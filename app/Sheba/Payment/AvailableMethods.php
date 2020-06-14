@@ -47,9 +47,10 @@ class AvailableMethods
                 throw new Exception('Invalid Payable Type');
         }
 
+        $empty_user = new ("\\App\\Models\\" . studly_case($user_type));
         $details = [];
         foreach ($methods as $method) {
-            $details[] = PaymentStrategy::getDetails($method, $version_code, $platform_name);
+            $details[] = PaymentStrategy::getDetails($method, $version_code, $platform_name, $empty_user);
         }
 
         return $details;
@@ -133,7 +134,8 @@ class AvailableMethods
         return [
             PaymentStrategy::CBL,
             PaymentStrategy::ONLINE,
-            PaymentStrategy::BKASH
+            PaymentStrategy::BKASH,
+            PaymentStrategy::SSL_DONATION
         ];
     }
 }

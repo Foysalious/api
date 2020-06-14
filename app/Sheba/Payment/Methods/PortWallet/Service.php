@@ -18,7 +18,7 @@ class Service
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->isIpnEnabled = config('port_wallet.is_ipn_enabled');
+        $this->isIpnEnabled = config('payment.port_wallet.is_ipn_enabled');
     }
 
     /**
@@ -39,10 +39,10 @@ class Service
         $data = $this->makeCreateData();
 
         if ($this->isIpnEnabled) {
-            $data['order']['redirect_url'] = config('port_wallet.redirect_without_validation_url');
-            $data['order']['ipn_url'] = config('port_wallet.ipn_url');
+            $data['order']['redirect_url'] = config('payment.port_wallet.urls.redirect_without_validation');
+            $data['order']['ipn_url'] = config('payment.port_wallet.urls.ipn');
         } else {
-            $data['order']['redirect_url'] = config('port_wallet.validation_on_redirect_url');
+            $data['order']['redirect_url'] = config('payment.port_wallet.urls.validation_on_redirect');
         }
 
         $res = $this->client->post('/invoice', $data);

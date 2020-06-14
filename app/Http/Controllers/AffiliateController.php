@@ -39,7 +39,6 @@ use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
-use Sheba\Transactions\Registrar;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
@@ -249,7 +248,7 @@ class AffiliateController extends Controller
             $affiliate->ambassador_id = $ambassador->id;
             $affiliate->under_ambassador_since = Carbon::now();
             $affiliate->update();
-            
+
             return api_response($request, $ambassador, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -533,7 +532,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             if ($affiliate->transactions()->count()) {
                 $credit       = $affiliate_credit_transactions->transactions->values()->all();
                 $debit        = $affiliate_debit_transactions->transactions->values()->all();
-                
+
                 return api_response($request, null, 200, ['credit' => $credit, 'debit' => $debit]);
             } else {
                 return api_response($request, null, 404);

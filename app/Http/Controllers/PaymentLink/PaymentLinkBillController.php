@@ -2,20 +2,34 @@
 
 use App\Http\Controllers\Controller;
 use App\Sheba\Payment\Adapters\Payable\PaymentLinkOrderAdapter;
+use Illuminate\Http\JsonResponse;
 use Sheba\Customer\Creator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkBillController extends Controller
 {
-    public function clearBill(Request $request, ShebaPayment $payment,
-                              PaymentLinkOrderAdapter $paymentLinkOrderAdapter, Creator $customerCreator, PaymentLinkRepositoryInterface $paymentLinkRepository)
+    /**
+     * @param Request $request
+     * @param PaymentManager $payment_manager
+     * @param PaymentLinkOrderAdapter $payment_adapter
+     * @param Creator $customer_creator
+     * @param PaymentLinkRepositoryInterface $repo
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearBill(Request $request, PaymentManager $payment_manager, PaymentLinkOrderAdapter $payment_adapter,
+                              Creator $customer_creator, PaymentLinkRepositoryInterface $repo)
     {
         try {
             $this->validate($request, [
-                'payment_method' => 'required|in:online,bkash,cbl,ssl_donation',
+                'payment_method' => 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments()),
                 'amount' => 'numeric',
                 'purpose' => 'string',
                 'identifier' => 'required',
@@ -23,16 +37,22 @@ class PaymentLinkBillController extends Controller
                 'mobile' => 'required|string'
             ]);
             $payment_method = $request->payment_method;
-            $user = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
-            $payment_link = $paymentLinkRepository->findByIdentifier($request->identifier);
-            if (!empty($payment_link->getEmiMonth()) && (double)$payment_link->getAmount() < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
-            $payable = $paymentLinkOrderAdapter->setPayableUser($user)
-                ->setPaymentLink($payment_link)->setAmount($request->amount)->setDescription($request->purpose)->getPayable();
-            if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
-            $payment = $payment->setMethod($payment_method)->init($payable);
+            $user = $customer_creator->setMobile($request->mobile)->setName($request->name)->create();
+            $payment_link = $repo->findByIdentifier($request->identifier);
+            if (!empty($payment_link->getEmiMonth()) && (double)$payment_link->getAmount() < config('emi.manager.minimum_emi_amount'))
+                return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
+
+            $payable = $payment_adapter->setPayableUser($user)->setPaymentLink($payment_link)
+                ->setAmount($request->amount)->setDescription($request->purpose)
+                ->getPayable();
+            if ($payment_method == 'wallet' && $user->shebaCredit() < $payable->amount)
+                return api_response($request, null, 403, ['message' => "You don't have sufficient balance"]);
+
+            $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         }catch (\Throwable $e){
             return api_response($request,null,500);

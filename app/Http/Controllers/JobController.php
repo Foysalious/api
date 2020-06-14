@@ -34,20 +34,22 @@ use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Services\FormatServices;
 use Throwable;
 
 class JobController extends Controller
 {
-    private $job_statuses_show;
-    private $job_statuses;
+    private $jobStatusesShow;
+    private $jobStatuses;
 
     public function __construct()
     {
-        $this->job_statuses_show = config('constants.JOB_STATUSES_SHOW');
-        $this->job_statuses = config('constants.JOB_STATUSES');
+        $this->jobStatusesShow = config('constants.JOB_STATUSES_SHOW');
+        $this->jobStatuses = config('constants.JOB_STATUSES');
     }
 
     public function index(Request $request)
@@ -75,7 +77,7 @@ class JobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -321,7 +323,7 @@ class JobController extends Controller
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -343,7 +345,7 @@ class JobController extends Controller
             });
             return count($dates) > 0 ? api_response($request, $dates, 200, ['logs' => $dates->values()->all()]) : api_response($request, null, 404);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -448,7 +450,7 @@ class JobController extends Controller
                         'service_name', 'service_quantity', 'service_variable_type', 'service_variables', 'job_additional_info', 'service_option', 'discount',
                         'status', 'service_unit_price', 'partner_order_id')
                     ->first();
-                array_add($job, 'status_show', $this->job_statuses_show[array_search($job->status, $this->job_statuses)]);
+                array_add($job, 'status_show', $this->jobStatusesShow[array_search($job->status, $this->jobStatuses)]);
 
                 $job_model = Job::find($job->id);
                 $job_model->calculate();
@@ -523,12 +525,10 @@ class JobController extends Controller
             return api_response($request, null, 500);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (RequestException $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -555,12 +555,22 @@ class JobController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearBills($customer, $job, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
+    /**
+     * @param $customer
+     * @param $job
+     * @param Request $request
+     * @param PaymentManager $payment_manager
+     * @param OrderAdapter $order_adapter
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearBills($customer, $job, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
             'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
@@ -568,7 +578,7 @@ class JobController extends Controller
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
         $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->setEmiMonth($request->emi_month);
-        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($order_adapter->getPayable())->init();
         return api_response($request, $payment, 200, ['link' => $payment->redirect_url, 'payment' => $payment->getFormattedPayment()]);
     }
 
@@ -579,7 +589,7 @@ class JobController extends Controller
             $logs = (new JobLogs($job))->getOrderStatusLogs();
             return api_response($request, $logs, 200, ['logs' => $logs]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -682,7 +692,7 @@ class JobController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -693,7 +703,7 @@ class JobController extends Controller
             $job_cancel_reasons = JobCancelReason::ForCustomer()->select('id', 'name', 'key')->get();
             return api_response($request, $job_cancel_reasons, 200, ['cancel-reason' => $job_cancel_reasons]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

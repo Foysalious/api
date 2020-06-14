@@ -13,7 +13,10 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
 use Sheba\Payment\AvailableMethods;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 use Sheba\Reward\BonusCredit;
 use Sheba\Transactions\Wallet\TransactionGateways;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -25,10 +28,10 @@ class WalletController extends Controller
 
     /**
      * @param Request $request
-     * @param ShebaPayment $sheba_payment
+     * @param PaymentManager $payment_manager
      * @return JsonResponse
      */
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         try {
             /** @var Payment $payment */
@@ -36,11 +39,11 @@ class WalletController extends Controller
             $this->setModifier($payment->payable->user);
             if (!$payment) return api_response($request, null, 404); elseif ($payment->isComplete()) return api_response($request, 1, 200, ['message' => 'Payment completed']);
             elseif (!$payment->canComplete()) return api_response($request, null, 400, ['message' => 'Payment validation failed.']);
-            $payment = $sheba_payment->setMethod('wallet')->complete($payment);
+            $payment = $payment_manager->setMethodName(PaymentStrategy::WALLET)->setPayment($payment)->complete();
             if ($payment->isComplete()) $message = 'Payment successfully completed'; elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -48,11 +51,12 @@ class WalletController extends Controller
 
     /**
      * @param Request $request
-     * @param ShebaPayment $sheba_payment
+     * @param PaymentManager $payment_manager
      * @return JsonResponse
-     * @throws \Sheba\Payment\Exceptions\InitiateFailedException
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
      */
-    public function recharge(Request $request, ShebaPayment $sheba_payment)
+    public function recharge(Request $request, PaymentManager $payment_manager)
     {
         $methods = implode(',', AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
@@ -72,7 +76,7 @@ class WalletController extends Controller
         if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
         $recharge_adapter = new RechargeAdapter($user, $request->amount);
 
-        $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
+        $payment = $payment_manager->setMethodName($request->payment_method)->setPayable($recharge_adapter->getPayable())->init();
         return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
     }
 
@@ -147,7 +151,7 @@ class WalletController extends Controller
         } catch (QueryException $e) {
             $payment->status = 'failed';
             $payment->update();
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -166,7 +170,7 @@ class WalletController extends Controller
             ];
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

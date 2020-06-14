@@ -7,54 +7,54 @@ use GuzzleHttp\Client;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
+use Sheba\Payment\Methods\Ssl\Stores\SslStore;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use DB;
 
 class Ssl extends PaymentMethod
 {
-    private $storeId;
-    private $storePassword;
-    private $sessionUrl;
+    /** @var SslStore */
+    private $store;
+
     private $successUrl;
     private $failUrl;
     private $cancelUrl;
-    private $orderValidationUrl;
     CONST NAME        = 'ssl';
     CONST NAME_DONATE = 'ssl_donation';
-    private $is_donate = false;
+    private $isDonate = false;
 
     public function __construct()
     {
         parent::__construct();
-        $this->storeId            = config('ssl.store_id');
-        $this->storePassword      = config('ssl.store_password');
-        $this->sessionUrl         = config('ssl.session_url');
-        $this->successUrl         = config('ssl.success_url');
-        $this->failUrl            = config('ssl.fail_url');
-        $this->cancelUrl          = config('ssl.cancel_url');
-        $this->orderValidationUrl = config('ssl.order_validation_url');
+        $this->successUrl         = config('payment.ssl.urls.success');
+        $this->failUrl            = config('payment.ssl.urls.fail');
+        $this->cancelUrl          = config('payment.ssl.urls.cancel');
     }
 
-    public function setDonationConfig()
+    public function setStore(SslStore $store)
     {
-        $this->storeId            = config('ssl_donation.store_id');
-        $this->storePassword      = config('ssl_donation.store_password');
-        $this->sessionUrl         = config('ssl_donation.session_url');
-        $this->successUrl         = config('ssl_donation.success_url');
-        $this->failUrl            = config('ssl_donation.fail_url');
-        $this->cancelUrl          = config('ssl_donation.cancel_url');
-        $this->orderValidationUrl = config('ssl_donation.order_validation_url');
-        $this->is_donate          = true;
+        $this->store = $store;
         return $this;
     }
 
+    public function forDonation()
+    {
+        $this->isDonate = true;
+        return $this;
+    }
+
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws \Exception
+     */
     public function init(Payable $payable): Payment
     {
         $invoice              = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
         $data                 = array();
-        $data['store_id']     = $this->storeId;
-        $data['store_passwd'] = $this->storePassword;
+        $data['store_id']     = $this->store->getStoreId();
+        $data['store_passwd'] = $this->store->getStorePassword();
         $data['total_amount'] = (double)$payable->amount;
         $data['currency']     = "BDT";
         $data['success_url']  = $this->successUrl;
@@ -86,7 +86,7 @@ class Ssl extends PaymentMethod
             $payment->save();
             $payment_details             = new PaymentDetail();
             $payment_details->payment_id = $payment->id;
-            $payment_details->method     = !$this->is_donate ? self::NAME : self::NAME_DONATE;
+            $payment_details->method     = $this->getMethodName();
             $payment_details->amount     = $payable->amount;
             $payment_details->save();
         });
@@ -115,7 +115,7 @@ class Ssl extends PaymentMethod
     public function getSslSession($data)
     {
         $client = new Client();
-        $result = $client->request('POST', $this->sessionUrl, ['form_params' => $data]);
+        $result = $client->request('POST', $this->store->getSessionUrl(), ['form_params' => $data]);
         return json_decode($result->getBody());
     }
 
@@ -173,7 +173,7 @@ class Ssl extends PaymentMethod
                     }
                 }
             }
-            $new_data['store_passwd'] = md5($this->storePassword);
+            $new_data['store_passwd'] = md5($this->store->getStorePassword());
             ksort($new_data);
             $hash_string = "";
             foreach ($new_data as $key => $value) {
@@ -194,11 +194,11 @@ class Ssl extends PaymentMethod
     {
         $client   = new Client();
         try {
-            $result   = $client->request('GET', $this->orderValidationUrl, [
+            $result   = $client->request('GET', $this->store->getOrderValidationUrl(), [
                 'query' => [
                     'val_id'       => request('val_id'),
-                    'store_id'     => $this->storeId,
-                    'store_passwd' => $this->storePassword,
+                    'store_id'     => $this->store->getStoreId(),
+                    'store_passwd' => $this->store->getStorePassword(),
                 ]
             ]);
             $response = json_decode($result->getBody()->getContents());
@@ -223,6 +223,6 @@ class Ssl extends PaymentMethod
 
     public function getMethodName()
     {
-        return $this->is_donate ? self::NAME_DONATE : self::NAME;
+        return $this->isDonate ? self::NAME_DONATE : self::NAME;
     }
 }
