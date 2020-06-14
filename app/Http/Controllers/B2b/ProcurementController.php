@@ -213,22 +213,60 @@ class ProcurementController extends Controller
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
 
-        if ($request->has('sort_by_id')) $procurements = $this->procurementRepository->sortById($request->sort_by_id, $business->id);
-        if ($request->has('sort_by_title')) $procurements = $this->procurementRepository->sortByTitle($request->sort_by_title, $business->id);
-        if ($request->has('sort_by_created_at')) $procurements = $this->procurementRepository->sortByCreatedAt($request->sort_by_created_at, $business->id);
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
         $total_procurement = count($procurements);
+        if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
+        if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
+        if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
+        if ($request->has('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
         if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
 
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement
         ]); else return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $procurements
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortById($procurements, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($procurements)->$sort_by(function ($procurement) {
+            return strtoupper($procurement['id']);
+        });
+    }
+
+    /**
+     * @param $procurements
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByTitle($procurements, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($procurements)->$sort_by(function ($procurement) {
+            return strtoupper($procurement['title']);
+        });
+    }
+
+    /**
+     * @param $procurements
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByCreatedAt($procurements, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($procurements)->$sort_by(function ($procurement) {
+            return strtoupper($procurement['created_at']);
+        });
     }
 
     /**
