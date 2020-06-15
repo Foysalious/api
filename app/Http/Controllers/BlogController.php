@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Transformers\BlogTransformer;
 use App\Transformers\OfferTransformer;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
@@ -16,8 +17,12 @@ class BlogController extends Controller
 {
     public function index(Request $request) {
         try {
-            list($offset, $limit) = calculatePagination($request);
-            $blogs = $this->getBlogsWithFormation(BlogPost::orderBy('id', 'desc')->skip($offset)->take($limit)->get());
+            $limit = 3;
+            if ($request->has("limit")) $limit = $request->limit;
+            $url = env('SHEBA_SMANAGER_LINK') . "/blog/wp-json/wp/v2/posts?per_page=".$limit;
+            $response = (new Client())->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+            $blogs = $this->getBlogsWithFormation($response);
             if (count($blogs) > 0) return api_response($request, $blogs, 200, ['blogs' => $blogs]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
@@ -27,9 +32,10 @@ class BlogController extends Controller
     }
 
     private function getBlogsWithFormation($blogs) {
+        $blogs_collection = collect($blogs);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $resource = new Collection($blogs, new BlogTransformer());
+        $resource = new Collection($blogs_collection, new BlogTransformer());
         return $manager->createData($resource)->toArray()['data'];
     }
 }
