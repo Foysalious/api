@@ -26,7 +26,10 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\EMI\Banks;
 use Sheba\EMI\Calculations;
+use Sheba\EMI\Calculator;
+use Sheba\EMI\CalculatorForManager;
 use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\PaymentLink\PaymentLinkTransformer;
@@ -321,162 +324,54 @@ class ShebaController extends Controller
         ];
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws Exception
+     */
     public function getPayments(Request $request)
     {
-        try {
-            $version_code = (int)$request->header('Version-Code');
-            $platform_name = $request->header('Platform-Name');
-            $user_type = $request->type;
-            $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
-            return api_response($request, $payments, 200, [
-                'payments' => $payments,
-                'discount_message' => 'Pay online and stay relaxed!!!'
-            ]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $version_code = (int)$request->header('Version-Code');
+        $platform_name = $request->header('Platform-Name');
+        $user_type = $request->type;
+        if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
+        if (!$user_type) $user_type = "customer";
+        $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
+        return api_response($request, $payments, 200, [
+            'payments' => $payments,
+            'discount_message' => 'Pay online and stay relaxed!!!'
+        ]);
     }
 
-    public function getEmiInfo(Request $request)
+    public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
-        try {
-            $amount = $request->amount;
-            $icons_folder = getEmiBankIconsFolder(true);
+        $amount       = $request->amount;
 
-            if (!$amount) {
-                return api_response($request, null, 400, ['message' => 'Amount missing']);
-            }
-
-            $emi = [
-                [
-                    "number_of_months" => 3,
-                    "interest" => "3%",
-                    "amount" => number_format(($amount + ($amount * 0.03)) / 3, 2, '.', '')
-                ],
-                [
-                    "number_of_months" => 6,
-                    "interest" => "4.5%",
-                    "amount" => number_format(($amount + ($amount * 0.045)) / 6, 2, '.', '')
-                ],
-                [
-                    "number_of_months" => 9,
-                    "interest" => "6.5%",
-                    "amount" => number_format(($amount + ($amount * 0.065)) / 9, 2, '.', '')
-                ],
-                [
-                    "number_of_months" => 12,
-                    "interest" => "8.5%",
-                    "amount" => number_format(($amount + ($amount * 0.085)) / 12, 2, '.', '')
-                ]
-            ];
-
-            $banks = [
-                [
-                    "name" => "Midland Bank Ltd",
-                    "logo" => $icons_folder . "midland_bank.png",
-                    "asset" => "midland_bank"
-                ],
-                [
-                    "name" => "SBAC Bank",
-                    "logo" => $icons_folder . "sbac_bank.jpg",
-                    "asset" => "sbac_bank"
-                ],
-                [
-                    "name" => "Meghna Bank Limited",
-                    "logo" => $icons_folder . "meghna_bank.png",
-                    "asset" => "meghna_bank"
-                ],
-                [
-                    "name" => "NRB Bank Limited",
-                    "logo" => $icons_folder . "nrb_bank.png",
-                    "asset" => "nrb_bank"
-                ],
-                [
-                    "name" => "STANDARD CHARTERED BANK",
-                    "logo" => $icons_folder . "standard_chartered.png",
-                    "asset" => "standard_chartered"
-                ],
-                [
-                    "name" => "STANDARD BANK",
-                    "logo" => $icons_folder . "standard_bank.png",
-                    "asset" => "standard_bank"
-                ],
-                [
-                    "name" => "SOUTHEAST BANK",
-                    "logo" => $icons_folder . "sebl_bank.png",
-                    "asset" => "sebl_bank"
-                ],
-                [
-                    "name" => "NCC BANK",
-                    "logo" => $icons_folder . "ncc_bank.png",
-                    "asset" => "ncc_bank"
-                ],
-                [
-                    "name" => "MUTUAL TRUST BANK",
-                    "logo" => $icons_folder . "mtb_bank.png",
-                    "asset" => "mtb_bank"
-                ],
-                [
-                    "name" => "JAMUNA BANK",
-                    "logo" => $icons_folder . "jamuna_bank.png",
-                    "asset" => "jamuna_bank"
-                ],
-                [
-                    "name" => "EASTERN BANK",
-                    "logo" => $icons_folder . "ebl.png",
-                    "asset" => "ebl"
-                ],
-                [
-                    "name" => "DUTCH BANGLA BANK",
-                    "logo" => $icons_folder . "dbbl_bank.png",
-                    "asset" => "dbbl_bank"
-                ],
-                [
-                    "name" => "DHAKA BANK LIMITED",
-                    "logo" => $icons_folder . "dhaka_bank.png",
-                    "asset" => "dhaka_bank"
-                ],
-                [
-                    "name" => "CITY BANK LIMITED",
-                    "logo" => $icons_folder . "city_bank.png",
-                    "asset" => "city_bank"
-                ],
-                [
-                    "name" => "BRAC BANK LIMITED",
-                    "logo" => $icons_folder . "brac_bank.png",
-                    "asset" => "brac_bank"
-                ],
-                [
-                    "name" => "BANK ASIA LIMITED",
-                    "logo" => $icons_folder . "bank_asia.png",
-                    "asset" => "bank_asia"
-                ],
-
-            ];
-
-            $emi_data = [
-                "emi" => $emi,
-                "banks" => $banks
-            ];
-
-            return api_response($request, null, 200, ['info' => $emi_data]);
-        } catch (Exception $e) {
-            return api_response($request, null, 500);
+        if (!$amount) {
+            return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
+
+        if ($amount < config('emi.minimum_emi_amount')) {
+            return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+        }
+
+        $emi_data = [
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => Banks::get()
+        ];
+
+        return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
     }
 
-    public function emiInfoForManager(Request $request)
+    public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
             $amount               = $request->amount;
             $icons_folder         = getEmiBankIconsFolder(true);
-            $emi = Calculations::calculateEmiCharges($amount);
-            $banks = Calculations::BankDetails($icons_folder);
             $emi_data = [
-                "emi"   => $emi,
-                "banks" => $banks
+                "emi"   => $emi_calculator->getCharges($amount),
+                "banks" => Banks::get($icons_folder)
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
