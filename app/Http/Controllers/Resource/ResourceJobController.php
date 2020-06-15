@@ -220,6 +220,7 @@ class ResourceJobController extends Controller
             if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
             $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }
+        if($jobs->isEmpty()) return api_response($request, $jobs, 404);
         return api_response($request, $jobs, 200, ['results' => $jobs]);
     }
 }
