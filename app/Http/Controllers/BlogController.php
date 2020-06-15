@@ -24,7 +24,9 @@ class BlogController extends Controller
             $response = json_decode($response, 1);
             if(!$response) return api_response($request, null, 401, ['data' => null]);
             $blogs = $this->getBlogsWithFormation($response);
-            if (count($blogs) > 0) return api_response($request, $blogs, 200, ['data' => $blogs]);
+            $data["blogs"] = $this->getBlogsWithFormation($response);
+            $data["blog_url"] = constants('BLOG_URL');
+            if (count($blogs) > 0) return api_response($request, $data, 200, ['data' => $data]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
