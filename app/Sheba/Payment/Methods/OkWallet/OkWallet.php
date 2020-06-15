@@ -15,13 +15,6 @@ class OkWallet extends PaymentMethod
 {
     const NAME = 'ok_wallet';
 
-    public function __construct()
-    {
-        parent::__construct();
-        $this->successUrl = '';
-        $this->failUrl    = '';
-    }
-
     /**
      * @param Payable $payable
      * @return Payment
@@ -48,7 +41,9 @@ class OkWallet extends PaymentMethod
             $payment_details->save();
         });
         try {
-            $session = (new OkWalletClient())->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
+            /** @var OkWalletClient $ok_wallet */
+            $ok_wallet = app(OkWalletClient::class);
+            $session = $ok_wallet->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
         } catch (\Throwable $e) {
             $error = ['status' => "failed", "errorMessage" => $e->getMessage(), 'statusCode' => $e->getCode()];
             $this->onInitFailed($payment, json_encode($error));
@@ -82,6 +77,7 @@ class OkWallet extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     public function validate(Payment $payment)
     {
