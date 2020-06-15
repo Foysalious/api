@@ -3,6 +3,7 @@
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
 use Carbon\Carbon;
 use Sheba\Business\Procurement\Type;
+use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
@@ -60,6 +61,11 @@ class Procurement extends Model implements PayableType
     public function owner()
     {
         return $this->morphTo();
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProcurementInvitation::class);
     }
 
     public function scopeOrder($query)

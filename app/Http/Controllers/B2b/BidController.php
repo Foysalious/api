@@ -147,12 +147,13 @@ class BidController extends Controller
         if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
 
         $procurement = Procurement::findOrFail((int)$procurement);
+
         list($offset, $limit) = calculatePagination($request);
         $bids = $procurement->bids()->orderBy('created_at', 'desc');
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($bids->get(), new BidHistoryTransformer());
+        $resource = new Collection($bids->get(), new BidHistoryTransformer($procurement));
         $bids = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort_by_name')) $bids = $this->sortByName($bids, $request->sort_by_name)->values();
