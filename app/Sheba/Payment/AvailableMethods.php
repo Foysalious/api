@@ -47,7 +47,7 @@ class AvailableMethods
                 throw new Exception('Invalid Payable Type');
         }
 
-        $empty_user = new ("\\App\\Models\\" . studly_case($user_type));
+        $empty_user = new ("\\App\\Models\\" . studly_case($user_type))();
         $details = [];
         foreach ($methods as $method) {
             $details[] = PaymentStrategy::getDetails($method, $version_code, $platform_name, $empty_user);

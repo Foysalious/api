@@ -2,6 +2,8 @@
 
 use App\Http\Requests\ApiRequest;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Sheba\Portals\Portals;
 
 if (!function_exists('api_response')) {
     /**
@@ -89,5 +91,16 @@ if (!function_exists('decodeGuzzleResponse')) {
     function decodeGuzzleResponse($response, $assoc = true)
     {
         return json_decode($response->getBody()->getContents(), $assoc);
+    }
+}
+
+if (!function_exists('getUserTypeFromRequestHeader')) {
+    /**
+     * @param Request $request
+     * @return string
+     */
+    function getUserTypeFromRequestHeader(Request $request)
+    {
+        return Portals::getUserTypeFromPortal($request->header('portal-name'));
     }
 }
