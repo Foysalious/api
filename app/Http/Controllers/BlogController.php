@@ -19,11 +19,12 @@ class BlogController extends Controller
         try {
             $limit = 3;
             if ($request->has("limit")) $limit = $request->limit;
-            $url = env('SHEBA_SMANAGER_LINK') . "/blog/wp-json/wp/v2/posts?per_page=".$limit;
+            $url = constants('BLOG_URL') . "/wp-json/wp/v2/posts?orderby=date&order=desc&per_page=".$limit;
             $response = (new Client())->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
+            if(!$response) return api_response($request, null, 401, ['data' => null]);
             $blogs = $this->getBlogsWithFormation($response);
-            if (count($blogs) > 0) return api_response($request, $blogs, 200, ['blogs' => $blogs]);
+            if (count($blogs) > 0) return api_response($request, $blogs, 200, ['data' => $blogs]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
