@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\DigitalKYC\Partner;
+<?php namespace App\Sheba\DigitalKYC\Partner;
 
 use App\Sheba\Partner\KYC\RestrictedFeature;
 use Illuminate\Http\Request;

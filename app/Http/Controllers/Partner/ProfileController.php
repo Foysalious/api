@@ -24,12 +24,12 @@ class ProfileController extends Controller
      */
     public function checkNid(Request $request, $partner, ProfileUpdateRepository $pro_repo)
     {
-        try{
+        try {
 
             $data = $pro_repo->checkNid($request);
             return api_response($request, null, 200, ['data' => $data]);
 
-        }  catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
         }
@@ -51,7 +51,7 @@ class ProfileController extends Controller
             if (!$profile)
                 return api_response($request, null, 404, ['message' => 'Profile not found']);
 
-            if($resource->status == 'verified')
+            if ($resource->status == 'verified')
                 return api_response($request, null, 420, ['message' => 'Already Verified! Not allowed to update profile info']);
 
             $this->validate($request, [
@@ -64,15 +64,13 @@ class ProfileController extends Controller
                 'pro_pic' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg'
             ]);
 
-            if($request->type != 'image')
-            {
+            if ($request->type != 'image') {
                 $profile_by_given_nid = $this->isAlreadyExistNid($request->nid_no);
 
-                if(!empty($profile_by_given_nid))
-                {
-                    if(!empty($profile_by_given_nid->resource))
+                if (!empty($profile_by_given_nid)) {
+                    if (!empty($profile_by_given_nid->resource))
                         return api_response($request, null, 401, ['message' => 'This NID is used by another sManager account']);
-                    if(!empty($profile_by_given_nid->affiliate))
+                    if (!empty($profile_by_given_nid->affiliate))
                         return api_response($request, null, 403, ['message' => 'This NID is used by another sBondhu account']);
                 }
 
@@ -81,8 +79,7 @@ class ProfileController extends Controller
             $data = $pro_repo->createData($request);
             $this->setModifier($resource);
             $repository->update($profile, $data);
-            if($request->type != 'image')
-            {
+            if ($request->type != 'image') {
                 $this->setToPendingStatus($resource);
                 $this->shootStatusChangeLog($resource);
             }
@@ -104,15 +101,14 @@ class ProfileController extends Controller
     private function shootStatusChangeLog($resource)
     {
         $data = [
-          'from' => $resource->status,
-          'to'  => 'pending',
-          'resource_id' => $resource->id,
-          'reason' => 'nid_info_submit',
-            'log'  => 'status changed to pending as resource submit profile info for verification'
+            'from' => $resource->status,
+            'to' => 'pending',
+            'resource_id' => $resource->id,
+            'reason' => 'nid_info_submit',
+            'log' => 'status changed to pending as resource submit profile info for verification'
         ];
         Model::create($this->withCreateModificationField($data));
     }
-
 
 
     /**
@@ -121,7 +117,7 @@ class ProfileController extends Controller
 
     private function isAlreadyExistNid($nid_no)
     {
-        return Profile::where('nid_no',$nid_no)->first();
+        return Profile::where('nid_no', $nid_no)->first();
     }
 
     /**
@@ -131,8 +127,4 @@ class ProfileController extends Controller
     {
         $resource->update($this->withUpdateModificationField(['status' => 'pending']));
     }
-
-
-
-
 }
