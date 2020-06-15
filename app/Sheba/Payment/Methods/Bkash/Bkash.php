@@ -65,7 +65,7 @@ class Bkash extends PaymentMethod
         } else {
             $data = $this->create($payment);
             $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url = config('bkash.client_url') . '/bkash?paymentID=' . $data->paymentID;
+            $payment->redirect_url = config('bkash.client_url') . '?paymentID=' . $data->paymentID;
         }
         $payment->transaction_details = json_encode($data);
         $payment->update();
