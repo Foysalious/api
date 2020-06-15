@@ -10,6 +10,7 @@ use Sheba\Payment\Methods\OkWallet\Exception\FailedToInitiateException;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
+use Sheba\TPProxy\TPProxyServerError;
 
 class OkWallet extends PaymentMethod
 {
@@ -22,24 +23,7 @@ class OkWallet extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $invoice = "SHEBA_OK_WALLET_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        $user    = $payable->user;
-        $payment = new Payment();
-        DB::transaction(function () use (&$payment, $payable, $invoice, $user) {
-            $payment->payable_id     = $payable->id;
-            $payment->transaction_id = $invoice;
-            $payment->status         = Statuses::INITIATED;
-            $payment->valid_till     = $this->getValidTill();
-            $this->setModifier($user);
-            $payment->fill((new RequestIdentification())->get());
-            $this->withCreateModificationField($payment);
-            $payment->save();
-            $payment_details             = new PaymentDetail();
-            $payment_details->payment_id = $payment->id;
-            $payment_details->method     = self::NAME;
-            $payment_details->amount     = $payable->amount;
-            $payment_details->save();
-        });
+        $payment = $this->createPayment($payable);
         try {
             /** @var OkWalletClient $ok_wallet */
             $ok_wallet = app(OkWalletClient::class);
@@ -77,19 +61,16 @@ class OkWallet extends PaymentMethod
     /**
      * @param Payment $payment
      * @return Payment
-     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws TPProxyServerError
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         $request = request()->all();
-
         $request = (new InitRequest(json_decode($request['data'], true)));
-
         $validate_transaction = (new ValidateTransaction($this->paymentLogRepo))->setPayment($payment);
 
         if ($request->getRescode() != 2000) {
             $payment = $validate_transaction->changeToFailed();
-
         } else {
             $payment = $validate_transaction->initValidation();
         }

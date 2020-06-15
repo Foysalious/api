@@ -9,4 +9,12 @@ class DefaultStore extends SslStore
         $this->sessionUrl         = config("payment.ssl.stores.default.session_url");
         $this->orderValidationUrl = config("payment.ssl.stores.default.order_validation_url");
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return "default";
+    }
 }

@@ -75,7 +75,7 @@ class Cbl extends PaymentMethod
      * @return Payment
      * @throws GuzzleException
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         $xml = $this->post($this->makeOrderInfoData($payment));
         $validation_response = new ValidateResponse();

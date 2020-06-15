@@ -15,13 +15,13 @@ class OkWalletClient
 
     public function __construct(TPProxyClient $tp_client)
     {
-        $this->baseUrl    = config('ok_wallet.base_url');
-        $this->account    = config('ok_wallet.account');
-        $this->apiKey     = config('ok_wallet.api_key');
-        $this->apiSecret  = config('ok_wallet.api_secret');
-        $this->format     = config('ok_wallet.format', 'json');
-        $this->merchant   = config('ok_wallet.merchant', 'sheba.xyz');
-        $this->publicKey  = file_get_contents(resource_path(config('ok_wallet.key_path')));
+        $this->baseUrl    = config('payment.ok_wallet.base_url');
+        $this->account    = config('payment.ok_wallet.account');
+        $this->apiKey     = config('payment.ok_wallet.api_key');
+        $this->apiSecret  = config('payment.ok_wallet.api_secret');
+        $this->format     = config('payment.ok_wallet.format', 'json');
+        $this->merchant   = config('payment.ok_wallet.merchant', 'sheba.xyz');
+        $this->publicKey  = file_get_contents(resource_path(config('payment.ok_wallet.key_path')));
         $this->tpClient   = $tp_client;
     }
 
