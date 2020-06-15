@@ -208,6 +208,7 @@ class ProcurementController extends Controller
         $procurements = $this->procurementRepository->ofBusiness($business->id)
             ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published'])
             ->orderBy('id', 'desc');
+        $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
         if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
         $start_date = $request->has('start_date') ? $request->start_date : null;
@@ -226,7 +227,7 @@ class ProcurementController extends Controller
         $total_procurement = count($procurements);
         if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
-            'procurements' => $procurements, 'total_procurement' => $total_procurement
+            'procurements' => $procurements, 'total_procurement' => $total_procurement, 'is_procurement_available' => $is_procurement_available
         ]); else return api_response($request, null, 404);
     }
 
@@ -845,7 +846,7 @@ class ProcurementController extends Controller
                 ->setProposal($request->proposal)
                 ->setPrice($request->price)
                 ->update();
-            
+
             return api_response($request, null, 200);
         }
 
@@ -1040,9 +1041,9 @@ class ProcurementController extends Controller
         $categories_id = config('sheba.tender_landing_categories_id');
         Category::whereIn('id', $categories_id)->get()->each(function ($category) use (&$categories) {
             $categories[$category->id] = [
-                'id'    => $category->id,
-                'name'  => $category->name,
-                'icon'  => $category->icon
+                'id' => $category->id,
+                'name' => $category->name,
+                'icon' => $category->icon
             ];
         });
         $data['categories'] = array_values($categories);
