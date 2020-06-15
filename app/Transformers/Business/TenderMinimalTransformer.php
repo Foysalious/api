@@ -15,7 +15,8 @@ class TenderMinimalTransformer extends TransformerAbstract
             'title' => $procurement->title,
             'description' => $procurement->long_description,
             'estimated_price' => $procurement->estimated_price ? (double)$procurement->estimated_price : null,
-            'created_at' => 'Posted ' . $procurement->created_at->diffForHumans()
+            'created_at' => 'Posted ' . $procurement->created_at->diffForHumans(),
+            'created_at_time' => $procurement->created_at->format('h:i A')
         ];
     }
 }
