@@ -9,4 +9,12 @@ class Donation extends SslStore
         $this->sessionUrl         = config("payment.ssl.stores.donation.session_url");
         $this->orderValidationUrl = config("payment.ssl.stores.donation.order_validation_url");
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return "donation";
+    }
 }

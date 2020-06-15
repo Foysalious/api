@@ -10,6 +10,11 @@ abstract class SslStore
     /**
      * @return string
      */
+    abstract public function getName();
+
+    /**
+     * @return string
+     */
     public function getStoreId()
     {
         return $this->storeId;
