@@ -8,10 +8,12 @@ use App\Models\Customer;
 use App\Models\CustomerTransaction;
 use App\Models\Partner;
 use App\Models\PartnerTransaction;
+use App\Models\Resource;
 use App\Models\Vendor;
 use App\Models\VendorTransaction;
 use Carbon\Carbon;
 use DB;
+use Sheba\Dal\ResourceTransaction\Model;
 
 trait Wallet
 {
@@ -68,6 +70,8 @@ trait Wallet
             return new VendorTransaction();
         } else if ($this instanceof Business) {
             return new BusinessTransaction();
+        } else if ($this instanceof Resource) {
+            return new Model();
         }
     }
 

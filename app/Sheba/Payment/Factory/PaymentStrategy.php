@@ -1,7 +1,18 @@
 <?php namespace Sheba\Payment\Factory;
 
-use InvalidArgumentException;
+use App\Models\Customer;
+use App\Models\Partner;
 use Sheba\Helpers\ConstGetter;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Methods\Bkash\Bkash;
+use Sheba\Payment\Methods\Cbl\Cbl;
+use Sheba\Payment\Methods\OkWallet\OkWallet;
+use Sheba\Payment\Methods\PartnerWallet;
+use Sheba\Payment\Methods\PortWallet\PortWallet;
+use Sheba\Payment\Methods\Ssl\Ssl;
+use Sheba\Payment\Methods\Ssl\SslBuilder;
+use Sheba\Payment\Methods\Wallet;
+use Sheba\Payment\PayableUser;
 
 class PaymentStrategy
 {
@@ -22,22 +33,65 @@ class PaymentStrategy
         return self::SSL;
     }
 
-    public static function getDetails($method, $version_code, $platform_name)
+    /**
+     * @param $method
+     * @param PayableUser $user
+     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet
+     * @throws InvalidPaymentMethod
+     */
+    public static function getMethod($method, PayableUser $user)
     {
-        if (!self::isValid($method)) throw new InvalidArgumentException('Invalid Method.');
+        switch (self::getValidatedMethod($method, $user)) {
+            case self::SSL: return SslBuilder::get($user);
+            case self::SSL_DONATION: return SslBuilder::getForDonation();
+            case self::BKASH: return app(Bkash::class);
+            case self::WALLET: return app(Wallet::class);
+            case self::CBL: return app(Cbl::class);
+            case self::PARTNER_WALLET: return app(PartnerWallet::class);
+            case self::OK_WALLET: return app(OkWallet::class);
+            case self::PORT_WALLET: return app(PortWallet::class);
+        }
+    }
 
-        if ($method == self::ONLINE) $method = self::getDefaultOnlineMethod();
-
-        switch ($method) {
-            case self::SSL: return self::sslDetails();
+    /**
+     * @param $method
+     * @param $version_code
+     * @param $platform_name
+     * @param PayableUser $user
+     * @return array
+     * @throws InvalidPaymentMethod
+     */
+    public static function getDetails($method, $version_code, $platform_name, PayableUser $user)
+    {
+        switch (self::getValidatedMethod($method, $user)) {
+            case self::SSL:
+            case self::SSL_DONATION: return self::sslDetails();
             case self::BKASH: return self::bkashDetails();
             case self::WALLET: return self::shebaCreditDetails();
             case self::CBL: return self::cblDetails($version_code, $platform_name);
             case self::PARTNER_WALLET: return self::partnerWalletDetails();
             case self::OK_WALLET: return self::okWalletDetails();
-            case self::SSL_DONATION: return self::sslDetails();
             case self::PORT_WALLET: return self::portWalletDetails();
         }
+    }
+
+    /**
+     * @param $method
+     * @param PayableUser $user
+     * @return string
+     * @throws InvalidPaymentMethod
+     */
+    private static function getValidatedMethod($method, PayableUser $user)
+    {
+        if (!self::isValid($method)) throw new InvalidPaymentMethod();
+
+        if ($method == self::ONLINE) {
+            if ($user instanceof Customer) $method = self::SSL;
+            else if ($user instanceof Partner) $method = self::PORT_WALLET;
+            else $method = self::getDefaultOnlineMethod();
+        }
+
+        return $method;
     }
 
     /**

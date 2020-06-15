@@ -11,6 +11,7 @@ use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
+use Sheba\Payment\PayableUser;
 use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -24,7 +25,7 @@ use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\VoucherGeneratorTrait;
 
-class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction
+class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction, PayableUser
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields, VoucherGeneratorTrait;
 

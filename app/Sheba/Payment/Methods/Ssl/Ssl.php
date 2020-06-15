@@ -2,12 +2,11 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Models\PaymentDetail;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Methods\Ssl\Response\InitResponse;
 use Sheba\Payment\Methods\Ssl\Response\ValidationResponse;
+use Sheba\Payment\Methods\Ssl\Stores\SslStore;
 use Sheba\Payment\Statuses;
-use Sheba\RequestIdentification;
 use DB;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
@@ -15,16 +14,15 @@ use Sheba\TPProxy\TPRequest;
 
 class Ssl extends PaymentMethod
 {
-    private $storeId;
-    private $storePassword;
-    private $sessionUrl;
+    /** @var SslStore */
+    private $store;
+
     private $successUrl;
     private $failUrl;
     private $cancelUrl;
-    private $orderValidationUrl;
     CONST NAME        = 'ssl';
     CONST NAME_DONATE = 'ssl_donation';
-    private $is_donate = false;
+    private $isDonate = false;
 
     /** @var TPProxyClient */
     private $tpClient;
@@ -32,26 +30,21 @@ class Ssl extends PaymentMethod
     public function __construct(TPProxyClient $tp_client)
     {
         parent::__construct();
-        $this->storeId            = config('ssl.store_id');
-        $this->storePassword      = config('ssl.store_password');
-        $this->sessionUrl         = config('ssl.session_url');
-        $this->successUrl         = config('ssl.success_url');
-        $this->failUrl            = config('ssl.fail_url');
-        $this->cancelUrl          = config('ssl.cancel_url');
-        $this->orderValidationUrl = config('ssl.order_validation_url');
+        $this->successUrl         = config('payment.ssl.urls.success');
+        $this->failUrl            = config('payment.ssl.urls.fail');
+        $this->cancelUrl          = config('payment.ssl.urls.cancel');
         $this->tpClient           = $tp_client;
     }
 
-    public function setDonationConfig()
+    public function setStore(SslStore $store)
     {
-        $this->storeId            = config('ssl_donation.store_id');
-        $this->storePassword      = config('ssl_donation.store_password');
-        $this->sessionUrl         = config('ssl_donation.session_url');
-        $this->successUrl         = config('ssl_donation.success_url');
-        $this->failUrl            = config('ssl_donation.fail_url');
-        $this->cancelUrl          = config('ssl_donation.cancel_url');
-        $this->orderValidationUrl = config('ssl_donation.order_validation_url');
-        $this->is_donate          = true;
+        $this->store = $store;
+        return $this;
+    }
+
+    public function forDonation()
+    {
+        $this->isDonate = true;
         return $this;
     }
 
@@ -62,48 +55,11 @@ class Ssl extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $invoice              = "SHEBA_SSL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        $data                 = array();
-        $data['store_id']     = $this->storeId;
-        $data['store_passwd'] = $this->storePassword;
-        $data['total_amount'] = (double)$payable->amount;
-        $data['currency']     = "BDT";
-        $data['success_url']  = $this->successUrl;
-        $data['fail_url']     = $this->failUrl;
-        $data['cancel_url']   = $this->cancelUrl;
-        $data['tran_id']      = $invoice;
-        $user                 = $payable->user;
-        $data['cus_name']     = $payable->getName();
-        $data['cus_email']    = $payable->getEmail();
-        $data['cus_phone']    = $payable->getMobile();
-        if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
-            $data['emi_option']          = 1;
-            $data['emi_max_inst_option'] = 12;
-            if ($payable->emi_month) {
-                $data['emi_selected_inst'] = (int)$payable->emi_month;
-                $data['emi_allow_only']    = 1;
-            }
-        }
-        $payment = new Payment();
-        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
-            $payment->payable_id             = $payable->id;
-            $payment->transaction_id         = $invoice;
-            $payment->gateway_transaction_id = $invoice;
-            $payment->status                 = Statuses::INITIATED;
-            $payment->valid_till             = $this->getValidTill();
-            $this->setModifier($user);
-            $payment->fill((new RequestIdentification())->get());
-            $this->withCreateModificationField($payment);
-            $payment->save();
-            $payment_details             = new PaymentDetail();
-            $payment_details->payment_id = $payment->id;
-            $payment_details->method     = !$this->is_donate ? self::NAME : self::NAME_DONATE;
-            $payment_details->amount     = $payable->amount;
-            $payment_details->save();
-        });
-        $response      = $this->createSslSession($data);
+        $payment       = $this->createPayment($payable, $this->store->getName());
+        $response      = $this->createSslSession($payment);
         $init_response = new InitResponse();
         $init_response->setResponse($response);
+
         if ($init_response->hasSuccess()) {
             $success                      = $init_response->getSuccess();
             $payment->transaction_details = json_encode($success->details);
@@ -124,18 +80,45 @@ class Ssl extends PaymentMethod
     }
 
     /**
-     * @param $data
+     * @param Payment $payment
      * @return mixed
      * @throws TPProxyServerError
      */
-    private function createSslSession($data)
+    private function createSslSession(Payment $payment)
     {
-        $request = (new TPRequest())->setUrl($this->sessionUrl)
+        $payable = $payment->payable;
+
+        $data                 = array();
+        $data['store_id']     = $this->store->getStoreId();
+        $data['store_passwd'] = $this->store->getStorePassword();
+        $data['total_amount'] = (double)$payable->amount;
+        $data['currency']     = "BDT";
+        $data['success_url']  = $this->successUrl;
+        $data['fail_url']     = $this->failUrl;
+        $data['cancel_url']   = $this->cancelUrl;
+        $data['tran_id']      = $payment->transaction_id;
+        $data['cus_name']     = $payable->getName();
+        $data['cus_email']    = $payable->getEmail();
+        $data['cus_phone']    = $payable->getMobile();
+        if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
+            $data['emi_option']          = 1;
+            $data['emi_max_inst_option'] = 12;
+            if ($payable->emi_month) {
+                $data['emi_selected_inst'] = (int)$payable->emi_month;
+                $data['emi_allow_only']    = 1;
+            }
+        }
+
+        $request = (new TPRequest())->setUrl($this->store->getSessionUrl())
             ->setMethod(TPRequest::METHOD_POST)->setInput($data);
         return $this->tpClient->call($request);
     }
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment
+     */
+    public function validate(Payment $payment): Payment
     {
         if ($this->sslIpnHashValidation()) {
             $validation_response = new ValidationResponse();
@@ -182,15 +165,15 @@ class Ssl extends PaymentMethod
         if (!(request()->has('verify_key') && request()->has('verify_sign'))) return false;
 
         $pre_define_key = explode(',', request('verify_key'));
-        $new_data       = array();
-        if (!empty($pre_define_key)) {
-            foreach ($pre_define_key as $value) {
-                if (request()->exists($value)) {
-                    $new_data[$value] = request($value);
-                }
+        $new_data       = [];
+        if (empty($pre_define_key)) return false;
+
+        foreach ($pre_define_key as $value) {
+            if (request()->exists($value)) {
+                $new_data[$value] = request($value);
             }
         }
-        $new_data['store_passwd'] = md5($this->storePassword);
+        $new_data['store_passwd'] = md5($this->store->getStorePassword());
         ksort($new_data);
         $hash_string = "";
         foreach ($new_data as $key => $value) {
@@ -222,13 +205,13 @@ class Ssl extends PaymentMethod
     private function validateFromSsl()
     {
         $request = (new TPRequest())
-            ->setUrl($this->orderValidationUrl)
+            ->setUrl($this->store->getOrderValidationUrl())
             ->setMethod(TPRequest::METHOD_GET)
             ->setInput([
                 'query' => [
                     'val_id'       => request('val_id'),
-                    'store_id'     => $this->storeId,
-                    'store_passwd' => $this->storePassword,
+                    'store_id'     => $this->store->getStoreId(),
+                    'store_passwd' => $this->store->getStorePassword(),
                 ]
             ]);
         return $this->tpClient->call($request);
@@ -236,6 +219,6 @@ class Ssl extends PaymentMethod
 
     public function getMethodName()
     {
-        return $this->is_donate ? self::NAME_DONATE : self::NAME;
+        return $this->isDonate ? self::NAME_DONATE : self::NAME;
     }
 }

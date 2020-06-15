@@ -2,11 +2,12 @@
 
 use App\Models\Payment;
 use Illuminate\Http\Request;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 
 class CblController extends Controller
 {
-    public function validateCblPGR(Request $request,ShebaPayment $sheba_payment)
+    public function validateCblPGR(Request $request, PaymentManager $payment_manager)
     {
         $xml = simplexml_load_string($request->xmlmsg);
         $invoice = "SHEBA_CBL_" . $xml->OrderID->__toString();
@@ -16,11 +17,11 @@ class CblController extends Controller
             $this->validate($request, [
                 'xmlmsg' => 'required|string',
             ]);
-            $payment = $sheba_payment->setMethod('cbl')->complete($payment);
             $payable = $payment->payable;
+            $payment = $payment_manager->setMethodName(PaymentStrategy::CBL)->setPayment($payment)->complete();
             return redirect($payable->success_url . '?invoice_id=' . $payment->transaction_id);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             if (!$payment) return redirect(config('sheba.front_url'));
             return redirect($payment->payable->success_url . '?invoice_id=' . $payment->transaction_id);
         }

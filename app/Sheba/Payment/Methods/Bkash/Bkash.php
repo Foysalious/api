@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
@@ -30,11 +31,20 @@ class Bkash extends PaymentMethod
     private $url;
     private $merchantNumber;
 
-    public function __construct()
+    /** @var Registrar $registrar */
+    private $registrar;
+
+    public function __construct(Registrar $registrar)
     {
         parent::__construct();
+        $this->registrar = $registrar;
     }
 
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws \Exception
+     */
     public function init(Payable $payable): Payment
     {
         $this->setCredentials($payable->user);
@@ -142,7 +152,12 @@ class Bkash extends PaymentMethod
         return $token;
     }
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment|mixed
+     * @throws GuzzleException
+     */
+    public function validate(Payment $payment): Payment
     {
         $this->setCredentials($payment->payable->user);
         $execute_response = new ExecuteResponse();
@@ -159,7 +174,11 @@ class Bkash extends PaymentMethod
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                (new Registrar())->setAmount($payment->payable->amount)->setDetails(json_encode($success->details))->setTime(Carbon::now()->format('Y-m-d H:s:i'))->setIsValidated(1)->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                $this->registrar->setAmount($payment->payable->amount)
+                    ->setDetails(json_encode($success->details))
+                    ->setTime(Carbon::now()->format('Y-m-d H:s:i'))
+                    ->setIsValidated(1)
+                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {

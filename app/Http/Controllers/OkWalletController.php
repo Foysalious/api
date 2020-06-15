@@ -3,35 +3,34 @@
 use App\Models\Payment;
 use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use Illuminate\Http\Request;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 
 class OkWalletController extends Controller
 {
-    const NAME = 'ok_wallet';
-
     /**
      * @param Request $request
-     * @param ShebaPayment $sheba_payment
+     * @param PaymentManager $payment_manager
      * @return \Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
-
         $redirect_url = config('sheba.front_url');
         try {
             $request = (new InitRequest(json_decode($request->data,true)));
+            /** @var Payment $payment */
             $payment = Payment::where('gateway_transaction_id', $request->getSessionKey())->first();
             if ($payment) {
                 $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
 
                 if ($payment->isValid() && !$payment->isComplete())
-                    $sheba_payment->setMethod(self::NAME)->complete($payment);
+                    $payment_manager->setMethodName(PaymentStrategy::OK_WALLET)->setPayment($payment)->complete();
             } else {
                 throw new \Exception('Payment not found to validate.');
             }
 
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
         }
         return redirect($redirect_url);
     }

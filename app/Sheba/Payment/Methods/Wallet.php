@@ -54,7 +54,7 @@ class Wallet extends PaymentMethod
         $payment_details->save();
     }
 
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         return $payment;
     }

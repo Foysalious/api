@@ -20,7 +20,10 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 
 class OrderController extends Controller
 {
@@ -49,12 +52,10 @@ class OrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -76,12 +77,10 @@ class OrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -103,27 +102,35 @@ class OrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearBills($business, $order, Request $request, ShebaPayment $payment, OrderAdapter $order_adapter)
+    /**
+     * @param $business
+     * @param $order
+     * @param Request $request
+     * @param PaymentManager $payment_manager
+     * @param OrderAdapter $order_adapter
+     * @return \Illuminate\Http\JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearBills($business, $order, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
-            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl',
+            'payment_method' => 'sometimes|required|in:' . implode(',', AvailableMethods::getRegularPayments()),
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
         if ($payment_method == 'bkash' && $this->hasPreviousBkashTransaction($request->job->partner_order_id)) {
             return api_response($request, null, 500, ['message' => "Can't send multiple requests within 1 minute."]);
         }
-        $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method);
-        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        $payable = $order_adapter->setPartnerOrder($request->job->partnerOrder)->setPaymentMethod($payment_method)->getPayable();
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -169,12 +176,10 @@ class OrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -226,12 +231,10 @@ class OrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -255,7 +258,7 @@ class OrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -265,7 +268,7 @@ class OrderController extends Controller
         try {
             (new NotificationRepository())->send($order);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return null;
         }
     }

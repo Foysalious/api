@@ -40,9 +40,9 @@ abstract class PaymentMethod
 
     /**
      * @param Payment $payment
-     * @return mixed
+     * @return Payment
      */
-    abstract public function validate(Payment $payment);
+    abstract public function validate(Payment $payment): Payment;
 
     /**
      * @return Carbon
@@ -61,10 +61,11 @@ abstract class PaymentMethod
 
     /**
      * @param Payable $payable
+     * @param string $gateway_account_name
      * @return Payment
      * @throws \Exception
      */
-    protected function createPayment(Payable $payable) : Payment
+    protected function createPayment(Payable $payable, $gateway_account_name = 'default') : Payment
     {
         $payment = new Payment();
         $user = $payable->user;
@@ -73,22 +74,27 @@ abstract class PaymentMethod
             strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' .
             randomString(10, 1, 1);
 
-        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
-            $payment->payable_id = $payable->id;
-            $payment->transaction_id = $invoice;
+        DB::transaction(function () use (&$payment, $payable, $invoice, $user, $gateway_account_name) {
+            $payment->payable_id             = $payable->id;
+            $payment->transaction_id         = $invoice;
             $payment->gateway_transaction_id = $invoice;
-            $payment->status = Statuses::INITIATED;
-            $payment->valid_till = $this->getValidTill();
+            $payment->gateway_account_name   = $gateway_account_name;
+            $payment->status                 = Statuses::INITIATED;
+            $payment->valid_till             = $this->getValidTill();
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
             $payment->save();
-            $payment_details = new PaymentDetail();
+
+            $payment_details             = new PaymentDetail();
             $payment_details->payment_id = $payment->id;
-            $payment_details->method = $this->getMethodName();
-            $payment_details->amount = $payable->amount;
+            $payment_details->method     = $this->getMethodName();
+            $payment_details->amount     = $payable->amount;
             $payment_details->save();
         });
+
+        $payment->payable = $payable;
+
         return $payment;
     }
 }
