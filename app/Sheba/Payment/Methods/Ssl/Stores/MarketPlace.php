@@ -9,4 +9,12 @@ class MarketPlace extends SslStore
         $this->sessionUrl         = config("payment.ssl.stores.market_place.session_url");
         $this->orderValidationUrl = config("payment.ssl.stores.market_place.order_validation_url");
     }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return "market_place";
+    }
 }

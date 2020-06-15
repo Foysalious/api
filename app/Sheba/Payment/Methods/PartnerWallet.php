@@ -59,7 +59,7 @@ class PartnerWallet extends PaymentMethod
      * @param Payment $payment
      * @return Payment
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         return $payment;
     }

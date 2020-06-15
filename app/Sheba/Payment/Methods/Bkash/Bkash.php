@@ -156,7 +156,7 @@ class Bkash extends PaymentMethod
      * @return Payment|mixed
      * @throws GuzzleException
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         $this->setCredentials($payment->payable->user);
         $execute_response = new ExecuteResponse();
