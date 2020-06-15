@@ -94,6 +94,7 @@ class PartnerSubscriptionBilling
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
         if (in_array($grade, [PartnerSubscriptionChange::UPGRADE, PartnerSubscriptionChange::DOWNGRADE]) || !$this->partner->billing_start_date) {
             $this->partner->billing_start_date = $this->today;
+            $this->partner->save();
         }
 
         $this->billingDatabaseTransactions($this->packagePrice);
