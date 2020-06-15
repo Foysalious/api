@@ -13,7 +13,7 @@ class Procurement extends Model implements PayableType
     use AlgoliaEloquentTrait;
 
     protected $guarded = ['id'];
-    protected $dates = ['closed_and_paid_at', 'procurement_start_date', 'procurement_end_date', 'last_date_of_submission'];
+    protected $dates = ['closed_and_paid_at', 'procurement_start_date', 'procurement_end_date', 'last_date_of_submission', 'published_at'];
     public $paid;
     public $due;
     public $totalPrice;
