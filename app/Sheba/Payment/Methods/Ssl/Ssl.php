@@ -14,9 +14,9 @@ use Sheba\TPProxy\TPRequest;
 
 class Ssl extends PaymentMethod
 {
-    private $storeId;
-    private $storePassword;
-    private $sessionUrl;
+    /** @var SslStore */
+    private $store;
+
     private $successUrl;
     private $failUrl;
     private $cancelUrl;
@@ -30,26 +30,21 @@ class Ssl extends PaymentMethod
     public function __construct(TPProxyClient $tp_client)
     {
         parent::__construct();
-        $this->storeId            = config('ssl.store_id');
-        $this->storePassword      = config('ssl.store_password');
-        $this->sessionUrl         = config('ssl.session_url');
-        $this->successUrl         = config('ssl.success_url');
-        $this->failUrl            = config('ssl.fail_url');
-        $this->cancelUrl          = config('ssl.cancel_url');
-        $this->orderValidationUrl = config('ssl.order_validation_url');
+        $this->successUrl         = config('payment.ssl.urls.success');
+        $this->failUrl            = config('payment.ssl.urls.fail');
+        $this->cancelUrl          = config('payment.ssl.urls.cancel');
         $this->tpClient           = $tp_client;
     }
 
-    public function setDonationConfig()
+    public function setStore(SslStore $store)
     {
-        $this->storeId            = config('ssl_donation.store_id');
-        $this->storePassword      = config('ssl_donation.store_password');
-        $this->sessionUrl         = config('ssl_donation.session_url');
-        $this->successUrl         = config('ssl_donation.success_url');
-        $this->failUrl            = config('ssl_donation.fail_url');
-        $this->cancelUrl          = config('ssl_donation.cancel_url');
-        $this->orderValidationUrl = config('ssl_donation.order_validation_url');
-        $this->is_donate          = true;
+        $this->store = $store;
+        return $this;
+    }
+
+    public function forDonation()
+    {
+        $this->isDonate = true;
         return $this;
     }
 
@@ -119,7 +114,11 @@ class Ssl extends PaymentMethod
         return $this->tpClient->call($request);
     }
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment
+     */
+    public function validate(Payment $payment): Payment
     {
         if ($this->sslIpnHashValidation()) {
             $validation_response = new ValidationResponse();
@@ -166,15 +165,15 @@ class Ssl extends PaymentMethod
         if (!(request()->has('verify_key') && request()->has('verify_sign'))) return false;
 
         $pre_define_key = explode(',', request('verify_key'));
-        $new_data       = array();
-        if (!empty($pre_define_key)) {
-            foreach ($pre_define_key as $value) {
-                if (request()->exists($value)) {
-                    $new_data[$value] = request($value);
-                }
+        $new_data       = [];
+        if (empty($pre_define_key)) return false;
+
+        foreach ($pre_define_key as $value) {
+            if (request()->exists($value)) {
+                $new_data[$value] = request($value);
             }
         }
-        $new_data['store_passwd'] = md5($this->storePassword);
+        $new_data['store_passwd'] = md5($this->store->getStorePassword());
         ksort($new_data);
         $hash_string = "";
         foreach ($new_data as $key => $value) {
@@ -206,15 +205,20 @@ class Ssl extends PaymentMethod
     private function validateFromSsl()
     {
         $request = (new TPRequest())
-            ->setUrl($this->orderValidationUrl)
+            ->setUrl($this->store->getOrderValidationUrl())
             ->setMethod(TPRequest::METHOD_GET)
             ->setInput([
                 'query' => [
                     'val_id'       => request('val_id'),
-                    'store_id'     => $this->storeId,
-                    'store_passwd' => $this->storePassword,
+                    'store_id'     => $this->store->getStoreId(),
+                    'store_passwd' => $this->store->getStorePassword(),
                 ]
             ]);
         return $this->tpClient->call($request);
+    }
+
+    public function getMethodName()
+    {
+        return $this->isDonate ? self::NAME_DONATE : self::NAME;
     }
 }
