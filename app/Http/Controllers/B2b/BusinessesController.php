@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
 use App\Models\Notification;
@@ -19,6 +20,7 @@ use Carbon\Carbon;
 use DB;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
 use Throwable;
 
@@ -270,15 +272,19 @@ class BusinessesController extends Controller
     /**
      * @param $business
      * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repository
      * @return JsonResponse
      */
-    public function getVendorsListV3($business, Request $request)
+    public function getVendorsListV3($business, Request $request, ProfileRepositoryInterface $profile_repository)
     {
         $business = $request->business;
-        if (!$business) return api_response($request, 1, 404);
+        if (!$business) return api_response($request, null, 404);
 
         $vendors = collect();
+        $sheba_verified_vendors = collect();
+
         $business->partners()
+            ->with('resources.profile')
             ->select('id', 'name', 'logo', 'address')
             ->get()
             ->each(function ($partner) use ($vendors) {
@@ -298,8 +304,47 @@ class BusinessesController extends Controller
                 return (stripos($vendor['mobile'], $needle) !== false) ||
                     (stripos($vendor['name'], $needle) !== false);
             })->values();
+
+            if ($vendors->isEmpty()) {
+                $mobile_validator = BangladeshiMobileValidator::validate($request->q);
+                if (!$mobile_validator)
+                    return api_response($request, null, 400, [
+                        'own_vendors' => $vendors,
+                        'sheba_verified_vendors' => $sheba_verified_vendors,
+                        'message' => 'Mobile number not proper bangladeshi number. Give a proper bangladeshi number, like 01678242973'
+                    ]);
+
+                $mobile = formatMobile($request->q);
+                /** @var Partner $partner */
+                $partner = $this->getPartner($profile_repository, $mobile);
+                if ($partner)
+                    $sheba_verified_vendors->push([
+                        'id' => $partner->id,
+                        'name' => $partner->name,
+                        'logo' => $partner->logo,
+                        'mobile' => $partner->getContactNumber()
+                    ]);
+            }
         }
 
-        return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => []]);
+        return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => $sheba_verified_vendors]);
+    }
+
+    /**
+     * @param ProfileRepositoryInterface $profile_repository
+     * @param $mobile
+     * @return mixed|null
+     */
+    private function getPartner(ProfileRepositoryInterface $profile_repository, $mobile)
+    {
+        /** @var Profile $profile */
+        $profile = $profile_repository->findByMobile($mobile)->first();
+        if (!$profile || !$profile->resource) return null;
+
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        if (!$resource->firstPartner()) return null;
+
+        return $resource->firstPartner();
     }
 }
