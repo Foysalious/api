@@ -1,19 +1,17 @@
 <?php namespace App\Transformers;
 
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\BlogPost\BlogPost;
 
 class BlogTransformer extends TransformerAbstract {
-    function transform(BlogPost $blog) {
+    function transform($blog) {
+        $date=strtotime($blog["date"]);
         return [
-            "id" => $blog->id,
-            "title" => $blog->title,
-            "short_description" => $blog->short_description,
-            "long_description" => $blog->long_description,
-            "thumb" => $blog->thumb,
-            "is_published" => $blog->is_published ? true : false,
-            "target_link" => $blog->target_link,
-            "created_by_name" => $blog->created_by_name,
+            "id" => $blog["id"],
+            "title" => $blog["title"]["rendered"],
+            "link" => $blog["link"],
+            "long_description" => strip_tags($blog["content"]["rendered"]),
+            "short_description" => strip_tags($blog["excerpt"]["rendered"]),
+            "created_date" => date("Y-m-d h:i:sa",$date),
         ];
     }
 }
