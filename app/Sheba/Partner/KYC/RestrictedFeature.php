@@ -14,7 +14,8 @@ class RestrictedFeature
             'digital_collection_from_pos',
             'emi_collection',
             'emi_use',
-            'withdrawal'
+            'withdrawal',
+            'package_update'
         ];
     }
 
