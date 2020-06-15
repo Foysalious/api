@@ -486,9 +486,7 @@ class ProcurementController extends Controller
                                    ProcurementInvitationRepositoryInterface $procurement_invitation_repository,
                                    BusinessMemberRepositoryInterface $business_member_repository)
     {
-        $this->validate($request, [
-            'partners' => 'required|string',
-        ]);
+        $this->validate($request, ['partners' => 'required|string',]);
         $partners = Partner::whereIn('id', json_decode($request->partners))->get();
         $business = $request->business;
         $procurement = $procurementRepository->find($procurement);
@@ -496,7 +494,10 @@ class ProcurementController extends Controller
         foreach ($partners as $partner) {
             /** @var Partner $partner */
             $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
-            $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
+            $procurement_invitation = $creator->setBusinessMember($request->business_member)
+                ->setProcurement($procurement)
+                ->setPartner($partner);
+
             if ($creator->hasError()) {
                 if ($creator->getErrorCode() == 409) {
                     $procurement_invitation = $procurement_invitation->getProcurementInvitation();
@@ -764,7 +765,10 @@ class ProcurementController extends Controller
     private function shootSmsForInvitation(Business $business, ProcurementInvitation $procurement_invitation, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
     {
         $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
-        $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
+        $sms->shoot(
+            $partner->getManagerMobile(),
+            "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url)
+        );
     }
 
     /**
