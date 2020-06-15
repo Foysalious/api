@@ -1019,7 +1019,7 @@ class ProcurementController extends Controller
             $categories[$category->id] = [
                 'id' => $category->id,
                 'name' => $category->name,
-                'icon' => $category->icon
+                'icon' => $category->icon_svg
             ];
         });
         $data['categories'] = array_values($categories);
