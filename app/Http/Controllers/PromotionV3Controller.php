@@ -44,7 +44,7 @@ class PromotionV3Controller extends Controller
 
             if ($promotion) return api_response($request, 1, 200, ['promotion' => $promo]); else return api_response($request, null, 403, ['message' => $msg]);
         } else {
-            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
+            return api_response($request, null, 403, ['message' => $result['message']]);
         }
     }
 
