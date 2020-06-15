@@ -6,6 +6,7 @@ use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Facades\Redis;
+use InvalidArgumentException;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
@@ -64,7 +65,7 @@ class Bkash extends PaymentMethod
         } else {
             $data = $this->create($payment);
             $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
+            $payment->redirect_url = config('bkash.client_url') . '/bkash?paymentID=' . $data->paymentID;
         }
         $payment->transaction_details = json_encode($data);
         $payment->update();
@@ -107,7 +108,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash create API error.');
+            throw new InvalidArgumentException('Bkash create API error.');
         curl_close($url);
         return json_decode($result_data);
     }
@@ -132,7 +133,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash grant token API error.');
+            throw new InvalidArgumentException('Bkash grant token API error.');
         curl_close($url);
         $data = json_decode($result_data, true);
         $token = $data['id_token'];
@@ -197,10 +198,10 @@ class Bkash extends PaymentMethod
         $result_data = curl_exec($url);
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
-            $error = new \InvalidArgumentException('Bkash execute API error.');
+            $error = new InvalidArgumentException('Bkash execute API error.');
             $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
-        };
+        }
         curl_close($url);
         return $result_data;
     }
