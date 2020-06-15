@@ -3,23 +3,13 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
-use App\Models\Resource;
-use App\Repositories\FileRepository;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
-use App\Sheba\Partner\KYC\RestrictedFeature;
-use App\Transformers\CustomSerializer;
-use App\Transformers\NidInfoTransformer;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use League\Fractal\Manager;
-use League\Fractal\Resource\Item;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-
-use Sheba\Repositories\ProfileRepository;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 
 class ProfileController extends Controller
@@ -108,7 +98,9 @@ class ProfileController extends Controller
     }
 
 
-
+    /**
+     * @param $resource
+     */
     private function shootStatusChangeLog($resource)
     {
         $data = [
@@ -132,6 +124,9 @@ class ProfileController extends Controller
         return Profile::where('nid_no',$nid_no)->first();
     }
 
+    /**
+     * @param $resource
+     */
     private function setToPendingStatus($resource)
     {
         $resource->update($this->withUpdateModificationField(['status' => 'pending']));
