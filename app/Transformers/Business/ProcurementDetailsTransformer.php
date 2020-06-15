@@ -25,7 +25,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
 
         return [
             'id' => $procurement->id,
-            'title' => $procurement->title,
+            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'status' => $this->getStatus($procurement),
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
@@ -33,7 +33,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
             'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
-            'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),
+            'last_date_of_submission' => $procurement->last_date_of_submission->format('d/m/y'),
             'payment_options' => $procurement->payment_options,
             'created_at' => $procurement->created_at->format('d/m/y'),
             'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
