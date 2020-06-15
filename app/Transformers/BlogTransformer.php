@@ -10,6 +10,7 @@ class BlogTransformer extends TransformerAbstract {
             "id" => $blog["id"],
             "title" => $blog["title"]["rendered"],
             "link" => $blog["link"],
+            "category" => $this->getCategory($blog["_links"]),
             "image" => $this->getTitleImage($blog["_links"]),
             "long_description" => strip_tags($blog["content"]["rendered"]),
             "short_description" => strip_tags($blog["excerpt"]["rendered"]),
@@ -22,6 +23,16 @@ class BlogTransformer extends TransformerAbstract {
         $response = json_decode($response, 1);
         if($response["guid"]["rendered"]) {
             return $response["guid"]["rendered"];
+        }
+        return null;
+    }
+
+    private function getCategory($link) {
+        $url = $link["wp:term"][0]["href"];
+        $response = (new Client())->get($url)->getBody()->getContents();
+        $response = json_decode($response, 1);
+        if($response[0]["name"]) {
+            return $response[0]["name"];
         }
         return null;
     }
