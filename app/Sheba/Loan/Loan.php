@@ -35,11 +35,13 @@ use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
+use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 
 class Loan
 {
     use CdnFileManager, FileManager, ModificationFields;
+
     private $repo;
     private $partner;
     private $data;
@@ -69,6 +71,11 @@ class Loan
             'nominee_granter' => 'nomineeGranter',
             'document'        => 'documents'
         ];
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
     }
 
     /**
@@ -152,7 +159,7 @@ class Loan
     }
 
     /**
-     * @param $loan_id
+     * @param         $loan_id
      * @param Request $request
      * @throws NotAllowedToAccess
      * @throws ReflectionException
@@ -422,10 +429,7 @@ class Loan
     {
         /** @var PartnerBankLoan $request */
         $request = $this->repo->find($loan_id);
-        $user    = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $request->bank_id))) {
-            throw new NotAllowedToAccess();
-        }
+        (new RequestValidator($request))->validate();
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
@@ -443,19 +447,15 @@ class Loan
     {
         /** @var PartnerBankLoan $request */
         $request = $this->repo->find($loan_id);
-        if(empty($request))
+        if (empty($request))
             throw new LoanNotFoundException();
-        $user    = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof RetailerMember && $user->retailer_member->id != $request->retailer_member_id))) {
-            throw new NotAllowedToAccess();
-        }
-        $loan                   = (new PartnerLoanRequest($request));
-        $details                = $loan->detailsForAgent();
-        return $details;
+        (new RequestValidator($request))->validate();
+        $loan    = (new PartnerLoanRequest($request));
+        return $loan->detailsForAgent();
     }
 
     /**
-     * @param $loan_id
+     * @param         $loan_id
      * @param Request $request
      * @throws NotAllowedToAccess
      * @throws ReflectionException
@@ -465,15 +465,13 @@ class Loan
         /** @var PartnerBankLoan $loan */
         $loan = $this->repo->find($loan_id);
         $user = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
-            throw new NotAllowedToAccess();
-        }
+        (new RequestValidator($loan))->validate();
         (new DocumentUploader($loan))->setUser($user)->setFor($request->for)->update($request);
 
     }
 
     /**
-     * @param $loan_id
+     * @param         $loan_id
      * @param Request $request
      * @throws InvalidStatusTransaction
      * @throws NotAllowedToAccess
