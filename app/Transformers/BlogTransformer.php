@@ -12,7 +12,6 @@ class BlogTransformer extends TransformerAbstract {
             "link" => $blog["link"],
             "category" => $this->getCategory($blog["_links"]),
             "image" => $this->getTitleImage($blog["_links"]),
-            "long_description" => strip_tags($blog["content"]["rendered"]),
             "short_description" => strip_tags($blog["excerpt"]["rendered"]),
             "created_date" => date("Y-m-d h:i:sa",$date),
         ];
