@@ -20,13 +20,12 @@ class ProfileUpdateRepository
             $data['dob'] = $request->dob;
         }
         if ($request->type != 'info') {
-            $data['nid_image_front'] = $request->name;
-            $data['nid_image_back'] = $request->name;
+            $data['nid_image_front'] = $request->nid_image_front;
+            $data['nid_image_back'] = $request->nid_image_back;
             $data['profile_image'] = (new ProfileRepository($profile))->saveProPic($request->pro_pic, $profile->name);
         }
 
         return $data;
-
     }
 
     /**
