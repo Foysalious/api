@@ -290,7 +290,7 @@ class IndexRoute
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
             $api->group(['prefix' => 'kyc'], function ($api) {
-                $api->get('check-nid', 'Partner\ProfileController@checkNid');
+                $api->get('check-verification', 'Partner\ProfileController@checkVerification');
                 $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
                 $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
             });
