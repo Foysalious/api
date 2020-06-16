@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use App\Models\Business;
 use Carbon\Carbon;
 use DB;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -344,7 +345,10 @@ class BusinessesController extends Controller
         /** @var Resource $resource */
         $resource = $profile->resource;
         if (!$resource->firstPartner()) return null;
+        
+        $partner = $resource->firstPartner();
+        if ($partner->status != PartnerStatuses::VERIFIED) return null;
 
-        return $resource->firstPartner();
+        return $partner;
     }
 }
