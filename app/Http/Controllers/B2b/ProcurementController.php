@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
+use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
@@ -33,6 +34,7 @@ use ReflectionException;
 use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
+use Sheba\Business\Procurement\RequestHandler;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
@@ -42,10 +44,8 @@ use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Partner\Creator as PartnerCreator;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
-use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
-use Sheba\Payment\Exceptions\InvalidPaymentMethod;
-use Sheba\Payment\PaymentManager;
+use Sheba\Payment\ShebaPayment;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -420,7 +420,7 @@ class ProcurementController extends Controller
     public function show($business, $procurement, Request $request)
     {
         $procurement = $this->procurementRepository->find($procurement);
-        if (!$procurement)  return api_response($request, null, 404, ["message" => "Not found."]);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
@@ -431,37 +431,36 @@ class ProcurementController extends Controller
     }
 
     /**
+     * @param $business
+     * @param $procurement
      * @param Request $request
+     * @param RequestHandler $request_handler
+     * @param Updater $updater
      * @return JsonResponse
      */
-    public function updateGeneral(Request $request)
+    public function updateGeneral($business, $procurement, Request $request, RequestHandler $request_handler, Updater $updater)
     {
-        try {
-            $this->validate($request, [
-                'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'date_format:Y-m-d', 'payment_options' => 'string'
-            ]);
+        $this->validate($request, [
+            'description' => 'sometimes|required|string',
+            'number_of_participants' => 'sometimes|required|numeric',
+            'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
+            'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
+            'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
+            'payment_options' => 'sometimes|required|string',
+        ]);
 
-            $procurement = Procurement::find($request->procurement);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
-            if (is_null($procurement)) {
-                return api_response($request, null, 404, ["message" => "Not found."]);
-            } else {
-                $procurement->number_of_participants = $request->number_of_participants;
-                $procurement->last_date_of_submission = $request->last_date_of_submission;
-                if ($request->procurement_start_date) $procurement->procurement_start_date = $request->procurement_start_date;
-                if ($request->payment_options) $procurement->payment_options = $request->payment_options;
+        $request_handler->setLongDescription($request->description)
+            ->setNumberOfParticipants($request->number_of_participants)
+            ->setLastDateOfSubmission($request->last_date_of_submission)
+            ->setProcurementStartDate($request->procurement_start_date)
+            ->setProcurementEndDate($request->procurement_end_date)
+            ->setPaymentOptions($request->payment_options);
+        $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
+        return api_response($request, null, 200, ["message" => "Successful"]);
 
-                $procurement->save();
-                return api_response($request, null, 200, ["message" => "Successful"]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
@@ -538,25 +537,24 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param ProcurementAdapter $procurement_adapter
-     * @param PaymentManager $payment_manager
+     * @param ShebaPayment $payment
      * @param ShebaPaymentValidator $payment_validator
      * @param ProcurementRepositoryInterface $procurement_repository
      * @return JsonResponse
+     * @throws ReflectionException
      * @throws InitiateFailedException
-     * @throws InvalidPaymentMethod
      */
-    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, PaymentManager $payment_manager, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->validate($request, [
-            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getBusinessPayments()),
-            'emi_month' => 'numeric'
+            'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
         $procurement = $procurement_repository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
-        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
+        $payment = $payment->setMethod($payment_method)->init($payable);
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -576,7 +574,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -624,7 +622,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -646,7 +644,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -670,7 +668,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
@@ -727,7 +725,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            logError($e);
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
