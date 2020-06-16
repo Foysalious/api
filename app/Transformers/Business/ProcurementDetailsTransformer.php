@@ -2,15 +2,10 @@
 
 use League\Fractal\TransformerAbstract;
 use App\Transformers\AttachmentTransformer;
+use Sheba\Business\Procurement\StatusCalculator;
 
 class ProcurementDetailsTransformer extends TransformerAbstract
 {
-    const IS_DRAFTED = 0;
-    const DRAFTED = 'drafted';
-    const IS_PUBLISHED = 1;
-    const PUBLISHED = 'published';
-    const PENDING = 'pending';
-
     protected $defaultIncludes = ['attachments'];
 
     /**
@@ -26,7 +21,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
         return [
             'id' => $procurement->id,
             'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
-            'status' => $this->getStatus($procurement),
+            'status' => StatusCalculator::resolveStatus($procurement),
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
@@ -52,16 +47,5 @@ class ProcurementDetailsTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
-    }
-
-    /**
-     * @param $procurement
-     * @return string
-     */
-    private function getStatus($procurement)
-    {
-        if ($procurement->is_published == self::IS_DRAFTED) return self::DRAFTED;
-        if ($procurement->is_published == self::IS_PUBLISHED && $procurement->status == self::PENDING) return self::PUBLISHED;
-        return $procurement->status;
     }
 }
