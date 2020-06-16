@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
+use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,10 +26,8 @@ class ProfileController extends Controller
     public function checkNid(Request $request, $partner, ProfileUpdateRepository $pro_repo)
     {
         try {
-
             $data = $pro_repo->checkNid($request);
             return api_response($request, null, 200, ['data' => $data]);
-
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
@@ -51,7 +50,7 @@ class ProfileController extends Controller
             if (!$profile)
                 return api_response($request, null, 404, ['message' => 'Profile not found']);
 
-            if ($resource->status == 'verified')
+            if ($resource->status == Statuses::VERIFIED)
                 return api_response($request, null, 420, ['message' => 'Already Verified! Not allowed to update profile info']);
 
             $this->validate($request, [
@@ -135,7 +134,5 @@ class ProfileController extends Controller
         ]);
         $pro_repo->updateSeenStatus($resource,$request->seen);
         return api_response($request, null, 200, ['message' => 'Seen Status updated successfully']);
-
-
     }
 }
