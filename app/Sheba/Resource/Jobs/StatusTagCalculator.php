@@ -21,7 +21,7 @@ class StatusTagCalculator
         if ($job->status == JobStatuses::SERVED && !$job->partnerOrder->isClosedAndPaidAt()) {
             return ['message' => "বিল সংগ্রহ বাকি আছে", 'tag' => 'collection'];
         } elseif ($job->status == JobStatuses::SERVED && $job->partnerOrder->isClosedAndPaidAt()) {
-            return ['message' => "যে অর্ডার টি শেষ", 'tag' => 'served'];
+            return ['message' => "কাজ শেষ", 'tag' => 'served'];
         } elseif ($this->isStatusAfterOrEqualToProcess($job->status)) {
             return ['message' => "যে অর্ডার টি এখন চলছে", 'tag' => 'process'];
         } else {
