@@ -13,6 +13,7 @@ use Carbon\Carbon;
 use DB;
 use Exception;
 use Sheba\ExpenseTracker\AutomaticExpense;
+use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
@@ -35,8 +36,8 @@ class PartnerSubscriptionBilling
     public  $packageFrom;
     public  $packageTo;
     private $isCollectAdvanceSubscriptionFee = false;
-    private $packageOriginalPrice;
-    private $adjustedCreditFromLastSubscription;
+    public $packageOriginalPrice;
+    public $adjustedCreditFromLastSubscription;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -85,13 +86,13 @@ class PartnerSubscriptionBilling
      */
     public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
-        $discount          = 0;
-        $this->packageFrom = $old_package;
-        $this->packageTo   = $new_package;
-        $this->adjustedCreditFromLastSubscription  = $this->remainingCredit($old_package, $old_billing_type);
+        $discount                                 = 0;
+        $this->packageFrom                        = $old_package;
+        $this->packageTo                          = $new_package;
+        $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
         if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
-        $this->packageOriginalPrice=($new_package->originalPrice($new_billing_type) - $discount);
-        $this->packagePrice = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
+        $this->packageOriginalPrice = ($new_package->originalPrice($new_billing_type) - $discount);
+        $this->packagePrice         = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
         if ($this->packagePrice < 0) {
             $this->refundRemainingCredit(abs($this->packagePrice));
             $this->packagePrice = 0;
@@ -102,21 +103,9 @@ class PartnerSubscriptionBilling
             $this->partner->save();
         }
         $this->billingDatabaseTransactions($this->packagePrice);
-        if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
-        }else{
-
-        }
+        (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
-    }
-
-    public function runAdvanceSubscriptionBilling()
-    {
-        $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
-        $this->packagePrice       = $this->getSubscribedPackageDiscountedPrice();
-        $this->advanceBillingDatabaseTransactions($this->packagePrice);
-        (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
     }
 
     private function calculateRunningBillingCycleNumber()
@@ -153,11 +142,11 @@ class PartnerSubscriptionBilling
                 $this->partnerTransactionForSubscriptionBilling($package_price);
             }
             $this->partner->last_billed_date   = $this->today;
-            $this->partner->last_billed_amount = $this->getSubscribedPackageDiscountedPrice();
+            $this->partner->last_billed_amount = $this->packageOriginalPrice;
             if ($this->partner->status == PartnerStatuses::INACTIVE) {
                 $this->revokeStatus();
             }
-            $this->partner->update();
+            $this->partner->save();
         });
     }
 
@@ -201,49 +190,6 @@ class PartnerSubscriptionBilling
     {
         $package_price = number_format($package_price, 2, '.', '');
         $this->partnerBonusHandler->pay($package_price, '%d BDT has been deducted for subscription package', [$this->getSubscriptionTag()->id]);
-    }
-
-    /**
-     * @param PartnerSubscriptionPackage $old_package
-     * @param                            $old_billing_type
-     * @return string
-     * @throws InvalidPreviousSubscriptionRules
-     */
-    public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
-    {
-        $remaining_credit                = $this->usageLeft();
-        return $remaining_credit < 0 ? 0 : round($remaining_credit, 2);
-    }
-
-    /**
-     * @throws InvalidPreviousSubscriptionRules
-     */
-    private function usageLeft()
-    {
-        $remainingDay = $this->remainingDays();
-        $perDayPrice  = $this->currentPackagePerDayPrice();
-        return round($remainingDay * $perDayPrice, 2);
-
-    }
-
-    /**
-     * @return false|float
-     * @throws InvalidPreviousSubscriptionRules
-     */
-    private function currentPackagePerDayPrice()
-    {
-        $subscriptionRules = $this->partner->subscription_rules;
-        $billing_type      = $this->partner->billing_type;
-        if (isset($subscriptionRules->fee->$billing_type->value)) {
-            throw new InvalidPreviousSubscriptionRules();
-        }
-        $total = $this->partner->subscriber()->periodicBillingHandler()->totalDaysOfUsage();
-        return round($subscriptionRules->fee->$billing_type->value / $total, 2);
-    }
-
-    private function remainingDays()
-    {
-        return $this->partner->subscriber()->periodicBillingHandler()->remainingDay();
     }
 
     /**
@@ -391,6 +337,9 @@ class PartnerSubscriptionBilling
         ]);
     }
 
+    /**
+     * @throws ExpenseTrackingServerError
+     */
     private function storeEntry()
     {
         /**

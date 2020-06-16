@@ -1,17 +1,20 @@
 <?php namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
+use App\Models\PartnerSubscriptionPackage;
 use Carbon\Carbon;
+use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
 class PeriodicBillingHandler
 {
+    /** @var Partner $partner */
     private $partner;
     private $today;
 
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
-        $this->today = Carbon::today();
+        $this->today   = Carbon::today();
     }
 
     public function run()
@@ -33,13 +36,13 @@ class PeriodicBillingHandler
      */
     public function nextBillingDate()
     {
-        $new_bill_date = '';
+        $new_bill_date    = '';
         $last_billed_date = $this->partner->last_billed_date;
 
         if ($this->partner->billing_type == BillingType::MONTHLY) {
             $next_billed_date_month = (($last_billed_date->month + 1) % 12) ?: 12;
-            $next_billed_date_year = $last_billed_date->year + ($last_billed_date->month == 12);
-            $new_bill_date = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
+            $next_billed_date_year  = $last_billed_date->year + ($last_billed_date->month == 12);
+            $new_bill_date          = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
 
             if ($this->partner->billing_start_date->day <= $new_bill_date->daysInMonth) {
                 $new_bill_date->day($this->partner->billing_start_date->day);
@@ -65,14 +68,54 @@ class PeriodicBillingHandler
      */
     public function remainingDay()
     {
-        $next = $this->nextBillingDate();
+        $next  = $this->nextBillingDate();
         $today = Carbon::today();
-        $diff = $today->diffInDays($next, false);
+        $diff  = $today->diffInDays($next, false);
         return $diff > 0 ? $diff : 0;
     }
-    public function totalDaysOfUsage(){
-        $next=$this->nextBillingDate();
-        $last=Carbon::parse($this->partner->last_billing_date);
+
+    public function totalDaysOfUsage()
+    {
+        $next = $this->nextBillingDate();
+        $last = Carbon::parse($this->partner->last_billed_date);
         return abs($last->diffInDays($next));
     }
+
+    /**
+     * @return false|float|int
+     * @throws InvalidPreviousSubscriptionRules
+     */
+    public function remainingCredit()
+    {
+        $remaining_credit = $this->usageLeft();
+        return $remaining_credit < 0 ? 0 : round($remaining_credit, 2);
+    }
+
+    /**
+     * @throws InvalidPreviousSubscriptionRules
+     */
+    private function usageLeft()
+    {
+        $remainingDay = $this->remainingDay();
+        $perDayPrice  = $this->currentPackagePerDayPrice();
+        return round($remainingDay * $perDayPrice, 2);
+
+    }
+
+    /**
+     * @return false|float
+     * @throws InvalidPreviousSubscriptionRules
+     */
+    private function currentPackagePerDayPrice()
+    {
+        $subscriptionRules = $this->partner->subscription_rules;
+        $billing_type      = $this->partner->billing_type;
+        if (!isset($subscriptionRules->fee->$billing_type->value)) {
+            throw new InvalidPreviousSubscriptionRules();
+        }
+        $total = $this->totalDaysOfUsage();
+        return round($subscriptionRules->fee->$billing_type->value / $total, 2);
+    }
+
+
 }

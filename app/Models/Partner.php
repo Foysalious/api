@@ -868,7 +868,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getCreditBreakdown()
     {
-        $remaining             = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
+        $remaining             = (double)$this->subscriber()->periodicBillingHandler()->remainingCredit();
         $wallet                = (double)$this->wallet;
         $bonus_wallet          = (double)$this->bonusWallet();
         $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
@@ -892,7 +892,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         if (empty($last_advance_subscription_package_charge)) return false;
         return true;
     }
-    public function invalidateAdvanceSubscriptionFee(){}
+
+    public function invalidateAdvanceSubscriptionFee()
+    {
+        $charge = $this->lastAdvanceSubscriptionCharge();
+        if (!empty($charge)) {
+            $charge->is_valid_advance_payment = 0;
+            $charge->save();
+        }
+    }
 
     private function lastAdvanceSubscriptionCharge()
     {

@@ -49,10 +49,10 @@ class PurchaseHandler
     }
 
     /**
-     * @param mixed $partner
+     * @param Partner $partner
      * @return PurchaseHandler
      */
-    public function setPartner($partner)
+    public function setPartner(Partner $partner)
     {
         $this->partner = $partner;
         return $this;
@@ -91,7 +91,7 @@ class PurchaseHandler
      * @param mixed $modifier
      * @return PurchaseHandler
      */
-    public function setModifier($modifier)
+    public function setConsumer($modifier)
     {
         $this->modifier = $modifier;
         $this->setModifier($modifier);
@@ -116,12 +116,11 @@ class PurchaseHandler
     }
 
     /**
-     * @return PurchaseHandler
+     * @return PartnerSubscriptionUpdateRequest
      */
     public function getSubscriptionRequest()
     {
         $this->runningDiscount        = $this->newPackage->runningDiscount($this->newBillingType);
-        $request                      = null;
         $data                         = [
             'partner_id'       => $this->partner->id,
             'old_package_id'   => $this->currentPackage->id ?: 1,
@@ -131,7 +130,7 @@ class PurchaseHandler
             'discount_id'      => $this->runningDiscount ? $this->runningDiscount->id : null
         ];
         $this->newSubscriptionRequest = PartnerSubscriptionUpdateRequest::create($this->withCreateModificationField($data));
-        return $this;
+        return $this->newSubscriptionRequest;
     }
 
     /**
@@ -159,15 +158,17 @@ class PurchaseHandler
         $this->partner->subscriptionUpgrade($this->newPackage, $this->newSubscriptionRequest);
     }
 
-    public function notifyForInsufficientBalance(){
+    public function notifyForInsufficientBalance()
+    {
         (new NotificationRepository())->sendInsufficientNotification($this->partner, $this->newPackage, $this->newBillingType, $this->grade);
     }
 
     /**
+     * @param bool $new
      * @return array
      */
-    public function getBalance()
+    public function getBalance($new = false)
     {
-        return $this->balance;
+        return $new ? array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['threshold']]) : $this->balance;
     }
 }

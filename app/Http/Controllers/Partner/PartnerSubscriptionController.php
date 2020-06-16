@@ -290,11 +290,10 @@ class PartnerSubscriptionController extends Controller
             if (empty($requestedPackage)) {
                 return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
-            $handler = (new PurchaseHandler($partner))->setModifier($request->manager_resource)->setNewBillingType($request->billing_type)->setNewPackage($requestedPackage);
+            $handler = (new PurchaseHandler($partner))->setConsumer($request->manager_resource)->setNewBillingType($request->billing_type)->setNewPackage($requestedPackage);
             $handler->checkIfRunningAndAlreadyCollected();
-            /** @var PartnerSubscriptionUpdateRequest $upgradeRequest */
             $upgradeRequest = $handler->getSubscriptionRequest();
-            if (empty($upgradeRequest)) {
+            if (!empty($upgradeRequest)) {
                 try {
                     $grade = $handler->getGrade();
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
@@ -307,15 +306,13 @@ class PartnerSubscriptionController extends Controller
                         return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $handler->getRequiredBalance()], $handler->getBalance()));
                     }
                     $handler->purchase();
+                    DB::commit();
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
-                        DB::commit();
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $handler->getBalance()));
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $handler->getBalance(true)));
                     } else {
-                        DB::commit();
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে উন্নীত করা হয়েছে।"], $handler->getBalance()));
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে উন্নীত করা হয়েছে।"], $handler->getBalance(true)));
                     }
                 } catch (Throwable $e) {
-                    DB::rollback();
                     throw $e;
                 }
             } else {
@@ -335,6 +332,7 @@ class PartnerSubscriptionController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             DB::rollback();
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

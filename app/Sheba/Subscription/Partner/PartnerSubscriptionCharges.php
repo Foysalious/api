@@ -22,10 +22,8 @@ class PartnerSubscriptionCharges
         $this->action = $action;
         $this->data['action'] = $this->action;
         $this->data['partner_id'] = $this->partnerSubscriptionBilling->partner->id;
-
         $this->setPackage()->setPrices()->setDates()->setLog()->save();
     }
-    private function
     private function setPackage()
     {
         if ($this->action == $this->actions[PartnerSubscriptionChange::RENEWED]) {
@@ -39,10 +37,11 @@ class PartnerSubscriptionCharges
 
     private function setPrices()
     {
-        $this->data['package_price'] = $this->partnerSubscriptionBilling->packagePrice;
+        $this->data['package_price'] = $this->partnerSubscriptionBilling->packageOriginalPrice;
         $this->data['cash_wallet_charge'] = $this->partnerSubscriptionBilling->partnerBonusHandler->payFromWallet;
         $this->data['bonus_wallet_charge'] = $this->partnerSubscriptionBilling->partnerBonusHandler->payFromBonus;
         $this->data['refunded'] = $this->partnerSubscriptionBilling->refundAmount;
+        $this->data['adjusted_amount_from_last_subscription']=$this->partnerSubscriptionBilling->adjustedCreditFromLastSubscription;
         return $this;
     }
 
