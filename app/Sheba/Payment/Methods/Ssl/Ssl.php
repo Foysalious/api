@@ -206,17 +206,11 @@ class Ssl extends PaymentMethod
      */
     private function validateFromSsl()
     {
-        $request = (new TPRequest())
-            ->setUrl($this->store->getOrderValidationUrl())
-            ->setMethod(TPRequest::METHOD_GET)
-            ->setInput([
-                'query' => [
-                    'val_id'       => request('val_id'),
-                    'store_id'     => $this->store->getStoreId(),
-                    'store_passwd' => $this->store->getStorePassword(),
-                ]
-            ]);
-        return $this->tpClient->call($request);
+        $url  = $this->store->getOrderValidationUrl();
+        $url .= "?val_id=" . request('val_id');
+        $url .= "&store_id=" . $this->store->getStoreId();
+        $url .= "&store_passwd=" . $this->store->getStorePassword();
+        return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
     }
 
     public function getMethodName()
