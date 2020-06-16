@@ -126,4 +126,16 @@ class ProfileController extends Controller
     {
         $resource->update($this->withUpdateModificationField(['status' => 'pending']));
     }
+
+    public function updateSeenStatus(Request $request, ProfileUpdateRepository $pro_repo)
+    {
+        $resource = $request->manager_resource;
+        $this->validate($request, [
+            'seen' => 'required|in:0,1'
+        ]);
+        $pro_repo->updateSeenStatus($resource,$request->seen);
+        return api_response($request, null, 200, ['message' => 'Seen Status updated successfully']);
+
+
+    }
 }

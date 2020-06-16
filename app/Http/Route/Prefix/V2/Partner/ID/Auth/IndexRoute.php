@@ -292,6 +292,7 @@ class IndexRoute
             $api->group(['prefix' => 'kyc'], function ($api) {
                 $api->get('check-nid', 'Partner\ProfileController@checkNid');
                 $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
+                $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
             });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);

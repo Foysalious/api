@@ -95,8 +95,13 @@ class ProfileUpdateRepository
     private function getRejectCountAndReason($resource)
     {
         $rejected_logs = $resource->statusChangeLog->where('to', 'rejected');
+        return ([!$rejected_logs->isEmpty() ? $rejected_logs->count() : 1, !$rejected_logs->isEmpty() ? $rejected_logs->last()->reason : null]);
+    }
 
-        return [$rejected_logs->count(), $rejected_logs->last()->reason];
+    public function updateSeenStatus($resource,$seen_status)
+    {
+        $resource->verification_message_seen = $seen_status;
+        $resource->update();
     }
 
 }
