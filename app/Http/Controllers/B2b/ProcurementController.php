@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
-use App\Models\Attachment;
 use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Category;
@@ -13,7 +12,6 @@ use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
-use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
@@ -36,7 +34,6 @@ use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
-use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Logs\ErrorLog;
@@ -368,7 +365,7 @@ class ProcurementController extends Controller
         parse_str(request()->getQueryString(), $query);
         unset($query[$pageName]);
         return new LengthAwarePaginator(
-            $currentPageItems,
+            $currentPageItems->values(),
             $collection->count(),
             $perPage,
             $currentPage,
@@ -480,33 +477,33 @@ class ProcurementController extends Controller
      * @return bool|JsonResponse
      */
     public function sendInvitation($business, $procurement, Request $request, Sms $sms,
-                                   ErrorLog $errorLog,
                                    BitlyLinkShort $bitly_link,
                                    ProcurementRepositoryInterface $procurementRepository,
-                                   ProcurementInvitationRepositoryInterface $procurement_invitation_repository,
-                                   BusinessMemberRepositoryInterface $business_member_repository)
+                                   ProcurementInvitationRepositoryInterface $procurement_invitation_repository)
     {
-        $this->validate($request, [
-            'partners' => 'required|string',
-        ]);
+        $this->validate($request, ['partners' => 'required|string']);
         $partners = Partner::whereIn('id', json_decode($request->partners))->get();
         $business = $request->business;
+        $this->setModifier($request->manager_member);
+
         $procurement = $procurementRepository->find($procurement);
 
         foreach ($partners as $partner) {
             /** @var Partner $partner */
             $creator = new ProcurementInvitationCreator($procurement_invitation_repository);
-            $procurement_invitation = $creator->setBusinessMember($request->business_member)->setProcurement($procurement)->setPartner($partner);
+            $procurement_invitation = $creator->setBusinessMember($request->business_member)
+                ->setProcurement($procurement)
+                ->setPartner($partner);
+
             if ($creator->hasError()) {
                 if ($creator->getErrorCode() == 409) {
-                    $procurement_invitation = $procurement_invitation->getProcurementInvitation();
-                    $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
+                    $this->shootSmsForInvitation($business, $procurement, $bitly_link, $sms, $partner);
                 }
                 continue;
             }
 
-            $procurement_invitation = $procurement_invitation->create();
-            $this->shootSmsForInvitation($business, $procurement_invitation, $bitly_link, $sms, $partner);
+            $procurement_invitation->create();
+            $this->shootSmsForInvitation($business, $procurement, $bitly_link, $sms, $partner);
         }
 
         return api_response($request, null, 200);
@@ -756,14 +753,14 @@ class ProcurementController extends Controller
 
     /**
      * @param Business $business
-     * @param ProcurementInvitation $procurement_invitation
+     * @param Procurement $procurement
      * @param BitlyLinkShort $bitly_link
      * @param Sms $sms
      * @param Partner $partner
      */
-    private function shootSmsForInvitation(Business $business, ProcurementInvitation $procurement_invitation, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
+    private function shootSmsForInvitation(Business $business, Procurement $procurement, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
     {
-        $url = config('sheba.partners_url') . "/v3/rfq-invitations/$procurement_invitation->id";
+        $url = config('sheba.business_url') . "/tender/list/$procurement->id";
         $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
     }
 
