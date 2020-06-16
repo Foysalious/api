@@ -93,9 +93,18 @@ class PaymentManager
      * @return Payment
      * @throws InvalidPaymentMethod
      */
+    public function validate()
+    {
+        return $this->getMethod()->validate($this->payment);
+    }
+
+    /**
+     * @return Payment
+     * @throws InvalidPaymentMethod
+     */
     public function complete()
     {
-        $payment = $this->getMethod()->validate($this->payment);
+        $payment = $this->validate();
         if ($payment->canComplete()) {
             $completion_class = $this->payable->getCompletionClass();
             $completion_class->setPayment($payment);
