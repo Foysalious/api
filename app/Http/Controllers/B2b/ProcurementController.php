@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
+use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
@@ -33,6 +34,7 @@ use ReflectionException;
 use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
+use Sheba\Business\Procurement\RequestHandler;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
@@ -418,7 +420,7 @@ class ProcurementController extends Controller
     public function show($business, $procurement, Request $request)
     {
         $procurement = $this->procurementRepository->find($procurement);
-        if (!$procurement)  return api_response($request, null, 404, ["message" => "Not found."]);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
@@ -429,39 +431,36 @@ class ProcurementController extends Controller
     }
 
     /**
+     * @param $business
+     * @param $procurement
      * @param Request $request
+     * @param RequestHandler $request_handler
+     * @param Updater $updater
      * @return JsonResponse
      */
-    public function updateGeneral(Request $request)
+    public function updateGeneral($business, $procurement, Request $request, RequestHandler $request_handler, Updater $updater)
     {
-        try {
-            $this->validate($request, [
-                'number_of_participants' => 'required|numeric', 'last_date_of_submission' => 'required|date_format:Y-m-d', 'procurement_start_date' => 'date_format:Y-m-d', 'payment_options' => 'string'
-            ]);
+        $this->validate($request, [
+            'description' => 'sometimes|required|string',
+            'number_of_participants' => 'sometimes|required|numeric',
+            'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
+            'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
+            'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
+            'payment_options' => 'sometimes|required|string',
+        ]);
 
-            $procurement = Procurement::find($request->procurement);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
-            if (is_null($procurement)) {
-                return api_response($request, null, 404, ["message" => "Not found."]);
-            } else {
-                $procurement->number_of_participants = $request->number_of_participants;
-                $procurement->last_date_of_submission = $request->last_date_of_submission;
-                if ($request->procurement_start_date) $procurement->procurement_start_date = $request->procurement_start_date;
-                if ($request->payment_options) $procurement->payment_options = $request->payment_options;
+        $request_handler->setLongDescription($request->description)
+            ->setNumberOfParticipants($request->number_of_participants)
+            ->setLastDateOfSubmission($request->last_date_of_submission)
+            ->setProcurementStartDate($request->procurement_start_date)
+            ->setProcurementEndDate($request->procurement_end_date)
+            ->setPaymentOptions($request->payment_options);
+        $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
+        return api_response($request, null, 200, ["message" => "Successful"]);
 
-                $procurement->save();
-                return api_response($request, null, 200, ["message" => "Successful"]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
