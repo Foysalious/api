@@ -25,10 +25,8 @@ class ProfileController extends Controller
     public function checkNid(Request $request, $partner, ProfileUpdateRepository $pro_repo)
     {
         try {
-
             $data = $pro_repo->checkNid($request);
             return api_response($request, null, 200, ['data' => $data]);
-
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
@@ -135,7 +133,5 @@ class ProfileController extends Controller
         ]);
         $pro_repo->updateSeenStatus($resource,$request->seen);
         return api_response($request, null, 200, ['message' => 'Seen Status updated successfully']);
-
-
     }
 }

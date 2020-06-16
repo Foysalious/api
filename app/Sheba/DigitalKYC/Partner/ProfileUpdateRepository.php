@@ -39,23 +39,27 @@ class ProfileUpdateRepository
         $status = $resource->status;
 
         if ($status == 'verified') {
-            $data = [
+
+             return $data = [
                 'message' => [
                     'en' => 'NID verified',
                     'bn' => 'NID ভেরিফাইড'
                 ],
                 'status' => 'verified',
+                'message_seen' => $resource->verification_message_seen,
+                'nid_verification_request_count' =>  $profile->nid_verification_request_count
             ];
         }
 
         if ($status == 'unverified') {
-            $data = [
+            return $data = [
                 'message' => [
                     'en' => 'NID has not been submitted',
                     'bn' => 'আপনার NID দেয়া হয় নি'
                 ],
                 'status' => 'not_submitted',
                 'restricted_feature' => $this->getRestrictedFeature(),
+                'nid_verification_request_count' =>  $profile->nid_verification_request_count
             ];
         } else {
             $data = [
@@ -65,6 +69,7 @@ class ProfileUpdateRepository
                 ],
                 'status' => $resource->status,
                 'restricted_feature' => $this->getRestrictedFeature(),
+                'nid_verification_request_count' =>  $profile->nid_verification_request_count,
             ];
             if ($status == 'rejected')
             {
@@ -73,10 +78,8 @@ class ProfileUpdateRepository
                 $data['reason'] = $reason;
             }
 
+            return $data;
         }
-        $data['nid_verification_rejection_count'] = $profile->nid_verification_request_count;
-
-        return $data;
     }
 
 
