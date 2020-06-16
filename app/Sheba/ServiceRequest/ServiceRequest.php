@@ -47,7 +47,8 @@ class ServiceRequest
             }
             if (isset($service['destination_location_geo'])) {
                 $geo = new Geo();
-                $serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])->setLng($service['destination_location_geo']['lng']));
+                $serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'] ?? null)
+                    ->setLng($service['destination_location_geo']['lng'] ?? null));
             }
             if (isset($service['pick_up_address'])) $serviceRequestObject->setPickUpAddress($service['pick_up_address']);
             if (isset($service['destination_address'])) $serviceRequestObject->setDestinationAddress($service['destination_address']);
