@@ -345,7 +345,7 @@ class BusinessesController extends Controller
         /** @var Resource $resource */
         $resource = $profile->resource;
         if (!$resource->firstPartner()) return null;
-        
+
         $partner = $resource->firstPartner();
         if ($partner->status != PartnerStatuses::VERIFIED) return null;
 
