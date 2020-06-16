@@ -265,15 +265,15 @@ class ShebaController extends Controller
         }
     }
 
-    public function checkTransactionStatus(Request $request, $transactionID)
+    public function checkTransactionStatus(Request $request, $transaction_id)
     {
         /** @var Payment $payment */
-        $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-        if (!$payment) {
-            $payment = Payment::where('transaction_id', $transactionID)->first();
-            if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
-            if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
-                $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
+        $payment = Payment::where('transaction_id', $transaction_id)->first();
+        if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
+
+        if (!$payment->isComplete() && !$payment->isPassed()) {
+            if ($error = $payment->getErrorMessage()) {
+                $message = 'Your payment has been failed due to ' . $error;
             } else {
                 $message = 'Payment Failed.';
             }
@@ -288,7 +288,7 @@ class ShebaController extends Controller
             'description' => $payable->description,
             'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link' => $payment->invoice_link,
-            'transaction_id' => $transactionID
+            'transaction_id' => $transaction_id
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);

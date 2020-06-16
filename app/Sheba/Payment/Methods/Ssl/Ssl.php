@@ -188,12 +188,14 @@ class Ssl extends PaymentMethod
         try {
             $response = $this->validateFromSsl();
         } catch (TPProxyServerError $e) {
-            $response          = new \stdClass();
-            $response->status  = "ERROR";
-            $response->result  = $e->getMessage();
-            $response->code    = $e->getCode();
-            $response->trace   = $e->getTrace();
-            $response->tran_id = null;
+            $response               = new \stdClass();
+            $response->status       = "ERROR";
+            $response->errorMessage = $e->getMessage();
+            $response->code         = $e->getCode();
+            $response->file         = $e->getFile();
+            $response->line         = $e->getLine();
+            $response->request      = request()->all();
+            $response->tran_id      = null;
         }
         return $response;
     }
