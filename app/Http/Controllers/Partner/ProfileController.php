@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
+use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class ProfileController extends Controller
             if (!$profile)
                 return api_response($request, null, 404, ['message' => 'Profile not found']);
 
-            if ($resource->status == 'verified')
+            if ($resource->status == Statuses::VERIFIED)
                 return api_response($request, null, 420, ['message' => 'Already Verified! Not allowed to update profile info']);
 
             $this->validate($request, [

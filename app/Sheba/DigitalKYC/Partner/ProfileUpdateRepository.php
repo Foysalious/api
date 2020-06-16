@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\DigitalKYC\Partner;
 
 use App\Sheba\Partner\KYC\RestrictedFeature;
+use App\Sheba\Partner\KYC\Statuses;
 use Illuminate\Http\Request;
 use Sheba\Repositories\ProfileRepository;
 
@@ -38,40 +39,40 @@ class ProfileUpdateRepository
         $profile = $resource->profile;
         $status = $resource->status;
 
-        if ($status == 'verified') {
+        if ($status == Statuses::VERIFIED) {
 
              return $data = [
                 'message' => [
-                    'en' => 'NID verified',
-                    'bn' => 'NID ভেরিফাইড'
+                    'en' => 'Profile verified',
+                    'bn' => 'Profile ভেরিফাইড'
                 ],
-                'status' => 'verified',
+                'status' => Statuses::VERIFIED,
                 'message_seen' => $resource->verification_message_seen,
                 'nid_verification_request_count' =>  $profile->nid_verification_request_count
             ];
         }
 
-        if ($status == 'unverified') {
+        if ($status == Statuses::UNVERIFIED) {
             return $data = [
                 'message' => [
                     'en' => 'NID has not been submitted',
-                    'bn' => 'আপনার NID দেয়া হয় নি'
+                    'bn' => 'আপনার NID দেয়া হয় নি। সকল ফিচার ব্যাবহার করতে NID ভেরিফিকেশন করুন'
                 ],
-                'status' => 'not_submitted',
+                'status' => Statuses::UNVERIFIED,
                 'restricted_feature' => $this->getRestrictedFeature(),
                 'nid_verification_request_count' =>  $profile->nid_verification_request_count
             ];
         } else {
             $data = [
                 'message' => [
-                    'en' => $status == 'pending' ? 'NID verification process pending' : 'NID Rejected',
-                    'bn' => $status == 'pending' ? 'আপনার ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। দ্রুত করতে চাইলে ১৬১৬৫ নাম্বারে যোগাযোগ করুন' : 'দুঃখিত। আপনার ভেরিফিকেশন সফল হয় নি।'
+                    'en' => $status == Statuses::PENDING ? 'Profile verification process pending' : 'Profile verification rejected',
+                    'bn' => $status == Statuses::PENDING ? 'আপনার NID ভেরিফিকেশন প্রক্রিয়াধীন রয়েছে। ভেরিফিকেশন প্রক্রিয়া দ্রুত করতে চাইলে ১৬১৬৫ নাম্বারে যোগাযোগ করুন' : 'দুঃখিত। আপনার NID ভেরিফিকেশন সফল হয় নি।পুনরায় চেষ্টা করুন।'
                 ],
                 'status' => $resource->status,
                 'restricted_feature' => $this->getRestrictedFeature(),
                 'nid_verification_request_count' =>  $profile->nid_verification_request_count,
             ];
-            if ($status == 'rejected')
+            if ($status == Statuses::REJECTED)
             {
                 list($count, $reason) = $this->getRejectCountAndReason($request->manager_resource);
                 $data['reject_count'] = $count;
@@ -97,7 +98,7 @@ class ProfileUpdateRepository
      */
     private function getRejectCountAndReason($resource)
     {
-        $rejected_logs = $resource->statusChangeLog->where('to', 'rejected');
+        $rejected_logs = $resource->statusChangeLog->where('to', Statuses::REJECTED);
         return ([!$rejected_logs->isEmpty() ? $rejected_logs->count() : 1, !$rejected_logs->isEmpty() ? $rejected_logs->last()->reason : null]);
     }
 
