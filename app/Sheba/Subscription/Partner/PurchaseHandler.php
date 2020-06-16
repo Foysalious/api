@@ -4,9 +4,12 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use App\Repositories\NotificationRepository;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
 use Sheba\Subscription\Exceptions\AlreadyRunningSubscriptionRequestException;
+use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
+use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
 class PurchaseHandler
 {
@@ -75,10 +78,13 @@ class PurchaseHandler
         return $this;
     }
 
-    public function setGrade()
+    /**
+     * @return string
+     */
+    public function getGrade()
     {
         $this->grade = $this->partner->subscriber()->getBilling()->findGrade($this->newPackage, $this->currentPackage, $this->newBillingType, $this->currentBillingType);
-        return $this;
+        return $this->grade;
     }
 
     /**
@@ -99,20 +105,24 @@ class PurchaseHandler
     }
 
     /**
-     * @throws AlreadyRunningSubscriptionRequestException
+     * @throws AlreadyRunningSubscriptionRequestException|HasAlreadyCollectedFeeException
      */
-    private function checkIfRunning(){
-        if ($this->currentPackage->id==$this->newPackage->id && $this->newBillingType==$this->currentBillingType)
+    public function checkIfRunningAndAlreadyCollected()
+    {
+        if ($this->currentPackage->id == $this->newPackage->id && $this->newBillingType == $this->currentBillingType)
             throw new AlreadyRunningSubscriptionRequestException("আপনি বর্তমানে {$this->currentPackage->name_bn} প্যকেজ ব্যবহার করছেন ,আপনার বর্তমান প্যকেজ এর মেয়াদ শেষ হলে স্বয়ংক্রিয়  ভাবে নবায়ন হয়ে যাবে");
+        if ($this->partner->alreadyCollectedSubscriptionFee())
+            throw new HasAlreadyCollectedFeeException();
     }
+
     /**
      * @return PurchaseHandler
      */
-    public function createSubscriptionRequest()
+    public function getSubscriptionRequest()
     {
-        $this->runningDiscount = $this->newPackage->runningDiscount($this->newBillingType);
-        $request               = null;
-        $data                  = [
+        $this->runningDiscount        = $this->newPackage->runningDiscount($this->newBillingType);
+        $request                      = null;
+        $data                         = [
             'partner_id'       => $this->partner->id,
             'old_package_id'   => $this->currentPackage->id ?: 1,
             'new_package_id'   => $this->newPackage->id ?: 1,
@@ -120,12 +130,13 @@ class PurchaseHandler
             'new_billing_type' => $this->newBillingType ?: 'monthly',
             'discount_id'      => $this->runningDiscount ? $this->runningDiscount->id : null
         ];
-        $this->newSubscriptionRequest= PartnerSubscriptionUpdateRequest::create($this->withCreateModificationField($data));
+        $this->newSubscriptionRequest = PartnerSubscriptionUpdateRequest::create($this->withCreateModificationField($data));
         return $this;
     }
 
     /**
      * @return bool
+     * @throws InvalidPreviousSubscriptionRules
      */
     public function hasCredit()
     {
@@ -137,11 +148,21 @@ class PurchaseHandler
         ];
         return $hasCredit;
     }
-    public function checkCredit(){
-        if(!$this->hasCredit()){
 
-        }
+    public function getRequiredBalance()
+    {
+        return $this->partner->totalPriceRequiredForSubscription - $this->partner->totalCreditForSubscription;
     }
+
+    public function purchase()
+    {
+        $this->partner->subscriptionUpgrade($this->newPackage, $this->newSubscriptionRequest);
+    }
+
+    public function notifyForInsufficientBalance(){
+        (new NotificationRepository())->sendInsufficientNotification($this->partner, $this->newPackage, $this->newBillingType, $this->grade);
+    }
+
     /**
      * @return array
      */

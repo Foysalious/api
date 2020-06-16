@@ -8,11 +8,15 @@ use App\Repositories\NotificationRepository;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Partner\StatusChanger;
+use Sheba\Subscription\Exceptions\AlreadyRunningSubscriptionRequestException;
+use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
 use Sheba\Subscription\Partner\BillingType;
+use Sheba\Subscription\Partner\PurchaseHandler;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -20,7 +24,7 @@ class PartnerSubscriptionController extends Controller
     use ModificationFields;
 
     /**
-     * @param $partner
+     * @param         $partner
      * @param Request $request
      * @return JsonResponse
      */
@@ -31,28 +35,28 @@ class PartnerSubscriptionController extends Controller
             $partner = $request->partner;
 
             $partner_subscription_packages = $this->generateSubscriptionRelatedData($partner);
-            $partner_subscription_package = $partner->subscription;
+            $partner_subscription_package  = $partner->subscription;
             list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
             $data = [
-                'subscription_package' => $partner_subscription_packages,
-                'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
-                'tags' => [
-                    'monthly' => ['en' => null, 'bn' => null],
+                'subscription_package'       => $partner_subscription_packages,
+                'monthly_tag'                => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
+                'tags'                       => [
+                    'monthly'     => ['en' => null, 'bn' => null],
                     'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly' => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
+                    'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
                 ],
-                'billing_type' => $partner->billing_type,
-                'current_package' => [
+                'billing_type'               => $partner->billing_type,
+                'current_package'            => [
                     'en' => $partner_subscription_package->show_name,
                     'bn' => $partner_subscription_package->show_name_bn
                 ],
-                'last_billing_date' => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                'next_billing_date' => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
+                'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+                'next_billing_date'          => $partner->last_billed_date ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
                 'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated' => ($partner->auto_billing_activated) ? true : false,
-                'balance' => [
-                    'wallet' => $wallet + $bonus_wallet,
-                    'refund' => $remaining,
+                'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
+                'balance'                    => [
+                    'wallet'                 => $wallet + $bonus_wallet,
+                    'refund'                 => $remaining,
                     'minimum_wallet_balance' => $threshold
                 ]
             ];
@@ -73,11 +77,11 @@ class PartnerSubscriptionController extends Controller
         try {
             $data = [
                 'subscription_package' => $this->generateSubscriptionRelatedData(),
-                'monthly_tag' => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
-                'tags' => [
-                    'monthly' => ['en' => null, 'bn' => null],
+                'monthly_tag'          => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
+                'tags'                 => [
+                    'monthly'     => ['en' => null, 'bn' => null],
                     'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly' => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
+                    'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
                 ]
             ];
 
@@ -89,35 +93,35 @@ class PartnerSubscriptionController extends Controller
     }
 
     /**
-     * @param $rules
+     * @param                            $rules
      * @param PartnerSubscriptionPackage $package
      * @return mixed
      */
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
-        $rules['fee']['monthly']['original_price'] = $rules['fee']['monthly']['value'];
-        $rules['fee']['monthly']['discount'] = $this->discountPrice($package, 'monthly');
-        $monthly_discounted_price = $rules['fee']['monthly']['original_price'] - $rules['fee']['monthly']['discount'];
+        $rules['fee']['monthly']['original_price']   = $rules['fee']['monthly']['value'];
+        $rules['fee']['monthly']['discount']         = $this->discountPrice($package, 'monthly');
+        $monthly_discounted_price                    = $rules['fee']['monthly']['original_price'] - $rules['fee']['monthly']['discount'];
         $rules['fee']['monthly']['discounted_price'] = $monthly_discounted_price > 0 ? $monthly_discounted_price : 0;
-        $rules['fee']['monthly']['discount_note'] = $this->discountNote($package, 'monthly');
+        $rules['fee']['monthly']['discount_note']    = $this->discountNote($package, 'monthly');
 
-        $rules['fee']['half_yearly']['original_price'] = $rules['fee']['half_yearly']['value'];
-        $rules['fee']['half_yearly']['discount'] = $this->discountPrice($package, 'half_yearly');
-        $half_yearly_discounted_price = $rules['fee']['half_yearly']['original_price'] - $rules['fee']['half_yearly']['discount'];
-        $rules['fee']['half_yearly']['discounted_price'] = $half_yearly_discounted_price > 0 ? $half_yearly_discounted_price : 0;
-        $rules['fee']['half_yearly']['discount_note'] = $this->discountNote($package, 'half_yearly');
-        $rules['fee']['half_yearly']['original_price_breakdown'] = round($rules['fee']['half_yearly']['original_price'] / 6, 2);
+        $rules['fee']['half_yearly']['original_price']             = $rules['fee']['half_yearly']['value'];
+        $rules['fee']['half_yearly']['discount']                   = $this->discountPrice($package, 'half_yearly');
+        $half_yearly_discounted_price                              = $rules['fee']['half_yearly']['original_price'] - $rules['fee']['half_yearly']['discount'];
+        $rules['fee']['half_yearly']['discounted_price']           = $half_yearly_discounted_price > 0 ? $half_yearly_discounted_price : 0;
+        $rules['fee']['half_yearly']['discount_note']              = $this->discountNote($package, 'half_yearly');
+        $rules['fee']['half_yearly']['original_price_breakdown']   = round($rules['fee']['half_yearly']['original_price'] / 6, 2);
         $rules['fee']['half_yearly']['discounted_price_breakdown'] = round($rules['fee']['half_yearly']['discounted_price'] / 6, 2);
-        $rules['fee']['half_yearly']['breakdown_type'] = 'monthly';
+        $rules['fee']['half_yearly']['breakdown_type']             = 'monthly';
 
-        $rules['fee']['yearly']['original_price'] = $rules['fee']['yearly']['value'];
-        $rules['fee']['yearly']['discount'] = $this->discountPrice($package, 'yearly');
-        $yearly_discounted_price = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
-        $rules['fee']['yearly']['discounted_price'] = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
-        $rules['fee']['yearly']['discount_note'] = $this->discountNote($package, 'yearly');
-        $rules['fee']['yearly']['original_price_breakdown'] = round($rules['fee']['yearly']['original_price'] / 12, 2);
+        $rules['fee']['yearly']['original_price']             = $rules['fee']['yearly']['value'];
+        $rules['fee']['yearly']['discount']                   = $this->discountPrice($package, 'yearly');
+        $yearly_discounted_price                              = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
+        $rules['fee']['yearly']['discounted_price']           = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
+        $rules['fee']['yearly']['discount_note']              = $this->discountNote($package, 'yearly');
+        $rules['fee']['yearly']['original_price_breakdown']   = round($rules['fee']['yearly']['original_price'] / 12, 2);
         $rules['fee']['yearly']['discounted_price_breakdown'] = round($rules['fee']['yearly']['discounted_price'] / 12, 2);
-        $rules['fee']['yearly']['breakdown_type'] = 'monthly';
+        $rules['fee']['yearly']['breakdown_type']             = 'monthly';
 
         array_forget($rules, ['fee.monthly.value', 'fee.yearly.value']);
 
@@ -126,7 +130,7 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param PartnerSubscriptionPackage $package
-     * @param $billing_type
+     * @param                            $billing_type
      * @return float|int
      */
     private function discountPrice(PartnerSubscriptionPackage $package, $billing_type)
@@ -148,13 +152,13 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param PartnerSubscriptionPackage $package
-     * @param $billing_type
+     * @param                            $billing_type
      * @return string
      */
     private function discountNote(PartnerSubscriptionPackage $package, $billing_type)
     {
         if ($package->discounts->count()) {
-            $partner_subscription_discount = $package->discounts->filter(function ($discount) use ($billing_type) {
+            $partner_subscription_discount       = $package->discounts->filter(function ($discount) use ($billing_type) {
                 return $discount->billing_type == $billing_type;
             })->first();
             $partner_subscription_discount_cycle = json_decode($partner_subscription_discount ? $partner_subscription_discount->applicable_billing_cycles : '[]');
@@ -199,7 +203,7 @@ class PartnerSubscriptionController extends Controller
     }
 
     /**
-     * @param $partner
+     * @param         $partner
      * @param Request $request
      * @return JsonResponse
      */
@@ -207,7 +211,7 @@ class PartnerSubscriptionController extends Controller
     {
         try {
             $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'package_id'    => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_cycle' => 'required|string|in:monthly,yearly'
             ]);
             /** @var Partner $partner */
@@ -222,7 +226,7 @@ class PartnerSubscriptionController extends Controller
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -255,7 +259,7 @@ class PartnerSubscriptionController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -267,73 +271,70 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param Request $request
-     * @param $partner
-     * @param bool $inside
+     * @param         $partner
+     * @param bool    $inside
      * @return JsonResponse
      */
     public function purchase(Request $request, $partner, $inside = false)
     {
         try {
             $this->validate($request, [
-                'package_id' => 'required|numeric|exists:partner_subscription_packages,id',
+                'package_id'   => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
             ]);
-
+            DB::beginTransaction();
             /** @var Partner $partner */
             $partner = $request->partner;
-            $this->setModifier($request->manager_resource);
-
-            $currentPackage = $partner->subscription;
+            /** @var PartnerSubscriptionPackage $requestedPackage */
             $requestedPackage = PartnerSubscriptionPackage::find($request->package_id);
-
-            if ($partner->isAlreadyCollectedAdvanceSubscriptionFee()) {
-                return api_response($request, null, 400, ['message' => 'আপনার প্যকেজ এর জন্য অগ্রিম ফি নেয়া আছে আপনার বর্তমান প্যকেজ এর মেয়াদ শেষ হলে স্বয়ংক্রিয়  ভাবে নবায়ন হয়ে যাবে']);
-            }
             if (empty($requestedPackage)) {
                 return api_response($request, null, 403, ['message' => 'আপনার অনুরধক্রিত প্যকেজটি পাওয়া যায় নাই']);
             }
-
-            if ($upgradeRequest = $this->createSubscriptionRequest($requestedPackage)) {
+            $handler = (new PurchaseHandler($partner))->setModifier($request->manager_resource)->setNewBillingType($request->billing_type)->setNewPackage($requestedPackage);
+            $handler->checkIfRunningAndAlreadyCollected();
+            /** @var PartnerSubscriptionUpdateRequest $upgradeRequest */
+            $upgradeRequest = $handler->getSubscriptionRequest();
+            if (empty($upgradeRequest)) {
                 try {
-                    $grade = $partner->subscriber()->getBilling()->findGrade($requestedPackage, $currentPackage, $request->billing_type, $partner->billing_type);
+                    $grade = $handler->getGrade();
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
-
-                    $hasCredit = $partner->hasCreditForSubscription($requestedPackage, $request->billing_type);
-                    $balance = [
-                        'remaining_balance' => $partner->totalCreditForSubscription,
-                        'price' => $partner->totalPriceRequiredForSubscription,
-                        'breakdown' => $partner->creditBreakdown
-                    ];
-
+                    $hasCredit = $handler->hasCredit();
                     if (!$hasCredit) {
-                        $upgradeRequest->delete();
-                        (new NotificationRepository())->sendInsufficientNotification($request->partner, $requestedPackage, $request->billing_type, $grade);
-                        return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $request->partner->totalPriceRequiredForSubscription - $request->partner->totalCreditForSubscription], $balance));
+                        DB::rollback();
+                        $handler->notifyForInsufficientBalance();
+                        return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $handler->getRequiredBalance()], $handler->getBalance()));
                     }
-                    $request->partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
-
+                    $handler->purchase();
                     if ($grade === PartnerSubscriptionChange::RENEWED) {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $balance));
+                        DB::commit();
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে পুনর্বহাল করা হয়েছে।"], $handler->getBalance()));
                     } else {
-                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে উন্নীত করা হয়েছে।"], $balance));
+                        DB::commit();
+                        return api_response($request, null, 200, array_merge(['message' => "আপনাকে $requestedPackage->show_name_bn প্যকেজে উন্নীত করা হয়েছে।"], $handler->getBalance()));
                     }
                 } catch (Throwable $e) {
-                    $upgradeRequest->delete();
+                    DB::rollback();
                     throw $e;
                 }
             } else {
+                DB::rollback();
                 return api_response($request, null, 403, ['message' => "$requestedPackage->show_name_bn প্যাকেজে যেতে অনুগ্রহ করে সেবার সাথে যোগাযোগ করুন"]);
             }
 
+        } catch (AlreadyRunningSubscriptionRequestException $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (HasAlreadyCollectedFeeException $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -341,8 +342,8 @@ class PartnerSubscriptionController extends Controller
 
     private function createSubscriptionRequest(PartnerSubscriptionPackage $requested_package)
     {
-        $request = \request();
-        $partner = $request->partner;
+        $request          = \request();
+        $partner          = $request->partner;
         $running_discount = $requested_package->runningDiscount($request->billing_type);
         $this->setModifier($request->manager_resource);
         $update_request_data = $this->withCreateModificationField([
@@ -365,21 +366,21 @@ class PartnerSubscriptionController extends Controller
      */
     private function generateSubscriptionRelatedData(Partner $partner = null)
     {
-        $featured_package_id = config('partner.subscription_featured_package_id');
+        $featured_package_id           = config('partner.subscription_featured_package_id');
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
-            ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
-            ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
-            ->get();
+                                                                   ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
+                                                                   ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
+                                                                   ->get();
 
         foreach ($partner_subscription_packages as $package) {
-            $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
+            $package['rules']        = $this->calculateDiscount(json_decode($package->rules, 1), $package);
             $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
-            $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
-            $package['features'] = $package->features ? json_decode($package->features) : [];
-            $package['is_featured'] = in_array($package->id, $featured_package_id);
+            $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+            $package['features']     = $package->features ? json_decode($package->features) : [];
+            $package['is_featured']  = in_array($package->id, $featured_package_id);
 
             if ($partner) {
-                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['is_subscribed']     = (int)($partner->package_id == $package->id);
                 $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
             }
             removeRelationsAndFields($package);

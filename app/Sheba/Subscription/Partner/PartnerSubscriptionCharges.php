@@ -25,7 +25,7 @@ class PartnerSubscriptionCharges
 
         $this->setPackage()->setPrices()->setDates()->setLog()->save();
     }
-
+    private function
     private function setPackage()
     {
         if ($this->action == $this->actions[PartnerSubscriptionChange::RENEWED]) {

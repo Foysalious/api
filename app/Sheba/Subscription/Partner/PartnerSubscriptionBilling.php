@@ -18,42 +18,46 @@ use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
+use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
 class PartnerSubscriptionBilling
 {
     use ModificationFields;
 
     /** @var Partner $partner */
-    public $partner;
-    public $runningCycleNumber;
+    public  $partner;
+    public  $runningCycleNumber;
     private $partnerTransactionHandler;
-    public $partnerBonusHandler;
-    public $today;
-    public $refundAmount;
-    public $packagePrice;
-    public $packageFrom;
-    public $packageTo;
+    public  $partnerBonusHandler;
+    public  $today;
+    public  $refundAmount;
+    public  $packagePrice;
+    public  $packageFrom;
+    public  $packageTo;
     private $isCollectAdvanceSubscriptionFee = false;
+    private $packageOriginalPrice;
+    private $adjustedCreditFromLastSubscription;
 
     /**
      * PartnerSubscriptionBilling constructor.
+     *
      * @param Partner $partner
      */
     public function __construct(Partner $partner)
     {
-        $this->partner = $partner;
-        $this->partnerTransactionHandler = new PartnerTransactionHandler($this->partner);
-        $this->partnerBonusHandler = new PaymentByBonusAndWallet($this->partner, $this->partner->subscription);
-        $this->today = Carbon::today();
-        $this->refundAmount = 0;
+        $this->partner                         = $partner;
+        $this->partnerTransactionHandler       = new PartnerTransactionHandler($this->partner);
+        $this->partnerBonusHandler             = new PaymentByBonusAndWallet($this->partner, $this->partner->subscription);
+        $this->today                           = Carbon::today();
+        $this->refundAmount                    = 0;
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
     }
 
     public function runUpfrontBilling()
     {
-        $this->runningCycleNumber = 1;
+        $this->runningCycleNumber          = 1;
         $this->partner->billing_start_date = $this->today;
-        $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
+        $this->packagePrice                = $this->getSubscribedPackageDiscountedPrice();
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
@@ -63,7 +67,7 @@ class PartnerSubscriptionBilling
     public function runSubscriptionBilling()
     {
         $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
-        $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
+        $this->packagePrice       = $this->getSubscribedPackageDiscountedPrice();
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
@@ -74,19 +78,20 @@ class PartnerSubscriptionBilling
     /**
      * @param PartnerSubscriptionPackage $old_package
      * @param PartnerSubscriptionPackage $new_package
-     * @param $old_billing_type
-     * @param $new_billing_type
-     * @param $discount_id
+     * @param                            $old_billing_type
+     * @param                            $new_billing_type
+     * @param                            $discount_id
      * @throws Exception
      */
     public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
-        $discount = 0;
+        $discount          = 0;
         $this->packageFrom = $old_package;
-        $this->packageTo = $new_package;
-        $remaining_credit = $this->remainingCredit($old_package, $old_billing_type);
+        $this->packageTo   = $new_package;
+        $this->adjustedCreditFromLastSubscription  = $this->remainingCredit($old_package, $old_billing_type);
         if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
-        $this->packagePrice = ($new_package->originalPrice($new_billing_type) - $discount) - $remaining_credit;
+        $this->packageOriginalPrice=($new_package->originalPrice($new_billing_type) - $discount);
+        $this->packagePrice = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
         if ($this->packagePrice < 0) {
             $this->refundRemainingCredit(abs($this->packagePrice));
             $this->packagePrice = 0;
@@ -96,10 +101,11 @@ class PartnerSubscriptionBilling
             $this->partner->billing_start_date = $this->today;
             $this->partner->save();
         }
-
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
+        }else{
+
         }
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
@@ -108,7 +114,7 @@ class PartnerSubscriptionBilling
     public function runAdvanceSubscriptionBilling()
     {
         $this->runningCycleNumber = $this->calculateRunningBillingCycleNumber();
-        $this->packagePrice = $this->getSubscribedPackageDiscountedPrice();
+        $this->packagePrice       = $this->getSubscribedPackageDiscountedPrice();
         $this->advanceBillingDatabaseTransactions($this->packagePrice);
         (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
     }
@@ -117,7 +123,7 @@ class PartnerSubscriptionBilling
     {
         if (!$this->partner->billing_start_date) return 1;
         if ($this->partner->billing_type == BillingType::MONTHLY) {
-            $diff = $this->today->month - $this->partner->billing_start_date->month;
+            $diff     = $this->today->month - $this->partner->billing_start_date->month;
             $yearDiff = ($this->today->year - $this->partner->billing_start_date->year);
             return $diff + ($yearDiff * 12) + 1;
         } elseif ($this->partner->billing_type == BillingType::HALF_YEARLY) {
@@ -132,8 +138,8 @@ class PartnerSubscriptionBilling
     {
         /** @var PartnerSubscriptionPackage $partner_subscription */
         $partner_subscription = PartnerSubscriptionPackage::find($this->partner->package_id);
-        $original_price = $partner_subscription->originalPrice($this->partner->billing_type);
-        $discount = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
+        $original_price       = $partner_subscription->originalPrice($this->partner->billing_type);
+        $discount             = $this->calculateSubscribedPackageDiscount($this->runningCycleNumber, $original_price);
         return $original_price - $discount;
     }
 
@@ -146,7 +152,7 @@ class PartnerSubscriptionBilling
             if (!$this->isCollectAdvanceSubscriptionFee) {
                 $this->partnerTransactionForSubscriptionBilling($package_price);
             }
-            $this->partner->last_billed_date = $this->today;
+            $this->partner->last_billed_date   = $this->today;
             $this->partner->last_billed_amount = $this->getSubscribedPackageDiscountedPrice();
             if ($this->partner->status == PartnerStatuses::INACTIVE) {
                 $this->revokeStatus();
@@ -166,11 +172,11 @@ class PartnerSubscriptionBilling
 
         if ($log) {
             $this->partner->status = $log->from;
-            $status_change_log = [
-                'from' => $log->to,
-                'to' => $log->from,
+            $status_change_log     = [
+                'from'   => $log->to,
+                'to'     => $log->from,
                 'reason' => 'Subscription Revoked',
-                'log' => 'Partner became active due to subscription purchase'
+                'log'    => 'Partner became active due to subscription purchase'
             ];
 
             $this->partner->statusChangeLogs()->create($this->withCreateModificationField($status_change_log));
@@ -199,17 +205,45 @@ class PartnerSubscriptionBilling
 
     /**
      * @param PartnerSubscriptionPackage $old_package
-     * @param $old_billing_type
+     * @param                            $old_billing_type
      * @return string
+     * @throws InvalidPreviousSubscriptionRules
      */
     public function remainingCredit(PartnerSubscriptionPackage $old_package, $old_billing_type)
     {
-        $dayDiff = $this->partner->last_billed_date ? $this->partner->last_billed_date->diffInDays($this->today) + 1 : 0;
-        $used_credit = $old_package->originalPricePerDay($old_billing_type) * $dayDiff;
-        $remaining_credit = ($this->partner->last_billed_amount ?: 0) - $used_credit;
-        $alreadyCollectedSubscriptionFee = $this->partner->alreadyCollectedSubscriptionFee();
-        $remaining_credit += $alreadyCollectedSubscriptionFee;
+        $remaining_credit                = $this->usageLeft();
         return $remaining_credit < 0 ? 0 : round($remaining_credit, 2);
+    }
+
+    /**
+     * @throws InvalidPreviousSubscriptionRules
+     */
+    private function usageLeft()
+    {
+        $remainingDay = $this->remainingDays();
+        $perDayPrice  = $this->currentPackagePerDayPrice();
+        return round($remainingDay * $perDayPrice, 2);
+
+    }
+
+    /**
+     * @return false|float
+     * @throws InvalidPreviousSubscriptionRules
+     */
+    private function currentPackagePerDayPrice()
+    {
+        $subscriptionRules = $this->partner->subscription_rules;
+        $billing_type      = $this->partner->billing_type;
+        if (isset($subscriptionRules->fee->$billing_type->value)) {
+            throw new InvalidPreviousSubscriptionRules();
+        }
+        $total = $this->partner->subscriber()->periodicBillingHandler()->totalDaysOfUsage();
+        return round($subscriptionRules->fee->$billing_type->value / $total, 2);
+    }
+
+    private function remainingDays()
+    {
+        return $this->partner->subscriber()->periodicBillingHandler()->remainingDay();
     }
 
     /**
@@ -221,6 +255,7 @@ class PartnerSubscriptionBilling
         $refund_amount = number_format($refund_amount, 2, '.', '');
         $this->partnerTransactionHandler->credit($refund_amount, $refund_amount . ' BDT has been refunded due to subscription package upgrade', null, [$this->getSubscriptionTag()->id]);
         $this->refundAmount = $refund_amount;
+
     }
 
     /**
@@ -231,7 +266,7 @@ class PartnerSubscriptionBilling
     private function calculateSubscribedPackageDiscount($running_bill_cycle_no, $original_price)
     {
         if ($this->partner->discount_id) {
-            $subscription_discount = $this->partner->subscriptionDiscount;
+            $subscription_discount   = $this->partner->subscriptionDiscount;
             $discount_billing_cycles = json_decode($subscription_discount->applicable_billing_cycles);
             if (empty($discount_billing_cycles) || in_array($running_bill_cycle_no, $discount_billing_cycles)) {
                 if ($subscription_discount->is_percentage) {
@@ -252,9 +287,9 @@ class PartnerSubscriptionBilling
     /**
      * @param PartnerSubscriptionPackage $old_package
      * @param PartnerSubscriptionPackage $new_package
-     * @param $old_billing_type
-     * @param $new_billing_type
-     * @param string $grade
+     * @param                            $old_billing_type
+     * @param                            $new_billing_type
+     * @param string                     $grade
      * @throws Exception
      */
     private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = PartnerSubscriptionChange::UPGRADE)
@@ -289,7 +324,7 @@ class PartnerSubscriptionBilling
         } else if ($old->id > $new->id) {
             return PartnerSubscriptionChange::DOWNGRADE;
         } else {
-            $types = [BillingType::MONTHLY, BillingType::HALF_YEARLY, BillingType::YEARLY];
+            $types          = [BillingType::MONTHLY, BillingType::HALF_YEARLY, BillingType::YEARLY];
             $old_type_index = array_search($old_billing_type, $types);
             $new_type_index = array_search($new_billing_type, $types);
             if ($old_type_index < $new_type_index) {
@@ -304,26 +339,26 @@ class PartnerSubscriptionBilling
 
     /**
      * @param Partner $partner
-     * @param $old_package
-     * @param $new_package
-     * @param $old_billing_type
-     * @param $new_billing_type
-     * @param $price
-     * @param $grade
+     * @param         $old_package
+     * @param         $new_package
+     * @param         $old_billing_type
+     * @param         $new_billing_type
+     * @param         $price
+     * @param         $grade
      */
     public static function sendNotification(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $grade)
     {
-        $title = '';
-        $message = '';
+        $title     = '';
+        $message   = '';
         $type_text = BillingType::BN()[$new_billing_type];
-        $fee = convertNumbersToBangla(floatval($price));
+        $fee       = convertNumbersToBangla(floatval($price));
         switch ($grade) {
             case PartnerSubscriptionChange::UPGRADE:
-                $title = "সাবস্ক্রিপশন সম্পন্ন";
+                $title   = "সাবস্ক্রিপশন সম্পন্ন";
                 $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে।";
                 break;
             case PartnerSubscriptionChange::RENEWED:
-                $title = "সাবস্ক্রিপশন  নবায়ন";
+                $title   = "সাবস্ক্রিপশন  নবায়ন";
                 $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে।";
                 break;
             case PartnerSubscriptionChange::DOWNGRADE:
@@ -334,25 +369,25 @@ class PartnerSubscriptionBilling
 
     /**
      * @param Partner $partner
-     * @param $old_package
-     * @param $new_package
-     * @param $old_billing_type
-     * @param $new_billing_type
-     * @param $price
-     * @param $template
+     * @param         $old_package
+     * @param         $new_package
+     * @param         $old_billing_type
+     * @param         $new_billing_type
+     * @param         $price
+     * @param         $template
      * @throws Exception
      */
     public static function sendSms(Partner $partner, $old_package, $new_package, $old_billing_type, $new_billing_type, $price, $template)
     {
         (new SmsHandler($template))->send($partner->getContactNumber(), [
-            'old_package_name' => $old_package->show_name_bn,
-            'new_package_name' => $new_package->show_name_bn,
-            'subscription_amount' => $price,
-            'old_package_type' => $old_billing_type,
-            'new_package_type' => $new_billing_type,
-            'package_name' => $new_package->show_name_bn,
+            'old_package_name'       => $old_package->show_name_bn,
+            'new_package_name'       => $new_package->show_name_bn,
+            'subscription_amount'    => $price,
+            'old_package_type'       => $old_billing_type,
+            'new_package_type'       => $new_billing_type,
+            'package_name'           => $new_package->show_name_bn,
             'formatted_package_type' => $new_billing_type == BillingType::MONTHLY ? 'মাসের' : $new_billing_type == BillingType::YEARLY ? 'বছরের' : 'আর্ধবছরের',
-            'package_type' => $new_billing_type
+            'package_type'           => $new_billing_type
         ]);
     }
 

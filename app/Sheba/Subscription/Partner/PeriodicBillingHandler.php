@@ -68,7 +68,11 @@ class PeriodicBillingHandler
         $next = $this->nextBillingDate();
         $today = Carbon::today();
         $diff = $today->diffInDays($next, false);
-
         return $diff > 0 ? $diff : 0;
+    }
+    public function totalDaysOfUsage(){
+        $next=$this->nextBillingDate();
+        $last=Carbon::parse($this->partner->last_billing_date);
+        return abs($last->diffInDays($next));
     }
 }
