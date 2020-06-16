@@ -484,6 +484,8 @@ class ProcurementController extends Controller
         $this->validate($request, ['partners' => 'required|string']);
         $partners = Partner::whereIn('id', json_decode($request->partners))->get();
         $business = $request->business;
+        $this->setModifier($request->manager_member);
+
         $procurement = $procurementRepository->find($procurement);
 
         foreach ($partners as $partner) {
