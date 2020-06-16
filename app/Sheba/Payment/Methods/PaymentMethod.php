@@ -93,8 +93,6 @@ abstract class PaymentMethod
             $payment_details->save();
         });
 
-        $payment->payable = $payable;
-
         return $payment;
     }
 }
