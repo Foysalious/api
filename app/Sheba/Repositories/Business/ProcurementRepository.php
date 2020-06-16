@@ -84,7 +84,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
                     return $category_query->whereIn('category_id', $categories)->orWhereNull('category_id');
                 })
                     ->when($shared_to, function ($share_to_query) use ($shared_to) {
-                        return $share_to_query->orWhere('shared_to', $shared_to);
+                        return $share_to_query->orWhereIn('shared_to', $shared_to);
                     })
                     ->when($min_price, function ($price_query) use ($min_price, $max_price) {
                         return $price_query->orWhereBetween('estimated_price', [$min_price, $max_price]);

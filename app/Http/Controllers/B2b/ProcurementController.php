@@ -325,7 +325,7 @@ class ProcurementController extends Controller
         }
         if ($request->has('tag')) $procurement_filter_request->setTagsId(json_decode($request->tag));
         if ($request->has('category') && $request->category != 'all') $procurement_filter_request->setCategoriesId(json_decode($request->category));
-        if ($request->has('shared_to')) $procurement_filter_request->setSharedTo($request->shared_to);
+        if ($request->has('shared_to')) $procurement_filter_request->setSharedTo(json_decode($request->shared_to));
         if ($request->has('q')) $procurement_filter_request->setSearchQuery($request->q);
 
         $procurements = $this->procurementRepository->getProcurementFilterBy($procurement_filter_request);
