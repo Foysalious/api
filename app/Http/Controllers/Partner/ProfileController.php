@@ -73,7 +73,6 @@ class ProfileController extends Controller
                     if (!empty($profile_by_given_nid->affiliate))
                         return api_response($request, null, 403, ['message' => 'This NID is used by another sBondhu account']);
                 }
-
             }
 
             $data = $pro_repo->createData($request);
@@ -86,11 +85,11 @@ class ProfileController extends Controller
 
             return api_response($request, null, 200, ['message' => 'Profile data Updated']);
         } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->errors());
-            return api_response($request, null, 400, ['message' => $message]);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
+            return api_response($request, null, 500);
         }
     }
 

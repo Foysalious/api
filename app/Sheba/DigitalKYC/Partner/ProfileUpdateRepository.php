@@ -68,9 +68,12 @@ class ProfileUpdateRepository
                 'restricted_feature' => $this->getRestrictedFeature(),
             ];
             if ($status == 'rejected')
+            {
                 list($count, $reason) = $this->getRejectCountAndReason($request->manager_resource);
-            $data['reject_count'] = $count;
-            $data['reason'] = $reason;
+                $data['reject_count'] = $count;
+                $data['reason'] = $reason;
+            }
+
         }
         $data['nid_verification_rejection_count'] = $profile->nid_verification_request_count;
 
