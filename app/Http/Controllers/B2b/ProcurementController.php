@@ -368,7 +368,7 @@ class ProcurementController extends Controller
         parse_str(request()->getQueryString(), $query);
         unset($query[$pageName]);
         return new LengthAwarePaginator(
-            $currentPageItems,
+            $currentPageItems->values(),
             $collection->count(),
             $perPage,
             $currentPage,
