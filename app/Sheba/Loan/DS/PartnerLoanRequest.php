@@ -113,6 +113,10 @@ class PartnerLoanRequest implements Arrayable
         return $this->toArray();
     }
 
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
     public function detailsForAgent()
     {
         return $this->toArrayForAgent();

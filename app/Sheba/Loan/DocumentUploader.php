@@ -18,14 +18,12 @@ class DocumentUploader
     private $for;
     private $loanRequest;
     private $user;
-    private $fileRepository;
     private $uploadFolder;
 
     public function __construct(PartnerBankLoan $loan)
     {
         $this->loanRequest    = (new PartnerLoanRequest($loan));
         $this->repo           = new LoanRepository();
-        $this->fileRepository = app(FileRepository::class);
         $this->uploadFolder   = getLoanFolder(). $this->loanRequest->partnerBankLoan->id . '/';
     }
 
@@ -103,7 +101,7 @@ class DocumentUploader
         $base_name        = basename($filename);
         $old_image_folder = preg_replace("/$base_name/", '', $filename);
         if ($old_image_folder == $this->uploadFolder) {
-            $this->fileRepository->deleteFileFromCDN($filename);
+            DocumentDeleter::deleteOldImage($filename);
         }
     }
 

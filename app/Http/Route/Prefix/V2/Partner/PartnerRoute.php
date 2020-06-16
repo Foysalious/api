@@ -43,9 +43,10 @@ class PartnerRoute
             $api->get('/statuses','LoanController@getStatus');
         });
 
-        $api->group(['prefix'=>'loans'], function ($api) {
+        $api->group(['prefix'=>'loans','middleware'=>'jwtGlobalAuth'], function ($api) {
             $api->get('/{loan_id}/details-for-agents','LoanController@showForAgent');
             $api->get('{partner_bank_loan}/logs-for-agent', 'LoanController@getChangeLogsForAgent');
+            $api->delete('{partner_bank_loan}/delete-documents', 'LoanController@deleteDocument');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
         });
     }
