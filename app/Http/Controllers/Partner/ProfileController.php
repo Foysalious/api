@@ -23,7 +23,7 @@ class ProfileController extends Controller
      * @param ProfileUpdateRepository $pro_repo
      * @return JsonResponse
      */
-    public function checkNid(Request $request, $partner, ProfileUpdateRepository $pro_repo)
+    public function checkVerification(Request $request, $partner, ProfileUpdateRepository $pro_repo)
     {
         try {
             $data = $pro_repo->checkNid($request);
