@@ -15,6 +15,7 @@ class FeedbackController extends Controller
 
     public function create(Request $request, Feedback $feedback) {
         try {
+            return api_response($request, null, 500);
             $this->validate($request, [
                 'remember_token' => 'required_unless:user,0|string',
                 'description' => 'required|string'
