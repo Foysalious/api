@@ -210,7 +210,7 @@ class ProcurementController extends Controller
             ->orderBy('id', 'desc');
         $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
-        if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
+        #if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
         $start_date = $request->has('start_date') ? $request->start_date : null;
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
@@ -220,6 +220,7 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
+        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements,$request->status);
         if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
         if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
         if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
@@ -231,6 +232,26 @@ class ProcurementController extends Controller
         ]); else return api_response($request, null, 404);
     }
 
+    /**
+     * @param $procurements
+     * @param $status
+     * @return \Illuminate\Support\Collection
+     */
+    public function filterWithStatus($procurements, $status)
+    {
+        if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use($status){
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'open') return collect($procurements)->filter(function ($procurement) use($status){
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'hired') return collect($procurements)->filter(function ($procurement) use($status){
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use($status){
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+    }
     /**
      * @param $procurements
      * @param string $sort
