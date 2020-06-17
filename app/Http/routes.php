@@ -1,6 +1,11 @@
 <?php
 
+use App\Models\Customer;
+use Sheba\AutoSpAssign\Initiator;
+
 Route::get('/', function () {
+    $init=new Initiator();
+    $init->setPartnerIds([595,975])->initiate();
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
