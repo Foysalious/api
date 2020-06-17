@@ -15,6 +15,7 @@ use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
+use App\Transformers\Business\ProposalDetailsTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderMinimalTransformer;
 use App\Transformers\Business\TenderTransformer;
@@ -1048,5 +1049,27 @@ class ProcurementController extends Controller
         $data['tenders'] = $procurements;
 
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param $tender
+     * @param $proposal
+     * @param Request $request
+     * @param BidRepositoryInterface $bid_repo
+     * @return JsonResponse
+     */
+    public function proposalDetail($tender, $proposal, Request $request, BidRepositoryInterface $bid_repo)
+    {
+        $proposal = $bid_repo->find($proposal);
+        if (!$proposal) return api_response($request, null, 404);
+        if ($proposal->procurement_id != (int)$tender) return api_response($request, null, 404);
+        $procurement = $this->procurementRepository->find($tender);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($procurement, new ProposalDetailsTransformer($proposal));
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['data' => $procurement]);
     }
 }
