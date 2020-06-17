@@ -8,7 +8,7 @@ class ThrowableHandler extends Handler
 {
     protected function getCode()
     {
-        return isset(constants('API_RESPONSE_CODES')[$this->exception->getCode()]) ? $this->exception->getCode() : 500;
+        return $this->exception->getCode() ?? 500;
     }
 
     protected function getMessage()
@@ -16,6 +16,6 @@ class ThrowableHandler extends Handler
         if ($this->exception instanceof MethodNotAllowedHttpException) return 'Method is not allowed';
         if ($this->exception instanceof NotFoundHttpException) return 'Requested path not found';
         if ($this->exception instanceof RouteNotFoundException) return 'Route Not Found';
-        return empty(trim($this->exception->getMessage())) ? "Internal Server Error" : $this->exception->getMessage();
+        return empty(trim($this->exception->getMessage())) ? "Something went wrong" : $this->exception->getMessage();
     }
 }
