@@ -12,6 +12,7 @@ class HelpController extends Controller
 {    use ModificationFields;
     public function create(Request $request, PartnerHelp $partnerHelp) {
         try {
+            return api_response($request, null, 500);
             $data = $request->all();
             $partner = $request->partner;
             $this->setModifier($partner);
