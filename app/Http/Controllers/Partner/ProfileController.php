@@ -77,6 +77,8 @@ class ProfileController extends Controller
             $data = $pro_repo->createData($request);
             $this->setModifier($resource);
             $repository->update($profile, $data);
+            if($request->type != 'info')
+                $this->increase_verification_request_count($profile);
             if ($request->type != 'image') {
                 $this->setToPendingStatus($resource);
                 $this->shootStatusChangeLog($resource);
@@ -90,6 +92,15 @@ class ProfileController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $profile
+     */
+    public function increase_verification_request_count($profile)
+    {
+        $profile->nid_verification_request_count = $profile->nid_verification_request_count + 1 ;
+        $profile->update();
     }
 
 
