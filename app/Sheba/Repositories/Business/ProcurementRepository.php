@@ -120,9 +120,10 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
      */
     public function filterWithStatus($status)
     {
-        if ($status === 'drafted') return $this->model->where('is_published', 0);
-        return $this->model->where('status', $status);
-
+        if ($status === 'draft') return $this->model->where('is_published', 0);
+        if ($status === 'expired') return $this->model->where('last_date_of_submission', '<', Carbon::now());
+        if ($status === 'open') return $this->model->where('status', 'pending');
+        if ($status === 'hired') return $this->model->where('status', 'accepted');
     }
 
     /**
