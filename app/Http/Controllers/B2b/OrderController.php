@@ -151,10 +151,12 @@ class OrderController extends Controller
             $customer = $member->profile->customer;
             $geo = json_decode($business->geo_informations);
             if (!$customer) $customer = $this->memberManager->createCustomerFromMember($member);
-            $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]);
+
             $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : null;
-            $partnerListRequest->setRequest($request)->setLocation($location)->prepareObject();
+            $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng, 'location' => $location]);
+
+            $partnerListRequest->setRequest($request)->setGeo($geo->lat, $geo->lng)->setLocation($location)->prepareObject();
             $order_amount = $promotionCalculation->calculateOrderAmount($partnerListRequest, $request->partner);
             if (!$order_amount) return api_response($request, null, 403);
             $result = voucher($request->code)
@@ -174,6 +176,7 @@ class OrderController extends Controller
             $sentry->captureException($e);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
