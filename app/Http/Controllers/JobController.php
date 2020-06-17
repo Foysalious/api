@@ -167,9 +167,11 @@ class JobController extends Controller
             $variables = json_decode($job->service_variables);
             $location_service = $job->service->locationServices->first();
             $upsell_calculation->setService($job->service)
-                ->setLocationService($location_service)
                 ->setOption(json_decode($job->service_option, true))
                 ->setQuantity($job->service_quantity);
+            if ($location_service) {
+                $upsell_calculation->setLocationService($location_service);
+            }
             $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
             $services->push([
                 'service_id' => $job->service->id,
@@ -192,9 +194,11 @@ class JobController extends Controller
                 $location_service = $location_services->where('service_id', $jobService->service->id)->first();
                 $option = json_decode($jobService->option, true);
                 $upsell_calculation->setService($jobService->service)
-                    ->setLocationService($location_service)
                     ->setOption($option ? $option : [])
                     ->setQuantity($jobService->quantity);
+                if ($location_service) {
+                    $upsell_calculation->setLocationService($location_service);
+                }
                 $upsell_price = $upsell_calculation->getAllUpsellWithMinMaxQuantity();
                 $selected_service = [
                     "option" => json_decode($jobService->option, true),
@@ -220,7 +224,8 @@ class JobController extends Controller
                 $service_data += $price_data;
                 $services->push($service_data);
             }
-            $job_collection->put('is_same_service', $previousOrder->setCategory($job->category)->setJobServices($job->jobServices)
+            $job_collection->put('is_same_service', $previousOrder->setCategory($job->category)
+                ->setJobServices($job->jobServices)
                 ->setLocationServices($location_services)->canOrder());
         }
         $job_collection->put('services', $services);

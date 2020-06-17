@@ -110,9 +110,6 @@ class IncomeExpenseController extends Controller
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);
@@ -135,9 +132,6 @@ class IncomeExpenseController extends Controller
             return api_response($request, null, 200, ["heads" => $heads_response['heads']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (ExpenseTrackingServerError $e) {
             app('sentry')->captureException($e);

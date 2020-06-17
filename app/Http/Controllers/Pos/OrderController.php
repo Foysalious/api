@@ -251,12 +251,6 @@ class OrderController extends Controller
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -279,7 +273,6 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (InvalidPosOrder $e) {
-            app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -487,6 +480,9 @@ class OrderController extends Controller
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
             ]);
+        }catch (ValidationException  $e){
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request,null,400,['message'=>$message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -495,7 +491,8 @@ class OrderController extends Controller
 
     /**
      * @param PosOrder $order
-     * @param $paid_amount
+     * @param          $paid_amount
+     * @param          $emi_month
      * @throws ExpenseTrackingServerError
      */
     private function updateIncome(PosOrder $order, $paid_amount, $emi_month) {
@@ -615,6 +612,9 @@ class OrderController extends Controller
             $entry  = app(AutomaticEntryRepository::class);
             $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
             return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
+        }catch (ValidationException $e){
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request,null,400,['message'=>$message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
