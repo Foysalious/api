@@ -468,12 +468,10 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param Sms $sms
-     * @param ErrorLog $errorLog
      * @param BitlyLinkShort $bitly_link
      * @param ProcurementRepositoryInterface $procurementRepository
      * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repository
-     * @param BusinessMemberRepositoryInterface $business_member_repository
-     * @return bool|JsonResponse
+     * @return JsonResponse
      */
     public function sendInvitation($business, $procurement, Request $request, Sms $sms,
                                    BitlyLinkShort $bitly_link,
