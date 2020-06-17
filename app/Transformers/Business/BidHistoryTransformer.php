@@ -24,6 +24,7 @@ class BidHistoryTransformer extends TransformerAbstract
             'service_provider' => [
                 'id' => $bidder->id,
                 'name' => $bidder->name,
+                'image' => $bidder->getContactResourceProPic(),
                 'status' => $this->getStatus($bidder),
                 'rating' => number_format($bidder->reviews()->avg('rating'), 1),
             ],
