@@ -17,7 +17,6 @@ class BlogController extends Controller
 {
     public function index(Request $request) {
         try {
-            return api_response($request, null, 500);
             $limit = 3;
             if ($request->has("limit")) $limit = $request->limit;
             $url = constants('BLOG_URL') . "/wp-json/wp/v2/posts?orderby=date&order=desc&per_page=".$limit;
