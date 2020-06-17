@@ -161,6 +161,7 @@ class OrderController extends Controller
         $result = voucher($request->code)
             ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, constants('SALES_CHANNELS')['B2B']['name'])
             ->reveal();
+
         if ($result['is_valid']) {
             $voucher = $result['voucher'];
             $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
