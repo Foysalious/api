@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\ModificationFields;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
+use Sheba\Repositories\ResourceRepository;
 
 class ProfileController extends Controller
 {
@@ -27,6 +28,17 @@ class ProfileController extends Controller
     {
         try {
             $data = $pro_repo->checkNid($request);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
+        }
+    }
+
+    public function checkFirstTimeUser(Request $request, ResourceRepository $resourceRepository)
+    {
+        try {
+            $data = $resourceRepository->getFirstTimeUserData($request);
             return api_response($request, null, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
