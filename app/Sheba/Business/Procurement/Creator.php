@@ -367,55 +367,7 @@ class Creator
             ]);
         }
     }
-
-    /**
-     * @return array
-     */
-    public function formatTimeline()
-    {
-        $payment_requests = $this->procurement->paymentRequests()->with('statusChangeLogs')->get();
-
-        $requests = [];
-        $request_logs = [];
-        foreach ($payment_requests as $payment_request) {
-            $payment_request_logs = $payment_request->statusChangeLogs->isEmpty() ? null : $payment_request->statusChangeLogs;
-            if ($payment_request_logs) {
-                foreach ($payment_request_logs as $log) {
-                    array_push($request_logs, [
-                        'created_at' => $log->created_at->toDateTimeString(),
-                        'time' => $log->created_at->format('h.i A'),
-                        'date' => $log->created_at->format('Y-m-d'),
-                        'log' => 'Status Updated From ' . $log->from_status . ' To ' . $log->to_status
-                    ]);
-                }
-            }
-            array_push($requests, [
-                'created_at' => $payment_request->created_at->toDateTimeString(),
-                'time' => $payment_request->created_at->format('h.i A'),
-                'date' => $payment_request->created_at->format('Y-m-d'),
-                'log' => 'This Payment Request: #' . $payment_request->id . ' Is ' . $payment_request->status
-            ]);
-        }
-        $bid_status_change_log = $this->bid->statusChangeLogs()->where('to_status', 'awarded')->first();
-        $data = [
-            'created_at' => $bid_status_change_log ? $bid_status_change_log->created_at->toDateTimeString() : 'n/s',
-            'time' => $bid_status_change_log ? $bid_status_change_log->created_at->format('h.i A') : 'n/s',
-            'date' => $bid_status_change_log ? $bid_status_change_log->created_at->format('Y-m-d') : 'n/s',
-            'log' => $bid_status_change_log ? 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status : 'n/s'
-        ];
-
-        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->sortByDesc('created_at')->groupBy('date');
-        $order_time_line = [];
-        foreach ($order_time_lines as $key => $time_lines) {
-            array_push($order_time_line, [
-                'date' => Carbon::parse($key)->format('d M'),
-                'year' => Carbon::parse($key)->format('Y'),
-                'logs' => $time_lines,
-            ]);
-        }
-        return $order_time_line;
-    }
-
+    
     /**
      * @param Procurement $procurement
      */

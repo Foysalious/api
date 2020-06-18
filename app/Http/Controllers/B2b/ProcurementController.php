@@ -594,22 +594,13 @@ class ProcurementController extends Controller
      */
     public function orderTimeline($business, $procurement, Request $request, Creator $creator)
     {
-        try {
-            $procurement = $creator->getProcurement($procurement)->getBid();
-            $order_timelines = $creator->formatTimeline();
-            return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $order_timelines = $this->procurementOrder->setProcurement($procurement)->getBid()->formatTimeline();
+        return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
     }
 
     /**
      * @param $business
      * @param Request $request
-     * @param ProcurementOrder $procurement_order
      * @return JsonResponse
      */
     public function procurementOrders($business, Request $request)
@@ -658,19 +649,12 @@ class ProcurementController extends Controller
      */
     public function orderBill($business, $procurement, Request $request, Creator $creator)
     {
-        try {
-            $procurement = Procurement::findOrFail((int)$procurement);
-            $procurement->calculate();
-            $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
-            $rfq_order_bill['paid'] = $procurement->paid;
-            $rfq_order_bill['due'] = $procurement->due;
-            return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $procurement = Procurement::findOrFail((int)$procurement);
+        $procurement->calculate();
+        $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
+        $rfq_order_bill['paid'] = $procurement->paid;
+        $rfq_order_bill['due'] = $procurement->due;
+        return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
     }
 
     /**
@@ -717,17 +701,10 @@ class ProcurementController extends Controller
      */
     public function workOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
     {
-        try {
-            $business = $request->business;
-            $bid = Bid::findOrFail((int)$bid);
-            $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
-            return api_response($request, null, 200, ['work_order' => $work_order]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $business = $request->business;
+        $bid = Bid::findOrFail((int)$bid);
+        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
+        return api_response($request, null, 200, ['work_order' => $work_order]);
     }
 
     /**
@@ -879,6 +856,10 @@ class ProcurementController extends Controller
         return $partner;
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     private function formatProfileSpecificData($request)
     {
         return [
