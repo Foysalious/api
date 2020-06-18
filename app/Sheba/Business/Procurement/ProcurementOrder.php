@@ -63,6 +63,7 @@ class ProcurementOrder
         $procurement_orders = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('status') && $request->status != 'all') $procurement_orders = $this->filterWithStatus($procurement_orders, $request->status);
+        if ($request->has('search')) $procurement_orders = $this->searchByTitle($procurement_orders, $request)->values();
 
 
         if ($request->has('sort_by_id')) $procurement_orders = $this->sortById($procurement_orders, $request->sort_by_id)->values();
@@ -173,6 +174,13 @@ class ProcurementOrder
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($procurements)->$sort_by(function ($procurement) {
             return strtoupper($procurement['created_at']);
+        });
+    }
+
+    private function searchByTitle($procurements, Request $request)
+    {
+        return collect($procurements)->filter(function ($procurement) use ($request) {
+            return str_contains(strtoupper($procurement['title']), strtoupper($request->search));
         });
     }
 }
