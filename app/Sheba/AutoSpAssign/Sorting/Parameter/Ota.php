@@ -5,6 +5,11 @@ class Ota extends Parameter
 {
     protected function getWeight()
     {
-        return 25;
+        return 15;
+    }
+
+    protected function getValueForPartner()
+    {
+        return $this->partner->getOta();
     }
 }

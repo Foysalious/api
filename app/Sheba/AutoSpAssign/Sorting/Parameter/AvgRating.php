@@ -3,9 +3,13 @@
 
 class AvgRating extends Parameter
 {
-
     protected function getWeight()
     {
-        // TODO: Implement getWeight() method.
+        return 10;
+    }
+
+    protected function getValueForPartner()
+    {
+        return $this->partner->getAvgRating();
     }
 }

@@ -7,4 +7,9 @@ class Ita extends Parameter
     {
         return 25;
     }
+
+    protected function getValueForPartner()
+    {
+        return $this->partner->getIta();
+    }
 }

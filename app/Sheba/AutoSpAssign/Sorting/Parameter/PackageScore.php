@@ -6,6 +6,11 @@ class PackageScore extends Parameter
 
     protected function getWeight()
     {
-        // TODO: Implement getWeight() method.
+        return 5;
+    }
+
+    protected function getValueForPartner()
+    {
+        // TODO: Implement getValueForPartner() method.
     }
 }

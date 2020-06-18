@@ -5,6 +5,11 @@ class ComplainPercentage extends Parameter
 {
     protected function getWeight()
     {
-        return 25;
+        return 10;
+    }
+
+    protected function getValueForPartner()
+    {
+        return $this->partner->getComplainRatio();
     }
 }

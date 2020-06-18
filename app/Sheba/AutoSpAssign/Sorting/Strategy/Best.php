@@ -1,6 +1,7 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Strategy;
 
 
+use Sheba\AutoSpAssign\EligiblePartner;
 use Sheba\AutoSpAssign\Sorting\Parameter\AvgRating;
 use Sheba\AutoSpAssign\Sorting\Parameter\ComplainPercentage;
 use Sheba\AutoSpAssign\Sorting\Parameter\Ita;
@@ -26,6 +27,11 @@ class Best implements Strategy
 
     public function sort($partners)
     {
-        // TODO: Implement sort() method.
+        foreach ($partners as $partner) {
+
+        }
+    }
+    private function getScore(EligiblePartner $partner){
+     
     }
 }

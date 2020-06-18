@@ -1,13 +1,30 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Parameter;
 
 
+use Sheba\AutoSpAssign\EligiblePartner;
+
 abstract class Parameter
 {
-    public function getScore($value): double
+    /** @var EligiblePartner */
+    protected $partner;
+
+    public function getScore(): double
     {
-        return $this->getWeight() * $value;
+        return $this->getValueForPartner() * $this->getWeight();
+    }
+
+    /**
+     * @param EligiblePartner $partner
+     * @return $this
+     */
+    public function setPartner(EligiblePartner $partner)
+    {
+        $this->partner = $partner;
+        return $this;
     }
 
     abstract protected function getWeight();
+
+    abstract protected function getValueForPartner();
 
 }
