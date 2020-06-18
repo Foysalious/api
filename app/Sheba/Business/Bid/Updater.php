@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\Business\Bid;
 
 use App\Models\Bid;
+use App\Models\BidItem;
+use App\Models\BidItemField;
 use App\Models\Partner;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Repositories\Business\BidRepository;
@@ -178,20 +180,22 @@ class Updater
                 $this->bidRepository->update($this->bid, ['status' => 'awarded', 'terms' => $this->terms, 'policies' => $this->policies]);
 
                 if ($this->bid->isAdvanced()) {
+                    /** @var BidItem $bid_price_quotation_item */
                     $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
                     $price_quotation_item = $this->items->where('id', $bid_price_quotation_item->id)->first();
                     $fields = collect($price_quotation_item->fields);
                     foreach ($bid_price_quotation_item->fields as $field) {
+                        /** @var BidItemField $field */
                         $field_result = $fields->where('id', $field->id)->first();
                         if ($field_result) {
+                            $variables = null;
                             if ($field_result->unit) {
                                 $variables = json_decode($field->variables);
                                 $variables->unit = $field_result->unit;
                                 $variables = json_encode($variables);
-                            } else {
-                                $variables = null;
                             }
 
+                            $this->bidItemFieldRepository->update($field, ['bidder_result' => $field->result]);
                             $this->bidItemFieldRepository->update($field, [
                                 'result'    => isset($field_result->result) ? $field_result->result : $field->result,
                                 'variables' => $variables ? $variables : $field->variables,
@@ -202,13 +206,9 @@ class Updater
                     }
                 }
 
+                $this->bidRepository->update($this->bid, ['bidder_price' => (double)$this->bid->price]);
                 $this->updateBidPrice();
-                $this->statusLogCreator
-                    ->setBid($this->bid)
-                    ->setPreviousStatus($previous_status)
-                    ->setStatus($this->bid->status)
-                    ->create();
-
+                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->bid->status)->create();
                 // $this->sendHiringRequestNotification();
                 $this->smsForHiringRequest();
             });
