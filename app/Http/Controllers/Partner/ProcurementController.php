@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Procurement;
+use App\Sheba\Business\Procurement\ProcurementOrder;
 use App\Sheba\Business\Procurement\Updater;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\Business\Procurement\Creator;
 use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 
 class ProcurementController extends Controller
 {
@@ -57,18 +59,12 @@ class ProcurementController extends Controller
         }
     }
 
-    public function showProcurementOrder($partner, $procurement, $bid, Request $request, Creator $creator)
+    public function showProcurementOrder($partner, $procurement, $bid, Request $request, ProcurementOrder $procurement_order, BidRepositoryInterface $bid_repository)
     {
-        try {
-            $bid = Bid::findOrFail((int)$bid);
-            $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
-            return api_response($request, $rfq_order_details, 200, ['order_details' => $rfq_order_details]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $bid = $bid_repository->find((int)$bid);
+        if (!$bid) return api_response($request, null, 404);
+        $rfq_order_details = $procurement_order->setProcurement($procurement)->setBid($bid)->orderDetails();
+        return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
     }
 
     public function orderBill($partner, $procurement, Request $request, Creator $creator)
