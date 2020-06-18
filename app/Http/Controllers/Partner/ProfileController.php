@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Models\Resource;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
 use App\Sheba\Partner\KYC\Statuses;
 use Carbon\Carbon;
@@ -57,7 +58,9 @@ class ProfileController extends Controller
     public function submitDataForVerification(Request $request, $partner, ShebaProfileRepository $repository, ProfileUpdateRepository $pro_repo)
     {
         try {
+            /** @var Resource $resource */
             $resource = $request->manager_resource;
+            /** @var Profile $profile */
             $profile = $resource->profile;
             if (!$profile)
                 return api_response($request, null, 404, ['message' => 'Profile not found']);
@@ -76,8 +79,7 @@ class ProfileController extends Controller
             ]);
 
             if ($request->type != 'image') {
-                $profile_by_given_nid = $this->isAlreadyExistNid($request->nid_no);
-
+                $profile_by_given_nid = $profile->searchOtherUsingNid($request->nid_no);
                 if (!empty($profile_by_given_nid)) {
                     if (!empty($profile_by_given_nid->resource))
                         return api_response($request, null, 401, ['message' => 'This NID is used by another sManager account']);
