@@ -78,6 +78,8 @@ class ProcurementController extends Controller
     private $partnerCreateRequest;
     /** @var ProcurementFilterRequest $procurementFilterRequest */
     private $procurementFilterRequest;
+    /** @var ProcurementOrder $procurementOrder */
+    private $procurementOrder;
 
     /**
      * ProcurementController constructor.
@@ -88,13 +90,15 @@ class ProcurementController extends Controller
      * @param PartnerCreator $partner_creator
      * @param PartnerCreateRequest $partner_create_request
      * @param ProcurementFilterRequest $procurement_filter_request
+     * @param ProcurementOrder $procurement_order
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
                                 ResourceCreator $resource_creator,
                                 PartnerCreator $partner_creator,
                                 PartnerCreateRequest $partner_create_request,
-                                ProcurementFilterRequest $procurement_filter_request)
+                                ProcurementFilterRequest $procurement_filter_request,
+                                ProcurementOrder $procurement_order)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
@@ -102,6 +106,7 @@ class ProcurementController extends Controller
         $this->partnerCreator = $partner_creator;
         $this->partnerCreateRequest = $partner_create_request;
         $this->procurementFilterRequest = $procurement_filter_request;
+        $this->procurementOrder = $procurement_order;
     }
 
     public function create(Request $request)
@@ -607,7 +612,7 @@ class ProcurementController extends Controller
      * @param ProcurementOrder $procurement_order
      * @return JsonResponse
      */
-    public function procurementOrders($business, Request $request, ProcurementOrder $procurement_order)
+    public function procurementOrders($business, Request $request)
     {
         $procurement_orders = Procurement::order()->with([
             'bids' => function ($q) {
@@ -621,7 +626,7 @@ class ProcurementController extends Controller
         if ($start_date && $end_date) {
             $procurement_orders->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
-        list($procurement_orders, $total_orders) = $procurement_order->getOrders($procurement_orders, $request);
+        list($procurement_orders, $total_orders) = $this->procurementOrder->orders($procurement_orders, $request);
 
         if (count($procurement_orders) > 0) return api_response($request, $procurement_orders, 200, [
             'procurement_orders' => $procurement_orders, 'total_orders' => $total_orders, 'is_order_available' => $is_order_available
@@ -633,21 +638,15 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param $bid
      * @param Request $request
-     * @param Creator $creator
+     * @param BidRepositoryInterface $bid_repository
      * @return JsonResponse
      */
-    public function showProcurementOrder($business, $procurement, $bid, Request $request, Creator $creator)
+    public function showProcurementOrder($business, $procurement, $bid, Request $request, BidRepositoryInterface $bid_repository)
     {
-        try {
-            $bid = Bid::findOrFail((int)$bid);
-            $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
-            return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $bid = $bid_repository->find((int)$bid);
+        if (!$bid) return api_response($request, null, 404);
+        $rfq_order_details = $this->procurementOrder->setProcurement($procurement)->setBid($bid)->orderDetails();
+        return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
     }
 
     /**

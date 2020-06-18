@@ -1,19 +1,65 @@
 <?php namespace App\Sheba\Business\Procurement;
 
+use App\Models\Bid;
+use App\Models\Procurement;
 use League\Fractal\Manager;
 use Illuminate\Http\Request;
+use League\Fractal\Resource\Item;
 use App\Transformers\CustomSerializer;
 use League\Fractal\Resource\Collection;
-use Sheba\Business\Procurement\OrderStatusCalculator;
-use App\Transformers\Business\ProcurementOrderTransformer;
+use App\Transformers\Business\ProcurementOrderListTransformer;
+use App\Transformers\Business\ProcurementOrderDetailsTransformer;
+use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class ProcurementOrder
 {
-    public function getOrders($procurement_orders, Request $request)
+    /** @var Procurement $procurement */
+    private $procurement;
+    /** @var Bid $bid */
+    private $bid;
+
+    /** @var ProcurementRepositoryInterface $procurementRepository */
+    private $procurementRepository;
+
+    /**
+     * ProcurementOrder constructor.
+     * @param ProcurementRepositoryInterface $procurement_repository
+     */
+    public function __construct(ProcurementRepositoryInterface $procurement_repository)
+    {
+        $this->procurementRepository = $procurement_repository;
+    }
+
+    /**
+     * @param $procurement
+     * @return $this
+     */
+    public function setProcurement($procurement)
+    {
+        $this->procurement = $this->procurementRepository->find((int)$procurement);
+        return $this;
+    }
+
+    /**
+     * @param Bid $bid
+     * @return $this
+     */
+    public function setBid(Bid $bid)
+    {
+        $this->bid = $bid;
+        return $this;
+    }
+
+    /**
+     * @param $procurement_orders
+     * @param Request $request
+     * @return array
+     */
+    public function orders($procurement_orders, Request $request)
     {
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($procurement_orders->get(), new ProcurementOrderTransformer());
+        $resource = new Collection($procurement_orders->get(), new ProcurementOrderListTransformer());
         $procurement_orders = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('status') && $request->status != 'all') $procurement_orders = $this->filterWithStatus($procurement_orders, $request->status);
@@ -33,11 +79,23 @@ class ProcurementOrder
     }
 
     /**
+     * @return mixed
+     */
+    public function orderDetails()
+    {
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($this->procurement, new ProcurementOrderDetailsTransformer($this->bid));
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+        return $procurement;
+    }
+
+    /**
      * @param $procurements
      * @param $status
      * @return \Illuminate\Support\Collection
      */
-    public function filterWithStatus($procurements, $status)
+    private function filterWithStatus($procurements, $status)
     {
         if ($status === 'accepted') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
@@ -78,6 +136,7 @@ class ProcurementOrder
             return strtoupper($procurement['title']);
         });
     }
+
     /**
      * @param $procurements
      * @param string $sort
@@ -90,6 +149,7 @@ class ProcurementOrder
             return strtoupper($procurement['bid']['service_provider']['name']);
         });
     }
+
     /**
      * @param $procurements
      * @param string $sort

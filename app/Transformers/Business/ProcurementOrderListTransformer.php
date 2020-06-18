@@ -3,7 +3,7 @@
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\Procurement\OrderStatusCalculator;
 
-class ProcurementOrderTransformer extends TransformerAbstract
+class ProcurementOrderListTransformer extends TransformerAbstract
 {
     /**
      * @param $procurement
