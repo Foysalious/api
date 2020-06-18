@@ -14,6 +14,14 @@ class EligiblePartner
     private $resourceAppUsageCount;
     private $recentServedJobCount;
     private $lifetimeServedJobCount;
+    private $score;
+
+
+    public function setScore($score)
+    {
+        $this->score = $score;
+        return $this;
+    }
 
     public function setId($id)
     {

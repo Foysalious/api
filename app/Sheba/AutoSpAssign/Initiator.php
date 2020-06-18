@@ -56,6 +56,7 @@ class Initiator
      */
     private function getCustomerOrderCount()
     {
+        return 0;
         return Order::where('customer_id', $this->order->customer_id)->select('id')->count();
     }
 

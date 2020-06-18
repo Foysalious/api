@@ -8,7 +8,7 @@ abstract class Parameter
     /** @var EligiblePartner */
     protected $partner;
 
-    public function getScore(): double
+    public function getScore()
     {
         return $this->getValueForPartner() * $this->getWeight();
     }

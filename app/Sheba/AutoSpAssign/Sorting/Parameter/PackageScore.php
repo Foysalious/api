@@ -11,6 +11,6 @@ class PackageScore extends Parameter
 
     protected function getValueForPartner()
     {
-        // TODO: Implement getValueForPartner() method.
+        return 0;
     }
 }
