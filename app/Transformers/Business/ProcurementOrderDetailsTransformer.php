@@ -26,7 +26,8 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
         $bid_price_quotations = null;
         if ($procurement->isAdvanced())
             $bid_price_quotations = $this->generateBidItemData();
-
+        $category = $procurement->category ? $procurement->category : null;
+        $bidder = $this->bid->bidder;
         return [
             'procurement_id' => $procurement->id,
             'procurement_title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
@@ -35,14 +36,18 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
             'procurement_end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'procurement_type' => $procurement->type,
             'procurement_additional_info' => $procurement->long_description,
+            'category' => $category ? [
+                'id' => $category->id,
+                'name' => $category->name,
+            ] : null,
             'vendor' => [
-                'name' => $this->bid->bidder->name,
-                'logo' => $this->bid->bidder->logo,
-                'contact_person' => $this->bid->bidder->getContactPerson(),
-                'mobile' => $this->bid->bidder->getMobile(),
-                'address' => $this->bid->bidder->address,
-                'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
-                'total_rating' => $this->bid->bidder->reviews->count()
+                'name' => $bidder->name,
+                'logo' => $bidder->logo,
+                'contact_person' => $bidder->getContactPerson(),
+                'mobile' => $bidder->getMobile(),
+                'address' => $bidder->address,
+                'rating' => round($bidder->reviews->avg('rating'), 2),
+                'total_rating' => $bidder->reviews->count()
             ],
             'bid_id' => $this->bid->id,
             'bid_price' => $this->bid->price,
