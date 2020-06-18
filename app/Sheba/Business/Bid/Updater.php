@@ -1,14 +1,17 @@
 <?php namespace App\Sheba\Business\Bid;
 
-
 use App\Models\Bid;
+use App\Models\Partner;
+use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Repositories\Business\BidRepository;
+use Exception;
 use Illuminate\Database\QueryException;
 use Sheba\Business\BidStatusChangeLog\Creator;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use DB;
 use App\Sheba\Business\Procurement\Updater as ProcurementUpdater;
+use Sheba\Sms\Sms;
 
 class Updater
 {
@@ -27,13 +30,31 @@ class Updater
     private $procurementUpdater;
     private $fieldResults;
     private $proposal;
+    /** @var BitlyLinkShort */
+    private $bitlyLink;
+    /** @var Sms */
+    private $sms;
 
-    public function __construct(BidRepository $bid_repository, BidItemFieldRepositoryInterface $bid_item_field_repository, Creator $creator, ProcurementUpdater $procurement_updater)
+    /**
+     * Updater constructor.
+     * @param BidRepository $bid_repository
+     * @param BidItemFieldRepositoryInterface $bid_item_field_repository
+     * @param Creator $creator
+     * @param ProcurementUpdater $procurement_updater
+     * @param Sms $sms
+     * @param BitlyLinkShort $bitly_link
+     */
+    public function __construct(BidRepository $bid_repository,
+                                BidItemFieldRepositoryInterface $bid_item_field_repository,
+                                Creator $creator, ProcurementUpdater $procurement_updater,
+                                Sms $sms, BitlyLinkShort $bitly_link)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->statusLogCreator = $creator;
         $this->procurementUpdater = $procurement_updater;
+        $this->sms = $sms;
+        $this->bitlyLink = $bitly_link;
     }
 
     public function setBid(Bid $bid)
@@ -77,7 +98,6 @@ class Updater
         $this->price = $price;
         return $this;
     }
-
 
     public function updateFavourite(Bid $bid)
     {
@@ -156,6 +176,7 @@ class Updater
             DB::transaction(function () {
                 $previous_status = $this->bid->status;
                 $this->bidRepository->update($this->bid, ['status' => 'awarded', 'terms' => $this->terms, 'policies' => $this->policies]);
+
                 if ($this->bid->isAdvanced()) {
                     $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
                     $price_quotation_item = $this->items->where('id', $bid_price_quotation_item->id)->first();
@@ -170,22 +191,41 @@ class Updater
                             } else {
                                 $variables = null;
                             }
+
                             $this->bidItemFieldRepository->update($field, [
-                                'result' => isset($field_result->result) ? $field_result->result : $field->result,
+                                'result'    => isset($field_result->result) ? $field_result->result : $field->result,
                                 'variables' => $variables ? $variables : $field->variables,
-                                'title' => isset($field_result->title) ? $field_result->title : $field->title,
+                                'title'     => isset($field_result->title) ? $field_result->title : $field->title,
                                 'short_description' => isset($field_result->short_description) ? $field_result->short_description : $field->short_description,
                             ]);
                         }
                     }
                 }
+
                 $this->updateBidPrice();
-                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->bid->status)->create();
-                $this->sendHiringRequestNotification();
+                $this->statusLogCreator
+                    ->setBid($this->bid)
+                    ->setPreviousStatus($previous_status)
+                    ->setStatus($this->bid->status)
+                    ->create();
+
+                // $this->sendHiringRequestNotification();
+                $this->smsForHiringRequest();
             });
         } catch (QueryException $e) {
             throw  $e;
         }
+    }
+
+    private function smsForHiringRequest()
+    {
+        /** @var Partner $partner */
+        $partner = $this->bid->bidder;
+        $message = $this->bid->procurement->owner->name . ' sent you a hiring request for BID #' . $this->bid->id;
+        $procurement_id = $this->bid->procurement->id;
+        $bid_id = $this->bid->id;
+        $url = config('sheba.business_url') . "/tender/$procurement_id/participate/$bid_id";
+        $this->sms->shoot($partner->getManagerMobile(), "$message. Now go to this link-" . $this->bitlyLink->shortUrl($url));
     }
 
     public function updateStatus()
@@ -209,11 +249,8 @@ class Updater
     private function updateBidPrice()
     {
         $bid_price_quotation_item = $this->bid->items()->where('type', 'price_quotation')->first();
-        if ($bid_price_quotation_item) {
-            $this->bidRepository->update($this->bid, ['price' => (double)$bid_price_quotation_item->fields->sum('result')]);
-        } else {
-            $this->bidRepository->update($this->bid, ['price' => (double)$this->price]);
-        }
+        $price = ($bid_price_quotation_item) ? $bid_price_quotation_item->fields->sum('result') : $this->price;
+        $this->bidRepository->update($this->bid, ['price' => (double)$price]);
     }
 
     private function updatePartnerCommission()
@@ -223,15 +260,17 @@ class Updater
 
     private function sendHiringRequestNotification()
     {
-        $message = $this->bid->procurement->owner->name . ' sent you a hiring request for BID #' . $this->bid->id;
-        $link = config('sheba.partners_url') . '/' . $this->bid->bidder->sub_domain . '/procurements/' . $this->bid->procurement->id . '/summary';
-        notify()->partner($this->bid->bidder)->send([
-            'title' => $message,
-            'type' => 'warning',
-            'event_type' => get_class($this->bid),
-            'event_id' => $this->bid->id,
-            'link' => $link
-        ]);
+        try {
+            $message = $this->bid->procurement->owner->name . ' sent you a hiring request for BID #' . $this->bid->id;
+            $link = config('sheba.partners_url') . '/' . $this->bid->bidder->sub_domain . '/procurements/' . $this->bid->procurement->id . '/summary';
+            notify()->partner($this->bid->bidder)->send([
+                'title' => $message,
+                'type' => 'warning',
+                'event_type' => get_class($this->bid),
+                'event_id' => $this->bid->id,
+                'link' => $link
+            ]);
+        } catch (Exception $e) {}
     }
 
     private function notify($message, $link)

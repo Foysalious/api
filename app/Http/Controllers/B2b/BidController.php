@@ -7,6 +7,7 @@ use App\Transformers\Business\BidHistoryTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -17,6 +18,7 @@ use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Throwable;
 
 class BidController extends Controller
 {
@@ -109,7 +111,7 @@ class BidController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -135,7 +137,7 @@ class BidController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -203,26 +205,32 @@ class BidController extends Controller
         });
     }
 
+    /**
+     * @param $business
+     * @param $bid
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
     public function sendHireRequest($business, $bid, Request $request, Updater $updater)
     {
-        try {
-            $this->validate($request, [
-                'terms' => 'required|string', 'policies' => 'required|string', 'items' => 'required|string', 'price' => 'required|numeric'
-            ]);
-            $bid = $this->repo->find((int)$bid);
-            $this->setModifier($request->manager_member);
-            $updater->setBid($bid)->setTerms($request->terms)->setPolicies($request->policies)->setItems(json_decode($request->items))->setPrice($request->price)->hire();
-            return api_response($request, $bid, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'terms'     => 'required|string',
+            'price'     => 'required|numeric',
+            'items'     => 'required|string',
+            'policies'  => 'required|string'
+        ]);
+        $bid = $this->repo->find((int)$bid);
+        $this->setModifier($request->manager_member);
+
+        $updater->setBid($bid)
+            ->setTerms($request->terms)
+            ->setPolicies($request->policies)
+            ->setItems(json_decode($request->items))
+            ->setPrice($request->price)
+            ->hire();
+
+        return api_response($request, null, 200);
     }
 
     public function show($business, $bid, Request $request)
@@ -248,7 +256,7 @@ class BidController extends Controller
                 ], 'attachments' => $bid->attachments()->select('title', 'file')->get(), 'terms' => $bid->terms, 'policies' => $bid->policies, 'proposal' => $bid->proposal, 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'), 'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'), 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
             ];
             return api_response($request, $bid_details, 200, ['bid' => $bid_details]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
