@@ -64,8 +64,6 @@ class ProcurementOrder
 
         if ($request->has('status') && $request->status != 'all') $procurement_orders = $this->filterWithStatus($procurement_orders, $request->status);
         if ($request->has('search')) $procurement_orders = $this->searchByTitle($procurement_orders, $request)->values();
-
-
         if ($request->has('sort_by_id')) $procurement_orders = $this->sortById($procurement_orders, $request->sort_by_id)->values();
         if ($request->has('sort_by_title')) $procurement_orders = $this->sortByTitle($procurement_orders, $request->sort_by_title)->values();
         if ($request->has('sort_by_vendor')) $procurement_orders = $this->sortByVendor($procurement_orders, $request->sort_by_vendor)->values();
@@ -177,6 +175,11 @@ class ProcurementOrder
         });
     }
 
+    /**
+     * @param $procurements
+     * @param Request $request
+     * @return \Illuminate\Support\Collection
+     */
     private function searchByTitle($procurements, Request $request)
     {
         return collect($procurements)->filter(function ($procurement) use ($request) {

@@ -1,11 +1,14 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Bid;
+use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\Procurement\OrderStatusCalculator;
 
 class ProcurementOrderDetailsTransformer extends TransformerAbstract
 {
+    protected $defaultIncludes = ['attachments'];
+
     /** @var Bid $bid */
     private $bid;
 
@@ -29,7 +32,7 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
             'procurement_title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'procurement_status' => OrderStatusCalculator::resolveStatus($procurement),
             'procurement_start_date' => $procurement->procurement_start_date->format('d/m/y'),
-            'procurement_end_date' =>$procurement->procurement_end_date->format('d/m/y'),
+            'procurement_end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'procurement_type' => $procurement->type,
             'procurement_additional_info' => $procurement->long_description,
             'vendor' => [
@@ -47,6 +50,21 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
         ];
     }
 
+    /**
+     * @param $procurement
+     * @return \League\Fractal\Resource\Collection|\League\Fractal\Resource\Item
+     */
+    public function includeAttachments($procurement)
+    {
+        $collection = $this->collection($procurement->attachments, new AttachmentTransformer());
+        return $collection->getData() ? $collection : $this->item(null, function () {
+            return [];
+        });
+    }
+
+    /**
+     * @return array
+     */
     private function generateBidItemData()
     {
         $item_type = $this->bid->items->where('type', 'price_quotation')->first();
