@@ -189,7 +189,7 @@ class ResourceRepository extends BaseRepository
             $is_first_time = 1;
             if($profile->affiliate)
                 return [
-                    "message"         => "ইত মধ্যে আপনার একটি sBondhu একাউন্ট রয়েছে, আনুগ্রহ করে sBondhu অ্যাপ ওপেন করুন। এখন থেকে আপনার sManager এবং sBondhu একাউন্ট এ একি আইডি এবং পিন দিয়ে লগ ইন করতে হবে",
+                    "message"         => "ইতোমধ্যে আপনার একটি sBondhu একাউন্ট রয়েছে, অনুগ্রহ করে sBondhu অ্যাপ ওপেন করুন। এখন থেকে আপনার sManager এবং sBondhu একাউন্ট একই আইডি এবং পিন দিয়ে লগ ইন করতে হবে",
                     "affiliate_exist" => 1,
                     "is_first_time"   => $is_first_time,
                 ];
