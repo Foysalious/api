@@ -139,9 +139,11 @@ class Updater
                         ]);
                     }
                 }
+
                 $this->updateBidPrice();
                 $this->updatePartnerCommission();
                 $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+
                 if ($this->status == 'sent') $this->sendVendorParticipatedNotification();
                 elseif ($this->status == 'rejected') $this->sendBidRejectedNotification();
                 elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
@@ -160,15 +162,19 @@ class Updater
 
     private function sendBidRejectedNotification()
     {
+        /** @todo $link CHANGE ON NEW DESIGN */
         $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
+
         $this->notify($message, $link);
     }
 
     private function sendBidAcceptedNotification()
     {
-        $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
+        /** @todo $link CHANGE ON NEW DESIGN */
         $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '?bid=' . $this->bid->id;
+        $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
+
         $this->notify($message, $link);
     }
 
@@ -234,10 +240,19 @@ class Updater
             DB::transaction(function () {
                 $previous_status = $this->bid->status;
                 $this->bidRepository->update($this->bid, ['status' => $this->status]);
-                if ($this->status == config('b2b.BID_STATUSES')['accepted']) $this->procurementUpdater->setProcurement($this->bid->procurement)
-                    ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])->updateStatus();
+                if ($this->status == config('b2b.BID_STATUSES')['accepted']) {
+                    $this->procurementUpdater
+                        ->setProcurement($this->bid->procurement)
+                        ->setStatus(config('b2b.PROCUREMENT_STATUS')['accepted'])
+                        ->updateStatus();
+                }
                 $this->updatePartnerCommission();
-                $this->statusLogCreator->setBid($this->bid)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
+                $this->statusLogCreator
+                    ->setBid($this->bid)
+                    ->setPreviousStatus($previous_status)
+                    ->setStatus($this->status)
+                    ->create();
+
                 if ($this->status == 'rejected') $this->sendBidRejectedNotification();
                 elseif ($this->status == 'accepted') $this->sendBidAcceptedNotification();
             });

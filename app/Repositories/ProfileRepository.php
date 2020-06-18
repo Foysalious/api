@@ -17,8 +17,8 @@ use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
-
-class ProfileRepository {
+class ProfileRepository
+{
     use ModificationFields;
 
     public function getIfExist($data, $queryColumn) {
