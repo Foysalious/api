@@ -26,7 +26,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
-            'last_date_of_submission' => $procurement->last_date_of_submission->format('d/m/y'),
+            'last_date_of_submission' => $procurement->last_date_of_submission->format('d/m/Y'),
             'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
             'number_of_participants' => $procurement->number_of_participants,
             'payment_options' => $procurement->payment_options,
