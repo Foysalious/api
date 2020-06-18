@@ -10,6 +10,7 @@ class AvgRating extends Parameter
 
     protected function getValueForPartner()
     {
-        return $this->partner->getAvgRating();
+        if ($this->partner->getAvgRating() == $this->minValue) return 0;
+        return ($this->partner->getAvgRating() - $this->minValue) / ($this->maxValue - $this->minValue) * 100;
     }
 }

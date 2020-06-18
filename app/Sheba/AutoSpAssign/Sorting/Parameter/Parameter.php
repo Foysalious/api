@@ -7,16 +7,27 @@ abstract class Parameter
 {
     /** @var EligiblePartner */
     protected $partner;
+    protected $maxValue;
+    protected $minValue;
+
+
+    public function setMaxValue($maxValue)
+    {
+        $this->maxValue = $maxValue;
+        return $this;
+    }
+
+    public function setMinValue($minValue)
+    {
+        $this->minValue = $minValue;
+        return $this;
+    }
 
     public function getScore()
     {
-        return $this->getValueForPartner() * $this->getWeight();
+        return $this->getValueForPartner() * ($this->getWeight() / 100);
     }
 
-    /**
-     * @param EligiblePartner $partner
-     * @return $this
-     */
     public function setPartner(EligiblePartner $partner)
     {
         $this->partner = $partner;

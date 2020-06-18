@@ -10,6 +10,7 @@ class MaxRevenue extends Parameter
 
     protected function getValueForPartner()
     {
-        return $this->partner->getMaxRevenue();
+        if ($this->partner->getMaxRevenue() == $this->minValue) return 0;
+        return ($this->partner->getMaxRevenue() - $this->minValue) / ($this->maxValue - $this->minValue) * 100;
     }
 }

@@ -14,7 +14,7 @@ class EligiblePartner
     private $resourceAppUsageCount;
     private $recentServedJobCount;
     private $lifetimeServedJobCount;
-    private $score;
+    public $score;
 
 
     public function setScore($score)
@@ -103,22 +103,22 @@ class EligiblePartner
 
     public function getIta()
     {
-        return $this->itaCount / $this->recentServedJobCount;
+        return ($this->itaCount / $this->recentServedJobCount) * 100;
     }
 
     public function getOta()
     {
-        return $this->otaCount / $this->recentServedJobCount;
+        return ($this->otaCount / $this->recentServedJobCount) * 100;
     }
-    
+
     public function getComplainRatio()
     {
-        return $this->complainCount / $this->recentServedJobCount;
+        return ($this->complainCount / $this->recentServedJobCount) * 100;
     }
 
     public function getResourceAppUsageRatio()
     {
-        return $this->resourceAppUsageCount / $this->recentServedJobCount;
+        return ($this->resourceAppUsageCount / $this->recentServedJobCount) * 100;
     }
 
     public function getImpressionCount()

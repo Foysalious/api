@@ -42,7 +42,6 @@ class Initiator
         $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId(14)->find();
         $sorter = new PartnerSort();
         $eligible_partners = $sorter->setStrategy($this->getStrategy())->sort($eligible_partners);
-
     }
 
     public function getStrategy()

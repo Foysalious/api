@@ -17,6 +17,7 @@ class Finder
     const PARTNER_ID = 'partner_id';
     const PARTNER_PACKAGE_ID = 'partner_package_id';
     const IMPRESSION_COUNT = 'impression_count';
+    const RATING_COUNT = 'rating_count';
     private $partnerIds;
     private $category_id;
 
@@ -66,6 +67,7 @@ class Finder
     {
         return PartnerOrderReport::selectRaw("avg(csat) as " . self::AVG_RATING)
             ->selectRaw("count(*) as " . self::RECENT_SERVED_JOB_COUNT)
+            ->selectRaw("count(case when csat is not null then csat end) as " . self::RATING_COUNT)
             ->selectRaw("count(case when user_complaint >0 then user_complaint end) as " . self::COMPLAIN_COUNT)
             ->selectRaw("SUM(TIMESTAMPDIFF(MINUTE, created_date, accept_date) <= 5) as " . self::ITA_COUNT)
 //             SUM(case when kind = 1 then 1 else 0 end)
