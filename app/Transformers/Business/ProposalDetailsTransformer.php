@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Bid;
+use App\Models\BidItem;
 use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Procurement;
@@ -21,8 +22,10 @@ class ProposalDetailsTransformer extends TransformerAbstract
     public function transform(Procurement $procurement)
     {
         $this->procurement = $procurement;
-        $procurement_price_quotations = $this->generateItemDataBy($this->procurement);
-        $bid_price_quotations = $this->generateItemDataBy($this->bid);
+        $price_quotations = $this->generateItemDataBy();
+
+        /*$total_proposed_budget = $price_quotations ? $price_quotations->sum('proposed_budget') : 0.00;
+        $total_final_budget = $price_quotations ? $price_quotations->sum('final_budget') : 0.00;*/
 
         /** @var Business $business */
         $business = $this->procurement->owner;
@@ -48,38 +51,38 @@ class ProposalDetailsTransformer extends TransformerAbstract
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/time.png',
             ],
             'payment_options' => $this->procurement->payment_options,
+            'proposal' => $this->bid->proposal,
+            'final_budget' => (double)$this->bid->price,
+            'proposed_budget' => (double)$this->bid->bidder_price,
             'bid_id' => $this->bid->id,
-            'bid_price' => $this->bid->price,
-            'procurement_price_quotations' => $procurement_price_quotations ? $procurement_price_quotations->toArray() : null,
-            'bid_price_quotations' => $bid_price_quotations ? $bid_price_quotations->toArray() : null ,
             'bid_terms' => $this->bid->terms,
-            'bid_policies' => $this->bid->policies
+            'bid_policies' => $this->bid->policies,
+            'price_quotations' => $price_quotations,
+            // 'total_proposed_budget' => (double)$total_proposed_budget,
+            // 'total_final_budget' => (double)$total_final_budget
         ];
     }
 
     /**
-     * @param Procurement $type | Bid $type
      * @return array|null
      */
-    private function generateItemDataBy($type)
+    private function generateItemDataBy()
     {
-        $type_data = $type->items->where('type', 'price_quotation')->first();
-        $total_proposed_price = 0;
-        return $type_data ? $type_data->fields->map(function ($field) use (&$total_proposed_price, $type) {
+        /** @var BidItem $bid_items */
+        $bid_items = $this->bid->items->where('type', 'price_quotation')->first();
+        if (!$bid_items) return null;
+
+        return $bid_items->fields->map(function ($field) use (&$total_proposed_price) {
             $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
-            $total_price = ($type instanceof Procurement) ? ($unit * $field->result) : $field->result;
-            $total_proposed_price += $total_price;
-            $total_proposed_price = ($type instanceof Procurement) ? $total_proposed_price : $this->bid->price;
 
             return [
-                'id'                    => $field->id,
-                'title'                 => $field->title,
-                'short_description'     => $field->short_description,
-                'unit'                  => $unit,
-                'result'                => $field->result,
-                'total_price'           => (double)$total_price,
-                'total_proposed_price'  => (double)$total_proposed_price
+                'id'                => $field->id,
+                'title'             => $field->title,
+                'short_description' => $field->short_description,
+                'unit'              => $unit,
+                'proposed_budget'   => (double)$field->bidder_result,
+                'final_budget'      => (double)$field->result
             ];
-        }) : null;
+        });
     }
 }
