@@ -12,6 +12,7 @@ use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
+use App\Sheba\Business\Procurement\ProcurementOrder;
 use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
@@ -221,7 +222,7 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements,$request->status);
+        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
         if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
         if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
         if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
@@ -240,19 +241,20 @@ class ProcurementController extends Controller
      */
     public function filterWithStatus($procurements, $status)
     {
-        if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'open') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'open') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'hired') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'hired') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
     }
+
     /**
      * @param $procurements
      * @param string $sort
@@ -602,49 +604,28 @@ class ProcurementController extends Controller
     /**
      * @param $business
      * @param Request $request
+     * @param ProcurementOrder $procurement_order
      * @return JsonResponse
      */
-    public function procurementOrders($business, Request $request)
+    public function procurementOrders($business, Request $request, ProcurementOrder $procurement_order)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $procurements = Procurement::order()->with([
-                'bids' => function ($q) {
-                    $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
-                }
-            ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
-
-            $total_procurement = $procurements->get()->count();
-
-            if ($request->has('status') && $request->status != 'all') {
-                $procurements = $procurements->where('status', $request->status);
+        $procurement_orders = Procurement::order()->with([
+            'bids' => function ($q) {
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
             }
+        ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
+        $is_order_available = $procurement_orders->count() > 0 ? 1 : 0;
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
-            if ($start_date && $end_date) {
-                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-            }
-            $procurements = $procurements->skip($offset)->limit($limit)->get();
-            $rfq_order_lists = [];
-            foreach ($procurements as $procurement) {
-                $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
-                array_push($rfq_order_lists, [
-                    'procurement_id' => $procurement->id, 'procurement_title' => $procurement->title, 'procurement_status' => $procurement->status, 'created_at' => $procurement->created_at->format('d/m/y'), 'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status], 'bid_id' => $bid ? $bid->id : null, 'price' => $bid ? $bid->price : null, 'vendor' => [
-                        'name' => $bid ? $bid->bidder->name : null
-                    ]
-                ]);
-            }
-
-            return api_response($request, $rfq_order_lists, 200, [
-                'rfq_order_lists' => $rfq_order_lists, 'total_procurement' => $total_procurement,
-            ]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $procurement_orders->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
+        list($procurement_orders, $total_orders) = $procurement_order->getOrders($procurement_orders, $request);
+
+        if (count($procurement_orders) > 0) return api_response($request, $procurement_orders, 200, [
+            'procurement_orders' => $procurement_orders, 'total_orders' => $total_orders, 'is_order_available' => $is_order_available
+        ]); else return api_response($request, null, 404);
     }
 
     /**
