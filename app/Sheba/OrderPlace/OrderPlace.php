@@ -16,7 +16,9 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use Exception;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Collection;
+use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
@@ -44,7 +46,7 @@ use Sheba\ServiceRequest\ServiceRequestObject;
 
 class OrderPlace
 {
-    use ModificationFields;
+    use ModificationFields, DispatchesJobs;
 
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
@@ -385,15 +387,16 @@ class OrderPlace
                 $job->jobServices()->saveMany($job_services);
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
-                if ($this->canCreatePartnerOrderRequest()) {
-                    $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
-                    $first_partner_id = [$partners->first()->id];
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
-                }
                 $partner_order = $partner_order->fresh();
                 if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
+                if ($this->canCreatePartnerOrderRequest()) {
+                    dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
+//                    $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
+//                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
+//                    $first_partner_id = [$partners->first()->id];
+//                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
+                }
             });
         } catch (QueryException $e) {
             throw $e;
