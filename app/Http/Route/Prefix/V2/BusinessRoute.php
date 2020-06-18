@@ -19,11 +19,14 @@ class BusinessRoute
                 $api->group(['prefix' => 'proposal'], function ($api) {
                     $api->get('/', 'B2b\ProcurementController@tenderProposalEdit');
                     $api->post('/', 'B2b\ProcurementController@tenderProposalStore');
-                    $api->get('/{proposal}', 'B2b\ProcurementController@proposalDetail');
+                    $api->group(['prefix' => '{proposal}'], function ($api) {
+                        $api->get('/', 'B2b\ProcurementController@proposalDetail');
+                        $api->get('/send-pin', 'B2b\ProposalController@sendPin');
+                        $api->post('/', 'B2b\ProposalController@takeAction');
+                    });
                 });
             });
         });
-
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
