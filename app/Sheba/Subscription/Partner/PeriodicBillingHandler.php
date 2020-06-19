@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PartnerSubscriptionUpdateRequest;
 use Carbon\Carbon;
 use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
@@ -23,7 +24,31 @@ class PeriodicBillingHandler
             $this->partner->runSubscriptionBilling();
         }
     }
+    private function migrateToLite($reason = '')
+    {
+        $new_package      = PartnerSubscriptionPackage::find(self::FREE_PACKAGE_ID);
+        $new_billing_type = BillingType::MONTHLY;
+        $this->partner->subscriber()->upgradeNew($new_package, $new_billing_type);
+        (new AutoBillingLog($this->partner))->shootLite($reason);
+    }
 
+    private function checkPackageChangeRequest(&$new_package, &$new_billing_type)
+    {
+        $request = null;
+        $this->partner->load(['subscriptionUpdateRequest' => function ($q) { $q->where('status', 'Pending'); }]);
+        if (!$this->partner->subscriptionUpdateRequest->isEmpty()) {
+            $requests         = $this->partner->subscriptionUpdateRequest;
+            $request          = $requests->last();
+            $new_package      = $request->newPackage;
+            $new_billing_type = $request->new_billing_type;
+            foreach ($requests as $req) {
+                /** @var PartnerSubscriptionUpdateRequest $req */
+                $req->status = 'Rejected';
+                $req->update();
+            }
+        }
+        return $request;
+    }
     public function hasBillingCycleEnded()
     {
         return $this->nextBillingDate()->isSameDay($this->today);

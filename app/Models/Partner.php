@@ -561,11 +561,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
-    public function runUpfrontSubscriptionBilling()
-    {
-        $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
-
     public function getCommissionAttribute()
     {
         return (double)$this->subscription_rules->commission->value;

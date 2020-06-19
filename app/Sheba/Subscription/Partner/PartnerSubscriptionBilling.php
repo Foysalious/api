@@ -36,8 +36,8 @@ class PartnerSubscriptionBilling
     public  $packageFrom;
     public  $packageTo;
     private $isCollectAdvanceSubscriptionFee = false;
-    public $packageOriginalPrice;
-    public $adjustedCreditFromLastSubscription;
+    public  $packageOriginalPrice;
+    public  $adjustedCreditFromLastSubscription;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -54,16 +54,6 @@ class PartnerSubscriptionBilling
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
     }
 
-    public function runUpfrontBilling()
-    {
-        $this->runningCycleNumber          = 1;
-        $this->partner->billing_start_date = $this->today;
-        $this->packagePrice                = $this->getSubscribedPackageDiscountedPrice();
-        $this->billingDatabaseTransactions($this->packagePrice);
-        if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
-        }
-    }
 
     public function runSubscriptionBilling()
     {
@@ -71,7 +61,7 @@ class PartnerSubscriptionBilling
         $this->packagePrice       = $this->getSubscribedPackageDiscountedPrice();
         $this->billingDatabaseTransactions($this->packagePrice);
         if (!$this->isCollectAdvanceSubscriptionFee) {
-            (new PartnerSubscriptionCharges($this))->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
+            (new PartnerSubscriptionCharges($this))->setPackage($this->partner->subscription, $this->partner->subscription, $this->partner->billing_type, $this->partner->billing_type)->shootLog(constants('PARTNER_PACKAGE_CHARGE_TYPES')[PartnerSubscriptionChange::RENEWED]);
         }
         dispatch((new PartnerRenewalSMS($this->partner))->setPackage($this->partner->subscription)->setSubscriptionAmount($this->packagePrice));
     }
@@ -86,24 +76,26 @@ class PartnerSubscriptionBilling
      */
     public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
-        $discount                                 = 0;
-        $this->packageFrom                        = $old_package;
-        $this->packageTo                          = $new_package;
-        $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
+        $discount          = 0;
+        $this->packageFrom = $old_package;
+        $this->packageTo   = $new_package;
         if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
-        $this->packageOriginalPrice = ($new_package->originalPrice($new_billing_type) - $discount);
-        $this->packagePrice         = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
+        $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
+        $this->packageOriginalPrice               = ($new_package->originalPrice($new_billing_type) - $discount);
+        $this->packagePrice                       = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
         if ($this->packagePrice < 0) {
             $this->refundRemainingCredit(abs($this->packagePrice));
             $this->packagePrice = 0;
         }
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
-        if (in_array($grade, [PartnerSubscriptionChange::UPGRADE, PartnerSubscriptionChange::DOWNGRADE]) || !$this->partner->billing_start_date) {
+        if (in_array($grade, [PartnerSubscriptionChange::DOWNGRADE, PartnerSubscriptionChange::UPGRADE]) || !$this->partner->billing_start_date) {
             $this->partner->billing_start_date = $this->today;
             $this->partner->save();
         }
         $this->billingDatabaseTransactions($this->packagePrice);
-        (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
+        if (!$this->isCollectAdvanceSubscriptionFee) {
+            (new PartnerSubscriptionCharges($this))->setPackage($old_package, $new_package, $old_billing_type, $new_billing_type)->shootLog($grade);
+        }
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
     }
@@ -158,18 +150,16 @@ class PartnerSubscriptionBilling
             ['to', PartnerStatuses::INACTIVE],
             ['from', '!=', PartnerStatuses::INACTIVE]
         ])->orderBy('created_at', 'DESC')->first();
-
-        if ($log) {
-            $this->partner->status = $log->from;
-            $status_change_log     = [
-                'from'   => $log->to,
-                'to'     => $log->from,
-                'reason' => 'Subscription Revoked',
-                'log'    => 'Partner became active due to subscription purchase'
-            ];
-
-            $this->partner->statusChangeLogs()->create($this->withCreateModificationField($status_change_log));
-        }
+        $this->partner->status = $log?$log->from:'Onboarded';
+        $this->partner->statusChangeLogs()->create([
+            'from'            => $log?$log->to:'Inactive',
+            'to'              => $log?$log->from:'Onboarded',
+            'reason'          => 'Subscription Revoked',
+            'log'             => 'Partner became active due to subscription purchase',
+            'created_by'      => 'automatic',
+            'created_by_name' => 'automatic',
+            'created_at'      => Carbon::now()
+        ]);
     }
 
     /**
