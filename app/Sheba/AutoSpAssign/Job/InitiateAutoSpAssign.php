@@ -9,7 +9,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\AutoSpAssign\Initiator;
 
-class InitiateAutoSpAssign extends Job implements ShouldQueue
+class InitiateAutoSpAssign extends Job
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -30,8 +30,10 @@ class InitiateAutoSpAssign extends Job implements ShouldQueue
 
     public function handle()
     {
-        if ($this->attempts() > 0) return;
-        $initiator = new Initiator();
+        if ($this->attempts() > 1) return;
+        /** @var Initiator $initiator */
+        $initiator = app(Initiator::class);
+        $initiator->setPartnerIds($this->partnerId)->setCustomer($this->customer)->setPartnerOrder($this->partnerOrder)->initiate();
         dd($this);
     }
 }

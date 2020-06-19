@@ -49,6 +49,7 @@ class Finder
     {
         $p_reports = $this->getFromDB();
         $total_served_count = $this->getTotalServedCount();
+        dd($total_served_count);
         $partners = [];
         foreach ($p_reports as $p_report) {
             $eligible_partner = new EligiblePartner();
