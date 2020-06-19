@@ -397,7 +397,7 @@ class PartnerOrderRepository
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
         $partner_order['due_amount'] = (double)$partner_order->due;
         $partner_order['discount'] = (double)$partner_order->totalDiscount;
-        $partner_order['sheba_collection'] = (double)$partner_order->sheba_collection;
+        $partner_order['sheba_collection'] = (int)$partner_order->sheba_collection;
         $partner_order['partner_collection'] = (double)$partner_order->partner_collection;
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
