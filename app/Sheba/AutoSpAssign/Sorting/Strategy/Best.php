@@ -82,6 +82,7 @@ class Best implements Strategy
     {
         $score = 0;
         foreach ($this->getNormalizedParameters() as $param) {
+            dump($param->setPartner($partner)->getScore(),$param);
             $score += $param->setPartner($partner)->getScore();
         }
         return $score;

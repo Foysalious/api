@@ -374,6 +374,7 @@ class OrderPlace
         try {
             $this->resolveAddress();
             $this->fetchPartner();
+            dd($this->partnersFromList->pluck('id')->toArray());
             $job_services = $this->createJobService();
             $this->calculateOrderAmount($job_services);
             $this->setVoucherData();

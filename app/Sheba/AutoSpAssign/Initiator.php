@@ -62,7 +62,7 @@ class Initiator
     public function initiate()
     {
         $finder = new Finder();
-        $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId(14)->find();
+        $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId($this->partnerOrder->jobs->first()->category_id)->find();
         $sorter = new PartnerSort();
         $eligible_partners = $sorter->setStrategy($this->getStrategy())->sort($eligible_partners);
         dd($eligible_partners);

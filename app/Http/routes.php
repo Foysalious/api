@@ -1,11 +1,13 @@
 <?php
 
-use App\Models\Customer;
+
+use App\Models\PartnerOrder;
 use Sheba\AutoSpAssign\Initiator;
 
 Route::get('/', function () {
-    $init=new Initiator();
-    $init->setPartnerIds([595,975])->initiate();
+    /** @var Initiator $init */
+    $init = app(Initiator::class);
+    $init->setPartnerIds([3836, 37662,37914])->setPartnerOrder(PartnerOrder::where('order_id', 161022)->first())->initiate();
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 

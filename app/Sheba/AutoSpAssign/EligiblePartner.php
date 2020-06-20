@@ -16,6 +16,11 @@ class EligiblePartner
     private $lifetimeServedJobCount;
     public $score;
 
+    public function getPackageId()
+    {
+        return $this->packageId;
+    }
+
 
     public function setScore($score)
     {
@@ -103,21 +108,25 @@ class EligiblePartner
 
     public function getIta()
     {
+        if (!$this->recentServedJobCount) return 0;
         return ($this->itaCount / $this->recentServedJobCount) * 100;
     }
 
     public function getOta()
     {
+        if (!$this->recentServedJobCount) return 0;
         return ($this->otaCount / $this->recentServedJobCount) * 100;
     }
 
     public function getComplainRatio()
     {
+        if (!$this->recentServedJobCount) return 0;
         return ($this->complainCount / $this->recentServedJobCount) * 100;
     }
 
     public function getResourceAppUsageRatio()
     {
+        if (!$this->recentServedJobCount) return 0;
         return ($this->resourceAppUsageCount / $this->recentServedJobCount) * 100;
     }
 
