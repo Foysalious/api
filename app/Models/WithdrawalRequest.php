@@ -2,15 +2,26 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
-class PartnerWithdrawalRequest extends Model
+Relation::morphMap([
+    'partner' => 'App\Models\Partner',
+    'resource' => 'App\Models\Resource'
+]);
+
+class WithdrawalRequest extends Model
 {
     protected $guarded = ['id'];
     private $deadline = Carbon::SATURDAY;
 
+    public function requester()
+    {
+        return $this->morphTo();
+    }
+
     public function partner()
     {
-        return $this->belongsTo(Partner::class);
+        return $this->requester();
     }
 
     public function scopeNotCancelled($query)

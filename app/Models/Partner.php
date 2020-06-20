@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
@@ -372,6 +373,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
     }
 
+
     public function updatedAt()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -420,14 +422,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function withdrawalRequests()
+    {
+        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
+    }
+
     public function lastWeekWithdrawalRequest()
     {
         return $this->withdrawalRequests()->lastWeek()->notCancelled()->first();
-    }
-
-    public function withdrawalRequests()
-    {
-        return $this->hasMany(PartnerWithdrawalRequest::class);
     }
 
     public function currentWeekWithdrawalRequest()
@@ -561,7 +564,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return (double)$this->subscription_rules->commission->value;
     }
 
-    public function canCreateResource(Array $types)
+    public function canCreateResource(array $types)
     {
         return $this->subscriber()->canCreateResource($types);
     }
