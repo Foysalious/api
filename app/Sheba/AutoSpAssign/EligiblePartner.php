@@ -21,6 +21,10 @@ class EligiblePartner
         return $this->packageId;
     }
 
+    public function getId()
+    {
+        return $this->id;
+    }
 
     public function setScore($score)
     {

@@ -4,11 +4,11 @@
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use Sheba\AutoSpAssign\PartnerOrderRequest\Store;
 use Sheba\AutoSpAssign\Sorting\PartnerSort;
 use Sheba\AutoSpAssign\Sorting\Strategy\Basic;
 use Sheba\AutoSpAssign\Sorting\Strategy\Best;
 use Sheba\PartnerOrderRequest\Creator;
-use Sheba\PartnerOrderRequest\Store;
 
 class Initiator
 {
@@ -66,12 +66,11 @@ class Initiator
         $sorter = new PartnerSort();
         $eligible_partners = $sorter->setStrategy($this->getStrategy())->sort($eligible_partners);
         $this->orderRequestStore->setPartnerOrderId($this->partnerOrder->id)->setPartners($eligible_partners)->set();
-        $first_partner_id = [$partners->first()->id];
-        $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
+        $first_partner_id = [$eligible_partners[0]->getId()];
+        $this->partnerOrderRequestCreator->setPartnerOrder($this->partnerOrder)->setPartners($first_partner_id)->create();
     }
 
-    public
-    function getStrategy()
+    public function getStrategy()
     {
         if ($this->getCustomerOrderCount() < 3) return new Best();
         return new Basic();
@@ -80,11 +79,9 @@ class Initiator
     /**
      * @return mixed
      */
-    private
-    function getCustomerOrderCount()
+    private function getCustomerOrderCount()
     {
-        return 0;
-        return Order::where('customer_id', $this->order->customer_id)->select('id')->count();
+        return Order::where('customer_id', $this->partnerOrder->order->customer_id)->select('id')->count();
     }
 
 

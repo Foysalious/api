@@ -1,4 +1,4 @@
-<?php namespace Sheba\PartnerOrderRequest;
+<?php namespace Sheba\AutoSpAssign\PartnerOrderRequest;
 
 
 use Illuminate\Contracts\Cache\Repository;
@@ -35,7 +35,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode(serialize($this->partners)), $this->getExpirationTimeInSeconds() / 60);
+        $store->put($this->getCacheName(), json_encode(serialize($this->partners)), $this->getExpirationTimeInMinutes());
     }
 
     /**
@@ -55,9 +55,9 @@ class Store
         return sprintf("%s::%d", "order_requests", $this->partnerOrderId);
     }
 
-    private function getExpirationTimeInSeconds()
+    private function getExpirationTimeInMinutes()
     {
-        return 60 * 60;
+        return 60;
     }
 
 }

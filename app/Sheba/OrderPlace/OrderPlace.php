@@ -390,13 +390,8 @@ class OrderPlace
                 $partner_order = $partner_order->fresh();
                 if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
-                if ($this->canCreatePartnerOrderRequest()) {
+                if ($this->canCreatePartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
-//                    $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-//                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
-//                    $first_partner_id = [$partners->first()->id];
-//                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
-                }
             });
         } catch (QueryException $e) {
             throw $e;
