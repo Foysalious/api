@@ -8,7 +8,7 @@ trait GenericHandler
      */
     protected function getCode()
     {
-        return $this->exception->getCode();
+        return $this->exception->getCode() ? $this->exception->getCode() : 500;
     }
 
     /**
@@ -16,6 +16,6 @@ trait GenericHandler
      */
     protected function getMessage()
     {
-        return $this->exception->getMessage();
+        return empty(trim($this->exception->getMessage())) ? "Something went wrong" : $this->exception->getMessage();
     }
 }

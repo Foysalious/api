@@ -21,7 +21,7 @@ class ReportsController extends Controller
 
     /**
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|void
      */
     public function product(Request $request)
     {
@@ -48,7 +48,7 @@ class ReportsController extends Controller
 
     /**
      * @param Request $request
-     * @return JsonResponse
+     * @return JsonResponse|void
      */
     public function customer(Request $request)
     {
