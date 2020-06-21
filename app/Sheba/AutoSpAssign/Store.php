@@ -1,4 +1,4 @@
-<?php namespace Sheba\PartnerOrderRequest;
+<?php namespace Sheba\AutoSpAssign;
 
 
 use Illuminate\Contracts\Cache\Repository;

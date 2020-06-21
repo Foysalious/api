@@ -65,10 +65,9 @@ class Initiator
         $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId($this->partnerOrder->jobs->first()->category_id)->find();
         $sorter = new PartnerSort();
         $eligible_partners = $sorter->setStrategy($this->getStrategy())->sort($eligible_partners);
-        dd($eligible_partners);
-//        $this->orderRequestStore->setPartnerOrderId($this->partnerOrder->id)->setPartners($partners->pluck('id')->values()->all())->set();
-//        $first_partner_id = [$partners->first()->id];
-//        $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
+        $this->orderRequestStore->setPartnerOrderId($this->partnerOrder->id)->setPartners($eligible_partners)->set();
+        $first_partner_id = [$partners->first()->id];
+        $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
     }
 
     public

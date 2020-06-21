@@ -101,6 +101,7 @@ class Finder
                 ->selectRaw("partners.current_impression as " . self::IMPRESSION_COUNT)
                 ->rightJoin('partners', 'partners.id', '=', 'partner_order_report.sp_id')
                 ->where('closed_date', '<>', null)
+                ->where('service_category_id', $this->category_id)
                 ->whereIn('sp_id', $this->partnerIds)
                 ->groupBy('sp_id')->get();
     }
