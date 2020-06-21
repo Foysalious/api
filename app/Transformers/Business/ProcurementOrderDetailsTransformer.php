@@ -9,6 +9,10 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = ['attachments'];
 
+    const IS_VERIFIED = 'Verified';
+    const VERIFIED = 'Sheba Verified';
+    const UNVERIFIED = 'Unverified';
+
     /** @var Bid $bid */
     private $bid;
 
@@ -24,13 +28,13 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
     public function transform($procurement)
     {
         $bid_price_quotations = null;
-        if ($procurement->isAdvanced())
-            $bid_price_quotations = $this->generateBidItemData();
+        if ($procurement->isAdvanced()) $bid_price_quotations = $this->generateBidItemData();
         $category = $procurement->category ? $procurement->category : null;
         $bidder = $this->bid->bidder;
         return [
             'procurement_id' => $procurement->id,
-            'procurement_title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'procurement_code' => $procurement->orderCode(),
+            'procurement_title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 15),
             'procurement_status' => OrderStatusCalculator::resolveStatus($procurement),
             'procurement_start_date' => $procurement->procurement_start_date->format('d/m/y'),
             'procurement_end_date' => $procurement->procurement_end_date->format('d/m/y'),
@@ -39,12 +43,14 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
             'category' => $category ? [
                 'id' => $category->id,
                 'name' => $category->name,
+                'image' => $category->thumb,
             ] : null,
             'vendor' => [
                 'name' => $bidder->name,
                 'logo' => $bidder->logo,
                 'contact_person' => $bidder->getContactPerson(),
                 'mobile' => $bidder->getMobile(),
+                'status' => $bidder->status === self::IS_VERIFIED ? self::VERIFIED: self::UNVERIFIED,
                 'address' => $bidder->address,
                 'rating' => round($bidder->reviews->avg('rating'), 2),
                 'total_rating' => $bidder->reviews->count()
