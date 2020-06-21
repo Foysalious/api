@@ -6,6 +6,7 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Models\ProcurementItem;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Tag;
@@ -489,6 +490,23 @@ class ProcurementController extends Controller
         $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
         return api_response($request, null, 200, ["message" => "Successful"]);
 
+    }
+
+    public function updateItem($business, $procurement, Request $request, Updater $updater)
+    {
+        $this->validate($request, [
+            'item' => 'required|string',
+        ]);
+        $this->setModifier($request->manager_member);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+        $procurement->load('items.fields');
+        $procurement_item_type = collect(json_decode($request->item, true))->first();
+        $procurement_item_fields = $procurement_item_type['fields'];
+        /** @var ProcurementItem $procurement_item */
+        $procurement_item = $procurement->items->where('type', $procurement_item_type['item_type'])->first();
+        $updater->itemFieldsUpdate($procurement_item, $procurement_item_fields);
+        return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
     /**

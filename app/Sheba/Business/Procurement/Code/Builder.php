@@ -35,6 +35,15 @@ class Builder extends Machine
      * @param Procurement $procurement
      * @return string
      */
+    public function order(Procurement $procurement)
+    {
+        return 'P' . $this->baseCodeByProcurement($procurement);
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @return string
+     */
     private function baseCodeByProcurement(Procurement $procurement)
     {
         return self::SEPARATOR . $this->getProcurementFormat($procurement) . self::SEPARATOR . $this->getBidCodeByProcurement($procurement);

@@ -117,6 +117,11 @@ class Procurement extends Model implements PayableType
         return $this->type == Type::ADVANCED;
     }
 
+    public function orderCode()
+    {
+        return $this->codeBuilder->order($this);
+    }
+
     public function workOrderCode()
     {
         return $this->codeBuilder->workOrder($this);

@@ -1,11 +1,15 @@
 <?php namespace App\Sheba\Business\Procurement;
 
 use App\Models\Procurement;
+use App\Models\ProcurementItem;
+use App\Models\ProcurementItemField;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\Procurement\RequestHandler;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
+use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
@@ -24,6 +28,9 @@ class Updater
     private $closedAndPaidAt;
     private $data;
     private $procurementOrderCloseHandler;
+    private $procurementItemFieldData;
+    private $procurementItemRepository;
+    private $procurementItemFieldRepository;
 
     /** @var RequestHandler $requestHandler */
     private $requestHandler;
@@ -35,12 +42,16 @@ class Updater
      * @param Creator $creator
      * @param WalletTransactionHandler $wallet_transaction_handler
      * @param PaymentCreator $payment_creator
+     * @param ProcurementItemRepositoryInterface $procurement_item_repository
+     * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 OrderClosedHandler $procurement_order_close_handler,
                                 Creator $creator,
                                 WalletTransactionHandler $wallet_transaction_handler,
-                                PaymentCreator $payment_creator)
+                                PaymentCreator $payment_creator,
+                                ProcurementItemRepositoryInterface $procurement_item_repository,
+                                ProcurementItemFieldRepositoryInterface $procurement_item_field_repository)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
@@ -48,7 +59,8 @@ class Updater
         $this->paymentCreator = $payment_creator;
         $this->data = [];
         $this->procurementOrderCloseHandler = $procurement_order_close_handler;
-
+        $this->procurementItemRepository = $procurement_item_repository;
+        $this->procurementItemFieldRepository = $procurement_item_field_repository;
     }
 
     /**
@@ -119,6 +131,55 @@ class Updater
         $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
         $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
         $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
+    }
+
+    /**
+     * @param ProcurementItem $procurement_item
+     * @param $fields
+     */
+    public function itemFieldsUpdate(ProcurementItem $procurement_item, $fields)
+    {
+        DB::beginTransaction();
+        try {
+            $this->procurementItemFieldData = [];
+            $procurement_item->fields->each(function ($field) {
+                $this->itemFieldsDelete($field);
+            });
+            $this->makeItemFields($procurement_item, $fields);
+            $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+        }
+    }
+
+    /**
+     * @param ProcurementItem $procurement_item
+     * @param $fields
+     */
+    private function makeItemFields(ProcurementItem $procurement_item, $fields)
+    {
+        foreach ($fields as $field) {
+            $is_required = isset($field['is_required']) ? $field['is_required'] : 1;
+            $options = isset($field['options']) ? $field['options'] : [];
+            $unit = isset($field['unit']) ? $field['unit'] : null;
+            array_push($this->procurementItemFieldData, [
+                'title' => $field['title'],
+                'short_description' => isset($field['short_description']) ? $field['short_description'] : '',
+                'input_type' => isset($field['type']) ? $field['type'] : null,
+                'result' => isset($field['result']) ? $field['result'] : null,
+                'procurement_item_id' => $procurement_item->id,
+                'variables' => json_encode(['is_required' => $is_required, 'options' => $options, 'unit' => $unit])
+            ]);
+        }
+    }
+
+    /**
+     * @param ProcurementItemField $field
+     */
+    private function itemFieldsDelete(ProcurementItemField $field)
+    {
+        $this->procurementItemFieldRepository->delete($field->id);
     }
 
     /**
