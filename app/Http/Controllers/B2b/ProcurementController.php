@@ -455,8 +455,8 @@ class ProcurementController extends Controller
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($procurement, new ProcurementDetailsTransformer());
         $procurement = $fractal->createData($resource)->toArray()['data'];
-
-        return api_response($request, null, 200, ['procurement' => $procurement]);
+        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
+        return api_response($request, null, 200, ['procurement' => $procurement, 'number_of_participants' => $number_of_participants]);
     }
 
     /**
