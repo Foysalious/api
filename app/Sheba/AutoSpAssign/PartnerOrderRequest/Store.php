@@ -52,7 +52,7 @@ class Store
 
     private function getCacheName()
     {
-        return sprintf("%s::%d", "order_requests", $this->partnerOrderId);
+        return sprintf("%s::%d", "auto_sp_assign", $this->partnerOrderId);
     }
 
     private function getExpirationTimeInMinutes()
