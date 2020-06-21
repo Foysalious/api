@@ -475,7 +475,6 @@ class ProcurementController extends Controller
             'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
-            'payment_options' => 'sometimes|required|string',
         ]);
 
         $procurement = $this->procurementRepository->find($procurement);
