@@ -1,5 +1,8 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
+use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
+use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
@@ -17,6 +20,8 @@ use App\Models\PartnerOrder;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
@@ -39,6 +44,7 @@ use Sheba\PartnerOrderRequest\Creator;
 use Sheba\PartnerOrderRequest\Store;
 use Sheba\RequestIdentification;
 use DB;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 
@@ -154,6 +160,11 @@ class OrderPlace
     /**
      * @param $services
      * @return $this
+     * @throws DestinationCitySameAsPickupException
+     * @throws InsideCityPickUpAddressNotFoundException
+     * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws ValidationException
+     * @throws ServiceIsUnpublishedException
      */
     public function setServices($services)
     {
@@ -577,11 +588,14 @@ class OrderPlace
             'crm_id' => $this->crmId,
             'job_additional_info' => $this->additionalInformation,
             'category_answers' => $this->categoryAnswers,
-            'material_commission_rate' => config('sheba.material_commission_rate'),
             'status' => JobStatuses::PENDING,
         ];
 
-        if ($this->selectedPartner) $job_data['commission_rate'] = $this->category->commission($this->selectedPartner->id);
+        if ($this->selectedPartner) {
+            $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner($this->selectedPartner);
+            $job_data['commission_rate'] = $commissions->getServiceCommission();
+            $job_data['material_commission_rate'] = $commissions->getMaterialCommission();
+        }
 
         $job_data['discount'] = 0.00;
         if ($this->orderVoucherData->isValid()) {
