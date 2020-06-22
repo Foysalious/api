@@ -205,4 +205,26 @@ class ResourceJobController extends Controller
         $jobs = $jobs->getHistoryJobs();
         return api_response($request, $jobs, 200, ['jobs' => ['years' => $jobs]]);
     }
+
+    public function jobSearch(Request $request, JobList $job_list)
+    {
+        $this->validate($request, ['q' => 'required']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if (substr($request->q,1,1) == '-') {
+            $order_id = (int) substr($request->q,2) - config('sheba.order_code_start');
+            $results = $job_list->setResource($resource)->setOrderId($order_id)->getJobsFilteredByOrderId();
+            $order_code = $request->q;
+            $jobs = $results->filter(function ($job) use ($order_code) {
+                return $job['order_code'] == $order_code;
+            });
+        } else {
+            $jobs = $job_list->setResource($resource)->setQuery($request->q);
+            if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+            $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
+        }
+        if($jobs->isEmpty()) return api_response($request, $jobs, 404);
+        return api_response($request, $jobs, 200, ['results' => $jobs]);
+    }
 }
