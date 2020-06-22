@@ -38,7 +38,7 @@ class SslBuilder
      */
     public static function getStore(PayableUser $user)
     {
-        if ($user instanceof Customer) return new DefaultStore();
+        if ($user instanceof Customer) return new MarketPlace();
 
         return new DefaultStore();
     }
