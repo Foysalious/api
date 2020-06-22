@@ -157,6 +157,7 @@ class JobController extends Controller
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
+        $job_collection->put('is_closed', $job->partnerOrder->closed_at != null ? 1 : 0);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {
