@@ -301,9 +301,9 @@ class ProfileController extends Controller
             if (!empty($affiliate)) {
                 $this->updateVerificationStatus($affiliate);
                 $submitted_by = get_class($affiliate);
+                $nidLogData = $profileNIDSubmissionLogRepo->processData($profile->id, $submitted_by, $log);
+                $profileNIDSubmissionLogRepo->create($nidLogData);
             }
-            $nidLogData = $profileNIDSubmissionLogRepo->processData($affiliate->profile->id, $submitted_by, $log);
-            $profileNIDSubmissionLogRepo->create($nidLogData);
 
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
