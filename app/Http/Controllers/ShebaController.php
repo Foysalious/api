@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
+use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
@@ -25,11 +26,16 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\EMI\Banks;
 use Sheba\EMI\Calculations;
+use Sheba\EMI\Calculator;
+use Sheba\EMI\CalculatorForManager;
 use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
 
@@ -38,15 +44,17 @@ class ShebaController extends Controller {
 
     private $serviceRepository;
     private $reviewRepository;
-    private $paymentLinkrepository;
+    private $paymentLinkRepo;
 
-    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository) {
+    public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
+    {
         $this->serviceRepository     = $service_repo;
         $this->reviewRepository      = $review_repo;
-        $this->paymentLinkrepository = $paymentLinkRepository;
+        $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
-    public function getInfo() {
+    public function getInfo()
+    {
         $job_count      = Job::all()->count() + 16000;
         $service_count  = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
@@ -245,227 +253,113 @@ class ShebaController extends Controller {
         }
     }
 
-    public function checkTransactionStatus(Request $request, $transactionID, PdfHandler $pdfHandler) {
-        $payment = Payment::where('transaction_id', $transactionID)->whereIn('status', ['failed', 'validated', 'completed'])->first();
-        if (!$payment) {
-            $payment = Payment::where('transaction_id', $transactionID)->first();
-            if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
-            if ($payment->transaction_details && isset(json_decode($payment->transaction_details)->errorMessage)) {
-                $message = 'Your payment has been failed due to ' . json_decode($payment->transaction_details)->errorMessage;
+    public function checkTransactionStatus(Request $request, $transaction_id)
+    {
+        /** @var Payment $payment */
+        $payment = Payment::where('transaction_id', $transaction_id)->first();
+        if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
+
+        if (!$payment->isComplete() && !$payment->isPassed()) {
+            if ($error = $payment->getErrorMessage()) {
+                $message = 'Your payment has been failed due to ' . $error;
             } else {
                 $message = 'Payment Failed.';
             }
             return api_response($request, null, 404, ['message' => $message]);
         }
+
+        /** @var Payable $payable */
+        $payable = $payment->payable;
         $info = [
-            'amount'         => $payment->payable->amount,
-            'method'         => $payment->paymentDetails->last()->readable_method,
-            'description'    => $payment->payable->description,
-            'created_at'     => $payment->created_at->format('jS M, Y, h:i A'),
-            'invoice_link'   => $payment->invoice_link,
-            'transaction_id' => $transactionID
+            'amount' => $payable->amount,
+            'method' => $payment->paymentDetails->last()->readable_method,
+            'description' => $payable->description,
+            'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
+            'invoice_link' => $payment->invoice_link,
+            'transaction_id' => $transaction_id
         ];
-        $info = array_merge($info, $this->getInfoForPaymentLink($payment->payable));
-        if ($payment->status == 'validated' || $payment->status == 'failed') {
-            $message = 'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.';
-        } else {
-            $message = 'Successful';
-        }
+
+        if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
+
+        $message = $payment->isPassed() ?
+            'Your payment has been received but there was a system error. It will take some time to update your transaction. Call 16516 for support.' :
+            'Successful';
+
         return api_response($request, null, 200, ['info' => $info, 'message' => $message]);
     }
 
-    public function getInfoForPaymentLink(Payable $payable) {
-        $data = [];
-        if ($payable->type == 'payment_link') {
-            $payment_link = $this->paymentLinkrepository->getPaymentLinkByLinkId($payable->type_id);
-            $user         = $payment_link->getPaymentReceiver();
-            $data         = [
-                'payment_receiver' => [
-                    'name'    => $user->name,
-                    'image'   => $user->logo,
-                    'mobile'  => $user->getMobile(),
-                    'address' => $user->address
-                ],
-                'payer'            => [
-                    'name'   => $payable->user->profile->name,
-                    'mobile' => $payable->user->profile->mobile
-                ]
-            ];
-        }
-        return $data;
-
+    private function mergePaymentLinkInfo(&$info, Payable $payable)
+    {
+        $payment_link = $this->paymentLinkRepo->getPaymentLinkByLinkId($payable->type_id);
+        $receiver = $payment_link->getPaymentReceiver();
+        $payer = $payable->user->profile;
+        $info = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
     }
 
-    public function getPayments(Request $request) {
-        try {
-            $version_code  = (int)$request->header('Version-Code');
-            $platform_name = $request->header('Platform-Name');
-            $payments      = AvailableMethods::get($request->payable_type, $version_code, $platform_name);
-            return api_response($request, $payments, 200, [
-                'payments'         => $payments,
-                'discount_message' => 'Pay online and stay relaxed!!!'
-            ]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+    private function getInfoForPaymentLink(Profile $payer, HasWalletTransaction $receiver)
+    {
+        return [
+            'payment_receiver' => [
+                'name' => $receiver->name,
+                'image' => $receiver->logo,
+                'mobile' => $receiver->getMobile(),
+                'address' => $receiver->address
+            ],
+            'payer' => [
+                'name' => $payer->name,
+                'mobile' => $payer->mobile
+            ]
+        ];
     }
 
-    public function getEmiInfo(Request $request) {
-        try {
-            $amount       = $request->amount;
-            $icons_folder = getEmiBankIconsFolder(true);
-
-            if (!$amount) {
-                return api_response($request, null, 400, ['message' => 'Amount missing']);
-            }
-
-            if ($amount < config('emi.minimum_emi_amount')) {
-                return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
-            }
-
-            $bank_transaction_fee = ceil($amount * (config('emi.bank_fee_percentage') / 100));
-
-            $emi = [
-                [
-                    "number_of_months"     => 3,
-                    "interest"             => "3%",
-                    "total_interest"       => number_format(ceil(($amount * 0.03))),
-                    "bank_transaction_fee" => $bank_transaction_fee,
-                    "amount"               => number_format(ceil(($amount + ($amount * 0.03) + $bank_transaction_fee) / 3)),
-                    "total_amount"         => number_format($amount + ceil(($amount * 0.03)) + $bank_transaction_fee)
-                ],
-                [
-                    "number_of_months"     => 6,
-                    "interest"             => "4.5%",
-                    "total_interest"       => number_format(ceil(($amount * 0.045))),
-                    "bank_transaction_fee" => $bank_transaction_fee,
-                    "amount"               => number_format(ceil(($amount + ($amount * 0.045) + $bank_transaction_fee) / 6)),
-                    "total_amount"         => number_format($amount + ceil(($amount * 0.045)) + $bank_transaction_fee)
-                ],
-                [
-                    "number_of_months"     => 9,
-                    "interest"             => "6.5%",
-                    "total_interest"       => number_format(ceil(($amount * 0.065))),
-                    "bank_transaction_fee" => $bank_transaction_fee,
-                    "amount"               => number_format(ceil(($amount + ($amount * 0.065) + $bank_transaction_fee) / 9)),
-                    "total_amount"         => number_format($amount + ceil(($amount * 0.065)) + $bank_transaction_fee)
-                    //                    "amount" => number_format(($amount + ($amount * 0.065)) / 9, 2, '.', '')
-                ],
-                [
-                    "number_of_months"     => 12,
-                    "interest"             => "8.5%",
-                    "total_interest"       => number_format(ceil(($amount * 0.085))),
-                    "bank_transaction_fee" => $bank_transaction_fee,
-                    "amount"               => number_format(ceil(($amount + ($amount * 0.085) + $bank_transaction_fee) / 12)),
-                    "total_amount"         => number_format($amount + ceil(($amount * 0.085)) + $bank_transaction_fee)
-                ]
-            ];
-
-            $banks = [
-                [
-                    "name"  => "Midland Bank Ltd",
-                    "logo"  => $icons_folder . "midland_bank.png",
-                    "asset" => "midland_bank"
-                ],
-                [
-                    "name"  => "SBAC Bank",
-                    "logo"  => $icons_folder . "sbac_bank.jpg",
-                    "asset" => "sbac_bank"
-                ],
-                [
-                    "name"  => "Meghna Bank Limited",
-                    "logo"  => $icons_folder . "meghna_bank.png",
-                    "asset" => "meghna_bank"
-                ],
-                [
-                    "name"  => "NRB Bank Limited",
-                    "logo"  => $icons_folder . "nrb_bank.png",
-                    "asset" => "nrb_bank"
-                ],
-                [
-                    "name"  => "STANDARD CHARTERED BANK",
-                    "logo"  => $icons_folder . "standard_chartered.png",
-                    "asset" => "standard_chartered"
-                ],
-                [
-                    "name"  => "STANDARD BANK",
-                    "logo"  => $icons_folder . "standard_bank.png",
-                    "asset" => "standard_bank"
-                ],
-                [
-                    "name"  => "SOUTHEAST BANK",
-                    "logo"  => $icons_folder . "sebl_bank.png",
-                    "asset" => "sebl_bank"
-                ],
-                [
-                    "name"  => "NCC BANK",
-                    "logo"  => $icons_folder . "ncc_bank.png",
-                    "asset" => "ncc_bank"
-                ],
-                [
-                    "name"  => "MUTUAL TRUST BANK",
-                    "logo"  => $icons_folder . "mtb_bank.png",
-                    "asset" => "mtb_bank"
-                ],
-                [
-                    "name"  => "JAMUNA BANK",
-                    "logo"  => $icons_folder . "jamuna_bank.png",
-                    "asset" => "jamuna_bank"
-                ],
-                [
-                    "name"  => "EASTERN BANK",
-                    "logo"  => $icons_folder . "ebl.png",
-                    "asset" => "ebl"
-                ],
-                [
-                    "name"  => "DUTCH BANGLA BANK",
-                    "logo"  => $icons_folder . "dbbl_bank.png",
-                    "asset" => "dbbl_bank"
-                ],
-                [
-                    "name"  => "DHAKA BANK LIMITED",
-                    "logo"  => $icons_folder . "dhaka_bank.png",
-                    "asset" => "dhaka_bank"
-                ],
-                [
-                    "name"  => "CITY BANK LIMITED",
-                    "logo"  => $icons_folder . "city_bank.png",
-                    "asset" => "city_bank"
-                ],
-                [
-                    "name"  => "BRAC BANK LIMITED",
-                    "logo"  => $icons_folder . "brac_bank.png",
-                    "asset" => "brac_bank"
-                ],
-                [
-                    "name"  => "BANK ASIA LIMITED",
-                    "logo"  => $icons_folder . "bank_asia.png",
-                    "asset" => "bank_asia"
-                ],
-            ];
-
-            $emi_data = [
-                "emi"   => $emi,
-                "banks" => $banks
-            ];
-
-            return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
-        } catch (Exception $e) {
-            return api_response($request, null, 500);
-        }
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws Exception
+     */
+    public function getPayments(Request $request)
+    {
+        $version_code = (int)$request->header('Version-Code');
+        $platform_name = $request->header('Platform-Name');
+        $user_type = $request->type;
+        if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
+        if (!$user_type) $user_type = "customer";
+        $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
+        return api_response($request, $payments, 200, [
+            'payments' => $payments,
+            'discount_message' => 'Pay online and stay relaxed!!!'
+        ]);
     }
 
-    public function emiInfoForManager(Request $request) {
+    public function getEmiInfo(Request $request, Calculator $emi_calculator)
+    {
+        $amount       = $request->amount;
+
+        if (!$amount) {
+            return api_response($request, null, 400, ['message' => 'Amount missing']);
+        }
+
+        if ($amount < config('emi.minimum_emi_amount')) {
+            return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+        }
+
+        $emi_data = [
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => Banks::get()
+        ];
+
+        return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+    }
+
+    public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
+    {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
             $amount               = $request->amount;
             $icons_folder         = getEmiBankIconsFolder(true);
-            $emi=Calculations::calculateEmiCharges($amount);
-            $banks=Calculations::BankDetails($icons_folder);
             $emi_data = [
-                "emi"   => $emi,
-                "banks" => $banks
+                "emi"   => $emi_calculator->getCharges($amount),
+                "banks" => Banks::get($icons_folder)
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -478,7 +372,8 @@ class ShebaController extends Controller {
         }
     }
 
-    public function nidValidate(Request $request) {
+    public function nidValidate(Request $request)
+    {
         try {
             $this->validate($request, NidValidation::$RULES);
             $nidValidation = new NidValidation();
@@ -509,7 +404,8 @@ class ShebaController extends Controller {
         }
     }
 
-    public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository) {
+    public function getSluggableType(Request $request, $slug, MetaTagRepositoryInterface $meta_tag_repository)
+    {
         $type = SluggableType::where('slug', $slug)->select('sluggable_type', 'sluggable_id')->first();
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
@@ -524,7 +420,8 @@ class ShebaController extends Controller {
         return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
     }
 
-    public function redirectUrl(Request $request) {
+    public function redirectUrl(Request $request)
+    {
         $this->validate($request, ['url' => 'required']);
 
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
@@ -534,7 +431,5 @@ class ShebaController extends Controller {
         } else {
             return api_response($request, true, 404, ['message' => 'Not Found']);
         }
-
     }
-
 }

@@ -1,4 +1,4 @@
-<?php namespace Sheba\Payment;
+<?php namespace Sheba\Wallet;
 
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
@@ -19,7 +19,6 @@ trait Wallet
 {
     public function rechargeWallet($amount, $transaction_data)
     {
-        /** @var PartnerTransaction $transaction */
         $transaction = null;
         DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
             $this->creditWallet($amount);
@@ -31,7 +30,6 @@ trait Wallet
 
     public function minusWallet($amount, $transaction_data)
     {
-        /** @var PartnerTransaction $transaction */
         $transaction = null;
         DB::transaction(function () use ($amount, $transaction_data, &$transaction) {
             $this->debitWallet($amount);
@@ -75,5 +73,11 @@ trait Wallet
         } else if ($this instanceof Resource) {
             return new Model();
         }
+    }
+
+    public function getBalance()
+    {
+        return $this->transactions()->selectRaw('SUM(IF(type = "debit", -1, 1) * amount) as balance')
+            ->pluck('balance')->first();
     }
 }

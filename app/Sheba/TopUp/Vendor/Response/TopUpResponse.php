@@ -10,6 +10,9 @@ abstract class TopUpResponse
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     abstract public function hasSuccess(): bool;
 
     /**
@@ -27,6 +30,13 @@ abstract class TopUpResponse
      */
     abstract public function getErrorMessage();
 
+    /**
+     * @return bool
+     */
+    public function hasError(): bool
+    {
+        return !$this->hasSuccess();
+    }
 
     /**
      * @return TopUpSuccessResponse

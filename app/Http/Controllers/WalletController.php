@@ -3,7 +3,7 @@
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
-use App\Repositories\PaymentRepository;
+use App\Repositories\PaymentStatusChangeLogRepository;
 use DB;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
@@ -12,7 +12,11 @@ use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\RechargeAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 use Sheba\Reward\BonusCredit;
 use Sheba\Transactions\Wallet\TransactionGateways;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -24,10 +28,10 @@ class WalletController extends Controller
 
     /**
      * @param Request $request
-     * @param ShebaPayment $sheba_payment
+     * @param PaymentManager $payment_manager
      * @return JsonResponse
      */
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         try {
             /** @var Payment $payment */
@@ -35,11 +39,11 @@ class WalletController extends Controller
             $this->setModifier($payment->payable->user);
             if (!$payment) return api_response($request, null, 404); elseif ($payment->isComplete()) return api_response($request, 1, 200, ['message' => 'Payment completed']);
             elseif (!$payment->canComplete()) return api_response($request, null, 400, ['message' => 'Payment validation failed.']);
-            $payment = $sheba_payment->setMethod('wallet')->complete($payment);
+            $payment = $payment_manager->setMethodName(PaymentStrategy::WALLET)->setPayment($payment)->complete();
             if ($payment->isComplete()) $message = 'Payment successfully completed'; elseif ($payment->isPassed()) $message = 'Your payment has been received but there was a system error. It will take some time to transaction your order. Call 16516 for support.';
             return api_response($request, null, 200, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -47,14 +51,16 @@ class WalletController extends Controller
 
     /**
      * @param Request $request
-     * @param ShebaPayment $sheba_payment
+     * @param PaymentManager $payment_manager
      * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
      */
-    public function recharge(Request $request, ShebaPayment $sheba_payment)
+    public function recharge(Request $request, PaymentManager $payment_manager)
     {
+        $methods = implode(',', AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
-
-            'payment_method' => 'required|in:online,bkash,cbl,ok_wallet',
+            'payment_method' => 'required|in:' . $methods,
             'amount' => 'required|numeric|min:10|max:100000',
             'user_id' => 'required',
             'user_type' => 'required|in:customer,affiliate,partner',
@@ -70,17 +76,17 @@ class WalletController extends Controller
         if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
         $recharge_adapter = new RechargeAdapter($user, $request->amount);
 
-        $payment = $sheba_payment->setMethod($request->payment_method)->init($recharge_adapter->getPayable());
+        $payment = $payment_manager->setMethodName($request->payment_method)->setPayable($recharge_adapter->getPayable())->init();
         return api_response($request, $payment, 200, ['link' => $payment['link'], 'payment' => $payment->getFormattedPayment()]);
     }
 
     /**
      * @param Request $request
-     * @param PaymentRepository $paymentRepository
+     * @param PaymentStatusChangeLogRepository $paymentRepository
      * @param BonusCredit $bonus_credit
      * @return JsonResponse
      */
-    public function purchase(Request $request, PaymentRepository $paymentRepository, BonusCredit $bonus_credit)
+    public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit)
     {
         $this->validate($request, ['transaction_id' => 'required']);
 
@@ -95,7 +101,7 @@ class WalletController extends Controller
         $sheba_credit = $user->shebaCredit();
         $paymentRepository->setPayment($payment);
         if ($sheba_credit == 0) {
-            $paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
+            $paymentRepository->create(['to' => 'validation_failed', 'from' => $payment->status, 'transaction_details' => $payment->transaction_details, 'log' => "Insufficient balance. Purchase Amount: " . $payment->payable->amount . " & Sheba Credit: $sheba_credit"]);
             $payment->status = 'validation_failed';
             $payment->update();
             return api_response($request, null, 400, ['message' => 'You don\'t have sufficient credit']);
@@ -134,7 +140,7 @@ class WalletController extends Controller
                 }
             });
 
-            $paymentRepository->changeStatus([
+            $paymentRepository->create([
                 'to' => 'validated',
                 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details
@@ -145,7 +151,7 @@ class WalletController extends Controller
         } catch (QueryException $e) {
             $payment->status = 'failed';
             $payment->update();
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -164,7 +170,7 @@ class WalletController extends Controller
             ];
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
