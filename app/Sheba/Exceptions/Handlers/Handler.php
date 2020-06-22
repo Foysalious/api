@@ -33,8 +33,8 @@ abstract class Handler
     public function render()
     {
         $response = [
-            'code' => $this->exception->getCode() ? $this->exception->getCode() : 500,
-            'message' => $this->wantsTrace() && $this->getMessage() ? $this->getMessage() : 'Something went wrong'
+            'code' => $this->getCode(),
+            'message' => $this->getMessage()
         ];
 
         if ($this->wantsTrace()) {
@@ -44,7 +44,7 @@ abstract class Handler
                 'line' => $this->exception->getLine(),
             ];
         }
-        return api_response($this->request, null, 500, $response);
+        return response()->json($response);
     }
 
     /**

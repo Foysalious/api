@@ -20,6 +20,7 @@ use Sheba\Pos\Product\Updater as ProductUpdater;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class ServiceController extends Controller
@@ -147,13 +148,13 @@ class ServiceController extends Controller
             $partner_pos_service->discounts = $partner_pos_service_model->discounts;
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
-
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_CREATE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

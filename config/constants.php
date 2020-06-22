@@ -764,7 +764,7 @@ return [
         'service_unavailable' => 'Service Unavailable'
     ],
     'PARTNER_AFFILIATIONS_FAKE_REJECT_REASONS'    => ['fake'],
-    'PARTNER_DEFAULT_SECURITY_MONEY'              => 300,
+    'PARTNER_DEFAULT_SECURITY_MONEY'              => 100,
     'PARTNER_AFFILIATION_REWARD'                  => 200,
     'PARTNER_AFFILIATION_PARTNER_ORDER_BENCHMARK' => 2,
     'PARTNER_AFFILIATION_REWARD_BREAKDOWN'        => [
