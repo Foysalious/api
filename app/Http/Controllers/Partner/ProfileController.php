@@ -114,6 +114,7 @@ class ProfileController extends Controller
     public function increase_verification_request_count($profile)
     {
         $profile->nid_verification_request_count = $profile->nid_verification_request_count + 1 ;
+        $profile->last_nid_verification_request_date = Carbon::now();
         $profile->update();
     }
 
