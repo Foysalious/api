@@ -19,7 +19,6 @@ class FeedbackController extends Controller
                 'remember_token' => 'required_unless:user,0|string',
                 'description' => 'required|string'
             ]);
-            return api_response($request, null, 500);
 
             $data = $request->all();
             $partner = $request->partner;
