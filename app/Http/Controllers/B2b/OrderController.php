@@ -138,44 +138,36 @@ class OrderController extends Controller
 
     public function applyPromo(Request $request, PartnerListRequest $partnerListRequest, PromotionCalculation $promotionCalculation)
     {
-        try {
-            $this->validate($request, [
-                'services' => 'required|string',
-                'partner' => 'required',
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
-                'code' => 'required|string'
-            ]);
-            $business = $request->business;
-            $member = $request->manager_member;
-            $customer = $member->profile->customer;
-            $geo = json_decode($business->geo_informations);
-            if (!$customer) $customer = $this->memberManager->createCustomerFromMember($member);
-            $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng]);
-            $partnerListRequest->setRequest($request)->prepareObject();
-            $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
-            $location = $hyper_local ? $hyper_local->location->id : null;
-            $order_amount = $promotionCalculation->calculateOrderAmount($partnerListRequest, $request->partner);
-            if (!$order_amount) return api_response($request, null, 403);
-            $result = voucher($request->code)
-                ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, constants('SALES_CHANNELS')['B2B']['name'])
-                ->reveal();
-            if ($result['is_valid']) {
-                $voucher = $result['voucher'];
-                $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
-                return api_response($request, 1, 200, ['promotion' => $promo]);
-            } else {
-                return api_response($request, null, 403, ['message' => 'Invalid Promo']);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'services' => 'required|string',
+            'partner' => 'required',
+            'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
+            'time' => 'required|string',
+            'code' => 'required|string'
+        ]);
+        $business = $request->business;
+        $member = $request->manager_member;
+        $customer = $member->profile->customer;
+        $geo = json_decode($business->geo_informations);
+        if (!$customer) $customer = $this->memberManager->createCustomerFromMember($member);
+
+        $hyper_local = HyperLocal::insidePolygon((double)$geo->lat, (double)$geo->lng)->with('location')->first();
+        $location = $hyper_local ? $hyper_local->location->id : null;
+        $request->merge(['lat' => (double)$geo->lat, 'lng' => (double)$geo->lng, 'location' => $location]);
+
+        $partnerListRequest->setRequest($request)->setGeo($geo->lat, $geo->lng)->setLocation($location)->prepareObject();
+        $order_amount = $promotionCalculation->calculateOrderAmount($partnerListRequest, $request->partner);
+        if (!$order_amount) return api_response($request, null, 403);
+        $result = voucher($request->code)
+            ->check($partnerListRequest->selectedCategory->id, $request->partner, $location, $customer, $order_amount, constants('SALES_CHANNELS')['B2B']['name'])
+            ->reveal();
+
+        if ($result['is_valid']) {
+            $voucher = $result['voucher'];
+            $promo = array('amount' => (double)$result['amount'], 'code' => $voucher->code, 'id' => $voucher->id, 'title' => $voucher->title);
+            return api_response($request, 1, 200, ['promotion' => $promo]);
+        } else {
+            return api_response($request, null, 403, ['message' => 'Invalid Promo']);
         }
     }
 
