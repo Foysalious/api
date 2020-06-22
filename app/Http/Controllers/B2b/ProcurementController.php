@@ -112,7 +112,9 @@ class ProcurementController extends Controller
 
     public function create(Request $request)
     {
+        $uncategorised = ['id' => 0, 'name' => 'uncategorised'];
         $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $categories = array_merge([$uncategorised],$categories);
         $sharing_to = config('b2b.SHARING_TO');
         $payment_strategy = config('b2b.PAYMENT_STRATEGY');
         $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
@@ -120,7 +122,7 @@ class ProcurementController extends Controller
             'sharing_to' => array_values($sharing_to),
             'payment_strategy' => $payment_strategy,
             'number_of_participants' => $number_of_participants,
-            'categories' => $categories
+            'categories' => array_merge([$uncategorised],$categories)
         ];
         return api_response($request, $procurements, 200, ['procurements' => $procurements]);
     }
@@ -583,18 +585,17 @@ class ProcurementController extends Controller
      * @param ProcurementAdapter $procurement_adapter
      * @param ShebaPayment $payment
      * @param ShebaPaymentValidator $payment_validator
-     * @param ProcurementRepositoryInterface $procurement_repository
      * @return JsonResponse
      * @throws ReflectionException
      * @throws InitiateFailedException
      */
-    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator)
     {
         $this->validate($request, [
             'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
-        $procurement = $procurement_repository->find($procurement);
+        $procurement = $this->procurementRepository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
@@ -606,10 +607,9 @@ class ProcurementController extends Controller
      * @param $business
      * @param $procurement
      * @param Request $request
-     * @param Creator $creator
      * @return JsonResponse
      */
-    public function orderTimeline($business, $procurement, Request $request, Creator $creator)
+    public function orderTimeline($business, $procurement, Request $request)
     {
         $order_timelines = $this->procurementOrder->setProcurement($procurement)->getBid()->formatTimeline();
         return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
@@ -661,12 +661,11 @@ class ProcurementController extends Controller
      * @param $business
      * @param $procurement
      * @param Request $request
-     * @param Creator $creator
      * @return JsonResponse
      */
-    public function orderBill($business, $procurement, Request $request, Creator $creator)
+    public function orderBill($business, $procurement, Request $request)
     {
-        $procurement = Procurement::findOrFail((int)$procurement);
+        $procurement = $this->procurementRepository->find((int)$procurement);
         $procurement->calculate();
         $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
         $rfq_order_bill['paid'] = $procurement->paid;
@@ -762,7 +761,6 @@ class ProcurementController extends Controller
      * @param Request $request
      * @param BidCreator $creator
      * @param BidUpdater $updater
-     * @param ProcurementRepository $procurement_repository
      * @param BidRepositoryInterface $bid_repository
      * @param ProfileRepositoryInterface $profile_repository
      * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
@@ -771,7 +769,6 @@ class ProcurementController extends Controller
      */
     public function tenderProposalStore($tender, Request $request,
                                         BidCreator $creator, BidUpdater $updater,
-                                        ProcurementRepository $procurement_repository,
                                         BidRepositoryInterface $bid_repository,
                                         ProfileRepositoryInterface $profile_repository,
                                         ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
@@ -786,7 +783,7 @@ class ProcurementController extends Controller
         ]);
 
         /** @var Procurement $procurement */
-        $procurement = $procurement_repository->find($tender);
+        $procurement = $this->procurementRepository->find($tender);
         $partner = $this->getPartner($profile_repository, $request);
         $shared_to_statuses = config('b2b.SHARING_TO');
 
@@ -841,11 +838,10 @@ class ProcurementController extends Controller
     }
 
     /**
-     * @param ProfileRepositoryInterface $profile_repository
      * @param Request $request
      * @return Partner
      */
-    private function getPartner(ProfileRepositoryInterface $profile_repository, Request $request)
+    private function getPartner(Request $request)
     {
         /** @var Profile $profile */
         $profile = $this->profileRepository->checkExistingProfile($request->company_phone, $request->email);
@@ -931,10 +927,9 @@ class ProcurementController extends Controller
     /**
      * @param $tender
      * @param Request $request
-     * @param ProcurementRepository $procurement_repository
      * @return JsonResponse
      */
-    public function tenderProposalEdit($tender, Request $request, ProcurementRepository $procurement_repository)
+    public function tenderProposalEdit($tender, Request $request)
     {
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
@@ -955,6 +950,11 @@ class ProcurementController extends Controller
         return api_response($request, null, 200, ['tender' => $procurement]);
     }
 
+    /**
+     * @param $procurement
+     * @param $type
+     * @return |null
+     */
     public function generateItemData($procurement, $type)
     {
         $type_data = $procurement->items->where('type', $type)->first();
@@ -973,6 +973,12 @@ class ProcurementController extends Controller
         }) : null;
     }
 
+    /**
+     * @param Procurement $procurement
+     * @param Partner $partner
+     * @param $shared_to_statuses
+     * @return bool
+     */
     private function isVerifiedOnlyTender(Procurement $procurement, Partner $partner, $shared_to_statuses)
     {
         if ($procurement->shared_to != ($shared_to_statuses['verified'])['key']) return false;
