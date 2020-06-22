@@ -7,6 +7,7 @@ namespace Sheba\Cache\Sitemap;
 use App\Models\Category;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 
 class SitemapDataStore implements DataStoreObject
 {
@@ -24,26 +25,38 @@ class SitemapDataStore implements DataStoreObject
 
     public function generateMasterCategoryTree()
     {
-        $master_categories = Category::select('id', 'name')->parent()->get();
-
+        $categories = [];
+        $services = [];
+        $master_categories = Category::whereHas('subCat', function ($q) {
+            $q->has('publishedServices');
+        })->with(['subCat' => function ($q) {
+            $q->has('publishedServices')->select('id', 'parent_id', 'name')->with(['services' => function ($q) {
+                $q->select('id', 'name', 'category_id')->published();
+            }]);
+        }])->parent()->published()->select('id', 'name')->get();
         foreach ($master_categories as $master_category) {
-            $master_category['slug'] = $master_category->getSlug();
-            $master_category['secondary_categories'] = $master_category->subCat()->select('id', 'name')->get();
-
-            foreach ( $master_category['secondary_categories'] as $secondary_category) {
-                $secondary_category['slug'] = $secondary_category->getSlug();
-                $secondary_category['services'] = $secondary_category->publishedServices()->select('id', 'name')->get();
-
-                foreach ( $secondary_category['services'] as $service) {
-                    $service['slug'] = $service->getSlug();
+            array_push($categories, $master_category->id);
+            $master_category['secondary_categories'] = $master_category->subCat;
+            array_forget($master_category, 'subCat');
+            foreach ($master_category->secondary_categories as $category) {
+                array_push($categories, $category->id);
+                foreach ($category->services as $service) {
+                    array_push($services, $service->id);
                 }
-
-                $secondary_category['services'] = $secondary_category['services']->toArray();
             }
-
-            $master_category['secondary_categories'] =  $master_category['secondary_categories']->toArray();
         }
-
-        return $master_categories->toArray();
+        $category_slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'category')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $categories)->get()->pluck('slug', 'sluggable_id')->toArray();
+        $service_slugs = UniversalSlugModel::where('sluggable_type', 'like', '%' . 'service')->select('slug', 'sluggable_id')->whereIn('sluggable_id', $services)->get()->pluck('slug', 'sluggable_id')->toArray();
+        foreach ($master_categories as $master_category) {
+            $is_car_rental = $master_category->isRentMaster();
+            $master_category['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($category_slugs[$master_category->id] ?? null);
+            foreach ($master_category->secondary_categories as $category) {
+                $category['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($category_slugs[$category->id] ?? null);
+                foreach ($category->services as $service) {
+                    $service['slug'] = $is_car_rental ? config('sheba.car_rental.slug') : ($service_slugs[$service->id] ?? null);
+                }
+            }
+        }
+        return array_values($master_categories->toArray());
     }
 }

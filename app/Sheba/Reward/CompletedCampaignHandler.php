@@ -4,7 +4,11 @@ use App\Models\Reward;
 
 use Carbon\Carbon;
 
+use Exception;
+use Sheba\Dal\RewardCampaignLog\RewardCampaignLogRepositoryInterface;
 use Sheba\Reward\Disburse\DisburseHandler;
+use Sheba\Reward\Event\Campaign;
+use Sheba\Reward\Event\ParticipatedCampaignUser;
 use Sheba\Reward\Helper\TimeFrameCalculator;
 
 class CompletedCampaignHandler
@@ -12,20 +16,18 @@ class CompletedCampaignHandler
     private $validRewards;
     private $timeFrame;
     private $disburseHandler;
+    private $rewardCampaignLogRepository;
 
-    /**
-     * CompletedCampaignHandler constructor.
-     * @param DisburseHandler $disburse_handler
-     * @param TimeFrameCalculator $timeframe_calculator
-     */
-    public function __construct(DisburseHandler $disburse_handler, TimeFrameCalculator $timeframe_calculator)
+
+    public function __construct(DisburseHandler $disburse_handler, TimeFrameCalculator $timeframe_calculator, RewardCampaignLogRepositoryInterface $rewardCampaignLogRepository)
     {
         $this->timeFrame = $timeframe_calculator;
         $this->disburseHandler = $disburse_handler;
+        $this->rewardCampaignLogRepository = $rewardCampaignLogRepository;
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function run()
     {
@@ -40,28 +42,36 @@ class CompletedCampaignHandler
             ->where('detail_type', 'App\Models\RewardCampaign')
             ->get();
 
-
         $this->validRewards = $published_rewards->filter(function ($reward) {
             return $this->timeFrame->setReward($reward)->isValid();
         });
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     private function campaignRulesCalculation()
     {
+        /** @var Reward $reward */
         foreach ($this->validRewards as $reward) {
-            /** @var Reward $reward */
-            $rewardable_users = null;
+            $rewardable_users = collect();
             $events = $reward->setCampaignEvents()->campaignEvents;
-
+            /** @var Campaign $event */
             foreach ($events as $event) {
-                $rewardable_users = $event->findRewardableUsers($rewardable_users);
-            }
+                $participated_users = $event->getParticipatedUsers();
+                foreach ($participated_users as $participated_user) {
+                    $this->rewardCampaignLogRepository->create([
+                        'reward_campaign_id' => $reward->detail_id,
+                        'target_type' => $participated_user->getUserType(),
+                        'target_id' => $participated_user->getUser()->id,
+                        'achieved' => $participated_user->getAchievedValue()
+                    ]);
+                    if ($participated_user->getIsTargetAchieved()) $rewardable_users->push($participated_user->getUser());
+                }
 
+            }
             if (!$rewardable_users->isEmpty()) {
-                $this->disburseRewardToUser($rewardable_users, $reward);
+                $this->disburseRewardToUser($rewardable_users->unique('id'), $reward);
             }
         }
     }
@@ -69,7 +79,7 @@ class CompletedCampaignHandler
     /**
      * @param $rewarded_users
      * @param $reward
-     * @throws \Exception
+     * @throws Exception
      */
     private function disburseRewardToUser($rewarded_users, $reward)
     {
