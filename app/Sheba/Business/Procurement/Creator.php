@@ -117,7 +117,7 @@ class Creator
 
     public function setCategory($category)
     {
-        $this->category = $category;
+        $this->category = $category != 0 ? $category : null;
         return $this;
     }
 
@@ -367,7 +367,7 @@ class Creator
             ]);
         }
     }
-    
+
     /**
      * @param Procurement $procurement
      */
