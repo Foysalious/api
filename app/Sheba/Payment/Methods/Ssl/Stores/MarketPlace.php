@@ -2,6 +2,8 @@
 
 class MarketPlace extends SslStore
 {
+    const NAME = "market_place";
+
     public function __construct()
     {
         $this->storeId            = config("payment.ssl.stores.market_place.id");
@@ -15,6 +17,6 @@ class MarketPlace extends SslStore
      */
     public function getName()
     {
-        return "market_place";
+        return self::NAME;
     }
 }

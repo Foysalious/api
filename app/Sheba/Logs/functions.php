@@ -11,6 +11,9 @@ if (!function_exists('logError')) {
      */
     function logError($exception, $request = null, $message = null)
     {
-        (new ErrorLog())->setException($exception)->setRequest($request)->setErrorMessage($message)->send();
+        $log = (new ErrorLog())->setException($exception);
+        if ($request) $log->setRequest($request);
+        if ($message) $log->setErrorMessage($message);
+        $log->send();
     }
 }

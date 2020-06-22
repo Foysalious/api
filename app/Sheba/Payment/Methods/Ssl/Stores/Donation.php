@@ -2,6 +2,8 @@
 
 class Donation extends SslStore
 {
+    const NAME = "donation";
+
     public function __construct()
     {
         $this->storeId            = config("payment.ssl.stores.donation.id");
@@ -15,6 +17,6 @@ class Donation extends SslStore
      */
     public function getName()
     {
-        return "donation";
+        return self::NAME;
     }
 }

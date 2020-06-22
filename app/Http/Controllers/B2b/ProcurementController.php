@@ -47,8 +47,10 @@ use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Partner\Creator as PartnerCreator;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
+use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -582,23 +584,25 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param ProcurementAdapter $procurement_adapter
-     * @param ShebaPayment $payment
+     * @param PaymentManager $payment_manager
      * @param ShebaPaymentValidator $payment_validator
+     * @param ProcurementRepositoryInterface $procurement_repository
      * @return JsonResponse
-     * @throws ReflectionException
      * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
      */
-    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator)
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, PaymentManager $payment_manager, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->validate($request, [
-            'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
+            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getBusinessPayments()),
+            'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
         $procurement = $this->procurementRepository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
-        $payment = $payment->setMethod($payment_method)->init($payable);
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 

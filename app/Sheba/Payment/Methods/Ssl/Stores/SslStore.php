@@ -43,4 +43,12 @@ abstract class SslStore
     {
         return $this->orderValidationUrl;
     }
+
+    /**
+     * @return string
+     */
+    public function getRefundUrl()
+    {
+        return config("payment.ssl.urls.refund");
+    }
 }
