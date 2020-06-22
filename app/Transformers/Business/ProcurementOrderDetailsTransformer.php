@@ -2,6 +2,8 @@
 
 use App\Models\Bid;
 use App\Transformers\AttachmentTransformer;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\Procurement\OrderStatusCalculator;
 
@@ -29,8 +31,10 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
     {
         $bid_price_quotations = null;
         if ($procurement->isAdvanced()) $bid_price_quotations = $this->generateBidItemData();
+
         $category = $procurement->category ? $procurement->category : null;
         $bidder = $this->bid->bidder;
+
         return [
             'procurement_id' => $procurement->id,
             'procurement_code' => $procurement->orderCode(),
@@ -63,7 +67,7 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
 
     /**
      * @param $procurement
-     * @return \League\Fractal\Resource\Collection|\League\Fractal\Resource\Item
+     * @return Collection|Item
      */
     public function includeAttachments($procurement)
     {
@@ -91,6 +95,7 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
                 'total_price' => $field->result,
             ]);
         }
+
         return $item_fields;
     }
 }

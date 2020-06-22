@@ -229,22 +229,20 @@ class BidController extends Controller
     {
         /** @var Bid $bid */
         $bid = $this->repo->find((int)$bid);
-        $bid->load([
-            'items' => function ($q) {
+        $bid->load(['items' => function ($q) {
                 $q->with([
                     'fields' => function ($q) {
                         $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
                     }
                 ]);
-            }
-        ]);
+            }]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($bid, new BidDetailsTransformer());
         $bid = $fractal->createData($resource)->toArray()['data'];
 
-        return api_response($request, $bid, 200, ['bid' => $bid]);
+        return api_response($request, null, 200, ['bid' => $bid]);
     }
 
     /**
