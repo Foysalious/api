@@ -68,7 +68,7 @@ class BidDetailsTransformer extends TransformerAbstract
             array_push($item_fields, [
                 'id' => $field->id,
                 'title' => $field->title,
-                'result' => is_array($result) ? implode(",", $result) : $field->result
+                'result' => is_array($result) ? implode(", ", $result) : $field->result
             ]);
         }
 
