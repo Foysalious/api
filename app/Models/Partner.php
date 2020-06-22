@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Business\Bid\Bidder;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
@@ -229,8 +230,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function commission($service_id)
     {
-        $service_category = Service::find($service_id)->category->id;
-        return $this->categories()->find($service_category)->pivot->commission;
+        $service_category = Service::find($service_id)->category;
+        $commissions = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
+        return $commissions->getServiceCommission();
     }
 
     public function categories()
