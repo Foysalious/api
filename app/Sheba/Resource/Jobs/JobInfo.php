@@ -41,6 +41,7 @@ class JobInfo
         foreach ($job_services as $job_service) {
             $services->push([
                 'id' => $job_service->id,
+                'service_id' => $job_service->service_id,
                 'name' => $job_service->service->name,
                 'image' => $job_service->service->app_thumb,
                 'variables' => json_decode($job_service->variables),
