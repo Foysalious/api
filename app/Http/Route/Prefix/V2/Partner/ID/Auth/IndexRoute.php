@@ -13,6 +13,7 @@ class IndexRoute
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
+            $api->post('help', 'HelpController@create');
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
@@ -289,6 +290,11 @@ class IndexRoute
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+            $api->group(['prefix' => 'kyc'], function ($api) {
+                $api->get('check-verification', 'Partner\ProfileController@checkVerification');
+                $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
+                $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
+            });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);

@@ -3,9 +3,14 @@
 use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Business\Bid\Updater;
+use App\Transformers\Business\BidHistoryTransformer;
+use App\Transformers\Business\ProcurementListTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -138,31 +143,64 @@ class BidController extends Controller
 
     public function getBidHistory($business, $procurement, Request $request, AccessControl $access_control)
     {
-        try {
+        $access_control->setBusinessMember($request->business_member);
+        if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
 
-            $access_control->setBusinessMember($request->business_member);
-            if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
-            $business = $request->business;
-            $procurement = Procurement::findOrFail((int)$procurement);
-            list($offset, $limit) = calculatePagination($request);
-            $bids = $procurement->bids()->orderBy('created_at', 'desc')->skip($offset)->limit($limit);
-            $bid_histories = [];
-            $bids->each(function ($bid) use (&$bid_histories) {
-                array_push($bid_histories, [
-                    'id' => $bid->id, 'service_provider' => $bid->bidder->name, 'status' => $bid->status, 'color' => constants('BID_STATUSES_COLOR')[$bid->status], 'price' => $bid->price, 'created_at' => $bid->created_at->format('h:i a,d M Y'),
-                ]);
-            });
-            if (count($bid_histories) > 0) return api_response($request, $bid_histories, 200, ['bid_histories' => $bid_histories]); else return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $procurement = Procurement::findOrFail((int)$procurement);
+
+        list($offset, $limit) = calculatePagination($request);
+        $bids = $procurement->bids()->orderBy('created_at', 'desc');
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($bids->get(), new BidHistoryTransformer($procurement));
+        $bids = $manager->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort_by_name')) $bids = $this->sortByName($bids, $request->sort_by_name)->values();
+        if ($request->has('sort_by_rating')) $bids = $this->sortByRating($bids, $request->sort_by_rating)->values();
+        if ($request->has('sort_by_price')) $bids = $this->sortByPrice($bids, $request->sort_by_price)->values();
+        if ($request->has('limit')) $bids = collect($bids)->splice($offset, $limit);
+
+        if (count($bids) > 0) return api_response($request, $bids, 200, ['bids' => $bids]); else return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $bids
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByName($bids, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($bids)->$sort_by(function ($bid) {
+            return strtoupper($bid['service_provider']['name']);
+        });
+    }
+
+    /**
+     * @param $bids
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByRating($bids, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($bids)->$sort_by(function ($bid) {
+            return strtoupper($bid['service_provider']['rating']);
+        });
+    }
+
+    /**
+     * @param $bids
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByPrice($bids, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($bids)->$sort_by(function ($bid) {
+            return strtoupper($bid['price']);
+        });
     }
 
     public function sendHireRequest($business, $bid, Request $request, Updater $updater)

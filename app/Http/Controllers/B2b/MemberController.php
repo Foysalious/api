@@ -1,24 +1,22 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Attachment;
-use App\Models\BusinessDepartment;
-use App\Models\BusinessRole;
-use App\Models\BusinessSmsTemplate;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\LeaveType\DefaultType;
+use Sheba\Business\BusinessCommonInformationCreator;
+use Sheba\Business\BusinessCreator;
+use Sheba\Business\BusinessCreatorRequest;
+use Sheba\Business\BusinessUpdater;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
-use Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
-use DB;
 use Throwable;
+use DB;
 
 class MemberController extends Controller
 {
@@ -27,10 +25,17 @@ class MemberController extends Controller
     /**
      * @param $member
      * @param Request $request
-     * @param LeaveTypeCreator $leave_type_creator
+     * @param BusinessCreatorRequest $business_creator_request
+     * @param BusinessCreator $business_creator
+     * @param BusinessUpdater $business_updater
+     * @param BusinessCommonInformationCreator $common_info_creator
      * @return JsonResponse
      */
-    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator)
+    public function updateBusinessInfo($member, Request $request,
+                                       BusinessCreatorRequest $business_creator_request,
+                                       BusinessCreator $business_creator,
+                                       BusinessUpdater $business_updater,
+                                       BusinessCommonInformationCreator $common_info_creator)
     {
         try {
             $this->validate($request, [
@@ -41,60 +46,34 @@ class MemberController extends Controller
                 'address' => 'required|string',
                 'mobile' => 'sometimes|required|string|mobile:bd',
             ]);
-
             $member = Member::find($member);
             $this->setModifier($member);
-
-            $business_data = [
-                'name' => $request->name,
-                'employee_size' => $request->no_employee,
-                'geo_informations' => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]),
-                'address' => $request->address,
-                'phone' => $request->mobile,
-            ];
-
+            $business_creator_request = $business_creator_request->setName($request->name)
+                ->setEmployeeSize($request->no_employee)
+                ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]))
+                ->setAddress($request->address)
+                ->setPhone($request->mobile);
+            DB::beginTransaction();
             if (count($member->businesses) > 0) {
                 $business = $member->businesses->first();
-                $business->update($this->withUpdateModificationField($business_data));
+                $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
             } else {
-                $business_data['sub_domain'] = $this->guessSubDomain($request->name);
-                $business = Business::create($this->withCreateModificationField($business_data));
-                $this->tagDepartment($business);
-                $this->tagRole($business);
-                $member_business_data = [
-                    'business_id' => $business->id,
-                    'member_id' => $member->id,
-                    'is_super' => 1,
-                    'join_date' => Carbon::now(),
-                ];
+                $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
+                $common_info_creator->setBusiness($business)->setMember($member)->create();
+
+                $member_business_data = ['business_id' => $business->id, 'member_id' => $member->id, 'is_super' => 1, 'join_date' => Carbon::now()];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
-                $this->saveSmsTemplate($business);
-
-                foreach (DefaultType::getWithKeys() as $key => $value) {
-                    $leave_type_creator->setBusiness($business)->setMember($member)->setTitle($value)->setTotalDays(DefaultType::getDays()[$key])->create();
-                }
             }
-
+            DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function saveSmsTemplate(Business $business)
-    {
-        $sms_template = new BusinessSmsTemplate();
-        $sms_template->business_id = $business->id;
-        $sms_template->event_name = "trip_request_accept";
-        $sms_template->event_title = "Vehicle Trip Request Accept";
-        $sms_template->template = "Your request for vehicle has been accepted. {{vehicle_name}} will be sent to you at {{arrival_time}}";
-        $sms_template->variables = "vehicle_name;arrival_time";
-        $sms_template->is_published = 1;
-        $sms_template->save();
     }
 
     public function getBusinessInfo($member, Request $request)
@@ -157,19 +136,6 @@ class MemberController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function guessSubDomain($name)
-    {
-        $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
-        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Business::select('sub_domain')->lists('sub_domain')->toArray();
-        $counter = 0;
-        while (in_array($name, array_merge($blacklist, $already_used))) {
-            $name = $base_name . $counter;
-            $counter++;
-        }
-        return $name;
     }
 
     public function index(Request $request)
@@ -250,30 +216,4 @@ class MemberController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    private function tagDepartment(Business $business)
-    {
-        $departments = ['IT', 'FINANCE', 'HR', 'ADMIN', 'MARKETING', 'OPERATION', 'CXO'];
-        foreach ($departments as $department) {
-            $dept = new BusinessDepartment();
-            $dept->name = $department;
-            $dept->business_id = $business->id;
-            $dept->save();
-        }
-    }
-
-    private function tagRole(Business $business)
-    {
-        $roles = ['Manager', 'VP', 'Executive', 'Intern', 'Senior Executive', 'Driver'];
-        $depts = BusinessDepartment::where('business_id', $business->id)->pluck('id')->toArray();
-        foreach ($roles as $role) {
-            foreach ($depts as $dept) {
-                $b_role = new BusinessRole();
-                $b_role->name = $role;
-                $b_role->business_department_id = $dept;
-                $b_role->save();
-            }
-        }
-    }
-
 }

@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -89,6 +90,9 @@ class TopUpController extends Controller
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
+            if($request->affiliate)
+                ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$request->affiliate->id,$request->mobile));
+
             return api_response($request, null, 500);
         }
     }

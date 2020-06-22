@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
+use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
 use Hash;
@@ -35,6 +36,7 @@ class LoginController extends Controller
                 'password' => 'required',
                 'from'     => 'required|string|in:' . implode(',', constants('FROM'))
             ]);
+            /** @var Profile $profile */
             $profile = $this->profileRepository->ifExist($request->email, 'email');
             if ($profile == false) {
                 $profile = $this->profileRepository->ifExist(formatMobile($request->email), 'mobile');

@@ -116,11 +116,6 @@ class Category extends Model
         return $this->hasOne(CrosssaleServiceModel::class);
     }
 
-    /**
-     *
-     * Other Methods
-     */
-
     public function scopeParents($query)
     {
         $query->where([
@@ -167,6 +162,11 @@ class Category extends Model
     public function scopePublishedForB2B($query)
     {
         return $query->where('is_published_for_b2b', 1);
+    }
+
+    public function scopePublishedForDdn($query)
+    {
+        return $query->where('is_published_for_ddn', 1);
     }
 
     public function scopePublishedForPartner($query)
@@ -320,6 +320,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 
+    public function isRentACarMasterCategory()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
+    }
+
     public function getSlug()
     {
         $type = $this->isParent() ? 'master_category' : 'secondary_category';
@@ -341,5 +346,10 @@ class Category extends Model
     public function isMarketPlacePublished()
     {
         return $this->publication_status;
+    }
+
+    public function scopeHasChildren($query)
+    {
+
     }
 }

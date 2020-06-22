@@ -11,7 +11,8 @@ use Sheba\ModificationFields;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
-use Sheba\Payment\Wallet;
+use Sheba\Payment\PayableUser;
+use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
@@ -24,7 +25,7 @@ use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\VoucherGeneratorTrait;
 
-class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction
+class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, Rechargable, HasWalletTransaction, PayableUser
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ModificationFields, VoucherGeneratorTrait;
 
@@ -198,10 +199,6 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())
             ->setModel($this)
             ->setAmount($transaction->getAmount())
@@ -332,5 +329,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
             return formatMobileReverse($this->profile->mobile);
 
         return VoucherCodeGenerator::byName($this->profile->name);
+    }
+
+    public function orders()
+    {
+        return $this->hasManyThrough(Order::class, Affiliation::class);
+
     }
 }

@@ -76,10 +76,14 @@ class Payment extends Model
         return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
     }
 
-
     public function canComplete()
     {
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
+    }
+
+    public function isReturnedFrom()
+    {
+        return true;
     }
 
     public function getFormattedPayment()
@@ -105,5 +109,21 @@ class Payment extends Model
             ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
+    }
+
+    public function getValidityInSeconds()
+    {
+        return Carbon::now()->diffInSeconds($this->valid_till);
+    }
+
+    public function getTransactionDetails()
+    {
+        return json_decode($this->transaction_details);
+    }
+
+    public function getErrorMessage()
+    {
+        $details = $this->getTransactionDetails();
+        return $details ? $details->errorMessage : null;
     }
 }

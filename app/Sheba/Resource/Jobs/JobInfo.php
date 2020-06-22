@@ -41,6 +41,7 @@ class JobInfo
         foreach ($job_services as $job_service) {
             $services->push([
                 'id' => $job_service->id,
+                'service_id' => $job_service->service_id,
                 'name' => $job_service->service->name,
                 'image' => $job_service->service->app_thumb,
                 'variables' => json_decode($job_service->variables),
@@ -71,12 +72,15 @@ class JobInfo
         $formatted_job->put('customer_name', $job->partnerOrder->order->customer->profile->name);
         $formatted_job->put('pro_pic', $job->partnerOrder->order->customer->profile->pro_pic);
         $formatted_job->put('delivery_name', $job->partnerOrder->order->delivery_name);
+        $formatted_job->put('location', $job->partnerOrder->order->location->name);
         $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
         $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
         $formatted_job->put('geo_informations', json_decode($job->partnerOrder->order->deliveryAddress->geo_informations));
         $formatted_job->put('start_time', humanReadableShebaTime($job->preferred_time_start, true));
         $formatted_job->put('schedule_date', $job->schedule_date);
+        $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
         $formatted_job->put('services', $this->formatServices($job->jobServices));
+        $formatted_job->put('rating', $job->review ? $job->review->rating : null);
         $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
         $formatted_job->put('status', $job->status);
         $formatted_job->put('can_process', 0);

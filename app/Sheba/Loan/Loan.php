@@ -2,12 +2,14 @@
 
 namespace Sheba\Loan;
 
+use App\Exceptions\NotFoundException;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
+use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\HZip;
@@ -28,14 +31,17 @@ use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
+use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 
 class Loan
 {
     use CdnFileManager, FileManager, ModificationFields;
+
     private $repo;
     private $partner;
     private $data;
@@ -65,6 +71,11 @@ class Loan
             'nominee_granter' => 'nomineeGranter',
             'document'        => 'documents'
         ];
+    }
+
+    public function setUser($user)
+    {
+        $this->user = $user;
     }
 
     /**
@@ -148,7 +159,7 @@ class Loan
     }
 
     /**
-     * @param $loan_id
+     * @param         $loan_id
      * @param Request $request
      * @throws NotAllowedToAccess
      * @throws ReflectionException
@@ -242,8 +253,8 @@ class Loan
     {
         $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
-        if (!$applicable)
-            throw new NotApplicableForLoan();
+//        if (!$applicable)
+//            throw new NotApplicableForLoan();
 
     }
 
@@ -418,10 +429,7 @@ class Loan
     {
         /** @var PartnerBankLoan $request */
         $request = $this->repo->find($loan_id);
-        $user    = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $request->bank_id))) {
-            throw new NotAllowedToAccess();
-        }
+        (new RequestValidator($request))->validate();
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
@@ -430,6 +438,24 @@ class Loan
 
     /**
      * @param $loan_id
+     * @return array
+     * @throws NotAllowedToAccess
+     * @throws ReflectionException
+     * @throws LoanNotFoundException
+     */
+    public function showForAgent($loan_id)
+    {
+        /** @var PartnerBankLoan $request */
+        $request = $this->repo->find($loan_id);
+        if (empty($request))
+            throw new LoanNotFoundException();
+        (new RequestValidator($request))->validate();
+        $loan    = (new PartnerLoanRequest($request));
+        return $loan->detailsForAgent();
+    }
+
+    /**
+     * @param         $loan_id
      * @param Request $request
      * @throws NotAllowedToAccess
      * @throws ReflectionException
@@ -439,15 +465,13 @@ class Loan
         /** @var PartnerBankLoan $loan */
         $loan = $this->repo->find($loan_id);
         $user = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $loan->bank_id))) {
-            throw new NotAllowedToAccess();
-        }
+        (new RequestValidator($loan))->validate();
         (new DocumentUploader($loan))->setUser($user)->setFor($request->for)->update($request);
 
     }
 
     /**
-     * @param $loan_id
+     * @param         $loan_id
      * @param Request $request
      * @throws InvalidStatusTransaction
      * @throws NotAllowedToAccess
@@ -579,7 +603,8 @@ class Loan
         $config = constants('LOAN_CONFIG');
         $data   = [
             'loan_amount' => $config['minimum_amount'],
-            'duration'    => $config['minimum_duration']
+            'duration'    => $config['minimum_duration'],
+            'type'        => $request->type ? $request->type : 0
         ];
         if ($this->user instanceof BankUser) {
             $data['bank_id'] = $this->user->bank->id;

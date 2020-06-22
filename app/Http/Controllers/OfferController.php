@@ -8,6 +8,7 @@ use App\Models\OfferShowcase;
 use App\Models\User;
 use App\Transformers\OfferDetailsTransformer;
 use App\Transformers\OfferTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -51,7 +52,7 @@ class OfferController extends Controller
         if ($user) $offer_filter->setCustomer($user);
         if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
         if ($location) $offer_filter->setLocation($location);
-        $offers = $offer_filter->filter()->sortByDesc('amount');
+        $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('amount'));
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -60,6 +61,48 @@ class OfferController extends Controller
 
         if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
         else return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getPartnerOffer(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'remember_token' => 'required_unless:user,0|string',
+            ]);
+            $offers = OfferShowcase::active()->valid()->actual()
+                ->notCampaign()
+                ->getPartnerOffers()
+                ->orderBy('end_date')->get();
+            $offer_filter = new OfferFilter($offers);
+            $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('id'));
+            if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
+            else return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $offers
+     * @return mixed
+     */
+    private function getOffersWithFormation($offers)
+    {
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $resource = new Collection($offers, new OfferTransformer());
+        return $manager->createData($resource)->toArray()['data'];
     }
 
     public function show($offer, Request $request)

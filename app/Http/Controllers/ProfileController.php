@@ -396,4 +396,9 @@ class ProfileController extends Controller
 
         return true;
     }
+
+    public function KycNidCheckAndUpdateInfo(Request $request,ProfileRepositoryInterface $profile_repo)
+    {
+
+    }
 }

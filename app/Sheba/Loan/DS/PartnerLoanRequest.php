@@ -72,6 +72,8 @@ class PartnerLoanRequest implements Arrayable
 
     public function create($data)
     {
+        if(!isset($data['type']) || !$data['type'])
+            $data['type'] = 'general';
         $data['partner_id'] = $this->partner->id;
         $data['status'] = constants('LOAN_STATUS')['applied'];
         $data['interest_rate'] = (int)constants('LOAN_CONFIG')['interest'];
@@ -109,6 +111,15 @@ class PartnerLoanRequest implements Arrayable
     public function details()
     {
         return $this->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function detailsForAgent()
+    {
+        return $this->toArrayForAgent();
     }
 
     /**
@@ -159,6 +170,42 @@ class PartnerLoanRequest implements Arrayable
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
             'next_status' => $output
+        ];
+    }
+
+    /**
+     * Get the instance as an array.
+     *
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function toArrayForAgent()
+    {
+        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
+        $generated_id = ($bank ? $bank->id : '000') . '-' . str_pad($this->partnerBankLoan->id, 8 - strlen($this->partnerBankLoan->id), '0', STR_PAD_LEFT);
+        return [
+            'id' => $this->partnerBankLoan->id,
+            'generated_id' => $generated_id,
+            'partner' => [
+                'id' => $this->partner->id,
+                'name' => $this->partner->name,
+                'logo' => $this->partner->logo,
+                'updated_at' => (Carbon::parse($this->partner->updated_at))->format('j F, Y h:i A'),
+                'profile' => [
+                    'name' => $this->partner->getContactPerson(),
+                    'mobile' => $this->partner->getContactNumber(),
+                    'updated_at' => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
+                ]
+            ],
+
+            'purpose' => $this->partnerBankLoan->purpose,
+            'status' => [
+                'name' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+                'status' => $this->partnerBankLoan->status
+            ],
+            'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'document'             => $this->getDocumentsForAgents(),
+
         ];
     }
 
@@ -244,5 +291,10 @@ class PartnerLoanRequest implements Arrayable
     public function getDocuments()
     {
         return $this->final_details->getDocuments();
+    }
+
+    public function getDocumentsForAgents()
+    {
+        return $this->final_details->getDocumentsForAgents();
     }
 }

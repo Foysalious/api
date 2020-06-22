@@ -1,6 +1,5 @@
 <?php namespace Sheba\Reward;
 
-use Sheba\HasWallet;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableType;
 use Sheba\Repositories\BonusLogRepository;

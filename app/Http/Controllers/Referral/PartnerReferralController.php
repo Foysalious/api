@@ -55,9 +55,7 @@ class PartnerReferralController extends Controller
     {
         try {
             $refer_code = $request->partner->refer_code;
-            $url_to_shorten = config('partner')['referral_base_link'] . $refer_code;
-            $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
-            return api_response($request, $deep_link, 200, ['link' => $deep_link]);
+            return api_response($request, $refer_code, 200, ['link' => $refer_code]);
 
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

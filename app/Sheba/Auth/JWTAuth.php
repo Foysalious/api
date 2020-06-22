@@ -19,7 +19,7 @@ class JWTAuth implements Authentication
         } catch (JWTException $e) {
             throw new AuthenticationFailedException();
         }
-        $auth_user = new AuthUser();
+        $auth_user = new AuthUser();;
         $auth_user->setPayload($payload);
         if (!$auth_user->getAuthUser()) throw new AuthenticationFailedException();
         return $auth_user;

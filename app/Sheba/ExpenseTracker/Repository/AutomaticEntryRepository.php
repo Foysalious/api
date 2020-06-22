@@ -151,7 +151,6 @@ class AutomaticEntryRepository extends BaseRepository {
         return $this;
     }
 
-
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
@@ -160,7 +159,7 @@ class AutomaticEntryRepository extends BaseRepository {
         $this->emiMonth = $emiMonth;
         return $this;
     }
-
+    
     /**
      * @param mixed $interest
      * @return AutomaticEntryRepository

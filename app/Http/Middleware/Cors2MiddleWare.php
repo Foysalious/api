@@ -25,6 +25,7 @@ class Cors2MiddleWare
             "http://localhost:8083",
             "http://localhost:8084",
             "http://localhost:7891",
+            "http://localhost:7892",
             "http://localhost:3333",
             "http://localhost:3334",
             "http://localhost:3335",
@@ -32,10 +33,12 @@ class Cors2MiddleWare
             "http://103.26.139.148",
             "http://144.76.92.216",
             "http://sheba.test",
+            "http://strategic-loan.sheba.test",
             "http://ticket.sheba.test",
             "https://developer.sslcommerz.com",
             "https://www.sslcommerz.com",
             "http://dev-sheba.xyz",
+            "http://strategic-loan.sheba.test",
             "http://business.dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "https://www.dev-sheba.xyz",
@@ -101,7 +104,9 @@ class Cors2MiddleWare
             "http://payment-link-web.sheba.test:3031",
             "https://v3.sheba.xyz",
             "https://www.smanager.xyz",
-            "https://v2.sheba.xyz"
+            "https://v2.sheba.xyz",
+            "https://retailers.dev-sheba.xyz",
+            "https://bkash-client.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
@@ -109,7 +114,7 @@ class Cors2MiddleWare
         $headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Auth-Token, Origin, Authorization, X-Requested-With, Portal-Name, User-Id';
         $headers['Access-Control-Allow-Origin'] = '*';
         if (!in_array($request->server('HTTP_ORIGIN'), $domains)) {
-            return response()->json(['message' => 'Unauthorized domain :'.$request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
+            return response()->json(['message' => 'Unauthorized domain :' . $request->server('HTTP_ORIGIN'), 'code' => 401])->withHeaders($headers);
         }
 
         // ALLOW OPTIONS METHOD

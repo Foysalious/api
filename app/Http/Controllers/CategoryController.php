@@ -57,8 +57,9 @@ class CategoryController extends Controller
         $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
         $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
         $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_ddn = $request->has('is_ddn') && (int)$request->is_ddn;
 
-        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration) {
+        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration,$is_ddn) {
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -67,7 +68,9 @@ class CategoryController extends Controller
                 $q->publishedForPartnerOnboarding();
             } elseif ($is_b2b) {
                 $q->publishedForB2b();
-            } else {
+            }elseif($is_ddn){
+                $q->publishedForDdn();
+            }else {
                 $q->published();
             }
         };
@@ -104,17 +107,19 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b, $is_ddn) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
-                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b) {
+                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b, $is_ddn) {
                                 if ($is_business) {
                                     $q->publishedForBusiness();
                                 } elseif ($is_b2b) {
                                     $q->publishedForB2b();
-                                } else {
+                                } elseif ($is_ddn) {
+                                    $q->publishedForDdn();
+                                }else {
                                     $q->published();
                                 }
                                 $q->whereHas('locations', function ($q) use ($location) {
@@ -390,55 +395,61 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
-        if ($category != null) {
-            $category_slug = $category->getSlug();
-            $cross_sale_service = $category->crossSaleService;
-            list($offset, $limit) = calculatePagination($request);
-            $scope = [];
-            if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
 
-            if ($category->parent_id == null) {
-                if ((int)$request->is_business) {
-                    $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
-                } elseif ($request->is_b2b) {
-                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                } elseif ($request->is_ddn) {
-                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                } else {
-                    $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
-                }
-                $services = $this->serviceRepository->addServiceInfo($services, $scope);
-            } else {
-                $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
-                        $q->whereNotIn('id', $this->serviceGroupServiceIds());
+            if ((int)$request->is_business) {
+                $category = $cat->publishedForBusiness()->first();
+            } elseif ((int)$request->is_b2b) {
+                $category = $cat->publishedForB2B()->first();
+            }elseif ((int)$request->is_ddn) {
+                $category = $cat->publishedForDdn()->first();
+            }
+            else {
+                $category = $cat->published()->first();
+            }
 
+            if ($category != null) {
+                $category_slug = $category->getSlug();
+                $cross_sale_service = $category->crossSaleService;
+                list($offset, $limit) = calculatePagination($request);
+                $scope = [];
+                if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+
+                if ($category->parent_id == null) {
+                    if ((int)$request->is_business) {
+                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_b2b) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_ddn) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    }else {
+                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
-                    $q->whereHas('locations', function ($query) use ($location) {
-                        $query->where('locations.id', $location);
-                    })->select(
-                        'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
-                        'app_thumb', 'app_banner', 'short_description', 'description',
-                        'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features'
-                    )->orderBy('order')->skip($offset)->take($limit);
+                    $services = $this->serviceRepository->addServiceInfo($services, $scope);
+                } else {
+                    $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                        if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    if ((int)\request()->is_business) $q->publishedForBusiness();
-                    elseif ((int)\request()->is_for_backend) $q->publishedForAll();
-                    elseif ((int)\request()->is_b2b) $q->publishedForB2B();
-                    elseif ((int)\request()->is_ddn) $q->publishedForDdn();
-                    else $q->published();
-                }]);
-                $services = $category->services;
-            }
+                        }
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        })->select(
+                            'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
+                            'app_thumb', 'app_banner', 'short_description', 'description',
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
+                            'terms_and_conditions', 'features'
+                        )->orderBy('order')->skip($offset)->take($limit);
 
-            if ($location) {
-                $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
-                    $q->where('location_id', $location);
-                }]);
-            }
+                        if ((int)\request()->is_business) $q->publishedForBusiness();
+                        elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                        elseif ((int)\request()->is_b2b) $q->publishedForB2B();
+                        elseif ((int)\request()->is_ddn) $q->publishedForDdn();
+                        else $q->published();
+                    }]);
+                    $services = $category->services;
+                }
 
             if ($request->has('service_id')) {
                 $services = $services->filter(function ($service) use ($request) {
