@@ -361,8 +361,7 @@ class ProcurementController extends Controller
         if ($request->has('q')) $procurement_filter_request->setSearchQuery($request->q);
 
         $procurements = $this->procurementRepository->getProcurementFilterBy($procurement_filter_request);
-        // list($offset, $limit) = calculatePagination($request);
-        // $procurements = $procurements->skip($offset)->limit($limit);
+
         $procurements = $procurements->filter(function ($procurement) {
             $number_of_participants = $procurement->number_of_participants;
             $number_of_bids = $procurement->bids()->count();

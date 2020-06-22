@@ -122,7 +122,7 @@ class Updater
     private function makeData()
     {
         $this->data['long_description'] = $this->requestHandler->getLongDescription() ? $this->requestHandler->getLongDescription() : $this->procurement->long_description;
-        $this->data['number_of_participants'] = $this->requestHandler->getNumberOfParticipants() ? $this->requestHandler->getNumberOfParticipants() : $this->procurement->number_of_participants;
+        $this->data['number_of_participants'] = $this->requestHandler->getNumberOfParticipants() || $this->requestHandler->getNumberOfParticipants() == 0 ? $this->requestHandler->getNumberOfParticipants() : $this->procurement->number_of_participants;
         $this->data['last_date_of_submission'] = $this->requestHandler->getLastDateOfSubmission() ? $this->requestHandler->getLastDateOfSubmission() : $this->procurement->last_date_of_submission;
         $this->data['procurement_start_date'] = $this->requestHandler->getProcurementStartDate() ? $this->requestHandler->getProcurementStartDate() : $this->procurement->procurement_start_date;
         $this->data['procurement_end_date'] = $this->requestHandler->getProcurementEndDate() ? $this->requestHandler->getProcurementEndDate() : $this->procurement->procurement_end_date;

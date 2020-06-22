@@ -3,6 +3,7 @@
 use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Business\Bid\Updater;
+use App\Transformers\Business\BidDetailsTransformer;
 use App\Transformers\Business\BidHistoryTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\CustomSerializer;
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -34,112 +36,96 @@ class BidController extends Controller
 
     public function index($business, $procurement, Request $request, AccessControl $access_control)
     {
-        try {
-            $access_control->setBusinessMember($request->business_member);
-            if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
-            $business = $request->business;
-            $procurement = Procurement::findOrFail((int)$procurement);
-            $final_fields = collect();
-            $procurement->load([
-                'bids' => function ($q) {
-                    $q->where('status', '<>', 'pending')->with('items.fields');
-                }
-            ]);
-            $bids = $procurement->bids;
-            $bid_lists = [];
-            $final_item = collect();
-            foreach ($bids as $bid) {
-                foreach ($bid->items as $item) {
-                    $final_item->push($item);
+        $access_control->setBusinessMember($request->business_member);
+        if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
+        $business = $request->business;
+        $procurement = Procurement::findOrFail((int)$procurement);
+        $final_fields = collect();
+        $procurement->load([
+            'bids' => function ($q) {
+                $q->where('status', '<>', 'pending')->with('items.fields');
+            }
+        ]);
+        $bids = $procurement->bids;
+        $bid_lists = [];
+        $final_item = collect();
+        foreach ($bids as $bid) {
+            foreach ($bid->items as $item) {
+                $final_item->push($item);
+            }
+        }
+        $group_by_items = $final_item->groupBy('type');
+        foreach ($group_by_items as $key => $group_by_item) {
+            $fields = collect();
+            foreach ($group_by_item as $item) {
+                foreach ($item->fields as $field) {
+                    $fields->push($field);
                 }
             }
-            $group_by_items = $final_item->groupBy('type');
-            foreach ($group_by_items as $key => $group_by_item) {
-                $fields = collect();
-                foreach ($group_by_item as $item) {
-                    foreach ($item->fields as $field) {
-                        $fields->push($field);
-                    }
+            $i = 0;
+            foreach ($fields->groupBy('title') as $key => $titles) {
+                foreach ($titles as $key => $title) {
+                    $title['key'] = $i;
+                    $final_fields->push($title);
                 }
-                $i = 0;
-                foreach ($fields->groupBy('title') as $key => $titles) {
-                    foreach ($titles as $key => $title) {
-                        $title['key'] = $i;
-                        $final_fields->push($title);
-                    }
-                    $i++;
-                }
+                $i++;
             }
-            foreach ($bids as $bid) {
-                $model = $bid->bidder_type;
-                $bidder = $model::findOrFail((int)$bid->bidder_id);
-                $reviews = $bidder->reviews;
+        }
+        foreach ($bids as $bid) {
+            $model = $bid->bidder_type;
+            $bidder = $model::findOrFail((int)$bid->bidder_id);
+            $reviews = $bidder->reviews;
 
-                $bid_items = $bid->items;
-                $item_type = [];
+            $bid_items = $bid->items;
+            $item_type = [];
 
-                foreach ($bid_items as $item) {
-                    $item_fields = [];
-                    $fields = $item->fields;
-                    $total_price = 0;
-                    foreach ($fields as $field) {
-                        $answer = null;
-                        if ($item->type == 'price_quotation') {
-                            $answer = $field->result;
-                            $total_price += ($field->result);
-                        } else {
-                            $answer = $field->result;
-                        }
-                        array_push($item_fields, [
-                            'field_id' => $field->id, 'question' => $field->title, 'answer' => $answer, 'input_type' => $field->input_type, 'key' => $final_fields->where('id', $field->id)->first()->key
-                        ]);
+            foreach ($bid_items as $item) {
+                $item_fields = [];
+                $fields = $item->fields;
+                $total_price = 0;
+                foreach ($fields as $field) {
+                    $answer = null;
+                    if ($item->type == 'price_quotation') {
+                        $answer = $field->result;
+                        $total_price += ($field->result);
+                    } else {
+                        $answer = $field->result;
                     }
-                    array_push($item_type, [
-                        'item_id' => $item->id, 'item_type' => $item->type, 'fields' => $item_fields, 'total_price' => $bid->price,
+                    array_push($item_fields, [
+                        'field_id' => $field->id, 'question' => $field->title, 'answer' => $answer, 'input_type' => $field->input_type, 'key' => $final_fields->where('id', $field->id)->first()->key
                     ]);
                 }
-
-                array_push($bid_lists, [
-                    'id' => $bid->id, 'status' => $bid->status, 'bidder_name' => $bidder->name, 'bidder_logo' => $bidder->logo, 'is_favourite' => $bid->is_favourite, 'created_at' => $bid->created_at->format('d/m/y'), 'bidder_avg_rating' => round($reviews->avg('rating'), 2), 'item' => $item_type
+                array_push($item_type, [
+                    'item_id' => $item->id, 'item_type' => $item->type, 'fields' => $item_fields, 'total_price' => $bid->price,
                 ]);
             }
 
-            if (count($bid_lists) > 0) return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]); else return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            array_push($bid_lists, [
+                'id' => $bid->id, 'status' => $bid->status, 'bidder_name' => $bidder->name, 'bidder_logo' => $bidder->logo, 'is_favourite' => $bid->is_favourite, 'created_at' => $bid->created_at->format('d/m/y'), 'bidder_avg_rating' => round($reviews->avg('rating'), 2), 'item' => $item_type
+            ]);
         }
+
+        if (count($bid_lists) > 0) return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]); else return api_response($request, null, 404);
     }
 
+    /**
+     * @param $business
+     * @param $bid
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
     public function updateFavourite($business, $bid, Request $request, Updater $updater)
     {
-
-        try {
-            $this->validate($request, [
-                'is_favourite' => 'required|integer:in:1,0',
-            ]);
-            $bid = Bid::findOrFail((int)$bid);
-            if (!$bid) {
-                return api_response($request, null, 404);
-            } else {
-                $updater->setIsFavourite($request->is_favourite)->updateFavourite($bid);
-                return api_response($request, null, 200);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'is_favourite' => 'required|integer:in:1,0',
+        ]);
+        $bid = $this->repo->find((int)$bid);
+        if (!$bid) {
+            return api_response($request, null, 404);
+        } else {
+            $updater->setIsFavourite($request->is_favourite)->updateFavourite($bid);
+            return api_response($request, null, 200);
         }
     }
 
@@ -215,10 +201,10 @@ class BidController extends Controller
     public function sendHireRequest($business, $bid, Request $request, Updater $updater)
     {
         $this->validate($request, [
-            'terms'     => 'required|string',
-            'price'     => 'required|numeric',
-            'items'     => 'required|string',
-            'policies'  => 'required|string'
+            'terms' => 'required|string',
+            'price' => 'required|numeric',
+            'items' => 'required|string',
+            'policies' => 'required|string'
         ]);
         $bid = $this->repo->find((int)$bid);
         $this->setModifier($request->manager_member);
@@ -233,35 +219,40 @@ class BidController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $bid
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function show($business, $bid, Request $request)
     {
-        try {
-            /** @var Bid $bid */
-            $bid = $this->repo->find((int)$bid);
-            $bid->load([
-                'items' => function ($q) {
-                    $q->with([
-                        'fields' => function ($q) {
-                            $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
-                        }
-                    ]);
-                }
-            ]);
-            $price_quotation = $bid->items->where('type', 'price_quotation')->first();
-            $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();
-            $company_evaluation = $bid->items->where('type', 'company_evaluation')->first();
-            $bid_details = [
-                'id' => $bid->id, 'status' => $bid->status, 'price' => $bid->price, 'title' => $bid->procurement->title, 'type' => $bid->procurement->type, 'is_awarded' => $bid->canNotSendHireRequest(), 'vendor' => [
-                    'name' => $bid->bidder->name, 'logo' => $bid->bidder->logo, 'domain' => $bid->bidder->sub_domain, 'rating' => round($bid->bidder->reviews->avg('rating'), 2), 'total_rating' => $bid->bidder->reviews->count()
-                ], 'attachments' => $bid->attachments()->select('title', 'file')->get(), 'terms' => $bid->terms, 'policies' => $bid->policies, 'proposal' => $bid->proposal, 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'), 'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'), 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
-            ];
-            return api_response($request, $bid_details, 200, ['bid' => $bid_details]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        /** @var Bid $bid */
+        $bid = $this->repo->find((int)$bid);
+        $bid->load([
+            'items' => function ($q) {
+                $q->with([
+                    'fields' => function ($q) {
+                        $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
+                    }
+                ]);
+            }
+        ]);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($bid, new BidDetailsTransformer());
+        $bid = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, $bid, 200, ['bid' => $bid]);
     }
 
+    /**
+     * @param $business
+     * @param $bid
+     * @param Request $request
+     * @return mixed
+     */
     public function downloadPdf($business, $bid, Request $request)
     {
         /** @var Bid $bid */
@@ -284,6 +275,5 @@ class BidController extends Controller
             ], 'proposal' => $bid->proposal, 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'), 'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'), 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
         ];
         return App::make('dompdf.wrapper')->loadView('pdfs.quotation_details', compact('bid_details'))->download("quotation_details.pdf");
-
     }
 }
