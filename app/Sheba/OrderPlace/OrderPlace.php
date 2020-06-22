@@ -594,7 +594,7 @@ class OrderPlace
         if ($this->selectedPartner) {
             $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner($this->selectedPartner);
             $job_data['commission_rate'] = $commissions->getServiceCommission();
-            $job_data['material_commission_rate'] = $commissions->getServiceCommission();
+            $job_data['material_commission_rate'] = $commissions->getMaterialCommission();
         }
 
         $job_data['discount'] = 0.00;
