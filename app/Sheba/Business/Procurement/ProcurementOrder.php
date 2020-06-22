@@ -95,8 +95,7 @@ class ProcurementOrder
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($this->procurement, new ProcurementOrderDetailsTransformer($this->bid));
-        $procurement = $fractal->createData($resource)->toArray()['data'];
-        return $procurement;
+        return $fractal->createData($resource)->toArray()['data'];
     }
 
     /**
