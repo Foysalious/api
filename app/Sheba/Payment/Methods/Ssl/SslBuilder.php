@@ -42,4 +42,25 @@ class SslBuilder
 
         return new DefaultStore();
     }
+
+    /**
+     * @param $store_name
+     * @return Ssl
+     */
+    public static function getByStoreName($store_name)
+    {
+        /** @var Ssl $ssl */
+        $ssl = app(Ssl::class);
+        $ssl->setStore(self::getStoreByName($store_name));
+        return $ssl;
+    }
+
+    public static function getStoreByName($name)
+    {
+        if ($name == MarketPlace::NAME) return new MarketPlace();
+
+        if ($name == Donation::NAME) return new Donation();
+
+        return new DefaultStore();
+    }
 }
