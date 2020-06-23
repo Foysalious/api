@@ -222,7 +222,7 @@ class PaymentLinkController extends Controller
                 $payables    = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
-                    $payment = $payable->payment ? $payable->payment : null;
+                    $payment = $payable->payments ? $payable->payments : null;
                     $payment = [
                         'id'         => $payment ? $payment->id : null,
                         'code'       => $payment ? '#' . $payment->id : null,
