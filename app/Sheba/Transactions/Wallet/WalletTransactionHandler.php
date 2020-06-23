@@ -1,5 +1,6 @@
 <?php namespace Sheba\Transactions\Wallet;
 
+use App\Models\Resource;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -87,6 +88,7 @@ class WalletTransactionHandler extends WalletTransaction
      */
     private function getTransactionClass()
     {
+        if ($this->model instanceof Resource) return new \Sheba\Dal\ResourceTransaction\Model();
         $name = class_basename($this->model);
         return app('App\\Models\\' . $name . 'Transaction');
     }
