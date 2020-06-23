@@ -952,7 +952,7 @@ class ProcurementController extends Controller
     /**
      * @param $procurement
      * @param $type
-     * @return |null
+     * @return array|null
      */
     public function generateItemData($procurement, $type)
     {
