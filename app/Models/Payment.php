@@ -124,6 +124,6 @@ class Payment extends Model
     public function getErrorMessage()
     {
         $details = $this->getTransactionDetails();
-        return $details ? $details->errorMessage : null;
+        return $details && property_exists($details, 'errorMessage') ? $details->errorMessage : null;
     }
 }
