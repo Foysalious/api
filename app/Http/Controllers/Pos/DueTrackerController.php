@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -259,6 +260,9 @@ class DueTrackerController extends Controller
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
+        } catch(InsufficientBalance $e) {
+            $message = "Insufficient Balance";
+            return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

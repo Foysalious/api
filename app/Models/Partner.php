@@ -6,12 +6,15 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\HasWallet;
+use Sheba\Payment\PayableUser;
+use Sheba\Wallet\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -20,7 +23,7 @@ use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\Referral\HasReferrals;
 use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
@@ -36,7 +39,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals
+class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
@@ -221,8 +224,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function commission($service_id)
     {
-        $service_category = Service::find($service_id)->category->id;
-        return $this->categories()->find($service_category)->pivot->commission;
+        $service_category = Service::find($service_id)->category;
+        $commissions = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
+        return $commissions->getServiceCommission();
     }
 
     public function categories()
@@ -372,6 +376,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
     }
 
+
     public function updatedAt()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -420,14 +425,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    public function withdrawalRequests()
+    {
+        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
+    }
+
     public function lastWeekWithdrawalRequest()
     {
         return $this->withdrawalRequests()->lastWeek()->notCancelled()->first();
-    }
-
-    public function withdrawalRequests()
-    {
-        return $this->hasMany(PartnerWithdrawalRequest::class);
     }
 
     public function currentWeekWithdrawalRequest()
@@ -561,7 +567,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return (double)$this->subscription_rules->commission->value;
     }
 
-    public function canCreateResource(Array $types)
+    public function canCreateResource(array $types)
     {
         return $this->subscriber()->canCreateResource($types);
     }
