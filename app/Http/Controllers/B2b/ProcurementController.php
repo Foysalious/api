@@ -16,6 +16,7 @@ use App\Sheba\Business\Bid\Updater as BidUpdater;
 use App\Sheba\Business\Procurement\ProcurementOrder;
 use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
+use App\Transformers\Business\ProcurementInvitationListTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\Business\ProposalDetailsTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
@@ -114,7 +115,7 @@ class ProcurementController extends Controller
     {
         $uncategorised = ['id' => 0, 'name' => 'uncategorised'];
         $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
-        $categories = array_merge([$uncategorised],$categories);
+        $categories = array_merge([$uncategorised], $categories);
         $sharing_to = config('b2b.SHARING_TO');
         $payment_strategy = config('b2b.PAYMENT_STRATEGY');
         $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
@@ -122,7 +123,7 @@ class ProcurementController extends Controller
             'sharing_to' => array_values($sharing_to),
             'payment_strategy' => $payment_strategy,
             'number_of_participants' => $number_of_participants,
-            'categories' => array_merge([$uncategorised],$categories)
+            'categories' => array_merge([$uncategorised], $categories)
         ];
         return api_response($request, $procurements, 200, ['procurements' => $procurements]);
     }
@@ -670,6 +671,70 @@ class ProcurementController extends Controller
         $rfq_order_bill['paid'] = $procurement->paid;
         $rfq_order_bill['due'] = $procurement->due;
         return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
+    }
+
+    public function invitedPartners($business, $procurement, Request $request)
+    {
+        $procurement = $this->procurementRepository->find((int)$procurement);
+        $procurement->load(['bids' => function ($q) {
+            $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type');
+        }, 'invitations' => function ($q) {
+            $q->with([
+                'partner' => function ($q) {
+                    $q->select('id', 'name', 'logo');
+                }
+            ]);
+        }]);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($procurement->invitations, new ProcurementInvitationListTransformer($procurement));
+        $invited_partners = $manager->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort_by_name')) $invited_partners = $this->sortByName($invited_partners, $request->sort_by_name)->values();
+        if ($request->has('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
+        if ($request->has('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
+
+        return api_response($request, null, 200, ['invited_partners' => $invited_partners]);
+    }
+
+    /**
+     * @param $invited_partners
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByName($invited_partners, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($invited_partners)->$sort_by(function ($invited_partner) {
+            return strtoupper($invited_partner['vendor']['name']);
+        });
+    }
+
+    /**
+     * @param $invited_partners
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByDate($invited_partners, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($invited_partners)->$sort_by(function ($invited_partner) {
+            return strtoupper($invited_partner['invited_on']);
+        });
+    }
+
+    /**
+     * @param $invited_partners
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByStatus($invited_partners, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($invited_partners)->$sort_by(function ($invited_partner) {
+            return strtoupper($invited_partner['status']);
+        });
     }
 
     /**
