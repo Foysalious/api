@@ -691,8 +691,7 @@ class ProcurementController extends Controller
                 }
             ]);
         }]);
-        $is_invitation_available = $procurement->invitations()->count();
-        dd($is_invitation_available);
+        $is_invitation_available = $procurement->invitations()->count() ? 1 : 0;
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurement->invitations, new ProcurementInvitationListTransformer($procurement));
