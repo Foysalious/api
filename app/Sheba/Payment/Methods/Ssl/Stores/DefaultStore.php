@@ -2,6 +2,8 @@
 
 class DefaultStore extends SslStore
 {
+    const NAME = "default";
+
     public function __construct()
     {
         $this->storeId            = config("payment.ssl.stores.default.id");
@@ -15,6 +17,6 @@ class DefaultStore extends SslStore
      */
     public function getName()
     {
-        return "default";
+        return self::NAME;
     }
 }

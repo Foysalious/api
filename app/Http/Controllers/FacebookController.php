@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
+use Sheba\Portals\Portals;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
@@ -139,7 +140,8 @@ class FacebookController extends Controller
             ($version > 30211 && $portal_name == 'customer-app') ||
             ($version > 12003 && $portal_name == 'bondhu-app') ||
             ($version > 2145 && $portal_name == 'resource-app') ||
-            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios');
+            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios') ||
+            $portal_name == Portals::BUSINESS_WEB;
     }
 
     private function getFacebookProfileInfo($token)
@@ -147,8 +149,8 @@ class FacebookController extends Controller
         try {
             $client = new Client();
             $res = $client->request('GET', 'https://graph.facebook.com/me?fields=id,name,email,gender,picture.height(400).width(400)&access_token=' . $token);
-            $data = json_decode($res->getBody(), true);
-            return $data;
+
+            return json_decode($res->getBody(), true);
         } catch (RequestException $e) {
             return false;
         }

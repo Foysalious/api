@@ -117,7 +117,7 @@ class Creator
 
     public function setCategory($category)
     {
-        $this->category = $category;
+        $this->category = $category != 0 ? $category : null;
         return $this;
     }
 
@@ -159,7 +159,7 @@ class Creator
 
     public function setProcurementEndDate($procurement_end_date)
     {
-        $this->procurementEndDate = $procurement_end_date ? $procurement_end_date. ' 23:59:59' : null;
+        $this->procurementEndDate = $procurement_end_date ? $procurement_end_date . ' 23:59:59' : null;
         return $this;
     }
 
@@ -171,7 +171,7 @@ class Creator
 
     public function setLastDateOfSubmission($last_date_of_submission)
     {
-        $this->lastDateOfSubmission = $last_date_of_submission. ' 23:59:59';
+        $this->lastDateOfSubmission = $last_date_of_submission . ' 23:59:59';
         return $this;
     }
 
@@ -218,18 +218,29 @@ class Creator
         return $this;
     }
 
+    /**
+     * @param $created_by
+     * @return $this
+     */
     public function setCreatedBy($created_by)
     {
         $this->createdBy = $created_by;
         return $this;
     }
 
+    /**
+     * @param $sharing_to
+     * @return $this
+     */
     public function setSharingTo($sharing_to)
     {
         $this->sharedTo = $sharing_to;
         return $this;
     }
 
+    /**
+     * @return $this
+     */
     public function getBid()
     {
         $this->bid = $this->procurement->getActiveBid();
@@ -295,6 +306,10 @@ class Creator
         ];
     }
 
+    /**
+     * @param ProcurementItem $procurement_item
+     * @param $fields
+     */
     private function makeItemFields(ProcurementItem $procurement_item, $fields)
     {
         $this->procurementItemFieldData = [];
@@ -313,12 +328,18 @@ class Creator
         }
     }
 
+    /**
+     * @param $procurement
+     */
     private function createTags($procurement)
     {
         $tags = Tag::sync($this->labels, get_class($procurement));
         $procurement->tags()->sync($tags);
     }
 
+    /**
+     * @param Procurement $procurement
+     */
     private function createAttachments(Procurement $procurement)
     {
         foreach ($this->attachments as $attachment) {
@@ -329,6 +350,9 @@ class Creator
         }
     }
 
+    /**
+     * @param Procurement $procurement
+     */
     private function makeQuestion(Procurement $procurement)
     {
         $this->procurementQuestionData = [];
@@ -344,113 +368,23 @@ class Creator
         }
     }
 
-    public function formatTimeline()
-    {
-        $payment_requests = $this->procurement->paymentRequests()->with('statusChangeLogs')->get();
-
-        $requests = [];
-        $request_logs = [];
-        foreach ($payment_requests as $payment_request) {
-            $payment_request_logs = $payment_request->statusChangeLogs->isEmpty() ? null : $payment_request->statusChangeLogs;
-            if ($payment_request_logs) {
-                foreach ($payment_request_logs as $log) {
-                    array_push($request_logs, [
-                        'created_at' => $log->created_at->toDateTimeString(),
-                        'time' => $log->created_at->format('h.i A'),
-                        'date' => $log->created_at->format('Y-m-d'),
-                        'log' => 'Status Updated From ' . $log->from_status . ' To ' . $log->to_status
-                    ]);
-                }
-            }
-            array_push($requests, [
-                'created_at' => $payment_request->created_at->toDateTimeString(),
-                'time' => $payment_request->created_at->format('h.i A'),
-                'date' => $payment_request->created_at->format('Y-m-d'),
-                'log' => 'This Payment Request: #' . $payment_request->id . ' Is ' . $payment_request->status
-            ]);
-        }
-        $bid_status_change_log = $this->bid->statusChangeLogs()->where('to_status', 'awarded')->first();
-        $data = [
-            'created_at' => $bid_status_change_log ? $bid_status_change_log->created_at->toDateTimeString() : 'n/s',
-            'time' => $bid_status_change_log ? $bid_status_change_log->created_at->format('h.i A') : 'n/s',
-            'date' => $bid_status_change_log ? $bid_status_change_log->created_at->format('Y-m-d') : 'n/s',
-            'log' => $bid_status_change_log ? 'Hired ' . $this->bid->bidder->name . ' and Status Updated From ' . $bid_status_change_log->from_status . ' To ' . $bid_status_change_log->to_status : 'n/s'
-        ];
-
-        $order_time_lines = collect(array_merge([$data], $requests, $request_logs))->sortByDesc('created_at')->groupBy('date');
-        $order_time_line = [];
-        foreach ($order_time_lines as $key => $time_lines) {
-            array_push($order_time_line, [
-                'date' => Carbon::parse($key)->format('d M'),
-                'year' => Carbon::parse($key)->format('Y'),
-                'logs' => $time_lines,
-            ]);
-        }
-        return $order_time_line;
-    }
-
     /**
      * @param Procurement $procurement
      */
     public function changeStatus(Procurement $procurement)
     {
         $this->procurementData = [
-            'is_published'  => $this->isPublished ? (int)$this->isPublished : 0,
-            'published_at'  => $this->isPublished ? Carbon::now() : '',
-            'shared_to'     => $this->sharedTo
+            'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'published_at' => $this->isPublished ? Carbon::now() : '',
+            'shared_to' => $this->sharedTo
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
         if ($this->isPublished) $this->sendNotification($procurement);
     }
 
-    public function formatData()
-    {
-        $bid_price_quotations = null;
-        if ($this->procurement->isAdvanced())
-            $bid_price_quotations = $this->generateBidItemData();
-
-        return [
-            'procurement_id' => $this->procurement->id,
-            'procurement_title' => $this->procurement->title,
-            'procurement_status' => $this->procurement->status,
-            'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$this->procurement->status],
-            'procurement_start_date' => Carbon::parse($this->procurement->procurement_start_date)->format('d/m/y'),
-            'procurement_end_date' => Carbon::parse($this->procurement->procurement_end_date)->format('d/m/y'),
-            'procurement_type' => $this->procurement->type,
-            'procurement_additional_info' => $this->procurement->long_description,
-            'vendor' => [
-                'name' => $this->bid->bidder->name,
-                'logo' => $this->bid->bidder->logo,
-                'contact_person' => $this->bid->bidder->getContactPerson(),
-                'mobile' => $this->bid->bidder->getMobile(),
-                'address' => $this->bid->bidder->address,
-                'rating' => round($this->bid->bidder->reviews->avg('rating'), 2),
-                'total_rating' => $this->bid->bidder->reviews->count()
-            ],
-            'bid_id' => $this->bid->id,
-            'bid_price' => $this->bid->price,
-            'bid_price_quotations' => $bid_price_quotations
-        ];
-    }
-
-    private function generateBidItemData()
-    {
-        $item_type = $this->bid->items->where('type', 'price_quotation')->first();
-        $item_fields = [];
-        foreach ($item_type->fields as $field) {
-            $unit = $field->variables ? json_decode($field->variables)->unit ? json_decode($field->variables)->unit : 0 : 0;
-            array_push($item_fields, [
-                'id' => $field->id,
-                'title' => $field->title,
-                'short_description' => $field->short_description,
-                'unit' => $unit,
-                'unit_price' => number_format($field->result / $unit, 2),
-                'total_price' => $field->result,
-            ]);
-        }
-        return $item_fields;
-    }
-
+    /**
+     * @param Procurement $procurement
+     */
     private function sendNotification(Procurement $procurement)
     {
         dispatch(new SendRFQCreateNotificationToPartners($procurement));

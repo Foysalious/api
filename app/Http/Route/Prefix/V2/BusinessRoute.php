@@ -16,11 +16,17 @@ class BusinessRoute
             $api->get('landings', 'B2b\ProcurementController@landings');
             $api->group(['prefix' => '{tender}'], function ($api) {
                 $api->get('/', 'B2b\ProcurementController@tenderShow');
-                $api->get('proposal', 'B2b\ProcurementController@tenderProposalEdit');
-                $api->post('proposal', 'B2b\ProcurementController@tenderProposalStore');
+                $api->group(['prefix' => 'proposal'], function ($api) {
+                    $api->get('/', 'B2b\ProcurementController@tenderProposalEdit');
+                    $api->post('/', 'B2b\ProcurementController@tenderProposalStore');
+                    $api->group(['prefix' => '{proposal}'], function ($api) {
+                        $api->get('/', 'B2b\ProcurementController@proposalDetail');
+                        $api->get('/send-pin', 'B2b\ProposalController@sendPin');
+                        $api->post('/', 'B2b\ProposalController@takeAction');
+                    });
+                });
             });
         });
-
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
@@ -149,6 +155,8 @@ class BusinessRoute
                             $api->post('/', 'AttachmentController@storeAttachment');
                             $api->get('/', 'AttachmentController@getAttachments');
                         });
+                        $api->post('/update-item', 'B2b\ProcurementController@updateItem');
+
                         $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');

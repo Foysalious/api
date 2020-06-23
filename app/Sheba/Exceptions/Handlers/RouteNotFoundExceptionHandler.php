@@ -1,14 +1,15 @@
 <?php namespace Sheba\Exceptions\Handlers;
 
-class ThrowableHandler extends Handler
+
+class RouteNotFoundExceptionHandler extends Handler
 {
     protected function getCode()
     {
-        return 500;
+        return 404;
     }
 
     protected function getMessage()
     {
-        return 'Something went wrong.';
+        return 'Route Not Found';
     }
 }

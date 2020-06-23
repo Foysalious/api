@@ -1,14 +1,14 @@
 <?php namespace Sheba\Exceptions\Handlers;
 
-class ThrowableHandler extends Handler
+class MethodNotAllowedHttpExceptionHandler extends Handler
 {
     protected function getCode()
     {
-        return 500;
+        return 405;
     }
 
     protected function getMessage()
     {
-        return 'Something went wrong.';
+        return 'Method is not allowed';
     }
 }

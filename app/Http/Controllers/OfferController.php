@@ -53,12 +53,6 @@ class OfferController extends Controller
         if ($request->has('category')) $offer_filter->setCategory(Category::find((int)$request->category));
         if ($location) $offer_filter->setLocation($location);
         $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('amount'));
-
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $resource = new Collection($offers, new OfferTransformer());
-        $offers = $manager->createData($resource)->toArray()['data'];
-
         if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
         else return api_response($request, null, 404);
     }

@@ -208,9 +208,48 @@ class Ssl extends PaymentMethod
     {
         $url  = $this->store->getOrderValidationUrl();
         $url .= "?val_id=" . request('val_id');
+        $url  = $this->addIdPasswordToUrl($url);
+        return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
+    }
+
+    /**
+     * @param $bank_transaction_id
+     * @param $amount
+     * @return mixed
+     * @throws TPProxyServerError
+     */
+    public function refund($bank_transaction_id, $amount)
+    {
+        $url  = $this->store->getRefundUrl();
+        $url .= "?refund_amount=" . urlencode($amount);
+        $url .= "&refund_remarks=" . urlencode('Customer Refund');
+        $url .= "&bank_tran_id=" . urlencode($bank_transaction_id);
+        $url  = $this->addIdPasswordToUrl($url);
+        $url .= "&v=1&format=json";
+
+        return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
+    }
+
+    /**
+     * @param $refund_ref_id
+     * @return mixed
+     * @throws TPProxyServerError
+     */
+    public function getRefundStatus($refund_ref_id)
+    {
+        $url  = $this->store->getRefundUrl();
+        $url .= "?refund_ref_id=$refund_ref_id";
+        $url  = $this->addIdPasswordToUrl($url);
+        $url .= "&format=json";
+
+        return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
+    }
+
+    private function addIdPasswordToUrl($url)
+    {
         $url .= "&store_id=" . $this->store->getStoreId();
         $url .= "&store_passwd=" . $this->store->getStorePassword();
-        return $this->tpClient->call((new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET));
+        return $url;
     }
 
     public function getMethodName()

@@ -1,7 +1,7 @@
 <?php namespace Sheba\Business\Procurement;
 
-use App\Models\Procurement;
 use Carbon\Carbon;
+use App\Models\Procurement;
 use Sheba\Helpers\ConstGetter;
 
 class StatusCalculator

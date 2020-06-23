@@ -1,13 +1,11 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+
 use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
-
-
 
 class IndexRoute
 {
     public function set($api)
     {
-
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
@@ -294,6 +292,8 @@ class IndexRoute
                 $api->get('check-verification', 'Partner\ProfileController@checkVerification');
                 $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
                 $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
+                $api->get('check-first-time-user', 'Partner\ProfileController@checkFirstTimeUser');
+
             });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);

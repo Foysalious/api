@@ -78,7 +78,8 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
         $search = $procurement_filter_request->getSearchQuery();
         $limit = $procurement_filter_request->getLimit();
 
-        $base_query = $this->model->with('tags', 'bids')->where('last_date_of_submission', '>=', Carbon::now())
+        $base_query = $this->model->with('tags', 'bids')->where('is_published', 1)
+            ->where('last_date_of_submission', '>=', Carbon::now())
             ->where(function ($query) use ($categories, $shared_to, $min_price, $max_price, $start_date, $end_date, $tags) {
                 $query->when($categories, function ($category_query) use ($categories) {
                     return $category_query->whereIn('category_id', $categories)->orWhereNull('category_id');

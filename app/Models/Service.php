@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
 use Sheba\Dal\Gallery\Gallery;
@@ -90,9 +91,8 @@ class Service extends Model
 
     public function commission($partner_id)
     {
-        $service_category = $this->category->id;
-        $partner = Partner::find($partner_id);
-        return $partner->categories()->find($service_category)->pivot->commission;
+        $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner(Partner::find($partner_id));
+        return $commissions->getServiceCommission();
     }
 
     public function custom_services()

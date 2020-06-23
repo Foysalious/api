@@ -1,8 +1,8 @@
 <?php namespace App\Sheba\DigitalKYC\Partner;
 
-use App\Sheba\Partner\KYC\RestrictedFeature;
 use App\Sheba\Partner\KYC\Statuses;
 use Illuminate\Http\Request;
+use Sheba\Partner\KYC\RestrictedFeature;
 use Sheba\Repositories\ProfileRepository;
 
 class ProfileUpdateRepository

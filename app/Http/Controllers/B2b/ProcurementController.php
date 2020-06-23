@@ -6,15 +6,18 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
+use App\Models\ProcurementItem;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Tag;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\Bid\Updater as BidUpdater;
+use App\Sheba\Business\Procurement\ProcurementOrder;
 use App\Sheba\Business\Procurement\Updater;
 use App\Transformers\Business\ProcurementDetailsTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
+use App\Transformers\Business\ProposalDetailsTransformer;
 use App\Transformers\Business\TenderDetailsTransformer;
 use App\Transformers\Business\TenderMinimalTransformer;
 use App\Transformers\Business\TenderTransformer;
@@ -44,8 +47,10 @@ use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Partner\Creator as PartnerCreator;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
+use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -76,6 +81,8 @@ class ProcurementController extends Controller
     private $partnerCreateRequest;
     /** @var ProcurementFilterRequest $procurementFilterRequest */
     private $procurementFilterRequest;
+    /** @var ProcurementOrder $procurementOrder */
+    private $procurementOrder;
 
     /**
      * ProcurementController constructor.
@@ -86,13 +93,15 @@ class ProcurementController extends Controller
      * @param PartnerCreator $partner_creator
      * @param PartnerCreateRequest $partner_create_request
      * @param ProcurementFilterRequest $procurement_filter_request
+     * @param ProcurementOrder $procurement_order
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
                                 ResourceCreator $resource_creator,
                                 PartnerCreator $partner_creator,
                                 PartnerCreateRequest $partner_create_request,
-                                ProcurementFilterRequest $procurement_filter_request)
+                                ProcurementFilterRequest $procurement_filter_request,
+                                ProcurementOrder $procurement_order)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
@@ -100,11 +109,14 @@ class ProcurementController extends Controller
         $this->partnerCreator = $partner_creator;
         $this->partnerCreateRequest = $partner_create_request;
         $this->procurementFilterRequest = $procurement_filter_request;
+        $this->procurementOrder = $procurement_order;
     }
 
     public function create(Request $request)
     {
+        $uncategorised = ['id' => 0, 'name' => 'uncategorised'];
         $categories = Category::child()->published()->publishedForB2B()->select('id', 'name')->get()->toArray();
+        $categories = array_merge([$uncategorised],$categories);
         $sharing_to = config('b2b.SHARING_TO');
         $payment_strategy = config('b2b.PAYMENT_STRATEGY');
         $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
@@ -112,7 +124,7 @@ class ProcurementController extends Controller
             'sharing_to' => array_values($sharing_to),
             'payment_strategy' => $payment_strategy,
             'number_of_participants' => $number_of_participants,
-            'categories' => $categories
+            'categories' => array_merge([$uncategorised],$categories)
         ];
         return api_response($request, $procurements, 200, ['procurements' => $procurements]);
     }
@@ -220,7 +232,7 @@ class ProcurementController extends Controller
         $resource = new Collection($procurements->get(), new ProcurementListTransformer());
         $procurements = $manager->createData($resource)->toArray()['data'];
 
-        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements,$request->status);
+        if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
         if ($request->has('search')) $procurements = $this->searchByTitle($procurements, $request)->values();
         if ($request->has('sort_by_id')) $procurements = $this->sortById($procurements, $request->sort_by_id)->values();
         if ($request->has('sort_by_title')) $procurements = $this->sortByTitle($procurements, $request->sort_by_title)->values();
@@ -239,19 +251,20 @@ class ProcurementController extends Controller
      */
     public function filterWithStatus($procurements, $status)
     {
-        if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'open') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'open') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'hired') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'hired') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
-        if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use($status){
+        if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
     }
+
     /**
      * @param $procurements
      * @param string $sort
@@ -350,8 +363,7 @@ class ProcurementController extends Controller
         if ($request->has('q')) $procurement_filter_request->setSearchQuery($request->q);
 
         $procurements = $this->procurementRepository->getProcurementFilterBy($procurement_filter_request);
-        // list($offset, $limit) = calculatePagination($request);
-        // $procurements = $procurements->skip($offset)->limit($limit);
+
         $procurements = $procurements->filter(function ($procurement) {
             $number_of_participants = $procurement->number_of_participants;
             $number_of_bids = $procurement->bids()->count();
@@ -447,8 +459,8 @@ class ProcurementController extends Controller
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($procurement, new ProcurementDetailsTransformer());
         $procurement = $fractal->createData($resource)->toArray()['data'];
-
-        return api_response($request, null, 200, ['procurement' => $procurement]);
+        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
+        return api_response($request, null, 200, ['procurement' => $procurement, 'number_of_participants' => $number_of_participants]);
     }
 
     /**
@@ -467,7 +479,6 @@ class ProcurementController extends Controller
             'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
-            'payment_options' => 'sometimes|required|string',
         ]);
 
         $procurement = $this->procurementRepository->find($procurement);
@@ -482,6 +493,23 @@ class ProcurementController extends Controller
         $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
         return api_response($request, null, 200, ["message" => "Successful"]);
 
+    }
+
+    public function updateItem($business, $procurement, Request $request, Updater $updater)
+    {
+        $this->validate($request, [
+            'item' => 'required|string',
+        ]);
+        $this->setModifier($request->manager_member);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+        $procurement->load('items.fields');
+        $procurement_item_type = collect(json_decode($request->item, true))->first();
+        $procurement_item_fields = $procurement_item_type['fields'];
+        /** @var ProcurementItem $procurement_item */
+        $procurement_item = $procurement->items->where('type', $procurement_item_type['item_type'])->first();
+        $updater->itemFieldsUpdate($procurement_item, $procurement_item_fields);
+        return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
     /**
@@ -556,24 +584,25 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param ProcurementAdapter $procurement_adapter
-     * @param ShebaPayment $payment
+     * @param PaymentManager $payment_manager
      * @param ShebaPaymentValidator $payment_validator
      * @param ProcurementRepositoryInterface $procurement_repository
      * @return JsonResponse
-     * @throws ReflectionException
      * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
      */
-    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, PaymentManager $payment_manager, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->validate($request, [
-            'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
+            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getBusinessPayments()),
+            'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
-        $procurement = $procurement_repository->find($procurement);
+        $procurement = $this->procurementRepository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
-        $payment = $payment->setMethod($payment_method)->init($payable);
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -581,21 +610,12 @@ class ProcurementController extends Controller
      * @param $business
      * @param $procurement
      * @param Request $request
-     * @param Creator $creator
      * @return JsonResponse
      */
-    public function orderTimeline($business, $procurement, Request $request, Creator $creator)
+    public function orderTimeline($business, $procurement, Request $request)
     {
-        try {
-            $procurement = $creator->getProcurement($procurement)->getBid();
-            $order_timelines = $creator->formatTimeline();
-            return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $order_timelines = $this->procurementOrder->setProcurement($procurement)->getBid()->formatTimeline();
+        return api_response($request, $order_timelines, 200, ['timelines' => $order_timelines]);
     }
 
     /**
@@ -605,45 +625,23 @@ class ProcurementController extends Controller
      */
     public function procurementOrders($business, Request $request)
     {
-        try {
-            list($offset, $limit) = calculatePagination($request);
-            $procurements = Procurement::order()->with([
-                'bids' => function ($q) {
-                    $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
-                }
-            ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
-
-            $total_procurement = $procurements->get()->count();
-
-            if ($request->has('status') && $request->status != 'all') {
-                $procurements = $procurements->where('status', $request->status);
+        $procurement_orders = Procurement::order()->with([
+            'bids' => function ($q) {
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
             }
+        ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
+        $is_order_available = $procurement_orders->count() > 0 ? 1 : 0;
 
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
-            if ($start_date && $end_date) {
-                $procurements->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-            }
-            $procurements = $procurements->skip($offset)->limit($limit)->get();
-            $rfq_order_lists = [];
-            foreach ($procurements as $procurement) {
-                $bid = $procurement->getActiveBid() ? $procurement->getActiveBid() : null;
-                array_push($rfq_order_lists, [
-                    'procurement_id' => $procurement->id, 'procurement_title' => $procurement->title, 'procurement_status' => $procurement->status, 'created_at' => $procurement->created_at->format('d/m/y'), 'color' => constants('PROCUREMENT_ORDER_STATUSES_COLOR')[$procurement->status], 'bid_id' => $bid ? $bid->id : null, 'price' => $bid ? $bid->price : null, 'vendor' => [
-                        'name' => $bid ? $bid->bidder->name : null
-                    ]
-                ]);
-            }
-
-            return api_response($request, $rfq_order_lists, 200, [
-                'rfq_order_lists' => $rfq_order_lists, 'total_procurement' => $total_procurement,
-            ]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $procurement_orders->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
+        list($procurement_orders, $total_orders) = $this->procurementOrder->orders($procurement_orders, $request);
+
+        if (count($procurement_orders) > 0) return api_response($request, $procurement_orders, 200, [
+            'procurement_orders' => $procurement_orders, 'total_orders' => $total_orders, 'is_order_available' => $is_order_available
+        ]); else return api_response($request, null, 404);
     }
 
     /**
@@ -651,45 +649,31 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param $bid
      * @param Request $request
-     * @param Creator $creator
+     * @param BidRepositoryInterface $bid_repository
      * @return JsonResponse
      */
-    public function showProcurementOrder($business, $procurement, $bid, Request $request, Creator $creator)
+    public function showProcurementOrder($business, $procurement, $bid, Request $request, BidRepositoryInterface $bid_repository)
     {
-        try {
-            $bid = Bid::findOrFail((int)$bid);
-            $rfq_order_details = $creator->getProcurement($procurement)->setBid($bid)->formatData();
-            return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $bid = $bid_repository->find((int)$bid);
+        if (!$bid) return api_response($request, null, 404);
+        $rfq_order_details = $this->procurementOrder->setProcurement($procurement)->setBid($bid)->orderDetails();
+        return api_response($request, null, 200, ['order_details' => $rfq_order_details]);
     }
 
     /**
      * @param $business
      * @param $procurement
      * @param Request $request
-     * @param Creator $creator
      * @return JsonResponse
      */
-    public function orderBill($business, $procurement, Request $request, Creator $creator)
+    public function orderBill($business, $procurement, Request $request)
     {
-        try {
-            $procurement = Procurement::findOrFail((int)$procurement);
-            $procurement->calculate();
-            $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
-            $rfq_order_bill['paid'] = $procurement->paid;
-            $rfq_order_bill['due'] = $procurement->due;
-            return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $procurement = $this->procurementRepository->find((int)$procurement);
+        $procurement->calculate();
+        $rfq_order_bill['total_price'] = $procurement->getActiveBid()->price;
+        $rfq_order_bill['paid'] = $procurement->paid;
+        $rfq_order_bill['due'] = $procurement->due;
+        return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
     }
 
     /**
@@ -736,17 +720,10 @@ class ProcurementController extends Controller
      */
     public function workOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
     {
-        try {
-            $business = $request->business;
-            $bid = Bid::findOrFail((int)$bid);
-            $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
-            return api_response($request, null, 200, ['work_order' => $work_order]);
-        } catch (ModelNotFoundException $e) {
-            return api_response($request, null, 404, ["message" => "Model Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $business = $request->business;
+        $bid = Bid::findOrFail((int)$bid);
+        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
+        return api_response($request, null, 200, ['work_order' => $work_order]);
     }
 
     /**
@@ -787,7 +764,6 @@ class ProcurementController extends Controller
      * @param Request $request
      * @param BidCreator $creator
      * @param BidUpdater $updater
-     * @param ProcurementRepository $procurement_repository
      * @param BidRepositoryInterface $bid_repository
      * @param ProfileRepositoryInterface $profile_repository
      * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
@@ -796,7 +772,6 @@ class ProcurementController extends Controller
      */
     public function tenderProposalStore($tender, Request $request,
                                         BidCreator $creator, BidUpdater $updater,
-                                        ProcurementRepository $procurement_repository,
                                         BidRepositoryInterface $bid_repository,
                                         ProfileRepositoryInterface $profile_repository,
                                         ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
@@ -811,7 +786,7 @@ class ProcurementController extends Controller
         ]);
 
         /** @var Procurement $procurement */
-        $procurement = $procurement_repository->find($tender);
+        $procurement = $this->procurementRepository->find($tender);
         $partner = $this->getPartner($profile_repository, $request);
         $shared_to_statuses = config('b2b.SHARING_TO');
 
@@ -866,11 +841,10 @@ class ProcurementController extends Controller
     }
 
     /**
-     * @param ProfileRepositoryInterface $profile_repository
      * @param Request $request
      * @return Partner
      */
-    private function getPartner(ProfileRepositoryInterface $profile_repository, Request $request)
+    private function getPartner(Request $request)
     {
         /** @var Profile $profile */
         $profile = $this->profileRepository->checkExistingProfile($request->company_phone, $request->email);
@@ -898,6 +872,10 @@ class ProcurementController extends Controller
         return $partner;
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     private function formatProfileSpecificData($request)
     {
         return [
@@ -952,10 +930,9 @@ class ProcurementController extends Controller
     /**
      * @param $tender
      * @param Request $request
-     * @param ProcurementRepository $procurement_repository
      * @return JsonResponse
      */
-    public function tenderProposalEdit($tender, Request $request, ProcurementRepository $procurement_repository)
+    public function tenderProposalEdit($tender, Request $request)
     {
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
@@ -976,6 +953,11 @@ class ProcurementController extends Controller
         return api_response($request, null, 200, ['tender' => $procurement]);
     }
 
+    /**
+     * @param $procurement
+     * @param $type
+     * @return |null
+     */
     public function generateItemData($procurement, $type)
     {
         $type_data = $procurement->items->where('type', $type)->first();
@@ -994,6 +976,12 @@ class ProcurementController extends Controller
         }) : null;
     }
 
+    /**
+     * @param Procurement $procurement
+     * @param Partner $partner
+     * @param $shared_to_statuses
+     * @return bool
+     */
     private function isVerifiedOnlyTender(Procurement $procurement, Partner $partner, $shared_to_statuses)
     {
         if ($procurement->shared_to != ($shared_to_statuses['verified'])['key']) return false;
@@ -1048,5 +1036,27 @@ class ProcurementController extends Controller
         $data['tenders'] = $procurements;
 
         return api_response($request, null, 200, ['data' => $data]);
+    }
+
+    /**
+     * @param $tender
+     * @param $proposal
+     * @param Request $request
+     * @param BidRepositoryInterface $bid_repo
+     * @return JsonResponse
+     */
+    public function proposalDetail($tender, $proposal, Request $request, BidRepositoryInterface $bid_repo)
+    {
+        $proposal = $bid_repo->find($proposal);
+        if (!$proposal) return api_response($request, null, 404);
+        if ($proposal->procurement_id != (int)$tender) return api_response($request, null, 404);
+        $procurement = $this->procurementRepository->find($tender);
+
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($procurement, new ProposalDetailsTransformer($proposal));
+        $procurement = $fractal->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['data' => $procurement]);
     }
 }
