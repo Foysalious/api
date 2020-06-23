@@ -2,6 +2,7 @@
 
 use App\Models\Bid;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\Bid\StatusCalculator;
 use App\Transformers\AttachmentTransformer;
 
 class BidDetailsTransformer extends TransformerAbstract
@@ -21,7 +22,7 @@ class BidDetailsTransformer extends TransformerAbstract
 
         return [
             'id' => $bid->id,
-            'status' => $bid->status,
+            'status' => StatusCalculator::resolveStatus($bid),
             'price' => $bid->price,
             'title' => $bid->procurement->title,
             'type' => $bid->procurement->type,
