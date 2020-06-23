@@ -1,17 +1,27 @@
 <?php namespace Sheba\Checkout;
 
 use App\Models\Category;
+use App\Models\Location;
 
 class DeliveryCharge
 {
     /** @var Category */
     private $category;
+    /** @var Location */
+    private $location;
     private $shebaLogisticDeliveryCharge;
     private $categoryPartnerPivot;
 
     public function setCategory(Category $category)
     {
         $this->category = $category;
+        $this->setShebaLogisticDeliveryCharge();
+        return $this;
+    }
+
+    public function setLocation(Location $location)
+    {
+        $this->location = $location;
         $this->setShebaLogisticDeliveryCharge();
         return $this;
     }
@@ -23,28 +33,34 @@ class DeliveryCharge
         return $this;
     }
 
+    /**
+     * Sheba Logistics delivery charge will be calculated if category
+     * has logistics enabled as per business decision
+     * @return $this
+     */
     private function setShebaLogisticDeliveryCharge()
     {
-        if (!$this->category || !$this->categoryPartnerPivot || !is_null($this->shebaLogisticDeliveryCharge)) return $this;
-        if ($this->category->needsLogistic() && $this->doesUseShebaLogistic()) {
-            $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
-        }
+        if (!$this->category || !$this->location) return $this;
+        if (!is_null($this->shebaLogisticDeliveryCharge)) return $this;
+        if (!$this->doesUseShebaLogistic()) return $this;
 
+        $this->shebaLogisticDeliveryCharge = $this->category->getShebaLogisticsPrice();
         return $this;
     }
 
     public function doesUseShebaLogistic()
     {
-        if ($this->categoryPartnerPivot)
-            return (bool)$this->categoryPartnerPivot->uses_sheba_logistic;
-
-        return $this->category->needsLogistic();
+        return $this->category->needsLogistic() && $this->category->needsLogisticOn($this->location);
     }
 
+    /**
+     *  Delivery charge will be calculated from category as per business decision
+     * @return float
+     */
     public function get()
     {
         return $this->doesUseShebaLogistic() ?
             (double)$this->shebaLogisticDeliveryCharge :
-            $this->categoryPartnerPivot ? (double)$this->categoryPartnerPivot->delivery_charge : (double)$this->category->delivery_charge;
+            (double)$this->category->delivery_charge;
     }
 }

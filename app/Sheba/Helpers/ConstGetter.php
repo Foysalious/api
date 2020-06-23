@@ -17,7 +17,7 @@ trait ConstGetter
 
     public static function getAllWithout(...$excludes)
     {
-        if(is_array($excludes[0])) $excludes = $excludes[0];
+        if (is_array($excludes[0])) $excludes = $excludes[0];
         return array_diff(static::get(), $excludes);
     }
 
@@ -25,8 +25,13 @@ trait ConstGetter
     {
         $result = [];
         foreach (static::get() as $item) {
-            $result[$item] = normalizeCases($item);
+            $result[$item] = normalizeStringCases($item);
         }
         return $result;
+    }
+
+    public static function isValid($value)
+    {
+        return in_array($value, static::get());
     }
 }

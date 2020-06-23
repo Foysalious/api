@@ -1,10 +1,14 @@
 <?php namespace Sheba\Business\AttendanceActionLog\ActionChecker;
 
-use App\Models\Business;
-use Carbon\Carbon;
-use Sheba\Dal\Attendance\Model as Attendance;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
+use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
+use Sheba\Dal\Attendance\Model as Attendance;
+use App\Models\BusinessMember;
+use App\Models\Business;
 use Sheba\Location\Geo;
+use Carbon\Carbon;
 
 abstract class ActionChecker
 {
@@ -20,6 +24,8 @@ abstract class ActionChecker
     protected $deviceId;
     protected $resultCode;
     protected $resultMessage;
+    protected $isRemote = 0;
+    const BUSINESS_OFFICE_HOUR = 1;
 
     /**
      * @param Business $business
@@ -81,13 +87,17 @@ abstract class ActionChecker
         return $this->resultMessage;
     }
 
+    public function getIsRemote()
+    {
+        return $this->isRemote;
+    }
 
     public function check()
     {
         $this->setAttendanceActionLogsOfToday();
         $this->checkAlreadyHasActionForToday();
         $this->checkDeviceId();
-        $this->checkIp();
+        $this->checkIpOrRemote();
     }
 
     private function setAttendanceActionLogsOfToday()
@@ -143,14 +153,29 @@ abstract class ActionChecker
         return $attendances_count > 0 ? 1 : 0;
     }
 
-    protected function checkIp()
+    protected function checkIpOrRemote()
     {
         if (!$this->isSuccess()) return;
-        if ($this->business->offices()->count() > 0 && !in_array($this->ip, $this->business->offices()->select('ip')->get()->pluck('ip')->toArray())) {
-            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
-        } else {
+        if ($this->business->isIpBasedAttendanceEnable()) {
+            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) $this->remoteAttendance();
             $this->setSuccessfulResponseMessage();
         }
+        $this->remoteAttendance();
+    }
+
+    private function remoteAttendance()
+    {
+        if ($this->business->isRemoteAttendanceEnable()) {
+            $this->isRemote = 1;
+            $this->setSuccessfulResponseMessage();
+        } else {
+            $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+        }
+    }
+
+    private function isInWifiArea()
+    {
+        return in_array($this->ip, $this->business->offices->pluck('ip')->toArray());
     }
 
     protected function setResult($result_code, $result_message)
@@ -165,7 +190,15 @@ abstract class ActionChecker
 
     public function isNoteRequired()
     {
-        return Carbon::now()->lt(Carbon::parse('18:30:00')) ? 1 : 0;
+        $date = Carbon::now();
+        $time = new TimeByBusiness();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $checkout_time = $time->getOfficeEndTimeByBusiness();
+        if (is_null($checkout_time)) return 0;
+        if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
+            return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;
+        }
+        return 0;
     }
 
     abstract protected function setSuccessfulResponseMessage();

@@ -1,77 +1,81 @@
 <?php namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpOrder;
-use Sheba\Logs\ErrorLog;
+use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
-use SoapClient;
-use SoapFault;
 
 class SslClient
 {
+    const VR_PROXY_RECHARGE_ACTION = "recharge";
+    const VR_PROXY_BALANCE_ACTION = "get_balance";
+    const VR_PROXY_STATUS_ACTION = "get_status";
+
+    /** @var HttpClient */
+    private $httpClient;
+
+    private $proxyUrl;
     private $clientId;
     private $clientPassword;
     private $topUpUrl;
 
-    public function __construct()
+    public function __construct(HttpClient $client)
     {
-        $this->clientId = config('ssl.topup_client_id');
-        $this->clientPassword = config('ssl.topup_client_password');
-        $this->topUpUrl = config('ssl.topup_url');
+        $this->httpClient = $client;
+        $this->proxyUrl = config('topup.ssl.proxy_url');
+        $this->topUpUrl = config('topup.ssl.url');
+        $this->clientId = config('topup.ssl.client_id');
+        $this->clientPassword = config('topup.ssl.client_password');
     }
 
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
+     * @throws \Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $ssl_response = new SslResponse();
-        try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $guid = randomString(20, 1, 1);
-            $mobile = $topup_order->payee_mobile;
-            $operator_id = $this->getOperatorId($mobile);
-            $connection_type = $topup_order->payee_mobile_type;
-            $sender_id = "redwan@sslwireless.com";
-            $priority = 1;
-            $s_url = config('sheba.api_url') . '/v2/top-up/success/ssl';
-            $f_url = config('sheba.api_url') . '/v2/top-up/fail/ssl';
-            $calling_method = "GET";
-            $create_recharge_response = $client->CreateRecharge($this->clientId, $this->clientPassword, $guid, $operator_id, $mobile, $topup_order->amount, $connection_type, $sender_id, $priority, $s_url, $f_url, $calling_method);
-            $vr_guid = $create_recharge_response->vr_guid;
-            $recharge_response = $client->InitRecharge($this->clientId, $this->clientPassword, $guid, $vr_guid);
-            $recharge_response->guid = $guid;
-            $ssl_response->setResponse($recharge_response);
-        } catch (SoapFault $exception) {
-            (new ErrorLog())->setException($exception)->send();
-        }
+        $ssl_response->setResponse($this->call([
+            "action" => self::VR_PROXY_RECHARGE_ACTION,
+            'guid' => randomString(20, 1, 1),
+            'payee_mobile' => $topup_order->payee_mobile,
+            'operator_id' => $this->getOperatorId($topup_order->payee_mobile),
+            'connection_type' => $topup_order->payee_mobile_type,
+            'sender_id' => "redwan@sslwireless.com",
+            'priority' => 1,
+            'success_url' => config('sheba.api_url') . '/v2/top-up/success/ssl',
+            'fail_url' => config('sheba.api_url') . '/v2/top-up/fail/ssl',
+            'calling_method' => "GET",
+            'amount' => $topup_order->amount
+        ]));
         return $ssl_response;
     }
 
+    /**
+     * @return mixed
+     * @throws Exception
+     */
     public function getBalance()
     {
-        try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $response = $client->GetBalanceInfo($this->clientId);
-            return $response;
-        } catch (SoapFault $exception) {
-            throw $exception;
-        }
+        return $this->call(["action" => self::VR_PROXY_BALANCE_ACTION]);
     }
 
+    /**
+     * @param $guid
+     * @param $vr_guid
+     * @return mixed
+     * @throws Exception
+     */
     public function getRecharge($guid, $vr_guid)
     {
-        try {
-            ini_set("soap.wsdl_cache_enabled", '0'); // disabling WSDL cache
-            $client = new SoapClient($this->topUpUrl);
-            $response = $client->QueryRechargeStatus($this->clientId, $guid, $vr_guid);
-            return $response;
-        } catch (SoapFault $exception) {
-            throw $exception;
-        }
+        return $this->call([
+            'action' => self::VR_PROXY_STATUS_ACTION,
+            'guid' => $guid,
+            'vr_guid' => $vr_guid
+        ]);
     }
 
     private function getOperatorId($mobile_number)
@@ -89,6 +93,37 @@ class SslClient
             return 5;
         } else {
             throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
+        }
+    }
+
+    /**
+     * @param $data
+     * @return object
+     * @throws \Exception
+     */
+    private function call($data)
+    {
+        $common = [
+            'url' => $this->topUpUrl,
+            'client_id' => $this->clientId,
+            'client_password' => $this->clientPassword
+        ];
+
+        try {
+            $response = $this->httpClient->request('POST', $this->proxyUrl, [
+                'form_params' => $common + $data,
+                'timeout' => 60,
+                'read_timeout' => 60,
+                'connect_timeout' => 60
+            ]);
+
+            $proxy_response = $response->getBody()->getContents();
+            if (!$proxy_response) throw new Exception("VR proxy server not working.");
+            $proxy_response = json_decode($proxy_response);
+            if ($proxy_response->code != 200) throw new Exception("VR proxy server error: ". $proxy_response->message);
+            return $proxy_response->vr_response;
+        } catch (GuzzleException $e) {
+            throw new Exception("VR proxy server error: ". $e->getMessage());
         }
     }
 }

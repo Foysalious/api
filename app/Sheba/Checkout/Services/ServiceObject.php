@@ -4,6 +4,7 @@ namespace Sheba\Checkout\Services;
 
 use App\Models\Category;
 use App\Models\Service;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use stdClass;
 
 class ServiceObject
@@ -38,7 +39,7 @@ class ServiceObject
     public function __construct(stdClass $service)
     {
         $this->service = $service;
-        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
+        $this->googleCalculatedCarService = config('sheba.car_rental')['destination_fields_service_ids'];
         $this->build();
         $this->setQuantity();
     }
@@ -63,6 +64,7 @@ class ServiceObject
     public function setService()
     {
         $this->serviceModel = Service::with('subscription')->where('id', $this->service->id)->publishedForAll()->first();
+        if (!$this->serviceModel) throw new ServiceIsUnpublishedException('Service #' . $this->service->id . " is not available.", 400);
     }
 
     protected function setQuantity()

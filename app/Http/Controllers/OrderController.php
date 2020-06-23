@@ -28,7 +28,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Portals\Portals;
 use Sheba\Sms\Sms;
 use Throwable;
@@ -36,6 +38,7 @@ use Throwable;
 class OrderController extends Controller
 {
     use DispatchesJobs;
+
     private $orderRepository;
     private $jobServiceRepository;
     private $sms;
@@ -58,11 +61,12 @@ class OrderController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function store($customer, Request $request)
+    public function store($customer, Request $request, OrderAdapter $order_adapter)
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
@@ -100,7 +104,7 @@ class OrderController extends Controller
                 $payment = $link = null;
                 if ($request->payment_method !== 'cod') {
                     /** @var Payment $payment */
-                    $payment = $this->getPayment($request->payment_method, $order);
+                    $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
                     if ($payment) {
                         $link = $payment->redirect_url;
                         $payment = $payment->getFormattedPayment();
@@ -114,29 +118,11 @@ class OrderController extends Controller
             return api_response($request, $order, 500);
         } catch (HyperLocationNotFoundException $e) {
             return api_response($request, null, 400, ['message' => "You're out of service area"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
-    /**
-     * @param BondhuOrderRequest $request
-     * @param $affiliate
-     * @param BondhuAutoOrder $bondhu_auto_order
-     * @param OrderPlace $order_place
-     * @return JsonResponse
-     */
     public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order,
-                                         OrderPlace $order_place)
+                                         OrderPlace $order_place, OrderAdapter $order_adapter)
     {
         try {
             if (Affiliate::find($affiliate)->is_suspended) {
@@ -151,7 +137,7 @@ class OrderController extends Controller
                     if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
                     if ($request->payment_method !== 'cod') {
                         /** @var Payment $payment */
-                        $payment = $this->getPayment($request->payment_method, $order);
+                        $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
                         if ($payment) {
                             $link = $payment->redirect_url;
                             $payment = $payment->getFormattedPayment();
@@ -175,12 +161,13 @@ class OrderController extends Controller
             return api_response($request, null, 400, ['message' => 'You\'re out of service area']);
         } catch (QueryException $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
-        } catch (Throwable $exception) {
-            dd($exception);
+
+        } catch (Throwable $e) {
+
             DB::rollback();
-            app('sentry')->captureException($exception);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -193,7 +180,7 @@ class OrderController extends Controller
                 $this->updateVoucherInPromoList($customer, $voucher, $order);
             }
         } catch (Throwable $e) {
-            return null;
+            logError($e);
         }
     }
 
@@ -235,8 +222,7 @@ class OrderController extends Controller
             }
             (new NotificationRepository())->send($order);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
+            logError($e);
         }
     }
 
@@ -256,22 +242,21 @@ class OrderController extends Controller
         }
     }
 
-    private function getPayment($payment_method, Order $order)
+    /**
+     * @param $payment_method
+     * @param Order $order
+     * @param OrderAdapter $order_adapter
+     * @return Payment|null
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    private function getPayment($payment_method, Order $order, OrderAdapter $order_adapter)
     {
-        try {
-            $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-            $order_adapter->setEmiMonth(\request()->emi_month);
-            $order_adapter->setPaymentMethod($payment_method);
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $payable = $order_adapter->setPartnerOrder($order->partnerOrders[0])->setIsAdvancedPayment(1)
+            ->setEmiMonth(\request()->emi_month)->setPaymentMethod($payment_method)
+            ->getPayable();
+        $payment = (new PaymentManager())->setMethodName($payment_method)->setPayable($payable)->init();
+        return $payment->isInitiated() ? $payment : null;
     }
 
     /**

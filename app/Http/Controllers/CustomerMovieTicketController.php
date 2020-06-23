@@ -14,13 +14,16 @@ use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Vendor\VendorFactory;
 use Sheba\Payment\Adapters\Payable\MovieTicketPurchaseAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Throwable;
 
 class CustomerMovieTicketController extends Controller
 {
     /**
      * @param MovieTicketManager $movieTicket
+     * @param Request $request
      * @return JsonResponse
      */
     public function getAvailableTickets(MovieTicketManager $movieTicket, Request $request)
@@ -29,13 +32,14 @@ class CustomerMovieTicketController extends Controller
             $movies = $movieTicket->initVendor()->getAvailableTickets();
             return api_response($request, $movies, 200, ['movies' => $this->convertToJson($movies)]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
     /**
      * @param MovieTicketManager $movieTicket
+     * @param Request $request
      * @return JsonResponse
      * @throws GuzzleException
      */
@@ -47,18 +51,17 @@ class CustomerMovieTicketController extends Controller
             return api_response($request, $theatres, 200, ['theatres' => $this->convertToJson($theatres)]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
     /**
      * @param MovieTicketManager $movieTicket
+     * @param Request $request
      * @return JsonResponse
      * @throws GuzzleException
      */
@@ -70,16 +73,19 @@ class CustomerMovieTicketController extends Controller
             return api_response($request, $status, 200, ['status' => $this->convertToJson($status)]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param MovieTicketManager $movieTicket
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function bookTickets(MovieTicketManager $movieTicket, Request $request)
     {
         try {
@@ -89,65 +95,65 @@ class CustomerMovieTicketController extends Controller
             return api_response($request, $bookingResponse, 200, ['status' => $bookingResponse]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         } catch (GuzzleException $e) {
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param MovieTicketManager $movieTicketManager
+     * @param MovieTicket $movieTicket
+     * @param Request $request
+     * @param MovieTicketRequest $movieTicketRequest
+     * @param VendorFactory $vendor
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     * @throws Exception
+     */
     public function updateTicketStatus(MovieTicketManager $movieTicketManager, MovieTicket $movieTicket, Request $request, MovieTicketRequest $movieTicketRequest, VendorFactory $vendor)
     {
-        try {
-            $this->validate($request, ['trx_id' => 'required', 'dtmsid' => 'required', 'lid' => 'required',
-                'confirm_status' => 'required', 'customer_name' => 'required', 'customer_email' => 'required',
-                'customer_mobile' => 'required|mobile:bd', 'cost' => 'required', 'image_url' => 'required',
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
-                'emi_month' => 'numeric'
-            ]);
+        $this->validate($request, ['trx_id' => 'required', 'dtmsid' => 'required', 'lid' => 'required',
+            'confirm_status' => 'required', 'customer_name' => 'required', 'customer_email' => 'required',
+            'customer_mobile' => 'required|mobile:bd', 'cost' => 'required', 'image_url' => 'required',
+            'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+            'emi_month' => 'numeric'
+        ]);
 
-            $agent = $this->getAgent($request);
-            $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)
-                ->setAmount($request->cost)->setMobile(BDMobileFormatter::format($request->customer_mobile))
-                ->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)->setTicketId($request->lid)
-                ->setConfirmStatus($request->confirm_status)
-                ->setImageUrl($request->image_url)
-                ->setVoucher($request->voucher_id);
+        $agent = $this->getAgent($request);
+        $movieTicketRequest->setName($request->customer_name)->setEmail($request->customer_email)
+            ->setAmount($request->cost)->setMobile(BDMobileFormatter::format($request->customer_mobile))
+            ->setTrxId($request->trx_id)->setDtmsId($request->dtmsid)->setTicketId($request->lid)
+            ->setConfirmStatus($request->confirm_status)
+            ->setImageUrl($request->image_url)
+            ->setVoucher($request->voucher_id);
 
-            $vendor = $vendor->getById(1);
+        $vendor = $vendor->getById(1);
 
-            $movieTicket = $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
-            if ($movieTicket->validate()) {
-                $movie_ticket_order = $movieTicket->placeOrder()->getMovieTicketOrder();
-                $payment = $this->getPayment($request->payment_method, $request->emi_month, $movie_ticket_order);
-                if ($payment) {
-                    $link = $payment->redirect_url;
-                    $payment = $payment->getFormattedPayment();
-                }
-                return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);
-            } else {
-                return api_response($request, 'Movie Ticket Request is not valid', 400, ['message' => 'Movie Ticket Request is not valid']);
+        $movieTicket = $movieTicket->setMovieTicketRequest($movieTicketRequest)->setAgent($agent)->setVendor($vendor);
+        if ($movieTicket->validate()) {
+            $movie_ticket_order = $movieTicket->placeOrder()->getMovieTicketOrder();
+            $payment = $this->getPayment($request->payment_method, $request->emi_month, $movie_ticket_order);
+            if ($payment) {
+                $link = $payment->redirect_url;
+                $payment = $payment->getFormattedPayment();
             }
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        } catch (GuzzleException $e) {
-            return api_response($request, null, 500);
+            return api_response($request, $movie_ticket_order, 200, ['link' => $link, 'payment' => $payment]);
+        } else {
+            return api_response($request, 'Movie Ticket Request is not valid', 400, ['message' => 'Movie Ticket Request is not valid']);
         }
+
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function history(Request $request)
     {
         try {
@@ -172,11 +178,17 @@ class CustomerMovieTicketController extends Controller
             }
             return api_response($request, $orders, 200, ['history' => $histories]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param $order
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function historyDetails($affiliate, $order, Request $request)
     {
         try {
@@ -188,7 +200,7 @@ class CustomerMovieTicketController extends Controller
             $order->reservation_details->cost = round($order->getNetBill());
             return api_response($request, $order, 200, ['details' => $order]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -210,19 +222,18 @@ class CustomerMovieTicketController extends Controller
         return json_decode(json_encode($response));
     }
 
+    /**
+     * @param $payment_method
+     * @param $emi_month
+     * @param $movie_ticket_order
+     * @return \App\Models\Payment|null
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
     private function getPayment($payment_method, $emi_month, $movie_ticket_order)
     {
-        try {
-            $movie_ticket_order_adapter = new MovieTicketPurchaseAdapter();
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($movie_ticket_order_adapter->setEmiMonth($emi_month)->setModelForPayable($movie_ticket_order)->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $payable = (new MovieTicketPurchaseAdapter())->setEmiMonth($emi_month)->setModelForPayable($movie_ticket_order)->getPayable();
+        $payment = (new PaymentManager())->setMethodName($payment_method)->setPayable($payable)->init();
+        return $payment->isInitiated() ? $payment : null;
     }
 }

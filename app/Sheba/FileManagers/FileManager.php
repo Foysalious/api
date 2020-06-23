@@ -77,9 +77,8 @@ trait FileManager
         return [$file, $filename];
     }
 
-    protected function makeExtraLoanFile($file,$name){
+    protected function makeLoanFile($file, $name){
         $filename = $this->uniqueFileName($file, $name);
-        $file=(new ExtraFileForLoan($file))->make();
         return [$file,$filename];
     }
 
@@ -132,6 +131,10 @@ trait FileManager
 
     protected function makeProPic($file, $name)
     {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
+    }
+    protected function makeAttachment($file,$name){
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
     }

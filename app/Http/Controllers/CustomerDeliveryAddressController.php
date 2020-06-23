@@ -20,6 +20,7 @@ use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
 use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 use Throwable;
 
 class CustomerDeliveryAddressController extends Controller
@@ -84,66 +85,59 @@ class CustomerDeliveryAddressController extends Controller
         }
     }
 
-    public function filterAddress($customer, Request $request, AddressValidator $address_validator, Geo $geo)
+    public function filterAddress($customer, Request $request, AddressValidator $address_validator, Geo $geo, CustomerDeliveryAddressInterface $customer_delivery_address_repo)
     {
-        try {
-            $this->validate($request, [
-                'lat' => 'required|numeric',
-                'lng' => 'required|numeric',
-                'partner' => 'sometimes|numeric',
-                'service' => 'sometimes|string',
-                'category' => 'sometimes|string',
-            ]);
-            $customer = $request->customer;
-            $location = null;
-            $customer_delivery_addresses = $customer->delivery_addresses()->select('id', 'location_id', 'address', 'name', 'geo_informations', 'flat_no', 'flat_no', 'road_no', 'house_no', 'block_no', 'sector_no', 'city', 'street_address', 'landmark')->get();
-            $hyper_location = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
-            if ($hyper_location) $location = $hyper_location->location;
+        $this->validate($request, [
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'partner' => 'sometimes|numeric',
+            'service' => 'sometimes|string',
+            'category' => 'sometimes|string',
+        ]);
+        $customer = $request->customer;
+        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->get();
+        $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
+        $target = new Coords((double)$request->lat, (double)$request->lng);
+        $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
+            return $address->geo_informations == null;
+        })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target, $address_validator, $geo) {
+            $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
+            $geo_info = json_decode($customer_delivery_address['geo_informations']);
+            $customer_delivery_address['geo_informations'] = $geo_info ? array('lat' => (double)$geo_info->lat, 'lng' => (double)$geo_info->lng) : null;
+            $customer_delivery_address['is_valid'] = 1;
+            $geo->setLat($customer_delivery_address['geo_informations']['lat'])->setLng($customer_delivery_address['geo_informations']['lng']);
+            $customer_delivery_address['is_same'] = $address_validator->isSameAddress($geo, $target);
 
-            if ($location == null) return api_response($request, null, 404, ['message' => "No address at this location"]);
-
-            $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
-            $target = new Coords((double)$request->lat, (double)$request->lng);
-            $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
-                return $address->geo_informations == null;
-            })->map(function ($customer_delivery_address) use ($customer_order_addresses, $target, $address_validator, $geo) {
-                $customer_delivery_address['count'] = $this->getOrderCount($customer_order_addresses, $customer_delivery_address);
-                $geo_info = json_decode($customer_delivery_address['geo_informations']);
-                $customer_delivery_address['geo_informations'] = $geo_info ? array('lat' => (double)$geo_info->lat, 'lng' => (double)$geo_info->lng) : null;
-                $customer_delivery_address['is_valid'] = 1;
-                $geo->setLat($customer_delivery_address['geo_informations']['lat'])->setLng($customer_delivery_address['geo_informations']['lng']);
-                $customer_delivery_address['is_same'] = $address_validator->isSameAddress($geo, $target);
-
+            return $customer_delivery_address;
+        });
+        if ($request->has('partner') && (int)$request->partner > 0) {
+            $partner = Partner::find((int)$request->partner);
+            $partner_geo = json_decode($partner->geo_informations);
+            $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
+            $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
+            $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
+                return $customer_delivery_address->geo_informations == null;
+            })->map(function ($customer_delivery_address) use ($distance, $to, $partner_geo) {
+                $address_geo = $customer_delivery_address->geo_informations;
+                $current = new Coords($address_geo['lat'], $address_geo['lng']);
+                $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
+                $customer_delivery_address['is_valid'] = $inside_radius;
                 return $customer_delivery_address;
             });
-
-            // if ($location) $customer_delivery_addresses = $customer_delivery_addresses->where('location_id', $location->id);
-            if ($request->has('partner') && (int)$request->partner > 0) {
-                $partner = Partner::find((int)$request->partner);
-                $partner_geo = json_decode($partner->geo_informations);
-                $to = [new Coords(floatval($partner_geo->lat), floatval($partner_geo->lng), $partner->id)];
-                $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
-                $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($customer_delivery_address) {
-                    return $customer_delivery_address->geo_informations == null;
-                })->map(function ($customer_delivery_address) use ($distance, $to, $partner_geo) {
-                    $address_geo = $customer_delivery_address->geo_informations;
-                    $current = new Coords($address_geo['lat'], $address_geo['lng']);
-                    $inside_radius = ($distance->from([$current])->to($to)->sortedDistance()[0][$to[0]->id] <= (double)$partner_geo->radius * 1000) ? 1 : 0;
-                    $customer_delivery_address['is_valid'] = $inside_radius;
-                    return $customer_delivery_address;
-                });
-            }
-            if ($request->has('service')) {
-                $service = array_map('intval', json_decode($request->service));
-                $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
-                $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
-                $customer_delivery_addresses->map(function ($address) use ($location_ids) {
-                    if (!$address['is_valid']) return $address;
-                    $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
-                    return $address;
-                });
-            }
-            if ($request->has('category')) {
+        }
+        if ($request->has('service')) {
+            $service = array_map('intval', json_decode($request->service));
+            $location_service = LocationService::whereIn('service_id', $service)->select('location_id')->get();
+            $location_ids = count($location_service) > 0 ? $location_service->pluck('location_id')->toArray() : [];
+            $customer_delivery_addresses->map(function ($address) use ($location_ids) {
+                if (!$address['is_valid']) return $address;
+                $address['is_valid'] = in_array($address->location_id, $location_ids) ? 1 : 0;
+                return $address;
+            });
+        }
+        if ($request->has('category')) {
+            $category = json_decode($request->category);
+            if ($category) {
                 $category = array_map('intval', json_decode($request->category));
                 $category_location = CategoryLocation::whereIn('category_id', $category)->select('location_id')->get();
                 $location_ids = count($category_location) > 0 ? $category_location->pluck('location_id')->toArray() : [];
@@ -153,21 +147,15 @@ class CustomerDeliveryAddressController extends Controller
                     return $address;
                 });
             }
-
-            $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();
-
-            return api_response($request, $customer_delivery_addresses, 200, [
-                'addresses' => $customer_delivery_addresses,
-                'name' => $customer->profile->name,
-                'mobile' => $customer->profile->mobile
-            ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+
+        $customer_delivery_addresses = $customer_delivery_addresses->sortByDesc('count')->sortByDesc('is_same')->values()->all();
+
+        return api_response($request, $customer_delivery_addresses, 200, [
+            'addresses' => $customer_delivery_addresses,
+            'name' => $customer->profile->name,
+            'mobile' => $customer->profile->mobile
+        ]);
     }
 
     public function store($customer, Request $request)

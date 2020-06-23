@@ -21,9 +21,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Throwable;
 
 class OrderController extends Controller
@@ -31,12 +34,7 @@ class OrderController extends Controller
     use DispatchesJobs;
     use ModificationFields;
 
-    /**
-     * @param Request $request
-     * @param OrderPlace $order_place
-     * @return JsonResponse
-     */
-    public function store(Request $request, OrderPlace $order_place)
+    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter)
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
@@ -51,7 +49,7 @@ class OrderController extends Controller
                 'time' => 'required|string',
                 'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
                 'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address',
+                'address_id' => 'required_without:address|numeric',
                 'partner' => 'sometimes|required',
                 'partner_id' => 'sometimes|required|numeric',
                 'affiliate_id' => 'sometimes|required|numeric',
@@ -94,7 +92,7 @@ class OrderController extends Controller
             if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
             $payment_method = $request->payment_method;
             /** @var Payment $payment */
-            $payment = $this->getPayment($payment_method, $order);
+            $payment = $this->getPayment($payment_method, $order, $order_adapter);
             if ($payment) $payment = $payment->getFormattedPayment();
             $job = $order->jobs->first();
             $partner_order = $job->partnerOrder;
@@ -112,16 +110,11 @@ class OrderController extends Controller
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
                 $this->sendNotifications($customer, $order);
             }
-
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
@@ -129,7 +122,6 @@ class OrderController extends Controller
      * @TODO FIx notification sending
      * @param $customer
      * @param $order
-     * @return |null
      */
     private function sendNotifications($customer, $order)
     {
@@ -137,34 +129,28 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
-            if ((bool)config('sheba.send_order_create_sms')) {
-                if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                        'order_code' => $order->code()
-                    ]);
-                }
 
-                if (!$order->jobs->first()->resource_id) {
-                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
-                        'order_code' => $order->code(), 'partner_name' => $partner->name
-                    ]);
-                }
-            }
             (new NotificationRepository())->send($order);
+
+            if (!(bool)config('sheba.send_order_create_sms')) return;
+
+            if ($this->isSendingServedConfirmationSms($order)) {
+                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+            }
+
+            if (!$order->jobs->first()->resource_id) {
+                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                    'order_code' => $order->code(), 'partner_name' => $partner->name
+                ]);
+            }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
+            logError($e);
         }
     }
 
-    /**
-     * @param OrderCreateFromBondhuRequest $request
-     * @param $affiliate
-     * @param BondhuAutoOrderV3 $bondhu_auto_order
-     * @param OrderPlace $order_place
-     * @return JsonResponse
-     */
-    public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place)
+    public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
     {
         try {
             if (Affiliate::find($affiliate)->is_suspended)
@@ -178,7 +164,7 @@ class OrderController extends Controller
                     if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
                     if ($request->payment_method !== 'cod') {
                         /** @var Payment $payment */
-                        $payment = $this->getPayment($request->payment_method, $order);
+                        $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
                         if ($payment) {
                             $link = $payment->redirect_url;
                             $payment = $payment->getFormattedPayment();
@@ -200,11 +186,11 @@ class OrderController extends Controller
             return api_response($request, null, 400, ['message' => 'You\'re out of service area']);
         } catch (QueryException $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
-        } catch (Throwable $exception) {
+        } catch (Throwable $e) {
             DB::rollback();
-            app('sentry')->captureException($exception);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -212,12 +198,12 @@ class OrderController extends Controller
     private function updateVouchers($order, Customer $customer)
     {
         try {
-            if ($order->voucher_id != null) {
-                $voucher = $order->voucher;
-                $this->updateVoucherInPromoList($customer, $voucher, $order);
-            }
+            if ($order->voucher_id == null) return;
+
+            $voucher = $order->voucher;
+            $this->updateVoucherInPromoList($customer, $voucher, $order);
         } catch (Throwable $e) {
-            return null;
+            logError($e);
         }
     }
 
@@ -237,23 +223,23 @@ class OrderController extends Controller
         }
     }
 
-    private function getPayment($payment_method, Order $order)
+    /**
+     * @param $payment_method
+     * @param Order $order
+     * @param OrderAdapter $order_adapter
+     * @return Payment|null
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    private function getPayment($payment_method, Order $order, OrderAdapter $order_adapter)
     {
-        try {
-            if ($payment_method == 'cod') return null;
-            $order_adapter = new OrderAdapter($order->partnerOrders[0], 1);
-            $order_adapter->setEmiMonth(\request()->emi_month);
-            $order_adapter->setPaymentMethod($payment_method);
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        if ($payment_method == 'cod') return null;
+        $payable = $order_adapter->setPartnerOrder($order->partnerOrders[0])
+            ->setIsAdvancedPayment(1)->setEmiMonth(\request()->emi_month)
+            ->setPaymentMethod($payment_method)
+            ->getPayable();
+        $payment = (new PaymentManager())->setMethodName($payment_method)->setPayable($payable)->init();
+        return $payment->isInitiated() ? $payment : null;
     }
 
     private function sendNotificationsForBondhu($customer, $order)
@@ -267,10 +253,8 @@ class OrderController extends Controller
                     ]);
                 }
             }
-            // (new NotificationRepository())->send($order);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
+            logError($e);
         }
     }
 

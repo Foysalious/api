@@ -40,135 +40,130 @@ class PartnerJobController extends Controller
 
     public function index($partner, Request $request)
     {
-        try {
-            ini_set('memory_limit', '4096M');
-            ini_set('max_execution_time', 660);
 
-            $this->validate($request, ['filter' => 'required|string|in:new,ongoing,history']);
-            $filter = $request->filter;
-            $partner = $request->partner->load([
-                'partnerOrders' => function ($q) use ($filter, $request) {
-                    $q->$filter()->with([
-                        'order' => function ($q) {
-                            $q->with('location', 'customer.profile');
-                        }
-                    ])->with([
-                        'jobs' => function ($q) use ($filter, $request) {
-                            $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with([
-                                'cancelRequests', 'category', 'usedMaterials' => function ($q) {
-                                    $q->select('id', 'job_id', 'material_name', 'material_price');
-                                }, 'resource.profile', 'review'
-                            ]);
-                        }
-                    ]);
-                }
-            ]);
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 660);
 
-            $jobs = collect();
-            $jobs_with_resource = collect();
-            foreach ($partner->partnerOrders as $partnerOrder) {
-                foreach ($partnerOrder->jobs as $job) {
-                    /** @var Job $job */
-                    if ($job->isLogisticCreated()) {
-                        $job['logistic_id'] = $job->getCurrentLogisticOrderId();
-                        // $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
+        $this->validate($request, ['filter' => 'required|string|in:new,ongoing,history']);
+        $filter = $request->filter;
+        $partner = $request->partner->load([
+            'partnerOrders' => function ($q) use ($filter, $request) {
+                $q->$filter()->with([
+                    'order' => function ($q) {
+                        $q->with(['location', 'customer.profile', 'deliveryAddress' => function ($q) {
+                            $q->select('id', 'address');
+                        }]);
                     }
-                    if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
-                    $job['location'] = $partnerOrder->order->location->name;
-                    $job['service_unit_price'] = (double)$job->service_unit_price;
-                    $job['discount'] = (double)$job->discount;
-                    $job['code'] = $partnerOrder->order->code();
-                    $job['category_name'] = $job->category ? $job->category->name : null;
-                    $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
-                    $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
-                    $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
-                    $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
-                    $job['schedule_timestamp'] = $job->preferred_time_start ? Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                    $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-                    $job['rating'] = $job->review != null ? $job->review->rating : null;
-                    $job['version'] = $partnerOrder->order->getVersion();
-
-                    if ($partnerOrder->closed_and_paid_at != null) {
-                        $job['completed_at_timestamp'] = $partnerOrder->closed_and_paid_at->timestamp;
-                        $job['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at->format('jS F');
-                    } else {
-                        $job['completed_at_timestamp'] = null;
-                        $job['closed_and_paid_at'] = null;
+                ])->with([
+                    'jobs' => function ($q) use ($filter, $request) {
+                        $q->info()->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with([
+                            'cancelRequests', 'category', 'usedMaterials' => function ($q) {
+                                $q->select('id', 'job_id', 'material_name', 'material_price');
+                            }, 'resource.profile', 'review'
+                        ]);
                     }
-                    $job['is_cancel_request_rejected'] = 0;
-                    if ($job->cancelRequests->count() > 0) {
-                        if ($job->cancelRequests->last()->status == constants('CANCEL_REQUEST_STATUSES')['Disapproved']) {
-                            $job['is_cancel_request_rejected'] = 1;
-                        }
-                    }
-                    $job['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
-                    removeRelationsFromModel($job);
-                    if ($job->resource_id == null) {
-                        $jobs_with_resource->push($job);
-                    } else {
-                        $jobs->push($job);
-                    }
-                }
+                ]);
             }
+        ]);
 
-            $logistic_ids = array_filter($jobs->pluck('logistic_id')->toArray());
-            if (!empty($logistic_ids)) $this->attachLogisticOrder($logistic_ids, $jobs);
+        $jobs = collect();
+        $jobs_with_resource = collect();
+        foreach ($partner->partnerOrders as $partnerOrder) {
+            foreach ($partnerOrder->jobs as $job) {
+                /** @var Job $job */
+                if ($job->isLogisticCreated()) {
+                    $job['logistic_id'] = $job->getCurrentLogisticOrderId();
+                    // $job['logistic'] = $job->getCurrentLogisticOrder()->formatForPartner();
+                }
+                if ($job->cancelRequests->where('status', 'Pending')->count() > 0) continue;
+                $job['location'] = $partnerOrder->order->location ? $partnerOrder->order->location->name : $partnerOrder->order->deliveryAddress->address;
+                $job['service_unit_price'] = (double)$job->service_unit_price;
+                $job['discount'] = (double)$job->discount;
+                $job['code'] = $partnerOrder->order->code();
+                $job['category_name'] = $job->category ? $job->category->name : null;
+                $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
+                $job['resource_picture'] = $job->resource != null ? $job->resource->profile->pro_pic : null;
+                $job['resource_mobile'] = $job->resource != null ? $job->resource->profile->mobile : null;
+                $job['resource_name'] = $job->resource != null ? $job->resource->profile->name : '';
+                $job['schedule_timestamp'] = $job->preferred_time_start ? Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+                $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+                $job['rating'] = $job->review != null ? $job->review->rating : null;
+                $job['version'] = $partnerOrder->order->getVersion();
 
-            if (count($jobs) > 0 || count($jobs_with_resource) > 0) {
-                if ($filter == 'ongoing') {
-                    $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
-                        return $key;
-                    });
-                    $final = collect();
-                    foreach ($group_by_jobs as $key => $jobs) {
-                        $jobs = $jobs->sortBy('schedule_timestamp');
-                        foreach ($jobs as $job) {
-                            $final->push($job);
-                        }
-                    }
-                    $jobs = $jobs_with_resource->merge($final);
+                if ($partnerOrder->closed_and_paid_at != null) {
+                    $job['completed_at_timestamp'] = $partnerOrder->closed_and_paid_at->timestamp;
+                    $job['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at->format('jS F');
                 } else {
-                    $jobs = $jobs_with_resource->merge($jobs);
-                    $jobs = $jobs->sortByDesc('id');
+                    $job['completed_at_timestamp'] = null;
+                    $job['closed_and_paid_at'] = null;
                 }
-                list($offset, $limit) = calculatePagination($request);
-                $jobs = $jobs->splice($offset, $limit);
-                $resources = collect();
-                foreach ($jobs->groupBy('resource_id') as $key => $resource) {
-                    if (!empty($key)) {
-                        $resources->push(array(
-                            'id' => (int)$key,
-                            'name' => $resource->first()->resource_name
-                        ));
+                $job['is_cancel_request_rejected'] = 0;
+                if ($job->cancelRequests->count() > 0) {
+                    if ($job->cancelRequests->last()->status == constants('CANCEL_REQUEST_STATUSES')['Disapproved']) {
+                        $job['is_cancel_request_rejected'] = 1;
                     }
                 }
-                $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
-
-                return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders' => $subscription_orders]);
-            } else {
-                return api_response($request, null, 404);
+                $job['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
+                removeRelationsFromModel($job);
+                if ($job->resource_id == null) {
+                    $jobs_with_resource->push($job);
+                } else {
+                    $jobs->push($job);
+                }
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+
+        $logistic_ids = array_filter($jobs->pluck('logistic_id')->toArray());
+        if (!empty($logistic_ids)) $this->attachLogisticOrder($logistic_ids, $jobs);
+
+        if (count($jobs) > 0 || count($jobs_with_resource) > 0) {
+            if ($filter == 'ongoing') {
+                $group_by_jobs = $jobs->groupBy('schedule_date')->sortBy(function ($item, $key) {
+                    return $key;
+                });
+                $final = collect();
+                foreach ($group_by_jobs as $key => $jobs) {
+                    $jobs = $jobs->sortBy('schedule_timestamp');
+                    foreach ($jobs as $job) {
+                        $final->push($job);
+                    }
+                }
+                $jobs = $jobs_with_resource->merge($final);
+            } else {
+                $jobs = $jobs_with_resource->merge($jobs);
+                $jobs = $jobs->sortByDesc('id');
+            }
+            list($offset, $limit) = calculatePagination($request);
+            $jobs = $jobs->splice($offset, $limit);
+            $resources = collect();
+            foreach ($jobs->groupBy('resource_id') as $key => $resource) {
+                if (!empty($key)) {
+                    $resources->push(array(
+                        'id' => (int)$key,
+                        'name' => $resource->first()->resource_name
+                    ));
+                }
+            }
+            $subscription_orders = $partner->subscriptionOrders->where('status', 'accepted')->count();
+
+            return api_response($request, $jobs, 200, ['jobs' => $jobs, 'resources' => $resources, 'subscription_orders' => $subscription_orders]);
+        } else {
+            return api_response($request, null, 404);
+        }
+
     }
 
     public function acceptJobAndAssignResource($partner, $job, Request $request)
     {
         try {
+            ini_set('memory_limit', '4096M');
+            ini_set('max_execution_time', 660);
             $this->validate($request, [
-                'resource_id' => 'required|int'
+                'resource_id' => 'int'
             ]);
 
             $this->jobStatusChanger->acceptJobAndAssignResource($request);
-            if($this->jobStatusChanger->hasError()) {
+            if ($this->jobStatusChanger->hasError()) {
                 return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
                     'message' => $this->jobStatusChanger->getErrorMessage()
                 ]);
@@ -192,7 +187,7 @@ class PartnerJobController extends Controller
     {
         try {
             $this->jobStatusChanger->decline($request);
-            if($this->jobStatusChanger->hasError()) {
+            if ($this->jobStatusChanger->hasError()) {
                 return api_response($request, null, $this->jobStatusChanger->getErrorCode(), [
                     'message' => $this->jobStatusChanger->getErrorMessage()
                 ]);
@@ -206,67 +201,51 @@ class PartnerJobController extends Controller
 
     public function update($partner, $job, Request $request)
     {
-        try {
-            $job = $request->job;
-            $statuses = 'start,end';
-            foreach (constants('JOB_STATUSES') as $key => $value) {
-                $statuses .= ",$value";
-            }
-            $this->validate($request, [
-                'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
-                'preferred_time' => 'required_with:schedule_date|string',
-                'resource_id' => 'string',
-                'status' => 'sometimes|required|in:' . $statuses
-            ]);
-            if ($request->has('schedule_date') && $request->has('preferred_time')) {
-                $job_time = new JobTime($request->day, $request->time);
-                $job_time->validate();
-                if (!$job_time->isValid) {
-                    return api_response($request, null, 400, ['message' => $job_time->error_message]);
-                }
-                if (!scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category, $job)) {
-                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
-                }
-                $request->merge(['resource' => $request->manager_resource]);
-                $response = $this->resourceJobRepository->reschedule($job->id, $request);
-                return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
-            }
-            if ($request->has('resource_id')) {
-                if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
-                if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
-                    return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
-                }
-                if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
-                    $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
-                    return api_response($request, $job, 200);
-                }
-                return api_response($request, null, 403);
-            }
-            if ($request->has('status')) {
-                $new_status = $request->status;
-                if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
-                elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
-                /**
-                 * $due = (double)$job->partnerOrder->calculate(true)->due;
-                 * if ($new_status == "Served" && ($due > 0 || $due < 0)) {
-                 * $action = $due > 0 ? "collect" : "refund";
-                 * return api_response($request, null, 403, ['message' => "Please " . $action . " money to end this job."]);
-                 * }*/
-                if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
-                    return api_response($request, $response, $response->code, ['message' => $response->msg]);
-                }
-            }
-            return api_response($request, null, 500);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Job $job */
+        $job = $request->job;
+        $statuses = 'start,end';
+        foreach (constants('JOB_STATUSES') as $key => $value) {
+            $statuses .= ",$value";
         }
+        $this->validate($request, [
+            'schedule_date' => 'sometimes|required|date|after:' . Carbon::yesterday(),
+            'preferred_time' => 'required_with:schedule_date|string',
+            'resource_id' => 'string',
+            'status' => 'sometimes|required|in:' . $statuses
+        ]);
+        if ($request->has('schedule_date') && $request->has('preferred_time')) {
+            $job_time = new JobTime($request->day, $request->time);
+            $job_time->validate();
+            if (!$job_time->isValid) {
+                return api_response($request, null, 400, ['message' => $job_time->error_message]);
+            }
+            if ($job->hasResource() && !scheduler(Resource::find((int)$job->resource_id))->isAvailableForCategory($request->schedule_date, explode('-', $request->preferred_time)[0], $job->category, $job)) {
+                return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+            }
+            $request->merge(['resource' => $request->manager_resource]);
+            $response = $this->resourceJobRepository->reschedule($job->id, $request);
+            return $response ? api_response($request, $response, $response->code) : api_response($request, null, 500);
+        }
+        if ($request->has('resource_id')) {
+            if ((int)$job->resource_id == (int)$request->resource_id) return api_response($request, null, 403, ['message' => 'অর্ডারটিতে এই রিসোর্স এসাইন করা রয়েছে']);
+            if (!scheduler(Resource::find((int)$request->resource_id))->isAvailableForCategory($job->schedule_date, explode('-', $job->preferred_time)[0], $job->category, $job)) {
+                return api_response($request, null, 403, ['message' => 'Resource is not available at this time. Please select different date time or change the resource']);
+            }
+            if ($request->partner->hasThisResource((int)$request->resource_id, 'Handyman') && $job->hasStatus(['Accepted', 'Schedule_Due', 'Process', 'Serve_Due'])) {
+                $job = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+                return api_response($request, $job, 200);
+            }
+            return api_response($request, null, 403);
+        }
+        if ($request->has('status')) {
+            $new_status = $request->status;
+            if ($new_status === 'start') $new_status = $this->jobStatuses['Process'];
+            elseif ($new_status === 'end') $new_status = $this->jobStatuses['Served'];
+            if ($response = (new \Sheba\Repositories\ResourceJobRepository($request->manager_resource))->changeJobStatus($job, $new_status)) {
+                return api_response($request, $response, $response->code, ['message' => $response->msg]);
+            }
+        }
+        return api_response($request, null, 500);
     }
 
     public function getMaterials($partner, $job, Request $request)
@@ -428,29 +407,33 @@ class PartnerJobController extends Controller
     public function cancelRequests($partner, Request $request)
     {
         try {
-            $partner = $request->partner->load(['partnerOrders' => function ($q) use ($request) {
+            $jobs = Job::whereHas('cancelRequests', function ($query) {
+                $query->where('status', 'Pending');
+            })->whereHas('partnerOrder', function ($q) use ($partner) {
+                $q->ongoing()->where('partner_id', $partner);
+            })->with(['category' => function ($q) {
+                $q->select('id', 'name');
+            }, 'partnerOrder' => function ($q) {
                 $q->with(['order' => function ($q) {
-                    $q->with('location', 'customer.profile');
-                }])->with(['jobs' => function ($q) use ($request) {
-                    $q->info()->whereHas('cancelRequests', function ($query) {
-                        $query->where('status', 'Pending');
-                    })->whereIn('status', (new PartnerOrderRepository())->getStatusFromRequest($request))->orderBy('id', 'desc')->with(['cancelRequests', 'category']);
+                    $q->select('id', 'customer_id', 'location_id', 'sales_channel')->with(['location' => function ($q) {
+                        $q->select('id', 'name');
+                    }, 'customer' => function ($q) {
+                        $q->select('id', 'profile_id')->with(['profile' => function ($q) {
+                            $q->select('id', 'name');
+                        }]);
+                    }]);
                 }]);
-            }]);
-            $jobs = collect();
-            foreach ($partner->partnerOrders as $partnerOrder) {
-                foreach ($partnerOrder->jobs as $job) {
-                    $job['is_on_premise'] = (int)$job->isOnPremise();
-                    $job['location'] = $partnerOrder->order->location->name;
-                    $job['code'] = $partnerOrder->order->code();
-                    $job['category_name'] = $job->category ? $job->category->name : null;
-                    $job['customer_name'] = $partnerOrder->order->customer ? $partnerOrder->order->customer->profile->name : null;
-                    $job['schedule_timestamp'] = $partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
-                    $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
-                    $job['version'] = $partnerOrder->order->getVersion();
-                    removeRelationsFromModel($job);
-                    $jobs->push($job);
-                }
+            }])->info()->orderBy('jobs.id', 'desc')->get();
+            foreach ($jobs as $job) {
+                $job['is_on_premise'] = (int)$job->isOnPremise();
+                $job['location'] = $job->partnerOrder->order->location->name;
+                $job['code'] = $job->partnerOrder->order->code();
+                $job['category_name'] = $job->category ? $job->category->name : null;
+                $job['customer_name'] = $job->partnerOrder->order->customer ? $job->partnerOrder->order->customer->profile->name : null;
+                $job['schedule_timestamp'] = $job->partnerOrder->getVersion() == 'v2' ? Carbon::parse($job->schedule_date . ' ' . explode('-', $job->preferred_time)[0])->timestamp : Carbon::parse($job->schedule_date)->timestamp;
+                $job['preferred_time'] = humanReadableShebaTime($job->preferred_time);
+                $job['version'] = $job->partnerOrder->order->getVersion();
+                removeRelationsFromModel($job);
             }
             return count($jobs) == 0 ? api_response($request, null, 404) : api_response($request, $jobs, 200, ['jobs' => $jobs]);
         } catch (Throwable $e) {
@@ -478,7 +461,7 @@ class PartnerJobController extends Controller
             $logistic_orders[$order->id] = $order->formatForPartner();
         }
         $jobs->whereIn('logistic_id', $logistic_ids)->each(function ($job) use ($logistic_orders) {
-            $job['logistic'] = $logistic_orders[$job->logistic_id];
+            $job['logistic'] = $logistic_orders[$job->logistic_id] ?? null;
         });
     }
 }

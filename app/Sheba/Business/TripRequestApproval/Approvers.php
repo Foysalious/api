@@ -1,13 +1,12 @@
 <?php namespace Sheba\Business\TripRequestApproval;
 
-
 use App\Models\Business;
 use App\Models\BusinessMember;
-use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
+use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 
 class Approvers
 {
-    /** @var TripRequestApprovalFlow */
+    /** @var ApprovalFlow $approvalFlow */
     private $approvalFlow;
     /** @var BusinessMember */
     private $requester;
@@ -34,10 +33,10 @@ class Approvers
     }
 
     /**
-     * @param TripRequestApprovalFlow $approvalFlow
-     * @return Approvers
+     * @param ApprovalFlow $approvalFlow
+     * @return $this
      */
-    public function setApprovalFlow($approvalFlow)
+    public function setApprovalFlow(ApprovalFlow $approvalFlow)
     {
         $this->approvalFlow = $approvalFlow;
         return $this;
@@ -60,61 +59,102 @@ class Approvers
     {
         $this->setBusinessMembersOfThisDepartment();
         $this->setBusinessMembersOfFlow();
+
         foreach ($this->businessMembersOfFlow as $business_member) {
-            if ($this->isRequesterIsInTheApprovalFlow($business_member)) continue;
-            elseif ($this->isMemberOfOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
+            if ($this->isBusinessMemberIsTheRequester($business_member) || $this->isBusinessMemberAndRequesterHasSameManager($business_member)) continue;
+            elseif ($this->isBusinessMemberFromOtherDepartment($business_member)) $this->pushToMemberId($business_member->id);
             elseif (!$business_member->manager_id) $this->pushToMemberId($business_member->id);
-            elseif (!$this->isRequesterAboveMember($business_member)) $this->pushToMemberId($business_member->id);
+            elseif (!$this->isRequesterAboveBusinessMember($business_member)) $this->pushToMemberId($business_member->id);
         }
+
         return $this->businessMemberIds;
     }
 
+    /**
+     * Business Members of this Department
+     *
+     * @return $this
+     */
     private function setBusinessMembersOfThisDepartment()
     {
         $this->businessMembersOfThisDepartment = BusinessMember::where('business_id', $this->business->id)->whereHas('role', function ($q) {
             $q->where('business_roles.business_department_id', $this->approvalFlow->business_department_id);
         })->select('id', 'manager_id')->get();
+
         return $this;
     }
 
     private function setBusinessMembersOfFlow()
     {
-        $this->businessMembersOfFlow = $this->approvalFlow->approvers()->select('id', 'manager_id')->where('business_member.id', '<>', $this->requester->id)->get();
+        $this->businessMembersOfFlow = $this->approvalFlow->approvers()->select('id', 'manager_id')
+            ->where('business_member.id', '<>', $this->requester->id)
+            ->get();
+
         return $this;
     }
 
-    private function isRequesterIsInTheApprovalFlow(BusinessMember $business_member)
+    private function isBusinessMemberIsTheRequester(BusinessMember $business_member)
     {
-        return $business_member->id == $this->requester->id ? 1 : 0;
+        return $business_member->id == $this->requester->id;
     }
 
-    private function isMemberOfOtherDepartment(BusinessMember $business_member)
+    /**
+     * @param BusinessMember $business_member
+     * @return bool
+     */
+    private function isBusinessMemberAndRequesterHasSameManager(BusinessMember $business_member)
+    {
+        return $business_member->manager_id == $this->requester->manager_id;
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return int
+     */
+    private function isBusinessMemberFromOtherDepartment(BusinessMember $business_member)
     {
         return $this->businessMembersOfThisDepartment->where('id', $business_member->id)->first() ? 0 : 1;
     }
 
     /**
-     * @param integer $id
+     * @param $id
      */
     private function pushToMemberId($id)
     {
         array_push($this->businessMemberIds, $id);
     }
 
-    private function isRequesterAboveMember(BusinessMember $business_member)
+    /**
+     * @param BusinessMember $business_member
+     * @return int
+     */
+    private function isRequesterAboveBusinessMember(BusinessMember $business_member)
     {
         if ($this->requester->manager_id == null) return 1;
-        if ($business_member->manager_id == $this->requester->manager_id) return 1;
+        if ($this->isBusinessMemberManagerOfRequester($business_member)) return 0;
         return $this->isRequesterIsManagerOfMember($business_member);
     }
 
+    /**
+     * @param BusinessMember $business_member
+     * @return bool
+     */
+    private function isBusinessMemberManagerOfRequester(BusinessMember $business_member)
+    {
+        return $this->requester->manager_id == $business_member->id;
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return int
+     */
     private function isRequesterIsManagerOfMember(BusinessMember $business_member)
     {
         while ($business_member->manager_id != $this->requester->id) {
             $business_member = $this->businessMembersOfThisDepartment->where('id', $business_member->manager_id)->first();
-            if ($business_member->manager_id == null) return 0;
+            if (!$business_member || $business_member->manager_id == null) return 0;
         }
-        return 1;
 
+        return 1;
     }
 }

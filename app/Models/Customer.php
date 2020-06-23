@@ -4,12 +4,12 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\HasWallet;
+use Sheba\Wallet\HasWallet;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\PayableUser;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\Report\Updater\Customer as ReportUpdater;
 use Sheba\Reward\Rewardable;
 use Sheba\TopUp\TopUpAgent;
@@ -21,7 +21,6 @@ use Sheba\Transport\Bus\BusTicketCommission;
 use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
-use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Voucher\VoucherGeneratorTrait;
 
 class Customer extends Authenticatable implements Rechargable, Rewardable, TopUpAgent, MovieAgent, TransportAgent, CanApplyVoucher, PayableUser, HasWalletTransaction, HasWallet
@@ -97,9 +96,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 
     public function usedVouchers()
     {
-        return $this->orders()->where('voucher_id', '<>', null)->get()->map(function ($order) {
-            return $order->voucher;
-        })->unique();
+        return Voucher::join('orders', 'orders.voucher_id', '=', 'vouchers.id')->where('orders.customer_id', $this->id)->groupBy('vouchers.id')->select('vouchers.*')->get();
     }
 
     public function nthOrders(...$n)

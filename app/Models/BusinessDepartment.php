@@ -1,7 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Carbon\Carbon;
+use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\Dal\TripRequestApprovalFlow\Model as TripRequestApprovalFlow;
 
 class BusinessDepartment extends Model
@@ -27,5 +27,20 @@ class BusinessDepartment extends Model
     public function tripRequestFlow()
     {
         return $this->hasOne(TripRequestApprovalFlow::class);
+    }
+
+    public function approvalFlows()
+    {
+        return $this->hasMany(ApprovalFlow::class);
+    }
+
+    public function approvalFlowBy($type)
+    {
+        return $this->approvalFlows()->where('type', $type)->first();
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', 1);
     }
 }

@@ -1,10 +1,12 @@
 <?php namespace App\Exceptions;
 
+use Dingo\Api\Http\Request;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\HandlerFactory;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Dingo\Api\Exception\Handler as DingoHandler;
 
@@ -17,10 +19,7 @@ class CustomHandler extends DingoHandler
      */
     protected $dontReport = [
         AuthorizationException::class,
-        HttpException::class,
-        ModelNotFoundException::class,
-        ValidationException::class,
-        ApiValidationException::class
+        HttpException::class
     ];
 
     /**
@@ -28,32 +27,43 @@ class CustomHandler extends DingoHandler
      *
      * This is a great spot to send exceptions to Sentry, Bugsnag, etc.
      *
-     * @param  \Exception $e
+     * @param Exception $e
      * @return void
      */
     public function report(Exception $e)
     {
-        if (app()->bound('sentry') && $this->parentHandler->shouldReport($e)) {
-            app('sentry')->captureException($e);
-        }
-        parent::report($e);
+        /**
+         * Done in the render section.
+         * As, request is needed sometimes.
+         */
+
+        // if (app()->bound('sentry') && $this->parentHandler->shouldReport($e)) {
+        //     app('sentry')->captureException($e);
+        // }
+
+        // parent::report($e);
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param \Dingo\Api\Http\Request $request
-     * @param \Exception $e
-     * @return \Illuminate\Http\Response|\Symfony\Component\HttpFoundation\Response
+     * @param Request $request
+     * @param Exception $e
+     * @return \Illuminate\Http\Response|Response
      * @throws Exception
      */
     public function render($request, Exception $e)
     {
         $handler = HandlerFactory::get($request, $e);
 
-        if ($handler) return $handler->render();
+        if ($handler) {
+            if ($this->parentHandler->shouldReport($e)) {
+                $handler->report();
+            }
+
+            return $handler->render();
+        }
 
         return parent::render($request, $e);
     }
-
 }

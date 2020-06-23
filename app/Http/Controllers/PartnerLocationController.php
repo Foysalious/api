@@ -34,54 +34,39 @@ class PartnerLocationController extends Controller
         $this->reviewRepository = new ReviewRepository();
     }
 
-    /**
-     * @param Request $request
-     * @param PartnerListRequest $partnerListRequest
-     * @return JsonResponse
-     */
+
     public function getPartners(Request $request, PartnerListRequest $partnerListRequest)
     {
-        try {
-            $this->validate($request, [
-                'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'), 'time' => 'sometimes|required|string', 'services' => 'required|string', 'isAvailable' => 'sometimes|required', 'partner' => 'sometimes|required', 'lat' => 'required|numeric', 'lng' => 'required|numeric', 'skip_availability' => 'numeric', 'filter' => 'string|in:sheba',
-            ]);
-            $validation = new Validation($request);
-            if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
-            $partner = $request->has('partner') ? $request->partner : null;
-            $partnerListRequest->setRequest($request)->prepareObject();
-            $partner_list = new PartnerList();
-            $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
-            if ($request->has('isAvailable')) {
-                $partners = $partner_list->partners;
-                $available_partners = $partners->filter(function ($partner) {
-                    return $partner->is_available == 1;
-                });
-                $is_available = count($available_partners) != 0 ? 1 : 0;
-                return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
-            }
-            if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
-            if ($partner_list->hasPartners) {
-                $partner_list->addPricing();
-                $partner_list->addInfo();
-                if ($request->has('filter') && $request->filter == 'sheba') {
-                    $partner_list->sortByShebaPartnerPriority();
-                } else {
-                    $partner_list->sortByShebaSelectedCriteria();
-                }
-                $partners = $partner_list->removeKeysFromPartner()->values()->all();
-                return api_response($request, $partners, 200, ['partners' => $partners]);
-            }
-            return api_response($request, null, 404, ['message' => 'No partner found.']);
-        } catch (HyperLocationNotFoundException $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'date' => 'sometimes|required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'), 'time' => 'sometimes|required|string', 'services' => 'required|string', 'isAvailable' => 'sometimes|required', 'partner' => 'sometimes|required', 'lat' => 'required|numeric', 'lng' => 'required|numeric', 'skip_availability' => 'numeric', 'filter' => 'string|in:sheba',
+        ]);
+        $validation = new Validation($request);
+        if (!$validation->isValid()) return api_response($request, $validation->message, 400, ['message' => $validation->message]);
+        $partner = $request->has('partner') ? $request->partner : null;
+        $partnerListRequest->setRequest($request)->prepareObject();
+        $partner_list = new PartnerList();
+        $partner_list->setPartnerListRequest($partnerListRequest)->find($partner);
+        if ($request->has('isAvailable')) {
+            $partners = $partner_list->partners;
+            $available_partners = $partners->filter(function ($partner) {
+                return $partner->is_available == 1;
+            });
+            $is_available = count($available_partners) != 0 ? 1 : 0;
+            return api_response($request, $is_available, 200, ['is_available' => $is_available, 'available_partners' => count($available_partners)]);
         }
+        if ($request->has('show_reason')) return api_response($request, null, 200, ['reason' => $partner_list->getNotShowingReason()]);
+        if ($partner_list->hasPartners) {
+            $partner_list->addPricing();
+            $partner_list->addInfo();
+            if ($request->has('filter') && $request->filter == 'sheba') {
+                $partner_list->sortByShebaPartnerPriority();
+            } else {
+                $partner_list->sortByShebaSelectedCriteria();
+            }
+            $partners = $partner_list->removeKeysFromPartner()->values()->all();
+            return api_response($request, $partners, 200, ['partners' => $partners]);
+        }
+        return api_response($request, null, 404, ['message' => 'No partner found.']);
     }
 
     public function getLitePartners(Request $request, PartnerListRequest $partnerListRequest)

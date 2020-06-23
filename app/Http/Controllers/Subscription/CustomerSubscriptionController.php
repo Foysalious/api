@@ -3,6 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use App\Models\ServiceSubscription;
@@ -26,7 +27,9 @@ use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\PreferredTime;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
@@ -71,13 +74,13 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -103,36 +106,37 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearPayment(Request $request, $customer, $subscription, ShebaPayment $sheba_payment)
+    /**
+     * @param Request $request
+     * @param $customer
+     * @param $subscription
+     * @param PaymentManager $payment_manager
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearPayment(Request $request, $customer, $subscription, PaymentManager $payment_manager)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
-            ]);
-            $customer = $request->customer;
-            $payment_method = $request->payment_method;
-            /** @var SubscriptionOrder $subscription_order */
-            $subscription_order = SubscriptionOrder::find((int)$subscription);
-            $subscription_order->calculate();
-            if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
-                return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
-            }
-            $order_adapter = new SubscriptionOrderAdapter();
-            $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
-            $payment = $sheba_payment->setMethod($payment_method)->init($payable);
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
+        ]);
+        $customer = $request->customer;
+        $payment_method = $request->payment_method;
+        /** @var SubscriptionOrder $subscription_order */
+        $subscription_order = SubscriptionOrder::find((int)$subscription);
+        $subscription_order->calculate();
+        if ($payment_method == 'wallet' && $subscription_order->due > $customer->shebaCredit()) {
+            return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
         }
+        $order_adapter = new SubscriptionOrderAdapter();
+        $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     public function index(Request $request, $customer)
@@ -212,25 +216,15 @@ class CustomerSubscriptionController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    /**
-     * @param Request $request
-     * @param $customer
-     * @param $subscription
-     * @param ApproximatePriceCalculator $approximatePriceCalculator
-     * @param PriceCalculation $price_calculation
-     * @param DeliveryCharge $delivery_charge
-     * @param JobDiscountHandler $job_discount_handler
-     * @return JsonResponse
-     */
     public function show(Request $request, $customer, $subscription,
                          ApproximatePriceCalculator $approximatePriceCalculator,
                          PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                         JobDiscountHandler $job_discount_handler)
+                         JobDiscountHandler $job_discount_handler, ServiceV2MinimalTransformer $service_transformer)
     {
         try {
             $customer = $request->customer;
@@ -293,7 +287,8 @@ class CustomerSubscriptionController extends Controller
                     "option" => $breakdown->option,
                     "variable_type" => $service->variable_type
                 ];
-                $resource = new Item($selected_service, new ServiceV2MinimalTransformer($location_service, $price_calculation));
+                if ($location_service) $service_transformer->setLocationService($location_service);
+                $resource = new Item($selected_service, $service_transformer);
                 $price_discount_data = $manager->createData($resource)->toArray();
 
                 $data = [
@@ -377,13 +372,15 @@ class CustomerSubscriptionController extends Controller
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
             ] : null;
 
-            $resource = new Item($service->category, new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler));
+            $resource = new Item($service->category,
+                new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $subscription_order->location)
+            );
             $delivery_charge_discount_data = $manager->createData($resource)->toArray();
             $subscription_order_details += $delivery_charge_discount_data;
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -451,7 +448,7 @@ class CustomerSubscriptionController extends Controller
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

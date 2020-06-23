@@ -28,12 +28,12 @@ class VendorController extends Controller
             $this->validate($request, [
                 'vendor_name' => 'required',
                 'vendor_mobile' => 'required|string|mobile:bd',
-                'vendor_image' => 'sometimes|required|mimes:jpeg,png',
+                'vendor_image' => 'sometimes|required|image|mimes:jpeg,png',
                 'resource_name' => 'required',
                 'resource_mobile' => 'required|string|mobile:bd'
             ]);
             $business = $request->business;
-            $member = $request->member;
+            $member = $request->manager_member;
             $this->setModifier($member);
 
             /** @var CreateRequest $request */
@@ -88,7 +88,7 @@ class VendorController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $admin_member = $request->member;
+            $admin_member = $request->manager_member;
             $business = $request->business;
             $this->setModifier($admin_member);
 

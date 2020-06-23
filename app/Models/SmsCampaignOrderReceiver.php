@@ -1,8 +1,8 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
 
-class SmsCampaignOrderReceiver extends Model
+class SmsCampaignOrderReceiver extends BaseModel
 {
     protected $guarded = ['id'];
 

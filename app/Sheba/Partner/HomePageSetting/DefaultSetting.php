@@ -39,7 +39,7 @@ class DefaultSetting
         $loan = [
             "key" => "loan",
             "name_en" => "Loan",
-            "name_bn" => "সহজ লোন",
+            "name_bn" => "ডিজিটাল লোন",
             "is_on_homepage" => 1
         ];
 
@@ -105,6 +105,7 @@ class DefaultSetting
             "name_bn" => "গিফট শপ",
             "is_on_homepage" => 0
         ];
+
         return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop];
     }
 }

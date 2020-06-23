@@ -28,7 +28,7 @@ class ServiceProvider extends BaseServiceProvider
     public function register()
     {
         $this->app->singleton(Setting::class, function ($app) {
-            return new CacheWrapper(new StatDbWrapper(new Basic()));
+            return (new CacheWrapper(new StatDbWrapper(new Basic())));
         });
     }
 }

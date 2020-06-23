@@ -1,6 +1,7 @@
 <?php namespace Sheba\PartnerList;
 
 
+use Illuminate\Support\Collection;
 use Sheba\Location\Geo;
 
 interface Builder
@@ -37,13 +38,25 @@ interface Builder
 
     public function removeUnavailablePartners();
 
+    public function resolvePartnerSortingParameters();
+
+    public function resolveInfoForAdminPortal();
+
+    public function sortPartners();
+
     public function withService();
+
+    public function withSubscriptionPackage();
 
     public function withResource();
 
     public function withAvgReview();
 
     public function withTotalCompletedOrder();
+
+    public function withTotalOngoingJobs();
+
+    public function withoutShebaHelpDesk();
 
     public function runQuery();
 
@@ -59,6 +72,7 @@ interface Builder
 
     public function setScheduleTime($time);
 
+    /** @var  Collection */
     public function get();
 
     public function first();

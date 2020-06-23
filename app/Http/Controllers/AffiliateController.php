@@ -42,7 +42,6 @@ use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
-use Sheba\Transactions\Registrar;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
@@ -252,7 +251,7 @@ class AffiliateController extends Controller
             $affiliate->ambassador_id = $ambassador->id;
             $affiliate->under_ambassador_since = Carbon::now();
             $affiliate->update();
-            
+
             return api_response($request, $ambassador, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -511,14 +510,33 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         try {
             list($offset, $limit) = calculatePagination($request);
             $affiliate = $request->affiliate;
-            $affiliate->load(['transactions' => function ($q) use ($offset, $limit) {
-                $q->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))->orderBy('id', 'desc');
-            }]);
-            if ($affiliate->transactions != null) {
-                $transactions = $affiliate->transactions;
-                $credit       = $transactions->where('type', 'Credit')->splice($offset, $limit)->values()->all();
-                $debit        = $transactions->where('type', 'Debit')->splice($offset, $limit)->values()->all();
-                return api_response($request, $affiliate->transactions, 200, ['credit' => $credit, 'debit' => $debit]);
+            $credit_affiliate = clone $affiliate;
+            $debit_affiliate = clone $affiliate;
+
+            $affiliate_credit_transactions  = $credit_affiliate->load([
+                'transactions' => function ($q) use ($offset, $limit) {
+                    $q->where('type', 'Credit')
+                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                        ->orderBy('id', 'desc')
+                        ->skip($offset)
+                        ->take($limit);
+                },
+            ]);
+            $affiliate_debit_transactions = $debit_affiliate->load([
+                'transactions' => function ($q) use ($offset, $limit) {
+                    $q->where('type', 'Debit')
+                        ->select('id', 'affiliate_id', 'affiliation_id', 'type', 'log', 'amount', DB::raw('DATE_FORMAT(created_at, "%M %d, %Y at %h:%i %p") as time'))
+                        ->orderBy('id', 'desc')
+                        ->skip($offset)
+                        ->take($limit);
+                }
+            ]);
+
+            if ($affiliate->transactions()->count()) {
+                $credit       = $affiliate_credit_transactions->transactions->values()->all();
+                $debit        = $affiliate_debit_transactions->transactions->values()->all();
+
+                return api_response($request, null, 200, ['credit' => $credit, 'debit' => $debit]);
             } else {
                 return api_response($request, null, 404);
             }

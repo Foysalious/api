@@ -46,6 +46,7 @@ class CustomerController extends Controller
             }]);
             $profile = $customer->profile;
             $profile->password = ($profile->password) ? 1 : 0;
+            $customer->profile['credit'] = $customer->shebaCredit();
             return api_response($request, $customer->profile, 200, ['profile' => $customer->profile]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

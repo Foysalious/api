@@ -2,11 +2,11 @@
 
 use Carbon\Carbon;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
+use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 
 class CheckIn extends ActionChecker
 {
-    CONST ENTRY_TIME = '9:30:00';
-
     public function getActionName()
     {
         return Actions::CHECKIN;
@@ -30,7 +30,18 @@ class CheckIn extends ActionChecker
 
     protected function checkForLateAction()
     {
+        $date = Carbon::now();
+        $weekendHoliday = new WeekendHolidayByBusiness();
+        $time = new TimeByBusiness();
+        $last_checkin_time = $time->getOfficeStartTimeByBusiness();
+        if (is_null($last_checkin_time)) return;
         if (!$this->isSuccess()) return;
-        if (Carbon::now() > Carbon::parse(self::ENTRY_TIME)) $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
+        if (Carbon::now() > Carbon::parse($last_checkin_time)) {
+            if ($weekendHoliday->isWeekendByBusiness($date) || $weekendHoliday->isHolidayByBusiness($date)) {
+                $this->setResult(ActionResultCodes::SUCCESSFUL, ActionResultCodeMessages::SUCCESSFUL_CHECKIN);
+            } else {
+                $this->setResult(ActionResultCodes::LATE_TODAY, ActionResultCodeMessages::LATE_TODAY);
+            }
+        }
     }
 }

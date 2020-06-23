@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\Statuses;
 use Sheba\Transactions\DTO\ShebaTransaction;
@@ -8,6 +9,10 @@ class Payment extends Model
 {
     protected $guarded = ['id'];
 
+    /**
+     *
+     * Relationships
+     */
     public function payable()
     {
         return $this->belongsTo(Payable::class);
@@ -18,6 +23,29 @@ class Payment extends Model
         return $this->hasMany(PaymentDetail::class);
     }
 
+    /**
+     *
+     * Scope functions
+     */
+    public function scopeNotCompleted($query)
+    {
+        return $query->where('status', '<>', Statuses::COMPLETED);
+    }
+
+    public function scopeInitiated($query)
+    {
+        return $query->where('status', Statuses::INITIATED);
+    }
+
+    public function scopeStillValidityLeft($query)
+    {
+        return $query->where('valid_till', '>', Carbon::now());
+    }
+
+    /**
+     *
+     * Other functions
+     */
     public function isComplete()
     {
         return $this->status == Statuses::COMPLETED;
@@ -48,14 +76,14 @@ class Payment extends Model
         return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
     }
 
-    public function scopeNotCompleted($query)
-    {
-        return $query->where('status', '<>', Statuses::COMPLETED);
-    }
-
     public function canComplete()
     {
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
+    }
+
+    public function isReturnedFrom()
+    {
+        return true;
     }
 
     public function getFormattedPayment()
@@ -81,5 +109,21 @@ class Payment extends Model
             ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
+    }
+
+    public function getValidityInSeconds()
+    {
+        return Carbon::now()->diffInSeconds($this->valid_till);
+    }
+
+    public function getTransactionDetails()
+    {
+        return json_decode($this->transaction_details);
+    }
+
+    public function getErrorMessage()
+    {
+        $details = $this->getTransactionDetails();
+        return $details && property_exists($details, 'errorMessage') ? $details->errorMessage : null;
     }
 }

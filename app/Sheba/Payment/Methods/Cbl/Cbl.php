@@ -2,31 +2,36 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Models\PaymentDetail;
-use Carbon\Carbon;
+use Exception;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\RequestIdentification;
 use DB;
+use SimpleXMLElement;
 
 class Cbl extends PaymentMethod
 {
-    private $tunnelHost;
-    private $tunnelPort;
+    /** @var HttpClient */
+    private $httpClient;
+
+    private $tunnelUrl;
     private $merchantId;
 
     private $acceptUrl;
     private $cancelUrl;
     private $declineUrl;
-    
+
     CONST NAME = 'cbl';
 
-    public function __construct()
+    public function __construct(HttpClient $client)
     {
         parent::__construct();
-        $this->tunnelHost = config('payment.cbl.tunnel_host');
-        $this->tunnelPort = config('payment.cbl.tunnel_port');
+
+        $this->httpClient = $client;
+
+        $this->tunnelUrl = config('payment.cbl.tunnel_url');
         $this->merchantId = config('payment.cbl.merchant_id');
 
         $this->acceptUrl = config('payment.cbl.urls.approve');
@@ -34,28 +39,17 @@ class Cbl extends PaymentMethod
         $this->declineUrl = config('payment.cbl.urls.decline');
     }
 
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws Exception
+     * @throws GuzzleException
+     */
     public function init(Payable $payable): Payment
     {
-        $payment = new Payment();
-        $user = $payable->user;
-        $invoice = "SHEBA_CBL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
-            $payment->payable_id = $payable->id;
-            $payment->transaction_id = $invoice;
-            $payment->gateway_transaction_id = $invoice;
-            $payment->status = 'initiated';
-            $payment->valid_till = Carbon::tomorrow();
-            $this->setModifier($user);
-            $payment->fill((new RequestIdentification())->get());
-            $this->withCreateModificationField($payment);
-            $payment->save();
-            $payment_details = new PaymentDetail();
-            $payment_details->payment_id = $payment->id;
-            $payment_details->method = self::NAME;
-            $payment_details->amount = $payable->amount;
-            $payment_details->save();
-        });
-        $response = $this->postQW($this->makeOrderCreateData($payable));
+        $payment = $this->createPayment($payable);
+
+        $response = $this->post($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
         $init_response->setResponse($response);
         if ($init_response->hasSuccess()) {
@@ -65,8 +59,8 @@ class Cbl extends PaymentMethod
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
-            $this->paymentRepository->setPayment($payment);
-            $this->paymentRepository->changeStatus(['to' => 'initiation_failed', 'from' => $payment->status,
+            $this->paymentLogRepo->setPayment($payment);
+            $this->paymentLogRepo->create(['to' => 'initiation_failed', 'from' => $payment->status,
                 'transaction_details' => json_encode($error->details)]);
             $payment->status = 'initiation_failed';
             $payment->transaction_details = json_encode($error->details);
@@ -76,22 +70,27 @@ class Cbl extends PaymentMethod
     }
 
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment
+     * @throws GuzzleException
+     */
+    public function validate(Payment $payment): Payment
     {
-        $xml = $this->postQW($this->makeOrderInfoData($payment));
+        $xml = $this->post($this->makeOrderInfoData($payment));
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
-        $this->paymentRepository->setPayment($payment);
+        $this->paymentLogRepo->setPayment($payment);
         if ($validation_response->hasSuccess()) {
             $success = $validation_response->getSuccess();
-            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+            $this->paymentLogRepo->create(['to' => 'validated', 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validated';
             $payment->transaction_details = json_encode($success->details);
         } else {
             $error = $validation_response->getError();
-            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+            $this->paymentLogRepo->create(['to' => 'validation_failed', 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($error->details);
@@ -142,34 +141,30 @@ class Cbl extends PaymentMethod
 
     /**
      * @param $data
-     * @return \SimpleXMLElement
-     * @throws \Exception
+     * @return SimpleXMLElement
+     * @throws GuzzleException
+     * @throws Exception
      */
-    private function postQW($data)
+    private function post($data)
     {
-        $path = '/Exec';
-        $content = '';
+        $response = $this->httpClient->request('POST', $this->tunnelUrl, [
+            'form_params' => [
+                'data' => $data
+            ],
+            'timeout' => 60,
+            'read_timeout' => 60,
+            'connect_timeout' => 60
+        ]);
+        $result = $response->getBody()->getContents();
 
-        $fp = fsockopen($this->tunnelHost, $this->tunnelPort, $err_no, $err_str, 30);
-        if (!$fp) throw new \Exception("$err_str ($err_no)");
+        if (!$result) throw new Exception("Tunnel not working.");
+        $result = json_decode($result);
+        if ($result->code != 200) throw new Exception("Tunnel error: ". $result->message);
+        return simplexml_load_string($result->data);
+    }
 
-        $headers = 'POST ' . $path . " HTTP/1.0\r\n";
-        $headers .= 'Host: ' . $this->tunnelHost . "\r\n";
-        $headers .= "Content-type: text/xml\r\n";
-        $headers .= 'Content-Length: ' . strlen($data) . "\r\n\r\n";
-
-        fwrite($fp, $headers . $data);
-
-        while (!feof($fp)) {
-            $inStr = fgets($fp, 1024);
-            $content .= $inStr;
-        }
-        fclose($fp);
-
-        // Cut the HTTP response headers. The string can be commented out if it is necessary to parse the header
-        // In this case it is necessary to cut the response
-        $content = substr($content, strpos($content, "<TKKPG>"));
-
-        return simplexml_load_string($content);
+    public function getMethodName()
+    {
+        return self::NAME;
     }
 }

@@ -73,6 +73,32 @@ class OrderRepository extends BaseRepository
     }
 
     /**
+     * @param Order $order
+     * @return mixed
+     * @throws LogisticServerError
+     */
+    public function cancel(Order $order)
+    {
+        $result = $this->client->post("orders/$order->id/cancel", []);
+        return !empty($result) ? $result : null;
+    }
+
+    /**
+     * @param Order $order
+     * @param $amount
+     * @return mixed
+     * @throws LogisticServerError
+     */
+    public function pay(Order $order, $amount)
+    {
+        $result = $this->client->post("orders/$order->id/collect-payment", [
+            'amount' => $amount,
+            'payment_method' => 'online'
+        ]);
+        return !empty($result) ? true : false;
+    }
+
+    /**
      * @param $order_id
      * @throws LogisticServerError
      */

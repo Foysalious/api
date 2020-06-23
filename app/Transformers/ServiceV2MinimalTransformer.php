@@ -3,6 +3,7 @@
 use App\Models\LocationService;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Services\Type;
 
@@ -13,38 +14,44 @@ class ServiceV2MinimalTransformer extends TransformerAbstract
     /** @var PriceCalculation $priceCalculation */
     private $priceCalculation;
 
-    /**
-     * ServiceV2Transformer constructor.
-     * @param LocationService $location_service
-     * @param PriceCalculation $price_calculation
-     */
-    public function __construct(LocationService $location_service, PriceCalculation $price_calculation)
+
+    public function __construct(PriceCalculation $price_calculation)
+    {
+        $this->priceCalculation = $price_calculation;
+    }
+
+    public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
-        $this->priceCalculation = $price_calculation;
+        return $this;
     }
 
     /**
      * @param array $selected_service
      * @return array
+     * @throws \Sheba\LocationService\CorruptedPriceStructureException
      */
     public function transform(array $selected_service)
     {
         /** @var ServiceDiscount $discount */
-        $discount = $this->locationService->discounts()->running()->first();
-        $this->priceCalculation->setLocationService($this->locationService);
-
+        $discount = $this->locationService ? $this->locationService->discounts()->running()->first() : null;
+        if ($this->locationService) $this->priceCalculation->setLocationService($this->locationService);
         $data = [
-            'discount'      => $discount ? [
+            'discount' => $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
                 'cap' => (double)$discount->cap
             ] : null,
         ];
-        if ($selected_service["variable_type"] == Type::FIXED)
-            $data['unit_price'] = $this->priceCalculation->getUnitPrice();
-        if ($selected_service["variable_type"] == Type::OPTIONS) {
-            $data['unit_price'] = $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice();
+        try {
+            if ($selected_service["variable_type"] == Type::FIXED) {
+                $data['unit_price'] = $this->locationService && $this->locationService->service->isFixed() ? $this->priceCalculation->getUnitPrice() : null;
+            }
+            if ($selected_service["variable_type"] == Type::OPTIONS) {
+                $data['unit_price'] = $this->locationService && $this->locationService->service->isOptions() ? $this->priceCalculation->setOption($selected_service["option"])->getUnitPrice() : null;
+            }
+        }catch (CorruptedPriceStructureException $e) {
+            $data['unit_price'] = null;
         }
 
         return $data;

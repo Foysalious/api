@@ -1,18 +1,22 @@
 <?php namespace Sheba\Business\Announcement;
 
-
 use App\Jobs\Business\SendAnnouncementNotificationToEmployee;
 use App\Models\Business;
+use App\Models\BusinessMember;
 use Carbon\Carbon;
 use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
+use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
 
 class Creator
 {
+    use ModificationFields;
+
     private $announcementRepository;
     private $title;
     private $shortDescription;
+    private $longDescription;
     private $type;
     private $data;
     /** @var Carbon */
@@ -21,7 +25,13 @@ class Creator
     private $business;
     /** @var PushNotificationHandler */
     private $pushNotification;
+    private $businessMember;
 
+    /**
+     * Creator constructor.
+     * @param AnnouncementRepositoryInterface $announcement_repository
+     * @param PushNotificationHandler $push_notification
+     */
     public function __construct(AnnouncementRepositoryInterface $announcement_repository, PushNotificationHandler $push_notification)
     {
         $this->announcementRepository = $announcement_repository;
@@ -39,12 +49,22 @@ class Creator
     }
 
     /**
-     * @param mixed $shortDescription
+     * @param mixed $short_description
      * @return Creator
      */
-    public function setShortDescription($shortDescription)
+    public function setShortDescription($short_description)
     {
-        $this->shortDescription = $shortDescription;
+        $this->shortDescription = $short_description;
+        return $this;
+    }
+
+    /**
+     * @param $long_description
+     * @return Creator
+     */
+    public function setLongDescription($long_description)
+    {
+        $this->longDescription = $long_description;
         return $this;
     }
 
@@ -62,9 +82,20 @@ class Creator
      * @param Business $business
      * @return Creator
      */
-    public function setBusiness($business)
+    public function setBusiness(Business $business)
     {
         $this->business = $business;
+        return $this;
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return Creator
+     */
+    public function setBusinessMember(BusinessMember $business_member)
+    {
+        $this->businessMember = $business_member;
+        $this->setModifier($this->businessMember->member);
         return $this;
     }
 
@@ -88,12 +119,14 @@ class Creator
 
     private function makeData()
     {
-        $this->data = [
+        $this->data = $this->withCreateModificationField([
             'business_id' => $this->business->id,
             'title' => $this->title,
             'short_description' => $this->shortDescription,
-            'end_date' => $this->endDate->toDateTimeString()
-        ];
+            'long_description' => $this->longDescription,
+            'end_date' => $this->endDate
+        ]);
+
         if ($this->type) $this->data['type'] = $this->type;
     }
 }

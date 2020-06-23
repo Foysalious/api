@@ -18,11 +18,12 @@ class Wallet extends PaymentMethod
         $user_bonus = $payable->user->shebaBonusCredit();
         $payment = new Payment();
         DB::transaction(function () use ($payment, $payable, $invoice, $user_bonus) {
+            $wallet = $payable->user->wallet;
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->gateway_transaction_id = $invoice;
             $payment->status = 'initiated';
-            $payment->valid_till = Carbon::tomorrow();
+            $payment->valid_till = $this->getValidTill();
             $this->setModifier($payable->user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
@@ -31,8 +32,11 @@ class Wallet extends PaymentMethod
             if ($remaining == 0) {
                 $this->savePaymentDetail($payment, $payable->amount, 'bonus');
             } else {
-                $this->savePaymentDetail($payment, $remaining, 'wallet');
                 if ($user_bonus > 0) $this->savePaymentDetail($payment, $payable->amount - $remaining, 'bonus');
+                if ($wallet > 0) {
+                    $deduct_amount_from_wallet = $wallet >= $remaining ? $remaining : $remaining - $wallet;
+                    $this->savePaymentDetail($payment, $deduct_amount_from_wallet, 'wallet');
+                }
             }
         });
         return $payment;
@@ -50,8 +54,13 @@ class Wallet extends PaymentMethod
         $payment_details->save();
     }
 
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         return $payment;
+    }
+
+    public function getMethodName()
+    {
+        return "credit";
     }
 }

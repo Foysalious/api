@@ -52,7 +52,7 @@ class CustomerRoute
                     $api->get('/', 'CustomerOrderController@index');
                     $api->get('valid', 'OrderController@checkOrderValidity');
                     $api->get('payment/valid', 'OrderController@checkInvoiceValidity');
-                    $api->post('promotions', 'PromotionController@autoApplyPromotion');
+                    $api->post('promotions', 'PromotionV3Controller@autoApplyPromotion');
                     $api->post('promotions/add', 'PromotionController@addPromotion');
                     $api->get('promotions/applicable', 'PromotionController@getAllApplicable');
                     $api->group(['prefix' => '{order}'], function ($api) {
@@ -108,6 +108,9 @@ class CustomerRoute
                 });
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'Customer\CustomerTransactionController@index');
+                });
+                $api->group(['prefix' => 'due-orders'], function ($api) {
+                    $api->get('/', 'CustomerOrderController@dueOrders');
                 });
             });
         });

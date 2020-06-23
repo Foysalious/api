@@ -26,7 +26,7 @@ class PartnerWallet extends PaymentMethod
             $payment->payable_id = $payable->id;
             $payment->transaction_id = $invoice;
             $payment->status = 'initiated';
-            $payment->valid_till = Carbon::tomorrow();
+            $payment->valid_till =$this->getValidTill();
             $this->setModifier($payable->user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
@@ -59,8 +59,13 @@ class PartnerWallet extends PaymentMethod
      * @param Payment $payment
      * @return Payment
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         return $payment;
+    }
+
+    public function getMethodName()
+    {
+        return "partner_wallet";
     }
 }

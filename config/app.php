@@ -1,5 +1,7 @@
 <?php
 
+use Sheba\Logistics\Listeners\EventsProvider;
+
 return [
 
     /*
@@ -168,13 +170,15 @@ return [
         Intervention\Image\ImageServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
+        AlgoliaSearch\Laravel\AlgoliaServiceProvider::class,
 
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,
         Sheba\Repositories\Providers\RepositoryServiceProvider::class,
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
-        Sheba\Report\Listeners\ReportUpdateProvider::class
+        Sheba\Report\Listeners\ReportUpdateProvider::class,
+        Sheba\Logistics\Listeners\EventsProvider::class
     ],
 
     /*

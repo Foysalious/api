@@ -1,17 +1,22 @@
 <?php namespace Sheba\ServiceRequest;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Category;
+use App\Models\HyperLocal;
 use App\Models\Service;
 use App\Models\Thana;
-use Sheba\Google\MapClient;
+use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
 use Sheba\Location\Geo;
+use Sheba\Map\DistanceMatrix;
+use Sheba\Map\MapClientNoResultException;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequestObject
 {
@@ -29,6 +34,7 @@ class ServiceRequestObject
     private $dropOffTime;
     /** @var Thana */
     private $pickUpThana;
+    private $thanas;
 
 
     /** @var Thana */
@@ -38,20 +44,47 @@ class ServiceRequestObject
     private $insideCityCategoryId;
     private $outsideCityCategoryId;
     private $googleCalculatedCarService;
-    private $mapClient;
+    /** @var DistanceMatrix */
+    private $distanceMatrix;
 
     /** @var Service */
     private $service;
     /** @var Category */
     private $category;
+    /** @var HyperLocal */
+    private $hyperLocal;
 
 
-    public function __construct()
+    public function __construct(DistanceMatrix $distanceMatrix)
     {
         $this->insideCityCategoryId = config('sheba.rent_a_car')['inside_city']['category'];
         $this->outsideCityCategoryId = config('sheba.rent_a_car')['outside_city']['category'];
-        $this->googleCalculatedCarService = array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS')));
-        $this->mapClient = new MapClient();
+        $this->googleCalculatedCarService = config('sheba.car_rental')['destination_fields_service_ids'];
+        $this->distanceMatrix = $distanceMatrix;
+    }
+
+    /**
+     * @return HyperLocal
+     */
+    public function getHyperLocal()
+    {
+        return $this->hyperLocal;
+    }
+
+    /**
+     * @param HyperLocal $hyperLocal
+     * @return ServiceRequestObject
+     */
+    public function setHyperLocal($hyperLocal)
+    {
+        $this->hyperLocal = $hyperLocal;
+        return $this;
+    }
+
+    private function setEstimatedDistance($distance)
+    {
+        $this->estimatedDistance = $distance;
+        return $this;
     }
 
     /**
@@ -62,6 +95,12 @@ class ServiceRequestObject
         return $this->estimatedDistance;
     }
 
+    private function setEstimatedTime($time)
+    {
+        $this->estimatedTime = $time;
+        return $this;
+    }
+
     /**
      * @return mixed
      */
@@ -69,6 +108,7 @@ class ServiceRequestObject
     {
         return $this->estimatedTime;
     }
+
 
     /**
      * @return mixed
@@ -185,16 +225,22 @@ class ServiceRequestObject
     /**
      * @return $this
      * @throws DestinationCitySameAsPickupException
+     * @throws HyperLocationNotFoundException
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws ServiceIsUnpublishedException
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
      */
     public function build()
     {
-        $this->service = Service::find($this->serviceId);
+        $this->service = Service::where('id', $this->serviceId)->publishedForAll()->first();
+        if (!$this->service) throw new ServiceIsUnpublishedException('Service #' . $this->serviceId . " is not available.", 400);
         $this->category = $this->service->category;
+        $this->setThanas();
         $this->setPickupThana();
         $this->setDestinationThana();
-        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->quantity = $this->getDistanceCalculationResult();
+        if (in_array($this->service->id, $this->googleCalculatedCarService)) $this->calculateDistanceResult();
         return $this;
     }
 
@@ -266,14 +312,22 @@ class ServiceRequestObject
         return $this->destinationAddress;
     }
 
+    private function setThanas()
+    {
+        $this->thanas = Thana::all();
+        return $this;
+    }
+
     /**
      * @throws InsideCityPickUpAddressNotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws HyperLocationNotFoundException
      */
     private function setPickupThana()
     {
         if (!$this->pickUpGeo) return;
-        $this->pickUpThana = $this->getThana($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng(), Thana::all());
+        $this->calculateHyperLocalFromPickUpGeo();
+        $this->pickUpThana = $this->getThana($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng());
         if (!in_array($this->pickUpThana->district_id, config('sheba.rent_a_car_pickup_district_ids'))) {
             if (!in_array($this->getCategory()->id, $this->outsideCityCategoryId)) {
                 throw new InsideCityPickUpAddressNotFoundException("Got " . $this->pickUpThana->name . '(' . $this->pickUpThana->id . ') for pickup');
@@ -283,34 +337,48 @@ class ServiceRequestObject
     }
 
     /**
+     * @throws HyperLocationNotFoundException
+     */
+    private function calculateHyperLocalFromPickUpGeo()
+    {
+        $hyper_local = HyperLocal::insidePolygon($this->pickUpGeo->getLat(), $this->pickUpGeo->getLng())->with('location')->first();
+        if (!$hyper_local || !$hyper_local->location || !$hyper_local->location->isPublished()) throw new HyperLocationNotFoundException('This pickup address is out of our service area', 701);
+        $this->setHyperLocal($hyper_local);
+    }
+
+    /**
      * @throws DestinationCitySameAsPickupException
      */
     private function setDestinationThana()
     {
         if (!$this->destinationGeo || in_array($this->service->id, [1043, 1044])) return;
-        $this->destinationThana = $this->getThana($this->destinationGeo->getLat(), $this->destinationGeo->getLng(), Thana::all());
+        $this->destinationThana = $this->getThana($this->destinationGeo->getLat(), $this->destinationGeo->getLng());
         if ($this->pickUpThana->district_id == $this->destinationThana->district_id) {
             throw new DestinationCitySameAsPickupException("Got " . $this->destinationThana->name . '(' . $this->destinationThana->id . ') for destination');
         }
     }
 
-    private function getThana($lat, $lng, $models)
+    private function getThana($lat, $lng)
     {
         $current = new Coords($lat, $lng);
-        $to = $models->map(function ($model) {
+        $to = $this->thanas->map(function ($model) {
             return new Coords(floatval($model->lat), floatval($model->lng), $model->id);
         })->toArray();
         $distance = (new Distance(DistanceStrategy::$VINCENTY))->matrix();
         $results = $distance->from([$current])->to($to)->sortedDistance()[0];
         $result = array_keys($results)[0];
-        return $models->where('id', $result)->first();
+        return $this->thanas->where('id', $result)->first();
     }
 
-    private function getDistanceCalculationResult()
+    /**
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
+     */
+    private function calculateDistanceResult()
     {
-        $data = $this->mapClient->getDistanceBetweenTwoPints($this->pickUpGeo, $this->destinationGeo);
-        $this->estimatedTime = (double)($data->rows[0]->elements[0]->duration->value) / 60;
-        $this->estimatedDistance = $this->quantity;
-        return (double)($data->rows[0]->elements[0]->distance->value) / 1000;
+        $distance = $this->distanceMatrix->getDistanceMatrix($this->pickUpGeo, $this->destinationGeo);
+        $this->setEstimatedTime($distance->getDurationInMinutes());
+        $this->setEstimatedDistance($distance->getDistanceInKms());
+        $this->setQuantity($distance->getDistanceInKms());
     }
 }

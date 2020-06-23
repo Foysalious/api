@@ -60,12 +60,11 @@ return [
         ['package' => 'LSP', 'badge' => null],
     ],
     'weight_on_partner_list' => [
-        'impression' => 0.1,
-        'capacity' => 0.1,
+        'impression' => 0.4,
+        'capacity' => 0.15,
         'orders' => 0.05,
-        'price' => 0.2,
-        'avg_rating' => 0.5,
-        'total_ratings' => 0.05
+        'avg_rating' => 0.3,
+        'total_ratings' => 0.1
     ],
     'promo_applicable_sales_channels' => ['Web', 'App', 'App-iOS', 'E-Shop', 'Call-Center'],
     'category_colors' => [
@@ -98,7 +97,7 @@ return [
         ['#5B247A', '#1BCEDF'],
         ['#00B8BA', '#00FFED']
     ],
-    'screen' => ['home', 'eshop','payment_link','pos','inventory','referral','due'],
+    'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
     'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
     'rent_a_car' => [
         'inside_city' => [
@@ -130,13 +129,23 @@ return [
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
         'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
-        'destination_fields_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD')),
+        'destination_fields_service_ids' => array_map('intval', explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD'))),
+        'service_ids' => array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS'))),
+        'slug' => 'car-rental'
     ],
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
     ],
     'min_order_amount_for_emi' => 5000,
-    'gift_card_validity_month' => 3,
+    'gift_card_validity_month' => 6,
     'marketplace_not_accessible_packages_id' => explode(',', env('MARKETPLACE_NOT_ACCESSIBLE_PACKAGES_ID', '1,2')),
     'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
+    'category_groups' => [
+        'trending' => env('TRENDING_CATEGORY_GROUP', 10)
+    ],
+    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'resource_max_withdraw_limit' => 1000,
+    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
+    'email' => 'info@sheba.xyz',
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
 ];

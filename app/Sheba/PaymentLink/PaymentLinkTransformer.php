@@ -1,11 +1,17 @@
 <?php namespace Sheba\PaymentLink;
 
-use Sheba\HasWallet;
+use App\Models\PosCustomer;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
 
 class PaymentLinkTransformer
 {
     private $response;
+
+    public function getResponse()
+    {
+        return $this->response;
+    }
 
     /**
      * @param stdClass $response
@@ -17,16 +23,10 @@ class PaymentLinkTransformer
         return $this;
     }
 
-    public function getResponse()
-    {
-        return $this->response;
-    }
-
     public function getLinkID()
     {
         return $this->response->linkId;
     }
-
 
     public function getReason()
     {
@@ -43,7 +43,6 @@ class PaymentLinkTransformer
         return $this->response->linkIdentifier;
     }
 
-
     public function getAmount()
     {
         return $this->response->amount;
@@ -59,13 +58,34 @@ class PaymentLinkTransformer
         return $this->response->isDefault;
     }
 
+    public function getEmiMonth() {
+        return isset($this->response->emiMonth) ? $this->response->emiMonth : null;
+    }
+
+    public function getInterest() {
+        return isset($this->response->interest) ? $this->response->interest : null;
+    }
+
+    public function getBankTransactionCharge() {
+        return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
+    }
+
     /**
-     * @return HasWallet
+     * @return HasWalletTransaction
      */
     public function getPaymentReceiver()
     {
         $model_name = "App\\Models\\" . ucfirst($this->response->userType);
         return $model_name::find($this->response->userId);
+    }
+
+    /**
+     * @return null
+     */
+    public function getPayer()
+    {
+        $order = $this->getTarget();
+        return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
 
     /**
@@ -80,18 +100,21 @@ class PaymentLinkTransformer
             return null;
     }
 
-    /**
-     * @return null
-     */
-    public function getPayer()
-    {
-        $order = $this->getTarget();
-        return $order ? $order->customer->profile : null;
-    }
-
     private function resolveTargetClass()
     {
         $model_name = "App\\Models\\";
-        if ($this->response->targetType == 'pos_order') return $model_name . 'PosOrder';
+        if ($this->response->targetType == 'pos_order')
+            return $model_name . 'PosOrder';
+    }
+
+    private function getPaymentLinkPayer()
+    {
+        $model_name = "App\\Models\\";
+        if (isset($this->response->payerId)) {
+            $model_name = $model_name . pamelCase($this->response->payerType);
+            /** @var PosCustomer $customer */
+            $customer = $model_name::find($this->response->payerId);
+            return $customer ? $customer->profile : null;
+        }
     }
 }

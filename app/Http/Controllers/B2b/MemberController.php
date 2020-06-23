@@ -4,25 +4,33 @@ use App\Models\Attachment;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessRole;
 use App\Models\BusinessSmsTemplate;
-use App\Models\InspectionItemIssue;
 use App\Sheba\Business\ACL\AccessControl;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
+use Sheba\Business\LeaveType\DefaultType;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
+use Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
 use DB;
+use Throwable;
 
 class MemberController extends Controller
 {
-    use ModificationFields;
-    use FilesAttachment;
+    use ModificationFields, FilesAttachment;
 
-    public function updateBusinessInfo($member, Request $request)
+    /**
+     * @param $member
+     * @param Request $request
+     * @param LeaveTypeCreator $leave_type_creator
+     * @return JsonResponse
+     */
+    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator)
     {
         try {
             $this->validate($request, [
@@ -44,6 +52,7 @@ class MemberController extends Controller
                 'address' => $request->address,
                 'phone' => $request->mobile,
             ];
+
             if (count($member->businesses) > 0) {
                 $business = $member->businesses->first();
                 $business->update($this->withUpdateModificationField($business_data));
@@ -60,13 +69,17 @@ class MemberController extends Controller
                 ];
                 BusinessMember::create($this->withCreateModificationField($member_business_data));
                 $this->saveSmsTemplate($business);
+
+                foreach (DefaultType::getWithKeys() as $key => $value) {
+                    $leave_type_creator->setBusiness($business)->setMember($member)->setTitle($value)->setTotalDays(DefaultType::getDays()[$key])->create();
+                }
             }
 
-            return api_response($request, 1, 200, ['business_id' => $business->id]);
+            return api_response($request, null, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -106,7 +119,7 @@ class MemberController extends Controller
                 return api_response($request, null, 404, ["message" => 'Business not found.']);
             }
 
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -134,13 +147,13 @@ class MemberController extends Controller
                 'remember_token' => $member->remember_token,
                 'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
                 'access' => [
-                    'support' => $business ? ($business->id == 110 && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
-                    'expense' => $business ? ($business->id == 110 && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
-                    'announcement' => $business ? ($business->id == 110 && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
+                    'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
+                    'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
+                    'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
                 ]
             ];
             return api_response($request, $info, 200, ['info' => $info]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -174,7 +187,7 @@ class MemberController extends Controller
             }
             if (count($members) > 0) return api_response($request, $members, 200, ['members' => $list]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -203,7 +216,7 @@ class MemberController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -232,7 +245,7 @@ class MemberController extends Controller
 
             if (count($attach_lists) > 0) return api_response($request, $attach_lists, 200, ['attach_lists' => $attach_lists]);
             else  return api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

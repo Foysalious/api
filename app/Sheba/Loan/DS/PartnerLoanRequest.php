@@ -2,7 +2,9 @@
 
 namespace Sheba\Loan\DS;
 
+use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\PartnerSubscriptionPackage;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Sheba\ModificationFields;
@@ -11,6 +13,7 @@ class PartnerLoanRequest implements Arrayable
 {
     use ModificationFields;
     public $partnerBankLoan;
+    /** @var Partner */
     public $partner;
     public $bank;
     public $loan_amount;
@@ -69,10 +72,10 @@ class PartnerLoanRequest implements Arrayable
 
     public function create($data)
     {
-        $data['partner_id']          = $this->partner->id;
-        $data['status']              = constants('LOAN_STATUS')['applied'];
-        $data['interest_rate']       = (int)constants('LOAN_CONFIG')['interest'];
-        $duration                    = (int)$data['duration'] * 12;
+        $data['partner_id'] = $this->partner->id;
+        $data['status'] = constants('LOAN_STATUS')['applied'];
+        $data['interest_rate'] = (int)constants('LOAN_CONFIG')['interest'];
+        $duration = (int)$data['duration'];
         $data['monthly_installment'] = emi_calculator($data['interest_rate'], $data['loan_amount'], $duration);
         $this->setModifier($this->partner);
         $this->partnerBankLoan = new PartnerBankLoan($this->withCreateModificationField($data));
@@ -93,7 +96,7 @@ class PartnerLoanRequest implements Arrayable
     public function history()
     {
         return [
-            'id'      => $this->partnerBankLoan->id,
+            'id' => $this->partnerBankLoan->id,
             'details' => (new LoanHistory($this->partnerBankLoan))->toArray()
         ];
 
@@ -116,59 +119,62 @@ class PartnerLoanRequest implements Arrayable
      */
     public function toArray()
     {
-        $bank         = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
-        $output       = $this->getNextStatus($this->partnerBankLoan->id);
+        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
+        $output = $this->getNextStatus($this->partnerBankLoan->id);
         $generated_id = ($bank ? $bank->id : '000') . '-' . str_pad($this->partnerBankLoan->id, 8 - strlen($this->partnerBankLoan->id), '0', STR_PAD_LEFT);
+        $admin_resource = $this->partner->getAdmin();
         return [
-            'id'                         => $this->partnerBankLoan->id,
-            'generated_id'               => $generated_id,
-            'partner'                    => [
-                'id'         => $this->partner->id,
-                'name'       => $this->partner->name,
-                'logo'       => $this->partner->logo,
+            'id' => $this->partnerBankLoan->id,
+            'generated_id' => $generated_id,
+            'partner' => [
+                'id' => $this->partner->id,
+                'current_package' =>  PartnerSubscriptionPackage::find($this->partner->package_id)->show_name,
+                'name' => $this->partner->name,
+                'logo' => $this->partner->logo,
                 'updated_at' => (Carbon::parse($this->partner->updated_at))->format('j F, Y h:i A'),
-                'profile'    => [
-                    'name'            => $this->partner->getContactPerson(),
-                    'mobile'          => $this->partner->getContactNumber(),
+                'profile' => [
+                    'name' => $this->partner->getContactPerson(),
+                    'mobile' => $this->partner->getContactNumber(),
                     'is_nid_verified' => $this->partner->isNIDVerified() ? true : false,
-                    'updated_at'      => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
+                    'dob' => $admin_resource ? $admin_resource->profile->dob : null,
+                    'updated_at' => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
                 ]
             ],
-            'credit_score'               => $this->partnerBankLoan->credit_score,
-            'purpose'                    => $this->partnerBankLoan->purpose,
-            'bank'                       => $bank ? $bank->toArray() : [
+            'credit_score' => $this->partnerBankLoan->credit_score,
+            'purpose' => $this->partnerBankLoan->purpose,
+            'bank' => $bank ? $bank->toArray() : [
                 'name' => null,
-                'id'   => null,
+                'id' => null,
                 'logo' => null
             ],
-            'duration'                   => $this->partnerBankLoan->duration,
-            'interest_rate'              => $this->partnerBankLoan->interest_rate,
-            'status'                     => [
-                'name'   => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+            'duration' => $this->partnerBankLoan->duration,
+            'interest_rate' => $this->partnerBankLoan->interest_rate,
+            'status' => [
+                'name' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
                 'status' => $this->partnerBankLoan->status
             ],
-            'monthly_installment'        => $this->partnerBankLoan->monthly_installment,
-            'loan_amount'                => $this->partnerBankLoan->loan_amount,
-            'total_installment'          => (int)$this->partnerBankLoan->duration * 12,
-            'status_'                    => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'monthly_installment' => $this->partnerBankLoan->monthly_installment,
+            'loan_amount' => $this->partnerBankLoan->loan_amount,
+            'total_installment' => (int)$this->partnerBankLoan->duration,
+            'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
-            'next_status'                => $output
+            'next_status' => $output
         ];
     }
 
     public function getNextStatus($loan_id)
     {
         $status_res = [
-            'applied'         => 'submitted',
-            'submitted'       => 'verified',
-            'verified'        => 'approved',
-            'approved'        => 'sanction_issued',
+            'considerable' => 'applied',
+            'applied' => 'submitted',
+            'submitted' => 'verified',
+            'verified' => 'approved',
+            'approved' => 'sanction_issued',
             'sanction_issued' => 'disbursed',
-            'disbursed'       => 'closed',
-            'considerable'    => 'verified',
-            'rejected'        => 'closed',
+            'disbursed' => 'closed',
+            'rejected' => 'closed',
         ];
-        $all        = [
+        $all = [
             'declined',
             'hold',
             'withdrawal'
@@ -178,7 +184,7 @@ class PartnerLoanRequest implements Arrayable
             $new_status = []; else if ($this->partnerBankLoan->status == 'disbursed')
             $new_status = ['closed']; else if ($this->partnerBankLoan->status == 'closed')
             $new_status = []; else if ($this->partnerBankLoan->status == 'hold') {
-            $change_log         = $this->partnerBankLoan->changeLogs()->where(function ($q) {
+            $change_log = $this->partnerBankLoan->changeLogs()->where(function ($q) {
                 return $q->where('to', 'hold')->orWhere('to', '["hold"]');
             })->orderby('id', 'desc')->first();
             $status_before_hold = 'applied';
@@ -194,7 +200,7 @@ class PartnerLoanRequest implements Arrayable
         $output = [];
         foreach ($new_status as $status) {
             $output[] = [
-                'name'   => ucfirst(preg_replace('/_/', ' ', $status)),
+                'name' => ucfirst(preg_replace('/_/', ' ', $status)),
                 'status' => $status,
                 'extras' => constants('LOAN_STATUS_BN')[$status]
             ];
@@ -207,20 +213,20 @@ class PartnerLoanRequest implements Arrayable
     {
         $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
         return [
-            'id'              => $this->partnerBankLoan->id,
-            'generated_id'    => $bank->id . '-' . str_pad($this->partnerBankLoan->id, 8 - strlen($this->partnerBankLoan->id), '0', STR_PAD_LEFT),
-            'created_at'      => $this->partnerBankLoan->created_at->format('d M, Y'),
-            'name'            => $this->partnerBankLoan->partner->getContactPerson(),
-            'phone'           => $this->partnerBankLoan->partner->getContactNumber(),
-            'partner'         => $this->partnerBankLoan->partner->name,
-            'status'          => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
-            'status_'         => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
-            'created_by'      => $this->partnerBankLoan->created_by,
-            'updated_by'      => $this->partnerBankLoan->updated_by,
+            'id' => $this->partnerBankLoan->id,
+            'generated_id' => $bank->id . '-' . str_pad($this->partnerBankLoan->id, 8 - strlen($this->partnerBankLoan->id), '0', STR_PAD_LEFT),
+            'created_at' => $this->partnerBankLoan->created_at->format('d M, Y'),
+            'name' => $this->partnerBankLoan->partner->getContactPerson(),
+            'phone' => $this->partnerBankLoan->partner->getContactNumber(),
+            'partner' => $this->partnerBankLoan->partner->name,
+            'status' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+            'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'created_by' => $this->partnerBankLoan->created_by,
+            'updated_by' => $this->partnerBankLoan->updated_by,
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
-            'updated'         => $this->partnerBankLoan->updated_at->format('d M, Y'),
-            'bank'            => $bank ? $bank->toArray() : null
+            'updated' => $this->partnerBankLoan->updated_at->format('d M, Y'),
+            'bank' => $bank ? $bank->toArray() : null
         ];
     }
 
@@ -228,9 +234,9 @@ class PartnerLoanRequest implements Arrayable
     {
         $this->setModifier($user);
         return $this->partnerBankLoan->changeLogs()->create($this->withCreateModificationField([
-            'title'       => $title,
-            'from'        => $from,
-            'to'          => $to,
+            'title' => $title,
+            'from' => $from,
+            'to' => $to,
             'description' => $description
         ]));
     }

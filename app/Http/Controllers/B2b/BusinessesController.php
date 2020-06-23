@@ -168,40 +168,39 @@ class BusinessesController extends Controller
 
     public function getNotifications($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $manager_member = $request->manager_member;
-            $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
-                ->where('notifiable_id', (int)$manager_member->id)
-                ->whereIn('event_type', [
-                    'App\Models\Procurement',
-                    'App\Models\Bid',
-                    'App\Models\Driver',
-                    'App\Models\Vehicle',
-                    'Sheba\Dal\Support\Model',
-                    'App\Models\BusinessTripRequest'
-                ])
-                ->orderBy('id', 'DESC');
+        $business = $request->business;
+        $manager_member = $request->manager_member;
 
-            $notifications = [];
-            foreach ($all_notifications->get() as $notification) {
-                $image = $this->getImage($notification);
-                array_push($notifications, [
-                    "id" => $notification->id,
-                    "image" => $image,
-                    "title" => $notification->title,
-                    "is_seen" => $notification->is_seen,
-                    "event_type" => $notification->getType(),
-                    "link" => $notification->link,
-                    "event_id" => $notification->event_id,
-                    "created_at" => $notification->created_at->format('M d h:ia')
-                ]);
-            }
-            return api_response($request, $notifications, 200, ['notifications' => $notifications]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        list($offset, $limit) = calculatePagination($request);
+        $all_notifications = Notification::where('notifiable_type', 'App\Models\Member')
+            ->where('notifiable_id', (int)$manager_member->id)
+            ->whereIn('event_type', [
+                'App\Models\Procurement',
+                'App\Models\Bid',
+                'App\Models\Driver',
+                'App\Models\Vehicle',
+                'Sheba\Dal\Support\Model',
+                'App\Models\BusinessTripRequest',
+                'Sheba\Dal\Leave\Model',
+            ])
+            ->skip($offset)->limit($limit)
+            ->orderBy('id', 'DESC');
+
+        $notifications = [];
+        foreach ($all_notifications->get() as $notification) {
+            $image = $this->getImage($notification);
+            array_push($notifications, [
+                "id" => $notification->id,
+                "image" => $image,
+                "title" => $notification->title,
+                "is_seen" => $notification->is_seen,
+                "event_type" => $notification->getType(),
+                "link" => $notification->link,
+                "event_id" => $notification->event_id,
+                "created_at" => $notification->created_at->format('M d h:ia')
+            ]);
         }
+        return api_response($request, $notifications, 200, ['notifications' => $notifications]);
     }
 
     private function getImage($notification)

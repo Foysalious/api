@@ -8,8 +8,10 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\Request;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\PushNotificationHandler;
+use Sheba\Resource\Jobs\SendJobAssignNotificationToResource;
 use Sheba\Resource\ResourceTypes;
 use Throwable;
+use App\Repositories\PartnerRepository;
 
 class StatusChanger
 {
@@ -36,7 +38,7 @@ class StatusChanger
     public function checkForError(Request $request)
     {
         $job = $request->job;
-        if (!$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
+        if ($request->resource_id && !$request->partner->hasThisResource((int)$request->resource_id, ResourceTypes::HANDYMAN)) {
             $this->setError(403, "Resource doesn't work for you");
             return;
         }
@@ -57,9 +59,20 @@ class StatusChanger
         if ($this->hasError()) return;
 
         $job = $request->job;
+        if ($request->resource_id) {
+            $selected_resource = $request->resource_id;
+        } else {
+            $available_resources = scheduler($request->partner)->isAvailable($job->schedule_date, $job->preferred_time_start, $job->category_id)->get('available_resources');
+            if (count($available_resources) > 0) {
+                $selected_resource = reset($available_resources);
+            } else {
+                $this->setError(403, "No Available Resource Found");
+                return;
+            }
+        }
         $this->changeStatus($job, $request, JobStatuses::ACCEPTED);
         if ($this->hasError()) return;
-        $this->changedJob = $this->assignResource($job, $request->resource_id, $request->manager_resource);
+        $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);
     }
 
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
@@ -82,6 +95,7 @@ class StatusChanger
 
         try {
             $this->sendAssignResourcePushNotifications($job);
+            dispatch((new SendJobAssignNotificationToResource($resource_id, $job)));
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
@@ -94,7 +108,7 @@ class StatusChanger
      */
     private function sendAssignResourcePushNotifications(Job $job)
     {
-        $topic   = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
+        $topic = config('sheba.push_notification_topic_name.customer') . $job->partner_order->order->customer->id;
         $channel = config('sheba.push_notification_channel_name.customer');
         (new PushNotificationHandler())->send([
             "title" => 'Resource has been assigned',
@@ -105,7 +119,7 @@ class StatusChanger
             "channel_id" => $channel
         ], $topic, $channel);
 
-        $topic   = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
+        $topic = config('sheba.push_notification_topic_name.resource') . $job->resource_id;
         $channel = config('sheba.push_notification_channel_name.resource');
         (new PushNotificationHandler())->send([
             "title" => 'Assigned to a new job',
@@ -141,7 +155,7 @@ class StatusChanger
             $this->setError(500);
             return;
         }
-        if ($response->code != 200)  {
+        if ($response->code != 200) {
             $this->setError($response->code, $response->msg);
             return;
         }

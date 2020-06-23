@@ -43,7 +43,7 @@ class ServiceTransformer extends TransformerAbstract
     {
         /** @var Category $category */
         $category = $service->category;
-        $usps = $category->usps()->select('name')->get();
+        $usps = $service->usps()->select('name')->get();
         $partnership = $service->partnership;
         $galleries = $service->galleries()->select('id', DB::Raw('thumb as image'))->get();
         $blog_posts = $service->blogPosts()->select('id', 'title', 'short_description', DB::Raw('thumb as image'), 'target_link')->get();
@@ -56,44 +56,51 @@ class ServiceTransformer extends TransformerAbstract
             'category_id' => $cross_sale_service->category_id,
             'service_id' => $cross_sale_service->service_id
         ] : null;
-        $delivery_charge = $this->deliveryCharge->setCategory($category)->get();
-        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($delivery_charge);
-        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($category)->setCheckingParams($discount_checking_params)->calculate();
-        /** @var Discount $delivery_discount */
-        $delivery_discount = $this->jobDiscountHandler->getDiscount();
-        $delivery_discount = $delivery_discount ? [
-            'value' => (double)$delivery_discount->amount,
-            'is_percentage' => $delivery_discount->is_percentage,
-            'cap' => (double)$delivery_discount->cap,
-            'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
-        ] : null;
-        /** @var ServiceDiscount $discount */
-        $discount = $this->locationService->discounts()->running()->first();
-        $prices = json_decode($this->locationService->prices);
-        $this->priceCalculation->setLocationService($this->locationService);
-        $this->upsellCalculation->setLocationService($this->locationService);
+        if($this->locationService) {
+            $delivery_charge = $this->deliveryCharge->setCategory($category)->setLocation($this->locationService->location)->get();
+            $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($delivery_charge);
+            $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($category)->setCheckingParams($discount_checking_params)->calculate();
+            /** @var Discount $delivery_discount */
+            $delivery_discount = $this->jobDiscountHandler->getDiscount();
+            $delivery_discount = $delivery_discount ? [
+                'value' => (double)$delivery_discount->amount,
+                'is_percentage' => $delivery_discount->is_percentage,
+                'cap' => (double)$delivery_discount->cap,
+                'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+            ] : null;
+            /** @var ServiceDiscount $discount */
+            $discount = $this->locationService->discounts()->running()->first();
+            $prices = json_decode($this->locationService->prices);
+            $this->priceCalculation->setLocationService($this->locationService);
+            $this->upsellCalculation->setLocationService($this->locationService);
+        }
+
         return [
             'id' => $service->id,
             'name' => $service->name,
             'slug' => $service->getSlug(),
             'thumb' => $service->thumb,
             'app_thumb' => $service->app_thumb,
+            'app_banner' => $service->app_banner,
             'banner' => $service->banner,
             'variable_type' => $service->variable_type,
+            'min_quantity' => $service->min_quantity,
+            'unit' => $service->unit,
             'questions' => $this->serviceQuestion->get(),
             'category' => [
                 'id' => $category->id,
                 'name' => $category->name,
                 'slug' => $category->getSlug(),
                 'cross_sale' => $cross_sale,
-                'delivery_discount' => $delivery_discount,
-                'delivery_charge' => $delivery_charge,
-                'is_auto_sp_enabled' => $category->is_auto_sp_enabled
+                'delivery_discount' => isset($delivery_discount) ? $delivery_discount : null,
+                'delivery_charge' => isset($delivery_charge) ? $delivery_charge : null,
+                'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
+                'min_order_amount' => (double) $category->min_order_amount
             ],
-            'fixed_price' => $service->isFixed() ? $this->priceCalculation->getUnitPrice() : null,
-            'fixed_upsell_price' => $service->isFixed() ? $this->upsellCalculation->getAllUpsellWithMinMaxQuantity() : null,
-            'option_prices' => $service->isOptions() ? $this->formatOptionWithPrice($prices) : null,
-            'discount' => $discount ? [
+            'fixed_price' => $service->isFixed() && $this->locationService ? $this->priceCalculation->getUnitPrice() : null,
+            'fixed_upsell_price' => $service->isFixed() && $this->locationService ? $this->upsellCalculation->getAllUpsellWithMinMaxQuantity() : null,
+            'option_prices' => isset($prices) && $this->locationService ? $service->isOptions() ? $this->formatOptionWithPrice($prices) : null : null,
+            'discount' => isset($discount) && $discount ? [
                 'value' => (double)$discount->amount,
                 'is_percentage' => $discount->isPercentage(),
                 'cap' => (double)$discount->cap

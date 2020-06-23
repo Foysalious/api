@@ -47,7 +47,6 @@ class UpsellCalculation
         return $this;
     }
 
-
     public function setQuantity($quantity)
     {
         $this->quantity = $quantity;
@@ -69,11 +68,11 @@ class UpsellCalculation
         foreach ($upsell_prices as $upsell_price) {
             if ($this->quantity >= $upsell_price['min'] && $this->quantity <= $upsell_price['max']) return $upsell_price['price'];
         }
-
     }
 
     private function getFixedServiceUpsell()
     {
+        if(!$this->locationService) return null;
         $upsell_prices = $this->locationService->upsell_price;
         if (!$upsell_prices) return null;
 
@@ -90,6 +89,7 @@ class UpsellCalculation
 
     private function getOptionServiceUpsell()
     {
+        if(!$this->locationService) return null;
         $option = implode(',', $this->option);
         $upsell_prices = $this->locationService->upsell_price;
         if (!$upsell_prices) return null;
@@ -113,7 +113,7 @@ class UpsellCalculation
     private function getService()
     {
         if ($this->service) return $this->service;
-        else return $this->locationService->service;
+        else return $this->locationService ? $this->locationService->service : null;
     }
 
 }

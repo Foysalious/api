@@ -12,6 +12,7 @@ use App\Models\Category;
 use App\Models\Promotion;
 use App\Models\Service;
 use League\Fractal\TransformerAbstract;
+use Throwable;
 
 class OfferDetailsTransformer extends TransformerAbstract
 {
@@ -46,6 +47,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             'has_cap' => $this->getCapStatus($offer, $target_type),
             'category_id' => $category_id,
             'category_slug' => $category ? $category->slug : null,
+            'slug' => $offer->isCategory() || $offer->isService() ? $offer->target->getSlug() : null,
             'is_category_master' => $category ? !$category->parent_id : false,
             'service_slug' => $target_type == 'service' ? $this->getServiceSlug($offer->target_id) : null,
             'button_text' => $offer->button_text,
@@ -133,7 +135,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             } else {
                 return null;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
@@ -146,7 +148,7 @@ class OfferDetailsTransformer extends TransformerAbstract
             } else {
                 return null;
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
