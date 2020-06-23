@@ -80,6 +80,13 @@ class JobInfo
         $formatted_job->put('schedule_date', $job->schedule_date);
         $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
         $formatted_job->put('services', $this->formatServices($job->jobServices));
+        $formatted_job->put('is_rent_a_car', $job->isRentCar());
+        $formatted_job->put('pick_up_location', $job->carRentalJobDetail && $job->carRentalJobDetail->pickUpLocation ? $job->carRentalJobDetail->pickUpLocation->name : null);
+        $formatted_job->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
+        $formatted_job->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
+        $formatted_job->put('destination_location', $job->carRentalJobDetail && $job->carRentalJobDetail->destinationLocation ? $job->carRentalJobDetail->destinationLocation->name : null);
+        $formatted_job->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
+        $formatted_job->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
         $formatted_job->put('rating', $job->review ? $job->review->rating : null);
         $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
         $formatted_job->put('status', $job->status);
