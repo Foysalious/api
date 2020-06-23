@@ -110,18 +110,11 @@ class OrderController extends Controller
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
                 $this->sendNotifications($customer, $order);
             }
-
             return api_response($request, null, 200, $order_with_response_data);
-        } catch (LocationIdNullException $e) {
-            logError($e, $request);
-            return api_response($request, null, 500, ['message' => 'Location id was not for this order']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            logError($e, $request);
-            return api_response($request, null, 500);
         }
     }
 
