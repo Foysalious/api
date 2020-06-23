@@ -677,6 +677,12 @@ class ProcurementController extends Controller
         return api_response($request, $rfq_order_bill, 200, ['rfq_order_bill' => $rfq_order_bill]);
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function invitedPartners($business, $procurement, Request $request)
     {
         $procurement = $this->procurementRepository->find((int)$procurement);
@@ -689,7 +695,7 @@ class ProcurementController extends Controller
                 }
             ]);
         }]);
-
+        $is_invitation_available = $procurement->invitations()->count() ? 1 : 0;
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($procurement->invitations, new ProcurementInvitationListTransformer($procurement));
@@ -699,7 +705,10 @@ class ProcurementController extends Controller
         if ($request->has('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
         if ($request->has('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
 
-        return api_response($request, null, 200, ['invited_partners' => $invited_partners]);
+        return api_response($request, null, 200, [
+            'invited_partners' => $invited_partners,
+            'is_invitation_available' => $is_invitation_available,
+        ]);
     }
 
     /**
