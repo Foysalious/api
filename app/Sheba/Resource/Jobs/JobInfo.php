@@ -73,7 +73,7 @@ class JobInfo
         $formatted_job->put('pro_pic', $job->partnerOrder->order->customer->profile->pro_pic);
         $formatted_job->put('delivery_name', $job->partnerOrder->order->delivery_name);
         $formatted_job->put('location', $job->partnerOrder->order->location->name);
-        $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
+        $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
         $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
         $formatted_job->put('geo_informations', json_decode($job->partnerOrder->order->deliveryAddress->geo_informations));
         $formatted_job->put('start_time', humanReadableShebaTime($job->preferred_time_start, true));
