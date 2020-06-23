@@ -220,15 +220,17 @@ class PaymentLinkController extends Controller
                 $payables    = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
-                    $payment = $payable->payment ? $payable->payment : null;
-                    $payment = [
-                        'id'         => $payment ? $payment->id : null,
-                        'code'       => $payment ? '#' . $payment->id : null,
-                        'name'       => $payment ? $payment->payable->getName() : null,
-                        'amount'     => $payment ? $payable->amount : null,
-                        'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
-                    ];
-                    array_push($all_payment, $payment);
+                    $payments = $payable->payments ? $payable->payments : null;
+                    foreach ($payments as $payment){
+                        $payment = [
+                            'id'         => $payment ? $payment->id : null,
+                            'code'       => $payment ? '#' . $payment->id : null,
+                            'name'       => $payment ? $payment->payable->getName() : null,
+                            'amount'     => $payment ? $payable->amount : null,
+                            'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
+                        ];
+                        array_push($all_payment, $payment);
+                    }
                 }
                 $payment_link_payments = [
                     'id'             => $payment_link_details['linkId'],
