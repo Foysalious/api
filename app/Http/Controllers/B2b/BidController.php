@@ -207,6 +207,7 @@ class BidController extends Controller
             'policies' => 'required|string'
         ]);
         $bid = $this->repo->find((int)$bid);
+        if ($request->business->id != $bid->procurement->owner->id) return api_response($request, null, 420);
         $this->setModifier($request->manager_member);
 
         $updater->setBid($bid)
