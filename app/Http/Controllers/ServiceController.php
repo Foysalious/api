@@ -77,13 +77,24 @@ class ServiceController extends Controller
         }
     }
 
+    public function getLpg(Request $request, ApproximatePriceCalculator $approximatePriceCalculator,
+                           PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                           JobDiscountHandler $job_discount_handler)
+    {
+
+        $lpg_service_id = config('sheba.lpg_service_id');
+        $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
+            $job_discount_handler);
+    }
+
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator,
                         PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
                         JobDiscountHandler $job_discount_handler)
     {
-        ini_set('memory_limit', '2048M');
-        $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
+
+        ini_set('memory_limit', '2048M');
+        $service = Service::where('id', (int)$service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
         $service_groups = $service->first()->groups;
         $offers = collect();
         if ($service_groups) {
