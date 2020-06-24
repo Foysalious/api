@@ -127,7 +127,7 @@ class SubscriptionController extends Controller
 
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
     {
-        $subscriptions = ServiceSubscription::active()->get();
+        $subscriptions = ServiceSubscription::active()->validDiscountsOrderByAmount()->get();
         foreach ($subscriptions as $index => $subscription) {
             if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
                 array_forget($subscriptions, $index);
@@ -136,6 +136,12 @@ class SubscriptionController extends Controller
             $location_service = LocationService::where([['location_id', $this->location], ['service_id', $subscription->service->id]])->first();
             $service = removeRelationsAndFields($subscription->service);
             $subscription['offers'] = $subscription->getDiscountOffers();
+            $subscription['discount'] = $subscription->discounts->first() ? [
+                'discount_amount' => $subscription->discounts->first()->discount_amount,
+                'is_discount_amount_percentage' => $subscription->discounts->first()->isPercentage(),
+                'cap' => $subscription->discounts->first()->cap,
+                'min_discount_qty' => $subscription->discounts->first()->min_discount_qty
+            ] : null;
             $price_range = $approximatePriceCalculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
             $subscription = removeRelationsAndFields($subscription);
             $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
@@ -147,7 +153,7 @@ class SubscriptionController extends Controller
 
         }
         if (count($subscriptions) > 0)
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
+            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->sortBy('discount.discount_amount')->values()->all()]);
         else
             return api_response($request, null, 404);
     }
