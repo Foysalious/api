@@ -34,6 +34,7 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\Service\MinMaxPrice;
+use Sheba\Services\ServiceSubscriptionDiscount;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use stdClass;
 use Throwable;
@@ -363,7 +364,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount)
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
@@ -502,11 +503,14 @@ class CategoryController extends Controller
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
-                    $subscription['discount'] = $subscription->validDiscounts->sortBy('discount_amount')->first() ? [
-                        'discount_amount' => $subscription->validDiscounts->sortBy('discount_amount')->first()->discount_amount,
-                        'is_discount_amount_percentage' => $subscription->validDiscounts->sortBy('discount_amount')->first()->is_discount_amount_percentage,
-                        'cap' => $subscription->validDiscounts->sortBy('discount_amount')->first()->cap,
-                        'min_discount_qty' => $subscription->validDiscounts->sortBy('discount_amount')->first()->min_discount_qty
+                    $lowest_service_subscription_discount = $subscription->validDiscounts->sortBy('discount_amount')->first();
+                    $subscription['discount'] = $lowest_service_subscription_discount ? [
+                        'discount_amount' => $lowest_service_subscription_discount->discount_amount,
+                        'is_discount_amount_percentage' => $lowest_service_subscription_discount->is_discount_amount_percentage,
+                        'cap' => $lowest_service_subscription_discount->cap,
+                        'min_discount_qty' => $lowest_service_subscription_discount->min_discount_qty,
+                        'text' => $subscriptionDiscount->setServiceSubscriptionDiscount($lowest_service_subscription_discount)->getDiscountText()
+
                     ] : null;
                     if ($subscription->faq) {
                         $faq = json_decode($subscription->faq);
