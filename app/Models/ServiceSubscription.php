@@ -17,6 +17,11 @@ class ServiceSubscription extends Model
         return $this->hasMany(ServiceSubscriptionDiscount::class);
     }
 
+    public function validDiscounts()
+    {
+        return $this->hasMany(ServiceSubscriptionDiscount::class)->valid();
+    }
+
     public function scopeValidDiscounts()
     {
         return $this->with(['discounts' => function ($query) {

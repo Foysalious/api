@@ -502,6 +502,12 @@ class CategoryController extends Controller
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
+                    $subscription['discount'] = $subscription->validDiscounts->sortBy('discount_amount')->first() ? [
+                        'discount_amount' => $subscription->validDiscounts->sortBy('discount_amount')->first()->discount_amount,
+                        'is_discount_amount_percentage' => $subscription->validDiscounts->sortBy('discount_amount')->first()->is_discount_amount_percentage,
+                        'cap' => $subscription->validDiscounts->sortBy('discount_amount')->first()->cap,
+                        'min_discount_qty' => $subscription->validDiscounts->sortBy('discount_amount')->first()->min_discount_qty
+                    ] : null;
                     if ($subscription->faq) {
                         $faq = json_decode($subscription->faq);
                         if ($faq->title && $faq->description) {
@@ -512,6 +518,7 @@ class CategoryController extends Controller
                             ];
                         }
                     }
+                    removeRelationsAndFields($subscription);
                     $subscriptions->push($subscription);
                 }
                 removeRelationsAndFields($service);
@@ -532,7 +539,7 @@ class CategoryController extends Controller
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions;
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
                 $category['cross_sale'] = $cross_sale_service ? [
                     'title' => $cross_sale_service->title,
                     'description' => $cross_sale_service->description,
