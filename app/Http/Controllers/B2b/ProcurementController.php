@@ -196,7 +196,8 @@ class ProcurementController extends Controller
 
         $procurement = $creator->create();
 
-        return api_response($request, $procurement, 200, ['id' => $procurement->id]);
+        $share = $this->getShareInformation($procurement);
+        return api_response($request, $procurement, 200, ['id' => $procurement->id, 'share' => $share]);
     }
 
     /**
@@ -454,12 +455,19 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
+        $share = $this->getShareInformation($procurement);
+        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
+
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($procurement, new ProcurementDetailsTransformer());
         $procurement = $fractal->createData($resource)->toArray()['data'];
-        $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
-        return api_response($request, null, 200, ['procurement' => $procurement, 'number_of_participants' => $number_of_participants]);
+
+        return api_response($request, null, 200, [
+            'procurement' => $procurement,
+            'number_of_participants' => $number_of_participants,
+            'share' => $share
+        ]);
     }
 
     /**
@@ -1128,5 +1136,18 @@ class ProcurementController extends Controller
         $procurement = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['data' => $procurement]);
+    }
+
+    /**
+     * @param $procurement
+     * @return array
+     */
+    private function getShareInformation($procurement)
+    {
+        return [
+            'link' => config('sheba.business_url') . "/tender/list/$procurement->id",
+            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'description' => substr($procurement->long_description, 0, 30)
+        ];
     }
 }
