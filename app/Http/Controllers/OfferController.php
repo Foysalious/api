@@ -15,21 +15,21 @@ use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Offer\OfferFilter;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class OfferController extends Controller
 {
     public function index(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'location' => 'sometimes|numeric',
-                'user' => 'numeric',
-                'user_type' => 'string|in:customer',
-                'remember_token' => 'required_unless:user,0|string',
-                'category' => 'numeric',
-                'lat' => 'sometimes|numeric',
-                'lng' => 'required_with:lat'
-            ]);
+        $this->validate($request, [
+            'location' => 'sometimes|numeric',
+            'user' => 'numeric',
+            'user_type' => 'string|in:customer',
+            'remember_token' => 'string',
+            'category' => 'numeric',
+            'lat' => 'sometimes|numeric',
+            'lng' => 'required_with:lat'
+        ]);
 
             if ($request->has('user') && $request->user == 0) return api_response($request, null, 404);
             $user = $category = $location = null;
@@ -53,18 +53,8 @@ class OfferController extends Controller
             if ($location) $offer_filter->setLocation($location);
             $offers = $this->getOffersWithFormation($offer_filter->filter()->sortByDesc('amount'));
 
-            if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
-            else return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        if (count($offers) > 0) return api_response($request, $offers, 200, ['offers' => $offers]);
+        else return api_response($request, null, 404);
     }
 
     /**
@@ -123,7 +113,7 @@ class OfferController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

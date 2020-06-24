@@ -133,7 +133,6 @@ class PartnerListRequest
         return $service_ids->unique()->toArray();
     }
 
-
     private function setPortalName()
     {
         $this->portalName = $this->request->header('portal-name');
@@ -230,15 +229,18 @@ class PartnerListRequest
 
     public function getLocationId()
     {
-        if($this->location) return $this->location;
+        if ($this->location) return $this->location;
 
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->first();
-        if(!$hyper_local) throw new HyperLocationNotFoundException("lat : $this->lat, lng: $this->lng");
+        if (!$hyper_local)
+            throw new HyperLocationNotFoundException('Your are out of service area.');
+
         return $hyper_local->location_id;
     }
 
     /**
      * @return Location
+     * @throws HyperLocationNotFoundException
      */
     public function getLocation()
     {

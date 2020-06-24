@@ -95,6 +95,11 @@ class ResourceController extends Controller
                 'title' => 'sPro - রিসোর্সদের জন্য নতুন অ্যাপ',
                 'link' => 'https://youtu.be/e2-pE8ioU4M',
                 'thumbnail' => 'https://img.youtube.com/vi/e2-pE8ioU4M/0.jpg'
+            ],
+            [
+                'title' => 'sPro- চলমান অর্ডারে সার্ভিস ম্যাটেরিয়াল ও পরিমাণ পরিবর্তনের পদ্ধতি',
+                'link' => 'https://youtu.be/HbKBjkPhZqI',
+                'thumbnail' => 'https://img.youtube.com/vi/HbKBjkPhZqI/0.jpg'
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);
