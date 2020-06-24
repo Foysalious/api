@@ -12,7 +12,8 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\HasWallet;
+use Sheba\Payment\PayableUser;
+use Sheba\Wallet\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -21,7 +22,7 @@ use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\Referral\HasReferrals;
 use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
@@ -37,7 +38,7 @@ use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 
-class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals
+class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 

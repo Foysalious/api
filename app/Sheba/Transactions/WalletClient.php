@@ -1,20 +1,20 @@
 <?php namespace Sheba\Transactions;
 
-use GuzzleHttp\Client;
+use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use stdClass;
 use Throwable;
 
 class WalletClient
 {
-    /** @var Client $client */
-    private $client;
+    /** @var HttpClient $httpClient */
+    private $httpClient;
     private $baseWalletUrl;
 
-    public function __construct()
+    public function __construct(HttpClient $http_client)
     {
-        $this->client = new Client();
-        $this->baseWalletUrl = config('wallet.url') . '/api/';
+        $this->httpClient = $http_client;
+        $this->baseWalletUrl = config('sheba.wallet_url') . '/api/';
     }
 
     /**
@@ -27,7 +27,7 @@ class WalletClient
         $uri = $this->baseWalletUrl . 'transaction/register';
         try {
             $params = ['form_params' => $data];
-            $response = $this->client->request('POST', $uri, $params)->getBody()->getContents();
+            $response = $this->httpClient->request('POST', $uri, $params)->getBody()->getContents();
             return json_decode($response);
         } catch (Throwable $exception) {
             $exception = (string) $exception->getResponse()->getBody();

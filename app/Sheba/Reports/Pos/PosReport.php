@@ -133,6 +133,7 @@ abstract class PosReport
      * @param string $name
      * @return void
      * @throws NotAssociativeArray
+     * @throws \Exception
      */
     public function downloadExcel($name = 'Sales Report')
     {
