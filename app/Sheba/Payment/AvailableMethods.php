@@ -135,7 +135,6 @@ class AvailableMethods
     {
         return [
             PaymentStrategy::CBL,
-            PaymentStrategy::ONLINE,
             PaymentStrategy::BKASH,
             PaymentStrategy::SSL_DONATION
         ];
