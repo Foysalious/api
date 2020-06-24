@@ -4,7 +4,8 @@ use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Business\Bid\Updater;
 use App\Transformers\Business\BidDetailsTransformer;
-use App\Transformers\Business\BidHistoryTransformer;
+use App\Transformers\Business\BidHiringHistoryTransformer;
+use App\Transformers\Business\BidListTransformer;
 use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -20,6 +21,7 @@ use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Throwable;
 
 class BidController extends Controller
@@ -28,10 +30,13 @@ class BidController extends Controller
 
     /** @var BidRepositoryInterface */
     private $repo;
+    /** @var ProcurementRepositoryInterface $procurementRepository */
+    private $procurementRepository;
 
-    public function __construct(BidRepositoryInterface $bid_repository)
+    public function __construct(BidRepositoryInterface $bid_repository, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->repo = $bid_repository;
+        $this->procurementRepository = $procurement_repository;
     }
 
     public function index($business, $procurement, Request $request, AccessControl $access_control)
@@ -129,19 +134,26 @@ class BidController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function getBidHistory($business, $procurement, Request $request, AccessControl $access_control)
     {
         $access_control->setBusinessMember($request->business_member);
         if (!($access_control->hasAccess('procurement.r') || $access_control->hasAccess('procurement.rw'))) return api_response($request, null, 403);
 
-        $procurement = Procurement::findOrFail((int)$procurement);
+        $procurement = $this->procurementRepository->find((int)$procurement);
 
         list($offset, $limit) = calculatePagination($request);
         $bids = $procurement->bids()->orderBy('created_at', 'desc');
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($bids->get(), new BidHistoryTransformer($procurement));
+        $resource = new Collection($bids->get(), new BidListTransformer($procurement));
         $bids = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort_by_name')) $bids = $this->sortByName($bids, $request->sort_by_name)->values();
@@ -150,6 +162,26 @@ class BidController extends Controller
         if ($request->has('limit')) $bids = collect($bids)->splice($offset, $limit);
 
         if (count($bids) > 0) return api_response($request, $bids, 200, ['bids' => $bids]); else return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getHiringHistory($business, $procurement, Request $request)
+    {
+        $procurement = $this->procurementRepository->find((int)$procurement);
+        $bids = $procurement->bids()->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price', 'bidder_price', 'created_at')
+            ->hiringHistory()->orderBy('created_at', 'desc');
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($bids->get(), new BidHiringHistoryTransformer());
+        $hiring_histories = $manager->createData($resource)->toArray()['data'];
+
+        if (count($bids) > 0) return api_response($request, $bids, 200, ['hiring_histories' => $hiring_histories]); else return api_response($request, null, 404);
     }
 
     /**
@@ -231,12 +263,12 @@ class BidController extends Controller
         /** @var Bid $bid */
         $bid = $this->repo->find((int)$bid);
         $bid->load(['items' => function ($q) {
-                $q->with([
-                    'fields' => function ($q) {
-                        $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
-                    }
-                ]);
-            }]);
+            $q->with([
+                'fields' => function ($q) {
+                    $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
+                }
+            ]);
+        }]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());

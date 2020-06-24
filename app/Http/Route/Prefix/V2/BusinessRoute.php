@@ -162,6 +162,7 @@ class BusinessRoute
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
+                        $api->get('/hiring-history', 'B2b\BidController@getHiringHistory');
                         $api->get('bills/clear', 'B2b\ProcurementController@clearBills');
                         $api->get('/timeline', 'B2b\ProcurementController@orderTimeline');
                         $api->group(['prefix' => 'bids'], function ($api) {
