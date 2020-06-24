@@ -52,6 +52,7 @@ class Route
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
             $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
+            $api->get('districts-with-thanas', 'LocationController@getDistrictsWithThanas');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
