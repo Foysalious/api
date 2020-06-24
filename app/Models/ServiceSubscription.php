@@ -24,6 +24,13 @@ class ServiceSubscription extends Model
         }]);
     }
 
+    public function scopeValidDiscountsOrderByAmount()
+    {
+        return $this->with(['discounts' => function ($query) {
+            return $query->valid()->orderBy('discount_amount', 'ASC');
+        }]);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('is_active', 1);
