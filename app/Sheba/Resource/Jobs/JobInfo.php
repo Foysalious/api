@@ -67,6 +67,7 @@ class JobInfo
     {
         $formatted_job = collect();
         $formatted_job->put('id', $job->id);
+        $formatted_job->put('category_name', $job->category->name);
         $formatted_job->put('order_code', $job->partnerOrder->order->code());
         $formatted_job->put('customer_id', $job->partnerOrder->order->customer->id);
         $formatted_job->put('customer_name', $job->partnerOrder->order->customer->profile->name);

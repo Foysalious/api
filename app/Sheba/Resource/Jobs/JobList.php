@@ -198,7 +198,6 @@ class JobList
      */
     private function formatJobs(Collection $jobs)
     {
-
         $formatted_jobs = collect();
         foreach ($jobs as $job) {
             $job->partnerOrder->calculate(1);
@@ -207,6 +206,7 @@ class JobList
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
             $formatted_job->put('total_price', (double)$job->partnerOrder->totalPrice);
             $formatted_job->put('category_id', $job->category_id);
+            $formatted_job->put('category_name', $job->category->name);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->location->name : null);
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
