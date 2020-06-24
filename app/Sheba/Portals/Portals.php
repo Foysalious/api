@@ -16,4 +16,27 @@ class Portals
     const BONDHU_APP = 'bondhu-app';
     const BONDHU_WEB = 'bondhu-portal';
     const CLI = 'automatic';
+
+    /**
+     * @param $portal
+     * @return string|null
+     */
+    public static function getUserTypeFromPortal($portal)
+    {
+        $types = [
+            self::ADMIN => "user",
+            self::PARTNER_WEB => "partner",
+            self::PARTNER_APP => "partner",
+            self::CUSTOMER_APP => "customer",
+            self::CUSTOMER_WEB => "customer",
+            self::RESOURCE_WEB => "resource",
+            self::RESOURCE_APP => "resource",
+            self::BONDHU_APP => "affiliate",
+            self::BONDHU_WEB => "affiliate",
+        ];
+
+        if (!array_key_exists($portal, $types)) return null;
+
+        return $types[$portal];
+    }
 }

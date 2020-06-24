@@ -84,12 +84,12 @@ if (!function_exists('scramble_string')) {
     }
 }
 
-if (!function_exists('normalizeCases')) {
+if (!function_exists('normalizeStringCases')) {
     /**
      * @param $value
      * @return string
      */
-    function normalizeCases($value)
+    function normalizeStringCases($value)
     {
         $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
         return ucwords(str_replace(['_','-'], ' ', $value));
