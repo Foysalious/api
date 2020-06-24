@@ -3,7 +3,7 @@
 use App\Models\Procurement;
 use League\Fractal\TransformerAbstract;
 
-class BidHistoryTransformer extends TransformerAbstract
+class BidListTransformer extends TransformerAbstract
 {
     const VERIFIED = 'Verified';
     const INVITED = 'Invited';

@@ -3,15 +3,12 @@
 use App\Models\Bid;
 use Sheba\Helpers\ConstGetter;
 
-class StatusCalculator
+class HiringHistoryStatusCalculator
 {
     use ConstGetter;
 
-    const IS_PENDING = "sent";
-    const PENDING = "Pending";
-
     const IS_AWARDED = "awarded";
-    const AWARDED = "Awarded";
+    const AWARDED = "Pending";
 
     const IS_ACCEPTED = "accepted";
     const ACCEPTED = "Accepted";
@@ -22,7 +19,6 @@ class StatusCalculator
     public static function resolveStatus(Bid $bid)
     {
         if ($bid->status == self::IS_AWARDED) return self::AWARDED;
-        if ($bid->status == self::IS_PENDING) return self::PENDING;
         if ($bid->status == self::IS_ACCEPTED) return self::ACCEPTED;
         if ($bid->status == self::IS_REJECTED) return self::REJECTED;
     }
