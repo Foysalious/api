@@ -4,7 +4,7 @@
     <!-- start: Meta -->
     <title>Workorder</title>
     <meta name="description" content="">
-    <meta name="author" content="Fazal Mahmud Niloy">
+    <meta name="author" content="Md. Saiful Islam Miajee">
     <meta name="keyword" content="">
     <style>
         @media print {
@@ -17,10 +17,6 @@
                 page-break-inside: avoid;
                 page-break-after: auto
             }
-
-            /*td    { page-break-inside:avoid; !*page-break-after:auto*! }*/
-            /*thead { display: table-header-group}
-            tfoot { display: table-footer-group}*/
         }
 
         /*invoice page*/
@@ -243,22 +239,26 @@
             font-family: Helvetica;
             font-size: 10px;
         }
+
         .companyInfoName {
             font-weight: bold;
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 12px;
         }
+
         .companyInfoAddress {
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 10px;
         }
+
         .companyInfoWorkOrderTitle {
             opacity: 0.6;
             font-family: Lato;
             font-size: 16px;
         }
+
         .companyInfoWorkOrderCode {
             opacity: 0.8;
             font-family: Lato;
@@ -291,7 +291,7 @@
     </tr>
     <tr>
         <td>
-            <hr>
+            <hr style="margin-top: 5px">
         </td>
     </tr>
 </table>
@@ -393,12 +393,18 @@
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Sub total</td>
-        <td class="padding-left"> {{ $work_order['sub_total'] }}</td>
+        <td class="padding-left">
+            <img style="width: 10px; height: 10px;" src="{{ $work_order['tk_sign'] }}" alt="tk_sign">
+            {{ $work_order['sub_total'] }}
+        </td>
     </tr>
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Due</td>
-        <td class="padding-left"> {{ $work_order['due'] }}</td>
+        <td class="padding-left">
+            <img style="width: 10px; height: 10px;" src="{{ $work_order['tk_sign'] }}" alt="tk_sign">
+            {{ $work_order['due'] }}
+        </td>
     </tr>
     <tr>
         <td colspan="6">
@@ -408,7 +414,10 @@
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Grand Total</td>
-        <td class="padding-left">{{ $work_order['grand_total'] }}</td>
+        <td class="padding-left">
+            <img style="width: 10px; height: 10px;" src="{{ $work_order['tk_sign'] }}" alt="tk_sign">
+            {{ $work_order['grand_total'] }}
+        </td>
     </tr>
 </table>
 
@@ -421,8 +430,6 @@
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
-
-
 
 </script>
 </body>

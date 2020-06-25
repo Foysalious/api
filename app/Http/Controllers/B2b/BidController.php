@@ -77,8 +77,7 @@ class BidController extends Controller
             }
         }
         foreach ($bids as $bid) {
-            $model = $bid->bidder_type;
-            $bidder = $model::findOrFail((int)$bid->bidder_id);
+            $bidder = $bid->bidder;
             $reviews = $bidder->reviews;
 
             $bid_items = $bid->items;
@@ -97,20 +96,37 @@ class BidController extends Controller
                         $answer = $field->result;
                     }
                     array_push($item_fields, [
-                        'field_id' => $field->id, 'question' => $field->title, 'answer' => $answer, 'input_type' => $field->input_type, 'key' => $final_fields->where('id', $field->id)->first()->key
+                        'field_id' => $field->id,
+                        'question' => $field->title,
+                        'answer' => $answer,
+                        'input_type' => $field->input_type,
+                        'key' => $final_fields->where('id', $field->id)->first()->key
                     ]);
                 }
                 array_push($item_type, [
-                    'item_id' => $item->id, 'item_type' => $item->type, 'fields' => $item_fields, 'total_price' => $bid->price,
+                    'item_id' => $item->id,
+                    'item_type' => $item->type,
+                    'fields' => $item_fields,
+                    'total_price' => $bid->price,
                 ]);
             }
-
             array_push($bid_lists, [
-                'id' => $bid->id, 'status' => $bid->status, 'bidder_name' => $bidder->name, 'bidder_logo' => $bidder->logo, 'is_favourite' => $bid->is_favourite, 'created_at' => $bid->created_at->format('d/m/y'), 'bidder_avg_rating' => round($reviews->avg('rating'), 2), 'item' => $item_type
+                'id' => $bid->id,
+                'status' => $bid->status,
+                'bidder_name' => $bidder->name,
+                'bidder_logo' => $bidder->logo,
+                'bidder_status' => $bidder->status == 'Verified' ? 'Verified' : 'Unverified',
+                'bidder_avg_rating' => round($reviews->avg('rating'), 2) > 0 ? round($reviews->avg('rating'), 2) : 5,
+                'is_favourite' => $bid->is_favourite,
+                'created_at' => $bid->created_at->format('d/m/y'),
+                'item' => $item_type
             ]);
         }
 
-        if (count($bid_lists) > 0) return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]); else return api_response($request, null, 404);
+        if (count($bid_lists) > 0)
+            return api_response($request, $bid_lists, 200, ['bid_lists' => $bid_lists]);
+        else
+            return api_response($request, null, 404);
     }
 
     /**
