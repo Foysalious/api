@@ -66,6 +66,7 @@ class TopUpController extends Controller
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @return JsonResponse
+     * @throws Exception
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
