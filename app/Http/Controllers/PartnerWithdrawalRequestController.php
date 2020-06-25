@@ -5,6 +5,7 @@ use App\Models\WithdrawalRequest;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
@@ -134,6 +135,7 @@ class PartnerWithdrawalRequestController extends Controller
     {
         $partner = $request->partner;
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
+        Log::info($partner->id .','. $partnerWithdrawalRequest->partner_id);
         if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
             $withdrawal_update = $partnerWithdrawalRequest->update([
                 'status' => 'cancelled',
