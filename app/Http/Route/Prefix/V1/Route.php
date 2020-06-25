@@ -52,6 +52,7 @@ class Route
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
             $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
+            $api->get('districts-with-thanas', 'LocationController@getDistrictsWithThanas');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
@@ -65,6 +66,7 @@ class Route
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
             $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
+            $api->get('lpg-service', 'ServiceController@getLpg');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
                 $api->get('/partner-offer', 'OfferController@getPartnerOffer');

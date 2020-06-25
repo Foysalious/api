@@ -396,7 +396,6 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
-
             if ((int)$request->is_business) {
                 $category = $cat->publishedForBusiness()->first();
             } elseif ((int)$request->is_b2b) {
@@ -451,6 +450,7 @@ class CategoryController extends Controller
                     }]);
                     $services = $category->services;
                 }
+
 
             if ($request->has('service_id')) {
                 $services = $services->filter(function ($service) use ($request) {
