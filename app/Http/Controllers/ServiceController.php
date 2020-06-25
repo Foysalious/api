@@ -83,7 +83,7 @@ class ServiceController extends Controller
     {
 
         $lpg_service_id = config('sheba.lpg_service_id');
-        $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
+        return $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
             $job_discount_handler);
     }
 
