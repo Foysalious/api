@@ -39,7 +39,7 @@
         .addresses {
             width: 100%;
             border: 0;
-            margin-top: 50px;
+            margin-left: 12px;
         }
 
         .addressRow {
@@ -86,9 +86,6 @@
         }
 
         /*invoice page end*/
-
-        ​
-
         @font-face {
             font-family: Lato;
         }
@@ -211,6 +208,12 @@
             width: 100%;
             border: 0;
         }
+        .addressesInfo {
+            width: 100%;
+            margin-top: 50px;
+            border: solid 1px #d2d8e6;
+            background-color: #f8f8fb;
+        }
     </style>
 </head>
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
@@ -264,46 +267,48 @@
     </tr>
 </table>
 
-<table class="addresses">
-    <tr class="addressRow">
-        <td style="margin-bottom: 16px">To Address</td>
-        <td style="margin-bottom: 16px">For Address</td>
-    </tr>
-    <tr>
-        <td>
-            <table style="border: 0">
-                <tr>
-                    <td>Name:</td>
-                    <td>{{ $work_order['to']['name'] }}</td>
-                </tr>
-                <tr>
-                    <td>Address:</td>
-                    <td>{{ $work_order['to']['address'] }}</td>
-                </tr>
-                <tr>
-                    <td>Mobile:</td>
-                    <td>{{ $work_order['to']['mobile'] }}</td>
-                </tr>
-            </table>
-        </td>
-        <td>
-            <table style="border: 0">
-                <tr>
-                    <td>Name:</td>
-                    <td>{{ $work_order['from']['name'] }}</td>
-                </tr>
-                <tr>
-                    <td>Address:</td>
-                    <td>{{ $work_order['from']['address'] }}</td>
-                </tr>
-                <tr>
-                    <td>Mobile:</td>
-                    <td>{{ $work_order['from']['mobile'] }}</td>
-                </tr>
-            </table>
-        </td>
-    </tr>
-</table>
+<div class="addressesInfo">
+    <table class="addresses">
+        <tr class="addressRow">
+            <td style="margin-bottom: 16px">To Address</td>
+            <td style="margin-bottom: 16px">For Address</td>
+        </tr>
+        <tr>
+            <td>
+                <table style="border: 0">
+                    <tr>
+                        <td>Name:</td>
+                        <td>{{ $work_order['to']['name'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Address:</td>
+                        <td>{{ $work_order['to']['address'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile:</td>
+                        <td>{{ $work_order['to']['mobile'] }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table style="border: 0">
+                    <tr>
+                        <td>Name:</td>
+                        <td>{{ $work_order['from']['name'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Address:</td>
+                        <td>{{ $work_order['from']['address'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile:</td>
+                        <td>{{ $work_order['from']['mobile'] }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
 
 <table class="itemsTable">
     <tr class="itemsSpec">
