@@ -511,6 +511,7 @@ class CategoryController extends Controller
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['unit'] = $service['unit'];
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
