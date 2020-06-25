@@ -55,8 +55,23 @@
         }
 
         .itemsSpec {
-            font-weight: bold;
             background: #f8f8fb;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .billHeader {
+            background-color: #f8f8fb;
+        }
+
+        .billHeader td {
+            border: solid 1px #d2d8e6;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .itemsSpecLabel {
@@ -79,10 +94,17 @@
         .itemsList {
             border-top: solid 0.5px #bac0cc;
             border-bottom: solid 0.5px #bac0cc;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
+
         }
 
         .total {
             font-weight: bold;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
         }
 
         /*invoice page end*/
@@ -208,19 +230,40 @@
             width: 100%;
             border: 0;
         }
+
         .addressesInfo {
             width: 100%;
             margin-top: 50px;
             border: solid 1px #d2d8e6;
             background-color: #f8f8fb;
         }
-        .billHeader {
+
+        .addressRowDetail {
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
+        }
+        .companyInfoName {
+            font-weight: bold;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+        }
+        .companyInfoAddress {
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
+        }
+        .companyInfoWorkOrderTitle {
+            opacity: 0.6;
+            font-family: Lato;
+            font-size: 16px;
+        }
+        .companyInfoWorkOrderCode {
+            opacity: 0.8;
+            font-family: Lato;
             font-size: 16px;
             font-weight: bold;
-            background-color: #f8f8fb;
-        }
-        .billHeader td {
-            border: solid 1px #d2d8e6;;
         }
     </style>
 </head>
@@ -258,17 +301,17 @@
         <td>
             <table style="border: 0">
                 <tr>
-                    <td><img src="{{ $work_order['to']['logo'] }}" alt="logo" class="logo"></td>
-                    <td>{{ $work_order['to']['name'] }} <br>
-                        {{ $work_order['to']['address'] }}</td>
+                    <td><img src="{{ $work_order['from']['logo'] }}" alt="logo" class="logo"></td>
+                    <td class="padding-left"><span class="companyInfoName">{{ $work_order['from']['name'] }}</span> <br>
+                        <span class="companyInfoAddress">{{ $work_order['from']['address'] }}</span></td>
                 </tr>
             </table>
         </td>
         <td>
-            <table style="border: 0">
+            <table style="border: 0; margin-left: auto">
                 <tr>
-                    <td>Work Order no:</td>
-                    <td>{{ $work_order['code'] }}</td>
+                    <td class="companyInfoWorkOrderTitle">Work Order no:</td>
+                    <td class="companyInfoWorkOrderCode">{{ $work_order['code'] }}</td>
                 </tr>
             </table>
         </td>
@@ -279,37 +322,43 @@
     <table class="addresses">
         <tr class="addressRow">
             <td style="margin-bottom: 16px">To Address</td>
-            <td style="margin-bottom: 16px">For Address</td>
+            <td style="margin-bottom: 16px">From Address</td>
         </tr>
-        <tr>
+        <tr class="addressRowDetail">
             <td>
-                <table style="border: 0">
+                <table cellpadding="5" style="border: 0">
                     <tr>
-                        <td>Name:</td>
+                        <td>Name</td>
+                        <td>:</td>
                         <td>{{ $work_order['to']['name'] }}</td>
                     </tr>
                     <tr>
-                        <td>Address:</td>
+                        <td>Address</td>
+                        <td>:</td>
                         <td>{{ $work_order['to']['address'] }}</td>
                     </tr>
                     <tr>
-                        <td>Mobile:</td>
+                        <td>Mobile</td>
+                        <td>:</td>
                         <td>{{ $work_order['to']['mobile'] }}</td>
                     </tr>
                 </table>
             </td>
             <td>
-                <table style="border: 0">
+                <table cellpadding="5" style="border: 0">
                     <tr>
-                        <td>Name:</td>
+                        <td>Name</td>
+                        <td>:</td>
                         <td>{{ $work_order['from']['name'] }}</td>
                     </tr>
                     <tr>
-                        <td>Address:</td>
+                        <td>Address</td>
+                        <td>:</td>
                         <td>{{ $work_order['from']['address'] }}</td>
                     </tr>
                     <tr>
-                        <td>Mobile:</td>
+                        <td>Mobile</td>
+                        <td>:</td>
                         <td>{{ $work_order['from']['mobile'] }}</td>
                     </tr>
                 </table>
@@ -318,17 +367,17 @@
     </table>
 </div>
 
-<table class="itemsTable">
+<table class="itemsTable" cellpadding="10">
     <tr class="billHeader">
         <td class="billHeaderTD padding-left" colspan="6">BILL</td>
     </tr>
     <tr class="itemsSpec">
         <th class="itemsSpecLabel border-left padding-left">SL NO</th>
-        <th class="itemsSpecLabel border-left padding-left">Item Name</th>
+        <th class="itemsSpecLabel border-left padding-left">Item Name/Description</th>
         <th class="itemsSpecLabel border-left padding-left">Specification</th>
         <th class="itemsSpecLabel border-left padding-left">Unit</th>
         <th class="itemsSpecLabel border-left padding-left">Unit Price</th>
-        <th class="itemsSpecLabel border-left padding-left">Total Price</th>
+        <th class="itemsSpecLabel border-left padding-left">Price</th>
     </tr>
     @foreach($work_order['items'] as $key => $item)
         <tr class="itemsList">
@@ -336,20 +385,20 @@
             <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
             <td class="itemsList border-left padding-left">{{ $item['short_description'] }}</td>
             <td class="itemsList border-left padding-left">{{ $item['unit'] }}</td>
-            <td class="itemsList border-left padding-left">BDT {{ $item['unit_price'] }}</td>
-            <td class="itemsList border-left padding-left border-right">BDT {{ $item['total_price'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['unit_price'] }}</td>
+            <td class="itemsList border-left padding-left border-right">{{ $item['total_price'] }}</td>
         </tr>
     @endforeach
 
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Sub total</td>
-        <td class="padding-left">BDT {{ $work_order['sub_total'] }}</td>
+        <td class="padding-left"> {{ $work_order['sub_total'] }}</td>
     </tr>
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Due</td>
-        <td class="padding-left">BDT {{ $work_order['due'] }}</td>
+        <td class="padding-left"> {{ $work_order['due'] }}</td>
     </tr>
     <tr>
         <td colspan="6">
@@ -359,7 +408,7 @@
     <tr class="total">
         <td colspan="4"></td>
         <td class="padding-left">Grand Total</td>
-        <td class="padding-left">BDT {{ $work_order['grand_total'] }}</td>
+        <td class="padding-left">{{ $work_order['grand_total'] }}</td>
     </tr>
 </table>
 
@@ -372,6 +421,8 @@
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
+
+
 
 </script>
 </body>
