@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\DigitalKYC\Partner\ProfileUpdateRepository;
@@ -10,8 +11,10 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Affiliate\VerificationStatus;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\ModificationFields;
+use Sheba\Repositories\AffiliateRepository;
 use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Repositories\ResourceRepository;
 
@@ -94,8 +97,10 @@ class ProfileController extends Controller
             if($request->type != 'info')
                 $this->increase_verification_request_count($profile);
             if ($request->type != 'image') {
-                $this->setToPendingStatus($resource);
                 $this->shootStatusChangeLog($resource);
+                $this->setToPendingStatus($resource);
+                if(isset($profile->affiliate))
+                    $this->updateVerificationStatus($profile->affiliate);
             }
 
             return api_response($request, null, 200, ['message' => 'Profile data Updated']);
@@ -132,6 +137,29 @@ class ProfileController extends Controller
             'log' => 'status changed to pending as resource submit profile info for verification'
         ];
         Model::create($this->withCreateModificationField($data));
+    }
+
+    /**
+     * @param Affiliate $affiliate
+     * @return bool|void
+     */
+    private function updateVerificationStatus(Affiliate $affiliate)
+    {
+        $previous_status = $affiliate->verification_status;
+        $pending_status = VerificationStatus::PENDING;
+
+        if ($previous_status != $pending_status) {
+            $affiliate->update($this->withUpdateModificationField(['verification_status' => $pending_status]));
+
+            $log_data = [
+                'from' => $previous_status,
+                'to' => $pending_status,
+                'log' => null,
+                'reason' => 're-submitted NID',
+            ];
+            return (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
+        }
+
     }
 
 
