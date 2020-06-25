@@ -214,6 +214,14 @@
             border: solid 1px #d2d8e6;
             background-color: #f8f8fb;
         }
+        .billHeader {
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #f8f8fb;
+        }
+        .billHeader td {
+            border: solid 1px #d2d8e6;;
+        }
     </style>
 </head>
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
@@ -311,43 +319,47 @@
 </div>
 
 <table class="itemsTable">
-    <tr class="itemsSpec">
-        <td class="itemsSpecLabel border-left padding-left ">Item Name</td>
-        <td class="itemsSpecLabel">Specification</td>
-        <td class="itemsSpecLabel">Unit</td>
-        <td class="itemsSpecLabel">Unit Price</td>
-        <td class="itemsSpecLabel border-right">Total Price</td>
+    <tr class="billHeader">
+        <td class="billHeaderTD padding-left" colspan="6">BILL</td>
     </tr>
-
-    @foreach($work_order['items'] as $item)
+    <tr class="itemsSpec">
+        <th class="itemsSpecLabel border-left padding-left">SL NO</th>
+        <th class="itemsSpecLabel border-left padding-left">Item Name</th>
+        <th class="itemsSpecLabel border-left padding-left">Specification</th>
+        <th class="itemsSpecLabel border-left padding-left">Unit</th>
+        <th class="itemsSpecLabel border-left padding-left">Unit Price</th>
+        <th class="itemsSpecLabel border-left padding-left">Total Price</th>
+    </tr>
+    @foreach($work_order['items'] as $key => $item)
         <tr class="itemsList">
+            <td class="itemsList border-left padding-left">{{ ++$key }}</td>
             <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
-            <td class="itemsList">{{ $item['short_description'] }}</td>
-            <td class="itemsList">{{ $item['unit'] }}</td>
-            <td class="itemsList">BDT {{ $item['unit_price'] }}</td>
-            <td class="itemsList border-right">BDT {{ $item['total_price'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['short_description'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['unit'] }}</td>
+            <td class="itemsList border-left padding-left">BDT {{ $item['unit_price'] }}</td>
+            <td class="itemsList border-left padding-left border-right">BDT {{ $item['total_price'] }}</td>
         </tr>
     @endforeach
 
     <tr class="total">
-        <td colspan="3"></td>
-        <td>Sub total</td>
-        <td>BDT {{ $work_order['sub_total'] }}</td>
+        <td colspan="4"></td>
+        <td class="padding-left">Sub total</td>
+        <td class="padding-left">BDT {{ $work_order['sub_total'] }}</td>
     </tr>
     <tr class="total">
-        <td colspan="3"></td>
-        <td>Due</td>
-        <td>BDT {{ $work_order['due'] }}</td>
+        <td colspan="4"></td>
+        <td class="padding-left">Due</td>
+        <td class="padding-left">BDT {{ $work_order['due'] }}</td>
     </tr>
     <tr>
-        <td colspan="5">
+        <td colspan="6">
             <hr>
         </td>
     </tr>
     <tr class="total">
-        <td colspan="3"></td>
-        <td>Grand Total</td>
-        <td>BDT {{ $work_order['grand_total'] }}</td>
+        <td colspan="4"></td>
+        <td class="padding-left">Grand Total</td>
+        <td class="padding-left">BDT {{ $work_order['grand_total'] }}</td>
     </tr>
 </table>
 
