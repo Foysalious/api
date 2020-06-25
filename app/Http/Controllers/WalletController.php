@@ -74,8 +74,7 @@ class WalletController extends Controller
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
             if ($user instanceof Affiliate && $user->isNotVerified()) {
                 return api_response($request, null, 403, [
-                    'message' => 'অনুগ্রহপূর্বক আপনার বন্ধ প্রোফাইল ভেরিফাই করুন। প্রফাইল ভেরিফিকেশন এর জন্য প্লে স্টোর থেকে বন্ধু মোবাইল অ্যাপ ডাউনলোড করুন এবং এতে দেখানো পদ্ধতি অনুসরণ করুন।
- কোন সমস্যা সমাধানে কল করুন ১৬৫১৬'
+                    'message' => 'অনুগ্রহপূর্বক আপনার বন্ধু প্রোফাইল ভেরিফাই করুন। প্রফাইল ভেরিফিকেশন এর জন্য প্লে স্টোর থেকে বন্ধু মোবাইল অ্যাপ ডাউনলোড করুন এবং এতে দেখানো পদ্ধতি অনুসরণ করুন। কোন সমস্যা সমাধানে কল করুন ১৬৫১৬'
                 ]);
             }
         }
