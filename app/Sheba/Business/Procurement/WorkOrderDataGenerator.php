@@ -52,11 +52,13 @@ class WorkOrderDataGenerator
             'from' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
+                'logo' => $this->business->logo,
                 'mobile' => $this->business->getContactNumber()
             ],
             'to' => [
                 'name' => $this->bid->bidder->name,
                 'address' => $this->bid->bidder->address,
+                'logo' => $this->bid->bidder->logo,
                 'mobile' => $this->bid->bidder->getContactNumber()
             ],
             'items' => $items,

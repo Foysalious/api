@@ -821,10 +821,8 @@ class ProcurementController extends Controller
         $business = $request->business;
         $bid = Bid::findOrFail((int)$bid);
         $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
-
-        return App::make('dompdf.wrapper')
-            ->loadView('pdfs.work_order', compact('work_order'))
-            ->download('work_order.pdf');
+        #return view('pdfs.work_order', compact('work_order'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.work_order', compact('work_order'))->download('work_order.pdf');
 
     }
 
