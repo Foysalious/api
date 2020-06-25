@@ -135,7 +135,7 @@ class PartnerWithdrawalRequestController extends Controller
     {
         $partner = $request->partner;
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
-        Log::info($partner->id .','. $partnerWithdrawalRequest->partner_id);
+        Log::info($partner->id .','. $partnerWithdrawalRequest->partner_id.','.$withdrawals.$partnerWithdrawalRequest->id);
         if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
             $withdrawal_update = $partnerWithdrawalRequest->update([
                 'status' => 'cancelled',
