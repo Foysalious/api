@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <!-- start: Meta -->
@@ -32,51 +31,60 @@
             border: 0;
             width: 100%;
         }
+
         hr {
             border: solid 1px #d1d7e6;
         }
-        .invoiceInfo {
-            border: 0;
-        }
+
         .addresses {
             width: 100%;
             border: 0;
             margin-top: 50px;
         }
+
         .addressRow {
             font-weight: bold;
             height: 36px;
             vertical-align: top;
         }
+
         .itemsTable {
             width: 100%;
             margin-top: 30px;
             border: 0;
         }
+
         .itemsSpec {
             font-weight: bold;
             background: #f8f8fb;
         }
+
         .itemsSpecLabel {
             border-top: solid 0.5px #bac0cc;
             border-bottom: solid 0.5px #bac0cc;
         }
+
         .border-left {
             border-left: solid 0.5px #bac0cc;
         }
+
         .padding-left {
             padding-left: 15px;
         }
+
         .border-right {
             border-right: solid 0.5px #bac0cc;
         }
+
         .itemsList {
             border-top: solid 0.5px #bac0cc;
             border-bottom: solid 0.5px #bac0cc;
         }
+
         .total {
             font-weight: bold;
         }
+
         /*invoice page end*/
 
         ​
@@ -159,19 +167,6 @@
             background-color: #f8f8fb;
         }
 
-        .expense-table {
-
-        }
-
-        .expense-table__header {
-
-        }
-
-        .expense-table__header td {
-
-        }
-
-
         /* Footer */
         .footer {
             width: 100%;
@@ -196,6 +191,7 @@
             text-align: center;
             color: #000000;
         }
+
         .footerPrompt {
             opacity: 0.6;
             font-size: 10px;
@@ -203,46 +199,26 @@
             height: 20px;
         }
 
-
-        /*.footer-row:after {*/
-        /*    content: "";*/
-        /*    display: table;*/
-        /*    clear: both;*/
-        /*}*/
-
-        /*.footer-row-header,*/
-        /*.footer-row-info {*/
-        /*    float: left;*/
-        /*    width: 25%;*/
-        /*    padding: 10px;*/
-        /*}*/
-
-        /*.footer-row-header span {*/
-        /*    font-size: 12px;*/
-        /*    font-weight: bold;*/
-        /*    text-align: center;*/
-        /*    color: #000000;*/
-        /*}*/
-
-        /*.footer-row-info span {*/
-        /*    font-size: 10px;*/
-        /*    text-align: center;*/
-        /*    color: #000000;*/
-        /*}*/
-
-
-        ​
-
         /*new styles end*/
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: solid 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .companyInfo {
+            width: 100%;
+            border: 0;
+        }
     </style>
 </head>
-
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
 
 {{--FOOTER START--}}
 <table class="footer">
     <tr>
-        <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here. </td>
+        <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here.</td>
     </tr>
     <tr>
         <td style="font-size: 10px; opacity: 0.8; font-weight: normal; width: 70px; padding-bottom: 0px">
@@ -260,14 +236,31 @@
         <td>Workorder</td>
     </tr>
     <tr>
-        <td><hr></td>
+        <td>
+            <hr>
+        </td>
     </tr>
 </table>
 
-<table class="invoiceInfo">
+<table class="companyInfo">
     <tr>
-        <td>Work Order no: </td>
-        <td>{{ $work_order['code'] }}</td>
+        <td>
+            <table style="border: 0">
+                <tr>
+                    <td><img src="{{ $work_order['to']['logo'] }}" alt="logo" class="logo"></td>
+                    <td>{{ $work_order['to']['name'] }} <br>
+                        {{ $work_order['to']['address'] }}</td>
+                </tr>
+            </table>
+        </td>
+        <td>
+            <table style="border: 0">
+                <tr>
+                    <td>Work Order no:</td>
+                    <td>{{ $work_order['code'] }}</td>
+                </tr>
+            </table>
+        </td>
     </tr>
 </table>
 
@@ -342,7 +335,9 @@
         <td>BDT {{ $work_order['due'] }}</td>
     </tr>
     <tr>
-        <td  colspan="5"><hr></td>
+        <td colspan="5">
+            <hr>
+        </td>
     </tr>
     <tr class="total">
         <td colspan="3"></td>
@@ -360,6 +355,7 @@
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
+
 </script>
 </body>
 </html>
