@@ -112,7 +112,7 @@ class PartnerWithdrawalRequestController extends Controller
         $this->validate($request, ['status' => 'required|in:cancelled']);
         $partner                  = $request->partner;
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
-        if ($partner->id == $partnerWithdrawalRequest->partner_id && $partnerWithdrawalRequest->status == 'pending') {
+        if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
             $withdrawal_update = $partnerWithdrawalRequest->update([
                 'status'          => $request->status,
                 'updated_by'      => $request->manager_resource->id,
@@ -136,7 +136,6 @@ class PartnerWithdrawalRequestController extends Controller
         $partner = $request->partner;
         /** @var WithdrawalRequest $partnerWithdrawalRequest */
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
-        Log::info($partner->id . ',' . $partnerWithdrawalRequest->requester->id . ',' . $withdrawals . ',' . $partnerWithdrawalRequest->requester_type);
         if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
             $withdrawal_update = $partnerWithdrawalRequest->update([
                 'status'          => 'cancelled',
