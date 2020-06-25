@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
@@ -27,7 +28,7 @@ class WalletController extends Controller
     use ModificationFields;
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param PaymentManager $payment_manager
      * @return JsonResponse
      */
@@ -50,7 +51,7 @@ class WalletController extends Controller
 
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param PaymentManager $payment_manager
      * @return JsonResponse
      * @throws InitiateFailedException
@@ -61,9 +62,9 @@ class WalletController extends Controller
         $methods = implode(',', AvailableMethods::getWalletRechargePayments());
         $this->validate($request, [
             'payment_method' => 'required|in:' . $methods,
-            'amount' => 'required|numeric|min:10|max:100000',
-            'user_id' => 'required',
-            'user_type' => 'required|in:customer,affiliate,partner',
+            'amount'         => 'required|numeric|min:10|max:100000',
+            'user_id'        => 'required',
+            'user_type'      => 'required|in:customer,affiliate,partner',
             'remember_token' => 'required'
         ]);
         $class_name = "App\\Models\\" . ucwords($request->user_type);
@@ -71,6 +72,12 @@ class WalletController extends Controller
             $user = (new PartnerRepository($request->user_id))->validatePartner($request->remember_token);
         } else {
             $user = $class_name::where([['id', (int)$request->user_id], ['remember_token', $request->remember_token]])->first();
+            if ($user instanceof Affiliate && $user->isNotVerified()) {
+                return api_response($request, null, 403, [
+                    'message' => 'অনুগ্রহপূর্বক আপনার বন্ধ প্রোফাইল ভেরিফাই করুন। প্রফাইল ভেরিফিকেশন এর জন্য প্লে স্টোর থেকে বন্ধু মোবাইল অ্যাপ ডাউনলোড করুন এবং এতে দেখানো পদ্ধতি অনুসরণ করুন।
+ কোন সমস্যা সমাধানে কল করুন ১৬৫১৬'
+                ]);
+            }
         }
 
         if (!$user) return api_response($request, null, 404, ['message' => 'User Not found.']);
@@ -81,9 +88,9 @@ class WalletController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param Request                          $request
      * @param PaymentStatusChangeLogRepository $paymentRepository
-     * @param BonusCredit $bonus_credit
+     * @param BonusCredit                      $bonus_credit
      * @return JsonResponse
      */
     public function purchase(Request $request, PaymentStatusChangeLogRepository $paymentRepository, BonusCredit $bonus_credit)
@@ -97,7 +104,7 @@ class WalletController extends Controller
         elseif ($payment->isPassed())
             return api_response($request, null, 200);
 
-        $user = $payment->payable->user;
+        $user         = $payment->payable->user;
         $sheba_credit = $user->shebaCredit();
         $paymentRepository->setPayment($payment);
         if ($sheba_credit == 0) {
@@ -111,19 +118,19 @@ class WalletController extends Controller
             $transaction = '';
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                 $spent_model = $payment->payable->getPayableType();
-                $remaining = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
+                $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
 
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
-                        $remaining = $user->wallet;
-                        $payment_detail = $payment->paymentDetails->where('method', 'wallet')->first();
+                        $remaining              = $user->wallet;
+                        $payment_detail         = $payment->paymentDetails->where('method', 'wallet')->first();
                         $payment_detail->amount = $remaining;
                         $payment_detail->update();
                     }
                     $this->setModifier($user);
                     $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType('debit')->setAmount($remaining);
                     if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
-                        $log = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
+                        $log    = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
                         $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;
                         $transactionHandler->setSource($source);
                     } else {
@@ -141,11 +148,11 @@ class WalletController extends Controller
             });
 
             $paymentRepository->create([
-                'to' => 'validated',
-                'from' => $payment->status,
+                'to'                  => 'validated',
+                'from'                => $payment->status,
                 'transaction_details' => $payment->transaction_details
             ]);
-            $payment->status = 'validated';
+            $payment->status              = 'validated';
             $payment->transaction_details = json_encode(['payment_id' => $payment->id, 'transaction_id' => $transaction ? $transaction->id : null]);
             $payment->update();
         } catch (QueryException $e) {
