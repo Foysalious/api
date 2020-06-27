@@ -1,5 +1,7 @@
 <?php namespace App\Transformers\Business;
 
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
 use App\Transformers\AttachmentTransformer;
 use Sheba\Business\Procurement\StatusCalculator;
@@ -22,6 +24,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
             'id' => $procurement->id,
             'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'status' => StatusCalculator::resolveStatus($procurement),
+            'type' => $procurement->type,
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/Y'),
@@ -39,7 +42,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
 
     /**
      * @param $procurement
-     * @return \League\Fractal\Resource\Collection|\League\Fractal\Resource\Item
+     * @return Collection|Item
      */
     public function includeAttachments($procurement)
     {
