@@ -226,7 +226,7 @@ class LoanV2Controller extends Controller
     public function updatePersonalInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, PersonalInfo::getValidators($request->type));
+            $this->validate($request, PersonalInfo::getValidators($request->loan_type));
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request);

@@ -222,6 +222,7 @@ class PartnerLoanRequest implements Arrayable
             'status' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'created_by' => $this->partnerBankLoan->created_by,
+            'type' => ucfirst($this->partnerBankLoan->type) . " Loan",
             'updated_by' => $this->partnerBankLoan->updated_by,
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
