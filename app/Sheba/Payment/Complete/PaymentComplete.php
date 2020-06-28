@@ -1,7 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Models\Payment;
-use App\Repositories\PaymentRepository;
+use App\Repositories\PaymentStatusChangeLogRepository;
 use Sheba\ModificationFields;
 use Sheba\Payment\Statuses;
 
@@ -11,12 +11,12 @@ abstract class PaymentComplete
     /** @var Payment $partner_order_payment */
     protected $payment;
 
-    /** @var PaymentRepository */
+    /** @var PaymentStatusChangeLogRepository */
     protected $paymentRepository;
 
     public function __construct()
     {
-        $this->paymentRepository = app(PaymentRepository::class);
+        $this->paymentRepository = app(PaymentStatusChangeLogRepository::class);
     }
 
     public function setPayment(Payment $payment)
@@ -32,7 +32,7 @@ abstract class PaymentComplete
 
     protected function changePaymentStatus($to_status)
     {
-        $this->paymentRepository->changeStatus(['to' => $to_status, 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
+        $this->paymentRepository->create(['to' => $to_status, 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
         $this->payment->status = $to_status;
         $this->payment->update();
     }

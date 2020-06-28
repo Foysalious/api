@@ -41,13 +41,14 @@ class ServiceRequest
             /** @var ServiceRequestObject $serviceRequestObject */
             $serviceRequestObject = app(ServiceRequestObject::class);
             $serviceRequestObject->setServiceId($service['id'])->setQuantity($service['quantity']);
-            if (isset($service['pick_up_location_geo'])) {
+            if (isset($service['pick_up_location_geo']) && isset($service['pick_up_location_geo']['lat']) && isset($service['pick_up_location_geo']['lng'])) {
                 $geo = new Geo();
                 $serviceRequestObject->setPickUpGeo($geo->setLat($service['pick_up_location_geo']['lat'])->setLng($service['pick_up_location_geo']['lng']));
             }
-            if (isset($service['destination_location_geo'])) {
+            if (isset($service['destination_location_geo']) && isset($service['destination_location_geo']['lat']) && isset($service['destination_location_geo']['lng'])) {
                 $geo = new Geo();
-                $serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])->setLng($service['destination_location_geo']['lng']));
+                $serviceRequestObject->setDestinationGeo($geo->setLat($service['destination_location_geo']['lat'])
+                    ->setLng($service['destination_location_geo']['lng']));
             }
             if (isset($service['pick_up_address'])) $serviceRequestObject->setPickUpAddress($service['pick_up_address']);
             if (isset($service['destination_address'])) $serviceRequestObject->setDestinationAddress($service['destination_address']);

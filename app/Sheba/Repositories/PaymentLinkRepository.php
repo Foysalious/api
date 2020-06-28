@@ -70,12 +70,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function payables($payment_link_details)
     {
-        return Payable::whereHas('payment', function ($query) {
+        return Payable::whereHas('payments', function ($query) {
             $query->where('status', 'completed');
         })->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
         ])->with([
-            'payment' => function ($q) {
+            'payments' => function ($q) {
                 $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
             }
         ])->select('id', 'type', 'type_id', 'amount');

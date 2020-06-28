@@ -36,6 +36,7 @@ class CategoryGroupDataStore implements DataStoreObject
         if (!$category_group) return null;
         return [
             'category' => [
+                'id' => $category_group->id,
                 'name' => $category_group->name,
                 'secondaries' => $category_group->categories->map(function ($category) {
                     $category['slug'] = $category->getSlug();
