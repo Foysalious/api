@@ -65,6 +65,7 @@ class ServiceQuestionSet
             $service['terms_and_conditions'] = json_decode($service->terms_and_conditions);
             array_forget($service, 'variables');
             array_forget($service, 'options_content');
+            array_forget($service, 'structured_contents');
         }
         return $services;
     }
