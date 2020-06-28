@@ -44,7 +44,7 @@ $formatted_type = ucwords($procurement_info['type'])
         .addresses {
             width: 100%;
             border: 0;
-            margin-left: 12px;
+            margin: 10px 0 0 12px;
         }
 
         .addressRow {
@@ -257,7 +257,7 @@ $formatted_type = ucwords($procurement_info['type'])
 
         .addressesInfo {
             width: 100%;
-            margin-top: 50px;
+            margin-top: 60px;
             border: solid 1px #d2d8e6;
             background-color: #f8f8fb;
         }
@@ -305,7 +305,7 @@ $formatted_type = ucwords($procurement_info['type'])
     </tr>
     <tr>
         <td>
-            <hr>
+            <hr style="margin-top: 5px">
         </td>
     </tr>
 </table>
