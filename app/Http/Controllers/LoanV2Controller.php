@@ -18,6 +18,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
+use Sheba\Loan\DS\GranterDetails;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
@@ -312,7 +313,10 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
+            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"])
+                $info     = $loan->setPartner($partner)->setResource($resource)->granterDetails();
+            else
+                $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
                 'completion' => $info->completion()
@@ -326,10 +330,16 @@ class LoanV2Controller extends Controller
     public function updateNomineeGranterInformation($partner, Request $request, Loan $loan)
     {
         try {
-            $this->validate($request, NomineeGranterInfo::getValidator());
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
+            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"]) {
+                $this->validate($request, GranterDetails::getValidator());
+                $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
+            }
+            else{
+                $this->validate($request, NomineeGranterInfo::getValidator());
+                $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
+            }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
