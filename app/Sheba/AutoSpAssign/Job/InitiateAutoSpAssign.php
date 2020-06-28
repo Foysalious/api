@@ -30,10 +30,9 @@ class InitiateAutoSpAssign extends Job
 
     public function handle()
     {
-        if ($this->attempts() > 1) return;
+        if ($this->attempts() < 3) return;
         /** @var Initiator $initiator */
         $initiator = app(Initiator::class);
         $initiator->setPartnerIds($this->partnerId)->setCustomer($this->customer)->setPartnerOrder($this->partnerOrder)->initiate();
-        dd($this);
     }
 }

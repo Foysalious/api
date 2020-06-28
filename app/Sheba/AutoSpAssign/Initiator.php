@@ -4,6 +4,7 @@
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use Carbon\Carbon;
 use Sheba\AutoSpAssign\PartnerOrderRequest\Store;
 use Sheba\AutoSpAssign\Sorting\PartnerSort;
 use Sheba\AutoSpAssign\Sorting\Strategy\Basic;
@@ -61,6 +62,7 @@ class Initiator
 
     public function initiate()
     {
+        if (!$this->canInitiate()) return;
         $finder = new Finder();
         $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId($this->partnerOrder->jobs->first()->category_id)->find();
         $sorter = new PartnerSort();
@@ -84,5 +86,11 @@ class Initiator
         return Order::where('customer_id', $this->partnerOrder->order->customer_id)->select('id')->count();
     }
 
+    private function canInitiate()
+    {
+        $start = Carbon::parse('2:00 AM');
+        $end = Carbon::parse('6:00 AM');
+        return Carbon::now()->gte($start) && Carbon::now()->lte($end);
+    }
 
 }

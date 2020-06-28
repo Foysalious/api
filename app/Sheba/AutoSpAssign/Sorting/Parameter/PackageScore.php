@@ -23,6 +23,6 @@ class PackageScore extends Parameter
         if ($package_id == 9) return 60;
         if ($package_id == 6) return 50;
         if ($package_id == 7) return 40;
-        return 0;
+        return 30;
     }
 }
