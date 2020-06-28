@@ -10,6 +10,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Location\LocationSetter;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\ServiceSubscription\ServiceSubscriptionInfo;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Sheba\Services\ServiceSubscriptionDiscount as SubscriptionDiscount;
 use Throwable;
@@ -374,5 +375,15 @@ class SubscriptionController extends Controller
         }
 
         return $result;
+    }
+
+    public function details($serviceSubscription, Request $request, ServiceSubscriptionInfo $serviceSubscriptionInfo)
+    {
+        /** @var ServiceSubscription $serviceSubscription */
+        $serviceSubscription = ServiceSubscription::validDiscountsOrderByAmount()->find((int)$serviceSubscription);
+        $location_service = LocationService::where('location_id', $this->location)->where('service_id', $serviceSubscription->service_id)->first();
+        if (!$location_service) return api_response($request, null, 404);
+        $serviceSubscription = $serviceSubscriptionInfo->setServiceSubscription($serviceSubscription)->setLocationService($location_service)->getServiceSubscriptionInfo();
+        return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
     }
 }
