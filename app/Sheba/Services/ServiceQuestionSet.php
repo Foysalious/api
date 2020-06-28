@@ -60,6 +60,7 @@ class ServiceQuestionSet
             }
             $service['questions'] = $questions;
             $service['faqs'] = json_decode($service->faqs);
+            $service['overview'] = $service->contents ? $service->contents : null;
             $service['features'] = json_decode($service->features);
             $service['terms_and_conditions'] = json_decode($service->terms_and_conditions);
             array_forget($service, 'variables');
