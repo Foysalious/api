@@ -1,7 +1,6 @@
 <?php namespace Sheba\Logistics\DTO;
 
 use Carbon\Carbon;
-use Exception;
 use Sheba\Helpers\BasicGetter;
 use Sheba\Logistics\Literals\LogisticOrderKeys;
 use Sheba\Logistics\Literals\Statuses;
@@ -30,12 +29,26 @@ class Order
     private $paidAmount;
     private $isInstant;
     private $collectableAmount;
+    private $vendorCollectableAmount;
     private $discount;
     private $isDiscountInPercentage;
     private $rider;
     private $status;
 
     private $touched = [];
+
+
+    public function getVendorCollectableAmount()
+    {
+        return (double)$this->vendorCollectableAmount;
+    }
+
+
+    public function setVendorCollectableAmount($vendorCollectableAmount)
+    {
+        $this->vendorCollectableAmount = $vendorCollectableAmount;
+        return $this;
+    }
 
     /**
      * @param int $id
@@ -299,7 +312,7 @@ class Order
 
     /**
      * @return string
-     * @throws Exception
+     * @throws \Exception
      */
     public function getReadableStatus()
     {
@@ -324,22 +337,22 @@ class Order
     public function getPickUpArray()
     {
         return [
-            LogisticOrderKeys::PICKUP_NAME => $this->pickUp->name,
-            LogisticOrderKeys::PICKUP_IMAGE => $this->pickUp->image,
-            LogisticOrderKeys::PICKUP_MOBILE => $this->pickUp->mobile,
-            LogisticOrderKeys::PICKUP_ADDRESS => $this->pickUp->address,
-            LogisticOrderKeys::PICKUP_ADDRESS_GEO => $this->pickUp->coordinate->toJson()
+            LogisticOrderKeys::PICKUP_NAME           => $this->pickUp->name,
+            LogisticOrderKeys::PICKUP_IMAGE          => $this->pickUp->image,
+            LogisticOrderKeys::PICKUP_MOBILE         => $this->pickUp->mobile,
+            LogisticOrderKeys::PICKUP_ADDRESS        => $this->pickUp->address,
+            LogisticOrderKeys::PICKUP_ADDRESS_GEO    => $this->pickUp->coordinate->toJson()
         ];
     }
 
     public function getDropOffArray()
     {
         return [
-            LogisticOrderKeys::DELIVERY_NAME => $this->dropOff->name,
-            LogisticOrderKeys::DELIVERY_IMAGE => $this->dropOff->image,
-            LogisticOrderKeys::DELIVERY_MOBILE => $this->dropOff->mobile,
-            LogisticOrderKeys::DELIVERY_ADDRESS => $this->dropOff->address,
-            LogisticOrderKeys::DELIVERY_ADDRESS_GEO => $this->dropOff->coordinate->toJson(),
+            LogisticOrderKeys::DELIVERY_NAME         => $this->dropOff->name,
+            LogisticOrderKeys::DELIVERY_IMAGE        => $this->dropOff->image,
+            LogisticOrderKeys::DELIVERY_MOBILE       => $this->dropOff->mobile,
+            LogisticOrderKeys::DELIVERY_ADDRESS      => $this->dropOff->address,
+            LogisticOrderKeys::DELIVERY_ADDRESS_GEO  => $this->dropOff->coordinate->toJson(),
         ];
     }
 
@@ -357,21 +370,21 @@ class Order
     public function toArray()
     {
         return [
-                LogisticOrderKeys::CUSTOMER_PROFILE_ID => $this->customerProfileId,
+                LogisticOrderKeys::CUSTOMER_PROFILE_ID   => $this->customerProfileId,
             ] + $this->getDateTimeArray() + $this->getPickUpArray() + $this->getDropOffArray() + [
-                LogisticOrderKeys::PARCEL_TYPE => $this->parcelType,
-                LogisticOrderKeys::SUCCESS_URL => $this->successUrl,
-                LogisticOrderKeys::PICKED_URL => $this->pickedUrl,
-                LogisticOrderKeys::FAILURE_URL => $this->failureUrl,
-                LogisticOrderKeys::COLLECTION_URL => $this->collectionUrl,
-                LogisticOrderKeys::PAY_URL => $this->payUrl,
-                LogisticOrderKeys::RIDER_NOT_FOUND_URL => $this->riderNotFoundUrl,
-                LogisticOrderKeys::VENDOR_ORDER_DETAIL => $this->vendorOrder->toJson(),
-                LogisticOrderKeys::PAID_AMOUNT => $this->paidAmount,
-                LogisticOrderKeys::IS_INSTANT => $this->isInstant,
-                LogisticOrderKeys::COLLECTABLE_AMOUNT => $this->collectableAmount,
-                LogisticOrderKeys::DISCOUNT => $this->discount,
-                LogisticOrderKeys::IS_PERCENTAGE => $this->isDiscountInPercentage,
+                LogisticOrderKeys::PARCEL_TYPE           => $this->parcelType,
+                LogisticOrderKeys::SUCCESS_URL           => $this->successUrl,
+                LogisticOrderKeys::PICKED_URL            => $this->pickedUrl,
+                LogisticOrderKeys::FAILURE_URL           => $this->failureUrl,
+                LogisticOrderKeys::COLLECTION_URL        => $this->collectionUrl,
+                LogisticOrderKeys::PAY_URL               => $this->payUrl,
+                LogisticOrderKeys::RIDER_NOT_FOUND_URL   => $this->riderNotFoundUrl,
+                LogisticOrderKeys::VENDOR_ORDER_DETAIL   => $this->vendorOrder->toJson(),
+                LogisticOrderKeys::PAID_AMOUNT           => $this->paidAmount,
+                LogisticOrderKeys::IS_INSTANT            => $this->isInstant,
+                LogisticOrderKeys::COLLECTABLE_AMOUNT    => $this->collectableAmount,
+                LogisticOrderKeys::DISCOUNT              => $this->discount,
+                LogisticOrderKeys::IS_PERCENTAGE         => $this->isDiscountInPercentage,
             ];
     }
 
@@ -382,7 +395,7 @@ class Order
 
     /**
      * @return array
-     * @throws Exception
+     * @throws \Exception
      */
     public function formatForPartner()
     {
@@ -390,7 +403,7 @@ class Order
             'status' => $this->getReadableStatus(),
             'original_status' => $this->status,
             'data' => [
-                'rider' => empty($this->rider) ? null : $this->rider,
+                'rider' => $this->rider,
                 'order_id' => $this->id
             ]
         ];
