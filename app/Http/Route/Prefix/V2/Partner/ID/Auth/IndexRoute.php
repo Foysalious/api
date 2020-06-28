@@ -65,8 +65,6 @@ class IndexRoute
                 $api->group(['prefix' => 'v2'], function ($api) {
                     $api->post('/', 'LoanController@store');
                     $api->get('/personal-info', 'LoanController@getPersonalInformation');
-                    $api->get('/personal-info-v2', 'LoanV2Controller@getPersonalInformation');
-                    $api->post('/personal-info-v2', 'LoanV2Controller@updatePersonalInformation');
                     $api->post('/personal-info', 'LoanController@updatePersonalInformation');
                     $api->get('/business-info', 'LoanController@getBusinessInformation');
                     $api->post('/business-info', 'LoanController@updateBusinessInformation');
