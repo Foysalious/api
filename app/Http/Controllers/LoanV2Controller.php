@@ -208,6 +208,7 @@ class LoanV2Controller extends Controller
 
     public function getPersonalInformation($partner, Request $request)
     {
+        dd(1212);
         try {
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
