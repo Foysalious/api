@@ -34,16 +34,16 @@ class FinanceInfo implements Arrayable
         }
     }
 
-    public static function getValidators()
+    public static function getValidators(Request $request = null)
     {
         return [
-            'acc_name'           => 'required|string',
-            'acc_no'             => 'required|string',
-            'bank_name'          => 'required|string',
-            'branch_name'        => 'required|string',
-            'acc_type'           => 'string|in:savings,current',
-            'bkash_no'           => 'string|mobile:bd',
-            'bkash_account_type' => 'string|in:personal,agent,merchant'
+            'acc_name' => 'required|string',
+            'acc_no' => 'required|string',
+            'bank_name' => 'required|string',
+            'branch_name' => 'required|string',
+            'acc_type' => $request && $request->loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|in:savings,current' : "string|in:savings,current",
+            'bkash_no' => $request && $request->loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|mobile:bd' : "string|mobile:bd",
+            'bkash_account_type' => $request && $request->loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|in:personal,agent,merchant' : "string|in:personal,agent,merchant"
         ];
     }
 
