@@ -85,7 +85,7 @@ class OrderManager
             ->setFailureUrl($base_url . '/logistic-completed')
             ->setPayUrl($base_url . '/logistic-paid')
             ->setCollectionUrl($base_url . '/collect-by-logistic')
-            ->setRiderNotFoundUrl($base_url.'/rider-not-found');
+            ->setRiderNotFoundUrl($base_url . '/rider-not-found');
 
         return $order;
     }
@@ -99,7 +99,7 @@ class OrderManager
     {
         $data = $this->repo->find($order_id);
         $order = new Order();
-        $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id']);
+        $order->setStatus($data['status'])->setRider($data['rider'])->setId($data['id'])->setVendorCollectableAmount($data['vendor_collectable_amount']);
         return $order;
     }
 
@@ -162,7 +162,7 @@ class OrderManager
         $logistic_nature = NatureFactory::getLogisticNature($this->job, OrderKeys::FIRST);
         $order = $order ?: $this->get($this->job->first_logistic_order_id);
         $new_point = $logistic_nature->createPartnerPoint($new_partner);
-        if($this->job->category->needsOneWayLogistic()) {
+        if ($this->job->category->needsOneWayLogistic()) {
             $order->setPickUp($new_point);
         } else {
             $order->setDropOff($new_point);
@@ -221,7 +221,7 @@ class OrderManager
         $res = $this->repo->cancel($order);
         $refunded = $res['refunded'];
 
-        if($refunded) {
+        if ($refunded) {
             $partner_order = $this->job->partnerOrder;
             $log = "Refunded $refunded for sheba order: " . $partner_order->code() . ", logistic order: " . $order->id;
             $this->vendorTransactionHandler->setVendor($this->getVendor())->debit($refunded, $partner_order, $log);
