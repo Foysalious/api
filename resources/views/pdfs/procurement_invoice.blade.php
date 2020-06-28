@@ -9,7 +9,6 @@ $formatted_type = ucwords($procurement_info['type'])
     <title>{{ $formatted_type }}</title>
     <meta name="description" content="">
     <meta name="author" content="Fazal Mahmud Niloy">
-    <meta name="keyword" content="">
     <style>
         @media print {
             table {
@@ -97,24 +96,13 @@ $formatted_type = ucwords($procurement_info['type'])
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 12px;
+            color: #333333;
         }
 
         /*invoice page end*/
 
         @font-face {
             font-family: Lato;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-left {
-            text-align: left;
         }
 
         body {
@@ -126,43 +114,6 @@ $formatted_type = ucwords($procurement_info['type'])
         table, th {
             border: solid 1px #d2d8e6;
             border-collapse: collapse;
-        }
-
-        .table1th {
-            /*font-family: Lato;*/
-            font-weight: normal;
-            opacity: 0.8;
-            font-size: 10px;
-            text-align: left;
-        }
-
-        .tableHeadRegular {
-            opacity: 0.8;
-            font-family: Lato;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 9px 20px;
-            text-align: left;
-            background-color: #fff8f8fb;
-        }
-
-        .tQuestion {
-            font-size: 10px;
-            font-weight: bold;
-            font-family: Lato;
-            opacity: 0.8;
-        }
-
-        .tAnswer {
-            font-size: 10px;
-            opacity: 0.6;
-            font-weight: normal;
-            font-family: Lato;
-            padding-top: 5px;
-        }
-
-        .pageCounter:after {
-            content: counter(page);
         }
 
         @page {
@@ -279,7 +230,13 @@ $formatted_type = ucwords($procurement_info['type'])
             font-size: 12px;
             font-weight: bold;
         }
+
+        .totalDetail {
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
     </style>
+    <meta name="keyword" content="">
 </head>
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
 
@@ -426,27 +383,18 @@ $formatted_type = ucwords($procurement_info['type'])
 
     <tr class="total">
         <td colspan="4"></td>
-        <td class="padding-left">Sub total</td>
-        <td class="padding-left">
+        <td class="padding-left" style="padding-bottom: 4px">Sub total</td>
+        <td class="padding-left" style="padding-bottom: 4px">
             <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
             {{ $procurement_info['sub_total'] }}
-        </td>
-    </tr>
-
-    <tr class="total">
-        <td colspan="4"></td>
-        <td class="padding-left">Grand Total</td>
-        <td class="padding-left">
-            <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-            {{ $procurement_info['grand_total'] }}
         </td>
     </tr>
 
     @if ($procurement_info['type'] == 'invoice')
         <tr class="total">
             <td colspan="4"></td>
-            <td class="padding-left">Amount to be paid</td>
-            <td class="padding-left">
+            <td class="padding-left totalDetail">Amount to be paid</td>
+            <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
                 {{ $procurement_info['amount_to_be_paid'] }}
             </td>
@@ -454,8 +402,8 @@ $formatted_type = ucwords($procurement_info['type'])
 
         <tr class="total">
             <td colspan="4"></td>
-            <td class="padding-left">due</td>
-            <td class="padding-left">
+            <td class="padding-left totalDetail">due</td>
+            <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
                 {{ $procurement_info['due_after_amount_to_be_paid'] }}
             </td>
@@ -465,8 +413,8 @@ $formatted_type = ucwords($procurement_info['type'])
     @if ($procurement_info['type'] == 'bill')
         <tr class="total">
             <td colspan="4"></td>
-            <td class="padding-left">Paid</td>
-            <td class="padding-left">
+            <td class="padding-left totalDetail">Paid</td>
+            <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
                 {{ $procurement_info['paid'] }}
             </td>
@@ -474,13 +422,28 @@ $formatted_type = ucwords($procurement_info['type'])
 
         <tr class="total">
             <td colspan="4"></td>
-            <td class="padding-left">due</td>
-            <td class="padding-left">
+            <td class="padding-left totalDetail">due</td>
+            <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
                 {{ $procurement_info['due'] }}
             </td>
         </tr>
     @endif
+
+    <tr>
+        <td colspan="6">
+            <hr style="margin: 2px 0 2px">
+        </td>
+    </tr>
+
+    <tr class="total">
+        <td colspan="4"></td>
+        <td class="padding-left totalDetail">Grand Total</td>
+        <td class="padding-left totalDetail">
+            <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+            {{ $procurement_info['grand_total'] }}
+        </td>
+    </tr>
 </table>
 
 <script type="text/php">

@@ -108,18 +108,6 @@
             font-family: Lato;
         }
 
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-left {
-            text-align: left;
-        }
-
         body {
             counter-reset: page;
         }
