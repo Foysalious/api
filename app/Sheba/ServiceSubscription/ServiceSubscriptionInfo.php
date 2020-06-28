@@ -73,7 +73,7 @@ class ServiceSubscriptionInfo
             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
             'app_thumb', 'app_banner', 'short_description', 'description',
             'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-            'terms_and_conditions', 'features'
+            'terms_and_conditions', 'features', 'structured_contents'
         )->get())->getServiceQuestionSet()->first();
 
         $serviceSubscription['service_details'] = $questionSet;
