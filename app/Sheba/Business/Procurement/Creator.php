@@ -269,7 +269,11 @@ class Creator
 
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
-                if ($procurement->is_published) $this->sendNotification($procurement);
+                /**
+                 * THIS NOTIFICATION TURNED OFF NOW (TURNED ON IN FUTURE)
+                 *
+                 * if ($procurement->is_published) $this->sendNotification($procurement);
+                 */
             });
         } catch (QueryException $e) {
             throw $e;
@@ -379,7 +383,11 @@ class Creator
             'shared_to' => $this->sharedTo
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
-        if ($this->isPublished) $this->sendNotification($procurement);
+        /**
+         * THIS NOTIFICATION TURNED OFF NOW (TURNED ON IN FUTURE)
+         *
+         * if ($this->isPublished) $this->sendNotification($procurement);
+         */
     }
 
     /**
