@@ -66,15 +66,15 @@ class ProfileController extends Controller
             /** @var Profile $profile */
             $profile = $resource->profile;
             if (!$profile)
-                return api_response($request, null, 404, ['message' => 'Profile not found']);
+                return api_response($request, null, 404, ['message' => ['title' => 'সফল হয়নি','en'=>'Profile not found' , 'bn' => 'আপনার আবেদনটি সফল হয়নি। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন','existing_no' => null]]);
 
             if ($resource->status == Statuses::VERIFIED)
-                return api_response($request, null, 420, ['message' => 'Already Verified! Not allowed to update profile info']);
+                return api_response($request, null, 420,['message' => ['title' => 'সফল হয়নি','en'=>'Already Verified! Not allowed to update profile info' , 'bn' => 'আপনার আবেদনটি সফল হয়নি। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন','existing_no' => null]]);
 
             $this->validate($request, [
                 'type' => 'required|in:info,image,all',
                 'name' => 'required_if:type,in:info,all|string',
-                'nid_no' => 'required_if:type,in:info,all',
+                'nid_no' => 'required_if:type,in:info,all|nid_number',
                 'dob' => 'required_if:type,in:info,all|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'nid_image_front' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg',
                 'nid_image_back' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg',
@@ -85,9 +85,9 @@ class ProfileController extends Controller
                 $profile_by_given_nid = $profile->searchOtherUsingNid($request->nid_no);
                 if (!empty($profile_by_given_nid)) {
                     if (!empty($profile_by_given_nid->resource))
-                        return api_response($request, null, 401, ['message' => 'This NID is used by another sManager account']);
+                        return api_response($request, null, 401, ['message' => ['title' => 'এই NID পূর্বে ব্যবহৃত হয়েছে!','en'=>'This NID is used by another sManager account' , 'bn' => 'এই NID ব্যবহার করে '. scramble_string(substr($profile_by_given_nid->mobile,-11)) .' নাম্বারে একটি sManager অ্যাকাউন্ট খোলা আছে। দয়া করে উল্লেখিত নাম্বার দিয়ে লগ ইন করুন অথবা আমাদের কাস্টমার কেয়ার-এ কথা বলুন।','existing_no' =>  scramble_string(substr($profile_by_given_nid->mobile,-11))]]);
                     if (!empty($profile_by_given_nid->affiliate))
-                        return api_response($request, null, 403, ['message' => 'This NID is used by another sBondhu account']);
+                        return api_response($request, null, 403, ['message' => ['title' => 'এই NID তে সেবা অ্যাকাউন্ট খোলা হয়েছে!','en'=> 'This NID is used by another sBondhu account' , 'bn' => 'এই NID ব্যবহার করে '. scramble_string(substr($profile_by_given_nid->mobile,-11)) .' নাম্বারে একটি সেবা অ্যাকাউন্ট খোলা আছে। দয়া করে উল্লেখিত নাম্বার দিয়ে লগ ইন করুন অথবা আমাদের কাস্টমার কেয়ার-এ কথা বলুন।','existing_no' =>  scramble_string(substr($profile_by_given_nid->mobile,-11))]]);
                 }
             }
 
@@ -103,13 +103,13 @@ class ProfileController extends Controller
                     $this->updateVerificationStatus($profile->affiliate);
             }
 
-            return api_response($request, null, 200, ['message' => 'Profile data Updated']);
+            return api_response($request, null, 200,['message' => ['title' => 'সফল হয়েছে!','en'=>'Profile data Updated' , 'bn' => 'সফল হয়েছে!','existing_no' => null]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+            return api_response($request, $message, 400,['message' => ['title' => 'সফল হয়নি','en'=> $message , 'bn' => 'আপনার আবেদনটি সফল হয়নি। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন','existing_no' => null]]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 500, ['message' => ['title' => 'সফল হয়নি','en'=> 'Internal Server Error' , 'bn' => 'আপনার আবেদনটি সফল হয়নি। অনুগ্রহ করে কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন','existing_no' => null]]);
         }
     }
 
