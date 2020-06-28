@@ -369,7 +369,7 @@
 
 <table class="itemsTable" cellpadding="10">
     <tr class="billHeader">
-        <td class="billHeaderTD padding-left" colspan="6">BILL</td>
+        <td class="padding-left" colspan="6">BILL</td>
     </tr>
     <tr class="itemsSpec">
         <th class="itemsSpecLabel border-left padding-left">SL NO</th>
@@ -430,7 +430,6 @@
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
-
 </script>
 </body>
 </html>

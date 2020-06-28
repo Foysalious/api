@@ -66,7 +66,7 @@ class WorkOrderDataGenerator
             "sub_total" => $this->procurement->totalPrice,
             "due" => $this->procurement->due,
             "grand_total" => $this->procurement->totalPrice,
-            "tk_sign" => config('sheba.s3_url') . 'business_assets/tender/icons/png/bdt.png'
+            "tk_sign" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png"
         ];
     }
 
