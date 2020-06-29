@@ -106,7 +106,7 @@ class ProfileRepository {
                 $info['partners']                  = $avatar->partners->unique('partner_id')->count();
                 $info['partner']                   = (new ResourceRepository($avatar))->getPartner($avatar);
                 $info['email']                     = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
-            } elseif ($from == 'RetailerMember') {
+            } elseif ($from == 'StrategicPartnerMember') {
                 $info['retailer']       = $avatar->retailer ? [
                     'name'=>$avatar->retailer->name,
                     'logo'=>$avatar->retailer->logo,

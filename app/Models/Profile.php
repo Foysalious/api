@@ -115,8 +115,8 @@ class Profile extends Model {
         return $this->hasOne(BankUser::class);
     }
 
-    public function RetailerMember() {
-        return $this->hasOne(RetailerMember::class);
+    public function StrategicPartnerMember() {
+        return $this->hasOne(StrategicPartnerMember::class);
     }
 
     public function isBlackListed() {
