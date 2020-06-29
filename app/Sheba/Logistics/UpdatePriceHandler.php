@@ -27,6 +27,7 @@ class UpdatePriceHandler
      */
     public function update()
     {
+        if (request()->header('origin') == config('logistics.api_url')) return;
         /** @var Job $job */
         $job = $this->partnerOrder->lastJob();
         $logistic_order = $job->getCurrentLogisticOrder();
