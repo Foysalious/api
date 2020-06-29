@@ -4,7 +4,7 @@ use App\Models\Job;
 use Exception;
 use Illuminate\Support\Collection;
 use Sheba\Dal\JobMaterial\JobMaterial;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
