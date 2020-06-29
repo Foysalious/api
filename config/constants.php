@@ -2,8 +2,8 @@
 return [
     "BLOG_URL" => env('BLOG_URL'),
     'LOAN_TYPE' => [
-        'term_loan' => 'term_loan',
-        'micro_loan'=> 'micro_loan'
+        'term_loan' => 'term',
+        'micro_loan'=> 'micro'
     ],
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',

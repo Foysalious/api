@@ -194,6 +194,21 @@ class Loan
         return $data;
     }
 
+    public function newHomepage()
+    {
+        $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
+        $data    = [
+            'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_1440_628.jpg',
+            'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_720_324.jpg',
+        ];
+
+        $data = array_merge($data, $this->getWebViews());
+        $data = array_merge($data, (new RunningApplication($running))->toArray());
+        $data = array_merge($data, $this->getLoanList());
+        $data = array_merge($data, ['details' => self::homepageStatics()]);
+        return $data;
+    }
+
     public static function homepageStatics()
     {
         return [
@@ -619,5 +634,32 @@ class Loan
         if (!empty($changeLog))
             return $changeLog->created_at;
         return null;
+    }
+
+    private function getWebViews()
+    {
+        return [
+            'digital_loan' => (config('sheba.partners_url') . "/api/digital-loan"),
+            'micro_loan'   => (config('sheba.partners_url') . "/api/micro-loan"),
+            'term_loan'    => (config('sheba.partners_url') . "/api/term-loan")
+        ];
+    }
+
+    private function getLoanList()
+    {
+        return [
+            'loan_list' => [
+                [
+                    'title'        => 'Micro Loan',
+                    'title_bn'     => 'রবি টপআপ লোন',
+                    'loan_type'    => constants('LOAN_TYPE')["micro_loan"]
+                ],
+                [
+                    'title'        => 'Term Loan',
+                    'title_bn'     => 'টার্ম লোন',
+                    'loan_type'    => constants('LOAN_TYPE')["term_loan"]
+                ]
+            ]
+        ];
     }
 }
