@@ -62,7 +62,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'loans'], function ($api) {
-                $api->group(['prefix' => 'v2'], function ($api) {
+                $api->group(['prefix' => 'v2','middleware'=>'loan.version'], function ($api) {
                     $api->post('/', 'LoanController@store');
                     $api->get('/personal-info', 'LoanController@getPersonalInformation');
                     $api->post('/personal-info', 'LoanController@updatePersonalInformation');
