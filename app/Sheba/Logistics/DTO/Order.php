@@ -403,7 +403,7 @@ class Order
             'status' => $this->getReadableStatus(),
             'original_status' => $this->status,
             'data' => [
-                'rider' => $this->rider,
+                'rider' => [$this->rider],
                 'order_id' => $this->id
             ]
         ];
