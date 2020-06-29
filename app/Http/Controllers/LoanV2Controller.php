@@ -125,9 +125,10 @@ class LoanV2Controller extends Controller
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $new      = $request->new;
-            $homepage = $loan->setPartner($partner)->setResource($resource)->homepage();
+            $homepage = $loan->setPartner($partner)->setResource($resource)->newHomepage();
             if (empty($new))
-                $homepage['duration'] = $homepage['duration'] / 12;
+                if(isset($homepage['type']) && isset($homepage['duration']) && $homepage['type'] == constants('LOAN_TYPE')["term_loan"])
+                    $homepage['duration'] = $homepage['duration'] / 12;
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
