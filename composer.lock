@@ -3303,7 +3303,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
-                "reference": "b9852926a4978d358af21f82903040710886fbaf"
+                "reference": "bb750020580cd363a72b2a4b8918218918137dde"
             },
             "require": {
                 "php": ">=5.4"
@@ -3327,7 +3327,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2020-04-09T16:23:52+00:00"
+            "time": "2020-06-17T12:01:44+00:00"
         },
         {
             "name": "sheba/report",

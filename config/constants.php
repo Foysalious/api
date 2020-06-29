@@ -1,5 +1,10 @@
 <?php
 return [
+    "BLOG_URL" => env('BLOG_URL'),
+    'LOAN_TYPE' => [
+        'term_loan' => 'term_loan',
+        'micro_loan'=> 'micro_loan'
+    ],
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',

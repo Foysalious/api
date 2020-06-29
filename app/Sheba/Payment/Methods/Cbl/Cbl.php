@@ -2,15 +2,12 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Models\PaymentDetail;
-use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Payment\Methods\Cbl\Response\InitResponse;
 use Sheba\Payment\Methods\Cbl\Response\ValidateResponse;
 use Sheba\Payment\Methods\PaymentMethod;
-use Sheba\RequestIdentification;
 use DB;
 use SimpleXMLElement;
 
@@ -50,25 +47,8 @@ class Cbl extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment = new Payment();
-        $user = $payable->user;
-        $invoice = "SHEBA_CBL_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        DB::transaction(function () use ($payment, $payable, $invoice, $user) {
-            $payment->payable_id = $payable->id;
-            $payment->transaction_id = $invoice;
-            $payment->gateway_transaction_id = $invoice;
-            $payment->status = 'initiated';
-            $payment->valid_till = $this->getValidTill();
-            $this->setModifier($user);
-            $payment->fill((new RequestIdentification())->get());
-            $this->withCreateModificationField($payment);
-            $payment->save();
-            $payment_details = new PaymentDetail();
-            $payment_details->payment_id = $payment->id;
-            $payment_details->method = self::NAME;
-            $payment_details->amount = $payable->amount;
-            $payment_details->save();
-        });
+        $payment = $this->createPayment($payable);
+
         $response = $this->post($this->makeOrderCreateData($payable));
         $init_response = new InitResponse();
         $init_response->setResponse($response);
@@ -79,8 +59,8 @@ class Cbl extends PaymentMethod
             $payment->redirect_url = $success->redirect_url;
         } else {
             $error = $init_response->getError();
-            $this->paymentRepository->setPayment($payment);
-            $this->paymentRepository->changeStatus(['to' => 'initiation_failed', 'from' => $payment->status,
+            $this->paymentLogRepo->setPayment($payment);
+            $this->paymentLogRepo->create(['to' => 'initiation_failed', 'from' => $payment->status,
                 'transaction_details' => json_encode($error->details)]);
             $payment->status = 'initiation_failed';
             $payment->transaction_details = json_encode($error->details);
@@ -95,22 +75,22 @@ class Cbl extends PaymentMethod
      * @return Payment
      * @throws GuzzleException
      */
-    public function validate(Payment $payment)
+    public function validate(Payment $payment): Payment
     {
         $xml = $this->post($this->makeOrderInfoData($payment));
         $validation_response = new ValidateResponse();
         $validation_response->setResponse($xml);
         $validation_response->setPayment($payment);
-        $this->paymentRepository->setPayment($payment);
+        $this->paymentLogRepo->setPayment($payment);
         if ($validation_response->hasSuccess()) {
             $success = $validation_response->getSuccess();
-            $this->paymentRepository->changeStatus(['to' => 'validated', 'from' => $payment->status,
+            $this->paymentLogRepo->create(['to' => 'validated', 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validated';
             $payment->transaction_details = json_encode($success->details);
         } else {
             $error = $validation_response->getError();
-            $this->paymentRepository->changeStatus(['to' => 'validation_failed', 'from' => $payment->status,
+            $this->paymentLogRepo->create(['to' => 'validation_failed', 'from' => $payment->status,
                 'transaction_details' => $payment->transaction_details]);
             $payment->status = 'validation_failed';
             $payment->transaction_details = json_encode($error->details);
@@ -181,5 +161,10 @@ class Cbl extends PaymentMethod
         $result = json_decode($result);
         if ($result->code != 200) throw new Exception("Tunnel error: ". $result->message);
         return simplexml_load_string($result->data);
+    }
+
+    public function getMethodName()
+    {
+        return self::NAME;
     }
 }

@@ -5,7 +5,7 @@ use App\Models\PaymentStatusChangeLog;
 use Carbon\Carbon;
 use Sheba\ModificationFields;
 
-class PaymentRepository
+class PaymentStatusChangeLogRepository
 {
     use ModificationFields;
     private $payment;
@@ -15,7 +15,7 @@ class PaymentRepository
         $this->payment = $payment;
     }
 
-    public function changeStatus(array $data)
+    public function create(array $data)
     {
         $new_payment = new PaymentStatusChangeLog();
         $new_payment->from = isset($data['from']) ? $data['from'] : null;

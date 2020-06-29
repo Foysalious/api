@@ -16,6 +16,10 @@ return [
     'partners_url' => env('SHEBA_PARTNER_END_URL'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',
+    "AWS_KEY" => env('AWS_KEY'),
+    "AWS_SECRET" => env('AWS_SECRET'),
+    "AWS_REGION" => env('AWS_REGION'),
+    "AWS_BUCKET" => env('AWS_BUCKET'),
     //'revision' => file_get_contents(base_path()."/revision"),
     'order_code_start' => 8000,
     'job_code_start' => 16000,
@@ -143,6 +147,9 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'payout_token'=>env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
-    'resource_max_withdraw_limit' => 1000
+    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'resource_max_withdraw_limit' => 1000,
+    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
+    'email' => 'info@sheba.xyz',
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
 ];

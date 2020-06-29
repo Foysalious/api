@@ -10,6 +10,7 @@ class GranterInfo
     protected $name;
     protected $mobile;
     protected $pro_pic;
+    protected $nid_no;
     protected $nid_image_back;
     protected $nid_image_front;
     protected $dob;

@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
 use Sheba\Dal\Gallery\Gallery;
@@ -156,7 +157,8 @@ class Category extends Model
 
     public function commission($partner_id)
     {
-        return (double)($this->partners()->wherePivot('partner_id', $partner_id)->first())->pivot->commission;
+        $commissions = (new CommissionCalculator())->setCategory($this)->setPartner(Partner::find($partner_id));
+        return $commissions->getServiceCommission();
     }
 
     public function scopePublishedForBusiness($query)

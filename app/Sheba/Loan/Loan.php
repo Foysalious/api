@@ -24,6 +24,7 @@ use Sheba\HZip;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
+use Sheba\Loan\DS\GranterDetails;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
@@ -50,6 +51,7 @@ class Loan
     private $resource;
     private $personal;
     private $finance;
+    private $granter;
     private $business;
     private $nominee_granter;
     private $document;
@@ -342,6 +344,12 @@ class Loan
     {
         $this->nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
         return $this->nominee_granter;
+    }
+
+    public function granterDetails()
+    {
+        $this->granter = (new GranterDetails($this->partner, $this->resource));
+        return $this->granter;
     }
 
     public function documents()

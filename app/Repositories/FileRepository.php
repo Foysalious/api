@@ -14,10 +14,10 @@ class FileRepository
     {
         $this->s3 = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_REGION'),
+            'region' => config('sheba.AWS_REGION'),
             'credentials' => [
-                'key' => env('AWS_KEY'),
-                'secret' => env('AWS_SECRET'),
+                'key' => config('sheba.AWS_KEY'),
+                'secret' => config('sheba.AWS_SECRET'),
             ],
         ]);
 
@@ -34,15 +34,15 @@ class FileRepository
     {
         $s3 = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_REGION'),
+            'region' => config('sheba.AWS_REGION'),
             'credentials' => [
-                'key' => env('AWS_KEY'),
-                'secret' => env('AWS_SECRET'),
+                'key' => config('sheba.AWS_KEY'),
+                'secret' => config('sheba.AWS_SECRET'),
             ],
         ]);
         try {
             $s3->putObject([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => config('sheba.AWS_BUCKET'),
                 'Key' => $folder . $filename,
                 'Body' => file_get_contents($file),
                 'ACL' => 'public-read',
@@ -52,14 +52,14 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return env('S3_URL') . $folder . $filename;
+        return config('sheba.s3_url') . $folder . $filename;
     }
 
     public function uploadImageToCDN($folder, $filename, $image)
     {
         try {
             $this->s3->putObject([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => config('sheba.AWS_BUCKET'),
                 'Key' => $folder . '/' . $filename,
                 'Body' => $image,
                 'ACL' => 'public-read',
@@ -69,6 +69,6 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return env('S3_URL') . $folder . '/' . $filename;
+        return config('sheba.S3_URL') . $folder . '/' . $filename;
     }
 }

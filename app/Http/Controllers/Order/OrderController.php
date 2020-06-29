@@ -24,7 +24,9 @@ use Sheba\ModificationFields;
 use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Throwable;
 
 class OrderController extends Controller
@@ -108,24 +110,11 @@ class OrderController extends Controller
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
                 $this->sendNotifications($customer, $order);
             }
-
             return api_response($request, null, 200, $order_with_response_data);
-        } catch (LocationIdNullException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500, ['message' => 'Location id was not for this order']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
         }
     }
 
@@ -133,7 +122,6 @@ class OrderController extends Controller
      * @TODO FIx notification sending
      * @param $customer
      * @param $order
-     * @return |null
      */
     private function sendNotifications($customer, $order)
     {
@@ -141,23 +129,24 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
-            if ((bool)config('sheba.send_order_create_sms')) {
-                if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
-                        'order_code' => $order->code()
-                    ]);
-                }
 
-                if (!$order->jobs->first()->resource_id) {
-                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
-                        'order_code' => $order->code(), 'partner_name' => $partner->name
-                    ]);
-                }
-            }
             (new NotificationRepository())->send($order);
+
+            if (!(bool)config('sheba.send_order_create_sms')) return;
+
+            if ($this->isSendingServedConfirmationSms($order)) {
+                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    'order_code' => $order->code()
+                ]);
+            }
+
+            if (!$order->jobs->first()->resource_id) {
+                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                    'order_code' => $order->code(), 'partner_name' => $partner->name
+                ]);
+            }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
+            logError($e);
         }
     }
 
@@ -197,11 +186,11 @@ class OrderController extends Controller
             return api_response($request, null, 400, ['message' => 'You\'re out of service area']);
         } catch (QueryException $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
-        } catch (Throwable $exception) {
+        } catch (Throwable $e) {
             DB::rollback();
-            app('sentry')->captureException($exception);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -209,12 +198,12 @@ class OrderController extends Controller
     private function updateVouchers($order, Customer $customer)
     {
         try {
-            if ($order->voucher_id != null) {
-                $voucher = $order->voucher;
-                $this->updateVoucherInPromoList($customer, $voucher, $order);
-            }
+            if ($order->voucher_id == null) return;
+
+            $voucher = $order->voucher;
+            $this->updateVoucherInPromoList($customer, $voucher, $order);
         } catch (Throwable $e) {
-            return null;
+            logError($e);
         }
     }
 
@@ -234,12 +223,22 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param $payment_method
+     * @param Order $order
+     * @param OrderAdapter $order_adapter
+     * @return Payment|null
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
     private function getPayment($payment_method, Order $order, OrderAdapter $order_adapter)
     {
         if ($payment_method == 'cod') return null;
-        $order_adapter->setPartnerOrder($order->partnerOrders[0])->setIsAdvancedPayment(1)->setEmiMonth(\request()->emi_month)->setPaymentMethod($payment_method);
-        $payment = new ShebaPayment();
-        $payment = $payment->setMethod($payment_method)->init($order_adapter->getPayable());
+        $payable = $order_adapter->setPartnerOrder($order->partnerOrders[0])
+            ->setIsAdvancedPayment(1)->setEmiMonth(\request()->emi_month)
+            ->setPaymentMethod($payment_method)
+            ->getPayable();
+        $payment = (new PaymentManager())->setMethodName($payment_method)->setPayable($payable)->init();
         return $payment->isInitiated() ? $payment : null;
     }
 
@@ -254,10 +253,8 @@ class OrderController extends Controller
                     ]);
                 }
             }
-            // (new NotificationRepository())->send($order);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
+            logError($e);
         }
     }
 
