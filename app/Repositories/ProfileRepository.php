@@ -106,11 +106,11 @@ class ProfileRepository
                 $info['partners']                  = $avatar->partners->unique('partner_id')->count();
                 $info['partner']                   = (new ResourceRepository($avatar))->getPartner($avatar);
                 $info['email']                     = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
-            } elseif ($from == 'RetailerMember') {
-                $info['retailer']       = $avatar->retailer ? [
-                    'name'=>$avatar->retailer->name,
-                    'logo'=>$avatar->retailer->logo,
-                    'id'=>$avatar->retailer->id
+            } elseif ($from == 'StrategicPartnerMember') {
+                $info['strategic_partner']       = $avatar->strategicPartner ? [
+                    'name'=>$avatar->strategicPartner->name,
+                    'logo'=>$avatar->strategicPartner->logo,
+                    'id'=>$avatar->strategicPartner->id
                 ] : null;
                 $info['remember_token'] = $avatar->remember_token;
                 $info['role']           = $avatar->role;

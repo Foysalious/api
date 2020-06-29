@@ -658,7 +658,7 @@ return [
         env('SHEBA_MANGER_APP')      => 'resource',
         'user'                       => 'user',
         'bank-loan-portal'           => 'bankUser',
-        'retailer-portal'            => 'RetailerMember'
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',

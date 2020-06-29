@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BankUser;
 use App\Models\Comment;
+use App\Models\Location;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
@@ -15,6 +16,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DocumentDeleter;
@@ -778,5 +780,25 @@ class LoanController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+    public function uploadRetailerList(Request $request, PartnerBankLoan $partner_bank_loan)
+    {
+
+        $count = 0;
+        $file = $this->getExcelDataFilesPath() . '/robi_retailer_list.csv';
+        Excel::load($file, function ($reader) use (&$count) {
+            $results = $reader->get();
+            foreach ($results as $row) {
+                $location = Location::find(intval($row->id));
+                if ($location) {
+                    $geo = json_decode($location->geo_informations);
+                    $decoded_geo = json_decode($row->geo);
+                    $geo->geometry=$decoded_geo->geometry;
+                    $location->geo_informations = json_encode($geo);
+                    $location->update();
+                    $count++;
+                }
+            }
+        });
     }
 }
