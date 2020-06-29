@@ -1,5 +1,6 @@
 <?php
 return [
+    "BLOG_URL" => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',

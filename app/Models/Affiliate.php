@@ -222,6 +222,16 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->is_ambassador == 1;
     }
 
+    public function isVerified()
+    {
+        return $this->verification_status == 'verified';
+    }
+
+    public function isNotVerified()
+    {
+        return !$this->isVerified();
+    }
+
     public function topups()
     {
         return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Affiliate');

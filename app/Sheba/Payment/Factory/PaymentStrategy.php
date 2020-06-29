@@ -64,8 +64,8 @@ class PaymentStrategy
     public static function getDetails($method, $version_code, $platform_name, PayableUser $user)
     {
         switch (self::getValidatedMethod($method, $user)) {
-            case self::SSL:
-            case self::SSL_DONATION: return self::sslDetails();
+            case self::SSL: return self::sslDetails();
+            case self::SSL_DONATION: return self::sslDonationDetails();
             case self::BKASH: return self::bkashDetails();
             case self::WALLET: return self::shebaCreditDetails();
             case self::CBL: return self::cblDetails($version_code, $platform_name);
@@ -178,6 +178,15 @@ class PaymentStrategy
         ];
     }
 
+    /**
+     * @return array
+     */
+    private static function sslDonationDetails()
+    {
+        return array_merge(self::sslDetails(), [
+            'method_name' => 'ssl_donation'
+        ]);
+    }
 
     /**
      * @return array
