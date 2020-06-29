@@ -25,4 +25,9 @@ class PartnerBankLoan extends Model
     {
         return $this->morphMany(Comment::class, 'commentable');
     }
+
+    public function scopeType($query, $type)
+    {
+        return $query->where('type', $type);
+    }
 }

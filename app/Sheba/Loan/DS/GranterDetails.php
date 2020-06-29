@@ -80,25 +80,16 @@ class GranterDetails implements Arrayable
     {
         $granter = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
         if (empty($granter)) {
+            $pro_pic_link = null;
+            if($photo = $request->file('pro_pic')) {
+                $pro_pic_link = (new FileRepository())->uploadToCDN($this->makePicName($photo), $photo, 'images/profiles/');
+            }
             $granter = (new GranterInfo([
                 'name'   => $request->grantor_name,
-                'mobile' => $request->grantor_mobile
-            ]))->create($this->partner);
-        }
-        if(isset($granter)){
-            $pro_pic_link = $granter->pro_pic;
-            if($photo = $request->file('pro_pic')) {
-                if (basename($granter->pro_pic) != 'default.jpg') {
-                    $filename = $granter->pro_pic;
-                    $this->deleteOldImage($filename);
-                }
-                $pro_pic_link = (new FileRepository())->uploadToCDN($this->makePicName($granter, $photo), $photo, 'images/profiles/');
-
-            }
-            $granter->update($this->withCreateModificationField([
+                'mobile' => $request->grantor_mobile,
                 'nid_no' => $request->grantor_nid_number,
                 'pro_pic'=> $pro_pic_link
-            ]));
+            ]))->create($this->partner);
         }
         $this->profile->update($this->withBothModificationFields([
             'grantor_id'       => $granter->id,
@@ -162,14 +153,8 @@ class GranterDetails implements Arrayable
         ];
     }
 
-    private function deleteOldImage($filename)
+    private function makePicName($photo)
     {
-        $old_image = substr($filename, strlen(config('sheba.s3_url')));
-        (new FileRepository())->deleteFileFromCDN($old_image);
-    }
-
-    private function makePicName($profile, $photo)
-    {
-        return $filename = Carbon::now()->timestamp . '_image_' . $profile->id . '.' . $photo->extension();
+        return $filename = Carbon::now()->timestamp . '_pro_pic'. "." . $photo->extension();
     }
 }
