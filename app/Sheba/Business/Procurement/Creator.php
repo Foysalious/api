@@ -259,14 +259,10 @@ class Creator
                 $this->createAttachments($procurement);
                 foreach ($this->items as $item_fields) {
                     /** @var ProcurementItem $procurement_item */
-                    $procurement_item = $this->procurementItemRepository->create([
-                        'procurement_id' => $procurement->id,
-                        'type' => $item_fields->item_type
-                    ]);
+                    $procurement_item = $this->createProcurementItem($procurement, $item_fields->item_type);
                     $this->makeItemFields($procurement_item, $item_fields->fields);
                     $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
                 }
-
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
                 if ($procurement->is_published) $this->sendNotification($procurement);
@@ -275,6 +271,19 @@ class Creator
             throw $e;
         }
         return $procurement;
+    }
+
+    /**
+     * @param $procurement
+     * @param $item_type
+     * @return \Illuminate\Database\Eloquent\Model
+     */
+    public function createProcurementItem($procurement, $item_type)
+    {
+        return $this->procurementItemRepository->create([
+            'procurement_id' => $procurement->id,
+            'type' => $item_type
+        ]);
     }
 
     private function makeProcurementData()
@@ -298,7 +307,7 @@ class Creator
             'published_at' => $this->isPublished ? Carbon::now() : '',
 
             'purchase_request_id' => $this->purchaseRequestId,
-            'type' => count($this->items) > 0 ? 'advanced' : 'basic',
+            'type' => count($this->items) > 0 ? Type::ADVANCED : Type::BASIC,
             'estimated_price' => $this->estimatedPrice,
             'order_start_date' => $this->orderStartDate,
             'order_end_date' => $this->orderEndDate,
