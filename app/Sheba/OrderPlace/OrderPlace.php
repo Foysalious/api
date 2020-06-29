@@ -6,7 +6,6 @@ use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
-use App\Models\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -24,11 +23,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
-use Sheba\Checkout\DeliveryCharge;
-use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
-use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
@@ -39,7 +35,6 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\Exceptions\LocationIdNullException;
-use Sheba\Partner\ImpressionManager;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\PartnerOrderRequest\Creator;
@@ -118,11 +113,13 @@ class OrderPlace
     private $orderAmountWithoutDeliveryCharge;
     /** @var JobDeliveryChargeCalculator */
     private $jobDeliveryChargeCalculator;
+    /** @var Action */
+    private $action;
 
     public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
-                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
+                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
     {
         $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
@@ -136,6 +133,7 @@ class OrderPlace
         $this->upsellCalculation = $upsell_calculation;
         $this->orderRequestStore = $order_request_store;
         $this->jobDeliveryChargeCalculator = $jobDeliveryChargeCalculator;
+        $this->action = $action;
     }
 
 
@@ -401,7 +399,7 @@ class OrderPlace
                 $partner_order = $partner_order->fresh();
                 if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
-                if ($this->canCreatePartnerOrderRequest())
+                if ($this->action->canSendPartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
             });
         } catch (QueryException $e) {
@@ -454,6 +452,7 @@ class OrderPlace
         $this->partnerListDirector->setBuilder($this->partnerListBuilder)->buildPartnerListForOrderPlacement();
         $this->partnersFromList = $this->partnerListBuilder->get();
         if ($this->selectedPartnerId) $this->selectedPartner = $this->partnersFromList->first();
+        $this->action->setSelectedPartner($this->selectedPartner)->setPartners($this->partnersFromList->toArray());
     }
 
     private function createJobService()
@@ -562,7 +561,7 @@ class OrderPlace
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->payment_method = $this->paymentMethod;
-        $partner_order->partner_id = $this->selectedPartner ? $this->selectedPartner->id : null;
+        if ($this->action->canAssignPartner()) $partner_order->partner_id = $this->selectedPartner->id;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
         return $partner_order;
@@ -606,19 +605,6 @@ class OrderPlace
         $job_data = $this->withCreateModificationField($job_data);
 
         return Job::create($job_data);
-    }
-
-
-    /**
-     * @return DeliveryCharge
-     */
-    private function buildDeliveryCharge()
-    {
-        $deliver_charge = new DeliveryCharge();
-        $deliver_charge->setCategory($this->category);
-        if ($this->selectedPartner) $deliver_charge->setCategoryPartnerPivot(CategoryPartner::where([['category_id', $this->category->id], ['partner_id', $this->selectedPartner->id]])
-            ->first());
-        return $deliver_charge;
     }
 
     /**

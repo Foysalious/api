@@ -88,6 +88,7 @@ class Initiator
 
     private function canInitiate()
     {
+        if (count($this->partnerIds) == 0) return false;
         $start = Carbon::parse('2:00 AM');
         $end = Carbon::parse('6:00 AM');
         return Carbon::now()->gte($start) && Carbon::now()->lte($end);
