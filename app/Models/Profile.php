@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\RetailerMembers\RetailerMember;
+use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 
 class Profile extends Model {
     protected $guarded  = ['id'];
