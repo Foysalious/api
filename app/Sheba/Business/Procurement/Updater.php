@@ -5,14 +5,17 @@ use App\Models\ProcurementItem;
 use App\Models\ProcurementItemField;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
+use Illuminate\Http\Request;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\Procurement\RequestHandler;
+use Sheba\Business\Procurement\Type;
 use Sheba\Business\ProcurementStatusChangeLog\Creator;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Business\ProcurementPayment\Creator as PaymentCreator;
+use Sheba\Business\Procurement\Creator as ProcurementCreator;
 use DB;
 
 class Updater
@@ -34,6 +37,8 @@ class Updater
 
     /** @var RequestHandler $requestHandler */
     private $requestHandler;
+    /** @var ProcurementCreator $procurementCreator */
+    private $procurementCreator;
 
     /**
      * Updater constructor.
@@ -44,6 +49,7 @@ class Updater
      * @param PaymentCreator $payment_creator
      * @param ProcurementItemRepositoryInterface $procurement_item_repository
      * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
+     * @param ProcurementCreator $procurement_creator
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 OrderClosedHandler $procurement_order_close_handler,
@@ -51,7 +57,8 @@ class Updater
                                 WalletTransactionHandler $wallet_transaction_handler,
                                 PaymentCreator $payment_creator,
                                 ProcurementItemRepositoryInterface $procurement_item_repository,
-                                ProcurementItemFieldRepositoryInterface $procurement_item_field_repository)
+                                ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
+                                ProcurementCreator $procurement_creator)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
@@ -61,6 +68,7 @@ class Updater
         $this->procurementOrderCloseHandler = $procurement_order_close_handler;
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
+        $this->procurementCreator = $procurement_creator;
     }
 
     /**
@@ -133,20 +141,31 @@ class Updater
         $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
     }
 
-    /**
-     * @param ProcurementItem $procurement_item
-     * @param $fields
-     */
-    public function itemFieldsUpdate(ProcurementItem $procurement_item, $fields)
+
+    public function itemFieldsUpdate(Request $request)
     {
         DB::beginTransaction();
         try {
-            $this->procurementItemFieldData = [];
-            $procurement_item->fields->each(function ($field) {
-                $this->itemFieldsDelete($field);
-            });
-            $this->makeItemFields($procurement_item, $fields);
-            $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
+            $this->procurement->load('items.fields');
+            /** @var ProcurementItem $procurement_item */
+            $procurement_item = $this->procurement->items->where('type', $request->item_type)->first();
+            $procurement_item_with_fields = collect(json_decode($request->item, true))->first();
+            if (!$procurement_item && $procurement_item_with_fields) $procurement_item = $this->procurementCreator->createProcurementItem($this->procurement, $request->item_type);
+
+            if ($procurement_item_with_fields) {
+                $procurement_item_fields = $procurement_item_with_fields['fields'];
+                $this->procurementItemFieldData = [];
+                if (!$procurement_item->fields->isEmpty()) {
+                    $procurement_item->fields->each(function ($field) {
+                        $this->itemFieldsDelete($field);
+                    });
+                }
+                $this->makeItemFields($procurement_item, $procurement_item_fields);
+                $this->procurementItemFieldRepository->createMany($this->procurementItemFieldData);
+            } else {
+                if ($procurement_item) $this->itemDelete($procurement_item);
+            }
+            $this->updateType();
             DB::commit();
         } catch (\Exception $e) {
             DB::rollback();
@@ -175,11 +194,26 @@ class Updater
     }
 
     /**
+     * @param ProcurementItem $procurement_item
+     */
+    private function itemDelete(ProcurementItem $procurement_item)
+    {
+        $this->procurementItemRepository->delete($procurement_item->id);
+    }
+
+    /**
      * @param ProcurementItemField $field
      */
     private function itemFieldsDelete(ProcurementItemField $field)
     {
         $this->procurementItemFieldRepository->delete($field->id);
+    }
+
+    private function updateType()
+    {
+        $this->procurementRepository->update($this->procurement, [
+            'type' => $this->procurement->items->isEmpty() ? Type::BASIC: Type::ADVANCED
+        ]);
     }
 
     /**

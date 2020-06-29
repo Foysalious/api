@@ -504,20 +504,23 @@ class ProcurementController extends Controller
 
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
     public function updateItem($business, $procurement, Request $request, Updater $updater)
     {
         $this->validate($request, [
             'item' => 'required|string',
+            'item_type' => 'required|string|in:price_quotation,technical_evaluation,company_evaluation',
         ]);
         $this->setModifier($request->manager_member);
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
-        $procurement->load('items.fields');
-        $procurement_item_type = collect(json_decode($request->item, true))->first();
-        $procurement_item_fields = $procurement_item_type['fields'];
-        /** @var ProcurementItem $procurement_item */
-        $procurement_item = $procurement->items->where('type', $procurement_item_type['item_type'])->first();
-        $updater->itemFieldsUpdate($procurement_item, $procurement_item_fields);
+        $updater->setProcurement($procurement)->itemFieldsUpdate($request);
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
