@@ -73,7 +73,7 @@ class PartnerLoanRequest implements Arrayable
     public function create($data)
     {
         if(!isset($data['type']) || !$data['type'])
-            $data['type'] = 'general';
+            $data['type'] = 'term';
         $data['partner_id'] = $this->partner->id;
         $data['status'] = constants('LOAN_STATUS')['applied'];
         $data['interest_rate'] = (int)constants('LOAN_CONFIG')['interest'];
