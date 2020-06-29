@@ -15,6 +15,8 @@ class BidDetailsTransformer extends TransformerAbstract
     public function transform($bid)
     {
         $this->bid = $bid;
+        $default_terms = "<p>After clicking on <b>Hire</b> button admin will be redirected to this page. In this page, admin can check the procurement title, vendor name, total price.Admin can also see a table where there will be Sl no.</p><ol><li>In economics, a service is a transaction in which</li><li>The benefits of such a service are held to be demonstrated</li><li>Buyer's willingness to make the exchange</li></ol>";
+        $default_policies = "<p>After clicking on <b>Hire</b> button admin will be redirected to this page. In this page, admin can check the procurement title, vendor name, total price.Admin can also see a table where there will be Sl no.</p><ol><li>In economics, a service is a transaction in which</li><li>The benefits of such a service are held to be demonstrated</li><li>Buyer's willingness to make the exchange</li></ol>";
 
         $price_quotation = $this->generatePriceQuotationItemData();
         $technical_evaluation = $this->formatItemData('technical_evaluation');
@@ -27,8 +29,8 @@ class BidDetailsTransformer extends TransformerAbstract
             'title' => $bid->procurement->title,
             'type' => $bid->procurement->type,
             'is_awarded' => $bid->canNotSendHireRequest(),
-            'terms' => $bid->terms,
-            'policies' => $bid->policies,
+            'terms' => $bid->terms ?: $default_terms,
+            'policies' => $bid->policies ?: $default_policies,
             'proposal' => $bid->proposal,
             'start_date' => $bid->procurement->procurement_start_date->format('d/m/y'),
             'end_date' => $bid->procurement->procurement_end_date->format('d/m/y'),

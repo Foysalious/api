@@ -249,9 +249,9 @@ class BidController extends Controller
     public function sendHireRequest($business, $bid, Request $request, Updater $updater)
     {
         $this->validate($request, [
-            'terms' => 'required|string',
             'price' => 'required|numeric',
             'items' => 'required|string',
+            'terms' => 'required|string',
             'policies' => 'required|string'
         ]);
         $bid = $this->repo->find((int)$bid);

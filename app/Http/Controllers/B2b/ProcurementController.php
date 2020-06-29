@@ -6,7 +6,6 @@ use App\Models\Business;
 use App\Models\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
-use App\Models\ProcurementItem;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\Tag;
@@ -25,24 +24,23 @@ use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\App;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use ReflectionException;
 use Sheba\Business\Bid\Creator as BidCreator;
+use Sheba\Business\Bid\Statuses as BidStatuses;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\RequestHandler;
+use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Partner\Creator as PartnerCreator;
@@ -53,16 +51,13 @@ use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
-use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
-use Throwable;
 
 class ProcurementController extends Controller
 {
@@ -870,7 +865,7 @@ class ProcurementController extends Controller
 
         /** @var Procurement $procurement */
         $procurement = $this->procurementRepository->find($tender);
-        $partner = $this->getPartner($profile_repository, $request);
+        $partner = $this->getPartner($request);
         $shared_to_statuses = config('b2b.SHARING_TO');
 
         if ($this->isVerifiedOnlyTender($procurement, $partner, $shared_to_statuses))
@@ -1134,6 +1129,8 @@ class ProcurementController extends Controller
         if (!$proposal) return api_response($request, null, 404);
         if ($proposal->procurement_id != (int)$tender) return api_response($request, null, 404);
         $procurement = $this->procurementRepository->find($tender);
+        if (!$this->isTenderProposalAcceptOrRejectable($procurement, $proposal))
+            return api_response($request, null, 422);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
@@ -1154,5 +1151,15 @@ class ProcurementController extends Controller
             'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'description' => substr($procurement->long_description, 0, 30)
         ];
+    }
+
+    /**
+     * @param $procurement
+     * @param $proposal
+     * @return bool
+     */
+    private function isTenderProposalAcceptOrRejectable($procurement, $proposal)
+    {
+        return $procurement->status == Statuses::PENDING && BidStatuses::isAcceptOrRejectable($proposal->status);
     }
 }
