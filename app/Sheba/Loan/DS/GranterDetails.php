@@ -155,6 +155,6 @@ class GranterDetails implements Arrayable
 
     private function makePicName($photo)
     {
-        return $filename = Carbon::now()->timestamp . '_pro_pic' . $photo->extension();
+        return $filename = Carbon::now()->timestamp . '_pro_pic'. "." . $photo->extension();
     }
 }
