@@ -152,4 +152,5 @@ return [
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
     'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'lpg_service_id' => env('LPG_SERVICE_ID')
 ];

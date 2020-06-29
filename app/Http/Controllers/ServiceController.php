@@ -58,10 +58,11 @@ class ServiceController extends Controller
             $scope = ['start_price'];
             if ($request->has('is_business')) $services = $services->publishedForBusiness();
             if ($request->has('is_b2b')) $services->publishedForB2B();
+            if ($request->has('is_ddn')) $services->publishedForDdn();
             $services = $services->skip($offset)->take($limit)->get();
             $services = $this->serviceRepository->getpartnerServicePartnerDiscount($services);
             $services = $this->serviceRepository->addServiceInfo($services, $scope);
-            if ($request->has('is_business')) {
+            if ($request->has('is_business') || $request->has('is_ddn')) {
                 $categories = $services->unique('category_id')->pluck('category_id')->toArray();
                 $master_categories = Category::select('id', 'parent_id')->whereIn('id', $categories)->get()
                     ->pluck('parent_id', 'id')->toArray();
@@ -76,13 +77,24 @@ class ServiceController extends Controller
         }
     }
 
+    public function getLpg(Request $request, ApproximatePriceCalculator $approximatePriceCalculator,
+                           PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
+                           JobDiscountHandler $job_discount_handler)
+    {
+
+        $lpg_service_id = config('sheba.lpg_service_id');
+        return $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
+            $job_discount_handler);
+    }
+
     public function get($service, Request $request, ApproximatePriceCalculator $approximatePriceCalculator,
                         PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
                         JobDiscountHandler $job_discount_handler)
     {
-        ini_set('memory_limit', '2048M');
-        $service = Service::where('id', $service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
 
+
+        ini_set('memory_limit', '2048M');
+        $service = Service::where('id', (int)$service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
         $service_groups = $service->first()->groups;
         $offers = collect();
         if ($service_groups) {
@@ -132,6 +144,7 @@ class ServiceController extends Controller
                 }
                 $service_breakdown = $total_breakdown;
             }
+
         } else {
             $service_breakdown = [
                 [
@@ -144,7 +157,7 @@ class ServiceController extends Controller
             ];
         }
 
-        $service = $request->has('is_business') ? $service->publishedForBusiness() : $service->publishedForAll();
+        $service = $request->has('is_business') ? $service->publishedForBusiness() : ($request->has('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
         $service = $service->first();
 
         if ($service == null) return api_response($request, null, 404);
@@ -228,7 +241,8 @@ class ServiceController extends Controller
             array_add($service, 'end_time', null);
         }
 
-        if ($request->has('is_business')) {
+
+        if ($request->has('is_business') || $request->has('is_ddn')) {
             $questions = null;
             $service['type'] = 'normal';
             if ($service->variable_type == 'Options') {
