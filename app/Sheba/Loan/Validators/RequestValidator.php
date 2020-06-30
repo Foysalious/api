@@ -8,6 +8,7 @@ use App\Models\BankUser;
 use App\Models\PartnerBankLoan;
 use App\Models\User;
 use Sheba\Dal\RetailerMembers\RetailerMember;
+use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 
 class RequestValidator
@@ -27,7 +28,7 @@ class RequestValidator
     public function validate()
     {
         $user = $this->user;
-        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $this->loan->bank_id)) && !($user instanceof RetailerMember)) {
+        if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $this->loan->bank_id)) && !($user instanceof StrategicPartnerMember)) {
             throw new NotAllowedToAccess();
         }
     }
