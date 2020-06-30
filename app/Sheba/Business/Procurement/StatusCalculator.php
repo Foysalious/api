@@ -18,7 +18,7 @@ class StatusCalculator
     const ACCEPTED = "Hired";
 
     const IS_SERVED = "served";
-    const SERVED = "Served";
+    const SERVED = "Closed";
 
     const EXPIRED = "Expired";
 
