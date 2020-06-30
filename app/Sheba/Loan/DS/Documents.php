@@ -68,9 +68,9 @@ class Documents implements Arrayable
     /**
      * @return array
      */
-    public function completion()
+    public function completion($loan_type = null)
     {
-        $data = $this->toArray();
+        $data = $this->toArray($loan_type);
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
@@ -82,9 +82,9 @@ class Documents implements Arrayable
     /**
      * @inheritDoc
      */
-    public function toArray()
+    public function toArray($loan_type = null)
     {
-        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
+        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile($loan_type);
     }
 
     private function getDataFromLoanRequest()
@@ -150,28 +150,34 @@ class Documents implements Arrayable
         ];
     }
 
-    private function getDataFromProfile()
+    private function getDataFromProfile($loan_type = null)
     {
-        return [
+        $data = [
             'picture'           => $this->profile->pro_pic,
             'is_verified'       => $this->resource->is_verified,
             'nid_image_front'   => $this->profile->nid_image_front,
             'nid_image_back'    => $this->profile->nid_image_back,
+            'business_document' => [
+                'tin_certificate'          => $this->profile->tin_certificate,
+                'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
+                'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
+            ]
+        ];
+        if($loan_type && constants('LOAN_TYPE')["micro_loan"] === $loan_type) {
+            return $data;
+        }
+        $nomineeWithGrantor = [
             'nominee_document'  => [
-                'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
-                'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
-                'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
+            'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
+            'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
+            'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
             ],
             'grantor_document'  => [
                 'picture'         => !empty($this->granter) ? $this->granter->pro_pic : null,
                 'nid_front_image' => !empty($this->granter) ? $this->granter->nid_image_front : null,
                 'nid_back_image'  => !empty($this->granter) ? $this->granter->nid_image_back : null,
-            ],
-            'business_document' => [
-                'tin_certificate'          => $this->profile->tin_certificate,
-                'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
-                'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
-            ],
+            ]
         ];
+        return array_merge($data,$nomineeWithGrantor);
     }
 }

@@ -358,8 +358,8 @@ class LoanV2Controller extends Controller
             $resource = $request->manager_resource;
             $info     = $loan->setPartner($partner)->setResource($resource)->documents();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
-                'completion' => $info->completion()
+                'info'       => $info->toArray($request->loan_type),
+                'completion' => $info->completion($request->loan_type)
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
