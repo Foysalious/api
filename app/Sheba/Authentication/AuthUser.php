@@ -156,7 +156,7 @@ class AuthUser
      */
     public function getAvatar()
     {
-        $model = $this->payload['avatar']['type'] !== 'retailermember' ? "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type'])) : "Sheba\\Dal\\RetailerMembers\\RetailerMember";
+        $model = $this->payload['avatar']['type'] !== 'strategicpartnermember' ? "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type'])) : "Sheba\\Dal\\StrategicPartnerMember\\StrategicPartnerMember";
         return $model::find($this->payload['avatar']['type_id']);
     }
 
