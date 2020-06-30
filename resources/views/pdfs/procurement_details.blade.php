@@ -313,6 +313,13 @@ if (!function_exists('showLongAnswer')) {
         font-size: 10px;
     }
 
+    hr.style-one {
+        margin-top: 5px;
+        border: 0;
+        height: 1px;
+        background: #333;
+        opacity: 0.4;
+    }
 </style>
 <head>
     <title>Procurement Details</title>
@@ -338,7 +345,7 @@ if (!function_exists('showLongAnswer')) {
         </tr>
         <tr>
             <td>
-                <hr style="margin-top: 5px">
+                <hr class="style-one">
             </td>
         </tr>
     </table>
@@ -536,6 +543,7 @@ if (!function_exists('showLongAnswer')) {
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
+
 
 
 

@@ -110,6 +110,7 @@
             height: 40px;
             border-radius: 5px;
             border: solid 1px rgba(0, 0, 0, 0.05);
+            border-right: 14px solid transparent
         }
 
         .companyInfoName {
@@ -192,6 +193,14 @@
             padding: 4px 20px 20px 20px;
         }
 
+        hr.style-one {
+            margin-top: 5px;
+            border: 0;
+            height: 1px;
+            background: #333;
+            opacity: 0.4;
+        }
+
     </style>
 </head>
 <body style="margin-top: 20px; font-family: Lato">
@@ -216,7 +225,7 @@
         </tr>
         <tr>
             <td>
-                <hr style="margin-top: 5px">
+                <hr class="style-one">
             </td>
         </tr>
     </table>
@@ -227,10 +236,18 @@
                     <tr>
                         <td><img src="{{ $bid_details['vendor']['logo'] }}" alt="logo" class="logo"></td>
                         <td>
-                            <span class="companyInfoName">{{ $bid_details['vendor']['name'] }}</span> <br>
-                            <span><img src="{{public_path("images/star.png")}}" style="height: 8px"></span>
-                            <span class="companyInfoAddress">{{$bid_details['vendor']['rating']}}</span>
-                            <span class="companyInfoAddress">({{$bid_details['vendor']['total_rating']}} ratings)</span>
+                            <table style="border: 0;">
+                                <tr>
+                                    <td colspan="3" class="companyInfoName">{{ $bid_details['vendor']['name'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <span><img src="{{public_path("images/star.png")}}" style="height: 8px"></span>
+                                        <span class="companyInfoAddress">{{$bid_details['vendor']['rating']}}</span>
+                                        <span class="companyInfoAddress">({{$bid_details['vendor']['total_rating']}} ratings)</span>
+                                    </td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
@@ -420,6 +437,8 @@
             $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
             $pdf->page_text($x, $y, $text, $font, $size);
         }
+
+
 
 
 </script>

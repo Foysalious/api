@@ -17,6 +17,9 @@ class StatusCalculator
     const IS_ACCEPTED = "accepted";
     const ACCEPTED = "Hired";
 
+    const IS_SERVED = "served";
+    const SERVED = "Served";
+
     const EXPIRED = "Expired";
 
     public static function resolveStatus(Procurement $procurement)
@@ -25,6 +28,7 @@ class StatusCalculator
         if ($procurement->is_published == self::IS_DRAFT) return self::DRAFT;
         if ($procurement->status == self::IS_PENDING) return self::PENDING;
         if ($procurement->status == self::IS_ACCEPTED) return self::ACCEPTED;
+        if ($procurement->status == self::IS_SERVED) return self::SERVED;
         return 'N/A';
     }
 

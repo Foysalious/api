@@ -259,6 +259,9 @@ class ProcurementController extends Controller
         if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
+        if ($status === 'served') return collect($procurements)->filter(function ($procurement) use ($status) {
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
     }
 
     /**
