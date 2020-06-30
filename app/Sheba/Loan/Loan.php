@@ -236,8 +236,6 @@ class Loan
 
     /**
      * @throws AlreadyRequestedForLoan
-     * @throws NotApplicableForLoan
-     * @throws ReflectionException
      */
     public function validate()
     {
@@ -640,9 +638,10 @@ class Loan
      */
     private function getRunningLoan()
     {
-        $running_term_loan  = !$this->partner->loan()->type('term')->get()->isEmpty() ? $this->partner->loan()->type('term')->get()->last()->toArray() : [];
-        $running_micro_loan = !$this->partner->loan()->type('micro')->get()->isEmpty() ? $this->partner->loan()->type('micro')->get()->last()->toArray() : [];
-        if (count($running_term_loan) && count($running_micro_loan))
+
+        $running_term_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->last()->toArray() : [];
+        if(count($running_term_loan) && count($running_micro_loan))
             return [
                 ["data" => (new RunningApplication($running_term_loan))->toArray(), "icon" => Statics::RUNNING_TERM_LOAN_ICON],
                 ["data" => (new RunningApplication($running_micro_loan))->toArray(), "icon" => Statics::RUNNING_MICRO_LOAN_ICON]

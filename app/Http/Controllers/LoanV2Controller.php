@@ -127,8 +127,8 @@ class LoanV2Controller extends Controller
             $new      = $request->new;
             $homepage = $loan->setPartner($partner)->setResource($resource)->homepageV2();
             if (empty($new))
-                if(isset($homepage['type']) && isset($homepage['duration']) && $homepage['type'] == constants('LOAN_TYPE')["term_loan"])
-                    $homepage['duration'] = $homepage['duration'] / 12;
+                if(isset($homepage['running_loan'][0]['data']['duration']) && $homepage['running_loan'][0]['data']['type'] == "term")
+                    $homepage['running_loan'][0]['data']['duration'] = $homepage['running_loan'][0]['data']['duration']/ 12;
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
