@@ -36,6 +36,7 @@ use Sheba\Business\Bid\Statuses as BidStatuses;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\RequestHandler;
+use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
@@ -713,9 +714,12 @@ class ProcurementController extends Controller
         if ($request->has('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
         if ($request->has('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
 
+        $procurement_status = ProcurementStatusCalculator::resolveStatus($procurement);
+
         return api_response($request, null, 200, [
-            'invited_partners' => $invited_partners,
-            'is_invitation_available' => $is_invitation_available,
+            'invited_partners'          => $invited_partners,
+            'is_invitation_available'   => $is_invitation_available,
+            'procurement_status'        => $procurement_status
         ]);
     }
 
