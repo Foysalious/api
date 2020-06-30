@@ -31,7 +31,6 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
-use ReflectionException;
 use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Bid\Statuses as BidStatuses;
 use Sheba\Business\Procurement\Creator;
@@ -605,7 +604,7 @@ class ProcurementController extends Controller
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
-        $procurement = $this->procurementRepository->find($procurement);
+        $procurement = $procurement_repository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
