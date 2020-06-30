@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DocumentDeleter;
@@ -781,24 +782,51 @@ class LoanController extends Controller
             return api_response($request, null, 500);
         }
     }
-    public function uploadRetailerList(Request $request, PartnerBankLoan $partner_bank_loan)
+    public function uploadRetailerList(Request $request,Loan $loan)
     {
+        try{
 
-        $count = 0;
-        $file = $this->getExcelDataFilesPath() . '/robi_retailer_list.csv';
-        Excel::load($file, function ($reader) use (&$count) {
-            $results = $reader->get();
-            foreach ($results as $row) {
-                $location = Location::find(intval($row->id));
-                if ($location) {
-                    $geo = json_decode($location->geo_informations);
-                    $decoded_geo = json_decode($row->geo);
-                    $geo->geometry=$decoded_geo->geometry;
-                    $location->geo_informations = json_encode($geo);
-                    $location->update();
-                    $count++;
-                }
-            }
-        });
+             $this->validate($request, [
+                 'retailers' => 'required|mimes:csv,txt',
+                 'strategic_partner_id' => 'required'
+            ]);
+
+            $uploaded_csv = $request->file('retailers');
+            $filename         = 'robi_retailers_' . Carbon::now()->timestamp . '.' . $uploaded_csv->extension();
+            $this->fileRepository->uploadToCDN($filename,$uploaded_csv, 'dls_v2/robi/retailer_list/');
+
+            $mobiles = [];
+            Excel::load($uploaded_csv, function ($reader) use (&$mobiles) {
+                $results = $reader->get();
+                $mobiles = $results->map(function($results){
+                    return formatMobile($results['mobile']);
+                });
+            });
+
+            $existing_mobiles = Retailer::where('strategic_partner_id',$request->strategic_partner_id)->pluck('mobile');
+            $to_insert = array_diff($mobiles->toArray(),$existing_mobiles->toArray());
+            $to_insert =  collect($to_insert)->map(function($to_insert) use($request){
+                return [
+                    'strategic_partner_id' => $request->strategic_partner_id,
+                    'mobile' => $to_insert,
+                    'created_by' => 1,
+                    'created_by_name' => 1,
+                ];
+            });
+
+            Retailer::insert($to_insert);
+
+            return api_response($request, null, 200);
+        }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
+        catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
     }
+
 }
