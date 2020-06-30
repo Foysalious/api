@@ -691,8 +691,8 @@ class Loan
 
     private function getRunningLoan()
     {
-        $running_term_loan = !$this->partner->loan()->type('term')->get()->isEmpty() ? $this->partner->loan()->type('term')->get()->last()->toArray() : [];
-        $running_micro_loan = !$this->partner->loan()->type('micro')->get()->isEmpty() ? $this->partner->loan()->type('micro')->get()->last()->toArray() : [];
+        $running_term_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->last()->toArray() : [];
         if(count($running_term_loan) && count($running_micro_loan))
             return [
                 ["data" => (new RunningApplication($running_term_loan))->toArray(), "icon" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png"],
