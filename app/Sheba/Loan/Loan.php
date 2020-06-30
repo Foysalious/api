@@ -59,6 +59,7 @@ class Loan
     private $zipDir;
     private $user;
     private $finalFields;
+    private $type;
 
     public function __construct()
     {
@@ -113,6 +114,12 @@ class Loan
     public function setResource($resource)
     {
         $this->resource = $resource;
+        return $this;
+    }
+
+    public function setType($type)
+    {
+        $this->type = $type;
         return $this;
     }
 
@@ -305,6 +312,7 @@ class Loan
             $data[$key] = $val->completion();
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
+        $data['details_link'] = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
         return $data;
     }
 
