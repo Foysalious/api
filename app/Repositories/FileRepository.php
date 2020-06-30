@@ -52,7 +52,7 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return config('sheba.S3_URL') . $folder . $filename;
+        return config('sheba.s3_url') . $folder . $filename;
     }
 
     public function uploadImageToCDN($folder, $filename, $image)
@@ -69,6 +69,6 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return config('sheba.S3_URL') . $folder . '/' . $filename;
+        return config('sheba.s3_url') . $folder . '/' . $filename;
     }
 }
