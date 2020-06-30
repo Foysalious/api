@@ -4,6 +4,7 @@ use App\Models\LocationService;
 use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use Illuminate\Support\Collection;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -59,8 +60,6 @@ class ServiceSubscriptionInfo
     {
         $serviceSubscription = $this->serviceSubscription;
         $price_range = $this->approximatePriceCalculator->setLocationService($this->locationService)->setSubscription($this->serviceSubscription)->getPriceRange();
-        $serviceSubscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
-        $serviceSubscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
         $serviceSubscription['price_applicable_for'] = $this->approximatePriceCalculator->getSubscriptionType();
         $serviceSubscription['thumb'] = $this->serviceSubscription->service['thumb'];
         $serviceSubscription['banner'] = $this->serviceSubscription->service['banner'];
@@ -80,11 +79,19 @@ class ServiceSubscriptionInfo
         $prices = json_decode($this->locationService->prices);
         $this->price_calculation->setService($this->serviceSubscription->service)->setLocationService($this->locationService);
         $this->upsell_calculation->setService($this->serviceSubscription->service)->setLocationService($this->locationService);
-
-        $serviceSubscription['fixed_price'] = $this->serviceSubscription->service->isFixed() && $this->locationService ? $this->price_calculation->getUnitPrice() : null;
-        $serviceSubscription['fixed_upsell_price'] = $this->serviceSubscription->service->isFixed() && $this->locationService ? $this->upsell_calculation->getAllUpsellWithMinMaxQuantity() : null;
-        $serviceSubscription['option_prices'] = isset($prices) && $this->locationService ? $this->serviceSubscription->service->isOptions() ? $this->formatOptionWithPrice($prices) : null :null;
-
+        $serviceSubscription['service_details']['fixed_price'] = $this->serviceSubscription->service->isFixed() && $this->locationService ? $this->price_calculation->getUnitPrice() : null;
+        $serviceSubscription['service_details']['fixed_upsell_price'] = $this->serviceSubscription->service->isFixed() && $this->locationService ? $this->upsell_calculation->getAllUpsellWithMinMaxQuantity() : null;
+        $serviceSubscription['service_details']['option_prices'] = isset($prices) && $this->locationService ? $this->serviceSubscription->service->isOptions() ? $this->formatOptionWithPrice($prices) : null :null;
+        $serviceSubscription['service_details']['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
+        $serviceSubscription['service_details']['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+        $serviceSubscription['service_details']['slug'] = $this->serviceSubscription->service->getSlug();
+        /** @var ServiceDiscount $discount */
+        $discount = $this->locationService->discounts()->running() ? $this->locationService->discounts()->running()->first() : null;
+        $serviceSubscription['service_details']['discount'] = $discount ? [
+            'value' => (double)$discount->amount,
+            'is_percentage' => $discount->isPercentage(),
+            'cap' => (double)$discount->cap
+        ] : null;
         $lowest_service_subscription_discount = $this->serviceSubscription->discounts->first();
         $serviceSubscription['discount'] = $lowest_service_subscription_discount ? [
             'discount_amount' => $lowest_service_subscription_discount->discount_amount,
