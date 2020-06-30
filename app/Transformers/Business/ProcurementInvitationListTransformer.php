@@ -2,6 +2,7 @@
 
 use App\Models\Procurement;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 
 class ProcurementInvitationListTransformer extends TransformerAbstract
 {
@@ -27,6 +28,7 @@ class ProcurementInvitationListTransformer extends TransformerAbstract
                 'logo' => $partner->logo,
             ],
             'status' => $this->generateStatus($partner),
+            'procurement_status' => ProcurementStatusCalculator::resolveStatus($this->procurement),
             'invited_on' => $invitation->created_at->format('h:i a').','.$invitation->created_at->format('d/m/y')
         ];
     }
