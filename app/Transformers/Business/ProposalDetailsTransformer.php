@@ -23,7 +23,6 @@ class ProposalDetailsTransformer extends TransformerAbstract
     {
         $this->procurement = $procurement;
         $price_quotations = $this->generateItemDataBy();
-
         /*$total_proposed_budget = $price_quotations ? $price_quotations->sum('proposed_budget') : 0.00;
         $total_final_budget = $price_quotations ? $price_quotations->sum('final_budget') : 0.00;*/
 
@@ -33,6 +32,7 @@ class ProposalDetailsTransformer extends TransformerAbstract
         $partner = $this->bid->bidder;
         $start_date = $this->procurement->procurement_start_date->format('d/m/y');
         $end_date = $this->procurement->procurement_end_date->format('d/m/y');
+        $proposed_budget = $this->bid->bidder_price ?: $this->bid->price;
 
         return [
             'procurement_id' => $this->procurement->id,
@@ -53,7 +53,7 @@ class ProposalDetailsTransformer extends TransformerAbstract
             'payment_options' => $this->procurement->payment_options,
             'proposal' => $this->bid->proposal,
             'final_budget' => (double)$this->bid->price,
-            'proposed_budget' => (double)$this->bid->bidder_price,
+            'proposed_budget' => (double)$proposed_budget,
             'bid_id' => $this->bid->id,
             'bid_terms' => $this->bid->terms,
             'bid_policies' => $this->bid->policies,
