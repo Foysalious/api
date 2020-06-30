@@ -2,6 +2,8 @@
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
 use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
+use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\Type;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
@@ -159,5 +161,23 @@ class Procurement extends Model implements PayableType
             'last_date_of_submission_timestamp' => $this->last_date_of_submission->timestamp,
             '_tags' => $this->getTagNamesAttribute()->toArray()
         ];
+    }
+
+    /**
+     * Scope a query to only include jobs of a given status.
+     *
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeOpenForPublic($query)
+    {
+        return $query
+            ->whereIn('status', Statuses::getOpen())
+            ->where('last_date_of_submission', '>=', Carbon::now());
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', 1);
     }
 }
