@@ -54,8 +54,10 @@ class LeaveController extends Controller
         $this->validate($request, [
             'sort' => 'sometimes|required|string|in:asc,desc'
         ]);
+
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
 
