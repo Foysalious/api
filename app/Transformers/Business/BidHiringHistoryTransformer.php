@@ -15,10 +15,10 @@ class BidHiringHistoryTransformer extends TransformerAbstract
                 'name' => $bidder->name,
                 'image' => $bid->bidder->logo,
             ],
-            'created_at' => $bid->created_at->format('h:i a').','.$bid->created_at->format('d F Y'),
+            'created_at' => $bid->created_at->format('h:i a') . ',' . $bid->created_at->format('d F Y'),
             'status' => HiringHistoryStatusCalculator::resolveStatus($bid),
             'quotation_price' => $bid->price,
-            'requested_price' => $bid->price,
+            'requested_price' => $bid->bidder_price > 0 ? $bid->bidder_price : $bid->price,
         ];
     }
 }
