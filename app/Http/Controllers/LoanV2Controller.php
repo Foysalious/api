@@ -125,7 +125,7 @@ class LoanV2Controller extends Controller
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $new      = $request->new;
-            $homepage = $loan->setPartner($partner)->setResource($resource)->newHomepage();
+            $homepage = $loan->setPartner($partner)->setResource($resource)->homepageV2();
             if (empty($new))
                 if(isset($homepage['running_loan'][0]['data']['duration']) && $homepage['running_loan'][0]['data']['type'] == "term")
                     $homepage['running_loan'][0]['data']['duration'] = $homepage['running_loan'][0]['data']['duration']/ 12;
