@@ -28,6 +28,7 @@ class Order
     /** @var VendorOrder */
     private $vendorOrder;
     private $paidAmount;
+    private $dueAmount;
     private $isInstant;
     private $collectableAmount;
     private $vendorCollectableAmount;
@@ -48,6 +49,17 @@ class Order
     public function setVendorCollectableAmount($vendorCollectableAmount)
     {
         $this->vendorCollectableAmount = $vendorCollectableAmount;
+        return $this;
+    }
+
+    public function getDueAmount()
+    {
+        return $this->dueAmount;
+    }
+
+    public function setDueAmount($dueAmount)
+    {
+        $this->dueAmount = (double)$dueAmount;
         return $this;
     }
 
