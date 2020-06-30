@@ -1,5 +1,6 @@
 <?php
 return [
+    "BLOG_URL" => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',
@@ -576,6 +577,12 @@ return [
             'short_name' => 'TEL',
             'prefix'     => 'T',
             'department' => 'TEL'
+        ],
+        'DDN'        => [
+            'name'      => 'DDN',
+            'short_name'=> 'DDN',
+            'prefix'    =>  'D',
+            'department'=>  'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [

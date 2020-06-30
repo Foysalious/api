@@ -4,10 +4,12 @@ use App\Models\PosCustomer;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
 
-class PaymentLinkTransformer {
+class PaymentLinkTransformer
+{
     private $response;
 
-    public function getResponse() {
+    public function getResponse()
+    {
         return $this->response;
     }
 
@@ -15,38 +17,44 @@ class PaymentLinkTransformer {
      * @param stdClass $response
      * @return $this
      */
-    public function setResponse(stdClass $response) {
+    public function setResponse(stdClass $response)
+    {
         $this->response = $response;
         return $this;
     }
 
-    public function getLinkID() {
+    public function getLinkID()
+    {
         return $this->response->linkId;
     }
 
-
-    public function getReason() {
+    public function getReason()
+    {
         return $this->response->reason;
     }
 
-    public function getLink() {
+    public function getLink()
+    {
         return $this->response->link;
     }
 
-    public function getLinkIdentifier() {
+    public function getLinkIdentifier()
+    {
         return $this->response->linkIdentifier;
     }
 
-
-    public function getAmount() {
+    public function getAmount()
+    {
         return $this->response->amount;
     }
 
-    public function getIsActive() {
+    public function getIsActive()
+    {
         return $this->response->isActive;
     }
 
-    public function getIsDefault() {
+    public function getIsDefault()
+    {
         return $this->response->isDefault;
     }
 
@@ -65,7 +73,8 @@ class PaymentLinkTransformer {
     /**
      * @return HasWalletTransaction
      */
-    public function getPaymentReceiver() {
+    public function getPaymentReceiver()
+    {
         $model_name = "App\\Models\\" . ucfirst($this->response->userType);
         return $model_name::find($this->response->userId);
     }
@@ -73,7 +82,8 @@ class PaymentLinkTransformer {
     /**
      * @return null
      */
-    public function getPayer() {
+    public function getPayer()
+    {
         $order = $this->getTarget();
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
@@ -81,7 +91,8 @@ class PaymentLinkTransformer {
     /**
      * @return mixed
      */
-    public function getTarget() {
+    public function getTarget()
+    {
         if ($this->response->targetType) {
             $model_name = $this->resolveTargetClass();
             return $model_name::find($this->response->targetId);
@@ -89,13 +100,15 @@ class PaymentLinkTransformer {
             return null;
     }
 
-    private function resolveTargetClass() {
+    private function resolveTargetClass()
+    {
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
             return $model_name . 'PosOrder';
     }
 
-    private function getPaymentLinkPayer() {
+    private function getPaymentLinkPayer()
+    {
         $model_name = "App\\Models\\";
         if (isset($this->response->payerId)) {
             $model_name = $model_name . pamelCase($this->response->payerType);

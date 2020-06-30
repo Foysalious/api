@@ -19,10 +19,7 @@ class CustomHandler extends DingoHandler
      */
     protected $dontReport = [
         AuthorizationException::class,
-        HttpException::class,
-        ModelNotFoundException::class,
-        ValidationException::class,
-        ApiValidationException::class
+        HttpException::class
     ];
 
     /**
@@ -35,10 +32,16 @@ class CustomHandler extends DingoHandler
      */
     public function report(Exception $e)
     {
-        if (app()->bound('sentry') && $this->parentHandler->shouldReport($e)) {
-            app('sentry')->captureException($e);
-        }
-        parent::report($e);
+        /**
+         * Done in the render section.
+         * As, request is needed sometimes.
+         */
+
+        // if (app()->bound('sentry') && $this->parentHandler->shouldReport($e)) {
+        //     app('sentry')->captureException($e);
+        // }
+
+        // parent::report($e);
     }
 
     /**
@@ -53,7 +56,13 @@ class CustomHandler extends DingoHandler
     {
         $handler = HandlerFactory::get($request, $e);
 
-        if ($handler) return $handler->render();
+        if ($handler) {
+            if ($this->parentHandler->shouldReport($e)) {
+                $handler->report();
+            }
+
+            return $handler->render();
+        }
 
         return parent::render($request, $e);
     }
