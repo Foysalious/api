@@ -207,14 +207,13 @@ class Loan
 
     public function newHomepage()
     {
-        $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
         $data    = [
             'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_1440_628.jpg',
             'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_720_324.jpg',
         ];
 
         $data = array_merge($data, $this->getWebViews());
-        $data = array_merge($data, (new RunningApplication($running))->toArray());
+        $data = array_merge($data, ['running_loan' => $this->getRunningLoan()]);
         $data = array_merge($data, $this->getLoanList());
         $data = array_merge($data, ['details' => self::homepageStatics()]);
         return $data;
@@ -677,14 +676,36 @@ class Loan
                 [
                     'title'        => 'Micro Loan',
                     'title_bn'     => 'রবি টপআপ লোন',
-                    'loan_type'    => constants('LOAN_TYPE')["micro_loan"]
+                    'loan_type'    => constants('LOAN_TYPE')["micro_loan"],
+                    'loan_icon'    => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
                 ],
                 [
                     'title'        => 'Term Loan',
                     'title_bn'     => 'টার্ম লোন',
-                    'loan_type'    => constants('LOAN_TYPE')["term_loan"]
+                    'loan_type'    => constants('LOAN_TYPE')["term_loan"],
+                    'loan_icon'    => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
                 ]
             ]
         ];
+    }
+
+    private function getRunningLoan()
+    {
+        $running_term_loan = !$this->partner->loan()->type('term')->get()->isEmpty() ? $this->partner->loan()->type('term')->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type('micro')->get()->isEmpty() ? $this->partner->loan()->type('micro')->get()->last()->toArray() : [];
+        if(count($running_term_loan) && count($running_micro_loan))
+            return [
+                ["data" => (new RunningApplication($running_term_loan))->toArray(), "icon" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png"],
+                ["data" => (new RunningApplication($running_micro_loan))->toArray(), "icon" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png"]
+            ];
+        if(count($running_term_loan))
+            return [
+                ["data" => (new RunningApplication($running_term_loan))->toArray(), "icon" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png"]
+            ];
+        if(!count($running_micro_loan))
+            return [
+                ["data" => (new RunningApplication($running_micro_loan))->toArray(), "icon" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png"]
+            ];
+        return [];
     }
 }
