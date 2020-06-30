@@ -30,7 +30,7 @@ abstract class BaseOrderComplete extends PaymentComplete
         $job = $partner_order->getActiveJob();
         if ($job->isOnlinePaymentDiscountApplicable()) {
             $payment_gateway = $this->payment->paymentDetails[0]->method;
-            if ($payment_gateway == 'ssl') $payment_gateway = PaymentStrategy::$ONLINE;
+            if ($payment_gateway == 'ssl') $payment_gateway = PaymentStrategy::ONLINE;
             $discount_checking_params = (new JobDiscountCheckingParams())
                 ->setDiscountableAmount($partner_order->due)
                 ->setOrderAmount($partner_order->grossAmount)

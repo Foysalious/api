@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
@@ -162,8 +163,12 @@ class SubscriptionOrderAdapter
         $job->preferred_time_end = $preferred_time->getEndString();
         $job->job_additional_info = $this->subscriptionOrder->additional_info;
         $job->category_answers = $this->subscriptionOrder->additional_info;
-        $job->commission_rate = $this->subscriptionOrder->category->commission($this->subscriptionOrder->partner_id);
-        $job->material_commission_rate = config('sheba.material_commission_rate');
+
+        $commissions = (new CommissionCalculator())->setCategory($this->subscriptionOrder->category)
+            ->setPartner($this->subscriptionOrder->partner);
+        $job->commission_rate = $commissions->getServiceCommission();
+        $job->material_commission_rate = $commissions->getMaterialCommission();
+
         $job->status = JobStatuses::PENDING;
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
