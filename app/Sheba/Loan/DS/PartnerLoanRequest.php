@@ -168,6 +168,7 @@ class PartnerLoanRequest implements Arrayable
             'monthly_installment' => $this->partnerBankLoan->monthly_installment,
             'loan_amount' => $this->partnerBankLoan->loan_amount,
             'loan_type'   => $this->partnerBankLoan->type,
+            'reject_reason' => $this->getLoanRejectReason(),
             'total_installment' => (int)$this->partnerBankLoan->duration,
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
@@ -299,6 +300,16 @@ class PartnerLoanRequest implements Arrayable
     public function getDocumentsForAgents()
     {
         return $this->final_details->getDocumentsForAgents();
+    }
+
+    public function getLoanRejectReason()
+    {
+        $statuses     = constants('LOAN_STATUS');
+        $last_status  = $this->partnerBankLoan->changeLogs()->where('to', $statuses['declined'])->orWhere('to', $statuses['rejected'])->get()->last();
+        if(isset($last_status))
+            return $last_status->description;
+
+        return null;
     }
 
 }
