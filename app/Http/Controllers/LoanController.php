@@ -782,40 +782,34 @@ class LoanController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function uploadRetailerList(Request $request,Loan $loan)
     {
         try{
-
-             $this->validate($request, [
+            $this->validate($request, [
                  'retailers' => 'required|mimes:csv,txt',
                  'strategic_partner_id' => 'required'
             ]);
+            $loan->uploadRetailerList($request);
+            return api_response($request, null, 200);
+        }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
+        catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
 
-            $uploaded_csv = $request->file('retailers');
-            $filename         = 'robi_retailers_' . Carbon::now()->timestamp . '.' . $uploaded_csv->extension();
-            $this->fileRepository->uploadToCDN($filename,$uploaded_csv, 'dls_v2/robi/retailer_list/');
+    }
 
-            $mobiles = [];
-            Excel::load($uploaded_csv, function ($reader) use (&$mobiles) {
-                $results = $reader->get();
-                $mobiles = $results->map(function($results){
-                    return formatMobile($results['mobile']);
-                });
-            });
-
-            $existing_mobiles = Retailer::where('strategic_partner_id',$request->strategic_partner_id)->pluck('mobile');
-            $to_insert = array_diff($mobiles->toArray(),$existing_mobiles->toArray());
-            $to_insert =  collect($to_insert)->map(function($to_insert) use($request){
-                return [
-                    'strategic_partner_id' => $request->strategic_partner_id,
-                    'mobile' => $to_insert,
-                    'created_by' => 1,
-                    'created_by_name' => 1,
-                ];
-            });
-
-            Retailer::insert($to_insert);
-
+    public function strategicPartnerDashboard(Request $request,Loan $loan)
+    {
+        try{
+            $this->validate($request, [
+                'strategic_partner_id' => 'required'
+            ]);
             return api_response($request, null, 200);
         }
         catch (ValidationException $e) {
