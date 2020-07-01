@@ -117,7 +117,7 @@ class WalletController extends Controller
             $transaction = '';
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                 $spent_model = $payment->payable->getPayableType();
-                $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
+                $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->setLog('Service Purchase')->deduct($payment->payable->amount);
 
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
