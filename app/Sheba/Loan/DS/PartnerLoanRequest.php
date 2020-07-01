@@ -7,6 +7,7 @@ use App\Models\PartnerBankLoan;
 use App\Models\PartnerSubscriptionPackage;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\ModificationFields;
 
 class PartnerLoanRequest implements Arrayable
@@ -73,7 +74,7 @@ class PartnerLoanRequest implements Arrayable
     public function create($data)
     {
         if(!isset($data['type']) || !$data['type'])
-            $data['type'] = 'term';
+            $data['type'] = LoanTypes::TERM;
         $data['partner_id'] = $this->partner->id;
         $data['status'] = constants('LOAN_STATUS')['applied'];
         $data['interest_rate'] = (int)constants('LOAN_CONFIG')['interest'];
