@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
@@ -125,7 +126,7 @@ class LoanV2Controller extends Controller
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $new      = $request->new;
-            $homepage = $loan->setPartner($partner)->setResource($resource)->newHomepage();
+            $homepage = $loan->setPartner($partner)->setResource($resource)->homepageV2();
             if (empty($new))
                 if(isset($homepage['running_loan'][0]['data']['duration']) && $homepage['running_loan'][0]['data']['type'] == "term")
                     $homepage['running_loan'][0]['data']['duration'] = $homepage['running_loan'][0]['data']['duration']/ 12;
@@ -314,7 +315,7 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"])
+            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
                 $info     = $loan->setPartner($partner)->setResource($resource)->granterDetails();
             else
                 $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
@@ -333,7 +334,7 @@ class LoanV2Controller extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"]) {
+            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
                 $this->validate($request, GranterDetails::getValidator());
                 $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
             }
@@ -358,8 +359,8 @@ class LoanV2Controller extends Controller
             $resource = $request->manager_resource;
             $info     = $loan->setPartner($partner)->setResource($resource)->documents();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
-                'completion' => $info->completion()
+                'info'       => $info->toArray($request->loan_type),
+                'completion' => $info->completion($request->loan_type)
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

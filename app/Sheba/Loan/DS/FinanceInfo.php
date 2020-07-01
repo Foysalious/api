@@ -8,6 +8,7 @@ use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use ReflectionException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -41,9 +42,9 @@ class FinanceInfo implements Arrayable
             'acc_no' => 'required|string',
             'bank_name' => 'required|string',
             'branch_name' => 'required|string',
-            'acc_type' => $loan_type && $loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|in:savings,current' : "string|in:savings,current",
-            'bkash_no' => $loan_type && $loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|mobile:bd' : "string|mobile:bd",
-            'bkash_account_type' => $loan_type && $loan_type == constants('LOAN_TYPE')["micro_loan"] ? 'required|string|in:personal,agent,merchant' : "string|in:personal,agent,merchant"
+            'acc_type' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|in:savings,current' : "string|in:savings,current",
+            'bkash_no' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|mobile:bd' : "string|mobile:bd",
+            'bkash_account_type' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|in:personal,agent,merchant' : "string|in:personal,agent,merchant"
         ];
     }
 

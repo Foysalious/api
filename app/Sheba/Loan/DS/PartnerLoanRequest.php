@@ -166,6 +166,7 @@ class PartnerLoanRequest implements Arrayable
             ],
             'monthly_installment' => $this->partnerBankLoan->monthly_installment,
             'loan_amount' => $this->partnerBankLoan->loan_amount,
+            'loan_type'   => $this->partnerBankLoan->type,
             'total_installment' => (int)$this->partnerBankLoan->duration,
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
@@ -298,4 +299,5 @@ class PartnerLoanRequest implements Arrayable
     {
         return $this->final_details->getDocumentsForAgents();
     }
+
 }
