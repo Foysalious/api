@@ -5,6 +5,7 @@ namespace Sheba\Loan\DS;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -163,7 +164,7 @@ class Documents implements Arrayable
                 'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
             ]
         ];
-        if($loan_type && constants('LOAN_TYPE')["micro_loan"] === $loan_type) {
+        if(LoanTypes::MICRO === $loan_type) {
             return $data;
         }
         $nomineeWithGrantor = [
