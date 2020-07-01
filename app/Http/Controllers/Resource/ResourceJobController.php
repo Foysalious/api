@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
@@ -18,6 +19,7 @@ use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
 use Sheba\UserAgentInformation;
+use Throwable;
 
 class ResourceJobController extends Controller
 {
@@ -102,9 +104,9 @@ class ResourceJobController extends Controller
             $response = $reschedule_job->reschedule();
             return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (ValidationException $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
 
     }
@@ -184,8 +186,48 @@ class ResourceJobController extends Controller
             if (count($quantity) > 0) $updateRequest->setQuantity($quantity);
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
         }
+    }
+
+    public function getAllHistoryJobs(Request $request, JobList $job_list)
+    {
+        $this->validate($request, [
+            'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+        ]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $jobs = $job_list->setResource($resource);
+        if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->has('year')) $jobs = $jobs->setYear($request->year);
+        if ($request->has('month')) $jobs = $jobs->setMonth($request->month);
+        $jobs = $jobs->getHistoryJobs();
+        return api_response($request, $jobs, 200, ['jobs' => ['years' => $jobs]]);
+    }
+
+    public function jobSearch(Request $request, JobList $job_list)
+    {
+        $this->validate($request, ['q' => 'required']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if (substr($request->q, 1, 1) == '-') {
+            $order_id = (int)substr($request->q, 2) - config('sheba.order_code_start');
+            $results = $job_list->setResource($resource)->setOrderId($order_id)->getJobsFilteredByOrderId();
+            $order_code = $request->q;
+            $jobs = $results->filter(function ($job) use ($order_code) {
+                return $job['order_code'] == $order_code;
+            });
+        } else {
+            $jobs = $job_list->setResource($resource)->setQuery($request->q);
+            if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+            $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
+        }
+        if ($jobs->isEmpty()) return api_response($request, $jobs, 404);
+        return api_response($request, $jobs, 200, ['results' => $jobs]);
     }
 }

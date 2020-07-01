@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Sheba\BanglaConverter;
 use Sheba\Dal\Job\JobRepositoryInterface;
 use Sheba\Jobs\JobStatuses;
+use DB;
 
 class JobList
 {
@@ -21,6 +22,16 @@ class JobList
     private $firstJobFromList;
     private $actionCalculator;
     private $statusTagCalculator;
+    /** @var int $limit */
+    private $limit;
+    /** @var int $offset */
+    private $offset;
+    /** @var int $year */
+    private $year;
+    /** @var int $month */
+    private $month;
+    private $orderId;
+    private $query;
 
     public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
@@ -29,11 +40,67 @@ class JobList
         $this->jobInfo = $jobInfo;
         $this->actionCalculator = $actionCalculator;
         $this->statusTagCalculator = $statusTagCalculator;
+        $this->limit = 10;
+        $this->offset = 0;
+        $this->year = Carbon::now()->format('Y');
     }
 
     public function setResource(Resource $resource)
     {
         $this->resource = $resource;
+        return $this;
+    }
+
+    /**
+     * @param $limit
+     * @return $this
+     */
+    public function setLimit($limit)
+    {
+        $this->limit = $limit;
+        return $this;
+    }
+
+    /**
+     * @param $offset
+     * @return $this
+     */
+    public function setOffset($offset)
+    {
+        $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param $year
+     * @return $this
+     */
+    public function setYear($year)
+    {
+        $this->year = $year;
+        return $this;
+    }
+
+    /**
+     * @param $month
+     * @return $this
+     */
+    public function setMonth($month)
+    {
+        $this->month = $month;
+        return $this;
+    }
+
+    public function setOrderId($orderId)
+    {
+        $this->orderId = $orderId;
+        return $this;
+    }
+
+
+    public function setQuery($query)
+    {
+        $this->query = $query;
         return $this;
     }
 
@@ -83,6 +150,30 @@ class JobList
         return $this->formatJobs($jobs);
     }
 
+    public function getHistoryJobs()
+    {
+        $query = $this->jobRepository->getHistoryJobsForResource($this->resource->id);
+        $query = $this->historyJobsFilterQuery($query);
+        $jobs = $query->orderBy('closed_at', 'DESC')->skip($this->offset)->take($this->limit)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->groupJobsByYearAndMonth($jobs);
+        return $this->formatHistoryJobs($jobs);
+    }
+
+    public function getJobsFilteredByOrderId()
+    {
+        $jobs = $this->jobRepository->getJobsForResourceFilteredByOrderId($this->resource->id, $this->orderId)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        return $this->formatJobs($jobs);
+    }
+
+    public function getJobsFilteredByServiceOrCustomerName()
+    {
+        $jobs = $this->jobRepository->getJobsForResourceFilteredByServiceOrCustomerName($this->resource->id, $this->query)->skip($this->offset)->take($this->limit)->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        return $this->formatJobs($jobs);
+    }
+
     private function loadNecessaryRelations($jobs)
     {
         $jobs->load(['partnerOrder' => function ($q) {
@@ -107,23 +198,27 @@ class JobList
      */
     private function formatJobs(Collection $jobs)
     {
+
         $formatted_jobs = collect();
         foreach ($jobs as $job) {
             $job->partnerOrder->calculate(1);
             $formatted_job = collect();
             $formatted_job->put('id', $job->id);
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
+            $formatted_job->put('total_price', (double)$job->partnerOrder->totalPrice);
             $formatted_job->put('category_id', $job->category_id);
-            $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
-            $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress->location->name);
-            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
+            $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
+            $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
+            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
+            $formatted_job->put('rating', $job->review ? $job->review->rating : null);
             $formatted_job->put('order_status', $this->statusTagCalculator->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));
             $formatted_job->put('status', $job->status);
             $formatted_job->put('schedule_date', $job->schedule_date);
             $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
+            $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
@@ -145,5 +240,37 @@ class JobList
         return $jobs_summary;
     }
 
+    private function formatHistoryJobs(Collection $jobs_grouped_by_years)
+    {
+        $formatted_history_jobs = collect();
+        foreach ($jobs_grouped_by_years as $index => $jobs_of_a_year_grouped_by_months) {
+            $year = collect();
+            $year->put('value', $index);
+            $year->put('months', collect());
+            foreach ($jobs_of_a_year_grouped_by_months as $key => $jobs_of_a_month) {
+                $month = collect();
+                $month->put('value', $key);
+                $month->put('jobs', $this->formatJobs($jobs_of_a_month));
+                $year['months']->push($month);
+            }
+            $formatted_history_jobs->push($year);
+        }
+        return $formatted_history_jobs;
+    }
 
+    private function groupJobsByYearAndMonth($jobs)
+    {
+        $ungrouped_jobs = new Collection($jobs);
+        return $ungrouped_jobs->groupBy('year')->transform(function($item, $value) {
+            return $item->groupBy('month');
+        });
+    }
+
+    private function historyJobsFilterQuery($query)
+    {
+        $query = $query->join('partner_orders', 'partner_orders.id','=','jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
+        $query = $query->where('closed_at', '>=', Carbon::now()->subMonth(12));
+        if ($this->month) $query = $query->whereYear('closed_at', '=', $this->year)->whereMonth('closed_at', '=', $this->month);
+        return $query;
+    }
 }

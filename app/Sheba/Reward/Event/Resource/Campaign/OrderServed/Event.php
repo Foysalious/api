@@ -68,7 +68,7 @@ class Event extends Campaign
      */
     public function checkProgress(Rewardable $rewardable)
     {
-        $jobs = $this->getJobs();
+        $jobs = $this->getJobs($rewardable);
         $achieved = $this->rule->getAchievedValue($jobs);
         $this->rule->target->setAchieved($achieved);
         return (new TargetProgress($this->rule->target));
@@ -93,10 +93,10 @@ class Event extends Campaign
         return $participated_users;
     }
 
-    private function getJobs($resource_id = null)
+    private function getJobs(Rewardable $rewardable = null)
     {
         $this->initiateQuery();
-        if ($resource_id) $this->filterResource([$resource_id]);
+        if ($rewardable) $this->filterResource([$rewardable->id]);
         $this->filterConstraints();
         $this->rule->check($this->query);
         return $this->query->get();

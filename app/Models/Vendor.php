@@ -3,7 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;

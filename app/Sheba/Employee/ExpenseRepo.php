@@ -1,6 +1,5 @@
 <?php namespace Sheba\Employee;
 
-
 use App\Models\Attachment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -8,6 +7,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Dal\Expense\Expense;
 use Sheba\ModificationFields;
+use Throwable;
 
 class ExpenseRepo
 {
@@ -32,7 +32,7 @@ class ExpenseRepo
             $expenses = $expenses->get();
 
             return $expenses;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }
@@ -55,7 +55,7 @@ class ExpenseRepo
                 unset($expense->member);
             }
             return $expenses;
-        } catch (\Throwable $e){
+        } catch (Throwable $e){
             return false;
         }
 
@@ -64,7 +64,7 @@ class ExpenseRepo
     public function store(Request $request, $member)
     {
         try {
-            $expense = new Expense;
+            $expense = new Expense();
             $expense->amount = $request->amount;
             $expense->member_id = $member->id;
             $expense->remarks = $request->remarks;
@@ -76,7 +76,7 @@ class ExpenseRepo
             }
 
             return ['expense' => ['id' => $expense->id]];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -97,7 +97,7 @@ class ExpenseRepo
             if ($this->getAttachments($expense, $request)) $expense['attachment'] = $this->getAttachments($expense, $request);
 
             return ['expense' => $expense];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -117,14 +117,14 @@ class ExpenseRepo
             if (!$expense) return false;
 
             $expense->amount = $request->amount;
+            if ($request->remarks) $expense->remarks = $request->remarks;
+            if ($request->type) $expense->type = $request->type;
             $expense->save();
 
-            if ($request['file']) {
-                $this->storeAttachment($expense, $request, $member);
-            }
+            if ($request['file']) $this->storeAttachment($expense, $request, $member);
 
             return ['expense' => ['id' => $expense->id]];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return false;
         }
     }
@@ -138,7 +138,7 @@ class ExpenseRepo
             $expense->delete();
 
             return true;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
@@ -148,15 +148,14 @@ class ExpenseRepo
     {
         try {
             $data = $this->storeAttachmentToCDN($request->file('file'));
-            $attachment = $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
-            return $attachment;
+            return $expense->attachments()->save(new Attachment($this->withBothModificationFields($data)));
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return false;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
@@ -172,7 +171,7 @@ class ExpenseRepo
                 ->select('id', 'title', 'file', 'file_type', 'created_at')
                 ->get();
             return $attachment ? $attachment : false;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return false;
         }
