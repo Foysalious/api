@@ -20,6 +20,7 @@ use Sheba\Partner\PartnerStatuses;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\PartnerWallet\PaymentByBonusAndWallet;
 use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
+use Sheba\Subscription\SubscriptionPackage;
 
 class PartnerSubscriptionBilling
 {
@@ -38,6 +39,9 @@ class PartnerSubscriptionBilling
     private $isCollectAdvanceSubscriptionFee = false;
     public  $packageOriginalPrice;
     public  $adjustedCreditFromLastSubscription;
+    public  $newBillingType;
+    public  $oldBillingType;
+    public  $discountId;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -67,38 +71,51 @@ class PartnerSubscriptionBilling
     }
 
     /**
-     * @param PartnerSubscriptionPackage $old_package
-     * @param PartnerSubscriptionPackage $new_package
-     * @param                            $old_billing_type
-     * @param                            $new_billing_type
-     * @param                            $discount_id
+     * @param SubscriptionPackage|PartnerSubscriptionPackage $old_package
+     * @param SubscriptionPackage|PartnerSubscriptionPackage $new_package
+     * @param                                                $old_billing_type
+     * @param                                                $new_billing_type
+     * @param                                                $discount_id
      * @throws Exception
      */
-    public function runUpgradeBilling(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $discount_id)
+    public function runUpgradeBilling($old_package, $new_package, $old_billing_type, $new_billing_type, $discount_id)
     {
-        $discount          = 0;
-        $this->packageFrom = $old_package;
-        $this->packageTo   = $new_package;
-        if ($discount_id) $discount = $new_package->discountPriceFor($discount_id);
-        $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
-        $this->packageOriginalPrice               = ($new_package->originalPrice($new_billing_type) - $discount);
-        $this->packagePrice                       = $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription;
-        if ($this->packagePrice < 0) {
-            $this->refundRemainingCredit(abs($this->packagePrice));
-            $this->packagePrice = 0;
-        }
+        $this->discountId     = $discount_id;
+        $this->packageFrom    = $old_package;
+        $this->oldBillingType = $old_billing_type;
+        $this->packageTo      = $new_package;
+        $this->newBillingType = $new_billing_type;
+        $this->updateBillingInfo();
         $grade = $this->findGrade($new_package, $old_package, $new_billing_type, $old_billing_type);
-        if (in_array($grade, [PartnerSubscriptionChange::DOWNGRADE, PartnerSubscriptionChange::UPGRADE]) || !$this->partner->billing_start_date) {
+        if (in_array($grade, [PartnerSubscriptionChange::DOWNGRADE, PartnerSubscriptionChange::UPGRADE]) || empty($this->partner->billing_start_date)) {
             $this->partner->billing_start_date = $this->today;
             $this->partner->save();
         }
-        $this->billingDatabaseTransactions($this->packagePrice);
+        $this->billingDatabaseTransactions();
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->setPackage($old_package, $new_package, $old_billing_type, $new_billing_type)->shootLog($grade);
         }
         $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
     }
+
+    /**
+     * @throws InvalidPreviousSubscriptionRules
+     * @throws Exception
+     */
+    private function updateBillingInfo()
+    {
+        $discount = 0;
+        if ($this->discountId) $discount = $this->packageTo->discountPriceFor($this->discountId);
+        $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
+        $this->packageOriginalPrice               = !$this->isCollectAdvanceSubscriptionFee ? ($this->packageTo->originalPrice($this->newBillingType) - $discount) : $this->partner->alreadyCollectedSubscriptionFee();
+        $this->packagePrice                       = !$this->isCollectAdvanceSubscriptionFee ? $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription : $this->packageOriginalPrice;
+        if ($this->packagePrice < 0) {
+            $this->refundRemainingCredit(abs($this->packagePrice));
+            $this->packagePrice = 0;
+        }
+    }
+
 
     private function calculateRunningBillingCycleNumber()
     {
@@ -127,8 +144,9 @@ class PartnerSubscriptionBilling
     /**
      * @param $package_price
      */
-    private function billingDatabaseTransactions($package_price)
+    private function billingDatabaseTransactions()
     {
+        $package_price = $this->packagePrice;
         DB::transaction(function () use ($package_price) {
             if (!$this->isCollectAdvanceSubscriptionFee) {
                 $this->partnerTransactionForSubscriptionBilling($package_price);
@@ -144,16 +162,16 @@ class PartnerSubscriptionBilling
 
     private function revokeStatus()
     {
-        $log = PartnerStatusChangeLog::query()->where([
+        $log                   = PartnerStatusChangeLog::query()->where([
             ['partner_id', $this->partner->id],
             ['reason', 'Subscription Expired'],
             ['to', PartnerStatuses::INACTIVE],
             ['from', '!=', PartnerStatuses::INACTIVE]
         ])->orderBy('created_at', 'DESC')->first();
-        $this->partner->status = $log?$log->from:'Onboarded';
+        $this->partner->status = $log ? $log->from : 'Onboarded';
         $this->partner->statusChangeLogs()->create([
-            'from'            => $log?$log->to:'Inactive',
-            'to'              => $log?$log->from:'Onboarded',
+            'from'            => $log ? $log->to : 'Inactive',
+            'to'              => $log ? $log->from : 'Onboarded',
             'reason'          => 'Subscription Revoked',
             'log'             => 'Partner became active due to subscription purchase',
             'created_by'      => 'automatic',
