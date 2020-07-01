@@ -2,7 +2,9 @@
 
 
 use App\Models\Job;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\JobUpdateLog\JobUpdateLogRepositoryInterface;
+use Sheba\UserAgentInformation;
 
 class Creator
 {
@@ -10,6 +12,21 @@ class Creator
     private $job;
     private $jobUpdateLogRepository;
     private $message;
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
+    /** @var Model */
+    private $createdBy;
+
+    public function __construct(JobUpdateLogRepositoryInterface $jobUpdateLogRepository)
+    {
+        $this->jobUpdateLogRepository = $jobUpdateLogRepository;
+    }
+
+    public function setMessage($message)
+    {
+        $this->message = $message;
+        return $this;
+    }
 
     /**
      * @param Job $job
@@ -22,25 +39,34 @@ class Creator
     }
 
     /**
-     * @param mixed $message
+     * @param UserAgentInformation $userAgentInformation
      * @return Creator
      */
-    public function setMessage($message)
+    public function setUserAgentInformation($userAgentInformation)
     {
-        $this->message = $message;
+        $this->userAgentInformation = $userAgentInformation;
         return $this;
     }
 
-    public function __construct(JobUpdateLogRepositoryInterface $jobUpdateLogRepository)
+    /**
+     * @param Model $createdBy
+     * @return Creator
+     */
+    public function setCreatedBy($createdBy)
     {
-        $this->jobUpdateLogRepository = $jobUpdateLogRepository;
+        $this->createdBy = $createdBy;
+        return $this;
     }
 
     public function create()
     {
         $this->jobUpdateLogRepository->create([
             'job_id' => $this->job->id,
-            'log' => json_encode(['message' => $this->message])
+            'log' => json_encode(['message' => $this->message]),
+            'portal_name' => $this->userAgentInformation->getPortalName(),
+            'user_agent' => $this->userAgentInformation->getUserAgent(),
+            'ip' => $this->userAgentInformation->getIp(),
+            'created_by_type' => get_class($this->createdBy)
         ]);
     }
 }

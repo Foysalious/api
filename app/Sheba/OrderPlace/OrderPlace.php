@@ -45,6 +45,7 @@ use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Sheba\JobUpdateLog\Creator as JobUpdateLogCreator;
+use Sheba\UserAgentInformation;
 
 class OrderPlace
 {
@@ -53,6 +54,8 @@ class OrderPlace
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
     /** @var Collection */
     private $services;
     /** @var Category */
@@ -140,6 +143,12 @@ class OrderPlace
         $this->action = $action;
     }
 
+    public function setUserAgentInformation($userAgentInformation)
+    {
+        $this->userAgentInformation = $userAgentInformation;
+        return $this;
+    }
+
 
     /**
      * @param $deliveryAddressId
@@ -177,120 +186,80 @@ class OrderPlace
         return $this;
     }
 
-    /**
-     * @param mixed $salesChannel
-     * @return OrderPlace
-     */
     public function setSalesChannel($salesChannel)
     {
         $this->salesChannel = $salesChannel;
         return $this;
     }
 
-    /**
-     * @param $deliveryMobile
-     * @return $this
-     */
     public function setDeliveryMobile($deliveryMobile)
     {
         $this->deliveryMobile = formatMobile(trim($deliveryMobile));
         return $this;
     }
 
-    /**
-     * @param $deliveryName
-     * @return $this
-     */
+
     public function setDeliveryName($deliveryName)
     {
         $this->deliveryName = trim($deliveryName);
         return $this;
     }
 
-    /**
-     * @param $paymentMethod
-     * @return $this
-     */
     public function setPaymentMethod($paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
     }
 
-    /**
-     * @param mixed $scheduleDate
-     * @return OrderPlace
-     */
+
     public function setScheduleDate($scheduleDate)
     {
         $this->scheduleDate = $scheduleDate;
         return $this;
     }
 
-    /**
-     * @param mixed $scheduleTime
-     * @return OrderPlace
-     */
+
     public function setScheduleTime($scheduleTime)
     {
         $this->scheduleTime = $scheduleTime;
         return $this;
     }
 
-    /**
-     * @param $customer
-     * @return $this
-     */
+
     public function setCustomer($customer)
     {
         $this->customer = $customer;
         return $this;
     }
 
-    /**
-     * @param mixed $crmId
-     * @return OrderPlace
-     */
+
     public function setCrmId($crmId)
     {
         $this->crmId = $crmId;
         return $this;
     }
 
-    /**
-     * @param mixed $additionalInformation
-     * @return OrderPlace
-     */
+
     public function setAdditionalInformation($additionalInformation)
     {
         $this->additionalInformation = $additionalInformation;
         return $this;
     }
 
-    /**
-     * @param mixed $infoCallId
-     * @return OrderPlace
-     */
+
     public function setInfoCallId($infoCallId)
     {
         $this->infoCallId = $infoCallId;
         return $this;
     }
 
-    /**
-     * @param $affiliationId
-     * @return $this
-     */
+
     public function setAffiliationId($affiliationId)
     {
         $this->affiliationId = $affiliationId;
         return $this;
     }
 
-    /**
-     * @param mixed $voucherId
-     * @return OrderPlace
-     */
     public function setVoucherId($voucherId)
     {
         $this->voucherId = $voucherId;
@@ -406,7 +375,8 @@ class OrderPlace
                 if ($this->action->canSendPartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
                 if ($this->selectedPartner && !$this->action->canAssignPartner())
-                    $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())->create();
+                    $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())
+                        ->setUserAgentInformation($this->userAgentInformation)->setCreatedBy($this->customer)->create();
             });
         } catch (QueryException $e) {
             throw $e;
@@ -641,14 +611,6 @@ class OrderPlace
         $car_rental_detail->job_id = $job->id;
         $this->withCreateModificationField($car_rental_detail);
         $car_rental_detail->save();
-    }
-
-    /**
-     * @return bool
-     */
-    private function canCreatePartnerOrderRequest()
-    {
-        return !$this->selectedPartner && count($this->partnersFromList) > 0;
     }
 
     /**
