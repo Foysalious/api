@@ -120,7 +120,8 @@ class WalletController extends Controller
                 $spent_model = $payment->payable->getPayableType();
                 $is_spend_on_order = $spent_model && ($spent_model instanceof PartnerOrder);
                 $category = $is_spend_on_order ? $spent_model->jobs->first()->category : null;
-                $bonus_log = $is_spend_on_order && $category ? 'Service Purchased ' . $category->name : 'Purchased ' . class_basename($spent_model);
+                $category_name = $category ? $category->name : '';
+                $bonus_log = $is_spend_on_order ? 'Service Purchased ' . $category_name : 'Purchased ' . class_basename($spent_model);
                 $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->setLog($bonus_log)->deduct($payment->payable->amount);
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
