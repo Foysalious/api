@@ -14,6 +14,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DS\BusinessInfo;
@@ -321,7 +322,7 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"])
+            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
                 $info     = $loan->setPartner($partner)->setResource($resource)->granterDetails();
             else
                 $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
@@ -340,7 +341,7 @@ class LoanV2Controller extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            if(isset($request->loan_type) && $request->loan_type == constants('LOAN_TYPE')["micro_loan"]) {
+            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
                 $this->validate($request, GranterDetails::getValidator());
                 $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
             }

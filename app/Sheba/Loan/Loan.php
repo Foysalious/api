@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -645,8 +646,8 @@ class Loan
      */
     private function getRunningLoan()
     {
-        $running_term_loan  = !$this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->last()->toArray() : [];
-        $running_micro_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->last()->toArray() : [];
+        $running_term_loan  = !$this->partner->loan()->type(LoanTypes::TERM)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::TERM)->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type(LoanTypes::MICRO)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::MICRO)->get()->last()->toArray() : [];
         $running_loan_data  = [];
         if(count($running_term_loan))
             $running_loan_data[] = $this->getRunningLoanData($running_term_loan, Statics::RUNNING_TERM_LOAN_ICON);
