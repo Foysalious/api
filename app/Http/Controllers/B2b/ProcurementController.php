@@ -120,7 +120,7 @@ class ProcurementController extends Controller
             'sharing_to' => array_values($sharing_to),
             'payment_strategy' => $payment_strategy,
             'number_of_participants' => $number_of_participants,
-            'categories' => array_merge([$uncategorised], $categories)
+            'categories' => $categories
         ];
         return api_response($request, $procurements, 200, ['procurements' => $procurements]);
     }
