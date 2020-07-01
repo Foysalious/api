@@ -57,8 +57,9 @@ class CategoryController extends Controller
         $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
         $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
         $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_ddn = $request->has('is_ddn') && (int)$request->is_ddn;
 
-        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration) {
+        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration,$is_ddn) {
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -67,7 +68,9 @@ class CategoryController extends Controller
                 $q->publishedForPartnerOnboarding();
             } elseif ($is_b2b) {
                 $q->publishedForB2b();
-            } else {
+            }elseif($is_ddn){
+                $q->publishedForDdn();
+            }else {
                 $q->published();
             }
         };
@@ -104,17 +107,19 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b, $is_ddn) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
-                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b) {
+                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b, $is_ddn) {
                                 if ($is_business) {
                                     $q->publishedForBusiness();
                                 } elseif ($is_b2b) {
                                     $q->publishedForB2b();
-                                } else {
+                                } elseif ($is_ddn) {
+                                    $q->publishedForDdn();
+                                }else {
                                     $q->published();
                                 }
                                 $q->whereHas('locations', function ($q) use ($location) {
@@ -389,6 +394,7 @@ class CategoryController extends Controller
         } else {
             $category = $cat->published()->first();
         }
+
 
         if ($category != null) {
             $category_slug = $category->getSlug();

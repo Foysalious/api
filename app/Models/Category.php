@@ -171,6 +171,11 @@ class Category extends Model
         return $query->where('is_published_for_b2b', 1);
     }
 
+    public function scopePublishedForDdn($query)
+    {
+        return $query->where('is_published_for_ddn', 1);
+    }
+
     public function scopePublishedForPartner($query)
     {
         return $query->where('is_published_for_partner', 1);
