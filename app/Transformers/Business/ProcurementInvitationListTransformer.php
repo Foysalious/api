@@ -2,6 +2,7 @@
 
 use App\Models\Procurement;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 
 class ProcurementInvitationListTransformer extends TransformerAbstract
 {

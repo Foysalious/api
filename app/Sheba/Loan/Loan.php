@@ -24,6 +24,7 @@ use Sheba\HZip;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
 use Sheba\Loan\DS\FinanceInfo;
+use Sheba\Loan\DS\GranterDetails;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PartnerLoanRequest;
 use Sheba\Loan\DS\PersonalInfo;
@@ -48,15 +49,11 @@ class Loan
     private $profile;
     private $partnerLoanRequest;
     private $resource;
-    private $personal;
-    private $finance;
-    private $business;
-    private $nominee_granter;
-    private $document;
     private $downloadDir;
     private $zipDir;
     private $user;
     private $finalFields;
+    private $type;
 
     public function __construct()
     {
@@ -71,6 +68,7 @@ class Loan
             'nominee_granter' => 'nomineeGranter',
             'document'        => 'documents'
         ];
+
     }
 
     public function setUser($user)
@@ -114,6 +112,12 @@ class Loan
         return $this;
     }
 
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
     /**
      * @return mixed
      */
@@ -150,6 +154,11 @@ class Loan
         return $this;
     }
 
+    /**
+     * @param $id
+     * @return array
+     * @throws ReflectionException
+     */
     public function get($id)
     {
         /** @var PartnerBankLoan $loan */
@@ -195,38 +204,25 @@ class Loan
     {
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
         $data    = [
-            'big_banner' => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_1440_628.jpg',
-            'banner'     => config('sheba.s3_url') . 'images/offers_images/banners/loan_banner_v5_720_324.jpg',
+            'big_banner' => Statics::bigBanner(),
+            'banner'     => Statics::banner(),
         ];
-        $data    = array_merge($data, (new RunningApplication($running))->toArray());
-        $data    = array_merge($data, ['details' => self::homepageStatics()]);
+        $data    = array_merge($data, (new RunningApplication($running))->toArray(), ['details' => Statics::homepage()]);
         return $data;
     }
 
-    public static function homepageStatics()
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function homepageV2()
     {
-        return [
-            [
-                'title'     => 'ব্যাংক লোনের সুবিধা কি কি - ',
-                'list'      => [
-                    'সহজ শর্তে লোন নিন',
-                    'জামানত বিহীন লোন নিন',
-                    'ঘরে বসেই লোনের আবেদন করুন',
-                    'ঘরে বসেই লোন পরিশোধ করুন'
-                ],
-                'list_icon' => 'icon'
-            ],
-            [
-                'title'     => 'ব্যাংক লোন কিভাবে নেবেন- ',
-                'list'      => [
-                    'sManager অ্যাপ থেকে প্রয়োজনীয় সকল তথ্য পুরন করুন',
-                    'লোন ক্যলকুলেটর দিয়ে হিসাব করে কিস্তির ধারনা নিন',
-                    'লোনের আবেদন নিশ্চিত করুন',
-                    'সেবা ও ব্যঙ্ক থেকে যাচাই করার পরে খুব দ্রুত আপনার কাছে লোন পৌঁছে যাবে'
-                ],
-                'list_icon' => 'number'
-            ]
+        $data = [
+            'big_banner' => Statics::bigBanner(),
+            'banner'     => Statics::banner(),
         ];
+        $data = array_merge($data, Statics::webViews(), ['running_loan' => $this->getRunningLoan()], Statics::loanList(), ['details' => Statics::homepage()]);
+        return $data;
     }
 
     /**
@@ -246,8 +242,6 @@ class Loan
 
     /**
      * @throws AlreadyRequestedForLoan
-     * @throws NotApplicableForLoan
-     * @throws ReflectionException
      */
     public function validate()
     {
@@ -289,6 +283,7 @@ class Loan
             $data[$key] = $val->completion();
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
+        $data['details_link'] = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
         return $data;
     }
 
@@ -322,32 +317,38 @@ class Loan
 
     public function personalInfo()
     {
-        $this->personal = (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
-        return $this->personal;
+        $personal = (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
+        return $personal;
     }
 
     public function businessInfo()
     {
-        $this->business = (new BusinessInfo($this->partner, $this->resource));
-        return $this->business;
+        $business = (new BusinessInfo($this->partner, $this->resource));
+        return $business;
     }
 
     public function financeInfo()
     {
-        $this->finance = (new FinanceInfo($this->partner, $this->resource));
-        return $this->finance;
+        $finance = (new FinanceInfo($this->partner, $this->resource));
+        return $finance;
     }
 
     public function nomineeGranter()
     {
-        $this->nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
-        return $this->nominee_granter;
+        $nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
+        return $nominee_granter;
+    }
+
+    public function granterDetails()
+    {
+        $granter = (new GranterDetails($this->partner, $this->resource));
+        return $granter;
     }
 
     public function documents()
     {
-        $this->document = (new Documents($this->partner, $this->resource));
-        return $this->document;
+        $document = (new Documents($this->partner, $this->resource));
+        return $document;
     }
 
     public function history()
@@ -450,7 +451,7 @@ class Loan
         if (empty($request))
             throw new LoanNotFoundException();
         (new RequestValidator($request))->validate();
-        $loan    = (new PartnerLoanRequest($request));
+        $loan = (new PartnerLoanRequest($request));
         return $loan->detailsForAgent();
     }
 
@@ -637,4 +638,36 @@ class Loan
             return $changeLog->created_at;
         return null;
     }
+
+    /**
+     * @return array|array[]
+     * @throws ReflectionException
+     */
+    private function getRunningLoan()
+    {
+        $running_term_loan  = !$this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->last()->toArray() : [];
+        $running_loan_data  = [];
+        if(count($running_term_loan))
+            $running_loan_data[] = $this->getRunningLoanData($running_term_loan, Statics::RUNNING_TERM_LOAN_ICON);
+        if(count($running_micro_loan))
+            $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, Statics::RUNNING_MICRO_LOAN_ICON);
+
+        return $running_loan_data;
+    }
+
+    /**
+     * @param $running_loan
+     * @param $icon_url
+     * @return array|array[]
+     * @throws ReflectionException
+     */
+    private function getRunningLoanData($running_loan, $icon_url)
+    {
+        return[
+            "data" => (new RunningApplication($running_loan))->toArray(),
+            "icon" => $icon_url
+        ];
+    }
+
 }

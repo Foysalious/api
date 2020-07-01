@@ -150,11 +150,11 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'tp_proxy_url' => env('TP_PROXY_URL'),
-    'resource_max_withdraw_limit' => 1000,
-    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
-    'email' => 'info@sheba.xyz',
     'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
     'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
+    'resource_max_withdraw_limit' => 1000,
+    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
+    'email' => 'info@sheba.xyz',
     'lpg_service_id' => env('LPG_SERVICE_ID',676)
 ];

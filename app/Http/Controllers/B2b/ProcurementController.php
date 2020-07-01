@@ -31,12 +31,12 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
-use ReflectionException;
 use Sheba\Business\Bid\Creator as BidCreator;
 use Sheba\Business\Bid\Statuses as BidStatuses;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\RequestHandler;
+use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
@@ -258,6 +258,9 @@ class ProcurementController extends Controller
             return strtoupper($procurement['status']) == strtoupper($status);
         });
         if ($status === 'expired') return collect($procurements)->filter(function ($procurement) use ($status) {
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'closed') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
     }
@@ -605,7 +608,7 @@ class ProcurementController extends Controller
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->payment_method;
-        $procurement = $this->procurementRepository->find($procurement);
+        $procurement = $procurement_repository->find($procurement);
         $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
@@ -711,9 +714,12 @@ class ProcurementController extends Controller
         if ($request->has('sort_by_date')) $invited_partners = $this->sortByDate($invited_partners, $request->sort_by_date)->values();
         if ($request->has('sort_by_status')) $invited_partners = $this->sortByStatus($invited_partners, $request->sort_by_status)->values();
 
+        $procurement_status = ProcurementStatusCalculator::resolveStatus($procurement);
+
         return api_response($request, null, 200, [
-            'invited_partners' => $invited_partners,
-            'is_invitation_available' => $is_invitation_available,
+            'invited_partners'          => $invited_partners,
+            'is_invitation_available'   => $is_invitation_available,
+            'procurement_status'        => $procurement_status
         ]);
     }
 
@@ -762,6 +768,7 @@ class ProcurementController extends Controller
      */
     public function downloadPdf(Request $request)
     {
+        $business = $request->business;
         $procurement = Procurement::find($request->procurement);
         $price_quotation = $procurement->items->where('type', 'price_quotation')->first();
         $technical_evaluation = $procurement->items->where('type', 'technical_evaluation')->first();
@@ -769,25 +776,30 @@ class ProcurementController extends Controller
 
         $procurement_details = [
             'id' => $procurement->id,
-            'title' => $procurement->title,
+            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'status' => $procurement->status,
+            'type' => $procurement->type,
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
-            'start_date' => Carbon::parse($procurement->procurement_start_date)->format('d/m/y'),
-            'published_at' => $procurement->is_published ? Carbon::parse($procurement->published_at)->format('d/m/y') : null,
-            'end_date' => Carbon::parse($procurement->procurement_end_date)->format('d/m/y'),
+            'start_date' => $procurement->procurement_start_date->format('d/m/y'),
+            'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
+            'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
-            'last_date_of_submission' => Carbon::parse($procurement->last_date_of_submission)->format('Y-m-d'),
+            'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),
             'payment_options' => $procurement->payment_options,
-            'created_at' => Carbon::parse($procurement->created_at)->format('d/m/y'),
+            'created_at' => $procurement->created_at->format('d M, Y'),
+            'business' => [
+                'name' => $business->name,
+                'logo' => $business->logo,
+                'address' => $business->address,
+            ],
             'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
             'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields : null : null,
             'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields : null : null,
         ];
 
-        return App::make('dompdf.wrapper')
-            ->loadView('pdfs.procurement_details', compact('procurement_details'))
-            ->download("procurement_details.pdf");
+        #return view('pdfs.procurement_details', compact('procurement_details'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.procurement_details', compact('procurement_details'))->download("procurement_details.pdf");
     }
 
     /**

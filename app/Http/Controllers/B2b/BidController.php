@@ -311,16 +311,40 @@ class BidController extends Controller
                         $q->select('id', 'bid_item_id', 'title', 'short_description', 'input_type', 'variables', 'result');
                     }
                 ]);
-            }
+            },
+            'procurement'
         ]);
+        $procurement = $bid->procurement;
         $price_quotation = $bid->items->where('type', 'price_quotation')->first();
         $technical_evaluation = $bid->items->where('type', 'technical_evaluation')->first();
         $company_evaluation = $bid->items->where('type', 'company_evaluation')->first();
         $bid_details = [
-            'id' => $bid->id, 'procurement_id' => $bid->procurement_id, 'status' => $bid->status, 'price' => $bid->price, 'title' => $bid->procurement->title, 'type' => $bid->procurement->type, 'vendor' => [
-                'name' => $bid->bidder->name, 'logo' => $bid->bidder->logo, 'domain' => $bid->bidder->sub_domain, 'rating' => round($bid->bidder->reviews->avg('rating'), 2), 'total_rating' => $bid->bidder->reviews->count()
-            ], 'proposal' => $bid->proposal, 'start_date' => Carbon::parse($bid->procurement->procurement_start_date)->format('d/m/y'), 'end_date' => Carbon::parse($bid->procurement->procurement_end_date)->format('d/m/y'), 'created_at' => Carbon::parse($bid->created_at)->format('d/m/y'), 'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null, 'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null, 'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
+            'id' => $bid->id,
+            'procurement_id' => $bid->procurement_id,
+            'status' => $bid->status,
+            'price' => $bid->price,
+            'vendor' => [
+                'name' => $bid->bidder->name,
+                'logo' => $bid->bidder->logo,
+                'domain' => $bid->bidder->sub_domain,
+                'rating' => round($bid->bidder->reviews->avg('rating'), 2),
+                'total_rating' => $bid->bidder->reviews->count()
+            ],
+            'proposal' => $bid->proposal,
+
+            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'type' => $bid->procurement->type,
+            'labels' => $procurement->getTagNamesAttribute()->toArray(),
+            'payment_options' => $procurement->payment_options,
+            'start_date' => $procurement->procurement_start_date->format('d/m/y'),
+            'end_date' => $procurement->procurement_end_date->format('d/m/y'),
+
+            'created_at' => $bid->created_at->format('d M, Y'),
+            'price_quotation' => $price_quotation ? $price_quotation->fields ? $price_quotation->fields->toArray() : null : null,
+            'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
+            'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
         ];
+        #return view('pdfs.quotation_details', compact('bid_details'));
         return App::make('dompdf.wrapper')->loadView('pdfs.quotation_details', compact('bid_details'))->download("quotation_details.pdf");
     }
 }
