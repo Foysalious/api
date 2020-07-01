@@ -81,4 +81,9 @@ class SubscriptionOrderAdapter implements PayableAdapter
         }
 
     }
+
+    public function canInit(): bool
+    {
+        return true;
+    }
 }
