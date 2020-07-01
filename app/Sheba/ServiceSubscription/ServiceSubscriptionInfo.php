@@ -1,10 +1,15 @@
 <?php namespace Sheba\ServiceSubscription;
 
+use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use Illuminate\Support\Collection;
+use Sheba\Checkout\DeliveryCharge;
+use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
+use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -21,14 +26,18 @@ class ServiceSubscriptionInfo
     protected $serviceQuestionSet;
     protected $upsell_calculation;
     protected $serviceSubscriptionDiscount;
+    protected $delivery_charge;
+    protected $job_discount_handler;
 
-    public function __construct(ApproximatePriceCalculator $approximatePriceCalculator, PriceCalculation $price_calculation, ServiceQuestionSet $serviceQuestionSet, UpsellCalculation $upsell_calculation, SubscriptionDiscount $subscriptionDiscount)
+    public function __construct(ApproximatePriceCalculator $approximatePriceCalculator, PriceCalculation $price_calculation, ServiceQuestionSet $serviceQuestionSet, UpsellCalculation $upsell_calculation, SubscriptionDiscount $subscriptionDiscount, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->approximatePriceCalculator = $approximatePriceCalculator;
         $this->price_calculation = $price_calculation;
         $this->serviceQuestionSet = $serviceQuestionSet;
         $this->upsell_calculation = $upsell_calculation;
         $this->serviceSubscriptionDiscount = $subscriptionDiscount;
+        $this->delivery_charge = $delivery_charge;
+        $this->job_discount_handler = $job_discount_handler;
     }
 
 
@@ -67,7 +76,11 @@ class ServiceSubscriptionInfo
         $serviceSubscription['service_min_quantity'] = $this->serviceSubscription->service['min_quantity'];
         $serviceSubscription['offers'] = $this->serviceSubscription->getDiscountOffers();
         $serviceSubscription['category_id'] = $this->serviceSubscription->service->category->id;
+        $serviceSubscription['category_name'] = $this->serviceSubscription->service->category->name;
         $serviceSubscription['is_auto_sp_enabled'] = $this->serviceSubscription->service->category->is_auto_sp_enabled;
+        $serviceSubscription['min_order_amount'] = $this->serviceSubscription->service->category->min_order_amount;
+        $serviceSubscription['max_order_amount'] = $this->serviceSubscription->service->category->max_order_amount;
+        $serviceSubscription['is_vat_applicable'] = $this->serviceSubscription->service->category->is_vat_applicable;
         $questionSet = $this->serviceQuestionSet->setServices($this->serviceSubscription->service()->select(
             'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
             'app_thumb', 'app_banner', 'short_description', 'description',
@@ -114,6 +127,24 @@ class ServiceSubscriptionInfo
             'value' => (double)$monthly_discount->discount_amount,
             'is_percentage' => $monthly_discount->isPercentage(),
             'cap' => (double)$monthly_discount->cap
+        ] : null;
+        $cross_sale_service = $this->serviceSubscription->service->category->crossSaleService;
+        $serviceSubscription['cross_sale'] = $cross_sale_service ? [
+            'title' => $cross_sale_service->title,
+            'description' => $cross_sale_service->description,
+            'icon' => $cross_sale_service->icon,
+            'category_id' => $cross_sale_service->category_id,
+            'service_id' => $cross_sale_service->service_id
+        ] : null;
+        $serviceSubscription['delivery_charge'] = $this->delivery_charge->setCategory($this->serviceSubscription->service->category)->setLocation(Location::find($this->locationService->location_id))->get();;
+        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($serviceSubscription['delivery_charge']);
+        $this->job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($this->serviceSubscription->service->category)->setCheckingParams($discount_checking_params)->calculate();
+        $delivery_discount = $this->job_discount_handler->getDiscount();
+        $serviceSubscription['delivery_discount'] = $delivery_discount ? [
+            'value' => (double)$delivery_discount->amount,
+            'is_percentage' => $delivery_discount->is_percentage,
+            'cap' => (double)$delivery_discount->cap,
+            'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
         ] : null;
         removeRelationsAndFields($serviceSubscription);
         return $serviceSubscription;
