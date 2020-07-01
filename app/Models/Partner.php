@@ -564,11 +564,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
-    public function runUpfrontSubscriptionBilling()
-    {
-        $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
-
     public function getCommissionAttribute()
     {
         return (double)$this->subscription_rules->commission->value;
@@ -893,7 +888,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         $last_advance_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
         if (empty($last_advance_subscription_package_charge)) return false;
-        return true;
+        return $this->isValidAdvancePayment($last_advance_subscription_package_charge);
     }
 
     public function invalidateAdvanceSubscriptionFee()
@@ -910,7 +905,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->subscriptionPackageCharges()->where('advance_subscription_fee', 1)->where('is_valid_advance_payment')->orderBy('id', 'desc')->first();
     }
 
-    public function checkValidityOfAdvancePayment($last_subscription_package_charge)
+    public function isValidAdvancePayment($last_subscription_package_charge)
     {
         return $last_subscription_package_charge->advance_subscription_fee && $last_subscription_package_charge->is_valid_advance_payment;
     }
@@ -919,8 +914,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
         $last_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
-        if (!empty($last_subscription_package_charge)) return (double)$last_subscription_package_charge->package_price;
-        else return 0;
+        if (empty($last_subscription_package_charge) || !$this->isValidAdvancePayment($last_subscription_package_charge)) return 0;
+        return (double)$last_subscription_package_charge->package_price;
     }
 
     public function subscriptionPackageCharges()
