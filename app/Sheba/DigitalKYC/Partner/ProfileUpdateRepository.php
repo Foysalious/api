@@ -17,7 +17,7 @@ class ProfileUpdateRepository
 
         if ($request->type != 'image') {
             $data['name'] = $request->name;
-            $data['nid_no'] = $request->nid_no;
+            $data['nid_no'] = $profile->nid_verified == 1 ? $profile->nid_no : $request->nid_no;
             $data['dob'] = $request->dob;
         }
         if ($request->type != 'info') {
