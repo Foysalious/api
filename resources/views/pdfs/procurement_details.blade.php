@@ -246,6 +246,7 @@ if (!function_exists('showLongAnswer')) {
         height: 40px;
         border-radius: 5px;
         border: solid 1px rgba(0, 0, 0, 0.05);
+        border-right: 14px solid transparent
     }
 
     .companyInfoName {
