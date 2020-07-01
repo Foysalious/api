@@ -89,7 +89,7 @@ if (!function_exists('showLongAnswer')) {
 }
 ?>
 
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <style>
     @media print {
@@ -323,16 +323,14 @@ if (!function_exists('showLongAnswer')) {
     }
 </style>
 <head>
-    <title>Procurement Details</title>
+    <title>Tender Details</title>
 </head>
 
 <body style="margin-top: 20px">
 {{--footer--}}
 <table class="footer">
     <tr>
-        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; width: 70px; padding-bottom: 0px">
-            Powered by -
-        </td>
+        <td style="font-size: 10px; opacity: 0.8; font-weight: normal; width: 70px; padding-bottom: 0px">Powered by -</td>
         <td style="font-size: 10px;font-weight: normal;  padding-left: 10px; padding-bottom: 0px; padding-top: 5px">
             <img src="{{public_path("images/sheba@3x.png")}}" style="height: 16px">
         </td>
@@ -544,10 +542,6 @@ if (!function_exists('showLongAnswer')) {
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
-
-
-
-
 </script>
 </body>
 </html>
