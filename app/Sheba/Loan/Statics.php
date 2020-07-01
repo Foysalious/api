@@ -4,6 +4,8 @@
 namespace Sheba\Loan;
 
 
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
+
 class Statics
 {
     const BIG_BANNER              = 'images/offers_images/banners/loan_banner_v5_1440_628.jpg';
@@ -18,13 +20,13 @@ class Statics
                 [
                     'title'     => 'Micro Loan',
                     'title_bn'  => 'রবি টপআপ লোন',
-                    'loan_type' => constants('LOAN_TYPE')["micro_loan"],
+                    'loan_type' => LoanTypes::MICRO,
                     'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
                 ],
                 [
                     'title'     => 'Term Loan',
                     'title_bn'  => 'টার্ম লোন',
-                    'loan_type' => constants('LOAN_TYPE')["term_loan"],
+                    'loan_type' => LoanTypes::TERM,
                     'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
                 ]
             ]
