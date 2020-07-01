@@ -9,15 +9,21 @@ use App\Models\PartnerBankLoan;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
+use App\Repositories\FileRepository;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Facades\Excel;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
+use Sheba\Dal\Retailer\Retailer;
+
 use Sheba\Dal\RetailerMembers\RetailerMember;
+use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\HZip;
@@ -54,8 +60,9 @@ class Loan
     private $user;
     private $finalFields;
     private $type;
+    private $fileRepository;
 
-    public function __construct()
+    public function __construct(FileRepository $file_repository)
     {
         $this->repo        = new LoanRepository();
         $this->downloadDir = storage_path('downloads');
@@ -68,6 +75,7 @@ class Loan
             'nominee_granter' => 'nomineeGranter',
             'document'        => 'documents'
         ];
+        $this->fileRepository = $file_repository;
 
     }
 
@@ -278,8 +286,13 @@ class Loan
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         $data['details_link'] = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
+        $data['loan_fee'] = $this->type == 'micro' ?  100 : 0;
+        $data['maximum_day'] = $this->type == 'micro' ?  15 : 7;
+        $data['maximum_loan_amount'] =   $this->type == 'micro' ?  25000 : 500000;
+
         return $data;
     }
+
 
     /**
      * @return array
@@ -639,8 +652,8 @@ class Loan
      */
     private function getRunningLoan()
     {
-        $running_term_loan  = !$this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["term_loan"])->get()->last()->toArray() : [];
-        $running_micro_loan = !$this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->isEmpty() ? $this->partner->loan()->type(constants('LOAN_TYPE')["micro_loan"])->get()->last()->toArray() : [];
+        $running_term_loan  = !$this->partner->loan()->type(LoanTypes::TERM)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::TERM)->get()->last()->toArray() : [];
+        $running_micro_loan = !$this->partner->loan()->type(LoanTypes::MICRO)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::MICRO)->get()->last()->toArray() : [];
         $running_loan_data  = [];
         if(count($running_term_loan))
             $running_loan_data[] = $this->getRunningLoanData($running_term_loan, Statics::RUNNING_TERM_LOAN_ICON);
@@ -664,4 +677,32 @@ class Loan
         ];
     }
 
+    public function uploadRetailerList($request)
+    {
+        $uploaded_csv = $request->file('retailers');
+        $filename         = 'robi_retailers_' . Carbon::now()->timestamp . '.' . $uploaded_csv->extension();
+        $this->fileRepository->uploadToCDN($filename,$uploaded_csv, 'dls_v2/robi/retailer_list/');
+
+        $mobiles = [];
+        Excel::load($uploaded_csv, function ($reader) use (&$mobiles) {
+            $results = $reader->get();
+            $mobiles = $results->map(function($results){
+                return formatMobile($results['mobile']);
+            });
+        });
+
+
+        $existing_mobiles = Retailer::where('strategic_partner_id',$request->strategic_partner_id)->pluck('mobile');
+        $to_insert = array_unique(array_diff($mobiles->toArray(),$existing_mobiles->toArray()));
+        $to_insert =  collect($to_insert)->map(function($to_insert) use($request){
+            return [
+                'strategic_partner_id' => $request->strategic_partner_id,
+                'mobile' => $to_insert,
+                'created_by' => $request->user->profile->id,
+                'created_by_name' => $request->user->profile->name,
+                'created_at' => Carbon::now()
+            ];
+        });
+        Retailer::insert($to_insert->toArray());
+    }
 }

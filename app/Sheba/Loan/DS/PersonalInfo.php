@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use ReflectionException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Completion;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\ModificationFields;
@@ -44,7 +45,7 @@ class PersonalInfo implements Arrayable
     {
         $gender = 'required|string|in:Male,Female,Other';
         $email = 'required|email';
-        if($loan_type && constants('LOAN_TYPE')["micro_loan"] === $loan_type) {
+        if(LoanTypes::MICRO === $loan_type) {
             $gender = 'string|in:Male,Female,Other';
             $email = 'email';
         }
