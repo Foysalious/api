@@ -211,6 +211,8 @@ class LoanV2Controller extends Controller
     public function getPersonalInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
+
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo();
@@ -218,6 +220,9 @@ class LoanV2Controller extends Controller
                 'info'       => $info->toArray(),
                 'completion' => $info->completion()
             ]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -227,6 +232,8 @@ class LoanV2Controller extends Controller
     public function updatePersonalInformation($partner, Request $request)
     {
         try {
+            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
+
             $this->validate($request, PersonalInfo::getValidators($request->loan_type));
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
@@ -354,6 +361,8 @@ class LoanV2Controller extends Controller
     public function getDocuments($partner, Request $request, Loan $loan)
     {
         try {
+            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
+
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $info     = $loan->setPartner($partner)->setResource($resource)->documents();
@@ -361,7 +370,11 @@ class LoanV2Controller extends Controller
                 'info'       => $info->toArray($request->loan_type),
                 'completion' => $info->completion($request->loan_type)
             ]);
-        } catch (Throwable $e) {
+        }catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        }
+        catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
