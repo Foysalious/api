@@ -4,6 +4,7 @@ use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\ProcurementItemField;
 use Carbon\Carbon;
+use Clockwork\DataSource\DBALDataSource;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Sheba\Business\Procurement\OrderClosedHandler;
@@ -165,8 +166,8 @@ class Updater
             } else {
                 if ($procurement_item) $this->itemDelete($procurement_item);
             }
-            $this->updateType();
             DB::commit();
+            $this->updateType();
         } catch (\Exception $e) {
             DB::rollback();
         }
@@ -211,8 +212,9 @@ class Updater
 
     private function updateType()
     {
-        $this->procurementRepository->update($this->procurement, [
-            'type' => $this->procurement->items->isEmpty() ? Type::BASIC: Type::ADVANCED
+        $procurement = $this->procurement->fresh();
+        $this->procurementRepository->update($procurement, [
+            'type' => $procurement->items->isEmpty() ? Type::BASIC: Type::ADVANCED
         ]);
     }
 
