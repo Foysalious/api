@@ -28,6 +28,7 @@ use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
 use Sheba\Loan\Exceptions\InsufficientWalletCredit;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\InvalidTypeException;
 use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
@@ -171,7 +172,7 @@ class LoanV2Controller extends Controller
             $this->validate($request, [
                 'loan_amount' => 'required|numeric',
                 'duration'    => 'required|integer',
-                'type'        => 'in:' . implode(',', LoanTypes::get())
+                'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get())
             ]);
             /** @var Partner $partner */
             $partner  = $request->partner;
@@ -180,12 +181,12 @@ class LoanV2Controller extends Controller
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
                 'month'       => $request->month ?: 0,
-                'type'        => $request->type ?: LoanTypes::TERM
+                'type'        => $request->loan_type ?: LoanTypes::TERM
             ];
-            $info     = $loan->setPartner($partner)->setVersion(2)->setType($request->type)->setResource($resource)->setData($data)->apply();
+            $info     = $loan->setPartner($partner)->setVersion(2)->setType($request->loan_type)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
         } catch (InsufficientWalletCredit $e) {
-            $fee     = (double)Statics::getFee($request->type);
+            $fee     = (double)Statics::getFee($request->loan_type);
             $balance = (double)$partner->wallet;
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage(), 'price' => $fee, 'remaining_balance' => $balance]);
         } catch (ValidationException $e) {
@@ -194,6 +195,8 @@ class LoanV2Controller extends Controller
         } catch (AlreadyRequestedForLoan $e) {
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
         } catch (NotApplicableForLoan $e) {
+            return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
+        } catch (InvalidTypeException $e) {
             return api_response($request, $e->getMessage(), 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -267,7 +270,7 @@ class LoanV2Controller extends Controller
     public function getBusinessInformation($partner, Request $request)
     {
         try {
-            $type             = $request->type ?: LoanTypes::TERM;
+            $type             = $request->loan_type ?: LoanTypes::TERM;
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
@@ -284,7 +287,7 @@ class LoanV2Controller extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, BusinessInfo::getValidator() + ['loan_type' => 'sometimes|in:' . implode(',', LoanTypes::get())]);
+            $this->validate($request, BusinessInfo::getValidator() + ['loan_type' => 'sometimes|required|in:' . implode(',', LoanTypes::get())]);
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setVersion(2)->setType($request->loan_type)
