@@ -36,6 +36,7 @@ use Sheba\Business\Bid\Statuses as BidStatuses;
 use Sheba\Business\Procurement\Creator;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
 use Sheba\Business\Procurement\RequestHandler;
+use Sheba\Business\Procurement\StatusCalculator;
 use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
@@ -1028,7 +1029,10 @@ class ProcurementController extends Controller
     {
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
-
+        if ($procurement->status != StatusCalculator::IS_PENDING)
+            return api_response($request, null, 422, [
+                'description' => 'Tender not Found'
+            ]);
         $price_quotation_fields = $this->generateItemData($procurement, 'price_quotation');
         $technical_evaluation_fields = $this->generateItemData($procurement, 'technical_evaluation');
         $company_evaluation_fields = $this->generateItemData($procurement, 'company_evaluation');
