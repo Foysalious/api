@@ -102,7 +102,8 @@ class ServiceUpdateRequest
         }
         DB::transaction(function () {
             if (count($this->newServices) > 0) $this->createNewJobService->setJob($this->job)->setServices($this->newServices)->create();
-            if (count($this->materials) > 0) $this->materialCreator->setJob($this->job)->setUserAgentInformation($this->userAgentInformation)->setMaterials($this->materials)->create();
+            if (count($this->materials) > 0) $this->materialCreator->setJob($this->job)->setUserAgentInformation($this->userAgentInformation)
+                ->setMaterials($this->materials)->create();
             if (count($this->quantity) > 0) {
                 foreach ($this->quantity as $quantity) {
                     $job_service = JobService::find($quantity['job_service_id']);

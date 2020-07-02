@@ -19,11 +19,17 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Jobs\StatusChanger;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\OrderManager;
+use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
+use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
+use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class PartnerJobController extends Controller
 {
+    use ModificationFields;
+
     /** @var ResourceJobRepository $resourceJobRepository */
     private $resourceJobRepository;
     /** @var mixed $jobStatuses */
@@ -267,39 +273,14 @@ class PartnerJobController extends Controller
         }
     }
 
-    public function addMaterial($partner, $job, Request $request)
+    public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $updateRequest)
     {
-        try {
-            $this->validate($request, [
-                'name' => 'required|string',
-                'price' => 'required|numeric|min:1'
-            ]);
-            try {
-                $material = new JobMaterial();
-                DB::transaction(function () use ($job, $request, $material) {
-                    $job = $request->job;
-                    $material->material_name = $request->name;
-                    $material->material_price = (double)$request->price;
-                    $material->job_id = $job->id;
-                    $material->created_by = $request->manager_resource->id;
-                    $material->created_by_name = 'Resource-' . $request->manager_resource->profile->name;
-                    $material->save();
-                });
-                return api_response($request, $material, 200);
-            } catch (QueryException $e) {
-                app('sentry')->captureException($e);
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['name' => 'required|string', 'price' => 'required|numeric|min:1']);
+        $this->setModifier($request->manager_resource);
+        $user_agent_information->setRequest($request);
+        $response = $updateRequest->setJob($request->job)->setUserAgentInformation($user_agent_information)
+            ->setMaterials([['name' => $request->name, 'price' => (double)$request->price]])->update();
+        return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     public function updateMaterial($partner, $job, Request $request)
