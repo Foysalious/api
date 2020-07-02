@@ -37,13 +37,16 @@ use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\DS\RunningApplication;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
+use Sheba\Loan\Exceptions\InsufficientWalletCredit;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
+use Sheba\Loan\Exceptions\InvalidTypeException;
 use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
 {
@@ -229,18 +232,23 @@ class Loan
     }
 
     /**
-     * @throws NotApplicableForLoan
-     * @throws ReflectionException
      * @throws AlreadyRequestedForLoan
      */
     public function apply()
     {
         $this->validate();
-        if (!(isset($this->data['month']) && $this->data['month'])) {
-            $this->data['duration'] = ((int)$this->data['duration'] * 12);
-            unset($this->data['month']);
-        }
-        return $this->create();
+        $created = null;
+        DB::transaction(function () use (&$created) {
+            if ($this->version === 2) {
+                $this->applyFee();
+            }
+            if (!(isset($this->data['month']) && $this->data['month'])) {
+                $this->data['duration'] = ((int)$this->data['duration'] * 12);
+                unset($this->data['month']);
+            }
+            $created = $this->create();
+        });
+        return $created;
     }
 
     /**
@@ -260,7 +268,7 @@ class Loan
      */
     private function validateAlreadyRequested()
     {
-        $requests = $this->repo->where('partner_id', $this->partner->id)->get();
+        $requests = $this->repo->where('partner_id', $this->partner->id)->where('type', $this->type ?: LoanTypes::TERM)->get();
         if (!$requests->isEmpty()) {
             $last_request = $requests->last();
             $statuses     = constants('LOAN_STATUS');
@@ -286,10 +294,12 @@ class Loan
             $data[$key] = $val->completion();
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
-        $data['details_link']           = $this->type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan") ;
-        $data['loan_fee']               = $this->type == LoanTypes::MICRO ? 100 : 0;
-        $data['maximum_day']            = $this->type == LoanTypes::MICRO ? 15 : 7;
-        $data['maximum_loan_amount']    = $this->type == LoanTypes::MICRO ? 25000 : 500000;
+        if ($this->version === 2) {
+            $data['details_link']        = Statics::getDetailsLink($this->type);
+            $data['loan_fee']            = Statics::getFee($this->type);
+            $data['maximum_day']         = Statics::getMinimumDay($this->type);
+            $data['maximum_loan_amount'] = Statics::getMinimumAmount($this->type);
+        }
 
         return $data;
     }
@@ -724,5 +734,23 @@ class Loan
     {
         $this->type = $type;
         return $this;
+    }
+
+    /**
+     * @return bool
+     * @throws InvalidTypeException
+     * @throws InsufficientWalletCredit
+     */
+    private function applyFee()
+    {
+        if ($this->version !== 2) return true;
+        if (!in_array($this->type, LoanTypes::get())) throw new InvalidTypeException();
+        $fee = (double)Statics::getFee($this->type);
+        if ((double)$this->partner->wallet >= $fee) {
+            $this->setModifier($this->resource);
+            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
+            return true;
+        }
+        throw  new InsufficientWalletCredit();
     }
 }

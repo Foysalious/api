@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\BankUser;
 use App\Models\Comment;
+use App\Models\Partner;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
@@ -25,11 +26,13 @@ use Sheba\Loan\DS\PersonalInfo;
 use Sheba\Loan\Exceptions\AlreadyAssignToBank;
 use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\EmailUsed;
+use Sheba\Loan\Exceptions\InsufficientWalletCredit;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
+use Sheba\Loan\Statics;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
 use Sheba\Sms\Sms;
@@ -168,16 +171,23 @@ class LoanV2Controller extends Controller
             $this->validate($request, [
                 'loan_amount' => 'required|numeric',
                 'duration'    => 'required|integer',
+                'type'        => 'in:' . implode(',', LoanTypes::get())
             ]);
+            /** @var Partner $partner */
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
-                'month'       => $resource->month ?: 0
+                'month'       => $request->month ?: 0,
+                'type'        => $request->type ?: LoanTypes::TERM
             ];
-            $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
+            $info     = $loan->setPartner($partner)->setVersion(2)->setType($request->type)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
+        } catch (InsufficientWalletCredit $e) {
+            $fee     = (double)Statics::getFee($request->type);
+            $balance = (double)$partner->wallet;
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage(), 'price' => $fee, 'remaining_balance' => $balance]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -278,7 +288,7 @@ class LoanV2Controller extends Controller
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setVersion(2)->setType($request->loan_type)
-                                                             ->setResource($resource)->businessInfo()->update($request);
+                        ->setResource($resource)->businessInfo()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
