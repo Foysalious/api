@@ -8,4 +8,5 @@ class RunningApplication
     protected $status;
     protected $duration;
     protected $type;
+    protected $id;
 }
