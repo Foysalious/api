@@ -19,4 +19,5 @@ class TransactionSources
     const SHEBA_WALLET     = 'sheba_wallet';
     const BONUS            = 'bonus';
     const PAYMENT_LINK     = 'payment_link';
+    const LOAN_FEE         = 'loan_fee';
 }

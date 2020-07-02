@@ -26,6 +26,7 @@ use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\FraudDetection\TransactionSources;
 use Sheba\HZip;
 use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\Documents;
@@ -748,7 +749,7 @@ class Loan
         $fee = (double)Statics::getFee($this->type);
         if ((double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
-            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
+            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
         }
         throw  new InsufficientWalletCredit();
