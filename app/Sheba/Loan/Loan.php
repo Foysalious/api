@@ -61,14 +61,15 @@ class Loan
     private $finalFields;
     private $type;
     private $fileRepository;
+    private $version;
 
     public function __construct(FileRepository $file_repository = null)
     {
-        $this->repo        = new LoanRepository();
-        $this->downloadDir = storage_path('downloads');
-        $this->zipDir      = public_path('temp/documents.zip');
-        $this->user        = request()->user;
-        $this->finalFields = [
+        $this->repo           = new LoanRepository();
+        $this->downloadDir    = storage_path('downloads');
+        $this->zipDir         = public_path('temp/documents.zip');
+        $this->user           = request()->user;
+        $this->finalFields    = [
             'personal'        => 'personalInfo',
             'business'        => 'businessInfo',
             'finance'         => 'financeInfo',
@@ -285,10 +286,10 @@ class Loan
             $data[$key] = $val->completion();
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
-        $data['details_link'] = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
-        $data['loan_fee'] = $this->type == 'micro' ?  100 : 0;
-        $data['maximum_day'] = $this->type == 'micro' ?  15 : 7;
-        $data['maximum_loan_amount'] =   $this->type == 'micro' ?  25000 : 500000;
+        $data['details_link']           = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
+        $data['loan_fee']               = $this->type == 'micro' ? 100 : 0;
+        $data['maximum_day']            = $this->type == 'micro' ? 15 : 7;
+        $data['maximum_loan_amount']    = $this->type == 'micro' ? 25000 : 500000;
 
         return $data;
     }
@@ -328,10 +329,9 @@ class Loan
         return $personal;
     }
 
-    public function businessInfo()
+    public function businessInfo($type = null)
     {
-        $business = (new BusinessInfo($this->partner, $this->resource));
-        return $business;
+        return (new BusinessInfo($this->partner, $this->resource))->setType($type)->setVersion($this->version);
     }
 
     public function financeInfo()
@@ -655,9 +655,9 @@ class Loan
         $running_term_loan  = !$this->partner->loan()->type(LoanTypes::TERM)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::TERM)->get()->last()->toArray() : [];
         $running_micro_loan = !$this->partner->loan()->type(LoanTypes::MICRO)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::MICRO)->get()->last()->toArray() : [];
         $running_loan_data  = [];
-        if(count($running_term_loan))
+        if (count($running_term_loan))
             $running_loan_data[] = $this->getRunningLoanData($running_term_loan, Statics::RUNNING_TERM_LOAN_ICON);
-        if(count($running_micro_loan))
+        if (count($running_micro_loan))
             $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, Statics::RUNNING_MICRO_LOAN_ICON);
 
         return $running_loan_data;
@@ -671,7 +671,7 @@ class Loan
      */
     private function getRunningLoanData($running_loan, $icon_url)
     {
-        return[
+        return [
             "data" => (new RunningApplication($running_loan))->toArray(),
             "icon" => $icon_url
         ];
@@ -680,29 +680,49 @@ class Loan
     public function uploadRetailerList($request)
     {
         $uploaded_csv = $request->file('retailers');
-        $filename         = 'robi_retailers_' . Carbon::now()->timestamp . '.' . $uploaded_csv->extension();
-        $this->fileRepository->uploadToCDN($filename,$uploaded_csv, 'dls_v2/robi/retailer_list/');
+        $filename     = 'robi_retailers_' . Carbon::now()->timestamp . '.' . $uploaded_csv->extension();
+        $this->fileRepository->uploadToCDN($filename, $uploaded_csv, 'dls_v2/robi/retailer_list/');
 
         $mobiles = [];
         Excel::load($uploaded_csv, function ($reader) use (&$mobiles) {
             $results = $reader->get();
-            $mobiles = $results->map(function($results){
+            $mobiles = $results->map(function ($results) {
                 return formatMobile($results['mobile']);
             });
         });
 
 
-        $existing_mobiles = Retailer::where('strategic_partner_id',$request->strategic_partner_id)->pluck('mobile');
-        $to_insert = array_unique(array_diff($mobiles->toArray(),$existing_mobiles->toArray()));
-        $to_insert =  collect($to_insert)->map(function($to_insert) use($request){
+        $existing_mobiles = Retailer::where('strategic_partner_id', $request->strategic_partner_id)->pluck('mobile');
+        $to_insert        = array_unique(array_diff($mobiles->toArray(), $existing_mobiles->toArray()));
+        $to_insert        = collect($to_insert)->map(function ($to_insert) use ($request) {
             return [
                 'strategic_partner_id' => $request->strategic_partner_id,
-                'mobile' => $to_insert,
-                'created_by' => $request->user->profile->id,
-                'created_by_name' => $request->user->profile->name,
-                'created_at' => Carbon::now()
+                'mobile'               => $to_insert,
+                'created_by'           => $request->user->profile->id,
+                'created_by_name'      => $request->user->profile->name,
+                'created_at'           => Carbon::now()
             ];
         });
         Retailer::insert($to_insert->toArray());
+    }
+
+    /**
+     * @param mixed $version
+     * @return Loan
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
+
+    /**
+     * @param mixed $type
+     * @return Loan
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
     }
 }
