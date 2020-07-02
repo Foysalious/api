@@ -6,6 +6,7 @@ use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;

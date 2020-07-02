@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -32,5 +33,10 @@ class Ssl implements Gateway
     public function getShebaCommission()
     {
         return self::SHEBA_COMMISSION;
+    }
+
+    public function getBalance()
+    {
+        return $this->ssl->getBalance()->available_credit;
     }
 }

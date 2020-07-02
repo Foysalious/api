@@ -15,6 +15,7 @@ class Portals
     const RESOURCE_APP = 'resource-app';
     const BONDHU_APP = 'bondhu-app';
     const BONDHU_WEB = 'bondhu-portal';
+    const BUSINESS_WEB = 'business-portal';
     const CLI = 'automatic';
 
     /**

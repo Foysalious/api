@@ -107,9 +107,14 @@ class PartnerRegistrationController extends Controller
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
+                $affiliate = $profile->affiliate;
+                if (!$affiliate) {
+                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                }
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
+                $this->profileRepository->registerAvatarByKit('affiliate', $profile);
             }
             if ($resource->partnerResources->count() > 0)
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
@@ -329,8 +334,11 @@ class PartnerRegistrationController extends Controller
             if (!$profile->resource)
                 $resource = Resource::create([
                     'profile_id'     => $profile->id,
-                    'remember_token' => str_random(60)
+                    'remember_token' => str_random(60),
+                    'status' =>  $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
                 ]); else $resource = $profile->resource;
+            if(!$profile->affiliate)
+                $this->profileRepository->registerAvatarByKit('affiliate', $profile);
             $this->setModifier($resource);
             $request['package_id']   = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
@@ -375,6 +383,8 @@ class PartnerRegistrationController extends Controller
             $profile       = $resource->profile;
             $profile->name = $request->name;
             $profile->save();
+            if(!$profile->affiliate)
+                $this->profileRepository->registerAvatarByKit('affiliate', $profile);
             if ($resource->partnerResources->count() > 0)
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $request['package_id']   = env('LITE_PACKAGE_ID');

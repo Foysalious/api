@@ -765,6 +765,7 @@ class LoanController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function deleteDocument(Request $request, PartnerBankLoan $partner_bank_loan, Loan $loan)
     {
         try {

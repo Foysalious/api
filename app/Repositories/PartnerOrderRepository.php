@@ -3,6 +3,7 @@
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Sheba\Jobs\JobStatuses;
 
 class PartnerOrderRepository
@@ -207,6 +208,14 @@ class PartnerOrderRepository
                     'schedule_date' => $jobs[0]->schedule_date,
                     'preferred_time' => $jobs[0]->readable_preferred_time,
                     'services' => $services,
+                    'is_rent_a_car' => $jobs[0]->isRentCar(),
+                    'rent_a_car_service_info' => $jobs[0]->isRentCar() ? $this->formatServices($jobs[0]->jobServices) : null,
+                    'pick_up_location' => $jobs[0]->carRentalJobDetail && $jobs[0]->carRentalJobDetail->pickUpLocation ? $jobs[0]->carRentalJobDetail->pickUpLocation->name : null,
+                    'pick_up_address' => $jobs[0]->carRentalJobDetail ? $jobs[0]->carRentalJobDetail->pick_up_address : null,
+                    'pick_up_address_geo' => $jobs[0]->carRentalJobDetail ? json_decode($jobs[0]->carRentalJobDetail->pick_up_address_geo) : null,
+                    'destination_location' => $jobs[0]->carRentalJobDetail && $jobs[0]->carRentalJobDetail->destinationLocation ? $jobs[0]->carRentalJobDetail->destinationLocation->name : null,
+                    'destination_address' => $jobs[0]->carRentalJobDetail ? $jobs[0]->carRentalJobDetail->destination_address : null,
+                    'destination_address_geo' => $jobs[0]->carRentalJobDetail ? json_decode($jobs[0]->carRentalJobDetail->destination_address_geo) : null,
                     'status' => $jobs[0]->status,
                     'is_order_request' => false,
                     'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false,
@@ -387,11 +396,11 @@ class PartnerOrderRepository
         $partner_order['customer_mobile'] = $partner_order->order->isFromOfflineBondhu() ?
             $partner_order->order->affiliation->affiliate->profile->mobile :
             $partner_order->order->deliveryAddress->mobile;
-        $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
-        $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
-        $partner_order['category_app_banner'] = $job->category ? $job->category->app_banner : null;
-        $partner_order['category_banner'] = $job->category ? $job->category->banner : null;
-        $partner_order['rating'] = $job->review ? (double)$job->review->rating : null;
+        $partner_order['resource_picture'] = $job && $job->resource ? $job->resource->profile->pro_pic : null;
+        $partner_order['resource_mobile'] = $job && $job->resource ? $job->resource->profile->mobile : null;
+        $partner_order['category_app_banner'] = $job && $job->category ? $job->category->app_banner : null;
+        $partner_order['category_banner'] = $job && $job->category ? $job->category->banner : null;
+        $partner_order['rating'] = $job && $job->review ? (double)$job->review->rating : null;
         $partner_order['address'] = $partner_order->order->deliveryAddress->address;
         $partner_order['location'] = $partner_order->order->location ? $partner_order->order->location->name : $partner_order->order->deliveryAddress->address;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
@@ -402,9 +411,9 @@ class PartnerOrderRepository
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
-        $partner_order['order_status'] = $job->status;
-        $partner_order['isRentCar'] = $job->isRentCar();
-        $partner_order['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
+        $partner_order['order_status'] = $job ? $job->status : null;
+        $partner_order['isRentCar'] = $job ? $job->isRentCar() : null;
+        $partner_order['is_on_premise'] = $job && $job->site == 'partner' ? 1 : 0;
         $partner_order['is_subscription_order'] = $partner_order->order->subscription_order_id ? 1 : 0;
 
         return $partner_order;
@@ -423,5 +432,26 @@ class PartnerOrderRepository
             $all_partner_orders = $final->unique('id');
         }
         return $all_partner_orders;
+    }
+
+    /**
+     * @param $job_services
+     * @return Collection
+     */
+    private function formatServices($job_services)
+    {
+        $services = collect();
+        foreach ($job_services as $job_service) {
+            $services->push([
+                'id' => $job_service->id,
+                'service_id' => $job_service->service_id,
+                'name' => $job_service->service->name,
+                'image' => $job_service->service->app_thumb,
+                'variables' => json_decode($job_service->variables),
+                'unit' => $job_service->service->unit,
+                'quantity' => $job_service->quantity
+            ]);
+        }
+        return $services;
     }
 }

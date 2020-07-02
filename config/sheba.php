@@ -33,16 +33,19 @@ return [
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
+        'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
         'resource' => 'resource_channel',
-        'employee' => 'employee_channel'
+        'employee' => 'employee_channel',
+        'affiliate' => 'affiliate_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
-        'manager' => 'notification_sound'
+        'manager' => 'notification_sound',
+        'affiliate' => 'default'
     ],
     'partner_packages' => [
         'ESP' => 4,
@@ -128,7 +131,7 @@ return [
     'online_payment_discount_threshold_minutes' => null,
     'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
     'car_rental' => [
-        'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
+        'master_category_id' => (int)env('RENT_A_CAR_CATEGORY_ID', 221),
         'secondary_category_ids' => explode(',', env('RENT_CAR_IDS')),
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
@@ -147,10 +150,11 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
     'resource_max_withdraw_limit' => 1000,
+    'tp_proxy_url' => env('TP_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
-    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
-    'lpg_service_id' => env('LPG_SERVICE_ID')
+    'lpg_service_id' => env('LPG_SERVICE_ID',676)
 ];

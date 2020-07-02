@@ -34,6 +34,7 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\Service\MinMaxPrice;
+use Sheba\Services\ServiceSubscriptionDiscount;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use stdClass;
 use Throwable;
@@ -368,7 +369,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount)
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
@@ -395,56 +396,61 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
+            if ((int)$request->is_business) {
+                $category = $cat->publishedForBusiness()->first();
+            } elseif ((int)$request->is_b2b) {
+                $category = $cat->publishedForB2B()->first();
+            }elseif ((int)$request->is_ddn) {
+                $category = $cat->publishedForDdn()->first();
+            }
+            else {
+                $category = $cat->published()->first();
+            }
 
-        if ($category != null) {
-            $category_slug = $category->getSlug();
-            $cross_sale_service = $category->crossSaleService;
-            list($offset, $limit) = calculatePagination($request);
-            $scope = [];
-            if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
+            if ($category != null) {
+                $category_slug = $category->getSlug();
+                $cross_sale_service = $category->crossSaleService;
+                list($offset, $limit) = calculatePagination($request);
+                $scope = [];
+                if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
 
-            if ($category->parent_id == null) {
-                if ((int)$request->is_business) {
-                    $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
-                } elseif ($request->is_b2b) {
-                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                } elseif ($request->is_ddn) {
-                    $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
-                } else {
-                    $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
-                }
-                $services = $this->serviceRepository->addServiceInfo($services, $scope);
-            } else {
-                $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
-                        $q->whereNotIn('id', $this->serviceGroupServiceIds());
-
+                if ($category->parent_id == null) {
+                    if ((int)$request->is_business) {
+                        $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_b2b) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    } elseif ($request->is_ddn) {
+                        $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
+                            ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                    }else {
+                        $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                     }
-                    $q->whereHas('locations', function ($query) use ($location) {
-                        $query->where('locations.id', $location);
-                    })->select(
-                        'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
-                        'app_thumb', 'app_banner', 'short_description', 'description',
-                        'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features'
-                    )->orderBy('order')->skip($offset)->take($limit);
+                    $services = $this->serviceRepository->addServiceInfo($services, $scope);
+                } else {
+                    $category->load(['services' => function ($q) use ($offset, $limit, $location) {
+                        if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                            $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    if ((int)\request()->is_business) $q->publishedForBusiness();
-                    elseif ((int)\request()->is_for_backend) $q->publishedForAll();
-                    elseif ((int)\request()->is_b2b) $q->publishedForB2B();
-                    elseif ((int)\request()->is_ddn) $q->publishedForDdn();
-                    else $q->published();
-                }]);
-                $services = $category->services;
-            }
+                        }
+                        $q->whereHas('locations', function ($query) use ($location) {
+                            $query->where('locations.id', $location);
+                        })->select(
+                            'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
+                            'app_thumb', 'app_banner', 'short_description', 'description',
+                            'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
+                            'terms_and_conditions', 'features'
+                        )->orderBy('order')->skip($offset)->take($limit);
 
-            if ($location) {
-                $services->load(['activeSubscription', 'locationServices' => function ($q) use ($location) {
-                    $q->where('location_id', $location);
-                }]);
-            }
+                        if ((int)\request()->is_business) $q->publishedForBusiness();
+                        elseif ((int)\request()->is_for_backend) $q->publishedForAll();
+                        elseif ((int)\request()->is_b2b) $q->publishedForB2B();
+                        elseif ((int)\request()->is_ddn) $q->publishedForDdn();
+                        else $q->published();
+                    }]);
+                    $services = $category->services;
+                }
+
 
             if ($request->has('service_id')) {
                 $services = $services->filter(function ($service) use ($request) {
@@ -505,9 +511,19 @@ class CategoryController extends Controller
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['unit'] = $service['unit'];
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
+                    $lowest_service_subscription_discount = $subscription->validDiscounts->sortBy('discount_amount')->first();
+                    $subscription['discount'] = $lowest_service_subscription_discount ? [
+                        'discount_amount' => $lowest_service_subscription_discount->discount_amount,
+                        'is_discount_amount_percentage' => $lowest_service_subscription_discount->is_discount_amount_percentage,
+                        'cap' => $lowest_service_subscription_discount->cap,
+                        'min_discount_qty' => $lowest_service_subscription_discount->min_discount_qty,
+                        'text' => $subscriptionDiscount->setServiceSubscriptionDiscount($lowest_service_subscription_discount)->getDiscountText()
+
+                    ] : null;
                     if ($subscription->faq) {
                         $faq = json_decode($subscription->faq);
                         if ($faq->title && $faq->description) {
@@ -518,6 +534,7 @@ class CategoryController extends Controller
                             ];
                         }
                     }
+                    removeRelationsAndFields($subscription);
                     $subscriptions->push($subscription);
                 }
                 removeRelationsAndFields($service);
@@ -538,7 +555,7 @@ class CategoryController extends Controller
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions;
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
                 $category['cross_sale'] = $cross_sale_service ? [
                     'title' => $cross_sale_service->title,
                     'description' => $cross_sale_service->description,

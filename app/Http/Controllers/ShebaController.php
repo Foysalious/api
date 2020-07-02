@@ -39,7 +39,8 @@ use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
 
-class ShebaController extends Controller {
+class ShebaController extends Controller
+{
     use DispatchesJobs;
 
     private $serviceRepository;
@@ -50,7 +51,7 @@ class ShebaController extends Controller {
     {
         $this->serviceRepository     = $service_repo;
         $this->reviewRepository      = $review_repo;
-        $this->paymentLinkRepo = $paymentLinkRepository;
+        $this->paymentLinkRepo       = $paymentLinkRepository;
     }
 
     public function getInfo()
@@ -58,18 +59,17 @@ class ShebaController extends Controller {
         $job_count      = Job::all()->count() + 16000;
         $service_count  = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
-        return response()->json([
-            'service'  => $service_count, 'job' => $job_count,
+        return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-            'msg'      => 'successful', 'code' => 200
-        ]);
+            'msg' => 'successful', 'code' => 200]);
     }
 
-    public function sendFaq(Request $request) {
+    public function sendFaq(Request $request)
+    {
         try {
             $validator = Validator::make($request->all(), [
-                'name'    => 'required|string',
-                'email'   => 'required|email',
+                'name' => 'required|string',
+                'email' => 'required|email',
                 'subject' => 'required|string',
                 'message' => 'required|string'
             ]);
@@ -83,11 +83,12 @@ class ShebaController extends Controller {
         }
     }
 
-    public function getImages(Request $request) {
+    public function getImages(Request $request)
+    {
         try {
             if ($request->has('is_business') && (int)$request->is_business) {
                 $portal_name = 'manager-app';
-                $screen      = 'eshop';
+                $screen = 'eshop';
 
                 if (!$request->has('location')) $location = 4;
                 else $location = $request->location;
@@ -108,7 +109,7 @@ class ShebaController extends Controller {
                 }
 
                 $portal_name = $request->portal;
-                $screen      = $request->screen;
+                $screen = $request->screen;
             }
 
             $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
@@ -141,21 +142,21 @@ class ShebaController extends Controller {
      * @param $screen
      * @return Slider
      */
-    private function getSliderWithSlides($location, $portal_name, $screen) {
+    private function getSliderWithSlides($location, $portal_name, $screen)
+    {
         $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
             $query->where('is_published', 1);
         })->where('portal_name', $portal_name)->where('screen', $screen)->first();
 
-        $slider = $sliderPortal->slider()->with([
-            'slides' => function ($q) use ($location) {
-                $q->where('location_id', $location)->orderBy('order');
-            }
-        ])->first();
+        $slider = $sliderPortal->slider()->with(['slides' => function ($q) use ($location) {
+            $q->where('location_id', $location)->orderBy('order');
+        }])->first();
 
         return $slider;
     }
 
-    public function getSimilarOffer($offer) {
+    public function getSimilarOffer($offer)
+    {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
             ->where([
                 ['id', '<>', $offer],
@@ -164,15 +165,17 @@ class ShebaController extends Controller {
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
-    public function getLeadRewardAmount() {
+    public function getLeadRewardAmount()
+    {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
 
-    public function getVersions(Request $request) {
+    public function getVersions(Request $request)
+    {
         try {
             if ($request->has('version') && $request->has('app')) {
-                $version  = (int)$request->version;
-                $app      = $request->app;
+                $version = (int)$request->version;
+                $app = $request->app;
                 $versions = AppVersion::where('tag', $app)
                     ->where('version_code', '>', $version)
                     ->where(function ($query) use ($version) {
@@ -182,12 +185,12 @@ class ShebaController extends Controller {
                     ->get();
 
                 $data = [
-                    'title'       => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body'        => !$versions->isEmpty() ? $versions->last()->body : null,
-                    'height'      => !$versions->isEmpty() ? $versions->last()->height : null,
-                    'width'       => !$versions->isEmpty() ? $versions->last()->width : null,
-                    'image_link'  => !$versions->isEmpty() ? $versions->last()->image_link : null,
-                    'has_update'  => count($versions) > 0 ? 1 : 0,
+                    'title' => !$versions->isEmpty() ? $versions->last()->title : null,
+                    'body' => !$versions->isEmpty() ? $versions->last()->body : null,
+                    'height' => !$versions->isEmpty() ? $versions->last()->height : null,
+                    'width' => !$versions->isEmpty() ? $versions->last()->width : null,
+                    'image_link' => !$versions->isEmpty() ? $versions->last()->image_link : null,
+                    'has_update' => count($versions) > 0 ? 1 : 0,
                     'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
                 ];
 
@@ -206,19 +209,20 @@ class ShebaController extends Controller {
         }
     }
 
-    private function scrapeAppVersionsAndStoreInRedis() {
+    private function scrapeAppVersionsAndStoreInRedis()
+    {
         $version_string = 'itemprop="softwareVersion">';
-        $apps           = constants('APPS');
-        $final          = [];
+        $apps = constants('APPS');
+        $final = [];
         foreach ($apps as $key => $value) {
-            $headers      = get_headers($value);
+            $headers = get_headers($value);
             $version_code = 0;
             if (substr($headers[0], 9, 3) == "200") {
-                $dom           = file_get_contents($value);
-                $version       = strpos($dom, $version_string);
+                $dom = file_get_contents($value);
+                $version = strpos($dom, $version_string);
                 $result_string = trim(substr($dom, $version + strlen($version_string), 15));
-                $final_string  = explode(' ', $result_string);
-                $version_code  = (int)str_replace('.', '', $final_string[0]);
+                $final_string = explode(' ', $result_string);
+                $version_code = (int)str_replace('.', '', $final_string[0]);
             }
             array_push($final, ['name' => $key, 'version_code' => $version_code, 'is_critical' => 0]);
         }
@@ -226,9 +230,10 @@ class ShebaController extends Controller {
         return $final;
     }
 
-    public function sendCarRentalInfo(Request $request) {
+    public function sendCarRentalInfo(Request $request)
+    {
         try {
-            $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+            $ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
             $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
             return api_response($request, $categories, 200, ['info' => $categories]);
         } catch (Throwable $e) {
@@ -237,18 +242,19 @@ class ShebaController extends Controller {
         }
     }
 
-    public function sendButcherInfo(Request $request) {
+    public function sendButcherInfo(Request $request)
+    {
         try {
             $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
             if ($butcher_service) {
                 $butcher_info = [
-                    'id'           => $butcher_service->id,
-                    'category_id'  => $butcher_service->category_id,
-                    'name'         => $butcher_service->name,
-                    'unit'         => $butcher_service->unit,
+                    'id' => $butcher_service->id,
+                    'category_id' => $butcher_service->category_id,
+                    'name' => $butcher_service->name,
+                    'unit' => $butcher_service->unit,
                     'min_quantity' => (double)$butcher_service->min_quantity,
-                    'price_info'   => json_decode($butcher_service->variables),
-                    'date'         => "2018-08-21"
+                    'price_info' => json_decode($butcher_service->variables),
+                    'date' => "2018-08-21"
                 ];
                 return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
             } else {
@@ -401,7 +407,7 @@ class ShebaController extends Controller {
             return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -417,12 +423,12 @@ class ShebaController extends Controller {
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag       = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
-            'type'     => $type->sluggable_type,
-            'id'       => $type->sluggable_id,
+            'type' => $type->sluggable_type,
+            'id' => $type->sluggable_id,
             'meta_tag' => $meta_tag && $meta_tag->meta_tag ? json_decode($meta_tag->meta_tag) : null,
-            'og_tag'   => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
+            'og_tag' => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
         ];
         return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
     }
@@ -431,7 +437,7 @@ class ShebaController extends Controller {
     {
         $this->validate($request, ['url' => 'required']);
 
-        $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', $request->url)->first();
 
         if ($new_url) {
             return api_response($request, true, 200, ['new_url' => $new_url->new_url]);

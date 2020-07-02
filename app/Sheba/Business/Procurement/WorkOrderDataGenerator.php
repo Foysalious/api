@@ -52,18 +52,21 @@ class WorkOrderDataGenerator
             'from' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
+                'logo' => $this->business->logo,
                 'mobile' => $this->business->getContactNumber()
             ],
             'to' => [
                 'name' => $this->bid->bidder->name,
                 'address' => $this->bid->bidder->address,
+                'logo' => $this->bid->bidder->logo,
                 'mobile' => $this->bid->bidder->getContactNumber()
             ],
             'items' => $items,
             'terms' => $this->bid->terms,
             "sub_total" => $this->procurement->totalPrice,
             "due" => $this->procurement->due,
-            "grand_total" => $this->procurement->totalPrice
+            "grand_total" => $this->procurement->totalPrice,
+            "tk_sign" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png"
         ];
     }
 

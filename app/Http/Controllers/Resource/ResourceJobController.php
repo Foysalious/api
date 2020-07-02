@@ -137,7 +137,7 @@ class ResourceJobController extends Controller
 
     public function getServices(Job $job, Request $request, ServiceList $serviceList)
     {
-        $services = $serviceList->setJob($job)->getServicesList();
+        $services = $serviceList->setJob($job)->setRequest($request)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
     }
@@ -155,14 +155,17 @@ class ResourceJobController extends Controller
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
 
         if ($request->has('services')) {
+            if (!is_array(json_decode($request->services))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForServiceAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
         if ($request->has('materials')) {
+            if (!is_array(json_decode($request->materials))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
         if ($request->has('quantity')) {
+            if (!is_array(json_decode($request->quantity))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForQuantityUpdate($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }

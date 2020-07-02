@@ -192,7 +192,7 @@
             <tr>
                 <td>Business Category</td>
                 <td colspan="2">{{$final_information_for_loan['business']['business_category']}}</td>
-                <td colspan="2">Supplier Category {{$final_information_for_loan['proposal_info']['supplier_category']}}</td>
+                <td colspan="2">Supplier Category: {{$final_information_for_loan['proposal_info']['supplier_category']}}</td>
                 <td class="text-center" colspan="2">{{$partner['current_package']}}</td>
             </tr>
             <tr>

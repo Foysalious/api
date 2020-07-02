@@ -9,4 +9,6 @@ interface PayableAdapter
     public function setModelForPayable($model);
 
     public function setEmiMonth($month);
+
+    public function canInit(): bool;
 }

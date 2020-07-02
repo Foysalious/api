@@ -24,7 +24,6 @@ class Creator {
     private $interest;
     private $bankTransactionCharge;
 
-
     /**
      * Creator constructor.
      * @param PaymentLinkRepositoryInterface $payment_link_repository
@@ -93,6 +92,7 @@ class Creator {
         $this->emiMonth = $emi_month;
         return $this;
     }
+
 
     /**
      * @param mixed $interest

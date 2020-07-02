@@ -198,7 +198,6 @@ class JobList
      */
     private function formatJobs(Collection $jobs)
     {
-
         $formatted_jobs = collect();
         foreach ($jobs as $job) {
             $job->partnerOrder->calculate(1);
@@ -207,11 +206,19 @@ class JobList
             $formatted_job->put('order_code', $job->partnerOrder->order->code());
             $formatted_job->put('total_price', (double)$job->partnerOrder->totalPrice);
             $formatted_job->put('category_id', $job->category_id);
+            $formatted_job->put('category_name', $job->category->name);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
             $formatted_job->put('delivery_mobile', $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
+            $formatted_job->put('is_rent_a_car', $job->isRentCar());
+            $formatted_job->put('pick_up_location', $job->carRentalJobDetail && $job->carRentalJobDetail->pickUpLocation ? $job->carRentalJobDetail->pickUpLocation->name : null);
+            $formatted_job->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
+            $formatted_job->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
+            $formatted_job->put('destination_location', $job->carRentalJobDetail && $job->carRentalJobDetail->destinationLocation ? $job->carRentalJobDetail->destinationLocation->name : null);
+            $formatted_job->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
+            $formatted_job->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
             $formatted_job->put('rating', $job->review ? $job->review->rating : null);
             $formatted_job->put('order_status', $this->statusTagCalculator->getOrderStatusMessage($job));
             $formatted_job->put('tag', $this->statusTagCalculator->calculateTag($job));

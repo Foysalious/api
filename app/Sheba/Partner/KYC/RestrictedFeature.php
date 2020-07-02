@@ -1,20 +1,19 @@
-<?php namespace App\Sheba\Partner\KYC;
-
-use Sheba\Helpers\ConstGetter;
-
+<?php namespace Sheba\Partner\KYC;
 
 class RestrictedFeature
 {
     public static function get()
     {
         return [
-            'wallet_recharge',
-            'digital_collection',
-            'product_link',
-            'digital_collection_from_pos',
-            'emi_collection',
-            'emi_use',
-            'withdrawal'
+            'RechargeActivity',
+            'PaymentLinkShareActivity',
+            'CreateLinkActivity',
+            'PosProductLinkShareActivity',
+            'PosPaymentLinkShareActivity',
+            'MonthlyEmiListActivity',
+            'EmiBalanceSetActivity',
+            'WithdrawRequestActivity',
+            'HomeLandingFragment'
         ];
     }
 

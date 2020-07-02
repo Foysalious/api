@@ -145,20 +145,8 @@ class ServiceController extends Controller
                 $service_breakdown = $total_breakdown;
             }
 
-        } else {
-            $service_breakdown = [
-                [
-                    'name' => $service->first()->name,
-                    'indexes' => null,
-                    'min_price' => $service_min_price,
-                    'max_price' => $service_max_price,
-                    'price' => $price_calculation->getUnitPrice()
-                ]
-            ];
-        }
-
-        $service = $request->has('is_business') ? $service->publishedForBusiness() : ($request->has('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
-        $service = $service->first();
+            $service = $request->has('is_business') ? $service->publishedForBusiness() : ($request->has('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
+            $service = $service->first();
 
         if ($service == null) return api_response($request, null, 404);
         if ($service->variable_type == 'Options') {
@@ -240,22 +228,21 @@ class ServiceController extends Controller
             array_add($service, 'start_time', null);
             array_add($service, 'end_time', null);
         }
-
-
-        if ($request->has('is_business') || $request->has('is_ddn')) {
-            $questions = null;
-            $service['type'] = 'normal';
-            if ($service->variable_type == 'Options') {
-                $questions = $service->variables->options;
-                foreach ($questions as &$question) {
-                    $question = collect($question);
-                    $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
-                    $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
-                    $explode_answers = explode(',', $question->get('answers'));
-                    $question->put('answers', $explode_answers);
-                }
-                if (count($questions) == 1) {
-                    $questions[0]->put('input_type', 'selectbox');
+            if ($request->has('is_business') || $request->has('is_ddn')) {
+                $questions = null;
+                $service['type'] = 'normal';
+                if ($service->variable_type == 'Options') {
+                    $questions = $service->variables->options;
+                    foreach ($questions as &$question) {
+                        $question = collect($question);
+                        $question->put('input_type', $this->resolveInputTypeField($question->get('answers')));
+                        $question->put('screen', count($questions) > 3 ? 'slide' : 'normal');
+                        $explode_answers = explode(',', $question->get('answers'));
+                        $question->put('answers', $explode_answers);
+                    }
+                    if (count($questions) == 1) {
+                        $questions[0]->put('input_type', 'selectbox');
+                    }
                 }
             }
             array_add($service, 'questions', $questions);

@@ -34,6 +34,8 @@ class ReviewDataStore implements DataStoreObject
             ->whereIn('reviews.rating', [5])
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->where('reviews.category_id', $category->id)
+            ->whereNotNull('profiles.name')
+            ->where('profiles.name', '!=', '')
             ->take(10)
             ->orderBy('id', 'desc')
             ->groupBy('customer_id')
