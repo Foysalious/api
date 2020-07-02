@@ -17,6 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -177,8 +178,8 @@ class LoanController extends Controller
             $data     = [
                 'loan_amount' => $request->loan_amount,
                 'duration'    => $request->duration,
-                'month'       => $resource->month ?: 0,
-                'type'        => $request->type ? $request->type : 0
+                'month'       => $request->month ?: 0,
+                'type'        => $request->type ?: LoanTypes::TERM
             ];
             $info     = $loan->setPartner($partner)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);

@@ -77,4 +77,27 @@ class Statics
             ]
         ];
     }
+
+    public static function getFee($type)
+    {
+        $fee = config('loan.fee');
+        return $type == LoanTypes::MICRO ? $fee[LoanTypes::MICRO] : $fee[LoanTypes::TERM];
+    }
+
+    public static function getMinimumDay($type)
+    {
+        $day = config('loan.minimum_day');
+        return $type == LoanTypes::MICRO ? $day[LoanTypes::MICRO] : $day[LoanTypes::TERM];
+    }
+
+    public static function getMinimumAmount($type)
+    {
+        $amount = config('loan.maximum_amount');
+        return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
+    }
+
+    public static function getDetailsLink($type)
+    {
+        return $type = LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");
+    }
 }
