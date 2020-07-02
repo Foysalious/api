@@ -63,8 +63,8 @@ class LoanV2Controller extends Controller
 
     /**
      * @param Request $request
-     * @param $loan_id
-     * @param Loan $loan
+     * @param         $loan_id
+     * @param Loan    $loan
      * @return JsonResponse
      */
     public function show(Request $request, $loan_id, Loan $loan)
@@ -128,8 +128,8 @@ class LoanV2Controller extends Controller
             $new      = $request->new;
             $homepage = $loan->setPartner($partner)->setResource($resource)->homepageV2();
             if (empty($new))
-                if(isset($homepage['running_loan'][0]['data']['duration']) && $homepage['running_loan'][0]['data']['type'] == "term")
-                    $homepage['running_loan'][0]['data']['duration'] = $homepage['running_loan'][0]['data']['duration']/ 12;
+                if (isset($homepage['running_loan'][0]['data']['duration']) && $homepage['running_loan'][0]['data']['type'] == "term")
+                    $homepage['running_loan'][0]['data']['duration'] = $homepage['running_loan'][0]['data']['duration'] / 12;
             return api_response($request, $homepage, 200, ['homepage' => $homepage]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -212,7 +212,10 @@ class LoanV2Controller extends Controller
     public function getPersonalInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
+            $this->validate($request, [
+                'loan_type' => 'required|in:' . implode(',', LoanTypes::get()
+                    )
+            ]);
 
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
@@ -254,9 +257,10 @@ class LoanV2Controller extends Controller
     public function getBusinessInformation($partner, Request $request)
     {
         try {
+            $type             = $request->type ?: LoanTypes::GENERAL;
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
                 'completion' => $info->completion()
@@ -270,10 +274,11 @@ class LoanV2Controller extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, BusinessInfo::getValidator());
+            $this->validate($request, BusinessInfo::getValidator() + ['loan_type' => 'sometimes|in:' . implode(',', LoanTypes::get())]);
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            (new Loan())->setPartner($partner)->setResource($resource)->businessInfo()->update($request);
+            (new Loan())->setPartner($partner)->setVersion(2)->setType($request->loan_type)
+                                                             ->setResource($resource)->businessInfo()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -322,10 +327,10 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
-                $info     = $loan->setPartner($partner)->setResource($resource)->granterDetails();
+            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
+                $info = $loan->setPartner($partner)->setResource($resource)->granterDetails();
             else
-                $info     = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
+                $info = $loan->setPartner($partner)->setResource($resource)->nomineeGranter();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
                 'completion' => $info->completion()
@@ -341,11 +346,10 @@ class LoanV2Controller extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
+            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
                 $this->validate($request, GranterDetails::getValidator());
                 $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
-            }
-            else{
+            } else {
                 $this->validate($request, NomineeGranterInfo::getValidator());
                 $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
             }
@@ -371,11 +375,10 @@ class LoanV2Controller extends Controller
                 'info'       => $info->toArray($request->loan_type),
                 'completion' => $info->completion($request->loan_type)
             ]);
-        }catch (ValidationException $e) {
+        } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        }
-        catch (Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -677,11 +680,11 @@ class LoanV2Controller extends Controller
     public function generateApplication(Request $request, $loan_id, Loan $loan)
     {
         try {
-            $data                  = $loan->show($loan_id);
-            $ownership_type = $data['final_information_for_loan']['business']['ownership_type'];
-            $data['ownership_type'] = config('constants.ownership_type_en.'.$ownership_type);
-            $pdf_handler           = new PdfHandler();
-            $loan_application_name = 'loan_application_' . $loan_id;
+            $data                   = $loan->show($loan_id);
+            $ownership_type         = $data['final_information_for_loan']['business']['ownership_type'];
+            $data['ownership_type'] = config('constants.ownership_type_en.' . $ownership_type);
+            $pdf_handler            = new PdfHandler();
+            $loan_application_name  = 'loan_application_' . $loan_id;
             if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {
                 $loan_application_name       = 'sanction_letter_' . $loan_id;
                 $data['sanction_issue_date'] = $loan->getSanctionIssueDate($loan_id);
