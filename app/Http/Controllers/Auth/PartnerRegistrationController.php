@@ -335,7 +335,7 @@ class PartnerRegistrationController extends Controller
                 $resource = Resource::create([
                     'profile_id'     => $profile->id,
                     'remember_token' => str_random(60),
-                    'status' =>  $profile->affiliate ? $profile->affiliate->verifiaction_status : 'unverified',
+                    'status' =>  $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
                 ]); else $resource = $profile->resource;
             if(!$profile->affiliate)
                 $this->profileRepository->registerAvatarByKit('affiliate', $profile);
