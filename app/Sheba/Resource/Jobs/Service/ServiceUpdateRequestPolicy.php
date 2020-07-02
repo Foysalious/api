@@ -57,31 +57,15 @@ class ServiceUpdateRequestPolicy
     public function canUpdate()
     {
         if ($this->job->isServed()) {
-            $this->setErrorMessage('Order is served');
+            $this->setErrorMessage('Order is closed.');
             return 0;
         }
         if ($this->job->isCancelled()) {
-            $this->setErrorMessage('Job is cancelled');
+            $this->setErrorMessage('Order is cancelled.');
             return 0;
         }
         if ($this->job->pendingCancelRequests->count() > 0) {
             $this->setErrorMessage('Order has pending cancel request');
-            return 0;
-        }
-        if (!$this->partner->hasAppropriateCreditLimit()) {
-            $this->setErrorMessage('Partner has not appropriate credit limit');
-            return 0;
-        }
-        if (!$this->hasResource()) {
-            $this->setErrorMessage('Partner has no resource for this category');
-            return 0;
-        }
-        if (!$this->isAvailable()) {
-            $this->setErrorMessage('Partner is not available');
-            return 0;
-        }
-        if ($this->job->partnerOrder->isAlreadyCancelled()) {
-            $this->setErrorMessage('You can\'t add material for cancelled order');
             return 0;
         }
         return 1;

@@ -273,53 +273,29 @@ class PartnerJobController extends Controller
         }
     }
 
-    public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $updateRequest)
+    public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $update_request)
     {
         $this->validate($request, ['name' => 'required|string', 'price' => 'required|numeric|min:1']);
         $this->setModifier($request->manager_resource);
         $user_agent_information->setRequest($request);
-        $response = $updateRequest->setJob($request->job)->setUserAgentInformation($user_agent_information)
+        $response = $update_request->setJob($request->job)->setUserAgentInformation($user_agent_information)
             ->setMaterials([['name' => $request->name, 'price' => (double)$request->price]])->update();
         return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
-    public function updateMaterial($partner, $job, Request $request)
+    public function updateMaterial($partner, $job, Request $request, ServiceUpdateRequest $update_request, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, [
-                'material_id' => 'required|numeric',
-                'name' => 'required|string',
-                'price' => 'required|numeric|min:1'
-            ]);
-            $job = $request->job;
-            $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
-            if ($material) {
-                try {
-                    DB::transaction(function () use ($job, $request, $material) {
-                        $material->material_name = $request->name;
-                        $material->material_price = $request->price;
-                        $material->updated_by = $request->manager_resource->id;
-                        $material->updated_by_name = 'Resource-' . $request->manager_resource->profile->name;
-                        $material->update();
-                        return api_response($request, null, 200);
-                    });
-                    return api_response($request, $material, 200);
-                } catch (QueryException $e) {
-                    app('sentry')->captureException($e);
-                    return api_response($request, null, 500);
-                }
-            }
-            return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'material_id' => 'required|numeric',
+            'name' => 'required|string',
+            'price' => 'required|numeric|min:1'
+        ]);
+        $this->setModifier($request->manager_resource);
+        $user_agent_information->setRequest($request);
+        $job = $request->job;
+        $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
+        $response = $update_request->setJob($job)->setUserAgentInformation($user_agent_information)->updateMaterial($material, $request->name, $request->price);
+        return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     private function jobUpdateLog($job_id, $log, $created_by)
