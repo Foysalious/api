@@ -286,10 +286,10 @@ class Loan
             $data[$key] = $val->completion();
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
-        $data['details_link']           = $this->type == 'term' ? (config('sheba.partners_url') . "/api/term-loan") : (config('sheba.partners_url') . "/api/micro-loan");
-        $data['loan_fee']               = $this->type == 'micro' ? 100 : 0;
-        $data['maximum_day']            = $this->type == 'micro' ? 15 : 7;
-        $data['maximum_loan_amount']    = $this->type == 'micro' ? 25000 : 500000;
+        $data['details_link']           = $this->type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan") ;
+        $data['loan_fee']               = $this->type == LoanTypes::MICRO ? 100 : 0;
+        $data['maximum_day']            = $this->type == LoanTypes::MICRO ? 15 : 7;
+        $data['maximum_loan_amount']    = $this->type == LoanTypes::MICRO ? 25000 : 500000;
 
         return $data;
     }

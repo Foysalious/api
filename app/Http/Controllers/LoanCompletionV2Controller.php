@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use App\Models\Profile;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Loan;
 
 class LoanCompletionV2Controller extends Controller
@@ -12,11 +13,8 @@ class LoanCompletionV2Controller extends Controller
     {
         try {
 
-            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
-
-
+            $this->validate($request, ['loan_type' => 'required|in:'. implode(',', LoanTypes::get())]);
             $complete_count = 0;
-
             $partner = $request->partner;
             $resource = $request->manager_resource;
             $completion = $loan->setPartner($partner)->setResource($resource)->setType($request->loan_type)->getCompletion();
