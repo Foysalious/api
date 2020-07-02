@@ -60,6 +60,10 @@ class ServiceUpdateRequestPolicy
             $this->setErrorMessage('Order is served');
             return 0;
         }
+        if ($this->job->isCancelled()) {
+            $this->setErrorMessage('Job is cancelled');
+            return 0;
+        }
         if ($this->job->pendingCancelRequests->count() > 0) {
             $this->setErrorMessage('Order has pending cancel request');
             return 0;
