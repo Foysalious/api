@@ -257,7 +257,7 @@ class LoanV2Controller extends Controller
     public function getBusinessInformation($partner, Request $request)
     {
         try {
-            $type             = $request->type ?: LoanTypes::GENERAL;
+            $type             = $request->type ?: LoanTypes::TERM;
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
