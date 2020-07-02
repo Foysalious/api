@@ -28,6 +28,7 @@ class Cors2MiddleWare
             "http://localhost:3333",
             "http://localhost:3334",
             "http://localhost:3335",
+            "http://localhost:8099",
             "http://localhost:3000",
             "http://103.26.139.148",
             "http://144.76.92.216",
