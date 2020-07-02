@@ -42,7 +42,7 @@ class OrderRequestTransformer extends TransformerAbstract
             'schedule_at' => Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end)->timestamp,
             'created_time' => $request->created_at->format('g:i:s A'),
             'is_rent_a_car' => $job->isRentCar(),
-            'services' => $this->formatServices($job->jobServices),
+            'rent_a_car_service_info' => $job->isRentCar() ? $this->formatServices($job->jobServices) : null,
             'pick_up_location' => $job->carRentalJobDetail && $job->carRentalJobDetail->pickUpLocation ? $job->carRentalJobDetail->pickUpLocation->name : null,
             'pick_up_address' => $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null,
             'pick_up_address_geo' => $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null,
