@@ -62,7 +62,7 @@ class Loan
     private $type;
     private $fileRepository;
 
-    public function __construct(FileRepository $file_repository)
+    public function __construct(FileRepository $file_repository = null)
     {
         $this->repo        = new LoanRepository();
         $this->downloadDir = storage_path('downloads');
