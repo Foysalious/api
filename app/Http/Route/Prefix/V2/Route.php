@@ -96,6 +96,11 @@ class Route
                     $api->post('fail', 'CblController@validateCblPGR');
                     $api->post('cancel', 'CblController@validateCblPGR');
                 });
+                $api->group(['prefix' => 'port-wallet'], function ($api) {
+                    $api->post('ipn', 'PortWalletController@ipn');
+                    $api->get('redirect-without-validate', 'PortWalletController@redirectWithoutValidation');
+                    $api->get('validate-on-redirect', 'PortWalletController@validateOnRedirect');
+                });
             });
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@login');
@@ -185,6 +190,8 @@ class Route
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
+            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');

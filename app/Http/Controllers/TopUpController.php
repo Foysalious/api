@@ -65,40 +65,31 @@ class TopUpController extends Controller
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @return JsonResponse
+     * @throws Exception
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-            $agent = $this->getAgent($request);
+        $this->validate($request, [
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric'
+        ]);
+        $agent = $this->getAgent($request);
 
-            if ($this->hasLastTopupWithinIntervalTime($agent))
-                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+        if ($this->hasLastTopupWithinIntervalTime($agent))
+            return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
-            if ($top_up_request->hasError())
-                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
+        if ($top_up_request->hasError())
+            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
-            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
-            if ($topup_order) {
-                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
-                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            dd($e);
-            app('sentry')->captureException($e);
+        if ($topup_order) {
+            dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+        } else {
             return api_response($request, null, 500);
         }
     }

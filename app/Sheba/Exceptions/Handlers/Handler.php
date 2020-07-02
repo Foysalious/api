@@ -32,9 +32,8 @@ abstract class Handler
 
     public function render()
     {
-
         $response = [
-            'code' => $this->exception->getCode() ? $this->exception->getCode() : 500,
+            'code' => $this->getCode(),
             'message' => $this->getMessage()
         ];
 
@@ -45,7 +44,12 @@ abstract class Handler
                 'line' => $this->exception->getLine(),
             ];
         }
-        return api_response($this->request, null, 500, $response);
+        return response()->json($response);
+    }
+
+    public function report()
+    {
+        logError($this->exception);
     }
 
     /**
@@ -60,6 +64,6 @@ abstract class Handler
 
     protected function wantsTrace()
     {
-        return ($this->request->has('debug') && $this->request->debug) || config('app.env') == 'local';
+        return ($this->request->has('debug') && $this->request->debug) || config('app.env') != 'production';
     }
 }

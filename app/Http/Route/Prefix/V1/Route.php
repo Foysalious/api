@@ -65,9 +65,17 @@ class Route
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
             $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
+            $api->get('lpg-service', 'ServiceController@getLpg');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
+                $api->get('/partner-offer', 'OfferController@getPartnerOffer');
                 $api->get('{offer}', 'OfferController@show');
+            });
+            $api->group(['prefix' => 'blogs'], function ($api) {
+                $api->get('/', 'BlogController@index');
+            });
+            $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
+                $api->post('/', 'FeedbackController@create');
             });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
             $api->group(['prefix' => 'navigation'], function ($api) {

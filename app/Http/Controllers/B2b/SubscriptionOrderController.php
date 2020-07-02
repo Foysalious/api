@@ -2,11 +2,15 @@
 
 use App\Models\Service;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Sheba\Logs\ErrorLog;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\SubscriptionOrder;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use GuzzleHttp\Client;
@@ -36,12 +40,10 @@ class SubscriptionOrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -65,17 +67,25 @@ class SubscriptionOrderController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearPayment($business, $subscription_order, Request $request, ShebaPayment $sheba_payment)
+    /**
+     * @param $business
+     * @param $subscription_order
+     * @param Request $request
+     * @param PaymentManager $payment_manager
+     * @param SubscriptionOrderAdapter $adapter
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearPayment($business, $subscription_order, Request $request, PaymentManager $payment_manager, SubscriptionOrderAdapter $adapter)
     {
         $this->validate($request, ['payment_method' => 'required|string|in:bkash,wallet,cbl,online']);
         $payment_method = $request->payment_method;
@@ -87,9 +97,8 @@ class SubscriptionOrderController extends Controller
         $subscription_order->calculate();
         if ($subscription_order->due <= 0) return api_response($request, null, 403, ['message' => 'Your order is already paid.']);
         if ($payment_method == 'wallet' && $subscription_order->due > $business->wallet) return api_response($request, null, 403, ['message' => 'You don\'t have sufficient credit.']);
-        $order_adapter = new SubscriptionOrderAdapter();
-        $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
-        $payment = $sheba_payment->setMethod($payment_method)->init($payable);
+        $payable = $adapter->setModelForPayable($subscription_order)->setUser($business)->getPayable();
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -145,12 +154,10 @@ class SubscriptionOrderController extends Controller
 
             ];
             $handler = new PdfHandler();
-            /*return $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')
-                ->download();*/
             $link = $handler->setData($subscription_order_invoice)->setName('Subscription Order Invoice')->setViewFile('subscription_order_invoice')->save();
             return api_response($request, null, 200, ['message' => 'Successfully Download receipt', 'link' => $link]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

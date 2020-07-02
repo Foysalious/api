@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
+use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -12,6 +13,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
+use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
 {
@@ -97,6 +99,8 @@ class DueTrackerController extends Controller
             ]);
             $request->merge(['customer_id' => $customer_id]);
             $response = $dueTrackerRepository->setPartner($request->partner)->store($request->partner, $request);
+
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::DUE_TRACKER_TRANSACTION)->create($request->manager_resource);
             return api_response($request, $response, 200, ['data' => $response]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -256,6 +260,9 @@ class DueTrackerController extends Controller
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
+        } catch(InsufficientBalance $e) {
+            $message = "Insufficient Balance";
+            return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

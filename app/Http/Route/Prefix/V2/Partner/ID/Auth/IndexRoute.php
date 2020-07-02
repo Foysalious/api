@@ -1,4 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
+
+
 
 class IndexRoute
 {
@@ -10,6 +13,7 @@ class IndexRoute
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
+            $api->post('help', 'HelpController@create');
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
@@ -289,6 +293,7 @@ class IndexRoute
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
+            (new ReferralRoute())->individuals($api);
         });
     }
 }

@@ -71,25 +71,26 @@ class TopUp
     {
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
-        } else {
-            $this->response = $this->vendor->recharge($topup_order);
-            dd($this->response);
-            if ($this->response->hasSuccess()) {
-                dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
-                $response = $this->response->getSuccess();
-                DB::transaction(function () use ($response, $topup_order) {
-                    $this->setModifier($this->agent);
-                    $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                    /** @var TopUpCommission $top_up_commission */
-                    $top_up_commission = $this->agent->getCommission();
-                    $top_up_commission->setTopUpOrder($topup_order)->disburse();
-                    $this->vendor->deductAmount($topup_order->amount);
-                    $this->isSuccessful = true;
-                });
-            } else {
-                $this->updateFailedTopOrder($topup_order, $this->response->getError());
-            }
+            return;
         }
+
+        $this->response = $this->vendor->recharge($topup_order);
+        if ($this->response->hasError()) {
+            $this->updateFailedTopOrder($topup_order, $this->response->getError());
+            return;
+        }
+
+        $response = $this->response->getSuccess();
+        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
+        DB::transaction(function () use ($response, $topup_order) {
+            $this->setModifier($this->agent);
+            $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+            /** @var TopUpCommission $top_up_commission */
+            $top_up_commission = $this->agent->getCommission();
+            $top_up_commission->setTopUpOrder($topup_order)->disburse();
+            $this->vendor->deductAmount($topup_order->amount);
+            $this->isSuccessful = true;
+        });
     }
 
     /**
@@ -132,7 +133,7 @@ class TopUp
 
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
     {
-        $topup_order->status = config('topup.status.failed')['sheba'];
+        $topup_order->status = config('topup.status.failed.sheba');
         $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
         return $this->updateTopUpOrder($topup_order);
     }

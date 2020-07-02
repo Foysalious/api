@@ -3,14 +3,14 @@
 use App\Models\Payment;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 use Sheba\Transactions\InvalidTransaction;
-use Sheba\Transactions\Registrar;
 use Throwable;
 
 class BkashController extends Controller
 {
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         try {
             $this->validate($request, ['paymentID' => 'required']);
@@ -18,7 +18,7 @@ class BkashController extends Controller
             $payment = Payment::where('gateway_transaction_id', $request->paymentID)->valid()->first();
 
             if (!$payment) return api_response($request, null, 404, ['message' => 'Valid Payment not found.']);
-            $payment = $sheba_payment->setMethod('bkash')->complete($payment);
+            $payment = $payment_manager->setPayment($payment)->setMethodName(PaymentStrategy::BKASH)->complete();
 
             $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
             if ($payment->isComplete()) {

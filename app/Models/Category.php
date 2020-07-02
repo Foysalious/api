@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
 use Sheba\Dal\Gallery\Gallery;
@@ -156,7 +157,8 @@ class Category extends Model
 
     public function commission($partner_id)
     {
-        return (double)($this->partners()->wherePivot('partner_id', $partner_id)->first())->pivot->commission;
+        $commissions = (new CommissionCalculator())->setCategory($this)->setPartner(Partner::find($partner_id));
+        return $commissions->getServiceCommission();
     }
 
     public function scopePublishedForBusiness($query)
@@ -167,6 +169,11 @@ class Category extends Model
     public function scopePublishedForB2B($query)
     {
         return $query->where('is_published_for_b2b', 1);
+    }
+
+    public function scopePublishedForDdn($query)
+    {
+        return $query->where('is_published_for_ddn', 1);
     }
 
     public function scopePublishedForPartner($query)
@@ -207,6 +214,11 @@ class Category extends Model
     public function isRentCar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS')))) ? 1 : 0;
+    }
+
+    public function isRentMaster()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
     }
 
 
@@ -331,5 +343,10 @@ class Category extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

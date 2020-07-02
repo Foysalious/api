@@ -19,6 +19,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Services\FormatServices;
 use Sheba\Voucher\Creator\Referral;
 use Throwable;
 
@@ -53,17 +54,19 @@ class OrderController extends Controller
     /**
      * @param $order
      * @param Request $request
+     * @param FormatServices $formatServices
      * @return JsonResponse
      */
-    public function getBills($order, Request $request)
+    public function getBills($order, Request $request, FormatServices $formatServices)
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
             $order = Order::find((int)$order);
             if ($request->vendor->id !== $order->vendor_id) return response()->json(['data' => null]);
-            $job = $order->partnerOrders[0]->jobs[0]->id;
+            $job = $order->partnerOrders[0]->jobs[0];
             $customer = $order->customer;
-            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job . '/bills?remember_token=' . $customer->remember_token);
+            $service_list = $formatServices->setJob($job)->formatServices();
+            $job = $this->api->get('/v2/customers/' . $customer->id . '/jobs/' . $job->id . '/bills?remember_token=' . $customer->remember_token);
             return response()->json(['data' =>
                 [
                     'discounted_price' => $job->get('total'),
@@ -76,6 +79,7 @@ class OrderController extends Controller
                     'paid' => $job->get('paid'),
                     'due' => $job->get('due'),
                     'services' => $job->get('services'),
+                    'service_list' => $service_list
                 ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

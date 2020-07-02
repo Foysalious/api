@@ -23,6 +23,7 @@ use Sheba\Pos\Customer\Creator;
 use Sheba\Pos\Customer\Updater;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class CustomerController extends Controller
@@ -64,6 +65,11 @@ class CustomerController extends Controller
             $customer = PosCustomer::find((int)$customer);
             if (!$customer)
                 return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
+            $partner_pos_customer = PartnerPosCustomer::byPartner($partner)->where('customer_id', $customer->id)->first();
+            if (empty($partner_pos_customer))
+                return api_response($request, null, 404, ['message' => 'Customer Not Found.']);
+
             $data                             = $customer->details();
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
@@ -108,15 +114,13 @@ class CustomerController extends Controller
             if ($error = $creator->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
             $customer = $creator->setPartner($request->partner)->create();
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -146,12 +150,6 @@ class CustomerController extends Controller
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
