@@ -137,6 +137,9 @@ class BillUpdate
                         $service['service_group']->push($this->formatGroupedService($service_to_add));
                         //TODO: Need to Update Quantity
                     }
+                    else {
+                        $services->push($this->formatOptionService($service_to_add));
+                    }
                 }
             }
         }
@@ -206,5 +209,25 @@ class BillUpdate
             }
         }, $services_group);
         return $services_group;
+    }
+
+    private function formatOptionService($service)
+    {
+        return array(
+            'id' => null,
+            'name' => $service['service_name'],
+            'service_group' => [
+                [
+                    'job_service_id' => null,
+                    'variables' => json_decode($service['variables']),
+                    'unit' => $service['unit'],
+                    'quantity' => $service['quantity'],
+                    'price' => $service['unit_price'] * $service['quantity']
+                ]
+            ],
+            'unit' => $service['unit'],
+            'quantity' => $service['quantity'],
+            'price' => $service['unit_price'] * $service['quantity']
+        );
     }
 }
