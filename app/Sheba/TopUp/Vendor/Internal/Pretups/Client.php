@@ -93,7 +93,7 @@ class Client
         $vpn_response = $this->call($this->makeInputString($topup_order));
         $rax_response = new PretupsResponse();
         if ($vpn_response) $rax_response->setResponse($vpn_response);
-        dd($vpn_response, $rax_response);
+        return $rax_response;
     }
 
     private function makeInputString(TopUpOrder $topup_order)
@@ -140,6 +140,7 @@ class Client
             'connect_timeout' => 60
         ]);
         $vpn_response = $result->getBody()->getContents();
+
         if (!$vpn_response) throw new Exception("Vpn server not working.");
         $vpn_response = json_decode($vpn_response);
         if ($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->message);
