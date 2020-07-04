@@ -499,8 +499,8 @@ class ProcurementController extends Controller
             ->setProcurementEndDate($request->procurement_end_date)
             ->setPaymentOptions($request->payment_options);
         $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
-        return api_response($request, null, 200, ["message" => "Successful"]);
 
+        return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
     /**
@@ -520,6 +520,7 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
         $updater->setProcurement($procurement)->itemFieldsUpdate($request);
+
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
