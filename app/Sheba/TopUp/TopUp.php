@@ -81,6 +81,8 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
+        dd($response);
+        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order)));
         DB::transaction(function () use ($response, $topup_order) {
             $this->setModifier($this->agent);
             $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
