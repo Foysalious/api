@@ -10,8 +10,8 @@ class RestrictedFeature
             'CreateLinkActivity',
             'PosProductLinkShareActivity',
             'PosPaymentLinkShareActivity',
-            'MonthlyEmiListActivity',
-            'EmiBalanceSetActivity',
+            /*'MonthlyEmiListActivity',
+            'EmiBalanceSetActivity',*/
             'WithdrawRequestActivity',
             'HomeLandingActivity',
             'MyCompanyActivity',
