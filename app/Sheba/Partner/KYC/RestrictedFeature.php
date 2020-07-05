@@ -15,7 +15,8 @@ class RestrictedFeature
             'WithdrawRequestActivity',
             'HomeLandingActivity',
             'MyCompanyActivity',
-            'CurrentPackageActivity'
+            'CurrentPackageActivity',
+            'DueCreateLinkActivity'
         ];
     }
 
