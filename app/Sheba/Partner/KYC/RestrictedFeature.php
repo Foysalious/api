@@ -13,7 +13,9 @@ class RestrictedFeature
             'MonthlyEmiListActivity',
             'EmiBalanceSetActivity',
             'WithdrawRequestActivity',
-            'HomeLandingFragment'
+            'HomeLandingActivity',
+            'MyCompanyActivity',
+            'CurrentPackageActivity'
         ];
     }
 
