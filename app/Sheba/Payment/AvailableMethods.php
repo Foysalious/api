@@ -137,7 +137,7 @@ class AvailableMethods
             PaymentStrategy::CBL,
             PaymentStrategy::BKASH,
             PaymentStrategy::SSL_DONATION,
-            PaymentStrategy::SSL
+            PaymentStrategy::ONLINE
         ];
     }
 }
