@@ -47,8 +47,8 @@ class OkWallet extends PaymentMethod
 
     private function onInitFailed(Payment $payment, $error)
     {
-        $this->paymentRepository->setPayment($payment);
-        $this->paymentRepository->changeStatus([
+        $this->paymentLogRepo->setPayment($payment);
+        $this->paymentLogRepo->create([
             'to'                  => Statuses::INITIATION_FAILED,
             'from'                => $payment->status,
             'transaction_details' => $error
@@ -76,5 +76,10 @@ class OkWallet extends PaymentMethod
         }
         $payment->update();
         return $payment;
+    }
+
+    public function getMethodName()
+    {
+        return self::NAME;
     }
 }

@@ -4,11 +4,10 @@ use App\Models\Job;
 use Exception;
 use Illuminate\Support\Collection;
 use Sheba\Dal\JobMaterial\JobMaterial;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
-use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\JobTime;
 use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
@@ -19,11 +18,17 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Jobs\StatusChanger;
 use Sheba\Logistics\DTO\Order;
 use Sheba\Logistics\OrderManager;
+use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
+use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
+use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class PartnerJobController extends Controller
 {
+    use ModificationFields;
+
     /** @var ResourceJobRepository $resourceJobRepository */
     private $resourceJobRepository;
     /** @var mixed $jobStatuses */
@@ -267,78 +272,29 @@ class PartnerJobController extends Controller
         }
     }
 
-    public function addMaterial($partner, $job, Request $request)
+    public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $update_request)
     {
-        try {
-            $this->validate($request, [
-                'name' => 'required|string',
-                'price' => 'required|numeric|min:1'
-            ]);
-            try {
-                $material = new JobMaterial();
-                DB::transaction(function () use ($job, $request, $material) {
-                    $job = $request->job;
-                    $material->material_name = $request->name;
-                    $material->material_price = (double)$request->price;
-                    $material->job_id = $job->id;
-                    $material->created_by = $request->manager_resource->id;
-                    $material->created_by_name = 'Resource-' . $request->manager_resource->profile->name;
-                    $material->save();
-                });
-                return api_response($request, $material, 200);
-            } catch (QueryException $e) {
-                app('sentry')->captureException($e);
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['name' => 'required|string', 'price' => 'required|numeric|min:1']);
+        $this->setModifier($request->manager_resource);
+        $user_agent_information->setRequest($request);
+        $response = $update_request->setJob($request->job)->setUserAgentInformation($user_agent_information)
+            ->setMaterials([['name' => $request->name, 'price' => (double)$request->price]])->update();
+        return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
-    public function updateMaterial($partner, $job, Request $request)
+    public function updateMaterial($partner, $job, Request $request, ServiceUpdateRequest $update_request, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, [
-                'material_id' => 'required|numeric',
-                'name' => 'required|string',
-                'price' => 'required|numeric|min:1'
-            ]);
-            $job = $request->job;
-            $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
-            if ($material) {
-                try {
-                    DB::transaction(function () use ($job, $request, $material) {
-                        $material->material_name = $request->name;
-                        $material->material_price = $request->price;
-                        $material->updated_by = $request->manager_resource->id;
-                        $material->updated_by_name = 'Resource-' . $request->manager_resource->profile->name;
-                        $material->update();
-                        return api_response($request, null, 200);
-                    });
-                    return api_response($request, $material, 200);
-                } catch (QueryException $e) {
-                    app('sentry')->captureException($e);
-                    return api_response($request, null, 500);
-                }
-            }
-            return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'material_id' => 'required|numeric',
+            'name' => 'required|string',
+            'price' => 'required|numeric|min:1'
+        ]);
+        $this->setModifier($request->manager_resource);
+        $user_agent_information->setRequest($request);
+        $job = $request->job;
+        $material = $job->usedMaterials->where('id', (int)$request->material_id)->first();
+        $response = $update_request->setJob($job)->setUserAgentInformation($user_agent_information)->updateMaterial($material, $request->name, $request->price);
+        return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     private function jobUpdateLog($job_id, $log, $created_by)
