@@ -39,6 +39,7 @@ use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Usage\Usage;
 use Throwable;
 
 class OrderController extends Controller
@@ -86,7 +87,7 @@ class OrderController extends Controller
             }
             if (!empty($status))
                 $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
-            $final_orders     = $final_orders->groupBy('date')->toArray();
+            $final_orders = $final_orders->groupBy('date')->toArray();
 
             $orders_formatted = [];
             $pos_orders_repo  = new PosOrderRepository();
@@ -163,30 +164,38 @@ class OrderController extends Controller
     {
         try {
             $this->validate($request, [
-                'services'          => 'required|string',
-                'paid_amount'       => 'sometimes|required|numeric',
-                'payment_method'    => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
-                'customer_name'     => 'string',
-                'customer_mobile'   => 'string',
-                'customer_address'  => 'string',
-                'nPos'              => 'numeric',
-                'discount'          => 'numeric',
-                'is_percentage'     => 'numeric',
-                'previous_order_id' => 'numeric'
+                'services'              => 'required|string',
+                'paid_amount'           => 'sometimes|required|numeric',
+                'payment_method'        => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+                'customer_name'         => 'string',
+                'customer_mobile'       => 'string',
+                'customer_address'      => 'string',
+                'nPos'                  => 'numeric',
+                'discount'              => 'numeric',
+                'is_percentage'         => 'numeric',
+                'previous_order_id'     => 'numeric',
+                'emi_month'             => 'required_if:payment_method,emi|numeric',
+                'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount')
             ]);
             $link = null;
             if ($request->manager_resource) {
                 $partner = $request->partner;
-                $this->setModifier($request->manager_resource);
+                $modifier = $request->manager_resource;
+                $usage_type = Usage::Partner()::POS_ORDER_CREATE;
+                $this->setModifier($modifier);
             } else {
                 $partner              = $partnerRepository->find((int)$partner);
                 $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
                 $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
-                $this->setModifier($profile->customer);
+                $modifier = $profile->customer;
+                $usage_type = Usage::Partner()::PRODUCT_LINK;
+                $this->setModifier($modifier);
                 $creator->setCustomer($pos_customer);
             }
             $creator->setPartner($partner)->setData($request->all());
+            if($error=$creator->hasDueError())
+                return $error;
             /**
              * POS ORDER CHECK IF STOCK LIMIT EXCEED
              *
@@ -204,8 +213,21 @@ class OrderController extends Controller
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill            = $order->getNetBill();
-            if ($request->payment_method == 'payment_link') {
-                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")->setUserName($partner->name)->setUserId($partner->id)->setUserType('partner')->setTargetId($order->id)->setTargetType('pos_order')->save();
+            if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")
+                    ->setUserName($partner->name)->setUserId($partner->id)
+                    ->setUserType('partner')
+                    ->setTargetId($order->id)
+                    ->setTargetType('pos_order')
+                    ->setEmiMonth($request->emi_month);
+                if ($request->payment_method == 'emi') {
+                    $paymentLink->setInterest($order->interest)->setBankTransactionCharge($order->bank_transaction_charge);
+                }
+                if ($order->customer) {
+                    $paymentLink->setPayerId($order->customer->id)->setPayerType('pos_customer');
+                }
+                $paymentLink = $paymentLink->save();
+
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);
                 $link = ['link' => $transformer->getLink()];
@@ -218,6 +240,10 @@ class OrderController extends Controller
                 'partner_wise_order_id' => $order->partner_wise_order_id
             ];
             app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($partner)->setType($usage_type)->create($modifier);
             return api_response($request, null, 200, [
                 'message' => 'Order Created Successfully',
                 'order'   => $order,
@@ -225,12 +251,6 @@ class OrderController extends Controller
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -253,7 +273,6 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (InvalidPosOrder $e) {
-            app('sentry')->captureException($e);
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -312,7 +331,6 @@ class OrderController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
-//        return $request->all();
         $this->setModifier($request->manager_resource);
         try {
             /** @var PosOrder $order */
@@ -433,7 +451,8 @@ class OrderController extends Controller
         try {
             $this->validate($request, [
                 'paid_amount'    => 'required|numeric',
-                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method'))
+                'payment_method' => 'required|string|in:' . implode(',', config('pos.payment_method')),
+                'emi_month'      => 'required_if:payment_method,emi'
             ]);
             /** @var PosOrder $order */
             $order        = PosOrder::find($request->order);
@@ -442,14 +461,25 @@ class OrderController extends Controller
                 'amount'       => $request->paid_amount,
                 'method'       => $request->payment_method
             ];
+            if ($request->has('emi_month')) {
+                $payment_data['emi_month'] = $request->emi_month;
+            }
+
             $payment_creator->credit($payment_data);
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
-            $this->updateIncome($order, $request->paid_amount);
+            $this->updateIncome($order, $request->paid_amount, $request->emi_month);
+            /**
+             * USAGE LOG
+             */
+            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order
             ]);
+        }catch (ValidationException  $e){
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request,null,400,['message'=>$message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -458,15 +488,15 @@ class OrderController extends Controller
 
     /**
      * @param PosOrder $order
-     * @param $paid_amount
+     * @param          $paid_amount
+     * @param          $emi_month
      * @throws ExpenseTrackingServerError
      */
-    private function updateIncome(PosOrder $order, $paid_amount)
-    {
+    private function updateIncome(PosOrder $order, $paid_amount, $emi_month) {
         /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
-        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->updateFromSrc();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->setEmiMonth($emi_month)->updateFromSrc();
     }
 
     /**
@@ -579,6 +609,9 @@ class OrderController extends Controller
             $entry  = app(AutomaticEntryRepository::class);
             $entry->setPartner($order->partner)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setParty($requested_customer->profile)->updatePartyFromSource();
             return api_response($request, null, 200, ['msg' => 'Customer tagged Successfully']);
+        }catch (ValidationException $e){
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request,null,400,['message'=>$message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

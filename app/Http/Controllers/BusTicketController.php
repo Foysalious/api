@@ -6,7 +6,6 @@ use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -15,7 +14,9 @@ use League\Fractal\Resource\Item;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\TransportTicketPurchaseAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Transport\Bus\Exception\InvalidLocationAddressException;
 use Sheba\Transport\Bus\Generators\CompanyList;
 use Sheba\Transport\Bus\Generators\Destinations;
@@ -71,7 +72,7 @@ class BusTicketController extends Controller
 
             return api_response($request, $pickup_routes, 200, ['routes' => $routes]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -93,18 +94,14 @@ class BusTicketController extends Controller
             return api_response($request, $routes, 200, ['routes' => $routes]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (InvalidLocationAddressException $e) {
             $message = $e->getMessage();
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -123,18 +120,14 @@ class BusTicketController extends Controller
             else return api_response($request, null, 404, ['message' => 'No Coaches Found.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (InvalidLocationAddressException $e) {
             $message = $e->getMessage();
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -158,12 +151,10 @@ class BusTicketController extends Controller
             return api_response($request, $seatStatus, 200, ['seat_status' => $seatStatus]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -191,12 +182,10 @@ class BusTicketController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -249,12 +238,10 @@ class BusTicketController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -334,14 +321,12 @@ class BusTicketController extends Controller
             return api_response($request, null, 200, ['data' => $order]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (TransportException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -350,38 +335,29 @@ class BusTicketController extends Controller
      * @param Request $request
      * @param TransportTicketOrdersRepository $ticket_order_repo
      * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
      */
     public function pay(Request $request, TransportTicketOrdersRepository $ticket_order_repo)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
-                'order_id' => 'required'
-            ]);
+        $this->validate($request, [
+            'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
+            'order_id' => 'required'
+        ]);
 
-            /** @var TransportAgent $agent */
-            $agent = $this->getAgent($request);
-            $this->setModifier($agent);
+        /** @var TransportAgent $agent */
+        $agent = $this->getAgent($request);
+        $this->setModifier($agent);
 
-            if ($request->payment_method == "wallet" && $agent->shebaCredit() < (double)$request->amount) {
-                return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
-            }
-
-            $order = $ticket_order_repo->findById($request->order_id)->calculate();
-            $payment = $this->getPayment($request->payment_method, $order);
-            if ($payment) $payment = $payment->getFormattedPayment();
-
-            return api_response($request, null, 200, ['payment' => $payment]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->payment_method == "wallet" && $agent->shebaCredit() < (double)$request->amount) {
+            return api_response($request, null, 403, ['message' => "You don't have sufficient balance to buy this ticket."]);
         }
+
+        $order = $ticket_order_repo->findById($request->order_id)->calculate();
+        $payment = $this->getPayment($request->payment_method, $order);
+        if ($payment) $payment = $payment->getFormattedPayment();
+
+        return api_response($request, null, 200, ['payment' => $payment]);
     }
 
     /**
@@ -418,7 +394,7 @@ class BusTicketController extends Controller
             }
             return api_response($request, null, 200, ['history' => $history,]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -463,7 +439,7 @@ class BusTicketController extends Controller
 
             return api_response($request, $history, 200, ['details' => $history]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -505,12 +481,10 @@ class BusTicketController extends Controller
                 return api_response($request, null, 200, ['message' => 'Ticket cannot be cancelled.', 'code' => 400]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -519,21 +493,14 @@ class BusTicketController extends Controller
      * @param $payment_method
      * @param $transport_ticket_order
      * @return Payment|void|null
+     * @throws InvalidPaymentMethod
+     * @throws InitiateFailedException
      */
     private function getPayment($payment_method, $transport_ticket_order)
     {
-        try {
-            $transport_ticket_order_adapter = new TransportTicketPurchaseAdapter();
-            $payment = new ShebaPayment();
-            $payment = $payment->setMethod($payment_method)->init($transport_ticket_order_adapter->setModelForPayable($transport_ticket_order)->getPayable());
-            return $payment->isInitiated() ? $payment : null;
-        } catch (QueryException $e) {
-            app('sentry')->captureException($e);
-            return null;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+        $payable = (new TransportTicketPurchaseAdapter())->setModelForPayable($transport_ticket_order)->getPayable();
+        $payment = (new PaymentManager())->setMethodName($payment_method)->setPayable($payable)->init();
+        return $payment->isInitiated() ? $payment : null;
     }
 
     /**
@@ -557,14 +524,12 @@ class BusTicketController extends Controller
             return api_response($request, null, 200, ['companies' => $companies]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (TransportException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

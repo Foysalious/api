@@ -92,14 +92,19 @@ class ResourceController extends Controller
         $fractal = new Manager();
         $content = [
             [
-                'title' => 'অ্যাপ কিভাবে ব্যবহার করতে হয়?',
-                'link' => 'https://www.youtube.com/watch?v=5xlGNrT8vlg&t=130s',
-                'thumbnail' => 'https://img.youtube.com/vi/5xlGNrT8vlg/0.jpg'
+                'title' => 'sPro - রিসোর্সদের জন্য নতুন অ্যাপ',
+                'link' => 'https://youtu.be/e2-pE8ioU4M',
+                'thumbnail' => 'https://img.youtube.com/vi/e2-pE8ioU4M/0.jpg'
             ],
             [
-                'title' => 'অর্ডারের জন্য কিভাবে তৈরী হতে হয়?  ',
-                'link' => 'https://www.youtube.com/watch?v=OMW0BfVYSOI',
-                'thumbnail' => 'https://img.youtube.com/vi/OMW0BfVYSOI/0.jpg'
+                'title' => 'sPro- চলমান অর্ডারে সার্ভিস ম্যাটেরিয়াল ও পরিমাণ পরিবর্তনের পদ্ধতি',
+                'link' => 'https://youtu.be/HbKBjkPhZqI',
+                'thumbnail' => 'https://img.youtube.com/vi/HbKBjkPhZqI/0.jpg'
+            ],
+            [
+                'title' => 'sPro- রিওয়ার্ড এন্ড সেবা ব্যালান্স',
+                'link' => 'https://www.youtube.com/watch?v=ngGxaJKJCjU',
+                'thumbnail' => 'https://img.youtube.com/vi/ngGxaJKJCjU/0.jpg'
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);

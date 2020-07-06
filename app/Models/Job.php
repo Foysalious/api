@@ -26,6 +26,7 @@ use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 
 class Job extends BaseModel implements MorphCommentable
 {
@@ -1114,11 +1115,21 @@ class Job extends BaseModel implements MorphCommentable
         return !$this->review;
     }
 
+    public function hasResource()
+    {
+        return (int)$this->resource_id;
+    }
+
     /**
      * @inheritDoc
      */
     public function getNotificationHandlerClass()
     {
         return JobNotificationHandler::class;
+    }
+
+    public function hasPendingCancelRequest()
+    {
+        return $this->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->count() > 0;
     }
 }

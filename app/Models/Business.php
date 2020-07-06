@@ -3,17 +3,19 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
@@ -191,12 +193,24 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function attendanceTypes()
     {
-        return $this->hasMany(BusinessAttendanceTypes::class);
+        return $this->hasMany(BusinessAttendanceType::class);
     }
 
     public function getBusinessFiscalPeriod()
     {
         $time_frame = new TimeFrame();
         return $time_frame->forAFiscalYear(Carbon::now(), Business::BUSINESS_FISCAL_START_MONTH);
+    }
+
+    public function isRemoteAttendanceEnable()
+    {
+        if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
+    }
+
+    public function isIpBasedAttendanceEnable()
+    {
+        if (in_array(AttendanceTypes::IP_BASED, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
+        return false;
     }
 }

@@ -80,6 +80,11 @@ class Creator
         $this->businessMember = $business_member;
         $this->getManager($this->businessMember);
 
+        if (empty($this->managers)) {
+            $this->setError(422, 'Manager not set yet!');
+            return $this;
+        }
+
         /** @var BusinessDepartment $department */
         $department = $this->businessMember->department();
         if (!$department) {
@@ -89,12 +94,11 @@ class Creator
 
         $approval_flow = $department->approvalFlowBy(Type::LEAVE);
         if (!$approval_flow) {
-            $this->setError(422, 'No Approver set yet!');
+            $this->setError(422, 'Approval flow not set yet!');
             return $this;
         }
 
         $this->approvers = $this->calculateApprovers($approval_flow, $department);
-
         if (empty($this->approvers)) {
             $this->setError(422, 'No Approver set yet!');
             return $this;
@@ -173,7 +177,6 @@ class Creator
                 ->setRequestable($leave)
                 ->create();
             $this->createAttachments($leave);
-            $this->notifySuperAdmins($leave);
         });
         return $leave;
     }
@@ -185,28 +188,6 @@ class Creator
                 ->setCreatedBy($this->createdBy)
                 ->setFile($attachment)
                 ->store();
-        }
-    }
-
-    /**
-     * @param Leave $leave
-     * @throws Exception
-     */
-    private function notifySuperAdmins(Leave $leave)
-    {
-        $super_admins = $this->businessMemberRepository
-            ->where('is_super', 1)
-            ->where('business_id', $this->businessMember->business_id)
-            ->get();
-
-        foreach ($super_admins as $super_admin) {
-            $title = $this->businessMember->member->profile->name . ' #' . $this->businessMember->member->id . ' has created a Leave Request';
-            notify()->member($super_admin->member)->send([
-                'title' => $title,
-                'type' => 'Info',
-                'event_type' => 'Sheba\Dal\Leave\Model',
-                'event_id' => $leave->id
-            ]);
         }
     }
 

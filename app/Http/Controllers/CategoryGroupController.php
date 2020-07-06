@@ -35,7 +35,7 @@ class CategoryGroupController extends Controller
                 $secondaries = $recommender->setParams(Carbon::now())->setLocationId($location_id)->get();
                 return api_response($request, null, 200, [
                     'category' => [
-                        'name' => 'Current High Demand Services',
+                        'name' => 'Recommended',
                         'secondaries' => $secondaries
                     ]
                 ]);

@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Announcement;
 
-
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Dal\Announcement\Announcement;
@@ -17,6 +16,7 @@ class Updater
     private $endDate;
     /** @var Announcement */
     private $announcement;
+    private $longDescription;
 
     public function __construct(AnnouncementRepositoryInterface $announcement_repository)
     {
@@ -24,19 +24,23 @@ class Updater
         $this->data = [];
     }
 
-
     public function setTitle($title)
     {
         $this->title = $title;
         return $this;
     }
 
-    public function setShortDescription($shortDescription)
+    public function setShortDescription($short_description)
     {
-        $this->shortDescription = $shortDescription;
+        $this->shortDescription = $short_description;
         return $this;
     }
 
+    public function setLongDescription($long_description)
+    {
+        $this->longDescription = $long_description;
+        return $this;
+    }
 
     public function setEndDate($endDate)
     {
@@ -71,6 +75,7 @@ class Updater
         if ($this->title) $this->data['title'] = $this->title;
         if ($this->type) $this->data['type'] = $this->type;
         if ($this->shortDescription) $this->data['short_description'] = $this->shortDescription;
+        if ($this->longDescription) $this->data['long_description'] = $this->longDescription;
         if ($this->endDate) $this->data['end_date'] = $this->endDate->toDateTimeString();
     }
 }

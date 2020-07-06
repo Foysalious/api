@@ -22,6 +22,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -53,8 +54,10 @@ class LeaveController extends Controller
         $this->validate($request, [
             'sort' => 'sometimes|required|string|in:asc,desc'
         ]);
+
         list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
 
@@ -238,7 +241,7 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => $approval_request->status,
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             ]);
         }
         return $approvers;

@@ -23,7 +23,10 @@ use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Logs\ErrorLog;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\ProcurementAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
@@ -54,12 +57,10 @@ class ProcurementController extends Controller
             return api_response($request, $procurement, 200, ['id' => $procurement->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -103,12 +104,9 @@ class ProcurementController extends Controller
             ]); else return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
+            logError($e, $request, $message);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -133,7 +131,7 @@ class ProcurementController extends Controller
                 return api_response($request, $procurement_details, 200, ['procurements' => $procurement_details]);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -160,12 +158,10 @@ class ProcurementController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -216,10 +212,10 @@ class ProcurementController extends Controller
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $errorLog->setException($e)->setRequest($request)->setErrorMessage($message)->send();
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -239,39 +235,39 @@ class ProcurementController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, ShebaPayment $payment, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param ProcurementAdapter $procurement_adapter
+     * @param PaymentManager $payment_manager
+     * @param ShebaPaymentValidator $payment_validator
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearBills($business, $procurement, Request $request, ProcurementAdapter $procurement_adapter, PaymentManager $payment_manager, ShebaPaymentValidator $payment_validator, ProcurementRepositoryInterface $procurement_repository)
     {
-        try {
-            $this->validate($request, [
-                'payment_method' => 'required|in:online,wallet,bkash,cbl', 'emi_month' => 'numeric'
-            ]);
-            $payment_method = $request->payment_method;
-            $procurement = $procurement_repository->find($procurement);
-            $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
-            if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
-            $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
-            $payment = $payment->setMethod($payment_method)->init($payable);
-            return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getBusinessPayments()),
+            'emi_month' => 'numeric'
+        ]);
+        $payment_method = $request->payment_method;
+        $procurement = $procurement_repository->find($procurement);
+        $payment_validator->setPayableType('procurement')->setPayableTypeId($procurement->id)->setPaymentMethod($payment_method);
+        if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
+        $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
+        return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
     public function orderTimeline($business, $procurement, Request $request, Creator $creator)
@@ -283,7 +279,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -331,7 +327,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -353,7 +349,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -370,7 +366,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -423,7 +419,7 @@ class ProcurementController extends Controller
         } catch (ModelNotFoundException $e) {
             return api_response($request, null, 404, ["message" => "Model Not found."]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

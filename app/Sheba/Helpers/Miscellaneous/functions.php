@@ -203,7 +203,12 @@ if (!function_exists('emi_calculator')) {
         return $divisor > 0 ? round($accessor / $divisor) : round($amount / $duration);
     }
 }
+
 if (!function_exists('calculateAge')) {
+    /**
+     * @param $dob
+     * @return int
+     */
     function calculateAge($dob){
         if (!empty($dob)&&!is_null($dob)){
             try{
@@ -213,5 +218,16 @@ if (!function_exists('calculateAge')) {
             }
         }
         return 0;
+    }
+}
+
+if (!function_exists('convertSemverToInt')) {
+    /**
+     * @param string $semver
+     * @return int
+     */
+    function convertSemverToInt($semver)
+    {
+        return (int)str_replace('.', '', $semver);
     }
 }

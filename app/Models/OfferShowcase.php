@@ -95,6 +95,11 @@ class OfferShowcase extends Model
         return $this->type() == 'category' ? 1 : 0;
     }
 
+    public function isService()
+    {
+        return $this->type() == 'service' ? 1 : 0;
+    }
+
     public function isCategoryGroup()
     {
         return $this->type() == 'category_group' ? 1 : 0;
@@ -108,6 +113,10 @@ class OfferShowcase extends Model
     public function groups()
     {
         return $this->belongsToMany(OfferGroup::class, 'offer_group_offer');
+    }
+    public function scopeGetPartnerOffers($query)
+    {
+        return $query->where('target_type', "App\\Models\\PartnerOffer");
     }
 
 }

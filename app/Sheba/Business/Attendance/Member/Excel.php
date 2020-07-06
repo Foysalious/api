@@ -59,24 +59,41 @@ class Excel
 
     private function makeData()
     {
+
         foreach ($this->monthlyData as $attendance) {
             $date = null;
             $checkin_time = null;
+            $checkin_status = null;
+            $checkin_address = null;
+            $checkin_is_remote = null;
+
             $checkout_time = null;
+            $checkout_status = null;
+            $checkout_address = null;
+            $checkout_is_remote = null;
+
             $active_hours = null;
-            $status = null;
+
             if (!$attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 1) {
                     $date = $attendance['date'];
-                    $checkin_time = $attendance['attendance']['checkin_time'];
-                    $checkout_time = $attendance['attendance']['checkout_time'];
-                    $active_hours = $attendance['attendance']['staying_time_in_minutes'];
-                    $status = $attendance['attendance']['status'];
+
+                    $checkin_time = $attendance['attendance']['check_in']['time'];
+                    $checkin_status = $attendance['attendance']['check_in']['status'];
+                    $checkin_address = $attendance['attendance']['check_in']['address'];
+                    $checkin_is_remote = $attendance['attendance']['check_in']['is_remote'];
+
+                    $checkout_time = $attendance['attendance']['check_out']['time'];
+                    $checkout_status = $attendance['attendance']['check_out']['status'];
+                    $checkout_address = $attendance['attendance']['check_out']['address'];
+                    $checkout_is_remote = $attendance['attendance']['check_out']['is_remote'];
+
+                    $active_hours = $attendance['attendance']['active_hours'];
                 }
                 if ($attendance['show_attendance'] == 0) {
                     if ($attendance['is_absent'] == 1) {
                         $date = $attendance['date'];
-                        $status = 'absent';
+                        $checkin_status = 'absent';
                     }
                     if ($attendance['is_absent'] == 0) {
                         $date = $attendance['date'];
@@ -86,14 +103,22 @@ class Excel
             if ($attendance['weekend_or_holiday_tag']) {
                 if ($attendance['show_attendance'] == 0) {
                     $date = $attendance['date'];
-                    $status = $attendance['weekend_or_holiday_tag'];
+                    $checkin_status = $attendance['weekend_or_holiday_tag'];
                 }
                 if ($attendance['show_attendance'] == 1) {
                     $date = $attendance['date'];
-                    $checkin_time = $attendance['attendance']['checkin_time'];
-                    $checkout_time = $attendance['attendance']['checkout_time'];
-                    $active_hours = $attendance['attendance']['staying_time_in_minutes'];
-                    $status = $attendance['attendance']['status'];
+
+                    $checkin_time = $attendance['attendance']['check_in']['time'];
+                    $checkin_status = $attendance['attendance']['check_in']['status'];
+                    $checkin_address = $attendance['attendance']['check_in']['address'];
+                    $checkin_is_remote = $attendance['attendance']['check_in']['is_remote'];
+
+                    $checkout_time = $attendance['attendance']['check_out']['time'];
+                    $checkout_status = $attendance['attendance']['check_out']['status'];
+                    $checkout_address = $attendance['attendance']['check_out']['address'];
+                    $checkout_is_remote = $attendance['attendance']['check_out']['is_remote'];
+
+                    $active_hours = $attendance['attendance']['active_hours'];
                 }
             }
             array_push($this->data, [
@@ -102,10 +127,18 @@ class Excel
                 'dept_name' => $this->department,
                 'designation' => $this->designation,
                 'date' => $date,
+
                 'checkin_time' => $checkin_time,
+                'checkin_status' => $checkin_status,
+                'checkin_address' => $checkin_address,
+                'checkin_is_remote' => $checkin_is_remote,
+
                 'checkout_time' => $checkout_time,
+                'checkout_status' => $checkout_status,
+                'checkout_address' => $checkout_address,
+                'checkout_is_remote' => $checkout_is_remote,
+
                 'active_hours' => $active_hours,
-                'status' => $this->statusPresenter::statuses()[$status]
             ]);
         }
     }

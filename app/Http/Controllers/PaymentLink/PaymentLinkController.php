@@ -11,28 +11,33 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use Exception;
+use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Usage\Usage;
 
-class PaymentLinkController extends Controller {
+class PaymentLinkController extends Controller
+{
     use ModificationFields;
     private $paymentLinkClient;
     private $paymentLinkRepo;
     private $creator;
     private $paymentDetailTransformer;
 
-
-    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator) {
+    public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
+    {
         $this->paymentLinkClient        = $payment_link_client;
         $this->paymentLinkRepo          = $payment_link_repo;
         $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
     }
 
-    public function index(Request $request) {
+    public function index(Request $request)
+    {
         try {
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
             if ($payment_links_list) {
@@ -54,7 +59,8 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository) {
+    public function show($identifier, Request $request, PaymentLinkRepositoryInterface $paymentLinkRepository)
+    {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
             if ($link && (int)$link->getIsActive()) {
@@ -66,6 +72,7 @@ class PaymentLinkController extends Controller {
                         'identifier'       => $link->getLinkIdentifier(),
                         'purpose'          => $link->getReason(),
                         'amount'           => $link->getAmount(),
+                        'emi_month'        => $link->getEmiMonth(),
                         'payment_receiver' => [
                             'name'  => $user->name,
                             'image' => $user->logo,
@@ -89,17 +96,20 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function store(Request $request) {
+    public function store(Request $request)
+    {
         try {
             $this->validate($request, [
-                'amount'      => 'required',
-                'purpose'     => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
+                'amount'  => 'required',
+                'purpose' => 'required','customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)
-                ->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)
-                ->setTargetType('pos_order');
-            if ($request->customer_id) {
+            if ($request->has('emi_month') && (double)$request->amount < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');if ($request->has('emi_month')) {
+                $data = Calculations::getMonthData($request->amount, $request->emi_month, false);
+                $this->creator->setEmiMonth((int)$request->emi_month)->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
+            }
+            if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
@@ -119,16 +129,23 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function createPaymentLinkForDueCollection(Request $request) {
+    public function createPaymentLinkForDueCollection(Request $request)
+    {
         try {
             $this->validate($request, [
-                'amount'      => 'required',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id'
+                'amount'      => 'required|numeric',
+                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
+
             $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            if ($request->emi_month) {
+                $data = Calculations::getMonthData($request->amount, (int)$request->emi_month, false);
+                $this->creator->setAmount($data['total_amount'])->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setEmiMonth((int)$request->emi_month);
+            }
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
@@ -146,7 +163,8 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function statusChange($link, Request $request) {
+    public function statusChange($link, Request $request)
+    {
         try {
             $this->validate($request, [
                 'status' => 'required'
@@ -167,7 +185,8 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function getDefaultLink(Request $request) {
+    public function getDefaultLink(Request $request)
+    {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
@@ -180,12 +199,7 @@ class PaymentLinkController extends Controller {
             } else {
                 $request->merge(['isDefault' => 1]);
 
-                $this->creator->setIsDefault($request->isDefault)
-                    ->setAmount($request->amount)
-                    ->setReason($request->purpose)
-                    ->setUserName($request->user->name)
-                    ->setUserId($request->user->id)
-                    ->setUserType($request->type);
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,
@@ -200,22 +214,25 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function getPaymentLinkPayments($link, Request $request) {
+    public function getPaymentLinkPayments($link, Request $request)
+    {
         try {
             $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
             if ($payment_link_details) {
                 $payables    = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
-                    $payment = $payable->payment ? $payable->payment : null;
-                    $payment = [
-                        'id'         => $payment ? $payment->id : null,
-                        'code'       => $payment ? '#' . $payment->id : null,
-                        'name'       => $payment ? $payment->payable->getName() : null,
-                        'amount'     => $payment ? $payable->amount : null,
-                        'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
-                    ];
-                    array_push($all_payment, $payment);
+                    $payments = $payable->payments ? $payable->payments : null;
+                    foreach ($payments as $payment){
+                        $payment = [
+                            'id'         => $payment ? $payment->id : null,
+                            'code'       => $payment ? '#' . $payment->id : null,
+                            'name'       => $payment ? $payment->payable->getName() : null,
+                            'amount'     => $payment ? $payable->amount : null,
+                            'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
+                        ];
+                        array_push($all_payment, $payment);
+                    }
                 }
                 $payment_link_payments = [
                     'id'             => $payment_link_details['linkId'],
@@ -238,7 +255,8 @@ class PaymentLinkController extends Controller {
         }
     }
 
-    public function paymentLinkPaymentDetails($link, $payment, Request $request) {
+    public function paymentLinkPaymentDetails($link, $payment, Request $request)
+    {
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
             $payment                      = $this->paymentLinkRepo->payment($payment);
@@ -249,7 +267,6 @@ class PaymentLinkController extends Controller {
             } else {
                 return api_response($request, 1, 404);
             }
-
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

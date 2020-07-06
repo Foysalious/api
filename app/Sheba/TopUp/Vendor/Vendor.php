@@ -39,7 +39,6 @@ abstract class Vendor
         return $this->topUpGateway->recharge($topup_order);
     }
 
-
     public function getTopUpInitialStatus()
     {
         return $this->topUpGateway->getInitialStatus();
@@ -78,5 +77,4 @@ abstract class Vendor
     {
         $this->topUpGateway = $topup_gateway;
     }
-
 }

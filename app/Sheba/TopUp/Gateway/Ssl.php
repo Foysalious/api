@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Gateway;
 
-
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -15,6 +14,11 @@ class Ssl implements Gateway
         $this->ssl = $ssl;
     }
 
+    /**
+     * @param TopUpOrder $topup_order
+     * @return TopUpResponse
+     * @throws \Exception
+     */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         return $this->ssl->recharge($topup_order);
@@ -22,7 +26,7 @@ class Ssl implements Gateway
 
     public function getInitialStatus()
     {
-        return config('topup.status.pending')['sheba'];
+        return config('topup.status.pending.sheba');
     }
 
     public function getShebaCommission()

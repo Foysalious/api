@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment;
 
 use Exception;
+use Sheba\Payment\Factory\PaymentStrategy;
 
 class AvailableMethods
 {
@@ -8,179 +9,135 @@ class AvailableMethods
      * @param $payable_type
      * @param $version_code
      * @param $platform_name
+     * @param $user_type
      * @return array
      * @throws Exception
      */
-    public static function get($payable_type, $version_code, $platform_name)
+    public static function getDetails($payable_type, $version_code, $platform_name, $user_type)
     {
-        if ($payable_type) {
-            switch ($payable_type) {
-                case 'order':
-                    $payments = self::getRegularPayments($version_code, $platform_name);
-                    break;
-                case 'subscription':
-                    $payments = self::getSubscriptionPayments($version_code, $platform_name);
-                    break;
-                case 'voucher':
-                    $payments = self::getVoucherPayments($version_code, $platform_name);
-                    break;
-                case 'movie_ticket':
-                case 'transport_ticket':
-                    $payments = self::getTicketsPayments($version_code, $platform_name);
-                    break;
-                case 'business':
-                    $payments = self::getBusinessPayments($version_code, $platform_name);
-                    break;
-                case 'utility':
-                    $payments = self::getUtilityPayments($version_code, $platform_name);
-                    break;
-                case 'payment_link':
-                    $payments = self::getPaymentLinkPayments($version_code, $platform_name);
-                    break;
-                case 'wallet_recharge':
-                    $payments = self::getWalletRechargePayments($version_code, $platform_name);
-                    break;
-                default:
-                    throw new Exception('Invalid Payable Type');
-                    break;
-            }
-        } else {
-            $payments = self::getRegularPayments($version_code, $platform_name);
+        $payable_type = $payable_type ?: "order";
+
+        switch ($payable_type) {
+            case 'order':
+                $methods = self::getRegularPayments();
+                break;
+            case 'subscription':
+                $methods = self::getSubscriptionPayments();
+                break;
+            case 'voucher':
+                $methods = self::getVoucherPayments();
+                break;
+            case 'movie_ticket':
+            case 'transport_ticket':
+                $methods = self::getTicketsPayments($user_type);
+                break;
+            case 'business':
+                $methods = self::getBusinessPayments();
+                break;
+            case 'utility':
+                $methods = self::getUtilityPayments();
+                break;
+            case 'payment_link':
+                $methods = self::getPaymentLinkPayments();
+                break;
+            case 'wallet_recharge':
+                $methods = self::getWalletRechargePayments();
+                break;
+            default:
+                throw new Exception('Invalid Payable Type');
         }
-        return $payments;
+
+        $model      = "\\App\\Models\\" . studly_case($user_type);
+        $empty_user = new $model();
+
+        $details = [];
+        foreach ($methods as $method) {
+            $details[] = PaymentStrategy::getDetails($method, $version_code, $platform_name, $empty_user);
+        }
+
+        return $details;
     }
 
-    private static function getRegularPayments($version_code, $platform_name)
+    public static function getRegularPayments()
     {
         return [
-
-            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            PaymentStrategy::WALLET,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
         ];
     }
 
-    /**
-     * @return array
-     */
-    private static function shebaCredit()
+    public static function getSubscriptionPayments()
     {
         return [
-
-            'name' => 'Sheba Credit', 'is_published' => 1, 'description' => '', 'asset' => 'sheba_credit', 'method_name' => 'wallet'
-
+            PaymentStrategy::WALLET,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
         ];
     }
 
-    /**
-     * @return array
-     */
-    private static function bkash()
+    public static function getVoucherPayments()
     {
         return [
-
-            'name' => 'bKash', 'is_published' => 1, 'description' => '', 'asset' => 'bkash', 'method_name' => 'bkash'
-
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
         ];
     }
 
-    /**
-     * @param $version_code
-     * @param $platform_name
-     * @return array
-     */
-    private static function cbl($version_code, $platform_name)
+    public static function getWalletRechargePayments()
     {
         return [
-            'name' => 'City Bank', 'is_published' => self::getCblStatus($version_code, $platform_name), 'description' => '', 'asset' => 'cbl', 'method_name' => 'cbl'
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::OK_WALLET
         ];
     }
 
-
-    private static function getCblStatus($version_code, $platform_name)
+    public static function getTicketsPayments($user_type)
     {
-        if (!$version_code) return 1;
-
-        return $platform_name && $platform_name == 'ios' ? 1 : ($version_code > 30112 ? 1 : 0);
-    }
-
-    /**
-     * @return array
-     */
-    private static function ssl()
-    {
-        return [
-            'name' => 'Other Debit/Credit', 'is_published' => 1, 'description' => '', 'asset' => 'ssl', 'method_name' => 'online'
-        ];
-    }
-
-    private static function getSubscriptionPayments($version_code, $platform_name)
-    {
-        return [
-            self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
-        ];
-    }
-
-    private static function getVoucherPayments($version_code, $platform_name)
-    {
-        return [
-            self::cbl($version_code, $platform_name), self::ssl()
-        ];
-    }
-
-    private static function getWalletRechargePayments($version_code, $platform_name)
-    {
-        return [
-            self::bkash(),
-            self::cbl($version_code, $platform_name),
-            self::ssl(),
-            self::okWallet()
-        ];
-    }
-
-
-    private static function getTicketsPayments($version_code, $platform_name)
-    {
-        if (isset(\request()->type) && \request()->type === 'customer') {
+        if (isset($user_type) && $user_type !== 'customer') {
             return [
-                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
-            ];
-        } else if (isset(\request()->type) && \request()->type !== 'customer') {
-            return [self::shebaCredit()];
-        } else {
-            return [
-                self::shebaCredit(), self::cbl($version_code, $platform_name), self::bkash(), self::ssl()
+                PaymentStrategy::WALLET
             ];
         }
-    }
 
-    private static function getBusinessPayments($version_code, $platform_name)
-    {
         return [
-            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::WALLET
         ];
     }
 
-    private static function getUtilityPayments($version_code, $platform_name)
+    public static function getBusinessPayments()
     {
         return [
-            self::shebaCredit(), self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::BKASH
         ];
     }
 
-    private static function getPaymentLinkPayments($version_code, $platform_name)
+    public static function getUtilityPayments()
     {
         return [
-            self::bkash(), self::cbl($version_code, $platform_name), self::ssl()
+            PaymentStrategy::CBL,
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::WALLET
         ];
     }
 
-    private static function okWallet()
+    public static function getPaymentLinkPayments()
     {
         return [
-            'name' => 'Ok Wallet',
-            'is_published' => 1,
-            'description' => '',
-            'asset' => 'ok_wallet',
-            'method_name' => 'ok_wallet'
+            PaymentStrategy::CBL,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::SSL_DONATION,
+            PaymentStrategy::ONLINE
         ];
     }
 }

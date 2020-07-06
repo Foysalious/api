@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\TopUp;
 
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
+use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Exception;
@@ -67,10 +69,8 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric'
             ]);
             $agent = $request->user;
-            if (get_class($agent) == "App\Models\Partner")
-                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)
+                ->setAgent($agent)->setVendorId($request->vendor_id);
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $topup_order = $creator->setTopUpRequest($top_up_request)->create();
             if ($topup_order) {
@@ -227,68 +227,67 @@ class TopUpController extends Controller
         return $agent;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function topUpHistory(Request $request)
     {
-        try {
-            $rules = [
-                'from' => 'date_format:Y-m-d',
-                'to' => 'date_format:Y-m-d|required_with:from'
-            ];
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 180);
 
-            $validator = Validator::make($request->all(), $rules);
-            if ($validator->fails()) {
-                $error = $validator->errors()->all()[0];
-                return api_response($request, $error, 400, ['msg' => $error]);
-            }
-
-            list($offset, $limit) = calculatePagination($request);
-            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
-            $user = $request->user;
-            $topups = $model::find($user->id)->topups();
-
-            $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel') ? true : false;
-
-            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
-            if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-            if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-            if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-
-            $total_topups = $topups->count();
-            if ($is_excel_report) {
-                $offset = 0;
-                $limit = 100000;
-            }
-            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
-
-            $topup_data = [];
-
-
-            foreach ($topups as $topup) {
-                $topup = [
-                    'payee_mobile' => $topup->payee_mobile,
-                    'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                    'amount' => $topup->amount,
-                    'operator' => $topup->vendor->name,
-                    'status' => $topup->status,
-                    'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                    'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-                ];
-                array_push($topup_data, $topup);
-            }
-
-            if ($is_excel_report) {
-                $excel = app(ExcelHandler::class);
-                $excel->setName('Topup History');
-                $excel->setViewFile('topup_history');
-                $excel->pushData('topup_data', $topup_data);
-                $excel->download();
-            }
-
-            return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $rules = [
+            'from' => 'date_format:Y-m-d',
+            'to' => 'date_format:Y-m-d|required_with:from'
+        ];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
         }
+
+        list($offset, $limit) = calculatePagination($request);
+        $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+        $user = $request->user;
+        $topups = $model::find($user->id)->topups();
+
+        $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
+
+        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
+        if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
+        if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
+        if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
+
+        $total_topups = $topups->count();
+        if ($is_excel_report) {
+            $offset = 0;
+            $limit = 100000;
+        }
+        $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
+
+        $topup_data = [];
+        foreach ($topups as $topup) {
+            $topup = [
+                'payee_mobile'  => $topup->payee_mobile,
+                'payee_name'    => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount'        => $topup->amount,
+                'operator'      => $topup->vendor->name,
+                'status'        => $topup->status,
+                'created_at'    => $topup->created_at->format('jS M, Y h:i A'),
+                'created_at_raw'=> $topup->created_at->format('Y-m-d h:i:s')
+            ];
+            array_push($topup_data, $topup);
+        }
+
+        if ($is_excel_report) {
+            $excel = app(ExcelHandler::class);
+            $excel->setName('Topup History');
+            $excel->setViewFile('topup_history');
+            $excel->pushData('topup_data', $topup_data);
+            $excel->download();
+        }
+
+        return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
     }
 
     /**

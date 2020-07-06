@@ -1,9 +1,12 @@
 <?php namespace App\Models;
 
+use App\Exceptions\NotFoundException;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
 use Sheba\Dal\Gallery\Gallery;
@@ -88,9 +91,8 @@ class Service extends Model
 
     public function commission($partner_id)
     {
-        $service_category = $this->category->id;
-        $partner = Partner::find($partner_id);
-        return $partner->categories()->find($service_category)->pivot->commission;
+        $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner(Partner::find($partner_id));
+        return $commissions->getServiceCommission();
     }
 
     public function custom_services()
@@ -214,6 +216,11 @@ class Service extends Model
         return $query->where('is_published_for_b2b', 1);
     }
 
+    public function scopePublishedForDdn($query)
+    {
+        return $query->where('is_published_for_ddn', 1);
+    }
+
     public function tags()
     {
         return $this->morphToMany(Tag::class, 'taggable');
@@ -241,15 +248,19 @@ class Service extends Model
 
     public function getVariablesOfOptionsService(array $options)
     {
-        $variables = [];
-        foreach ($this->getOptions() as $key => $service_option) {
-            array_push($variables, [
-                'title' => isset($service_option->title) ? $service_option->title : null,
-                'question' => $service_option->question,
-                'answer' => explode(',', $service_option->answers)[$options[$key]]
-            ]);
+        try {
+            $variables = [];
+            foreach ($this->getOptions() as $key => $service_option) {
+                array_push($variables, [
+                    'title' => isset($service_option->title) ? $service_option->title : null,
+                    'question' => $service_option->question,
+                    'answer' => explode(',', $service_option->answers)[$options[$key]]
+                ]);
+            }
+            return json_encode($variables);
+        } catch (Exception $e) {
+            throw new NotFoundException('Option does not exists', 404);
         }
-        return json_encode($variables);
     }
 
     public function variable()
@@ -336,5 +347,10 @@ class Service extends Model
     public function getContentsAttribute()
     {
         return $this->structured_contents ? json_decode($this->structured_contents) : null;
+    }
+
+    public function isMarketPlacePublished()
+    {
+        return $this->publication_status;
     }
 }

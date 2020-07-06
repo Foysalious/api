@@ -16,7 +16,9 @@ class AuthRoute
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
+                $api->get('history', 'Resource\ResourceJobController@getAllHistoryJobs');
                 $api->get('next', 'Resource\ResourceJobController@getNextJob');
+                $api->get('search', 'Resource\ResourceJobController@jobSearch');
                 $api->group(['prefix' => '{job}'], function ($api) {
                     $api->get('schedules', 'Resource\ResourceController@getSchedules');
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');
@@ -33,6 +35,23 @@ class AuthRoute
                     $api->post('services', 'Resource\ResourceJobController@updateService');
                 });
             });
+            $api->group(['prefix' => 'transactions'], function ($api) {
+                $api->get('/', 'Resource\ResourceTransactionController@index');
+            });
+            $api->group(['prefix' => 'rewards'], function ($api) {
+                $api->get('/', 'Resource\ResourceRewardController@index');
+                $api->get('history', 'Resource\ResourceRewardController@history');
+                $api->group(['prefix' => 'campaigns'], function ($api) {
+                    $api->group(['prefix' => '{campaign}'], function ($api) {
+                        $api->get('/', 'Resource\Reward\CampaignController@show');
+                    });
+                });
+                $api->group(['prefix' => '{reward}'], function ($api) {
+                    $api->get('/', 'Resource\ResourceRewardController@show');
+                });
+            });
+            $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
+            $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
         });
     }
 }

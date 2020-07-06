@@ -653,6 +653,8 @@ class LoanController extends Controller
     {
         try {
             $data                  = $loan->show($loan_id);
+            $ownership_type = $data['final_information_for_loan']['business']['ownership_type'];
+            $data['ownership_type'] = config('constants.ownership_type_en.'.$ownership_type);
             $pdf_handler           = new PdfHandler();
             $loan_application_name = 'loan_application_' . $loan_id;
             if ($request->has('pdf_type') && $request->pdf_type == constants('BANK_LOAN_PDF_TYPES')['SanctionLetter']) {

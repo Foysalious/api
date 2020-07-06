@@ -15,11 +15,13 @@ class ResourceHomeTransformer extends TransformerAbstract
     public function transform($resource)
     {
         return [
+            'id' => $resource->id,
             'name' => $resource->profile->name,
             'picture' => $resource->profile->pro_pic,
             'is_verified' => $resource->is_verified,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),
-            'notification_count' => $resource->notifications()->where('is_seen', 0)->count()
+            'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
+            'balance' => $resource->totalWalletAmount()
         ];
 
     }
