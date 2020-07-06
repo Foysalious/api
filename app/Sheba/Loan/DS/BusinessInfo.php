@@ -54,7 +54,7 @@ class BusinessInfo implements Arrayable
     {
         return [
             'business_type'      => 'string',
-            'location'           => 'required|string',
+            'location'           => 'string',
             'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'full_time_employee' => 'numeric'
         ];
