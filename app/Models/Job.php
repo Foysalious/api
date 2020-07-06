@@ -1127,4 +1127,9 @@ class Job extends BaseModel implements MorphCommentable
     {
         return JobNotificationHandler::class;
     }
+
+    public function hasPendingCancelRequest()
+    {
+        return $this->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->count() > 0;
+    }
 }
