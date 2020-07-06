@@ -11,6 +11,7 @@ use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Vendor\Internal\SslClient;
+use GuzzleHttp\Client;
 
 class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
@@ -24,10 +25,12 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     /**  @var Gateway */
     protected $topUpGatewayFactory;
     protected $response;
+    protected $sslClient;
 
     public function __construct(TopUpOrder $topup_order, $response)
     {
         $this->topup_order = $topup_order;
+        $this->sslClient = new SslClient((new Client()));
         $this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
         $this->topUpGateway = $this->getGatewayModel();
         $this->balance = $this->getBalance();
@@ -61,8 +64,7 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     private function getBalance()
     {
         if ($this->topup_order->gateway == Names::SSL) {
-            $ssl = new SslClient;
-            return $ssl->getBalance()->available_credit;
+            return $this->sslClient->getBalance()->available_credit;
         } elseif ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
             return $this->parseBalanceFromResponseMessage($this->response->transactionDetails->message);
         } else {
