@@ -3,7 +3,6 @@
 use App\Jobs\Job;
 use App\Models\TopUpOrder;
 use App\Repositories\SmsHandler;
-use GuzzleHttp\Client;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -31,12 +30,12 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
         $this->topup_order = $topup_order;
         $this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
         $this->topUpGateway = $this->getGatewayModel();
-        $this->balance = $this->getBalance();
         $this->response = $response;
     }
 
-    public function handle()
+    public function handle(SslClient $ssl)
     {
+        $this->balance = $this->topup_order->gateway == Names::SSL ? $ssl->getBalance()->available_credit : $this->getBalance();
         if ($this->attempts() < 2) {
             $this->topUpGateway->update([
                 'balance' => $this->balance
@@ -61,9 +60,7 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 
     private function getBalance()
     {
-        if ($this->topup_order->gateway == Names::SSL) {
-            return (new SslClient((new Client())))->getBalance()->available_credit;
-        } elseif ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
+        if ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
             return $this->parseBalanceFromResponseMessage($this->response->transactionDetails->message);
         } else {
             return $this->topUpGateway->balance;
