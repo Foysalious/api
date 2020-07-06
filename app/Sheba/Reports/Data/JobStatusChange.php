@@ -1,7 +1,7 @@
 <?php namespace Sheba\Reports\Data;
 
 use App\Models\Job;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Illuminate\Http\Request;
 use Sheba\Reports\ReportData;
 
