@@ -91,7 +91,13 @@ class ShebaController extends Controller {
 
                 if (!$request->has('location')) $location = 4;
                 else $location = $request->location;
-            } else {
+            } else if ($request->has('is_ddn') && (int)$request->is_ddn) {
+                $portal_name = 'bondhu-app';
+                $screen = 'eshop';
+
+                if (!$request->has('location')) $location = 4;
+                else $location = $request->location;
+            }else {
                 if ($request->has('location')) {
                     $location = $request->location;
                 } else {
@@ -124,6 +130,7 @@ class ShebaController extends Controller {
              * }
              * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

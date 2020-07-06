@@ -27,6 +27,7 @@ class UpdatePriceHandler
      */
     public function update()
     {
+        if (request()->header('app-key') == config('logistics.app_key') && request()->header('app-secret') == config('logistics.app_secret')) return;
         /** @var Job $job */
         $job = $this->partnerOrder->lastJob();
         $logistic_order = $job->getCurrentLogisticOrder();
@@ -38,7 +39,7 @@ class UpdatePriceHandler
         $this->partnerOrder->calculate(1);
         $vendor_collectable = $this->partnerOrder->due > 0 ? $this->partnerOrder->due : 0;
         if ($logistic_order->getVendorCollectableAmount() != $vendor_collectable) $logistic_order_manager->updateVendorCollectable($logistic_order, $vendor_collectable);
-        if ($this->partnerOrder->due < 0 && $job->logisticDue > 0) {
+        if ($this->partnerOrder->due < 0 && $job->logisticDue > 0 && $logistic_order->getDueAmount() > 0) {
             $has_enough_collection = $this->partnerOrder->due + $job->logisticDue <= 0;
             $logistic_order_manager->pay($logistic_order, $has_enough_collection ? $job->logisticDue : $this->partnerOrder->due * -1);
         }
