@@ -41,18 +41,12 @@ class PersonalInfo implements Arrayable
         }
     }
 
-    public static function getValidators($loan_type = null)
+    public static function getValidators()
     {
-        $gender = 'required|string|in:Male,Female,Other';
-        $email = 'required|email';
-        if(LoanTypes::MICRO === $loan_type) {
-            $gender = 'string|in:Male,Female,Other';
-            $email = 'email';
-        }
         return [
-            'gender'                          => $gender,
+            'gender'                          => 'string|in:Male,Female,Other',
             'birthday'                        => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'email'                           => $email,
+            'email'                           => 'email',
             'nid_issue_date'                  => 'sometimes|date|date_format:Y-m-d',
             #'father_name' => 'required_without:spouse_name',
             #'spouse_name' => 'required_without:father_name',
