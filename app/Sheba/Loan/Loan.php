@@ -328,7 +328,7 @@ class Loan
         $data       = $this->data;
         $final_info = [];
         foreach ($this->finalFields as $key => $val) {
-            $final_info[$key] = $this->$key->toArray();
+            $final_info[$key] = $this->$val->toArray();
         }
         $data['final_information_for_loan'] = json_encode($final_info);
         return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
