@@ -10,7 +10,6 @@ use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
-use Sheba\TopUp\Vendor\Internal\SslClient;
 
 class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
@@ -31,11 +30,11 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
         $this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
         $this->topUpGateway = $this->getGatewayModel();
         $this->response = $response;
+        $this->balance = $this->getBalance();
     }
 
-    public function handle(SslClient $ssl)
+    public function handle()
     {
-        $this->balance = $this->topup_order->gateway == Names::SSL ? $ssl->getBalance()->available_credit : $this->getBalance();
         if ($this->attempts() < 2) {
             $this->topUpGateway->update([
                 'balance' => $this->balance
@@ -60,7 +59,9 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 
     private function getBalance()
     {
-        if ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
+        if ($this->topup_order->gateway == Names::SSL) {
+            return $this->topUpGatewayFactory->getBalance();
+        } elseif ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
             return $this->parseBalanceFromResponseMessage($this->response->transactionDetails->message);
         } else {
             return $this->topUpGateway->balance;
