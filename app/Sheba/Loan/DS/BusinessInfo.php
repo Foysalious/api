@@ -71,7 +71,7 @@ class BusinessInfo implements Arrayable
             'smanager_business_type'          => $request->smanager_business_type,
             'ownership_type'                  => $request->ownership_type,
             'stock_price'                     => (double)$request->stock_price,
-            'address'                         => (new Address($request->address))->toString(),
+            'address'                         => $request->location,
             'full_time_employee'              => $request->full_time_employee,
             'part_time_employee'              => $request->part_time_employee,
             'sales_information'               => (new SalesInfo($request->last_six_month_sales_information))->toString(),
@@ -141,7 +141,7 @@ class BusinessInfo implements Arrayable
         foreach ($keys as $key) {
             if ($key == 'business_additional_information') {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
-                $output[$key] = $this->version===2?(new BusinessAdditionalInfo($set))->toVersionArray():(new BusinessAdditionalInfo($set))->toArray();
+                $output[$key] = $this->version === 2 ? (new BusinessAdditionalInfo($set))->toVersionArray() : (new BusinessAdditionalInfo($set))->toArray();
             } elseif ($key == 'last_six_month_sales_information') {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
                 $output[$key] = (new SalesInfo($set))->toArray();
@@ -213,7 +213,7 @@ class BusinessInfo implements Arrayable
                    'smanager_business_type'           => $this->partner->smanager_business_type,
                    'ownership_type'                   => $this->partner->ownership_type,
                    'stock_price'                      => (double)$this->partner->stock_price,
-                   'location'                          =>$this->partner->address,
+                   'location'                         => $this->partner->address,
                    'establishment_year'               => $this->basic_information->establishment_year,
                    'tin_no'                           => $this->profile->tin_no,
                    'tin_certificate'                  => $this->profile->tin_certificate,
@@ -226,7 +226,7 @@ class BusinessInfo implements Arrayable
                    'yearly_income'                    => $this->partner->yearly_income,
                    'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
                    'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,
-                   'business_additional_information'  => $this->version===2?(new BusinessAdditionalInfo($this->business_additional_information))->toVersionArray():(new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
+                   'business_additional_information'  => $this->version === 2 ? (new BusinessAdditionalInfo($this->business_additional_information))->toVersionArray() : (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
                    'last_six_month_sales_information' => (new SalesInfo($this->sales_information))->toArray()
                ] + self::staticsData();
     }
