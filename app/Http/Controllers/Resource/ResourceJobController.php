@@ -223,7 +223,7 @@ class ResourceJobController extends Controller
                 return $job['order_code'] == $order_code;
             });
         } else {
-            $jobs = $job_list->setResource($resource)->setQuery($request->q);
+            $jobs = $job_list->setResource($resource)->setQuery('"'.$request->q.'"');
             if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
             $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }
