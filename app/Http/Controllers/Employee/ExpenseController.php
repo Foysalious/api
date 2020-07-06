@@ -5,6 +5,7 @@ use App\Models\Attachment;
 use App\Models\BusinessMember;
 use App\Models\FuelLog;
 use App\Models\Member;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
@@ -18,15 +19,22 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Employee\ExpenseRepo;
+use Throwable;
 
 class ExpenseController extends Controller
 {
-    /** @var SupportRepositoryInterface */
-    private $repo;
-    private $expense_repo;
-    use ModificationFields;
-    use FilesAttachment;
+    use ModificationFields, FilesAttachment;
 
+    /** @var SupportRepositoryInterface $repo */
+    private $repo;
+    /** @var ExpenseRepo $expense_repo */
+    private $expense_repo;
+
+    /**
+     * ExpenseController constructor.
+     * @param SupportRepositoryInterface $repo
+     * @param ExpenseRepo $expense_repo
+     */
     public function __construct(SupportRepositoryInterface $repo, ExpenseRepo $expense_repo)
     {
         $this->repo = $repo;
@@ -58,7 +66,7 @@ class ExpenseController extends Controller
             $sum = $expenses->sum('amount');
 
             return api_response($request, $expenses, 200, ['data' => ['expenses' => $expenses, 'sum' => $sum]]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -83,7 +91,7 @@ class ExpenseController extends Controller
             $data = $this->expense_repo->store($request, $member);
 
             return api_response($request, $data, 200, $data);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -101,32 +109,27 @@ class ExpenseController extends Controller
             return $data ?
                 api_response($request, $expense, 200, $data)
                 : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $expense
+     * @return JsonResponse
+     */
     public function update(Request $request, $expense)
     {
-        try {
-            $this->validate($request, [
-                'amount' => 'required|string',
-            ]);
+        $this->validate($request, ['amount' => 'required|string',]);
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!$business_member) return api_response($request, null, 401);
 
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
-            if (!$business_member) return api_response($request, null, 401);
+        $data = $this->expense_repo->update($request, $expense, $business_member);
 
-            $data = $this->expense_repo->update($request, $expense, $business_member);
-
-            return $data ?
-                api_response($request, $expense, 200, $data)
-                : api_response($request, null, 404);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return $data ? api_response($request, null, 200, $data) : api_response($request, null, 404);
     }
 
     public function delete(Request $request, $expense)
@@ -140,7 +143,7 @@ class ExpenseController extends Controller
             return $data ?
                 api_response($request, $expense, 200)
                 : api_response($request, null, 404);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

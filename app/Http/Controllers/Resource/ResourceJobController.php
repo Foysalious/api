@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
@@ -18,6 +19,7 @@ use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
 use Sheba\UserAgentInformation;
+use Throwable;
 
 class ResourceJobController extends Controller
 {
@@ -102,9 +104,9 @@ class ResourceJobController extends Controller
             $response = $reschedule_job->reschedule();
             return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (ValidationException $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
 
     }
@@ -184,8 +186,9 @@ class ResourceJobController extends Controller
             if (count($quantity) > 0) $updateRequest->setQuantity($quantity);
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
         }
     }
 
@@ -212,8 +215,8 @@ class ResourceJobController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if (substr($request->q,1,1) == '-') {
-            $order_id = (int) substr($request->q,2) - config('sheba.order_code_start');
+        if (substr($request->q, 1, 1) == '-') {
+            $order_id = (int)substr($request->q, 2) - config('sheba.order_code_start');
             $results = $job_list->setResource($resource)->setOrderId($order_id)->getJobsFilteredByOrderId();
             $order_code = $request->q;
             $jobs = $results->filter(function ($job) use ($order_code) {
@@ -224,7 +227,7 @@ class ResourceJobController extends Controller
             if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
             $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }
-        if($jobs->isEmpty()) return api_response($request, $jobs, 404);
+        if ($jobs->isEmpty()) return api_response($request, $jobs, 404);
         return api_response($request, $jobs, 200, ['results' => $jobs]);
     }
 }
