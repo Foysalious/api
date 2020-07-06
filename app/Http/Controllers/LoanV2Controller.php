@@ -171,8 +171,8 @@ class LoanV2Controller extends Controller
         try {
             $this->validate($request, [
                 'loan_amount' => 'required|numeric',
-                'duration'    => 'required_if:loan_type:'.LoanTypes::MICRO.'|integer',
-                'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get())
+                'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get()),
+                'duration'    => 'required_if:loan_type,'.LoanTypes::MICRO.'|integer'
             ]);
             /** @var Partner $partner */
             $partner  = $request->partner;
