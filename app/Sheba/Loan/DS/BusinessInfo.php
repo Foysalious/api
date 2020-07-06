@@ -139,11 +139,6 @@ class BusinessInfo implements Arrayable
         $keys   = self::getKeys();
         $output = [];
         foreach ($keys as $key) {
-
-            if (($key) == 'address' && $this->version == 2) {
-                $set          = array_key_exists($key, $data) ? $data[$key] : null;
-                $output[$key] = (new Address($set))->toArray();
-            }
             if ($key == 'business_additional_information') {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
                 $output[$key] = $this->version===2?(new BusinessAdditionalInfo($set))->toVersionArray():(new BusinessAdditionalInfo($set))->toArray();
