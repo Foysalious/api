@@ -332,9 +332,12 @@ class Loan
         $data       = $this->data;
         $final_info = [];
         foreach ($this->finalFields as $key => $val) {
-            $final_info[$key] = $this->$val->toArray();
+            $final_info[$key] = $this->$val()->toArray();
         }
         $data['final_information_for_loan'] = json_encode($final_info);
+        if ($this->type===LoanTypes::MICRO){
+            $data['bank_id']=config('loan.micro_loan_assigned_bank_id');
+        }
         return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
     }
 

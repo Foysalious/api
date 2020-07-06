@@ -24,14 +24,16 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     /**  @var Gateway */
     protected $topUpGatewayFactory;
     protected $response;
+    protected $SslClient;
 
     public function __construct(TopUpOrder $topup_order, $response)
     {
         $this->topup_order = $topup_order;
         $this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
-        $this->balance = $this->getBalance();
         $this->topUpGateway = $this->getGatewayModel();
+        $this->balance = $this->getBalance();
         $this->response = $response;
+        $this->SslClient = app(SslClient::class);
     }
 
     public function handle()
@@ -61,12 +63,11 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     private function getBalance()
     {
         if ($this->topup_order->gateway == Names::SSL) {
-            $ssl = new SslClient;
-            return $ssl->getBalance()->available_credit;
-        } elseif ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL) {
-            return $this->parseBalanceFromResponseMessage($this->response->message);
+            return $this->SslClient->getBalance()->available_credit;
+        } elseif ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
+            return $this->parseBalanceFromResponseMessage($this->response->transactionDetails->message);
         } else {
-            return 0.0;
+            return $this->topUpGateway->balance;
         }
     }
 

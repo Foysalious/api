@@ -169,6 +169,6 @@ class PurchaseHandler
      */
     public function getBalance($new = false)
     {
-        return $new ? array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['threshold']]) : $this->balance;
+        return $new ? array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['breakdown']['threshold']]) : $this->balance;
     }
 }
