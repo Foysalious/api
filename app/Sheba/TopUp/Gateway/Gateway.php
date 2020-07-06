@@ -10,6 +10,4 @@ interface Gateway
     public function getInitialStatus();
 
     public function getShebaCommission();
-
-    public function getBalance();
 }

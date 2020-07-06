@@ -33,9 +33,4 @@ class Ssl implements Gateway
     {
         return self::SHEBA_COMMISSION;
     }
-
-    public function getBalance()
-    {
-        return $this->ssl->getBalance()->available_credit;
-    }
 }
