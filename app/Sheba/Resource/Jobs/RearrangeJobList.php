@@ -14,13 +14,7 @@ class RearrangeJobList
      */
     public function rearrange(Collection $jobs)
     {
-        $process_jobs = $this->sortJobs($jobs->whereIn('status', [JobStatuses::PROCESS, JobStatuses::SERVE_DUE]));
-        $served_jobs = $this->sortJobs($jobs->where('status', JobStatuses::SERVED));
-        $other_jobs = $jobs->filter(function ($job) {
-            return !in_array($job->status, [JobStatuses::PROCESS, JobStatuses::SERVED, JobStatuses::SERVE_DUE]);
-        });
-        $other_jobs = $this->sortJobs($other_jobs);
-        return $served_jobs->merge($process_jobs->merge($other_jobs));
+        return $this->sortJobs($jobs);
     }
 
     private function sortJobs(Collection $jobs)

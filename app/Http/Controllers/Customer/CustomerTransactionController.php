@@ -109,7 +109,7 @@ class CustomerTransactionController extends Controller
         $category = null;
         if ($spent_on instanceof PartnerOrder) {
             $category = $spent_on->jobs->first()->category;
-            $log = $category->name;
+            $log = $bonus->log ? $bonus->log : 'Service Purchased ' . $category->name;
         } elseif ($spent_on) {
             $log = 'Purchased ' . class_basename($spent_on);
         } else {
