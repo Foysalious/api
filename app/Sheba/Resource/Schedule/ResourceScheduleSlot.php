@@ -231,7 +231,8 @@ class ResourceScheduleSlot
             $this->resources = collect([$resource]);
             $this->bookedSchedules = $this->getBookedSchedules($start, $end);
             $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            if ($this->category) $this->preparationTime = $this->partner->categories->where('id', $this->category->id)->first()->pivot->preparation_time_minutes;
+            $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+            if ($this->category && $category_partner) $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
         }
         $day = $this->today->copy();
         while ($day < $last_day) {
