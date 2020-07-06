@@ -243,9 +243,13 @@ class Loan
             if ($this->version === 2) {
                 $this->applyFee();
             }
-            if (!(isset($this->data['month']) && $this->data['month'])) {
-                $this->data['duration'] = ((int)$this->data['duration'] * 12);
-                unset($this->data['month']);
+            if ($this->type === LoanTypes::TERM) {
+                if (!(isset($this->data['month']) && $this->data['month'])) {
+                    $this->data['duration'] = ((int)$this->data['duration'] * 12);
+                    unset($this->data['month']);
+                }
+            } else {
+                $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 7);
             }
             $created = $this->create();
         });
