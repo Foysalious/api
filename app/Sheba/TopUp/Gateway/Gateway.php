@@ -11,5 +11,4 @@ interface Gateway
 
     public function getShebaCommission();
 
-    public function getBalance();
 }
