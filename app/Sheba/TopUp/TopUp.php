@@ -4,9 +4,12 @@ use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
+use GuzzleHttp\Client;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
+use Sheba\TopUp\Vendor\Internal\SslClient;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -81,8 +84,8 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
-
-        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response)));
+        $ssl_balance = $topup_order->gateway == Names::SSL ? (new SslClient((new Client())))->getBalance()->available_credit : 0;
+        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response, $ssl_balance)));
         DB::transaction(function () use ($response, $topup_order) {
             $this->setModifier($this->agent);
             $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
