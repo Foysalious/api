@@ -39,56 +39,78 @@ class CoWorkerController extends Controller
         $this->profileRepository = $profile_repository;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store($business, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'name' => 'required|string', 'mobile' => 'required|string|mobile:bd', 'email' => 'required|email', 'role' => 'required|integer', 'manager_employee_id' => 'integer',
-            ]);
-            $business = $request->business;
-            $member = $request->manager_member;
-            $this->setModifier($member);
-            $manager_business_member = null;
-            $email_profile = $this->profileRepository->where('email', $request->email)->first();
-            $mobile_profile = $this->profileRepository->where('mobile', formatMobile($request->mobile))->first();
-            if ($email_profile) $profile = $email_profile; elseif ($mobile_profile) $profile = $mobile_profile;
-            else $profile = null;
-            $co_member = collect();
-            if ($request->has('manager_employee_id')) $manager_business_member = BusinessMember::where([['member_id', $request->manager_employee_id], ['business_id', $business->id]])->first();
-            if (!$profile) {
-                $profile = $this->createProfile($member, $request);
+        $this->validate($request, [
+            'name' => 'required|string',
+            'mobile' => 'required|string|mobile:bd',
+            'email' => 'required|email',
+            'role' => 'required|integer',
+            'manager_employee_id' => 'integer'
+        ]);
+
+        $business = $request->business;
+        $member = $request->manager_member;
+        $this->setModifier($member);
+
+        $manager_business_member = null;
+        $email_profile = $this->profileRepository->where('email', $request->email)->first();
+        $mobile_profile = $this->profileRepository->where('mobile', formatMobile($request->mobile))->first();
+
+        if ($email_profile) $profile = $email_profile;
+        elseif ($mobile_profile) $profile = $mobile_profile;
+        else $profile = null;
+
+        $co_member = collect();
+        if ($request->has('manager_employee_id'))
+            $manager_business_member = BusinessMember::where([
+                ['member_id', $request->manager_employee_id],
+                ['business_id', $business->id]
+            ])->first();
+
+        if (!$profile) {
+            $profile = $this->createProfile($member, $request);
+            $new_member = $this->makeMember($profile);
+            $co_member->push($new_member);
+
+            $business = $member->businesses->first();
+            $member_business_data = [
+                'business_id' => $business->id,
+                'member_id' => $co_member->first()->id,
+                'join_date' => Carbon::now(),
+                'manager_id' => $manager_business_member ? $manager_business_member->id : null,
+                'business_role_id' => $request->role
+            ];
+            
+            BusinessMember::create($this->withCreateModificationField($member_business_data));
+        } else {
+            $old_member = $profile->member;
+            if ($old_member) {
+                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
+                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                $co_member->push($old_member);
+            } else {
                 $new_member = $this->makeMember($profile);
                 $co_member->push($new_member);
-
-                $business = $member->businesses->first();
-                $member_business_data = [
-                    'business_id' => $business->id, 'member_id' => $co_member->first()->id, 'join_date' => Carbon::now(), 'manager_id' => $manager_business_member ? $manager_business_member->id : null, 'business_role_id' => $request->role,
-                ];
-                BusinessMember::create($this->withCreateModificationField($member_business_data));
-            } else {
-                $old_member = $profile->member;
-                if ($old_member) {
-                    if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
-                    if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
-                    $co_member->push($old_member);
-                } else {
-                    $new_member = $this->makeMember($profile);
-                    $co_member->push($new_member);
-                }
-                $this->sendExistingUserMail($profile);
-                $member_business_data = [
-                    'business_id' => $business->id, 'member_id' => $co_member->first()->id, 'join_date' => Carbon::now(), 'manager_id' => $manager_business_member ? $manager_business_member->id : null, 'business_role_id' => $request->role,
-                ];
-                BusinessMember::create($this->withCreateModificationField($member_business_data));
             }
-            return api_response($request, $profile, 200, ['co_worker' => $co_member->first()->id]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $this->sendExistingUserMail($profile);
+            $member_business_data = [
+                'business_id' => $business->id,
+                'member_id' => $co_member->first()->id,
+                'join_date' => Carbon::now(),
+                'manager_id' => $manager_business_member ? $manager_business_member->id : null,
+                'business_role_id' => $request->role
+            ];
+
+            BusinessMember::create($this->withCreateModificationField($member_business_data));
         }
+
+        return api_response($request, $profile, 200, ['co_worker' => $co_member->first()->id]);
     }
 
     /**
