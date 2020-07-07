@@ -9,6 +9,7 @@ use App\Models\LocationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Location\FromGeo;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\ServiceRequest\ServiceRequest;
@@ -85,5 +86,32 @@ class RentACarController extends Controller
             ]
         ];
         return api_response($request, null, 200, ['options' => $options]);
+    }
+
+    public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)
+    {
+        $pickup_lat = $request->pickup_lat;
+        $pickup_lng = $request->pickup_lng;
+        $destination_lat = $request->destination_lat;
+        $destination_lng = $request->destination_lng;
+
+        $pickup_thana = ($pickup_lat && $pickup_lng) ? $fromGeo->setThanas()->getThana($pickup_lat, $pickup_lng) : null;
+        $pickup_thana = $pickup_thana ? [
+            'id' => $pickup_thana->id,
+            'name' => $pickup_thana->name,
+            'location_id' => $pickup_thana->location_id,
+            'lat' => $pickup_thana->lat,
+            'lng' => $pickup_thana->lng,
+        ] : null;
+        $destination_thana = ($destination_lat && $destination_lng) ? $fromGeo->setThanas()->getThana($destination_lat, $destination_lng) : null;
+        $destination_thana = $destination_thana ? [
+            'id' => $destination_thana->id,
+            'name' => $destination_thana->name,
+            'location_id' => $destination_thana->location_id,
+            'lat' => $destination_thana->lat,
+            'lng' => $destination_thana->lng,
+        ] : null;
+
+        return api_response($request, null, 200, ['pickup_thana' => $pickup_thana, 'destination_thana' => $destination_thana]);
     }
 }
