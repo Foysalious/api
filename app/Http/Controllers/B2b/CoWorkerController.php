@@ -152,8 +152,9 @@ class CoWorkerController extends Controller
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
-            }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+            },
+            'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
@@ -180,7 +181,15 @@ class CoWorkerController extends Controller
             $role = $member->businessMember->role;
 
             $employee = [
-                'id' => $member->id, 'name' => $profile->name, 'pro_pic' => $profile->pro_pic, 'mobile' => $profile->mobile, 'email' => $profile->email, 'department_id' => $role ? $role->businessDepartment->id : null, 'department' => $role ? $role->businessDepartment->name : null, 'designation' => $role ? $role->name : null
+                'id' => $member->id,
+                'name' => $profile->name,
+                'pro_pic' => $profile->pro_pic,
+                'mobile' => $profile->mobile,
+                'email' => $profile->email,
+                'status' => $member->businessMember->status,
+                'department_id' => $role ? $role->businessDepartment->id : null,
+                'department' => $role ? $role->businessDepartment->name : null,
+                'designation' => $role ? $role->name : null
             ];
             array_push($employees, $employee);
         }
