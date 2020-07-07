@@ -2,6 +2,7 @@
 
 use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Illuminate\Database\Eloquent\Model;
+use InvalidArgumentException;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
@@ -56,6 +57,16 @@ class Payable extends Model
     public function isProcurement()
     {
         return $this->type == Types::PROCUREMENT;
+    }
+
+    /**
+     * @param $type
+     */
+    public function setTypeAttribute($type)
+    {
+        if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
+
+        $this->type = $type;
     }
 
     public function getReadableTypeAttribute()
