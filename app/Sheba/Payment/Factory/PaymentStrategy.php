@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\Payable;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
@@ -35,14 +36,14 @@ class PaymentStrategy
 
     /**
      * @param $method
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet
      * @throws InvalidPaymentMethod
      */
-    public static function getMethod($method, PayableUser $user)
+    public static function getMethod($method, Payable $payable)
     {
-        switch (self::getValidatedMethod($method, $user)) {
-            case self::SSL: return SslBuilder::get($user);
+        switch (self::getValidatedMethod($method, $payable)) {
+            case self::SSL: return SslBuilder::get($payable->user);
             case self::SSL_DONATION: return SslBuilder::getForDonation();
             case self::BKASH: return app(Bkash::class);
             case self::WALLET: return app(Wallet::class);
@@ -57,13 +58,13 @@ class PaymentStrategy
      * @param $method
      * @param $version_code
      * @param $platform_name
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return array
      * @throws InvalidPaymentMethod
      */
-    public static function getDetails($method, $version_code, $platform_name, PayableUser $user)
+    public static function getDetails($method, $version_code, $platform_name, Payable $payable)
     {
-        switch (self::getValidatedMethod($method, $user)) {
+        switch (self::getValidatedMethod($method, $payable)) {
             case self::SSL: return self::sslDetails();
             case self::SSL_DONATION: return self::sslDonationDetails();
             case self::BKASH: return self::bkashDetails();
@@ -77,17 +78,20 @@ class PaymentStrategy
 
     /**
      * @param $method
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return string
      * @throws InvalidPaymentMethod
      */
-    private static function getValidatedMethod($method, PayableUser $user)
+    private static function getValidatedMethod($method, Payable $payable)
     {
         if (!self::isValid($method)) throw new InvalidPaymentMethod();
 
+        /** @var PayableUser $user */
+        $user = $payable->user;
+
         if ($method == self::ONLINE) {
-            if ($user instanceof Customer) $method = self::SSL;
-            else if ($user instanceof Partner) $method = self::PORT_WALLET;
+            if ($payable->isPaymentLink() || $user instanceof Partner) $method = self::PORT_WALLET;
+            else if ($user instanceof Customer) $method = self::SSL;
             else $method = self::getDefaultOnlineMethod();
         }
 
