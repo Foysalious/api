@@ -45,4 +45,9 @@ class MovieTicketPurchaseAdapter implements PayableAdapter
     {
         return $payable->amount >= config('sheba.min_order_amount_for_emi') ? $this->emiMonth : null;
     }
+
+    public function canInit(): bool
+    {
+        return true;
+    }
 }

@@ -155,6 +155,8 @@ class CategorySchema
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->whereIn('reviews.rating', [5])
             ->where('reviews.category_id', $this->category->id)
+            ->whereNotNull('profiles.name')
+            ->where('profiles.name', '!=', '')
             ->take(10)
             ->orderBy('id', 'desc')
             ->groupBy('customer_id')

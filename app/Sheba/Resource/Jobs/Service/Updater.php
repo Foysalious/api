@@ -1,7 +1,7 @@
 <?php namespace Sheba\Resource\Jobs\Service;
 
 
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Illuminate\Http\Request;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\JobService\JobServiceRepositoryInterface;
