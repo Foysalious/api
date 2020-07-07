@@ -251,7 +251,7 @@ class LoanV2Controller extends Controller
         try {
             $this->validate($request, ['loan_type' => 'required|in:term,micro']);
 
-            $this->validate($request, PersonalInfo::getValidators($request->loan_type));
+            $this->validate($request, PersonalInfo::getValidators());
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request);
