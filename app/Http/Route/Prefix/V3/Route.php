@@ -23,6 +23,8 @@ class Route
             });
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
+                $api->get('options', 'RentACar\RentACarController@getOptions');
+                $api->get('thana', 'RentACar\RentACarController@getPickupAndDestinationThana');
             });
             $api->group(['prefix' => 'register'], function ($api) {
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
