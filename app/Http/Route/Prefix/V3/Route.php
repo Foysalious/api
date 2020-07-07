@@ -48,6 +48,7 @@ class Route
             });
             $api->get('training-videos', 'TrainingVideoController@index');
             $api->get('sitemap', 'SitemapController@index');
+            $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
