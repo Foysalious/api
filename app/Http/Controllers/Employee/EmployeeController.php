@@ -12,6 +12,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Business\CoWorker\ProfileCompletionCalculator;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -99,23 +100,27 @@ class EmployeeController extends Controller
     /**
      * @param Request $request
      * @param ActionProcessor $action_processor
+     * @param ProfileCompletionCalculator $completion_calculator
      * @return JsonResponse
      */
-    public function getDashboard(Request $request, ActionProcessor $action_processor)
+    public function getDashboard(Request $request, ActionProcessor $action_processor,
+                                 ProfileCompletionCalculator $completion_calculator)
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
         $member = $this->repo->find($business_member['member_id']);
         /** @var BusinessMember $business_member */
         $business_member = BusinessMember::find($business_member['id']);
         if (!$business_member) return api_response($request, null, 404);
+
         /** @var Attendance $attendance */
         $attendance = $business_member->attendanceOfToday();
-        /** @var ActionChecker $checkout */
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
 
         $approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMember($business_member);
         $pending_approval_requests = $this->approvalRequestRepo->getPendingApprovalRequestByBusinessMember($business_member);
+        $profile_completion_score = $completion_calculator->setBusinessMember($business_member)->getDigiGoScore();
 
         $data = [
             'id' => $member->id,
@@ -126,10 +131,15 @@ class EmployeeController extends Controller
                 'is_note_required' => 0
             ],
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
-            'approval_requests' => ['pending_request' => $pending_approval_requests->count()]
+            'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
+            'is_profile_complete' => $profile_completion_score ? 1 : 0
         ];
-        if ($data['attendance']['can_checkout']) $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
-        if ($business_member) return api_response($request, $business_member, 200, ['info' => $data]);
+
+        if ($data['attendance']['can_checkout']) {
+            $data['attendance']['is_note_required'] = $checkout->isNoteRequired();
+        }
+
+        return api_response($request, $business_member, 200, ['info' => $data]);
     }
 
     private function getBusinessMember(Request $request)
