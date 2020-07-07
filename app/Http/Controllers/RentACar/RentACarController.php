@@ -44,4 +44,46 @@ class RentACarController extends Controller
             return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
         }
     }
+
+    public function getOptions(Request $request, ServiceRequest $service_request, PriceCalculation $price_calculation, DiscountCalculation $discount_calculation)
+    {
+        $options = [
+            [
+                'name' => 'Budget',
+                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
+                'number_of_seats' => 4,
+                'info' => 'Model below 2009',
+                'price' => 4000.00
+            ],
+            [
+                'name' => 'Premium',
+                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
+                'number_of_seats' => 4,
+                'info' => 'Newer economy cars',
+                'price' => 6000.00
+            ],
+            [
+                'name' => 'Family',
+                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
+                'number_of_seats' => 7,
+                'info' => 'Model below 2009',
+                'price' => 8000.00
+            ],
+            [
+                'name' => 'Premium Family',
+                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
+                'number_of_seats' => 7,
+                'info' => 'Model above 2010',
+                'price' => 10000.00
+            ],
+            [
+                'name' => 'Group',
+                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/hiace.png',
+                'number_of_seats' => 12,
+                'info' => 'Model above 2010',
+                'price' => 12000.00
+            ]
+        ];
+        return api_response($request, null, 200, ['options' => $options]);
+    }
 }
