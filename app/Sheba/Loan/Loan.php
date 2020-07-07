@@ -246,11 +246,11 @@ class Loan
             if ($this->type === LoanTypes::TERM) {
                 if (!(isset($this->data['month']) && $this->data['month'])) {
                     $this->data['duration'] = ((int)$this->data['duration'] * 12);
-                    unset($this->data['month']);
                 }
             } else {
                 $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 7);
             }
+            unset($this->data['month']);
             $created = $this->create();
         });
         return $created;
@@ -335,8 +335,8 @@ class Loan
             $final_info[$key] = $this->$val()->toArray();
         }
         $data['final_information_for_loan'] = json_encode($final_info);
-        if ($this->type===LoanTypes::MICRO){
-            $data['bank_id']=config('loan.micro_loan_assigned_bank_id');
+        if ($this->type === LoanTypes::MICRO) {
+            $data['bank_id'] = config('loan.micro_loan_assigned_bank_id');
         }
         return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
     }
