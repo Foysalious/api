@@ -45,7 +45,8 @@ return [
     'push_notification_sound' => [
         'customer' => 'default',
         'manager' => 'notification_sound',
-        'affiliate' => 'default'
+        'affiliate' => 'default',
+        'employee'  => 'notification_sound'
     ],
     'partner_packages' => [
         'ESP' => 4,
