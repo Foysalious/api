@@ -37,8 +37,9 @@ return [
         'employee' => 'employee_channel'
     ],
     'push_notification_sound' => [
-        'customer' => 'default',
-        'manager' => 'notification_sound'
+        'customer'  => 'default',
+        'manager'   => 'notification_sound',
+        'employee'  => 'notification_sound'
     ],
     'partner_packages' => [
         'ESP' => 4,

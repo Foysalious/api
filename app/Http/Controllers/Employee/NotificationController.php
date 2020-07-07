@@ -68,8 +68,9 @@ class NotificationController extends Controller
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
 
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
-        $channel = config('sheba.push_notification_channel_name.employee');
+        $topic  = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $sound  = config('sheba.push_notification_sound.employee');
+        $channel= config('sheba.push_notification_channel_name.employee');
 
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
@@ -103,7 +104,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
 
         if ($request->has('leave_request_id')) {
