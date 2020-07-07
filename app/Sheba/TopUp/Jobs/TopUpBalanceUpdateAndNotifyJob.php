@@ -68,7 +68,7 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     private function getBalance()
     {
         if ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
-            return $this->parseBalanceFromResponseMessage($this->response->transactionDetails->message);
+            return $this->parseBalanceFromResponseMessage($this->response);
         } else {
             return $this->topUpGateway->balance;
         }
