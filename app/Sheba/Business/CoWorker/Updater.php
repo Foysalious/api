@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -19,6 +20,7 @@ use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
+use Throwable;
 
 class Updater
 {
@@ -38,7 +40,6 @@ class Updater
     private $profile;
     /** @var BusinessRole $businessRole */
     private $businessRole;
-
     /** BusinessMemberRepositoryInterface $businessMemberRepository */
     private $businessMemberRepository;
     /** RoleRequester $roleRequester */
@@ -47,7 +48,6 @@ class Updater
     private $roleCreator;
     /** RoleUpdater $roleUpdater */
     private $roleUpdater;
-
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
     /** BusinessMemberCreator $businessMemberCreator */
@@ -67,14 +67,10 @@ class Updater
      * @param BusinessMemberCreator $business_member_creator
      * @param BusinessMemberUpdater $business_member_updater
      */
-    public function __construct(FileRepository $file_repository,
-                                ProfileRepository $profile_repository,
+    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
-                                RoleRequester $role_requester,
-                                RoleCreator $role_creator,
-                                RoleUpdater $role_updater,
-                                BusinessMemberRequester $business_member_requester,
-                                BusinessMemberCreator $business_member_creator,
+                                RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
+                                BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater $business_member_updater)
     {
         $this->fileRepository = $file_repository;
@@ -139,14 +135,14 @@ class Updater
             $this->businessRole = $this->businessRoleCreate();
             $this->businessMemberUpdate();
             DB::commit();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollback();
             return null;
         }
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Model
      */
     private function businessRoleCreate()
     {
@@ -156,7 +152,7 @@ class Updater
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Model
      */
     private function businessMemberUpdate()
     {
@@ -177,8 +173,8 @@ class Updater
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
-        $picture_link = $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
-        return $picture_link;
+
+        return $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
     }
 
     /**

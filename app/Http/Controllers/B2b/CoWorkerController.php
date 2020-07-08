@@ -60,15 +60,10 @@ class CoWorkerController extends Controller
      * @param CoWorkerCreator $co_worker_creator
      * @param CoWorkerUpdater $co_worker_updater
      */
-    public function __construct(FileRepository $file_repository,
-                                ProfileRepository $profile_repository,
-                                BasicRequest $basic_request,
-                                EmergencyRequest $emergency_request,
-                                FinancialRequest $financial_request,
-                                OfficialRequest $official_request,
-                                PersonalRequest $personal_request,
-                                CoWorkerCreator $co_worker_creator,
-                                CoWorkerUpdater $co_worker_updater)
+    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
+                                EmergencyRequest $emergency_request, FinancialRequest $financial_request,
+                                OfficialRequest $official_request, PersonalRequest $personal_request,
+                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
