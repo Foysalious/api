@@ -13,6 +13,11 @@ use DB;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Business\CoWorker\Requests\BasicRequest;
+use Sheba\Business\CoWorker\Requests\EmergencyRequest;
+use Sheba\Business\CoWorker\Requests\FinancialRequest;
+use Sheba\Business\CoWorker\Requests\OfficialRequest;
+use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
@@ -27,16 +32,68 @@ class CoWorkerController extends Controller
     private $fileRepository;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
+    /** @var BasicRequest $basicRequest */
+    private $basicRequest;
+    /** @var EmergencyRequest $emergencyRequest */
+    private $emergencyRequest;
+    /** @var FinancialRequest $financialRequest */
+    private $financialRequest;
+    /** @var OfficialRequest $officialRequest */
+    private $officialRequest;
+    /** @var PersonalRequest $personalRequest */
+    private $personalRequest;
 
     /**
      * CoWorkerController constructor.
      * @param FileRepository $file_repository
      * @param ProfileRepository $profile_repository
+     * @param BasicRequest $basic_request
+     * @param EmergencyRequest $emergency_request
+     * @param FinancialRequest $financial_request
+     * @param OfficialRequest $official_request
+     * @param PersonalRequest $personal_request
      */
-    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository)
+    public function __construct(FileRepository $file_repository,
+                                ProfileRepository $profile_repository,
+                                BasicRequest $basic_request,
+                                EmergencyRequest $emergency_request,
+                                FinancialRequest $financial_request,
+                                OfficialRequest $official_request,
+                                PersonalRequest $personal_request)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
+        $this->basicRequest = $basic_request;
+        $this->emergencyRequest = $emergency_request;
+        $this->financialRequest = $financial_request;
+        $this->officialRequest = $official_request;
+        $this->personalRequest = $personal_request;
+        $this->creator = $personal_request;
+        $this->personalRequest = $personal_request;
+    }
+
+    public function basicInfoStore($business, Request $request)
+    {
+        $this->validate($request, [
+            'pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            'first_name' => 'required|string',
+            'last_name' => 'sometimes|required|string',
+            'email' => 'required|email',
+            'department' => 'required|integer',
+            'role' => 'required|integer',
+            'manager_employee' => 'sometimes|required|integer',
+        ]);
+        $basic_request = $this->basicRequest->setProPic($request->pro_pic)
+            ->setFirstName($request->first_name)
+            ->setLastName($request->last_name)
+            ->setEmail($request->email)
+            ->setDepartment($request->department)
+            ->setRole($request->role)
+            ->setManagerEmployee($request->manager_employee);
+
+        $business = $request->business;
+        $member = $request->manager_member;
+        $this->setModifier($member);
     }
 
     /**
@@ -86,7 +143,7 @@ class CoWorkerController extends Controller
                 'manager_id' => $manager_business_member ? $manager_business_member->id : null,
                 'business_role_id' => $request->role
             ];
-            
+
             BusinessMember::create($this->withCreateModificationField($member_business_data));
         } else {
             $old_member = $profile->member;
