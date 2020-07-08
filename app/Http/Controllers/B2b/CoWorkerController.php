@@ -23,6 +23,7 @@ use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
+use Sheba\Business\CoWorker\Statuses;
 
 class CoWorkerController extends Controller
 {
@@ -463,6 +464,23 @@ class CoWorkerController extends Controller
             'is_published' => 1,
         ];
         BusinessRole::create($this->withCreateModificationField($data));
+
+        return api_response($request, null, 200);
+    }
+
+    public function changeStatus($business, Request $request)
+    {
+        $this->validate($request, [
+            'employee_ids' => "required",
+            'status' => 'required|string|in:' . implode(',', Statuses::get())
+        ]);
+
+        return api_response($request, null, 200);
+    }
+
+    public function sendInvitation($business, Request $request)
+    {
+        $this->validate($request, ['emails' => "required"]);
 
         return api_response($request, null, 200);
     }
