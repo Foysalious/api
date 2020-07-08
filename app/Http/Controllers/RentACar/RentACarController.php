@@ -54,35 +54,60 @@ class RentACarController extends Controller
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
                 'number_of_seats' => 4,
                 'info' => 'Model below 2009',
-                'price' => 4000.00
+                'discounted_price' => 2990,
+                'original_price' => 2990,
+                'discount' => 0,
+                'quantity' => 1,
+                'is_surcharge_applied' => 1,
+                'surcharge_percentage' => 20
             ],
             [
                 'name' => 'Premium',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
                 'number_of_seats' => 4,
                 'info' => 'Newer economy cars',
-                'price' => 6000.00
+                'discounted_price' => 3700,
+                'original_price' => 4000,
+                'discount' => 0,
+                'quantity' => 1,
+                'is_surcharge_applied' => 0,
+                'surcharge_percentage' => 30
             ],
             [
                 'name' => 'Family',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
                 'number_of_seats' => 7,
                 'info' => 'Model below 2009',
-                'price' => 8000.00
+                'discounted_price' => 6000,
+                'original_price' => 6000,
+                'discount' => 0,
+                'quantity' => 1,
+                'is_surcharge_applied' => 1,
+                'surcharge_percentage' => 25
             ],
             [
                 'name' => 'Premium Family',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
                 'number_of_seats' => 7,
                 'info' => 'Model above 2010',
-                'price' => 10000.00
+                'discounted_price' => 9000,
+                'original_price' => 10000,
+                'discount' => 0,
+                'quantity' => 1,
+                'is_surcharge_applied' => 0,
+                'surcharge_percentage' => 30
             ],
             [
                 'name' => 'Group',
                 'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/hiace.png',
                 'number_of_seats' => 12,
                 'info' => 'Model above 2010',
-                'price' => 12000.00
+                'discounted_price' => 12000,
+                'original_price' => 12000,
+                'discount' => 0,
+                'quantity' => 1,
+                'is_surcharge_applied' => 1,
+                'surcharge_percentage' => 30
             ]
         ];
         return api_response($request, null, 200, ['options' => $options]);
