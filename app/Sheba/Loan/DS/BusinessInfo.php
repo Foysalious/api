@@ -218,7 +218,7 @@ class BusinessInfo implements Arrayable
                    'tin_no'                           => $this->profile->tin_no,
                    'tin_certificate'                  => $this->profile->tin_certificate,
                    'trade_license'                    => $this->basic_information->trade_license,
-                   'trade_license_issue_date'         => $this->basic_information->trade_license_issue_date,
+                   'trade_license_issue_date'         => Carbon::parse($this->basic_information->trade_license_issue_date)->format('Y-m-d'),
                    'registration_no'                  => $this->basic_information->registration_no,
                    'registration_year'                => $this->basic_information->registration_year,
                    'business_category'                => $this->basic_information->business_category,
