@@ -42,7 +42,7 @@ class Authentication
             $payload = JWS::load($data['id_token'])->getPayload();
             return (new AuthenticationResponse())->setCode(200)->setEmail($payload['email'])->setEmailVerified($payload['email_verified']);
         } catch (GuzzleException $e) {
-            return (new AuthenticationResponse())->setCode(500);
+            return (new AuthenticationResponse())->setCode(500)->setMessage('Apple authentication error.');
         }
     }
 
