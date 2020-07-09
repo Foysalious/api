@@ -1,28 +1,29 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Http\Controllers\Controller;
-use App\Jobs\SendBusinessRequestEmail;
-use App\Models\BusinessDepartment;
-use App\Models\BusinessMember;
-use App\Models\BusinessRole;
-use App\Models\Member;
-use App\Models\Profile;
-use App\Repositories\FileRepository;
-use Carbon\Carbon;
-use DB;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-use Sheba\Business\CoWorker\Requests\BasicRequest;
+use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
-use Sheba\ModificationFields;
+use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
+use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Repositories\ProfileRepository;
-use Throwable;
+use App\Jobs\SendBusinessRequestEmail;
+use Sheba\FileManagers\CdnFileManager;
+use App\Repositories\FileRepository;
+use App\Http\Controllers\Controller;
+use Sheba\FileManagers\FileManager;
+use App\Models\BusinessDepartment;
+use Illuminate\Http\JsonResponse;
+use App\Models\BusinessMember;
+use Sheba\ModificationFields;
+use App\Models\BusinessRole;
+use Illuminate\Http\Request;
+use App\Models\Profile;
+use App\Models\Member;
+use Carbon\Carbon;
+use DB;
+use Sheba\Business\CoWorker\Statuses;
 
 class CoWorkerController extends Controller
 {
@@ -42,6 +43,10 @@ class CoWorkerController extends Controller
     private $officialRequest;
     /** @var PersonalRequest $personalRequest */
     private $personalRequest;
+    /** @var CoWorkerCreator $coWorkerCreator */
+    private $coWorkerCreator;
+    /** @var CoWorkerUpdater $coWorkerUpdater */
+    private $coWorkerUpdater;
 
     /**
      * CoWorkerController constructor.
@@ -52,14 +57,13 @@ class CoWorkerController extends Controller
      * @param FinancialRequest $financial_request
      * @param OfficialRequest $official_request
      * @param PersonalRequest $personal_request
+     * @param CoWorkerCreator $co_worker_creator
+     * @param CoWorkerUpdater $co_worker_updater
      */
-    public function __construct(FileRepository $file_repository,
-                                ProfileRepository $profile_repository,
-                                BasicRequest $basic_request,
-                                EmergencyRequest $emergency_request,
-                                FinancialRequest $financial_request,
-                                OfficialRequest $official_request,
-                                PersonalRequest $personal_request)
+    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
+                                EmergencyRequest $emergency_request, FinancialRequest $financial_request,
+                                OfficialRequest $official_request, PersonalRequest $personal_request,
+                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -68,8 +72,8 @@ class CoWorkerController extends Controller
         $this->financialRequest = $financial_request;
         $this->officialRequest = $official_request;
         $this->personalRequest = $personal_request;
-        $this->creator = $personal_request;
-        $this->personalRequest = $personal_request;
+        $this->coWorkerCreator = $co_worker_creator;
+        $this->coWorkerUpdater = $co_worker_updater;
     }
 
     public function basicInfoStore($business, Request $request)
@@ -83,6 +87,10 @@ class CoWorkerController extends Controller
             'role' => 'required|integer',
             'manager_employee' => 'sometimes|required|integer',
         ]);
+        $business = $request->business;
+        $member = $request->manager_member;
+        $this->setModifier($member);
+
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
@@ -90,10 +98,34 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
+        $this->coWorkerCreator->setBasicRequest($basic_request)->storeBasicInfo();
+    }
 
-        $business = $request->business;
+    public function basicInfoEdit($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            'first_name' => 'required|string',
+            'last_name' => 'sometimes|required|string',
+            'email' => 'required|email',
+            'department' => 'required|integer',
+            'role' => 'required|string',
+            'manager_employee' => 'sometimes|required|integer'
+        ]);
         $member = $request->manager_member;
         $this->setModifier($member);
+        $basic_request = $this->basicRequest->setBusinessMember($business_member)
+            ->setProPic($request->file('pro_pic'))
+            ->setFirstName($request->first_name)
+            ->setLastName($request->last_name)
+            ->setEmail($request->email)
+            ->setDepartment($request->department)
+            ->setRole($request->role)
+            ->setManagerEmployee($request->manager_employee);
+        $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->updateBasicInfo();
+        if ($business_member) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
+
     }
 
     /**
@@ -148,8 +180,12 @@ class CoWorkerController extends Controller
         } else {
             $old_member = $profile->member;
             if ($old_member) {
-                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
-                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) {
+                    return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
+                }
+                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) {
+                    return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                }
                 $co_member->push($old_member);
             } else {
                 $new_member = $this->makeMember($profile);
@@ -350,7 +386,9 @@ class CoWorkerController extends Controller
             }
 
             $department = [
-                'id' => $business_dept->id, 'name' => $business_dept->name, 'roles' => $dept_role
+                'id' => $business_dept->id,
+                'name' => $business_dept->name,
+                'roles' => $dept_role
             ];
             array_push($departments, $department);
         }
@@ -425,6 +463,23 @@ class CoWorkerController extends Controller
             'is_published' => 1,
         ];
         BusinessRole::create($this->withCreateModificationField($data));
+
+        return api_response($request, null, 200);
+    }
+
+    public function changeStatus($business, Request $request)
+    {
+        $this->validate($request, [
+            'employee_ids' => "required",
+            'status' => 'required|string|in:' . implode(',', Statuses::get())
+        ]);
+
+        return api_response($request, null, 200);
+    }
+
+    public function sendInvitation($business, Request $request)
+    {
+        $this->validate($request, ['emails' => "required"]);
 
         return api_response($request, null, 200);
     }
