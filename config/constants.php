@@ -698,6 +698,10 @@ return [
             'message' => 'Successful',
             'code'    => 202
         ],
+        303 => [
+            'message' => 'Partial Updates Successful',
+            'code' => 303
+        ],
         400 => [
             'message' => 'Bad request',
             'code'    => 400
