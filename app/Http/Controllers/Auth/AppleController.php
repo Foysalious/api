@@ -28,15 +28,18 @@ class AppleController extends Controller
         return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
     }
 
-    public function login(Request $request, Authentication $authentication, ProfileRepository $profileRepository)
+    public function login(Request $request, Authentication $authentication, ProfileRepository $profileRepository, Creator $creator)
     {
 
         $this->validate($request, ['authorization_code' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
         $user_response = $authentication->getUser($request->authorization_code);
-        if ($user_response->hasError()) return api_response($request, null, 500);
-        $profile = $profileRepository->getIfExist($user_response->getEmail(), 'email');
+        if ($user_response->hasError()) return api_response($request, null, 500, ['message' => 'Please try again.']);
+        $from = $profileRepository->getAvatar($request->from);
+        /** @var Profile $profile */
+        $profile = $profileRepository->getIfExist('rupom@sheba.xyz', 'email');
         if (!$profile) return api_response($request, null, 404, ['message' => 'Account is not registered. Please register']);
-        $info = $profileRepository->getProfileInfo($request->from, $profile, $request);
+        if (!$profile->customer) $profileRepository->registerAvatar($from, $request, $profile);
+        $info = $profileRepository->getProfileInfo($from, $profile->fresh(), $request);
         return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
     }
 }
