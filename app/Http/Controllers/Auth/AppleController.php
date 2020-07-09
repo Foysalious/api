@@ -18,7 +18,8 @@ class AppleController extends Controller
         $accessTokenRequest->setAuthorizationCode($request->kit_code);
         $mobile = $accountKit->getMobile($accessTokenRequest);
         $user_response = $authentication->getUser($request->authorization_code);
-        if ($user_response->hasError() || !$mobile) return api_response($request, null, 500);
+        if ($user_response->hasError()) return api_response($request, null, 500, ['message' => $user_response->getMessage()]);
+        if (!$mobile) return api_response($request, null, 500, ['message' => 'Mobile authentication error.']);
         $email_profile = $profileRepository->getIfExist($user_response->getEmail(), 'email');
         $mobile_profile = $profileRepository->getIfExist($mobile, 'mobile');
         if ($email_profile || $mobile_profile) return api_response($request, null, 400, ['message' => $email_profile ? 'Email' : 'Mobile' . ' already exists! Please login']);

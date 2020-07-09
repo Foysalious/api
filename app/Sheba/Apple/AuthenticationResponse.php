@@ -6,6 +6,18 @@ class AuthenticationResponse
     private $code;
     private $email;
     private $emailVerified;
+    private $message;
+
+    public function getMessage()
+    {
+        return $this->message;
+    }
+
+    public function setMessage($message)
+    {
+        $this->message = $message;
+        return $this;
+    }
 
     public function getCode()
     {
