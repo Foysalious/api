@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Sheba\BankingInfo\GeneralBanking;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -24,9 +25,7 @@ class BusinessesController extends Controller
     use ModificationFields;
     const DIGIGO_PORTAL = 'digigo-portal';
     private $digigo_management_emails = [
-        'one' => 'one@gmail.com',
-        'two' => 'two@gmail.com',
-        'three' => 'three@gmail.com'
+        'one' => 'khairun@sheba.xyz'
     ];
     private $sms;
 
@@ -274,6 +273,18 @@ class BusinessesController extends Controller
             $this->sendMail($request->message, $request->email, $request->name);
         }
         return api_response($request, null, 200);
+    }
+
+    public function getBanks(Request $request)
+    {
+        $banks = [];
+        foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
+            array_push($banks, [
+                'id' => ++$key,
+                'bank' => $bank,
+            ]);
+        }
+        return api_response($request, null, 200, ['banks' => $banks]);
     }
 
     private function sendMail($message, $email, $name, $to = 'b2b@sheba.xyz')

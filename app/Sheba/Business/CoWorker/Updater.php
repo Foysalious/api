@@ -260,6 +260,9 @@ class Updater
         }
     }
 
+    /**
+     * @return Profile|null
+     */
     public function financialInfoUpdate()
     {
         DB::beginTransaction();
