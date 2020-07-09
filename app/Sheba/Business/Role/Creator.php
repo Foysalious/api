@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Role;
 
 use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
+use Illuminate\Database\Eloquent\Model;
 
 class Creator
 {
@@ -29,7 +30,7 @@ class Creator
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Model
      */
     public function create()
     {

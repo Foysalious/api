@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\CoWorker;
 
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
@@ -10,6 +9,7 @@ use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
 use Sheba\Repositories\ProfileRepository;
+use Illuminate\Database\Eloquent\Model;
 use Sheba\FileManagers\CdnFileManager;
 use App\Repositories\FileRepository;
 use Sheba\FileManagers\FileManager;
@@ -19,8 +19,8 @@ use App\Models\BusinessRole;
 use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
-use DB;
 use Throwable;
+use DB;
 
 class Updater
 {
@@ -133,8 +133,9 @@ class Updater
             ];
             $this->profileRepository->update($this->profile, $profile_data);
             $this->businessRole = $this->businessRoleCreate();
-            $this->businessMemberUpdate();
+            $this->businessMember = $this->businessMemberUpdate();
             DB::commit();
+            return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
             return null;
@@ -158,7 +159,7 @@ class Updater
     {
         $business_member_requester = $this->businessMemberRequester->setRole($this->businessRole->id)
             ->setManagerEmployee($this->basicRequest->getManagerEmployee());
-        return $this->businessMemberUpdater->setRequester($business_member_requester)->update();
+        return $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
     }
 
     /**

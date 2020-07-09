@@ -55,16 +55,17 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'employees'], function ($api) {
-                    $api->group(['prefix' => '{employees}'], function ($api) {
-                        $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
-                    });
+
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/change-status', 'B2b\CoWorkerController@changeStatus');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
-                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
-                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
-                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
+                    $api->group(['prefix' => '{employee}'], function ($api) {
+                        $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
+                        $api->get('/', 'B2b\CoWorkerController@show');
+                        $api->post('/', 'B2b\CoWorkerController@update');
+                        $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
+                    });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'approval-requests'], function ($api) {

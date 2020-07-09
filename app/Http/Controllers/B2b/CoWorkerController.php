@@ -112,10 +112,7 @@ class CoWorkerController extends Controller
             'role' => 'required|string',
             'manager_employee' => 'sometimes|required|integer'
         ]);
-
-        $business = $request->business;
         $member = $request->manager_member;
-
         $this->setModifier($member);
         $basic_request = $this->basicRequest->setBusinessMember($business_member)
             ->setProPic($request->file('pro_pic'))
@@ -125,7 +122,10 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
-        $this->coWorkerUpdater->setBasicRequest($basic_request)->updateBasicInfo();
+        $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->updateBasicInfo();
+        if ($business_member) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
+
     }
 
     /**
@@ -180,8 +180,12 @@ class CoWorkerController extends Controller
         } else {
             $old_member = $profile->member;
             if ($old_member) {
-                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
-                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) {
+                    return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
+                }
+                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) {
+                    return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
+                }
                 $co_member->push($old_member);
             } else {
                 $new_member = $this->makeMember($profile);

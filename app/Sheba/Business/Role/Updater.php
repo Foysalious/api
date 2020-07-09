@@ -1,7 +1,8 @@
 <?php namespace Sheba\Business\Role;
 
-use App\Models\BusinessRole;
 use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
+use Illuminate\Database\Eloquent\Model;
+use App\Models\BusinessRole;
 
 class Updater
 {
@@ -43,7 +44,7 @@ class Updater
     }
 
     /**
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Model
      */
     public function update()
     {
