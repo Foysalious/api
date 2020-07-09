@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\LoanClaim;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -296,6 +297,38 @@ class LoanV2Controller extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function claim(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required'
+            ]);
+            $request->merge(['loan_id' => $loan_id]);
+            $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
+            $is_eligible = $loan->isEligibleForClaim($last_claim->id);
+            if(!$is_eligible)
+                //********
+            $loan->claim($request);
+
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function claimList(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+
+
+
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -758,4 +791,6 @@ class LoanV2Controller extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
 }
