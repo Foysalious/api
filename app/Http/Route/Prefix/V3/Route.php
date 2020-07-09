@@ -10,7 +10,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             $api->get('locations', 'Location\LocationController@index');
-            $api->get('get-thana', 'Location\LocationController@getThanaFromLatLng');
+            $api->get('thana', 'Location\LocationController@getThanaFromLatLng');
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
