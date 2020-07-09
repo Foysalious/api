@@ -29,12 +29,12 @@ class FinancialRequest
     }
 
     /**
-     * @param $tin_member
+     * @param $tin_number
      * @return $this
      */
-    public function setTinNumber($tin_member)
+    public function setTinNumber($tin_number)
     {
-        $this->tinNumber = $tin_member;
+        $this->tinNumber = $tin_number;
         return $this;
     }
 

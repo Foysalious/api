@@ -12,6 +12,7 @@ use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
+use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Repositories\ProfileRepository;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\FileManagers\CdnFileManager;
@@ -66,6 +67,8 @@ class Updater
     private $businessMemberCreator;
     /** BusinessMemberUpdater $businessMemberUpdater */
     private $businessMemberUpdater;
+    /** ProfileBankInfoInterface $profileBankInfoRepository */
+    private $profileBankInfoRepository;
 
     /**
      * Updater constructor.
@@ -78,12 +81,13 @@ class Updater
      * @param BusinessMemberRequester $business_member_requester
      * @param BusinessMemberCreator $business_member_creator
      * @param BusinessMemberUpdater $business_member_updater
+     * @param ProfileBankInfoInterface $profile_bank_information
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
-                                BusinessMemberUpdater $business_member_updater)
+                                BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -94,6 +98,7 @@ class Updater
         $this->businessMemberRequester = $business_member_requester;
         $this->businessMemberCreator = $business_member_creator;
         $this->businessMemberUpdater = $business_member_updater;
+        $this->profileBankInfoRepository = $profile_bank_information;
     }
 
     /**
@@ -247,6 +252,30 @@ class Updater
                 'dob' => $this->personalRequest->getDateOfBirth()
             ];
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
+            DB::commit();
+            return $this->profile;
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
+
+    public function financialInfoUpdate()
+    {
+        DB::beginTransaction();
+        try {
+            $this->getProfile();
+            $profile_data = [
+                'tin_no' => $this->financialRequest->getTinNumber(),
+                'tin_certificate' => $this->financialRequest->getTinCertificate() ? $this->getProfilePicture($this->profile, $this->financialRequest->getTinCertificate(), 'tin_certificate') : null,
+            ];
+            $this->profileRepository->update($this->profile, $profile_data);
+            $profile_bank_data = [
+                'bank_name' => $this->financialRequest->getBankName(),
+                'account_no' => $this->financialRequest->getBankAccNumber(),
+                'profile_id' => $this->profile->id,
+            ];
+            $this->profileBankInfoRepository->create($profile_bank_data);
             DB::commit();
             return $this->profile;
         } catch (Throwable $e) {

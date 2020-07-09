@@ -188,6 +188,25 @@ class CoWorkerController extends Controller
         return api_response($request, null, 404);
     }
 
+    public function financialInfoEdit($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'tin_number ' => 'sometimes|required|string',
+            'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            'bank_name ' => 'sometimes|required|string',
+            'bank_account_number ' => 'sometimes|required|string',
+        ]);
+        $member = $request->manager_member;
+        $this->setModifier($member);
+        $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
+            ->setTinCertificate($request->tin_certificate)
+            ->setBankName($request->bank_name)
+            ->setBankAccNumber($request->bank_account_number);
+        $profile = $this->coWorkerUpdater->setFinancialRequest($financial_request)->setBusinessMember($business_member)->financialInfoUpdate();
+        if ($profile) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
+    }
+
     /**
      * @param $business
      * @param Request $request
