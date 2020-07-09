@@ -1,47 +1,29 @@
 <?php
 
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Facades\JWTFactory;
+
+use Lcobucci\JWT\Builder;
+use Lcobucci\JWT\Signer\Key;
+use Lcobucci\JWT\Signer\Ecdsa\Sha256;
 use \Firebase\JWT\JWT;
+
 Route::get('/', function () {
-    $team_id = "497KZASBJJ";
-    $kid = "FR4RDV4Z5H";
+
     $client_id = 'xyz.sheba.app';
-    $customClaims = [
-        'exp' => time() + 86400 * 180,
-        'sub' => $client_id,
-        'iss' => $team_id,
-        'kid' => $kid,
-        'aud' => 'https://appleid.apple.com',
-        'iat' => time()
-    ];
-//    $payload = JWTFactory::make($customClaims);
+    $redirect_uri = 'https://api.sheba.test/v1/apple';
+    $_SESSION['state'] = bin2hex(random_bytes(5));
+
+    $authorize_url = 'https://appleid.apple.com/auth/authorize'.'?'.http_build_query([
+            'response_type' => 'code',
+            'response_mode' => 'form_post',
+            'client_id' => $client_id,
+            'redirect_uri' => $redirect_uri,
+            'state' => $_SESSION['state'],
+            'scope' => 'name email',
+        ]);
+    echo '<a href="'.$authorize_url.'">Sign In with Apple</a>';
+//    (new \Sheba\Apple\ClientSecret())->create();
 //
-////    $token=JWTAuth::setAlgo('ES256');
-////    dd($token);
-//    $token = JWTAuth::encode($payload);
-//    dd($token);
-
-
-    $payload = array(
-        "iss" => $team_id,
-        "aud" => 'https://appleid.apple.com',
-        "iat" => 1356999524,
-        "nbf" => 1357000000,
-        'kid' => $kid,
-        'sub' => $client_id,
-        'exp' => time() + 86400 * 180,
-    );
-
-    /**
-     * IMPORTANT:
-     * You must specify supported algorithms for your application. See
-     * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
-     * for a list of spec-compliant algorithms.
-     */
-    $jwt = JWT::encode($payload, $privateKey,'ES256');
-    dd($jwt);
-    return ['code' => 200, 'message' => "Success. This project will hold the api's"];
+//    return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 
 $api = app('Dingo\Api\Routing\Router');

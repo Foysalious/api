@@ -8,6 +8,7 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+            $api->post('apple','GeocodeController@apple');
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
             $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
