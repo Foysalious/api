@@ -98,6 +98,6 @@ class Statics
 
     public static function getDetailsLink($type)
     {
-        return $type = LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");
+        return $type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");
     }
 }
