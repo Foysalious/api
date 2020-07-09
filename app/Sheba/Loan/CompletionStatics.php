@@ -6,7 +6,8 @@ namespace Sheba\Loan;
 
 class CompletionStatics
 {
-    static function businessV2(){
+    static function businessV2()
+    {
         return [
             'fixed_asset',
             'security_check',
@@ -15,7 +16,9 @@ class CompletionStatics
             'industry_and_business_nature',
         ];
     }
-    static function business(){
+
+    static function business()
+    {
         return [
             'fixed_asset',
             'security_check',
@@ -31,6 +34,8 @@ class CompletionStatics
             'thana',
             'zilla',
             'post_code',
+            'address',
+            'yearly_sales'
         ];
     }
 
