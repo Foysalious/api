@@ -147,11 +147,21 @@ class Updater
     }
 
     /**
+     * @param $business_member
+     * @return $this
+     */
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = BusinessMember::findOrFail($business_member);
+        return $this;
+    }
+
+    /**
      * @return mixed
      */
     public function getBusinessMember()
     {
-        return $this->businessMember = $this->basicRequest->getBusinessMember();
+        return $this->businessMember;
     }
 
     /**
@@ -170,22 +180,27 @@ class Updater
         return $this->profile = $this->getMember()->profile;
     }
 
+
     /**
-     * @return null
+     * @return BusinessMember|Model|null
      */
-    public function updateBasicInfo()
+    public function basicInfoUpdate()
     {
         DB::beginTransaction();
         try {
             $this->getProfile();
             $profile_data = [
-                'pro_pic' => $this->getProfilePicture($this->profile),
+                'pro_pic' => $this->getProfilePicture($this->profile, $this->basicRequest->getProPic()),
                 'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
                 'email' => $this->basicRequest->getEmail(),
             ];
             $this->profileRepository->update($this->profile, $profile_data);
             $this->businessRole = $this->businessRoleCreate();
-            $this->businessMember = $this->businessMemberUpdate();
+
+            $business_member_requester = $this->businessMemberRequester->setRole($this->businessRole->id)
+                ->setManagerEmployee($this->basicRequest->getManagerEmployee());
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
@@ -193,19 +208,53 @@ class Updater
             return null;
         }
     }
-    public function updateOfficialInfo()
+
+    /**
+     * @return BusinessMember|Model|null
+     */
+    public function officialInfoUpdate()
+    {
+        DB::beginTransaction();
+        try {
+            $business_member_requester = $this->businessMemberRequester->setJoinDate($this->officialRequest->getJoinDate())
+                ->setGrade($this->officialRequest->getGrade())
+                ->setEmployeeType($this->officialRequest->getEmployeeType())
+                ->setPreviousInstitution($this->officialRequest->getPreviousInstitution());
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            DB::commit();
+            return $this->businessMember;
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
+
+    /**
+     * @return Profile|bool|Model|int|null
+     */
+    public function personalInfoUpdate()
     {
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $this->businessMember = $this->businessMemberUpdate();
+            $profile_data = [
+                'mobile' => $this->personalRequest->getPhone(),
+                'address' => $this->personalRequest->getAddress(),
+                'nationality' => $this->personalRequest->getNationality(),
+                'nid_no' => $this->personalRequest->getNidNumber(),
+                'nid_image_front' => $this->personalRequest->getNidFont() ? $this->getProfilePicture($this->profile, $this->personalRequest->getNidFont(), 'nid_image_front') : null,
+                'nid_image_back' => $this->personalRequest->getNidBack() ? $this->getProfilePicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null,
+                'dob' => $this->personalRequest->getDateOfBirth()
+            ];
+            $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
-            return $this->businessMember;
+            return $this->profile;
         } catch (Throwable $e) {
             DB::rollback();
             return null;
         }
     }
+
     /**
      * @return Model
      */
@@ -217,28 +266,17 @@ class Updater
     }
 
     /**
-     * @return Model
-     */
-    private function businessMemberUpdate()
-    {
-        $business_member_requester = $this->businessMemberRequester->setRole($this->businessRole->id)
-            ->setManagerEmployee($this->basicRequest->getManagerEmployee());
-        return $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
-    }
-
-    /**
      * @param $profile
+     * @param $photo
      * @param string $image_for
      * @return bool|string
      */
-    private function getProfilePicture($profile, $image_for = 'pro_pic')
+    private function getProfilePicture($profile, $photo, $image_for = 'pro_pic')
     {
-        $photo = $this->basicRequest->getProPic();
         if (basename($profile->$image_for) != 'default.jpg') {
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
-
         return $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
     }
 

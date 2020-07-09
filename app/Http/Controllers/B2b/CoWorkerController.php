@@ -120,19 +120,24 @@ class CoWorkerController extends Controller
         ]);
         $member = $request->manager_member;
         $this->setModifier($member);
-        $basic_request = $this->basicRequest->setBusinessMember($business_member)
-            ->setProPic($request->file('pro_pic'))
+        $basic_request = $this->basicRequest->setProPic($request->file('pro_pic'))
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
             ->setEmail($request->email)
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
-        $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->updateBasicInfo();
+        $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusinessMember($business_member)->basicInfoUpdate();
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
 
+    /**
+     * @param $business
+     * @param $business_member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function officialInfoEdit($business, $business_member, Request $request)
     {
         $this->validate($request, [
@@ -144,13 +149,42 @@ class CoWorkerController extends Controller
         $member = $request->manager_member;
         $this->setModifier($member);
 
-        $official_request = $this->officialRequest->setBusinessMember($business_member)
-            ->setJoinDate($request->join_date)
+        $official_request = $this->officialRequest->setJoinDate($request->join_date)
             ->setGrade($request->grade)
             ->setEmployeeType($request->employee_type)
             ->setPreviousInstitution($request->previous_institution);
-        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->updateOfficialInfo();
+        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->setBusinessMember($business_member)->officialInfoUpdate();
         if ($business_member) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $business_member
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function personalInfoEdit($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'mobile' => 'string|mobile:bd',
+            'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'address ' => 'sometimes|required|string',
+            'nationality ' => 'sometimes|required|string',
+            'nid_number ' => 'sometimes|required|integer',
+            'nid_font ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+        ]);
+        $member = $request->manager_member;
+        $this->setModifier($member);
+        $personal_request = $this->personalRequest->setPhone($request->mobile)
+            ->setDateOfBirth($request->date_of_birth)
+            ->setAddress($request->address)
+            ->setNationality($request->nationality)
+            ->setNidNumber($request->nid_number)
+            ->setNidFont($request->file('nid_font'))->setNidBack($request->file('nid_back'));
+        $profile = $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusinessMember($business_member)->personalInfoUpdate();
+        if ($profile) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
 
