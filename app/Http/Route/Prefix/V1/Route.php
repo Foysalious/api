@@ -10,8 +10,8 @@ class Route
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
-            $api->post('login/apple', 'Auth\GoogleController@login');
-            $api->post('register/apple', 'Auth\GoogleController@register');
+            $api->post('login/apple', 'Auth\AppleController@login');
+            $api->post('register/apple', 'Auth\AppleController@register');
             $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
