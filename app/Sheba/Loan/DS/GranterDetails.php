@@ -9,6 +9,7 @@ use App\Repositories\FileRepository;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -64,6 +65,18 @@ class GranterDetails implements Arrayable
         ];
     }
 
+    public static function getValidatorForTerm()
+    {
+        return [
+            'grantor_name'     => 'required|string',
+            'grantor_mobile'   => 'required|string|mobile:bd',
+            'grantor_relation' => 'required|string',
+            'pro_pic'          => 'required|mimes:jpeg,png,jpg',
+            'nid_image_front'  => 'required|mimes:jpeg,png,jpg',
+            'nid_image_back'   => 'required|mimes:jpeg,png,jpg'
+        ];
+    }
+
     /**
      * @return mixed
      */
@@ -80,18 +93,28 @@ class GranterDetails implements Arrayable
     {
         $granter = Profile::where('mobile', formatMobile($request->grantor_mobile))->first();
         if (empty($granter)) {
-            $pro_pic_link = null;
-            if($photo = $request->file('pro_pic')) {
-                $pro_pic_link = (new FileRepository())->uploadToCDN($this->makePicName($photo), $photo, 'images/profiles/');
-            }
             $granter = (new GranterInfo([
                 'name'   => $request->grantor_name,
-                'mobile' => $request->grantor_mobile,
-                'nid_no' => $request->grantor_nid_number,
-                'pro_pic'=> $pro_pic_link
+                'mobile' => $request->grantor_mobile
             ]))->create($this->partner);
         }
-        $this->profile->update($this->withBothModificationFields([
+
+        if(!isset($request->loan_type) || $request->loan_type == LoanTypes::TERM)
+            $this->updateForTerm($request, $granter);
+
+        $pro_pic_link = $granter->pro_pic;
+        if($photo = $request->file('pro_pic')) {
+            if (basename($granter->pro_pic) != 'default.jpg')
+                $this->deleteOldImage($granter->pro_pic);
+
+            $pro_pic_link = (new FileRepository())->uploadToCDN($this->makePicName($photo), $photo, 'images/profiles/');
+        }
+        $granter->update($this->withUpdateModificationField([
+            'nid_no' => $request->grantor_nid_number,
+            'pro_pic'=> $pro_pic_link
+        ]));
+
+        $this->profile->update($this->withUpdateModificationField([
             'grantor_id'       => $granter->id,
             'grantor_relation' => $request->grantor_relation
         ]));
@@ -126,6 +149,28 @@ class GranterDetails implements Arrayable
         return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
     }
 
+    private function updateForTerm(Request $request, $profile)
+    {
+        if($nid_image_front = $request->file('nid_image_front')) {
+            if (isset($profile->nid_image_front))
+                $this->deleteOldImage($profile->nid_image_front);
+
+            $nid_image_front = (new FileRepository())->uploadToCDN($this->makePicName($nid_image_front, "_nid_image_front"), $nid_image_front, 'images/profiles/');
+        }
+        if($nid_image_back = $request->file('nid_image_back')) {
+            if (isset($profile->nid_image_back))
+                $this->deleteOldImage($profile->nid_image_back);
+
+            $nid_image_back = (new FileRepository())->uploadToCDN($this->makePicName($nid_image_back, "_nid_image_back"), $nid_image_back, 'images/profiles/');
+        }
+        if(isset($nid_image_back) && isset($nid_image_front)){
+            $profile->update(([
+                'nid_image_back' => $nid_image_back,
+                'nid_image_front' => $nid_image_front
+            ]));
+        }
+    }
+
     private function getDataFromLoanRequest()
     {
         $data = $this->loanDetails->getData();
@@ -153,8 +198,14 @@ class GranterDetails implements Arrayable
         ];
     }
 
-    private function makePicName($photo)
+    private function makePicName($photo, $image_for="_pro_pic")
     {
-        return $filename = Carbon::now()->timestamp . '_pro_pic'. "." . $photo->extension();
+        return $filename = Carbon::now()->timestamp . $image_for. "." . $photo->extension();
+    }
+
+    private function deleteOldImage($filename)
+    {
+        $filename = substr($filename, strlen(config('sheba.s3_url')));
+        (new FileRepository())->deleteFileFromCDN($filename);
     }
 }

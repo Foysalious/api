@@ -359,13 +359,12 @@ class LoanV2Controller extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
+            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
                 $this->validate($request, GranterDetails::getValidator());
-                $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
-            } else {
-                $this->validate($request, NomineeGranterInfo::getValidator());
-                $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
-            }
+            else
+                $this->validate($request, GranterDetails::getValidatorForTerm());
+
+            $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
