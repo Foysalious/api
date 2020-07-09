@@ -1,52 +1,49 @@
 <?php namespace Sheba\Apple;
 
-
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use Namshi\JOSE\JWS;
 use RuntimeException;
-use \Firebase\JWT\JWT;
 
-class ClientSecret
+class Authentication
 {
-    public function create()
+    private $keyId;
+    private $teamId;
+    private $clientId;
+
+    public function __construct()
     {
-        $team_id = "497KZASBJJ";
-        $kid = "Q66N9Y2HF6";
-        $client_id = 'xyz.sheba.app';
+        $this->keyId = config('apple.key_id');
+        $this->teamId = config('apple.team_id');
+        $this->clientId = config('apple.client_id');
+    }
 
-        $key = file_get_contents(storage_path('AuthKey_Q66N9Y2HF6.p8'));
-        $payload = array(
-            "iss" => $team_id,
-            "aud" => 'https://appleid.apple.com',
-            'iat' => time(),
-            'exp' => time() + 3600
-        );
-
-        /**
-         * IMPORTANT:
-         * You must specify supported algorithms for your application. See
-         * https://tools.ietf.org/html/draft-ietf-jose-json-web-algorithms-40
-         * for a list of spec-compliant algorithms.
-         */
-        $token = JWT::encode($payload, $key, 'ES256', $kid);
-
-
-//        $token = $this->generateJWT($kid, $team_id, $client_id);
-        $data = [
-            'client_id' => $client_id,
-            'client_secret' => $token,
-            'code' => 'c381bc28b67944bf68750b874203da702.0.nrxst.GU5Kc12u2VSNsC9VSPfBKQ',
-            'grant_type' => 'authorization_code'
-        ];
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, 'https://appleid.apple.com/auth/token');
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-        $serverOutput = curl_exec($ch);
-
-        curl_close($ch);
-        var_dump($serverOutput);
+    /**
+     * @param $code
+     * @return AuthenticationResponse
+     */
+    public function getUser($code)
+    {
+        $client = new Client();
+        try {
+            $response = $client->request('POST', 'https://appleid.apple.com/auth/token',
+                [
+                    'form_params' => [
+                        'client_id' => 'xyz.sheba.app',
+                        'client_secret' => $this->generateJWT(),
+                        'code' => $code,
+                        'grant_type' => 'authorization_code'
+                    ],
+                    'headers' => [
+                        'Content-Type' => 'application/x-www-form-urlencoded',
+                    ]
+                ]);
+            $data = json_decode($response->getBody(), 1);
+            $payload = JWS::load($data['id_token'])->getPayload();
+            return (new AuthenticationResponse())->setCode(200)->setEmail($payload['email'])->setEmailVerified($payload['email_verified']);
+        } catch (GuzzleException $e) {
+            return (new AuthenticationResponse())->setCode(500);
+        }
     }
 
     public function encode($data)
@@ -55,20 +52,20 @@ class ClientSecret
         return rtrim($encoded, '=');
     }
 
-    public function generateJWT($kid, $iss, $sub)
+    public function generateJWT()
     {
         $header = [
             'alg' => 'ES256',
-            'kid' => $kid
+            'kid' => $this->keyId
         ];
         $body = [
-            'iss' => $iss,
+            'iss' => $this->teamId,
             'iat' => time(),
             'exp' => time() + 3600,
             'aud' => 'https://appleid.apple.com',
-            'sub' => $sub
+            'sub' => $this->clientId
         ];
-        $privKey = openssl_pkey_get_private(file_get_contents(storage_path('AuthKey_FR4RDV4Z5H.pem')));
+        $privKey = openssl_pkey_get_private(file_get_contents(storage_path('AuthKey_Q66N9Y2HF6.pem')));
         if (!$privKey) {
             return false;
         }
