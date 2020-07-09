@@ -32,6 +32,7 @@ class BusinessRoute
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
+                $api->get('/banks', 'B2b\BusinessesController@getBanks');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
