@@ -6,8 +6,6 @@ class ActionType
 {
     use ConstGetter;
 
-    const CHECKED = 'checked';
-    const UNCHECKED = 'unchecked';
     const ADD = 'add';
     const EDIT = 'edit';
     const DELETE = 'delete';

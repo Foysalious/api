@@ -1,136 +1,77 @@
 <?php namespace Sheba\Business\Attendance\Setting;
 
-use App\Models\Business;
-use App\Models\Member;
-use Sheba\Dal\BusinessOffice\Contract as BusinessOfiiceRepoInterface;
-use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepositoryInterface;
+use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\ModificationFields;
-use Sheba\Business\Attendance\Setting\ActionType as Action;
 
 class Updater
 {
-    use ModificationFields;
+    use ModificationFields, HasErrorCodeAndMessage;
 
-    private $attendance_types;
-    private $business_offices;
-    private $business_office_repo;
-    private $attendance_type_repo;
-    private $business;
     private $member;
+    /** @var BusinessOffice $businessOffice */
+    private $businessOffice;
+    /** @var BusinessOfficeRepositoryInterface $businessOfficeRepo */
+    private $businessOfficeRepo;
+    private $name;
+    private $ip;
+    private $existingOfficeByIp;
+    /** @var bool $isNeedToRestoreOffice */
+    private $isNeedToRestoreOffice = false;
+    /** @var Deleter $deleter */
+    private $deleter;
 
-    public function __construct(Business $business, Member $member, BusinessOfiiceRepoInterface $business_office_repo,
-                                BusinessAttendanceTypesRepoInterface $attendance_type_repo)
+    /**
+     * Updater constructor.
+     * @param BusinessOfficeRepositoryInterface $business_office_repo
+     * @param Deleter $deleter
+     */
+    public function __construct(BusinessOfficeRepositoryInterface $business_office_repo, Deleter $deleter)
     {
-        $this->attendance_types = $business->attendanceTypes()->withTrashed()->get();
-        $this->business_offices = $business->offices()->withTrashed()->get();
-        $this->business_office_repo = $business_office_repo;
-        $this->attendance_type_repo = $attendance_type_repo;
-        $this->business = $business;
-        $this->member = $member;
+        $this->businessOfficeRepo = $business_office_repo;
+        $this->deleter = $deleter;
+    }
+    
+    public function update()
+    {
+        if ($this->isNeedToRestoreOffice) {
+            $this->deleter->setBusinessOfficeId($this->businessOffice->id)->delete();
+            $this->businessOffice = $this->existingOfficeByIp;
+            $this->restore();
+        }
+
+        $data = ['name' => $this->name, 'ip' => $this->ip];
+        $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField($data));
     }
 
-    public function validateOfficeIp($business_offices)
+    public function setBusinessOfficeId($business_office_id)
     {
-        $this->setModifier($this->member);
-        $data = [];
-        $validate_without_softdelete = $this->validateWithoutSoftDelete($business_offices);
-        if ($validate_without_softdelete == false) return $data = ['status' => false];
-        foreach ($business_offices as $key => $business_office) {
-            if ($business_office->action == Action::EDIT) {
-                $office = $this->business_offices->where('business_id', $this->business->id)->where('ip', $business_office->ip)->filter(function ($office) use ($business_office) {
-                    return $office->id != $business_office->id;
-                })->first();
-                if ($office) {
-                    if ($office->trashed()) {
-                        $data = ["name" => $business_office->name, "deleted_at" => null];
-                        $this->business_office_repo->update($office, $this->withUpdateModificationField($data));
-                        $office_to_be_soft_deleted = $this->business_office_repo->find($business_office->id);
-                        $office_to_be_soft_deleted->delete();
-                        unset($business_offices[$key]);
-                    } else {
-                        return $data = ['status' => false];
-                    }
-                }
-            }
-
-            if ($business_office->action == Action::ADD) {
-                $office = $this->business_offices->where('business_id', $this->business->id)->where('ip', $business_office->ip)->first();
-                if ($office) {
-                    if ($office->trashed()) {
-                        $data = ["name" => $business_office->name, "deleted_at" => null];
-                        $this->business_office_repo->update($office, $this->withUpdateModificationField($data));
-                        unset($business_offices[$key]);
-                    } else {
-                        return $data = ['status' => false];
-                    }
-                }
-            }
-        }
-        return $data = ['business_offices' => $business_offices];
+        $this->businessOffice = $this->businessOfficeRepo->builder()->withTrashed()->find($business_office_id);
+        return $this;
     }
 
-    public function updateAttendanceType($attendance_type_id, $attendance_type, $action)
+    public function setName($name)
     {
-        if ($attendance_type_id == "No ID" && $action == Action::CHECKED) {
-            $this->setModifier($this->member);
-            $data = ["business_id" => $this->business->id, "attendance_type" => $attendance_type];
-            $this->attendance_type_repo->create($this->withCreateModificationField($data));
-        } else {
-            $attendance_type = $this->attendance_types->where('id', $attendance_type_id)->first();
-            if ($action == Action::CHECKED) {
-                if ($attendance_type->trashed()) $attendance_type->restore();
-            }
-            if ($action == Action::UNCHECKED) {
-                if (!$attendance_type->trashed()) $attendance_type->delete();
-            }
-        }
-        return true;
+        $this->name = $name;
+        return $this;
     }
 
-    public function updateBusinessOffice($office_id, $office_name, $office_ip, $action)
+    public function setIp($ip)
     {
-        $this->setModifier($this->member);
-        if ($office_id == "No ID") {
-            if ($action == Action::ADD) {
-                $data = ["business_id" => $this->business->id, "name" => $office_name, "ip" => $office_ip];
-                $this->business_office_repo->create($this->withCreateModificationField($data));
-            }
-        } else {
-            $business_office = $this->business_offices->where('id', $office_id)->first();
-            if ($action == Action::EDIT) {
-                $data = ["name" => $office_name, "ip" => $office_ip];
-                $this->business_office_repo->update($business_office, $this->withUpdateModificationField($data));
-            }
-            if ($action == Action::DELETE) {
-                $business_office->delete();
-            }
+        $this->ip = $ip;
+
+        $this->existingOfficeByIp = $this->businessOfficeRepo->builder()->withTrashed()->where('ip', $this->ip)->first();
+        if ($this->existingOfficeByIp && $this->existingOfficeByIp->id != $this->businessOffice->id) {
+            if ($this->existingOfficeByIp->trashed()) $this->isNeedToRestoreOffice = true;
+            else $this->setError(403, "$this->ip ip already allocate to " . $this->existingOfficeByIp->name . " office");
         }
-        return true;
+        
+        return $this;
     }
 
-    private function validateWithoutSoftDelete($business_offices)
+    public function restore()
     {
-        foreach ($business_offices as $business_office) {
-            if ($business_office->action == Action::EDIT) {
-                $office = $this->business_offices->where('business_id', $this->business->id)->where('ip', $business_office->ip)->filter(function ($office) use ($business_office) {
-                    return $office->id != $business_office->id;
-                })->first();
-                if ($office) {
-                    if (!$office->trashed()) {
-                        return false;
-                    }
-                }
-            }
-
-            if ($business_office->action == Action::ADD) {
-                $office = $this->business_offices->where('business_id', $this->business->id)->where('ip', $business_office->ip)->first();
-                if ($office) {
-                    if (!$office->trashed()) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
+        return $this->businessOffice->restore();
     }
 }
