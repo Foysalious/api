@@ -360,6 +360,7 @@ class Loan
     {
 
        // return LoanRepaymentRequest\Model->isRepaymentCompleted();
+        return true;
 
     }
 
