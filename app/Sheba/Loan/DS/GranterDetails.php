@@ -121,10 +121,11 @@ class GranterDetails implements Arrayable
     }
 
     /**
+     * @param null $type
      * @return array
      * @throws \ReflectionException
      */
-    public function completion()
+    public function completion($type = null)
     {
         $data = $this->toArray();
         return (new Completion($data, [
@@ -135,8 +136,8 @@ class GranterDetails implements Arrayable
             'dob',
             'occupation',
             'net_worth',
-            'nid_image_back',
-            'nid_image_front'
+            $type && $type == LoanTypes::MICRO ? 'nid_image_back' : null,
+            $type && $type == LoanTypes::MICRO ? 'nid_image_front' : null
         ]))->get();
     }
 
