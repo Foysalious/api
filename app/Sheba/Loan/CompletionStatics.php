@@ -31,6 +31,7 @@ class CompletionStatics
             'thana',
             'zilla',
             'post_code',
+            'address'
         ];
     }
 
