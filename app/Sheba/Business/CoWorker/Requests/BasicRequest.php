@@ -1,8 +1,12 @@
 <?php namespace Sheba\Business\CoWorker\Requests;
 
 
+use App\Models\BusinessDepartment;
+use App\Models\BusinessMember;
+
 class BasicRequest
 {
+    private $businessMember;
     private $proPic;
     private $firstName;
     private $lastName;
@@ -10,6 +14,24 @@ class BasicRequest
     private $department;
     private $role;    #Designation
     private $managerEmployee;  #Manager
+
+    /**
+     * @param $business_member
+     * @return $this
+     */
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = BusinessMember::findOrFail($business_member);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBusinessMember()
+    {
+        return $this->businessMember;
+    }
 
     /**
      * @param $pro_pic
@@ -120,8 +142,7 @@ class BasicRequest
     {
         return $this->role;
     }
-
-
+    
     /**
      * @param $manager_employee
      * @return $this

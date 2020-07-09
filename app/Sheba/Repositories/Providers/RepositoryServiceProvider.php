@@ -31,6 +31,7 @@ use Sheba\Repositories\Business\PurchaseRequestItemRepository;
 use Sheba\Repositories\Business\PurchaseRequestQuestionRepository;
 use Sheba\Repositories\Business\PurchaseRequestRepository;
 use Sheba\Repositories\Business\VehicleRepository;
+use Sheba\Repositories\Customer\BusinessRoleRepository;
 use Sheba\Repositories\Customer\CustomerDeliveryAddressRepository;
 use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
@@ -38,6 +39,7 @@ use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\Business\TripRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
 use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 use Sheba\Repositories\Interfaces\CustomerRepositoryInterface;
 use Sheba\Repositories\Interfaces\DriverRepositoryInterface;
@@ -114,5 +116,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(ProfileMobileBankingRepositoryInterface::class, ProfileMobileBankingRepository::class);
         $this->app->bind(CustomerDeliveryAddressInterface::class, CustomerDeliveryAddressRepository::class);
         $this->app->bind(TripRequestRepositoryInterface::class, TripRequestRepository::class);
+        $this->app->bind(BusinessRoleRepositoryInterface::class, BusinessRoleRepository::class);
     }
 }
