@@ -20,6 +20,7 @@ use DB;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
 use Throwable;
 
