@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\LoanClaim;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -302,6 +303,38 @@ class LoanV2Controller extends Controller
         }
     }
 
+    public function claim(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required'
+            ]);
+            $request->merge(['loan_id' => $loan_id]);
+            $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
+            $is_eligible = $loan->isEligibleForClaim($last_claim->id);
+            if(!$is_eligible)
+                //********
+            $loan->claim($request);
+
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function claimList(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+
+
+
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getFinanceInformation($partner, Request $request)
     {
         try {
@@ -359,13 +392,12 @@ class LoanV2Controller extends Controller
         try {
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO) {
+            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
                 $this->validate($request, GranterDetails::getValidator());
-                $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
-            } else {
-                $this->validate($request, NomineeGranterInfo::getValidator());
-                $loan->setPartner($partner)->setResource($resource)->nomineeGranter()->update($request);
-            }
+            else
+                $this->validate($request, GranterDetails::getValidatorForTerm());
+
+            $loan->setPartner($partner)->setResource($resource)->granterDetails()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -758,4 +790,6 @@ class LoanV2Controller extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
 }

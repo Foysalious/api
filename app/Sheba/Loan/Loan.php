@@ -10,6 +10,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -19,6 +20,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
 
@@ -256,6 +258,7 @@ class Loan
         return $created;
     }
 
+
     /**
      * @throws AlreadyRequestedForLoan
      */
@@ -339,6 +342,25 @@ class Loan
             $data['bank_id'] = config('loan.micro_loan_assigned_bank_id');
         }
         return (new PartnerLoanRequest())->setPartner($this->partner)->create($data);
+    }
+
+
+    public function claim($request)
+    {
+        $data = [
+            'loan_id' => $request->loan_id,
+            'amount'  => $request->amount,
+            'status'  => Statuses::PENDING,
+            'log'     => '',
+        ];
+        return (new LoanClaim())->createRequest($data);
+    }
+
+    public function isEligibleForClaim($last_claim)
+    {
+
+       // return LoanRepaymentRequest\Model->isRepaymentCompleted();
+
     }
 
     public function personalInfo()
@@ -723,6 +745,7 @@ class Loan
         });
         Retailer::insert($to_insert->toArray());
     }
+
 
     /**
      * @param mixed $version
