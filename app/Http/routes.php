@@ -9,10 +9,10 @@ use \Firebase\JWT\JWT;
 Route::get('/', function () {
 
     $client_id = 'xyz.sheba.app';
-    $redirect_uri = 'https://api.sheba.test/v1/apple';
+    $redirect_uri = 'https://api.dev-sheba.xyz/v1/apple';
     $_SESSION['state'] = bin2hex(random_bytes(5));
 
-    $authorize_url = 'https://appleid.apple.com/auth/authorize'.'?'.http_build_query([
+    $authorize_url = 'https://appleid.apple.com/auth/authorize' . '?' . http_build_query([
             'response_type' => 'code',
             'response_mode' => 'form_post',
             'client_id' => $client_id,
@@ -20,7 +20,7 @@ Route::get('/', function () {
             'state' => $_SESSION['state'],
             'scope' => 'name email',
         ]);
-    echo '<a href="'.$authorize_url.'">Sign In with Apple</a>';
+    echo '<a href="' . $authorize_url . '">Sign In with Apple</a>';
 //    (new \Sheba\Apple\ClientSecret())->create();
 //
 //    return ['code' => 200, 'message' => "Success. This project will hold the api's"];
