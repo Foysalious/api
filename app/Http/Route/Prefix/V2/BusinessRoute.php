@@ -80,6 +80,10 @@ class BusinessRoute
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
                     $api->group(['prefix' => '{employee}'], function ($api) {
                         $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
+                        $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
+                        $api->post('/personal-info', 'B2b\CoWorkerController@personalInfoEdit');
+                        $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
+                        $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');

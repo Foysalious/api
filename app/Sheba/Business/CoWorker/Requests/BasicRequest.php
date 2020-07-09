@@ -1,7 +1,5 @@
 <?php namespace Sheba\Business\CoWorker\Requests;
 
-
-use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 
 class BasicRequest
@@ -142,7 +140,7 @@ class BasicRequest
     {
         return $this->role;
     }
-    
+
     /**
      * @param $manager_employee
      * @return $this
