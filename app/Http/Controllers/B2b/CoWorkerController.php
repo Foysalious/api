@@ -101,6 +101,12 @@ class CoWorkerController extends Controller
         $this->coWorkerCreator->setBasicRequest($basic_request)->storeBasicInfo();
     }
 
+    /**
+     * @param $business
+     * @param $business_member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function basicInfoEdit($business, $business_member, Request $request)
     {
         $this->validate($request, [
@@ -125,7 +131,27 @@ class CoWorkerController extends Controller
         $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->updateBasicInfo();
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
+    }
 
+    public function officialInfoEdit($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'grade' => 'sometimes|required|string',
+            'employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern',
+            'previous_institution' => 'sometimes|required|string',
+        ]);
+        $member = $request->manager_member;
+        $this->setModifier($member);
+
+        $official_request = $this->officialRequest->setBusinessMember($business_member)
+            ->setJoinDate($request->join_date)
+            ->setGrade($request->grade)
+            ->setEmployeeType($request->employee_type)
+            ->setPreviousInstitution($request->previous_institution);
+        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->updateOfficialInfo();
+        if ($business_member) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
     }
 
     /**

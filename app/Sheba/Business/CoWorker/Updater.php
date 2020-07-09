@@ -1,6 +1,10 @@
 <?php namespace Sheba\Business\CoWorker;
 
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\CoWorker\Requests\EmergencyRequest;
+use Sheba\Business\CoWorker\Requests\FinancialRequest;
+use Sheba\Business\CoWorker\Requests\OfficialRequest;
+use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
@@ -32,6 +36,14 @@ class Updater
     private $profileRepository;
     /** @var BasicRequest $basicRequest */
     private $basicRequest;
+    /** @var OfficialRequest $officialRequest */
+    private $officialRequest;
+    /** @var PersonalRequest $personalRequest */
+    private $personalRequest;
+    /** @var FinancialRequest $financialRequest */
+    private $financialRequest;
+    /** @var EmergencyRequest $emergencyRequest */
+    private $emergencyRequest;
     /** @var BusinessMember $businessMember */
     private $businessMember;
     /** @var Member $member */
@@ -95,6 +107,46 @@ class Updater
     }
 
     /**
+     * @param OfficialRequest $official_request
+     * @return $this
+     */
+    public function setOfficialRequest(OfficialRequest $official_request)
+    {
+        $this->officialRequest = $official_request;
+        return $this;
+    }
+
+    /**
+     * @param PersonalRequest $personal_request
+     * @return $this
+     */
+    public function setPersonalRequest(PersonalRequest $personal_request)
+    {
+        $this->personalRequest = $personal_request;
+        return $this;
+    }
+
+    /**
+     * @param FinancialRequest $financial_request
+     * @return $this
+     */
+    public function setFinancialRequest(FinancialRequest $financial_request)
+    {
+        $this->financialRequest = $financial_request;
+        return $this;
+    }
+
+    /**
+     * @param EmergencyRequest $emergency_request
+     * @return $this
+     */
+    public function setEmergencyRequest(EmergencyRequest $emergency_request)
+    {
+        $this->emergencyRequest = $emergency_request;
+        return $this;
+    }
+
+    /**
      * @return mixed
      */
     public function getBusinessMember()
@@ -141,7 +193,19 @@ class Updater
             return null;
         }
     }
-
+    public function updateOfficialInfo()
+    {
+        DB::beginTransaction();
+        try {
+            $this->getProfile();
+            $this->businessMember = $this->businessMemberUpdate();
+            DB::commit();
+            return $this->businessMember;
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
     /**
      * @return Model
      */
