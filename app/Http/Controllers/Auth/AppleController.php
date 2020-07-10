@@ -18,7 +18,7 @@ class AppleController extends Controller
         $accessTokenRequest->setAuthorizationCode($request->kit_code);
         $mobile = $accountKit->getMobile($accessTokenRequest);
         $user_response = $authentication->getUser($request->authorization_code);
-        if ($user_response->hasError()) return api_response($request, null, 500, ['message' => $user_response->getMessage()]);
+        if ($user_response->hasError()) return api_response($request, null, $user_response->getCode(), ['message' => $user_response->getMessage()]);
         if (!$mobile) return api_response($request, null, 500, ['message' => 'Mobile authentication error.']);
         $email_profile = $profileRepository->getIfExist($user_response->getEmail(), 'email');
         $mobile_profile = $profileRepository->getIfExist($mobile, 'mobile');
@@ -35,11 +35,11 @@ class AppleController extends Controller
 
         $this->validate($request, ['authorization_code' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
         $user_response = $authentication->getUser($request->authorization_code);
-        if ($user_response->hasError()) return api_response($request, null, 500, ['message' => 'Please try again.']);
+        if ($user_response->hasError()) return api_response($request, null, $user_response->getCode(), ['message' => $user_response->getMessage()]);
         $from = $profileRepository->getAvatar($request->from);
         /** @var Profile $profile */
         $profile = $profileRepository->getIfExist('rupom@sheba.xyz', 'email');
-        if (!$profile) return api_response($request, null, 404, ['message' => 'Account is not registered. Please register']);
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Your account is not registered.']);
         if (!$profile->customer) $profileRepository->registerAvatar($from, $request, $profile);
         $info = $profileRepository->getProfileInfo($from, $profile->fresh(), $request);
         return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
