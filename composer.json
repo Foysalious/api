@@ -44,9 +44,7 @@
     "ext-redis": "*",
     "ext-mysql_xdevapi": "*",
     "ext-intl": "*",
-    "algolia/algoliasearch-laravel": "^1.7",
-    "firebase/php-jwt": "^5.2",
-    "lcobucci/jwt": "^3.3"
+    "algolia/algoliasearch-laravel": "^1.7"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",
