@@ -4,13 +4,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
+use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
-use Sheba\Business\Attendance\Monthly\Stat;
+use Sheba\Business\Attendance\Setting\ActionType;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -19,10 +20,14 @@ use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
-use Sheba\Business\Attendance\Setting\Updater as AttendanceSettingUpdater;
+use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
+use Sheba\Business\Attendance\Setting\Updater as SettingUpdater;
+use Sheba\Business\Attendance\Setting\Deleter as SettingDeleter;
 use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\Attendance\Type\Updater as TypeUpdater;
 use Sheba\Business\Holiday\HolidayList;
 use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\Updater as HolidayUpdater;
@@ -31,6 +36,8 @@ use Throwable;
 
 class AttendanceController extends Controller
 {
+    use ModificationFields, BusinessBasicInformation;
+
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
 
@@ -339,34 +346,72 @@ class AttendanceController extends Controller
         ]);
     }
 
-    public function updateAttendanceSetting(Request $request, BusinessOfficeRepoInterface $business_office_repo,
-                                            BusinessAttendanceTypesRepoInterface $attendance_type_repo)
+    /**
+     * @param $business
+     * @param Request $request
+     * @param TypeUpdater $type_updater
+     * @param SettingCreator $creator
+     * @param SettingUpdater $updater
+     * @param SettingDeleter $deleter
+     * @return JsonResponse
+     */
+    public function updateAttendanceSetting($business, Request $request, TypeUpdater $type_updater,
+                                            SettingCreator $creator, SettingUpdater $updater, SettingDeleter $deleter
+)
     {
-        $this->validate($request, [
-            'attendance_types' => 'required|string', 'business_offices' => 'required|string'
-        ]);
-        $attendance_types = json_decode($request->attendance_types);
-        $business_offices = json_decode($request->business_offices);
+        $this->validate($request, ['attendance_types' => 'required|string', 'business_offices' => 'required|string']);
+
         $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+        $errors = [];
 
-        $updater = new AttendanceSettingUpdater($request->business, $business_member->member, $business_office_repo, $attendance_type_repo);
-        $validate_office_ip = $updater->validateOfficeIp($business_offices);
-        if (array_key_exists("business_offices", $validate_office_ip)) $business_offices = $validate_office_ip['business_offices'];
-        if (array_key_exists("status", $validate_office_ip)) return api_response($request, null, 400, ['msg' => "Validation Error"]);
-
+        $attendance_types = json_decode($request->attendance_types);
         if (!is_null($attendance_types)) {
             foreach ($attendance_types as $attendance_type) {
-                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : "No ID";
-                $update_attendance_type = $updater->updateAttendanceType($attendance_type_id, $attendance_type->type, $attendance_type->action);
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
+
+                $type_updater->setBusiness($business)
+                    ->setTypeId($attendance_type_id)
+                    ->setType($attendance_type->type)
+                    ->setAction($attendance_type->action)
+                    ->update();
             }
         }
+
+        $business_offices = json_decode($request->business_offices);
         if (!is_null($business_offices)) {
-            foreach ($business_offices as $business_office) {
-                $office_id = isset($business_office->id) ? $business_office->id : "No ID";
-                $update_business_type = $updater->updateBusinessOffice($office_id, $business_office->name, $business_office->ip, $business_office->action);
-            }
+            $offices = collect($business_offices);
+            $deleted_offices = $offices->where('action', ActionType::DELETE);
+            $deleted_offices->each(function ($deleted_office) use ($deleter) {
+                $deleter->setBusinessOfficeId($deleted_office->id);
+                $deleter->delete();
+            });
+
+            $added_offices = $offices->where('action', ActionType::ADD);
+            $added_offices->each(function ($added_office) use ($creator, $business, &$errors) {
+                $creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                if ($creator->hasError()) {
+                    array_push($errors, $creator->getErrorMessage());
+                    return;
+                }
+                $creator->create();
+            });
+
+            $edited_offices = $offices->where('action', ActionType::EDIT);
+            $edited_offices->each(function ($edited_office) use ($updater, $business, &$errors) {
+                $updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                if ($updater->hasError()) {
+                    array_push($errors, $updater->getErrorMessage());
+                    return;
+                }
+                $updater->update();
+            });
         }
-        return api_response($request, null, 200, ['msg' => "Update Successful"]);
+
+        if ($errors) return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+
+        return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
 
     public function getHolidays(Request $request)

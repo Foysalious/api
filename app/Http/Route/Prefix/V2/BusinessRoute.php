@@ -14,6 +14,7 @@ class BusinessRoute
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
+                $api->get('/banks', 'B2b\BusinessesController@getBanks');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
@@ -38,32 +39,38 @@ class BusinessRoute
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                 });
-
                 $api->group(['prefix' => 'office-time'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getOfficeTime');
                     $api->post('/update', 'B2b\AttendanceController@updateOfficeTime');
                 });
-
                 $api->group(['prefix' => 'attendance-setting'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
                     $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
                 });
-
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
-                    $api->post('/','B2b\AttendanceController@storeHoliday');
+                    $api->post('/', 'B2b\AttendanceController@storeHoliday');
                     $api->group(['prefix' => '{holiday}'], function ($api) {
-                        $api->post('/','B2b\AttendanceController@update');
+                        $api->post('/', 'B2b\AttendanceController@update');
                         $api->delete('/', 'B2b\AttendanceController@destroy');
                     });
                 });
-
                 $api->group(['prefix' => 'employees'], function ($api) {
+
                     $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
-                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
-                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
-                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
+                    $api->post('/change-status', 'B2b\CoWorkerController@changeStatus');
+                    $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
+                    $api->group(['prefix' => '{employee}'], function ($api) {
+                        $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
+                        $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
+                        $api->post('/personal-info', 'B2b\CoWorkerController@personalInfoEdit');
+                        $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
+                        $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
+                        $api->get('/', 'B2b\CoWorkerController@show');
+                        $api->post('/', 'B2b\CoWorkerController@update');
+                        $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
+                    });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'approval-requests'], function ($api) {

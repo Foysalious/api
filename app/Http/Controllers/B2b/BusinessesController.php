@@ -6,6 +6,7 @@ use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Sheba\BankingInfo\GeneralBanking;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -22,6 +23,10 @@ use Sheba\Sms\Sms;
 class BusinessesController extends Controller
 {
     use ModificationFields;
+    const DIGIGO_PORTAL = 'digigo-portal';
+    private $digigo_management_emails = [
+        'one' => 'khairun@sheba.xyz'
+    ];
     private $sms;
 
     public function __construct(Sms $sms)
@@ -156,7 +161,7 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
@@ -253,12 +258,41 @@ class BusinessesController extends Controller
 
     public function contactUs(Request $request)
     {
-        $this->validate($request, ['name' => 'required|string', 'email' => 'required|email', 'message' => 'required|string']);
-        Mail::raw($request->message, function ($m) use ($request) {
-            $m->from($request->email, $request->name);
-            $m->to('b2b@sheba.xyz');
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'message' => 'required|string',
+            'portal' => 'sometimes|required|in:' . self::DIGIGO_PORTAL
+        ]);
+
+        if ($request->portal == self::DIGIGO_PORTAL) {
+            foreach ($this->digigo_management_emails as $management_email) {
+                $this->sendMail($request->message, $request->email, $request->name, $management_email);
+            }
+        } else {
+            $this->sendMail($request->message, $request->email, $request->name);
+        }
+        return api_response($request, null, 200);
+    }
+
+    public function getBanks(Request $request)
+    {
+        $banks = [];
+        foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
+            array_push($banks, [
+                'id' => ++$key,
+                'bank' => $bank,
+            ]);
+        }
+        return api_response($request, null, 200, ['banks' => $banks]);
+    }
+
+    private function sendMail($message, $email, $name, $to = 'b2b@sheba.xyz')
+    {
+        Mail::raw($message, function ($m) use ($email, $name, $to) {
+            $m->from($email, $name);
+            $m->to($to);
             $m->subject('Contact Us');
         });
-        return api_response($request, null, 200);
     }
 }
