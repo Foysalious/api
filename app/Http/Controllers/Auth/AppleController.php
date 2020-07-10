@@ -38,7 +38,7 @@ class AppleController extends Controller
         if ($user_response->hasError()) return api_response($request, null, $user_response->getCode(), ['message' => $user_response->getMessage()]);
         $from = $profileRepository->getAvatar($request->from);
         /** @var Profile $profile */
-        $profile = $profileRepository->getIfExist('rupom@sheba.xyz', 'email');
+        $profile = $profileRepository->getIfExist($user_response->getEmail(), 'email');
         if (!$profile) return api_response($request, null, 404, ['message' => 'Your account is not registered.']);
         if (!$profile->customer) $profileRepository->registerAvatar($from, $request, $profile);
         $info = $profileRepository->getProfileInfo($from, $profile->fresh(), $request);
