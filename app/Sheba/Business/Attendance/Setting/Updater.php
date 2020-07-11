@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Attendance\Setting;
 
+use App\Models\Business;
 use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepositoryInterface;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 use Sheba\Helpers\HasErrorCodeAndMessage;
@@ -21,6 +22,8 @@ class Updater
     private $isNeedToRestoreOffice = false;
     /** @var Deleter $deleter */
     private $deleter;
+    /** @var Business $business */
+    private $business;
 
     /**
      * Updater constructor.
@@ -32,7 +35,7 @@ class Updater
         $this->businessOfficeRepo = $business_office_repo;
         $this->deleter = $deleter;
     }
-    
+
     public function update()
     {
         if ($this->isNeedToRestoreOffice) {
@@ -45,9 +48,19 @@ class Updater
         $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField($data));
     }
 
+    public function restore()
+    {
+        if ($this->name)
+            $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField(['name' => $this->name]));
+
+        return $this->businessOffice->restore();
+    }
+
     public function setBusinessOfficeId($business_office_id)
     {
         $this->businessOffice = $this->businessOfficeRepo->builder()->withTrashed()->find($business_office_id);
+        $this->business = $this->businessOffice->business;
+
         return $this;
     }
 
@@ -61,23 +74,14 @@ class Updater
     {
         $this->ip = $ip;
 
-        $this->existingOfficeByIp = $this->businessOfficeRepo->builder()->withTrashed()->where('ip', $this->ip)->first();
+        $this->existingOfficeByIp = $this->businessOfficeRepo->findByIpOnBusinessWithSoftDeleted($this->business, $this->ip);
         $this->isNeedToRestoreOffice = false;
 
         if ($this->existingOfficeByIp && $this->existingOfficeByIp->id != $this->businessOffice->id) {
-            if ($this->existingOfficeByIp->trashed()) $this->isNeedToRestoreOffice = true;
-            else $this->setError(403, "$this->ip ip already allocate to " . $this->existingOfficeByIp->name . " office");
+            if ($this->existingOfficeByIp->trashed()) $this->isNeedToRestoreOffice = true; else $this->setError(403, "$this->ip ip already allocate to " . $this->existingOfficeByIp->name . " office");
         }
-        
+
         return $this;
-    }
-
-    public function restore()
-    {
-        if ($this->name)
-            $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField(['name' => $this->name]));
-
-        return $this->businessOffice->restore();
     }
 
     public function resetError()
