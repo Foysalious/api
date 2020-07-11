@@ -380,6 +380,7 @@ class AttendanceController extends Controller
         }
 
         $business_offices = json_decode($request->business_offices);
+
         if (!is_null($business_offices)) {
             $offices = collect($business_offices);
             $deleted_offices = $offices->where('action', ActionType::DELETE);
@@ -393,6 +394,7 @@ class AttendanceController extends Controller
                 $creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
                 if ($creator->hasError()) {
                     array_push($errors, $creator->getErrorMessage());
+                    $creator->resetError();
                     return;
                 }
                 $creator->create();
@@ -403,13 +405,19 @@ class AttendanceController extends Controller
                 $updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
                 if ($updater->hasError()) {
                     array_push($errors, $updater->getErrorMessage());
+                    $updater->resetError();
                     return;
                 }
                 $updater->update();
             });
         }
 
-        if ($errors) return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        if ($errors) {
+            if ($this->isFailedToUpdateAllSettings($errors, $business_offices))
+                return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+
+            return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        }
 
         return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
@@ -512,5 +520,15 @@ class AttendanceController extends Controller
         return $attendances->$sort_by(function ($attendance, $key) {
             return strtoupper($attendance['attendance']['check_out']['time']);
         });
+    }
+
+    /**
+     * @param array $errors
+     * @param $business_offices
+     * @return bool
+     */
+    private function isFailedToUpdateAllSettings(array $errors, $business_offices)
+    {
+        return count($errors) == count($business_offices);
     }
 }

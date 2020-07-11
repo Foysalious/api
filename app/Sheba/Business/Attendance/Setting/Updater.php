@@ -62,6 +62,8 @@ class Updater
         $this->ip = $ip;
 
         $this->existingOfficeByIp = $this->businessOfficeRepo->builder()->withTrashed()->where('ip', $this->ip)->first();
+        $this->isNeedToRestoreOffice = false;
+
         if ($this->existingOfficeByIp && $this->existingOfficeByIp->id != $this->businessOffice->id) {
             if ($this->existingOfficeByIp->trashed()) $this->isNeedToRestoreOffice = true;
             else $this->setError(403, "$this->ip ip already allocate to " . $this->existingOfficeByIp->name . " office");
@@ -72,6 +74,14 @@ class Updater
 
     public function restore()
     {
+        if ($this->name)
+            $this->businessOfficeRepo->update($this->businessOffice, $this->withUpdateModificationField(['name' => $this->name]));
+
         return $this->businessOffice->restore();
+    }
+
+    public function resetError()
+    {
+        return $this->errorCode = null;
     }
 }

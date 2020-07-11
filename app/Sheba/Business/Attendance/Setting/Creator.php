@@ -31,11 +31,10 @@ class Creator
         $this->updater = $updater;
     }
 
-
     public function create()
     {
         if ($this->isNeedToRestoreOffice)
-            return $this->updater->setBusinessOfficeId($this->existingOfficeByIp->id)->restore();
+            return $this->updater->setBusinessOfficeId($this->existingOfficeByIp->id)->setName($this->name)->restore();
 
         $data = [
             'business_id' => $this->business->id,
@@ -57,6 +56,8 @@ class Creator
         $this->ip = $ip;
 
         $this->existingOfficeByIp = $this->businessOfficeRepo->builder()->withTrashed()->where('ip', $this->ip)->first();
+        $this->isNeedToRestoreOffice = false;
+
         if ($this->existingOfficeByIp) {
             if ($this->existingOfficeByIp->trashed()) $this->isNeedToRestoreOffice = true;
             else $this->setError(403, "$this->ip ip already allocate to " . $this->existingOfficeByIp->name . " office");
@@ -73,5 +74,10 @@ class Creator
     {
         $this->business = $business;
         return $this;
+    }
+
+    public function resetError()
+    {
+        return $this->errorCode = null;
     }
 }
