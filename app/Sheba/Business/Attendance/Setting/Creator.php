@@ -55,7 +55,7 @@ class Creator
     {
         $this->ip = $ip;
 
-        $this->existingOfficeByIp = $this->businessOfficeRepo->builder()->withTrashed()->where('ip', $this->ip)->first();
+        $this->existingOfficeByIp = $this->businessOfficeRepo->findByIpOnBusinessWithSoftDeleted($this->business, $this->ip);
         $this->isNeedToRestoreOffice = false;
 
         if ($this->existingOfficeByIp) {
