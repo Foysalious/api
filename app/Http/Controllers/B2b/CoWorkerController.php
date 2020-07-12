@@ -1,29 +1,33 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
+use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
-use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Repositories\ProfileRepository;
 use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
+use App\Transformers\CustomSerializer;
+use Sheba\Business\CoWorker\Statuses;
 use App\Repositories\FileRepository;
 use App\Http\Controllers\Controller;
 use Sheba\FileManagers\FileManager;
 use App\Models\BusinessDepartment;
+use League\Fractal\Resource\Item;
 use Illuminate\Http\JsonResponse;
 use App\Models\BusinessMember;
 use Sheba\ModificationFields;
 use App\Models\BusinessRole;
 use Illuminate\Http\Request;
+use League\Fractal\Manager;
 use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
-use Sheba\Business\CoWorker\Statuses;
 
 class CoWorkerController extends Controller
 {
@@ -435,39 +439,13 @@ class CoWorkerController extends Controller
     {
         $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
         $member = $business_member->member;
-        $manager_member_detail = [];
-        if ($business_member->manager_id) {
-            $manager_business_member = BusinessMember::findOrFail($business_member->manager_id);
-            $manager_member = $manager_business_member->member;
-            $manager_profile = $manager_member->profile;
-            $manager_member_detail = [
-                'id' => $manager_member->id,
-                'name' => $manager_profile->name,
-                'mobile' => $manager_profile->mobile,
-                'email' => $manager_profile->email,
-                'pro_pic' => $manager_profile->pro_pic,
-                'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
-                'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
-            ];
-        }
-
         if (!$member) return api_response($request, null, 404);
-        $profile = $member->profile;
-        $employee = [
-            'id' => $member->id,
-            'name' => $profile->name,
-            'mobile' => $profile->mobile,
-            'email' => $profile->email,
-            'pro_pic' => $profile->pro_pic,
-            'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
-            'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
-            'department' => $member->businessMember->role && $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
-            'manager_detail' => $manager_member_detail
-        ];
 
-        if (count($employee) > 0)
-            return api_response($request, $employee, 200, ['employee' => $employee]);
-
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $member = new Item($member, new CoWorkerDetailTransformer());
+        $employee = $manager->createData($member)->toArray()['data'];
+        if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
         return api_response($request, null, 404);
     }
 

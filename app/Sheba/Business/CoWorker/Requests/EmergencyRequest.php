@@ -51,7 +51,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonMobile($mobile)
     {
-        $this->mobile = $mobile;
+        $this->mobile = formatMobile($mobile);
         return $this;
     }
 
