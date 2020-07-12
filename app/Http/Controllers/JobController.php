@@ -305,6 +305,7 @@ class JobController extends Controller
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
             $bill['service_list'] = $service_list;
+            $bill['category_name'] = $job->category->name;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
@@ -320,6 +321,12 @@ class JobController extends Controller
             $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
             $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
             $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
+            $bill['pick_up'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
+                'thana' => $job->carRentalJobDetail->pick_up_address
+            ] : null;
+            $bill['destination'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
+                'thana' => $job->carRentalJobDetail->destination_address
+            ] : null;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
