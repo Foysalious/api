@@ -24,7 +24,8 @@ class AppleController extends Controller
         $mobile_profile = $profileRepository->getIfExist($mobile, 'mobile');
         if ($email_profile || $mobile_profile) return api_response($request, null, 400, ['message' => $email_profile ? 'Email' : 'Mobile' . ' already exists! Please login']);
         /** @var Profile $profile */
-        $profile = $profileRepository->store(['mobile' => $mobile, 'email_verified' => $user_response->getEmailVerified(), 'email' => $user_response->getEmail()]);
+        $profile = $profileRepository->store(['mobile' => $mobile, 'email_verified' => $user_response->getEmailVerified(), 'email' => $user_response->getEmail(),
+            'apple_id' => $user_response->getAppleId()]);
         $creator->setMobile($mobile)->create();
         $info = $profileRepository->getProfileInfo($profileRepository->getAvatar($request->from), $profile, $request);
         return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
@@ -34,11 +35,11 @@ class AppleController extends Controller
     {
 
         $this->validate($request, ['authorization_code' => 'required', 'from' => "required|in:" . implode(',', constants('FROM'))]);
-        $user_response = $authentication->getUser($request->authorization_code);
+        $user_response = $authentication->validateAuthorizationCode($request->authorization_code);
         if ($user_response->hasError()) return api_response($request, null, $user_response->getCode(), ['message' => $user_response->getMessage()]);
         $from = $profileRepository->getAvatar($request->from);
         /** @var Profile $profile */
-        $profile = $profileRepository->getIfExist($user_response->getEmail(), 'email');
+        $profile = $profileRepository->getIfExist($user_response->getAppleId(), 'apple_id');
         if (!$profile) return api_response($request, null, 404, ['message' => 'Your account is not registered.']);
         if (!$profile->customer) $profileRepository->registerAvatar($from, $request, $profile);
         $info = $profileRepository->getProfileInfo($from, $profile->fresh(), $request);
