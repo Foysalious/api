@@ -167,12 +167,12 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $business_member, Request $request)
     {
         $this->validate($request, [
-            'mobile' => 'sometimes|required|string|mobile:bd',
+            'mobile' => 'string|mobile:bd',
             'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'address ' => 'sometimes|required|string',
             'nationality ' => 'sometimes|required|string',
             'nid_number ' => 'sometimes|required|integer',
-            'nid_font ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
             'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
         ]);
         $member = $request->manager_member;
@@ -182,7 +182,7 @@ class CoWorkerController extends Controller
             ->setAddress($request->address)
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
-            ->setNidFont($request->file('nid_font'))->setNidBack($request->file('nid_back'));
+            ->setNidFront($request->file('nid_front'))->setNidBack($request->file('nid_back'));
         list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusinessMember($business_member)->personalInfoUpdate();
         if ($profile) {
             return api_response($request, 1, 200, [
@@ -231,7 +231,7 @@ class CoWorkerController extends Controller
     {
         $this->validate($request, [
             'name ' => 'sometimes|required|string',
-            'mobile' => 'sometimes|required|string|mobile:bd',
+            'mobile' => 'string|mobile:bd',
             'relationship ' => 'sometimes|required|string'
         ]);
         $member = $request->manager_member;

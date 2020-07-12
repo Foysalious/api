@@ -250,8 +250,8 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $nid_image_front_name = $this->personalRequest->getNidFont() ? $this->personalRequest->getNidFont()->getClientOriginalName() : null;
-            $nid_image_front = $this->personalRequest->getNidFont() ? $this->getPicture($this->profile, $this->personalRequest->getNidFont(), 'nid_image_front') : null;
+            $nid_image_front_name = $this->personalRequest->getNidFront() ? $this->personalRequest->getNidFront()->getClientOriginalName() : null;
+            $nid_image_front = $this->personalRequest->getNidFront() ? $this->getPicture($this->profile, $this->personalRequest->getNidFront(), 'nid_image_front') : null;
             $nid_image_back_name = $this->personalRequest->getNidBack() ? $this->personalRequest->getNidBack()->getClientOriginalName() : null;
             $nid_image_back = $this->personalRequest->getNidBack() ? $this->getPicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null;
             $profile_data = [

@@ -10,7 +10,7 @@ class PersonalRequest
     private $address;
     private $nationality;
     private $nidNumber;
-    private $nidFont;
+    private $nidFront;
     private $nidBack;
 
     /**
@@ -123,21 +123,21 @@ class PersonalRequest
     }
 
     /**
-     * @param $nid_font
+     * @param $nid_front
      * @return $this
      */
-    public function setNidFont($nid_font)
+    public function setNidFront($nid_front)
     {
-        $this->nidFont = $nid_font;
+        $this->nidFront = $nid_front;
         return $this;
     }
 
     /**
      * @return mixed
      */
-    public function getNidFont()
+    public function getNidFront()
     {
-        return $this->nidFont;
+        return $this->nidFront;
     }
 
     /**
