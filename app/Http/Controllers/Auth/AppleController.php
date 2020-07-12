@@ -24,7 +24,8 @@ class AppleController extends Controller
         $mobile_profile = $profileRepository->getIfExist($mobile, 'mobile');
         if ($email_profile || $mobile_profile) return api_response($request, null, 400, ['message' => $email_profile ? 'Email' : 'Mobile' . ' already exists! Please login']);
         /** @var Profile $profile */
-        $profile = $profileRepository->store(['mobile' => $mobile, 'email_verified' => $user_response->getEmailVerified(), 'email' => $user_response->getEmail(),
+        $profile = $profileRepository->store(['mobile' => $mobile, 'email_verified' =>
+            $user_response->getEmailVerified(), 'email' => $user_response->getEmail(),
             'apple_id' => $user_response->getAppleId()]);
         $creator->setMobile($mobile)->create();
         $info = $profileRepository->getProfileInfo($profileRepository->getAvatar($request->from), $profile, $request);
