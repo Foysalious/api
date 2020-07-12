@@ -11,6 +11,7 @@ use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
 use Sheba\Dal\Gallery\Gallery;
 use Sheba\Dal\Partnership\Partnership;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
 
@@ -103,6 +104,11 @@ class Service extends Model
     public function partnerServices()
     {
         return $this->hasMany(PartnerService::class);
+    }
+
+    public function serviceDiscounts()
+    {
+        return $this->belongsToMany(ServiceDiscount::class, 'service_service_discount', 'service_id', 'service_discount_id');
     }
 
     public function runningDiscounts()
@@ -304,6 +310,11 @@ class Service extends Model
     public function locationServices()
     {
         return $this->hasMany(LocationService::class);
+    }
+
+    public function carRentalPrices()
+    {
+        return $this->hasMany(CarRentalPrice::class);
     }
 
     public function getVariableAndOption(array $options)

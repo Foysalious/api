@@ -3,22 +3,13 @@
 use App\Models\LocationService;
 use App\Models\Service;
 use phpDocumentor\Reflection\Types\Iterable_;
+use Sheba\PriceCalculation\PriceCalculationAbstract;
 use stdClass;
 
-class PriceCalculation
+class PriceCalculation extends PriceCalculationAbstract
 {
-    private $option;
-    private $quantity;
-    private $minPrice;
     /** @var LocationService $locationService */
-    private $locationService;
-    /** @var Service */
-    private $service;
-
-    public function __construct()
-    {
-        $this->quantity = 1;
-    }
+    protected $locationService;
 
     /**
      * @param LocationService $location_service
@@ -31,47 +22,22 @@ class PriceCalculation
     }
 
     /**
-     * @param Service $service
-     * @return $this
+     * @return mixed
+     * @throws CorruptedPriceStructureException
      */
-    public function setService(Service $service)
-    {
-        $this->service = $service;
-        return $this;
-    }
-
-    /**
-     * @param array $option
-     * @return $this
-     */
-    public function setOption(array $option)
-    {
-        $this->option = $option;
-        return $this;
-    }
-
-
-    public function setQuantity($quantity)
-    {
-        $this->quantity = $quantity;
-        return $this;
-    }
-
-    private function setMinPrice($price)
-    {
-        $this->minPrice = $price;
-        return $this;
-    }
-
     public function getMinPrice()
     {
         $this->getTotalOriginalPrice();
         return $this->minPrice;
     }
 
+    /**
+     * @return float|int|null
+     * @throws CorruptedPriceStructureException
+     */
     public function getTotalOriginalPrice()
     {
-        $unit_price = $this->getUnitPrice();
+        $unit_price = $this->upsellUnitPrice ? $this->upsellUnitPrice : $this->getUnitPrice();
         $min_price = $this->getMinPriceFromDB();
         $this->setMinPrice($min_price);
         $service = $this->getService();
@@ -89,6 +55,8 @@ class PriceCalculation
         } elseif ($rent_a_car_price_applied) {
             $this->setMinPrice($original_price);
         }
+        $surcharge = $this->getSurcharge();
+        $original_price = $surcharge ? $original_price + $surcharge : $original_price;
         return $original_price;
 
     }
@@ -109,7 +77,7 @@ class PriceCalculation
      * @return float
      * @throws CorruptedPriceStructureException
      */
-    private function getFixedPrice($prices)
+    protected function getFixedPrice($prices)
     {
         if ($prices instanceof stdClass) $this->throwPriceStructureException();
         return (double)$this->locationService->prices;
@@ -121,7 +89,7 @@ class PriceCalculation
      * @return float|null
      * @throws CorruptedPriceStructureException
      */
-    private function getOptionPrice($prices)
+    protected function getOptionPrice($prices)
     {
         $option = implode(',', $this->option);
         $prices = json_decode($prices);
@@ -137,7 +105,7 @@ class PriceCalculation
     /**
      * @throws CorruptedPriceStructureException
      */
-    private function throwPriceStructureException()
+    protected function throwPriceStructureException()
     {
         throw new CorruptedPriceStructureException('Price mismatch in Service #' . $this->locationService->service_id . ' and Location #' . $this->locationService->location_id, 400);
     }
@@ -158,7 +126,7 @@ class PriceCalculation
         return $this->getOptionPrice($this->locationService->base_prices);
     }
 
-    private function getBaseQuantity()
+    protected function getBaseQuantity()
     {
         $service = $this->getService();
         if (!$this->locationService->base_quantity) return null;
@@ -169,7 +137,7 @@ class PriceCalculation
     /**
      * @return Service
      */
-    private function getService()
+    protected function getService()
     {
         if ($this->service) return $this->service;
         else return $this->locationService->service;

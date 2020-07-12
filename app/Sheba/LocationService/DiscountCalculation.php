@@ -1,6 +1,7 @@
 <?php namespace Sheba\LocationService;
 
 use App\Models\LocationService;
+use App\Models\Service;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 
 class DiscountCalculation
@@ -17,6 +18,7 @@ class DiscountCalculation
     private $shebaContribution;
     private $partnerContribution;
     private $quantity;
+    private $service;
 
     public function __construct()
     {
@@ -33,6 +35,16 @@ class DiscountCalculation
     public function setLocationService(LocationService $location_service)
     {
         $this->locationService = $location_service;
+        return $this;
+    }
+
+    /**
+     * @param Service $service
+     * @return $this
+     */
+    public function setService(Service $service)
+    {
+        $this->service = $service;
         return $this;
     }
 
@@ -127,6 +139,7 @@ class DiscountCalculation
     public function calculate()
     {
         $this->serviceDiscount = $this->locationService->discounts()->running()->first();
+        $this->serviceDiscount = $this->serviceDiscount ? $this->serviceDiscount : $this->service->serviceDiscounts()->running()->first();
         if (!$this->serviceDiscount) return;
         $this->discountedPrice = $this->calculateDiscountedPrice();
         $this->discountedPrice = $this->discountedPrice < 0 ? 0 : $this->discountedPrice;
