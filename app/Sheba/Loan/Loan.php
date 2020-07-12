@@ -11,6 +11,7 @@ use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\FileRepository;
 use App\Sheba\Loan\DLSV2\LoanClaim;
+use App\Sheba\Loan\DLSV2\Repayment;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -21,6 +22,7 @@ use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
 use Sheba\Dal\LoanClaimRequest\Statuses;
+use Sheba\Dal\LoanPayment\Model;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
 
@@ -299,7 +301,7 @@ class Loan
     {
         $data = $this->initiateFinalFields();
         foreach ($data as $key => $val) {
-            $data[$key] = $val->completion();
+            $data[$key] = $val->completion($this->type);
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         if ($this->version === 2) {
@@ -349,17 +351,26 @@ class Loan
     {
         $data = [
             'loan_id' => $request->loan_id,
-            'amount'  => $request->amount,
-            'status'  => Statuses::PENDING,
-            'log'     => '',
+            'amount' => $request->amount,
+            'status' => Statuses::PENDING,
+            'log' => '',
         ];
-        return (new LoanClaim())->createRequest($data);
+        (new LoanClaim())->createRequest($data);
+
+        $data = [
+            'loan_id' => $request->loan_id,
+            'debit'   => $request->amount,
+            'credit'  => 0,
+            'type'    => 'micro',
+        ];
+        (new Repayment())->storeDebit($data);
+
+        return true;
     }
 
-    public function isEligibleForClaim($last_claim)
+    public function isEligibleForClaim($loan_id)
     {
-
-       // return LoanRepaymentRequest\Model->isRepaymentCompleted();
+        return (new Repayment())->setLoan($loan_id)->isEligibleForClaim();
 
     }
 

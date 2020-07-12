@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Loan\DLSV2;
 
 
+use Sheba\Dal\LoanClaimRequest\Model;
 use Sheba\ModificationFields;
 use Sheba\Dal\LoanClaimRequest;
 
@@ -13,12 +14,18 @@ class LoanClaim
 
     public function setLoan($loan_id)
     {
-        return $this->loanID = $loan_id;
+         $this->loanId = $loan_id;
+         return $this;
     }
 
+    /**
+     * @return mixed
+     */
     public function lastClaim()
     {
-        return LoanClaimRequest\Model::lastClaim($this->loanId);
+        return Model::where('loan_id',$this->loanId)->orderBy('id','desc')->first();
+
+        //return Model::lastClaim($this->loanId);
     }
 
     public function createRequest($data)

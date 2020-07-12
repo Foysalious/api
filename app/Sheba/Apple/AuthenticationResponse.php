@@ -6,6 +6,7 @@ class AuthenticationResponse
     private $code;
     private $email;
     private $emailVerified;
+    private $appleId;
     private $message;
 
     public function getMessage()
@@ -43,12 +44,23 @@ class AuthenticationResponse
 
     public function getEmailVerified()
     {
-        return $this->emailVerified;
+        return $this->emailVerified == 'true' ? 1 : 0;
     }
 
     public function setEmailVerified($emailVerified)
     {
         $this->emailVerified = $emailVerified;
+        return $this;
+    }
+
+    public function getAppleId()
+    {
+        return $this->appleId;
+    }
+
+    public function setAppleId($appleId)
+    {
+        $this->appleId = $appleId;
         return $this;
     }
 

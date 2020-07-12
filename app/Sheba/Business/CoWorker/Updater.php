@@ -12,6 +12,7 @@ use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Repositories\ProfileRepository;
 use Illuminate\Database\Eloquent\Model;
@@ -69,6 +70,9 @@ class Updater
     private $businessMemberUpdater;
     /** ProfileBankInfoInterface $profileBankInfoRepository */
     private $profileBankInfoRepository;
+    /** MemberRepositoryInterface $memberRepository */
+    private $memberRepository;
+    private $imageBaseName;
 
     /**
      * Updater constructor.
@@ -82,12 +86,14 @@ class Updater
      * @param BusinessMemberCreator $business_member_creator
      * @param BusinessMemberUpdater $business_member_updater
      * @param ProfileBankInfoInterface $profile_bank_information
+     * @param MemberRepositoryInterface $member_repository
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
-                                BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information)
+                                BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
+                                MemberRepositoryInterface $member_repository)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -99,6 +105,7 @@ class Updater
         $this->businessMemberCreator = $business_member_creator;
         $this->businessMemberUpdater = $business_member_updater;
         $this->profileBankInfoRepository = $profile_bank_information;
+        $this->memberRepository = $member_repository;
     }
 
     /**
@@ -185,17 +192,18 @@ class Updater
         return $this->profile = $this->getMember()->profile;
     }
 
-
     /**
-     * @return BusinessMember|Model|null
+     * @return array|null
      */
     public function basicInfoUpdate()
     {
         DB::beginTransaction();
         try {
             $this->getProfile();
+            $profile_pic_name = $this->basicRequest->getProPic()->getClientOriginalName();
+            $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
             $profile_data = [
-                'pro_pic' => $this->getProfilePicture($this->profile, $this->basicRequest->getProPic()),
+                'pro_pic' => $profile_pic,
                 'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
                 'email' => $this->basicRequest->getEmail(),
             ];
@@ -207,7 +215,7 @@ class Updater
             $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
 
             DB::commit();
-            return $this->businessMember;
+            return [$this->businessMember, $profile_pic_name, $profile_pic];
         } catch (Throwable $e) {
             DB::rollback();
             return null;
@@ -235,25 +243,29 @@ class Updater
     }
 
     /**
-     * @return Profile|bool|Model|int|null
+     * @return array|null
      */
     public function personalInfoUpdate()
     {
         DB::beginTransaction();
         try {
             $this->getProfile();
+            $nid_image_front_name = $this->personalRequest->getNidFont() ? $this->personalRequest->getNidFont()->getClientOriginalName() : null;
+            $nid_image_front = $this->personalRequest->getNidFont() ? $this->getPicture($this->profile, $this->personalRequest->getNidFont(), 'nid_image_front') : null;
+            $nid_image_back_name = $this->personalRequest->getNidBack() ? $this->personalRequest->getNidBack()->getClientOriginalName() : null;
+            $nid_image_back = $this->personalRequest->getNidBack() ? $this->getPicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null;
             $profile_data = [
                 'mobile' => $this->personalRequest->getPhone(),
                 'address' => $this->personalRequest->getAddress(),
                 'nationality' => $this->personalRequest->getNationality(),
                 'nid_no' => $this->personalRequest->getNidNumber(),
-                'nid_image_front' => $this->personalRequest->getNidFont() ? $this->getProfilePicture($this->profile, $this->personalRequest->getNidFont(), 'nid_image_front') : null,
-                'nid_image_back' => $this->personalRequest->getNidBack() ? $this->getProfilePicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null,
+                'nid_image_front' => $nid_image_front_name,
+                'nid_image_back' => $nid_image_back_name,
                 'dob' => $this->personalRequest->getDateOfBirth()
             ];
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
-            return $this->profile;
+            return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
         } catch (Throwable $e) {
             DB::rollback();
             return null;
@@ -261,16 +273,18 @@ class Updater
     }
 
     /**
-     * @return Profile|null
+     * @return array|null
      */
     public function financialInfoUpdate()
     {
         DB::beginTransaction();
         try {
             $this->getProfile();
+            $tin_certificate_name = $this->financialRequest->getTinCertificate() ? $this->financialRequest->getTinCertificate()->getClientOriginalName() : null;
+            $tin_certificate_link = $this->financialRequest->getTinCertificate() ? $this->getPicture($this->profile, $this->financialRequest->getTinCertificate(), 'tin_certificate') : null;
             $profile_data = [
                 'tin_no' => $this->financialRequest->getTinNumber(),
-                'tin_certificate' => $this->financialRequest->getTinCertificate() ? $this->getProfilePicture($this->profile, $this->financialRequest->getTinCertificate(), 'tin_certificate') : null,
+                'tin_certificate' => $tin_certificate_link,
             ];
             $this->profileRepository->update($this->profile, $profile_data);
             $profile_bank_data = [
@@ -280,7 +294,29 @@ class Updater
             ];
             $this->profileBankInfoRepository->create($profile_bank_data);
             DB::commit();
-            return $this->profile;
+            return [$this->profile, $tin_certificate_name, $tin_certificate_link];
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
+
+    /**
+     * @return Member|null
+     */
+    public function emergencyInfoUpdate()
+    {
+        DB::beginTransaction();
+        try {
+            $this->getMember();
+            $member_data = [
+                'emergency_contract_person_name' => $this->emergencyRequest->getEmergencyContractPersonName(),
+                'emergency_contract_person_number' => $this->emergencyRequest->getEmergencyContractPersonMobile(),
+                'emergency_contract_person_relationship' => $this->emergencyRequest->getRelationshipEmergencyContractPerson(),
+            ];
+            $this->memberRepository->update($this->member, $member_data);
+            DB::commit();
+            return $this->member;
         } catch (Throwable $e) {
             DB::rollback();
             return null;
@@ -303,7 +339,7 @@ class Updater
      * @param string $image_for
      * @return bool|string
      */
-    private function getProfilePicture($profile, $photo, $image_for = 'pro_pic')
+    private function getPicture($profile, $photo, $image_for = 'pro_pic')
     {
         if (basename($profile->$image_for) != 'default.jpg') {
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));

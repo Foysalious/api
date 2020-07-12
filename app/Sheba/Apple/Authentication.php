@@ -10,19 +10,23 @@ class Authentication
     private $keyId;
     private $teamId;
     private $clientId;
+    private $authorizationCode;
+    private $publicKeyName;
 
-    public function __construct()
+    public function __construct(AuthorizationCode $authorizationCode)
     {
         $this->keyId = config('apple.key_id');
         $this->teamId = config('apple.team_id');
         $this->clientId = config('apple.client_id');
+        $this->publicKeyName = 'AuthKey_Q66N9Y2HF6.pem';
+        $this->authorizationCode = $authorizationCode;
     }
 
     /**
      * @param $code
      * @return AuthenticationResponse
      */
-    public function getUser($code)
+    public function validateAuthorizationCode($code)
     {
         $client = new Client();
         try {
@@ -40,16 +44,12 @@ class Authentication
                 ]);
             $data = json_decode($response->getBody(), 1);
             $payload = JWS::load($data['id_token'])->getPayload();
-            return (new AuthenticationResponse())->setCode(200)->setEmail($payload['email'])->setEmailVerified($payload['email_verified']);
+            $this->authorizationCode->save($code, $payload);
+            return (new AuthenticationResponse())->setCode(200)->setEmail($payload['email'])->setEmailVerified($payload['email_verified'])
+                ->setAppleId($payload['sub']);
         } catch (GuzzleException $e) {
-            return (new AuthenticationResponse())->setCode(500)->setMessage('Apple authentication error.');
+            return (new AuthenticationResponse())->setCode(500)->setMessage('Apple authentication failed.');
         }
-    }
-
-    public function encode($data)
-    {
-        $encoded = strtr(base64_encode($data), '+/', '-_');
-        return rtrim($encoded, '=');
     }
 
     public function generateJWT()
@@ -65,7 +65,7 @@ class Authentication
             'aud' => 'https://appleid.apple.com',
             'sub' => $this->clientId
         ];
-        $privKey = openssl_pkey_get_private(file_get_contents(storage_path('AuthKey_Q66N9Y2HF6.pem')));
+        $privKey = openssl_pkey_get_private(file_get_contents(storage_path($this->publicKeyName)));
         if (!$privKey) {
             return false;
         }
@@ -78,6 +78,12 @@ class Authentication
         $raw_signature = self::fromDER($signature, 64);
 
         return $payload . '.' . $this->encode($raw_signature);
+    }
+
+    public function encode($data)
+    {
+        $encoded = strtr(base64_encode($data), '+/', '-_');
+        return rtrim($encoded, '=');
     }
 
 
@@ -115,5 +121,17 @@ class Authentication
             $data = mb_substr($data, 2, null, '8bit');
         }
         return $data;
+    }
+
+    public function getUser($code)
+    {
+        $data = $this->authorizationCode->get($code);
+        $response = new AuthenticationResponse();
+        if ($data) {
+            $response->setCode(200)->setEmail($data['email'])->setEmailVerified($data['email_verified']);
+        } else {
+            $response->setCode(500)->setMessage('Apple authentication failed.');
+        }
+        return $response;
     }
 }
