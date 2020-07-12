@@ -301,7 +301,7 @@ class Loan
     {
         $data = $this->initiateFinalFields();
         foreach ($data as $key => $val) {
-            $data[$key] = $val->completion();
+            $data[$key] = $val->completion($this->type);
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         if ($this->version === 2) {
