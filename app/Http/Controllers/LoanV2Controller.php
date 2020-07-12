@@ -303,26 +303,6 @@ class LoanV2Controller extends Controller
         }
     }
 
-    public function claim(Request $request, $loan_id, Loan $loan)
-    {
-        try {
-            $this->validate($request, [
-                'amount' => 'required'
-            ]);
-            $request->merge(['loan_id' => $loan_id]);
-            $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
-            $is_eligible = $loan->isEligibleForClaim($last_claim->id);
-            if(!$is_eligible)
-                //********
-            $loan->claim($request);
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-
-    }
-
     public function claimList(Request $request, $loan_id, Loan $loan)
     {
         try {
