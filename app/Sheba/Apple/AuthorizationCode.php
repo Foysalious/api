@@ -9,8 +9,8 @@ class AuthorizationCode
     public function save($code, $data)
     {
         $key = self::KEY . $code;
-        Redis::put($key, json_encode($data));
-        Redis::exprire($key, 60 * 5);
+        Redis::set($key, json_encode($data));
+        Redis::expire($key, 60 * 5);
     }
 
     public function get($code)
