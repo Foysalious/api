@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
 use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
@@ -833,18 +834,15 @@ class LoanController extends Controller
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
-            $is_eligible= true;
-            if(!$loan->isEligibleForClaim($last_claim->id))
-                $is_eligible =false;
-            if(!$is_eligible)
-                //********
-                $loan->claim($request);
-            return api_response($request, null, 200);
-
+            if($last_claim && !$loan->isEligibleForClaim($last_claim->loan_id))
+                Throw new NotEligibleForClaim();
+            $loan->claim($request);
+            return api_response($request, null, 200,['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
+        } catch (NotEligibleForClaim $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 500,['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
         }
 
     }

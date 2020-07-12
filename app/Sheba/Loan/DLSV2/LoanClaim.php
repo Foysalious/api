@@ -14,7 +14,7 @@ class LoanClaim
 
     public function setLoan($loan_id)
     {
-         $this->loanID = $loan_id;
+         $this->loanId = $loan_id;
          return $this;
     }
 
