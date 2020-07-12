@@ -327,6 +327,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 
+    public function isRentACarOutsideCity()
+    {
+        return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_OUTSIDE_ID'))));
+    }
+
     public function getSlug()
     {
         $type = $this->isParent() ? 'master_category' : 'secondary_category';
