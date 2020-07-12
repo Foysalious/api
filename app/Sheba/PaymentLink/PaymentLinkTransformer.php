@@ -117,4 +117,12 @@ class PaymentLinkTransformer
             return $customer ? $customer->profile : null;
         }
     }
+
+    /**
+     * TODO: Implement logic later
+     */
+    public function isForMissionSaveBangladesh()
+    {
+        return false;
+    }
 }
