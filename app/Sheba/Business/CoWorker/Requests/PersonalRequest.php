@@ -37,7 +37,7 @@ class PersonalRequest
      */
     public function setPhone($phone)
     {
-        $this->phone = $phone;
+        $this->phone = formatMobile($phone);
         return $this;
     }
 
