@@ -44,7 +44,7 @@ class AuthenticationResponse
 
     public function getEmailVerified()
     {
-        return $this->emailVerified;
+        return $this->emailVerified == 'true' ? 1 : 0;
     }
 
     public function setEmailVerified($emailVerified)

@@ -10,13 +10,13 @@ class AuthorizationCode
     {
         $key = self::KEY . $code;
         Redis::set($key, json_encode($data));
-        Redis::expire($key, 60 * 5);
+        Redis::expire($key, 60 * 50);
     }
 
     public function get($code)
     {
         $data = Redis::get(self::KEY . $code);
         if (!$data) return null;
-        return json_decode($data);
+        return json_decode($data,1);
     }
 }

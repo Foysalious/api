@@ -125,10 +125,13 @@ class Authentication
 
     public function getUser($code)
     {
-        $payload = $this->authorizationCode->get($code);
+        $data = $this->authorizationCode->get($code);
         $response = new AuthenticationResponse();
-        if ($payload) $response->setCode(200)->setEmail($payload['email'])->setEmailVerified($payload['email_verified']);
-        else $response->setCode(500)->setMessage('Apple authentication failed.');
+        if ($data) {
+            $response->setCode(200)->setEmail($data['email'])->setEmailVerified($data['email_verified']);
+        } else {
+            $response->setCode(500)->setMessage('Apple authentication failed.');
+        }
         return $response;
     }
 }
