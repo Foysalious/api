@@ -6,6 +6,7 @@ use InvalidArgumentException;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Complete\PaymentComplete;
 use Sheba\Payment\PayableType;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Utility\UtilityOrder;
 
 class Payable extends Model
@@ -13,6 +14,8 @@ class Payable extends Model
     protected $guarded = ['id'];
     protected $casts = ['amount' => 'double'];
     public $timestamps = false;
+
+    private $typeObject;
 
     public function isPartnerOrder()
     {
@@ -198,17 +201,34 @@ class Payable extends Model
      */
     public function getPayableType()
     {
+        if ($this->typeObject) return $this->typeObject;
+
         if ($this->type == Types::UTILITY_ORDER) {
-            return (new UtilityOrder())->setPayable($this);
+            $this->typeObject = (new UtilityOrder())->setPayable($this);
         } elseif ($this->type == Types::PAYMENT_LINK) {
-            return (new PaymentLinkOrder())->setPayable($this);
+            $this->typeObject = app(PaymentLinkOrder::class)->setPayable($this);
         } else {
-            return ($this->getPayableModel())::find($this->type_id);
+            $this->typeObject = ($this->getPayableModel())::find($this->type_id);
         }
+
+        return $this->typeObject;
     }
 
     public function getPaymentAttribute()
     {
         return $this->payments->last();
+    }
+
+    /**
+     * @return PaymentLinkTransformer|null
+     */
+    public function getPaymentLink()
+    {
+        if (!$this->isPaymentLink()) return null;
+
+        /** @var PaymentLinkOrder $payment_link_order */
+        $payment_link_order = $this->getPayableType();
+
+        return $payment_link_order->getTransformer();
     }
 }
