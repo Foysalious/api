@@ -285,7 +285,7 @@ class BusinessesController extends Controller
         foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
             array_push($banks, [
                 'id' => ++$key,
-                'bank' => $bank,
+                'bank' => ucwords(str_replace('_',' ',$bank)),
             ]);
         }
         return api_response($request, null, 200, ['banks' => $banks]);

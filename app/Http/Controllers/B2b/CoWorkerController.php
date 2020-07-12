@@ -127,8 +127,8 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
-        $business_member = $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusinessMember($business_member)->basicInfoUpdate();
-        if ($business_member) return api_response($request, 1, 200);
+        list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusinessMember($business_member)->basicInfoUpdate();
+        if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
         return api_response($request, null, 404);
     }
 
@@ -167,7 +167,7 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $business_member, Request $request)
     {
         $this->validate($request, [
-            'mobile' => 'string|mobile:bd',
+            'mobile' => 'sometimes|required|string|mobile:bd',
             'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'address ' => 'sometimes|required|string',
             'nationality ' => 'sometimes|required|string',
@@ -183,8 +183,15 @@ class CoWorkerController extends Controller
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
             ->setNidFont($request->file('nid_font'))->setNidBack($request->file('nid_back'));
-        $profile = $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusinessMember($business_member)->personalInfoUpdate();
-        if ($profile) return api_response($request, 1, 200);
+        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusinessMember($business_member)->personalInfoUpdate();
+        if ($profile) {
+            return api_response($request, 1, 200, [
+                'nid_image_front_name' => $nid_image_front_name,
+                'nid_image_front' => $nid_image_front,
+                'nid_image_back_name' => $nid_image_back_name,
+                'nid_image_back' => $nid_image_back
+            ]);
+        }
         return api_response($request, null, 404);
     }
 
@@ -202,14 +209,38 @@ class CoWorkerController extends Controller
             'bank_name ' => 'sometimes|required|string',
             'bank_account_number ' => 'sometimes|required|string'
         ]);
+
         $member = $request->manager_member;
         $this->setModifier($member);
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
-            ->setTinCertificate($request->tin_certificate)
+            ->setTinCertificate($request->file('tin_certificate'))
             ->setBankName($request->bank_name)
             ->setBankAccNumber($request->bank_account_number);
-        $profile = $this->coWorkerUpdater->setFinancialRequest($financial_request)->setBusinessMember($business_member)->financialInfoUpdate();
-        if ($profile) return api_response($request, 1, 200);
+        list($profile, $image_name, $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)->setBusinessMember($business_member)->financialInfoUpdate();
+        if ($profile) return api_response($request, 1, 200, ['tin_certificate_name' => $image_name, 'tin_certificate_link' => $image_link]);
+        return api_response($request, null, 404);
+    }
+
+    /**
+     * @param $business
+     * @param $business_member
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function emergencyInfoEdit($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'name ' => 'sometimes|required|string',
+            'mobile' => 'sometimes|required|string|mobile:bd',
+            'relationship ' => 'sometimes|required|string'
+        ]);
+        $member = $request->manager_member;
+        $this->setModifier($member);
+        $emergency_request = $this->emergencyRequest->setEmergencyContractPersonName($request->name)
+            ->setEmergencyContractPersonMobile($request->mobile)
+            ->setRelationshipEmergencyContractPerson($request->relationship);
+        $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setBusinessMember($business_member)->emergencyInfoUpdate();
+        if ($member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
 
