@@ -826,16 +826,15 @@ class LoanController extends Controller
 
     }
 
-    public function claim(Request $request, $loan_id, Loan $loan)
+    public function claim(Request $request, $partner, $loan_id, Loan $loan)
     {
         try {
             $this->validate($request, [
                 'amount' => 'required|numeric|min:1000'
             ]);
             $request->merge(['loan_id' => $loan_id]);
-            $partner_loan = PartnerBankLoan::where('id',$loan_id)->first();
-            $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
-            if (($partner_loan->status != 'disbursed') || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$loan->isEligibleForClaim($last_claim->loan_id)))))
+
+            if(!$loan->canClaim($request))
                 throw new NotEligibleForClaim();
             $loan->claim($request);
             return api_response($request, null, 200, ['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
@@ -851,18 +850,16 @@ class LoanController extends Controller
 
     }
 
-    public function claimList(Request $request, $loan_id, Loan $loan)
+    public function claimList(Request $request, $partner, $loan_id, Loan $loan)
     {
         try{
             $request->merge(['loan_id' => $loan_id]);
-            $claims = $loan->claimList($loan_id);
-            return api_response($request, null, 200, ['claims' => $claims]);
+            $data = $loan->claimList($request);
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e){
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-
         }
-
     }
 
 }

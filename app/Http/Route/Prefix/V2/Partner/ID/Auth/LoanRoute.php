@@ -35,9 +35,6 @@ class LoanRoute
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
 
         });
-        $api->group(['prefix'=>'loans'], function ($api) {
-            $api->post('/{loan_id}/claim','LoanController@claim');
-            $api->get('/{loan_id}/claim-list','LoanController@claimList');
-        });
+
     }
 }

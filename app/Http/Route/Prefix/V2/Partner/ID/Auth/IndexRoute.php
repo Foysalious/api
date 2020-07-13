@@ -80,6 +80,10 @@ class IndexRoute
                     $api->get('/bank-interest', 'LoanController@getBankInterest');
                     $api->get('/history', 'LoanController@history');
                 });
+
+                $api->post('/{loan_id}/claim','LoanController@claim');
+                $api->get('/{loan_id}/claim-list','LoanController@claimList');
+
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
                 $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
