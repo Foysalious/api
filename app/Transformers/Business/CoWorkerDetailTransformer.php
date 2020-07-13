@@ -102,8 +102,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $profile = $member->profile;
         $profile_bank_info = $profile->banks->last();
 
-        $bank_name = $profile_bank_info ? $profile_bank_info->last()->bank_name : null;
-        $account_no = $profile_bank_info ? $profile_bank_info->last()->account_no : null;
+        $bank_name = $profile_bank_info ? $profile_bank_info->bank_name : null;
+        $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
         $count = 0;
         if ($profile->tin_no ||
             $profile->tin_certificate ||
