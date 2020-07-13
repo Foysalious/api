@@ -4,18 +4,20 @@ use App\Models\Payable;
 use Exception;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
 {
     /**
      * @param $payable_type
+     * @param $payable_type_id
      * @param $version_code
      * @param $platform_name
      * @param $user_type
      * @return array
-     * @throws Exception
+     * @throws Exceptions\InvalidPaymentMethod
      */
-    public static function getDetails($payable_type, $version_code, $platform_name, $user_type)
+    public static function getDetails($payable_type, $payable_type_id, $version_code, $platform_name, $user_type)
     {
         $payable_type = $payable_type ?: "order";
 
@@ -49,7 +51,7 @@ class AvailableMethods
                 $payable->type = Types::UTILITY_ORDER;
                 break;
             case 'payment_link':
-                $methods = self::getPaymentLinkPayments();
+                $methods = self::getPaymentLinkPayments($payable_type_id);
                 $payable->type = Types::PAYMENT_LINK;
                 break;
             case 'wallet_recharge':
@@ -141,12 +143,24 @@ class AvailableMethods
         ];
     }
 
-    public static function getPaymentLinkPayments()
+    public static function getPaymentLinkPayments($payment_link_identifier)
     {
+        /*
+         * TODO: Load payment methods depending on the link.
+         *
+         * /** @var PaymentLinkRepositoryInterface $repo *
+         * $repo = app(PaymentLinkRepositoryInterface::class);
+         * $payment_link = $repo->findByIdentifier($payment_link_identifier);
+         * if ($payment_link->isForMissionSaveBangladesh()) return [PaymentStrategy::ONLINE];
+         * if ($payment_link->isEmi()) return [PaymentStrategy::ONLINE];
+         *
+         */
+
         return [
             PaymentStrategy::CBL,
             PaymentStrategy::BKASH,
-            PaymentStrategy::ONLINE
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::SSL_DONATION
         ];
     }
 }
