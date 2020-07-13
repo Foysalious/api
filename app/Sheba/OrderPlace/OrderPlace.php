@@ -473,11 +473,12 @@ class OrderPlace
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
-                'min_price' => $this->category->isRentACarOutsideCity() ? null : $this->priceCalculation->getMinPrice(),
+                'min_price' => $this->category->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
