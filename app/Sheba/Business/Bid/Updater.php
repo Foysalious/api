@@ -230,7 +230,7 @@ class Updater
         $message = $this->bid->procurement->owner->name . ' sent you a hiring request for BID #' . $this->bid->id;
         $procurement_id = $this->bid->procurement->id;
         $bid_id = $this->bid->id;
-        $url = config('sheba.business_url') . "/tender/$procurement_id/participate/$bid_id";
+        $url = config('sheba.business_url') . "/tender/$procurement_id/hire/$bid_id";
         $this->sms->shoot($partner->getManagerMobile(), "$message. Now go to this link-" . $this->bitlyLink->shortUrl($url));
     }
 

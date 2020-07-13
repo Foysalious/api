@@ -830,19 +830,37 @@ class LoanController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount' => 'required'
+                'amount' => 'required|numeric|min:1000'
             ]);
             $request->merge(['loan_id' => $loan_id]);
+            $partner_loan = PartnerBankLoan::where('id',$loan_id)->first();
             $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
-            if($last_claim && !$loan->isEligibleForClaim($last_claim->loan_id))
-                Throw new NotEligibleForClaim();
+            if (($partner_loan->status != 'disbursed') || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$loan->isEligibleForClaim($last_claim->loan_id)))))
+                throw new NotEligibleForClaim();
             $loan->claim($request);
-            return api_response($request, null, 200,['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
+            return api_response($request, null, 200, ['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
         } catch (NotEligibleForClaim $e) {
-            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+            return api_response($request, null, 403, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500,['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
+            return api_response($request, null, 500, ['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
+        }
+
+    }
+
+    public function claimList(Request $request, $loan_id, Loan $loan)
+    {
+        try{
+            $request->merge(['loan_id' => $loan_id]);
+            $claims = $loan->claimList($loan_id);
+            return api_response($request, null, 200, ['claims' => $claims]);
+        } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+
         }
 
     }

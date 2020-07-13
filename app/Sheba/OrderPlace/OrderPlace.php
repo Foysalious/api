@@ -463,7 +463,7 @@ class OrderPlace
         $job_services = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
             $service = $selected_service->getService();
-            $this->priceCalculation = $this->resolvePriceCalculation($service->category);
+            $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);

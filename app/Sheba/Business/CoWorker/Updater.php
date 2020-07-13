@@ -75,7 +75,6 @@ class Updater
     private $profileBankInfoRepository;
     /** MemberRepositoryInterface $memberRepository */
     private $memberRepository;
-    private $imageBaseName;
 
     /**
      * Updater constructor.
@@ -195,7 +194,7 @@ class Updater
      */
     public function getBusinessMember()
     {
-        return $this->businessMember = $this->member->businessMember;
+        return $this->businessMember;
     }
 
     /**

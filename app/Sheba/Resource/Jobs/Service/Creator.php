@@ -1,6 +1,7 @@
 <?php namespace Sheba\Resource\Jobs\Service;
 
 
+use App\Models\Category;
 use App\Models\Job;
 use App\Models\LocationService;
 use App\Models\Order;
@@ -9,6 +10,7 @@ use Sheba\Dal\JobService\JobServiceRepositoryInterface;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\PriceCalculation\PriceCalculationFactory;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Sheba\Dal\JobService\JobService;
 
@@ -32,10 +34,9 @@ class Creator
     /** @var ServiceUpdateRequestPolicy */
     private $policy;
 
-    public function __construct(ServiceUpdateRequestPolicy $policy, PriceCalculation $priceCalculation, UpsellCalculation $upsellCalculation, DiscountCalculation $discountCalculation, JobServiceRepositoryInterface $jobServiceRepository)
+    public function __construct(ServiceUpdateRequestPolicy $policy, UpsellCalculation $upsellCalculation, DiscountCalculation $discountCalculation, JobServiceRepositoryInterface $jobServiceRepository)
     {
         $this->policy = $policy;
-        $this->priceCalculation = $priceCalculation;
         $this->upsellCalculation = $upsellCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->jobServiceRepository = $jobServiceRepository;
@@ -102,32 +103,42 @@ class Creator
             if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 400);
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->order->deliveryAddress->location_id]])->first();
-            $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
+            $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $selected_service->getCategory()->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
-            $total_original_price = $this->job->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
+            $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $service_data = [
                 'service_id' => $service->id,
                 'job_id' => $this->job->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
-                'min_price' => $this->priceCalculation->getMinPrice(),
+                'min_price' => $selected_service->getCategory()->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => 0
+                'surcharge_percentage' => $this->priceCalculation->getSurcharge()
             ];
             if (!$this->order->hasVoucher()) {
-                $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+                $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
                 $service_data['discount'] = $this->discountCalculation->getJobServiceDiscount();
                 $service_data['discount_percentage'] = $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0;
             }
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $this->jobServiceRepository->create($service_data);
         }
+    }
+
+    private function resolvePriceCalculation(Category $category)
+    {
+        $priceCalculationFactory = new PriceCalculationFactory();
+        $priceCalculationFactory->setCategory($category);
+        return $priceCalculationFactory->get();
     }
 
 
