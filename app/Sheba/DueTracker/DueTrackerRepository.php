@@ -111,6 +111,7 @@ class DueTrackerRepository extends BaseRepository
         if (!empty($partner_pos_customer)) {
             $customer = $partner_pos_customer->customer;
         }
+        if (empty($customer)) throw new InvalidPartnerPosCustomer();
         $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
