@@ -1,7 +1,5 @@
 <?php namespace Sheba\Business\CoWorker;
 
-use App\Models\Business;
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -22,10 +20,9 @@ use Sheba\FileManagers\FileManager;
 use App\Models\BusinessMember;
 use Sheba\ModificationFields;
 use App\Models\BusinessRole;
-use Illuminate\Http\Request;
+use App\Models\Business;
 use App\Models\Profile;
 use App\Models\Member;
-use Carbon\Carbon;
 use Throwable;
 use DB;
 
@@ -135,7 +132,6 @@ class Creator
         return $this;
     }
 
-
     private function businessRoleCreate()
     {
         $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
@@ -157,9 +153,10 @@ class Creator
                 $this->businessMember = $this->createBusinessMember($this->business, $co_member);
             } else {
                 $old_member = $profile->member;
+
                 if ($old_member) {
                     if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-                        return ['co_worker' => $old_member->id, ['message' => "This person is already added."]];
+                        return ['co_worker' => $old_member->id, 'message' => "This person is already added."];
                     }
                     if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
                         return ['message' => "This person is already connected with another business."];
@@ -193,9 +190,9 @@ class Creator
     {
         $data = [
             '_token' => str_random(255),
-            'name' => $this->basicRequest->getFirstName() . '' . $this->basicRequest->getLastName(),
+            'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
             'email' => $this->basicRequest->getEmail(),
-            'profile_image' => $this->basicRequest->getProPic(),
+            'pro_pic' => $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()),
         ];
         $profile = $this->profileRepository->store($data);
         #dispatch((new SendBusinessRequestEmail($request->email))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
