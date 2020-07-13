@@ -56,6 +56,7 @@ class Updater
             'grade' => $this->requester->getGrade() ? $this->requester->getGrade() :  $this->businessMember->grade,
             'employee_type' => $this->requester->getEmployeeType() ? $this->requester->getEmployeeType() :  $this->businessMember->employee_type,
             'previous_institution' => $this->requester->getPreviousInstitution() ? $this->requester->getPreviousInstitution() :  $this->businessMember->previous_institution,
+            'status' => $this->requester->getStatus() ? $this->requester->getStatus() :  $this->businessMember->status,
         ];
         return $this->businessMemberRepository->update($this->businessMember, $data);
     }

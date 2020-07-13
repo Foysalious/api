@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\CoWorker;
 
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
@@ -36,6 +37,8 @@ class Updater
     private $fileRepository;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
+    /** @var CoWorkerRequester $coWorkerRequester */
+    private $coWorkerRequester;
     /** @var BasicRequest $basicRequest */
     private $basicRequest;
     /** @var OfficialRequest $officialRequest */
@@ -109,6 +112,16 @@ class Updater
     }
 
     /**
+     * @param CoWorkerRequester $coWorker_requester
+     * @return $this
+     */
+    public function setCoWorkerRequest(CoWorkerRequester $coWorker_requester)
+    {
+        $this->coWorkerRequester = $coWorker_requester;
+        return $this;
+    }
+
+    /**
      * @param BasicRequest $basic_request
      * @return $this
      */
@@ -159,21 +172,14 @@ class Updater
     }
 
     /**
-     * @param $business_member
+     * @param $member
      * @return $this
      */
-    public function setBusinessMember($business_member)
+    public function setMember($member)
     {
-        $this->businessMember = BusinessMember::findOrFail($business_member);
+        $this->member = Member::findOrFail($member);
+        $this->businessMember = $this->member->businessMember;
         return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getBusinessMember()
-    {
-        return $this->businessMember;
     }
 
     /**
@@ -181,7 +187,15 @@ class Updater
      */
     public function getMember()
     {
-        return $this->member = $this->getBusinessMember()->member;
+        return $this->member;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBusinessMember()
+    {
+        return $this->businessMember = $this->member->businessMember;
     }
 
     /**
@@ -317,6 +331,23 @@ class Updater
             $this->memberRepository->update($this->member, $member_data);
             DB::commit();
             return $this->member;
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
+
+    /**
+     * @return BusinessMember|Model|null
+     */
+    public function statusUpdate()
+    {
+        DB::beginTransaction();
+        try {
+            $business_member_requester = $this->businessMemberRequester->setStatus($this->coWorkerRequester->getStatus());
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            DB::commit();
+            return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
             return null;

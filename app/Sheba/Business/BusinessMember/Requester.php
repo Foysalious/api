@@ -9,6 +9,7 @@ class Requester
     private $grade;
     private $employeeType;
     private $previousInstitution;
+    private $status;
 
     /**
      * @param $manager_employee
@@ -116,5 +117,23 @@ class Requester
     public function getPreviousInstitution()
     {
         return $this->previousInstitution;
+    }
+
+    /**
+     * @param $status
+     * @return $this
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getStatus()
+    {
+        return $this->status;
     }
 }
