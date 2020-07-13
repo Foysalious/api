@@ -3,11 +3,11 @@
 use App\Models\Payable;
 use Sheba\Payment\PayableType;
 use Sheba\PaymentLink\PaymentLinkTransformer;
-use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PaymentLinkOrder implements PayableType
 {
-    /** @var PaymentLinkRepository */
+    /** @var PaymentLinkRepositoryInterface */
     private $repo;
 
     private $payable;
@@ -16,7 +16,7 @@ class PaymentLinkOrder implements PayableType
     /** @var PaymentLinkTransformer */
     private $transformer;
 
-    public function __construct(PaymentLinkRepository $repo)
+    public function __construct(PaymentLinkRepositoryInterface $repo)
     {
         $this->repo = $repo;
     }
@@ -43,7 +43,7 @@ class PaymentLinkOrder implements PayableType
      */
     public function getTransformer()
     {
-        if (!$this->transformer) $this->transformer = $this->repo->getPaymentLinkByLinkId($this->id);
+        if (!$this->transformer) $this->transformer = $this->repo->find($this->id);
 
         return $this->transformer;
     }
