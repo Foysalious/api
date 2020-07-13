@@ -75,6 +75,8 @@ class PersonalInfo implements Arrayable
             'nid_no'         => $request->nid_no,
             'nid_issue_date' => $request->nid_issue_date,
         ], (new Expenses($request->get('expenses')))->toArray());
+        if(empty($request->email))
+            $profile_data = array_except($profile_data,'email');
         $basic_data    = [
             'present_address'     => (new PresentAddress($request))->toString(),
             'permanent_address'   => (new PermanentAddress($request))->toString(),
