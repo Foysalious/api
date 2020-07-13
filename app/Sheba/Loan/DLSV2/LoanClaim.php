@@ -34,4 +34,10 @@ class LoanClaim
         $this->loanClaimRequest->save();
         return $this->loanClaimRequest;
     }
+
+    public function getAll($loan_id)
+    {
+        return Model::where('loan_id',$loan_id)->get();
+
+    }
 }

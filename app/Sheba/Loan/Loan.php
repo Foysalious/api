@@ -353,7 +353,7 @@ class Loan
             'loan_id' => $request->loan_id,
             'amount' => $request->amount,
             'status' => Statuses::PENDING,
-            'log' => '',
+            'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
         ];
         (new LoanClaim())->createRequest($data);
 
@@ -366,6 +366,24 @@ class Loan
         (new Repayment())->storeDebit($data);*/
 
         return true;
+    }
+
+    public function claimList($loan_id)
+    {
+        $claims = (new LoanClaim())->getAll($loan_id);
+        $data = [];
+
+        foreach ($claims as $claim)
+        {
+            array_push($data,[
+                'status' => $claim->status,
+                'amount' => $claim->amount,
+                'log'   => $claim->log,
+                'created_at' => carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
+            ]);
+        }
+
+        return $data;
     }
 
     public function isEligibleForClaim($loan_id)

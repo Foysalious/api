@@ -851,4 +851,18 @@ class LoanController extends Controller
 
     }
 
+    public function claimList(Request $request, $loan_id, Loan $loan)
+    {
+        try{
+            $request->merge(['loan_id' => $loan_id]);
+            $claims = $loan->claimList($loan_id);
+            return api_response($request, null, 200, ['claims' => $claims]);
+        } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+
+        }
+
+    }
+
 }
