@@ -27,7 +27,6 @@ class ServicePriceCalculation
     /** @var ServiceRequestObject[] */
     private $serviceRequestObject;
     private $location;
-    /** @var PriceCalculation */
     private $priceCalculation;
     /** @var UpsellCalculation */
     private $upsellCalculation;
@@ -40,10 +39,9 @@ class ServicePriceCalculation
     private $delivery_charge;
     private $job_discount_handler;
 
-    public function __construct(ServiceRequest $serviceRequest, PriceCalculation $priceCalculation, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function __construct(ServiceRequest $serviceRequest, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->serviceRequest = $serviceRequest;
-        $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->upsellCalculation = $upsell_calculation;
         $this->delivery_charge = $delivery_charge;
