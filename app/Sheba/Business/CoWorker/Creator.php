@@ -1,20 +1,109 @@
 <?php namespace Sheba\Business\CoWorker;
 
-use App\Jobs\SendBusinessRequestEmail;
-use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Models\Profile;
-use Carbon\Carbon;
-use Illuminate\Http\Request;
+use App\Models\Business;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
+use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
+use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
+use Sheba\Business\Role\Creator as RoleCreator;
+use Sheba\Business\Role\Updater as RoleUpdater;
+use Sheba\Repositories\ProfileRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
+use App\Jobs\SendBusinessRequestEmail;
+use Sheba\FileManagers\CdnFileManager;
+use App\Repositories\FileRepository;
+use Sheba\FileManagers\FileManager;
+use App\Models\BusinessMember;
+use Sheba\ModificationFields;
+use App\Models\BusinessRole;
+use Illuminate\Http\Request;
+use App\Models\Profile;
+use App\Models\Member;
+use Carbon\Carbon;
+use Throwable;
+use DB;
 
 class Creator
 {
     use HasErrorCodeAndMessage;
-    
+    use CdnFileManager, FileManager, ModificationFields;
+
+    /** @var FileRepository $fileRepository */
+    private $fileRepository;
+    /** @var ProfileRepository $profileRepository */
+    private $profileRepository;
+    /** @var CoWorkerRequester $coWorkerRequester */
+    private $coWorkerRequester;
     /** @var BasicRequest $basicRequest */
     private $basicRequest;
+    /** @var Business $business */
+    private $business;
+    /** @var BusinessMember $businessMember */
+    private $businessMember;
+    /** @var Member $managerMember */
+    private $managerMember;
+    /** @var Profile $profile */
+    private $profile;
+    /** @var BusinessRole $businessRole */
+    private $businessRole;
+    /** BusinessMemberRepositoryInterface $businessMemberRepository */
+    private $businessMemberRepository;
+    /** RoleRequester $roleRequester */
+    private $roleRequester;
+    /** RoleCreator $roleCreator */
+    private $roleCreator;
+    /** RoleUpdater $roleUpdater */
+    private $roleUpdater;
+    /** BusinessMemberRequester $businessMemberRequester */
+    private $businessMemberRequester;
+    /** BusinessMemberCreator $businessMemberCreator */
+    private $businessMemberCreator;
+    /** BusinessMemberUpdater $businessMemberUpdater */
+    private $businessMemberUpdater;
+    /** ProfileBankInfoInterface $profileBankInfoRepository */
+    private $profileBankInfoRepository;
+    /** MemberRepositoryInterface $memberRepository */
+    private $memberRepository;
+
+    /**
+     * Updater constructor.
+     * @param FileRepository $file_repository
+     * @param ProfileRepository $profile_repository
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @param RoleRequester $role_requester
+     * @param RoleCreator $role_creator
+     * @param RoleUpdater $role_updater
+     * @param BusinessMemberRequester $business_member_requester
+     * @param BusinessMemberCreator $business_member_creator
+     * @param BusinessMemberUpdater $business_member_updater
+     * @param ProfileBankInfoInterface $profile_bank_information
+     * @param MemberRepositoryInterface $member_repository
+     */
+    public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
+                                BusinessMemberRepositoryInterface $business_member_repository,
+                                RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
+                                BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
+                                BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
+                                MemberRepositoryInterface $member_repository)
+    {
+        $this->fileRepository = $file_repository;
+        $this->profileRepository = $profile_repository;
+        $this->businessMemberRepository = $business_member_repository;
+        $this->roleRequester = $role_requester;
+        $this->roleCreator = $role_creator;
+        $this->roleUpdater = $role_updater;
+        $this->businessMemberRequester = $business_member_requester;
+        $this->businessMemberCreator = $business_member_creator;
+        $this->businessMemberUpdater = $business_member_updater;
+        $this->profileBankInfoRepository = $profile_bank_information;
+        $this->memberRepository = $member_repository;
+    }
 
     /**
      * @param BasicRequest $basic_request
@@ -26,103 +115,99 @@ class Creator
         return $this;
     }
 
-    public function storeBasicInfo()
+    /**
+     * @param Business $business
+     * @return $this
+     */
+    public function setBusiness(Business $business)
     {
-        return;
-    }
-
-    public function create()
-    {
-        $manager_business_member = null;
-        $email_profile = $this->profileRepository->where('email', $request->email)->first();
-        $mobile_profile = $this->profileRepository->where('mobile', formatMobile($request->mobile))->first();
-
-        if ($email_profile) $profile = $email_profile;
-        elseif ($mobile_profile) $profile = $mobile_profile;
-        else $profile = null;
-
-        $co_member = collect();
-        /*if ($request->has('manager_employee_id'))
-            $manager_business_member = BusinessMember::where([
-                ['member_id', $request->manager_employee_id],
-                ['business_id', $business->id]
-            ])->first();*/
-
-        if (!$profile) {
-            $profile = $this->createProfile($member, $request);
-            $new_member = $this->makeMember($profile);
-            $co_member->push($new_member);
-
-            $business = $member->businesses->first();
-            $member_business_data = [
-                'business_id' => $business->id,
-                'member_id' => $co_member->first()->id,
-                'join_date' => Carbon::now(),
-                'manager_id' => $manager_business_member ? $manager_business_member->id : null,
-                'business_role_id' => $request->role
-            ];
-
-            BusinessMember::create($this->withCreateModificationField($member_business_data));
-        } else {
-            $old_member = $profile->member;
-            if ($old_member) {
-                if ($old_member->businesses()->where('businesses.id', $business->id)->count() > 0) {
-                    return api_response($request, $profile, 200, ['co_worker' => $old_member->id, ['message' => "This person is already added."]]);
-                }
-                if ($old_member->businesses()->where('businesses.id', '<>', $business->id)->count() > 0) {
-                    return api_response($request, null, 403, ['message' => "This person is already connected with another business."]);
-                }
-                $co_member->push($old_member);
-            } else {
-                $new_member = $this->makeMember($profile);
-                $co_member->push($new_member);
-            }
-            $this->sendExistingUserMail($profile);
-            $member_business_data = [
-                'business_id' => $business->id,
-                'member_id' => $co_member->first()->id,
-                'join_date' => Carbon::now(),
-                'manager_id' => $manager_business_member ? $manager_business_member->id : null,
-                'business_role_id' => $request->role
-            ];
-
-            BusinessMember::create($this->withCreateModificationField($member_business_data));
-        }
+        $this->business = $business;
+        return $this;
     }
 
     /**
-     * @TODO NEED TO REMOVE THIS. CREATE FROM PROFILE REPO
-     *
-     * @param $member
-     * @param Request $request
-     * @return Profile
+     * @param Member $manager_member
+     * @return $this
      */
-    private function createProfile($member, Request $request)
+    public function setManagerMember(Member $manager_member)
     {
-        $this->setModifier($member);
-        $password = str_random(6);
-        $profile_data = [
-            'remember_token' => str_random(255),
-            'mobile' => !empty($request->mobile) ? formatMobile($request->mobile) : null,
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => bcrypt($password)
-        ];
-        $profile = Profile::create($this->withCreateModificationField($profile_data));
-        dispatch((new SendBusinessRequestEmail($request->email))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
+        $this->managerMember = $manager_member;
+        return $this;
+    }
 
+
+    private function businessRoleCreate()
+    {
+        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
+            ->setName($this->basicRequest->getRole())->setIsPublished(1);
+        $this->businessRole = $this->roleCreator->setRequester($business_role_requester)->create();
+    }
+
+    public function basicInfoStore()
+    {
+        DB::beginTransaction();
+        try {
+            $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
+            $this->businessRoleCreate();
+            $co_member = collect();
+            if (!$profile) {
+                $profile = $this->createProfile();
+                $new_member = $this->createMember($profile);
+                $co_member->push($new_member);
+                $this->businessMember = $this->createBusinessMember($this->business, $co_member);
+            } else {
+                $old_member = $profile->member;
+                if ($old_member) {
+                    if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+                        return ['co_worker' => $old_member->id, ['message' => "This person is already added."]];
+                    }
+                    if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+                        return ['message' => "This person is already connected with another business."];
+                    }
+                    $co_member->push($old_member);
+                } else {
+                    $new_member = $this->createMember($profile);
+                    $co_member->push($new_member);
+                }
+                #$this->sendExistingUserMail($profile);
+                $this->businessMember = $this->createBusinessMember($this->business, $co_member);
+            }
+            DB::commit();
+            return $co_member->first();
+        } catch (Throwable $e) {
+            DB::rollback();
+            return null;
+        }
+    }
+
+    private function createBusinessMember($business, $co_member)
+    {
+        $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
+            ->setMemberId($co_member->first()->id)
+            ->setRole($this->businessRole->id)
+            ->setManagerEmployee($this->basicRequest->getManagerEmployee());
+        return $this->businessMemberCreator->setRequester($business_member_requester)->create();
+    }
+
+    private function createProfile()
+    {
+        $data = [
+            '_token' => str_random(255),
+            'name' => $this->basicRequest->getFirstName() . '' . $this->basicRequest->getLastName(),
+            'email' => $this->basicRequest->getEmail(),
+            'profile_image' => $this->basicRequest->getProPic(),
+        ];
+        $profile = $this->profileRepository->store($data);
+        #dispatch((new SendBusinessRequestEmail($request->email))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
         return $profile;
     }
 
-    private function makeMember($profile)
+    private function createMember($profile)
     {
-        $this->setModifier($profile);
-        $member = new Member();
-        $member->profile_id = $profile->id;
-        $member->remember_token = str_random(255);
-        $member->save();
-
-        return $member;
+        return $this->memberRepository->create([
+            'profile_id' => $profile->id,
+            'remember_token' => str_random(255)
+        ]);
     }
 
     private function sendExistingUserMail($profile)

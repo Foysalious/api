@@ -94,21 +94,26 @@ class CoWorkerController extends Controller
             'last_name' => 'sometimes|required|string',
             'email' => 'required|email',
             'department' => 'required|integer',
-            'role' => 'required|integer',
-            'manager_employee' => 'sometimes|required|integer',
+            'role' => 'required|string',
+            'manager_employee' => 'sometimes|required|integer'
         ]);
         $business = $request->business;
-        $member = $request->manager_member;
-        $this->setModifier($member);
-
-        $basic_request = $this->basicRequest->setProPic($request->pro_pic)
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+        $basic_request = $this->basicRequest->setProPic($request->file('pro_pic'))
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
             ->setEmail($request->email)
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
-        $this->coWorkerCreator->setBasicRequest($basic_request)->storeBasicInfo();
+        list($business_member, $profile_pic_name, $profile_pic) =  $this->coWorkerCreator->setBasicRequest($basic_request)
+            ->setBusiness($business)
+            ->setManagerMember($manager_member)
+            ->basicInfoStore();
+        if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
+        return api_response($request, null, 404);
+
     }
 
     /**
@@ -272,6 +277,7 @@ class CoWorkerController extends Controller
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
+
     /**
      * @param $business
      * @param Request $request
@@ -459,10 +465,9 @@ class CoWorkerController extends Controller
         return api_response($request, null, 404);
     }
 
-    public function show($business, $employee, Request $request)
+    public function show($business, $member_id, Request $request)
     {
-        $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
-        $member = $business_member->member;
+        $member = Member::findOrFail($member_id);
         if (!$member) return api_response($request, null, 404);
 
         $manager = new Manager();

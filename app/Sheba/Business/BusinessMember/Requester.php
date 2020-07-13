@@ -10,6 +10,8 @@ class Requester
     private $employeeType;
     private $previousInstitution;
     private $status;
+    private $businessId;
+    private $memberId;
 
     /**
      * @param $manager_employee
@@ -135,5 +137,41 @@ class Requester
     public function getStatus()
     {
         return $this->status;
+    }
+
+    /**
+     * @param $business_id
+     * @return $this
+     */
+    public function setBusinessId($business_id)
+    {
+        $this->businessId = $business_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBusinessId()
+    {
+        return $this->businessId;
+    }
+
+    /**
+     * @param $member_id
+     * @return $this
+     */
+    public function setMemberId($member_id)
+    {
+        $this->memberId = $member_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMemberId()
+    {
+        return $this->memberId;
     }
 }
