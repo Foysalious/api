@@ -13,6 +13,7 @@ use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
+use Illuminate\Database\Eloquent\Model;
 use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
 use App\Repositories\FileRepository;
@@ -28,8 +29,7 @@ use DB;
 
 class Creator
 {
-    use HasErrorCodeAndMessage;
-    use CdnFileManager, FileManager, ModificationFields;
+    use HasErrorCodeAndMessage, CdnFileManager, FileManager, ModificationFields;
 
     /** @var FileRepository $fileRepository */
     private $fileRepository;
@@ -132,51 +132,47 @@ class Creator
         return $this;
     }
 
-    private function businessRoleCreate()
-    {
-        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
-            ->setName($this->basicRequest->getRole())->setIsPublished(1);
-        $this->businessRole = $this->roleCreator->setRequester($business_role_requester)->create();
-    }
-
     public function basicInfoStore()
     {
         DB::beginTransaction();
         try {
             $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
             $this->businessRoleCreate();
-            $co_member = collect();
+            $new_member = null;
             if (!$profile) {
                 $profile = $this->createProfile();
                 $new_member = $this->createMember($profile);
-                $co_member->push($new_member);
-                $this->businessMember = $this->createBusinessMember($this->business, $co_member);
+                $this->businessMember = $this->createBusinessMember($this->business, $new_member);
             } else {
                 $old_member = $profile->member;
 
                 if ($old_member) {
                     if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-                        return ['co_worker' => $old_member->id, 'message' => "This person is already added."];
+                        $this->setError(409, "This person is already added.");
                     }
                     if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-                        return ['message' => "This person is already connected with another business."];
+                        $this->setError(422, "This person is already connected with another business.");
                     }
-                    $co_member->push($old_member);
+                    $new_member = $old_member;
                 } else {
                     $new_member = $this->createMember($profile);
-                    $co_member->push($new_member);
                 }
-                #$this->sendExistingUserMail($profile);
-                $this->businessMember = $this->createBusinessMember($this->business, $co_member);
+                $this->sendExistingUserMail($profile);
+                $this->businessMember = $this->createBusinessMember($this->business, $new_member);
             }
             DB::commit();
-            return $co_member->first();
+            return $new_member;
         } catch (Throwable $e) {
             DB::rollback();
             return null;
         }
     }
 
+    /**
+     * @param $business
+     * @param $co_member
+     * @return Model
+     */
     private function createBusinessMember($business, $co_member)
     {
         $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
@@ -186,19 +182,28 @@ class Creator
         return $this->businessMemberCreator->setRequester($business_member_requester)->create();
     }
 
+    /**
+     * @return Profile
+     */
     private function createProfile()
     {
+        $password = str_random(6);
         $data = [
             '_token' => str_random(255),
             'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
             'email' => $this->basicRequest->getEmail(),
+            'password' => bcrypt($password),
             'pro_pic' => $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()),
         ];
         $profile = $this->profileRepository->store($data);
-        #dispatch((new SendBusinessRequestEmail($request->email))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
+        dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
         return $profile;
     }
 
+    /**
+     * @param $profile
+     * @return Model
+     */
     private function createMember($profile)
     {
         return $this->memberRepository->create([
@@ -207,6 +212,16 @@ class Creator
         ]);
     }
 
+    private function businessRoleCreate()
+    {
+        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
+            ->setName($this->basicRequest->getRole())->setIsPublished(1);
+        $this->businessRole = $this->roleCreator->setRequester($business_role_requester)->create();
+    }
+
+    /**
+     * @param $profile
+     */
     private function sendExistingUserMail($profile)
     {
         $CMail = new SendBusinessRequestEmail($profile->email);

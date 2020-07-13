@@ -111,10 +111,11 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
-        $member = $this->coWorkerCreator->setBasicRequest($basic_request)
-            ->setBusiness($business)
-            ->setManagerMember($manager_member)
-            ->basicInfoStore();
+        $this->coWorkerCreator->setBasicRequest($basic_request)->setBusiness($business)->setManagerMember($manager_member);
+        if ($this->coWorkerCreator->hasError()) {
+            return api_response($request, null, $this->coWorkerCreator->getErrorCode(), ['message' => $this->coWorkerCreator->getErrorMessage()]);
+        }
+        $member = $this->coWorkerCreator->basicInfoStore();
         if ($member) return api_response($request, 1, 200, ['member_id' => $member->id]);
         return api_response($request, null, 404);
 
@@ -202,7 +203,9 @@ class CoWorkerController extends Controller
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
             ->setNidFront($request->file('nid_front'))->setNidBack($request->file('nid_back'));
-        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)->setMember($member_id)->personalInfoUpdate();
+        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
+            ->setMember($member_id)
+            ->personalInfoUpdate();
         if ($profile) {
             return api_response($request, 1, 200, [
                 'nid_image_front_name' => $nid_image_front_name,
