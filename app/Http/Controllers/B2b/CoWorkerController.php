@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
@@ -51,6 +52,8 @@ class CoWorkerController extends Controller
     private $coWorkerCreator;
     /** @var CoWorkerUpdater $coWorkerUpdater */
     private $coWorkerUpdater;
+    /** @var CoWorkerRequester $coWorkerRequester */
+    private $coWorkerRequester;
 
     /**
      * CoWorkerController constructor.
@@ -63,11 +66,13 @@ class CoWorkerController extends Controller
      * @param PersonalRequest $personal_request
      * @param CoWorkerCreator $co_worker_creator
      * @param CoWorkerUpdater $co_worker_updater
+     * @param CoWorkerRequester $coWorker_requester
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
                                 OfficialRequest $official_request, PersonalRequest $personal_request,
-                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater)
+                                CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
+                                CoWorkerRequester $coWorker_requester)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -78,6 +83,7 @@ class CoWorkerController extends Controller
         $this->personalRequest = $personal_request;
         $this->coWorkerCreator = $co_worker_creator;
         $this->coWorkerUpdater = $co_worker_updater;
+        $this->coWorkerRequester = $coWorker_requester;
     }
 
     public function basicInfoStore($business, Request $request)
@@ -158,6 +164,18 @@ class CoWorkerController extends Controller
             ->setEmployeeType($request->employee_type)
             ->setPreviousInstitution($request->previous_institution);
         $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->setBusinessMember($business_member)->officialInfoUpdate();
+        if ($business_member) return api_response($request, 1, 200);
+        return api_response($request, null, 404);
+    }
+    public function statusUpdate($business, $business_member, Request $request)
+    {
+        $this->validate($request, [
+            'status' => 'required|in:active,inactive,invited',
+        ]);
+        $member = $request->manager_member;
+        $this->setModifier($member);
+        $this->coWorkerRequester->setStatus($request->status);
+        $business_member = $this->coWorkerUpdater->setOfficialRequest()->setBusinessMember($business_member)->officialInfoUpdate();
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }

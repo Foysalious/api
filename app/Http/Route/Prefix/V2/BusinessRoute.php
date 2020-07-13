@@ -67,6 +67,7 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->get('/', 'B2b\CoWorkerController@show');
+                        $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
                         $api->post('/', 'B2b\CoWorkerController@update');
                         $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
                     });
