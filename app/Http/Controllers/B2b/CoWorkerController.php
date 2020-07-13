@@ -1,15 +1,19 @@
 <?php namespace App\Http\Controllers\B2b;
 
+
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
 use Sheba\Business\CoWorker\Updater as CoWorkerUpdater;
+use App\Transformers\Business\CoWorkerListTransformer;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Repositories\ProfileRepository;
+use League\Fractal\Resource\Collection;
 use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
 use App\Transformers\CustomSerializer;
@@ -269,7 +273,6 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
-
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
@@ -294,32 +297,29 @@ class CoWorkerController extends Controller
                 });
             });
         }
-
-        $members = $members->get()->unique();
-        $employees = [];
-        foreach ($members as $member) {
-            $profile = $member->profile;
-            $role = $member->businessMember->role;
-
-            $employee = [
-                'id' => $member->id,
-                'name' => $profile->name,
-                'pro_pic' => $profile->pro_pic,
-                'mobile' => $profile->mobile,
-                'email' => $profile->email,
-                'status' => $member->businessMember->status,
-                'department_id' => $role ? $role->businessDepartment->id : null,
-                'department' => $role ? $role->businessDepartment->name : null,
-                'designation' => $role ? $role->name : null
-            ];
-            array_push($employees, $employee);
+        if ($request->has('status')) {
+            $members->where(function ($query) use ($request) {
+                $query->whereHas('businessMember', function ($query) use ($request) {
+                    $query->where('status', $request->status);
+                });
+            });
         }
+        $members = $members->get()->unique();
+        if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
-        if (count($employees) > 0)
-            return api_response($request, $employees, 200, ['employees' => $employees]);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($members, new CoWorkerListTransformer());
+        $employees = collect($manager->createData($employees)->toArray()['data']);
 
+        if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
+        if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
+        if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+
+        if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
         return api_response($request, null, 404);
     }
+
 
     /**
      * @param $business
@@ -507,5 +507,57 @@ class CoWorkerController extends Controller
         }
 
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $employees
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByName($employees, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($employees)->$sort_by(function ($employee, $key) {
+            return strtoupper($employee['profile']['name']);
+        });
+    }
+
+    /**
+     * @param $employees
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByDepartment($employees, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($employees)->$sort_by(function ($employee, $key) {
+            return strtoupper($employee['department']);
+        });
+    }
+
+    /**
+     * @param $employees
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByStatus($employees, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($employees)->$sort_by(function ($employee, $key) {
+            return strtoupper($employee['status']);
+        });
+    }
+
+    /**
+     * @param $members
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithEmployeeName($members, Request $request)
+    {
+        return $members->filter(function ($member) use ($request) {
+            $profile = $member->profile;
+            return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        });
     }
 }

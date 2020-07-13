@@ -37,7 +37,7 @@ class PersonalRequest
      */
     public function setPhone($phone)
     {
-        $this->phone = formatMobile($phone);
+        $this->phone = $phone ? formatMobile($phone) : null;
         return $this;
     }
 
@@ -55,7 +55,6 @@ class PersonalRequest
      */
     public function setDateOfBirth($date_of_birth)
     {
-        dd($date_of_birth);
         $this->dateOfBirth = $date_of_birth;
         return $this;
     }
