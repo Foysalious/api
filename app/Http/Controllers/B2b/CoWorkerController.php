@@ -589,9 +589,24 @@ class CoWorkerController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function sendInvitation($business, Request $request)
     {
         $this->validate($request, ['emails' => "required"]);
+
+        $business = $request->business;
+        $member = $request->manager_member;
+        $this->setModifier($member);
+
+        foreach (json_decode($request->emails) as $email) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+            $this->basicRequest->setEmail($email);
+            $this->coWorkerCreator->setBasicRequest($this->basicRequest)->create();
+        }
 
         return api_response($request, null, 200);
     }
