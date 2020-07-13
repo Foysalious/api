@@ -357,13 +357,13 @@ class Loan
         ];
         (new LoanClaim())->createRequest($data);
 
-        $data = [
+      /*  $data = [
             'loan_id' => $request->loan_id,
             'debit'   => $request->amount,
             'credit'  => 0,
             'type'    => 'micro',
         ];
-        (new Repayment())->storeDebit($data);
+        (new Repayment())->storeDebit($data);*/
 
         return true;
     }
@@ -371,7 +371,6 @@ class Loan
     public function isEligibleForClaim($loan_id)
     {
         return (new Repayment())->setLoan($loan_id)->isEligibleForClaim();
-
     }
 
     public function personalInfo()
