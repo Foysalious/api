@@ -68,12 +68,13 @@ class GranterDetails implements Arrayable
     public static function getValidatorForTerm()
     {
         return [
-            'grantor_name'     => 'required|string',
-            'grantor_mobile'   => 'required|string|mobile:bd',
-            'grantor_relation' => 'required|string',
-            'pro_pic'          => 'required|mimes:jpeg,png,jpg',
-            'nid_image_front'  => 'required|mimes:jpeg,png,jpg',
-            'nid_image_back'   => 'required|mimes:jpeg,png,jpg'
+            'grantor_name'       => 'required|string',
+            'grantor_mobile'     => 'required|string|mobile:bd',
+            'grantor_relation'   => 'required|string',
+            'grantor_nid_number' => 'required|string|digits_between:10,17',
+            'pro_pic'            => 'required|mimes:jpeg,png,jpg',
+            'nid_image_front'    => 'required|mimes:jpeg,png,jpg',
+            'nid_image_back'     => 'required|mimes:jpeg,png,jpg'
         ];
     }
 
