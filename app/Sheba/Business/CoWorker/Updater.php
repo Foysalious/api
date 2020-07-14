@@ -272,8 +272,8 @@ class Updater
                 'address' => $this->personalRequest->getAddress(),
                 'nationality' => $this->personalRequest->getNationality(),
                 'nid_no' => $this->personalRequest->getNidNumber(),
-                'nid_image_front' => $nid_image_front_name,
-                'nid_image_back' => $nid_image_back_name,
+                'nid_image_front' => $nid_image_front,
+                'nid_image_back' => $nid_image_back,
                 'dob' => $this->personalRequest->getDateOfBirth()
             ];
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
