@@ -116,7 +116,7 @@ class CoWorkerController extends Controller
             return api_response($request, null, $this->coWorkerCreator->getErrorCode(), ['message' => $this->coWorkerCreator->getErrorMessage()]);
         }
         $member = $this->coWorkerCreator->basicInfoStore();
-        if ($member) return api_response($request, 1, 200, ['member_id' => $member->id]);
+        if ($member) return api_response($request, 1, 200, ['member_id' => $member->id, 'pro_pic' => $member->profile->pro_pic]);
         return api_response($request, null, 404);
 
     }
