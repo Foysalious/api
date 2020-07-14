@@ -145,8 +145,10 @@ class JobController extends Controller
         $job_collection->put('is_on_premise', $job->isOnPremise());
         $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
         $job_collection->put('order_code', $job->partnerOrder->order->code());
+        $job_collection->put('pick_up_location', $job->carRentalJobDetail && $job->carRentalJobDetail->pickUpLocation ? $job->carRentalJobDetail->pickUpLocation->name : null);
         $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
         $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
+        $job_collection->put('destination_location', $job->carRentalJobDetail && $job->carRentalJobDetail->destinationLocation ? $job->carRentalJobDetail->destinationLocation->name : null);
         $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
         $job_collection->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
         $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
