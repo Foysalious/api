@@ -440,9 +440,10 @@ class Loan
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
 
         $data['loan_status'] = $partner_loan->status;
+        $data['granted_amount'] = $partner_loan->loan_amount;
         if(!$last_claim || ($last_claim && $last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
         {
-            $data['loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
             $data['status_message'] = 'আপনি সর্বোচ্চ' .convertNumbersToBangla($partner_loan->loan_amount). 'পর্যন্ত লোন গ্রহণ করতে পারবেন';
             $data['status_type'] = 'info';
@@ -451,7 +452,7 @@ class Loan
         }
         if($last_claim && $last_claim->status == 'pending')
         {
-            $data['loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
             $data['status_type'] = 'warning';
@@ -460,7 +461,7 @@ class Loan
         }
         if($last_claim && $last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id))
         {
-            $data['loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = $last_claim->amount;
             $data['due_balance'] = $this->getDue($last_claim->loan_id);
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যাল্যান্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
             $data['status_type'] = 'success';
@@ -470,7 +471,7 @@ class Loan
 
         if($last_claim && $last_claim->status == 'declined')
         {
-            $data['loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
             $data['status_type'] = 'error';
