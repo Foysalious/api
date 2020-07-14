@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
@@ -147,7 +146,9 @@ class CoWorkerController extends Controller
             ->setDepartment($request->department)
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
+
         list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->setBasicRequest($basic_request)->setMember($member_id)->basicInfoUpdate();
+
         if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
         return api_response($request, null, 404);
     }
@@ -322,7 +323,6 @@ class CoWorkerController extends Controller
         if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
         return api_response($request, null, 404);
     }
-
 
     /**
      * @param $business

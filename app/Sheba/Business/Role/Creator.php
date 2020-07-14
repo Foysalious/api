@@ -1,10 +1,13 @@
 <?php namespace Sheba\Business\Role;
 
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 
 class Creator
 {
+    use ModificationFields;
+
     /** BusinessRoleRepositoryInterface $businessRoleRepository */
     private $businessRoleRepository;
     /** @var Requester $requester */
@@ -37,8 +40,9 @@ class Creator
         $data = [
             'business_department_id' => $this->requester->getDepartment(),
             'name' => $this->requester->getName(),
-            'is_published' => $this->requester->getIsPublished(),
+            'is_published' => $this->requester->getIsPublished()
         ];
-        return $this->businessRoleRepository->create($data);
+
+        return $this->businessRoleRepository->create($this->withCreateModificationField($data));
     }
 }
