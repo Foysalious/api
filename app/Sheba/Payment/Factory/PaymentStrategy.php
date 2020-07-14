@@ -66,7 +66,9 @@ class PaymentStrategy
      */
     public static function getDetails($method, $version_code, $platform_name, Payable $payable)
     {
-        switch (self::getValidatedMethod($method, $payable)) {
+        if (!self::isValid($method)) throw new InvalidPaymentMethod();
+        switch ($method) {
+            case self::ONLINE: return self::sslDetails();
             case self::SSL: return self::sslDetails();
             case self::SSL_DONATION: return self::sslDonationDetails();
             case self::BKASH: return self::bkashDetails();
