@@ -18,7 +18,7 @@ class Authentication
         $this->keyId = config('apple.key_id');
         $this->teamId = config('apple.team_id');
         $this->clientId = config('apple.client_id');
-        $this->publicKeyName = 'AuthKey_Q66N9Y2HF6.pem';
+        $this->publicKeyName = config('apple.pem_key');
         $this->authorizationCode = $authorizationCode;
     }
 
