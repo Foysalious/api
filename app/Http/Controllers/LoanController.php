@@ -68,6 +68,16 @@ class LoanController extends Controller
 
     }
 
+    public function getDashboardData(Request $request, Loan $loan) {
+        try {
+            $data = $loan->microLoanData($request);
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     /**
      * @param Request $request
      * @param         $loan_id
