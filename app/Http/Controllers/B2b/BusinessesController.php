@@ -3,6 +3,7 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
+use App\Models\BusinessMember;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -281,6 +282,10 @@ class BusinessesController extends Controller
 
     public function getBanks(Request $request)
     {
+       /* $business_members = BusinessMember::query()->select('id', 'status')->limit(10)->get();
+        $business_members->each(function ($business_member){
+           $business_member->update(['status'=>'active']);
+        });*/
         $banks = [];
         foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
             array_push($banks, [
