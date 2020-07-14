@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use FontLib\EOT\File;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
@@ -128,18 +131,23 @@ class CoWorkerController extends Controller
      */
     public function basicInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+        $validation_data = [
             'first_name' => 'required|string',
             'last_name' => 'sometimes|required|string',
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
             'manager_employee' => 'sometimes|required'
-        ]);
-        $member = $request->manager_member;
-        $this->setModifier($member);
-        $basic_request = $this->basicRequest->setProPic($request->file('pro_pic'))
+        ];
+        if ($this->isFile($request)) {
+            $validation_data += ['pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'];
+        } else {
+            $validation_data += ['pro_pic' => 'sometimes|required|string'];
+        }
+        $this->validate($request, $validation_data);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+        $basic_request = $this->basicRequest->setProPic($request->pro_pic)
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
             ->setEmail($request->email)
@@ -154,6 +162,16 @@ class CoWorkerController extends Controller
 
         if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @return bool
+     */
+    private function isFile(Request $request)
+    {
+        if ($request->pro_pic instanceof Image || $request->pro_pic instanceof UploadedFile) return true;
+        return false;
     }
 
     /**
@@ -190,15 +208,25 @@ class CoWorkerController extends Controller
      */
     public function personalInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
+        $validation_data = [
             'mobile' => 'string|mobile:bd',
             'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
             'address ' => 'sometimes|required|string',
             'nationality ' => 'sometimes|required|string',
-            'nid_number ' => 'sometimes|required|integer',
-            'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-            'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-        ]);
+            'nid_number ' => 'sometimes|required|integer'
+        ];
+        if ($this->isFile($request)) {
+            $validation_data += [
+                'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+                'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            ];
+        } else {
+            $validation_data += [
+                'nid_front ' => 'sometimes|required|string',
+                'nid_back ' => 'sometimes|required|string'
+            ];
+        }
+        $this->validate($request, $validation_data);
         $member = $request->manager_member;
         $this->setModifier($member);
         $personal_request = $this->personalRequest->setPhone($request->mobile)
@@ -229,20 +257,32 @@ class CoWorkerController extends Controller
      */
     public function financialInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
+        $validation_data = [
             'tin_number ' => 'sometimes|required|string',
             'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
             'bank_name ' => 'sometimes|required|string',
             'bank_account_number ' => 'sometimes|required|string'
-        ]);
+        ];
+        if ($this->isFile($request)) {
+            $validation_data += [
+                'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+            ];
+        } else {
+            $validation_data += [
+                'tin_certificate ' => 'sometimes|required|string'
+            ];
+        }
+        $this->validate($request, $validation_data);
 
-        $member = $request->manager_member;
-        $this->setModifier($member);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
             ->setTinCertificate($request->file('tin_certificate'))
             ->setBankName($request->bank_name)
             ->setBankAccNumber($request->bank_account_number);
-        list($profile, $image_name, $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)->setMember($member_id)->financialInfoUpdate();
+        list($profile, $image_name, $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
+            ->setMember($member_id)
+            ->financialInfoUpdate();
         if ($profile) return api_response($request, 1, 200, ['tin_certificate_name' => $image_name, 'tin_certificate_link' => $image_link]);
         return api_response($request, null, 404);
     }
