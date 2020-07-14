@@ -16,10 +16,12 @@ use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\CoWorker\ProfileCompletionCalculator;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
+use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
@@ -225,14 +227,16 @@ class EmployeeController extends Controller
         return api_response($request, null, 200, ['details' => $employee_details]);
     }
 
-    public function updateBasicInformation(Request $request, BasicRequest $basic_request, Updater $updater)
+    public function updateBasicInformation(Request $request, BasicRequest $basic_request, PersonalRequest $personalRequest, Updater $updater)
     {
-        $this->validate($request, [
+        $validation_rules = [
             'name' => 'required|string',
-            'phone' => 'required|string',
+            'mobile' => 'required|string|mobile:bd',
             'department' => 'required|string',
             'designation' => 'required|string'
-        ]);
+        ];
+        $this->validate($request, $validation_rules);
+
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
         $member = $this->repo->find($business_member['member_id']);
@@ -241,7 +245,24 @@ class EmployeeController extends Controller
         $basic_request->setFirstName($request->name)->setDepartment($request->department)->setRole($request->designation);
         if ($request->has('manager')) $basic_request->setManagerEmployee($request->manager);
 
-        $updater->setBasicRequest($basic_request)->setMember($member->id)->basicInfoUpdate();
+        $mobile = BDMobileFormatter::format($request->mobile);
+        $updater->setBasicRequest($basic_request)->setMember($member->id)->setMobile($mobile);
+
+        if ($updater->hasError())
+            return api_response($request, null, $updater->getErrorCode(), ['message' => $updater->getErrorMessage()]);
+
+        $updater->basicInfoUpdate();
+
+        $profile = $updater->getProfile();
+        $personalRequest->setPhone($mobile)
+            ->setDateOfBirth($profile->date_of_birth)
+            ->setAddress($profile->address)
+            ->setNationality($profile->nationality)
+            ->setNidNumber($profile->nid_number)
+            ->setNidFront($profile->nid_front)
+            ->setNidBack($profile->nid_back);
+
+        $updater->setPersonalRequest($personalRequest)->personalInfoUpdate();
 
         return api_response($request, null, 200);
     }

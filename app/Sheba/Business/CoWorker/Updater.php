@@ -10,6 +10,7 @@ use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
@@ -36,7 +37,7 @@ use DB;
 
 class Updater
 {
-    use CdnFileManager, FileManager, ModificationFields;
+    use CdnFileManager, FileManager, ModificationFields, HasErrorCodeAndMessage;
 
     /** @var FileRepository $fileRepository */
     private $fileRepository;
@@ -82,6 +83,7 @@ class Updater
     private $memberRepository;
     /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
     private $businessRoleRepository;
+    private $mobile;
 
     /**
      * Updater constructor.
@@ -186,7 +188,9 @@ class Updater
     public function setMember($member)
     {
         $this->member = Member::findOrFail($member);
+        $this->profile = $this->member->profile;
         $this->businessMember = $this->member->businessMember;
+
         return $this;
     }
 
@@ -224,6 +228,18 @@ class Updater
         return false;
     }
 
+    private function getBusinessRole()
+    {
+        $business_role = $this->businessRoleRepository
+            ->whereLike('name', $this->basicRequest->getRole())
+            ->where('business_department_id', $this->basicRequest->getDepartment())
+            ->first();
+
+        if ($business_role) return $business_role;
+
+        return $this->businessRoleCreate();
+    }
+
     /**
      * @return array|null
      */
@@ -235,7 +251,7 @@ class Updater
             $profile_data = [];
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
-            $profile_data['name'] = $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName();
+            $profile_data['name'] = $this->basicRequest->getFirstName();
             if ($profile_image) {
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
@@ -257,20 +273,9 @@ class Updater
             return [$this->businessMember, $profile_pic_name, $profile_pic];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
-    }
-
-    private function getBusinessRole()
-    {
-        $business_role = $this->businessRoleRepository
-            ->whereLike('name', $this->basicRequest->getRole())
-            ->where('business_department_id', $this->basicRequest->getDepartment())
-            ->first();
-
-        if ($business_role) return $business_role;
-
-        return $this->businessRoleCreate();
     }
 
     /**
@@ -293,6 +298,7 @@ class Updater
             return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -332,6 +338,7 @@ class Updater
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -367,6 +374,7 @@ class Updater
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -389,6 +397,7 @@ class Updater
             return $this->member;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -400,16 +409,13 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_data = [
-                'status' => $this->coWorkerRequester->getStatus()
-            ];
-            $this->businessMember = $this->businessMemberUpdater
-                ->setBusinessMember($this->businessMember)
-                ->update($business_member_data);
+            $business_member_data = ['status' => $this->coWorkerRequester->getStatus()];
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -461,5 +467,20 @@ class Updater
     private function makePicName($profile, $photo, $image_for = 'profile')
     {
         return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
+    }
+
+    /**
+     * @param $mobile
+     * @return $this
+     */
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
+        $profile = $this->profileRepository->checkExistingMobile($mobile);
+        if (!$profile) return $this;
+        if ($profile->id != $this->member->profile->id)
+            $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
+
+        return $this;
     }
 }

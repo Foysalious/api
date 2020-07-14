@@ -10,7 +10,7 @@ class InvalidModeratorException extends Exception
         if (!$message || $message == '') {
             $message = 'Invalid Moderator';
         }
-        parent::__construct($message, $code, $previous);
 
+        parent::__construct($message, $code, $previous);
     }
 }
