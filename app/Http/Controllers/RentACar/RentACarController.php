@@ -73,6 +73,7 @@ class RentACarController extends Controller
                     'quantity' => 1,
                     'is_surcharge_applied' => 1,
                     'surcharge_percentage' => 20,
+                    'surcharge_amount' => 50,
                     'unit_price' => 2000
                 ];
                 $cars[] = $answer;
