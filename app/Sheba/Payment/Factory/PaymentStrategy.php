@@ -2,6 +2,8 @@
 
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\Payable;
+use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
@@ -13,6 +15,7 @@ use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
 use Sheba\Payment\Methods\Wallet;
 use Sheba\Payment\PayableUser;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PaymentStrategy
 {
@@ -35,14 +38,14 @@ class PaymentStrategy
 
     /**
      * @param $method
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet
      * @throws InvalidPaymentMethod
      */
-    public static function getMethod($method, PayableUser $user)
+    public static function getMethod($method, Payable $payable)
     {
-        switch (self::getValidatedMethod($method, $user)) {
-            case self::SSL: return SslBuilder::get($user);
+        switch (self::getValidatedMethod($method, $payable)) {
+            case self::SSL: return SslBuilder::get($payable);
             case self::SSL_DONATION: return SslBuilder::getForDonation();
             case self::BKASH: return app(Bkash::class);
             case self::WALLET: return app(Wallet::class);
@@ -57,13 +60,15 @@ class PaymentStrategy
      * @param $method
      * @param $version_code
      * @param $platform_name
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return array
      * @throws InvalidPaymentMethod
      */
-    public static function getDetails($method, $version_code, $platform_name, PayableUser $user)
+    public static function getDetails($method, $version_code, $platform_name, Payable $payable)
     {
-        switch (self::getValidatedMethod($method, $user)) {
+        if (!self::isValid($method)) throw new InvalidPaymentMethod();
+        switch ($method) {
+            case self::ONLINE: return self::sslDetails();
             case self::SSL: return self::sslDetails();
             case self::SSL_DONATION: return self::sslDonationDetails();
             case self::BKASH: return self::bkashDetails();
@@ -77,21 +82,28 @@ class PaymentStrategy
 
     /**
      * @param $method
-     * @param PayableUser $user
+     * @param Payable $payable
      * @return string
      * @throws InvalidPaymentMethod
      */
-    private static function getValidatedMethod($method, PayableUser $user)
+    private static function getValidatedMethod($method, Payable $payable)
     {
         if (!self::isValid($method)) throw new InvalidPaymentMethod();
 
-        if ($method == self::ONLINE) {
-            if ($user instanceof Customer) $method = self::SSL;
-            else if ($user instanceof Partner) $method = self::PORT_WALLET;
-            else $method = self::getDefaultOnlineMethod();
+        if ($method != self::ONLINE) return $method;
+
+        /** @var PayableUser $user */
+        $user = $payable->user;
+
+        if ($payable->isPaymentLink()) {
+            return SslBuilder::shouldUseForPaymentLink($payable->getPaymentLink()) ?
+                self::SSL :
+                self::PORT_WALLET;
         }
 
-        return $method;
+        if ($user instanceof Customer) return self::SSL;
+        else if ($user instanceof Partner) return self::PORT_WALLET;
+        return self::getDefaultOnlineMethod();
     }
 
     /**

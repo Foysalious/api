@@ -103,7 +103,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
      */
     private function getPaymentLink() {
         try {
-            return $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
+            return $this->paymentLinkRepository->find($this->payment->payable->type_id);
         } catch (RequestException $e) {
             throw $e;
         }
