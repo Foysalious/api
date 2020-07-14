@@ -46,71 +46,111 @@ class RentACarController extends Controller
         }
     }
 
-    public function getOptions(Request $request, ServiceRequest $service_request, PriceCalculation $price_calculation, DiscountCalculation $discount_calculation)
+    public function getCars(Request $request, ServiceRequest $service_request, PriceCalculation $price_calculation, DiscountCalculation $discount_calculation)
     {
-        $options = [
-            [
-                'name' => 'Budget',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
-                'number_of_seats' => 4,
-                'info' => 'Model below 2009',
-                'discounted_price' => 2990,
-                'original_price' => 2990,
-                'discount' => 0,
-                'quantity' => 1,
-                'is_surcharge_applied' => 1,
-                'surcharge_percentage' => 20
-            ],
-            [
-                'name' => 'Premium',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
-                'number_of_seats' => 4,
-                'info' => 'Newer economy cars',
-                'discounted_price' => 3700,
-                'original_price' => 4000,
-                'discount' => 0,
-                'quantity' => 1,
-                'is_surcharge_applied' => 0,
-                'surcharge_percentage' => 30
-            ],
-            [
-                'name' => 'Family',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
-                'number_of_seats' => 7,
-                'info' => 'Model below 2009',
-                'discounted_price' => 6000,
-                'original_price' => 6000,
-                'discount' => 0,
-                'quantity' => 1,
-                'is_surcharge_applied' => 1,
-                'surcharge_percentage' => 25
-            ],
-            [
-                'name' => 'Premium Family',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
-                'number_of_seats' => 7,
-                'info' => 'Model above 2010',
-                'discounted_price' => 9000,
-                'original_price' => 10000,
-                'discount' => 0,
-                'quantity' => 1,
-                'is_surcharge_applied' => 0,
-                'surcharge_percentage' => 30
-            ],
-            [
-                'name' => 'Group',
-                'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/hiace.png',
-                'number_of_seats' => 12,
-                'info' => 'Model above 2010',
-                'discounted_price' => 12000,
-                'original_price' => 12000,
-                'discount' => 0,
-                'quantity' => 1,
-                'is_surcharge_applied' => 1,
-                'surcharge_percentage' => 30
-            ]
-        ];
-        return api_response($request, null, 200, ['options' => $options]);
+        try {
+            $this->validate($request, ['services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric']);
+            $services = json_decode($request->services, 1);
+            $services = $service_request_object = $service_request->setServices($services)->get();
+            $service = $services[0];
+            $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
+            if (!$location_service) return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
+
+            $variables = json_decode($service->getService()->variables, true);
+            $car_type_option = $variables['options'][0];
+            $car_types = explode(',', $car_type_option['answers']);
+
+            $cars = [];
+            foreach ($car_types as $key => $car) {
+                $answer = [
+                    'name' => $car,
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/'.$variables['helpers']['assets'][$key].'.png',
+                    'number_of_seats' => $variables['helpers']['capacity'][$key],
+                    'info' => $variables['helpers']['descriptions'][$key],
+                    'discounted_price' => 2990,
+                    'original_price' => 2990,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 1,
+                    'surcharge_percentage' => 20,
+                    'unit_price' => 2000
+                ];
+                $cars[] = $answer;
+            }
+
+
+            $options = [
+                [
+                    'name' => 'Budget',
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
+                    'number_of_seats' => 4,
+                    'info' => 'Model below 2009',
+                    'discounted_price' => 2990,
+                    'original_price' => 2990,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 1,
+                    'surcharge_percentage' => 20
+                ],
+                [
+                    'name' => 'Premium',
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/sedan.png',
+                    'number_of_seats' => 4,
+                    'info' => 'Newer economy cars',
+                    'discounted_price' => 3700,
+                    'original_price' => 4000,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 0,
+                    'surcharge_percentage' => 30
+                ],
+                [
+                    'name' => 'Family',
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
+                    'number_of_seats' => 7,
+                    'info' => 'Model below 2009',
+                    'discounted_price' => 6000,
+                    'original_price' => 6000,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 1,
+                    'surcharge_percentage' => 25
+                ],
+                [
+                    'name' => 'Premium Family',
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/noah.png',
+                    'number_of_seats' => 7,
+                    'info' => 'Model above 2010',
+                    'discounted_price' => 9000,
+                    'original_price' => 10000,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 0,
+                    'surcharge_percentage' => 30
+                ],
+                [
+                    'name' => 'Group',
+                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/hiace.png',
+                    'number_of_seats' => 12,
+                    'info' => 'Model above 2010',
+                    'discounted_price' => 12000,
+                    'original_price' => 12000,
+                    'discount' => 0,
+                    'quantity' => 1,
+                    'is_surcharge_applied' => 1,
+                    'surcharge_percentage' => 30
+                ]
+            ];
+
+            return api_response($request, null, 200, ['cars' => $cars]);
+        } catch (InsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with outside city for this location.', 'code' => 700]);
+        } catch (OutsideCityPickUpAddressNotFoundException $e) {
+            return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
+        } catch (DestinationCitySameAsPickupException $e) {
+            return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
+        }
+
     }
 
     public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)
