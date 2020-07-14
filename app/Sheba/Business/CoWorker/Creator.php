@@ -5,6 +5,7 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
+use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Business\Role\Requester as RoleRequester;
@@ -67,6 +68,8 @@ class Creator
     private $profileBankInfoRepository;
     /** MemberRepositoryInterface $memberRepository */
     private $memberRepository;
+    /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
+    private $businessRoleRepository;
 
     /**
      * Updater constructor.
@@ -137,7 +140,7 @@ class Creator
         DB::beginTransaction();
         try {
             $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
-            $this->businessRoleCreate();
+            $this->businessRole = $this->getBusinessRole();
             $new_member = null;
             if (!$profile) {
                 $profile = $this->createProfile();
@@ -212,11 +215,27 @@ class Creator
         ]);
     }
 
+    private function getBusinessRole()
+    {
+        $business_role = $this->businessRoleRepository
+            ->whereLike('name', $this->basicRequest->getRole())
+            ->where('business_department_id', $this->basicRequest->getDepartment())
+            ->first();
+        if ($business_role) return $business_role;
+        return $this->businessRoleCreate();
+    }
+
+    /**
+     * @return Model
+     */
     private function businessRoleCreate()
     {
-        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
-            ->setName($this->basicRequest->getRole())->setIsPublished(1);
-        $this->businessRole = $this->roleCreator->setRequester($business_role_requester)->create();
+        $business_role_requester = $this->roleRequester
+            ->setDepartment($this->basicRequest->getDepartment())
+            ->setName($this->basicRequest->getRole())
+            ->setIsPublished(1);
+
+        return $this->roleCreator->setRequester($business_role_requester)->create();
     }
 
     /**

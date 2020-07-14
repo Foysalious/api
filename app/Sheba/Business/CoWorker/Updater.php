@@ -1,5 +1,9 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
+use phpDocumentor\Reflection\File;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
@@ -211,6 +215,16 @@ class Updater
     }
 
     /**
+     * @param $image
+     * @return bool
+     */
+    private function isFile($image)
+    {
+        if ($image instanceof Image || $image instanceof UploadedFile) return true;
+        return false;
+    }
+
+    /**
      * @return array|null
      */
     public function basicInfoUpdate()
@@ -221,11 +235,10 @@ class Updater
             $profile_data = [];
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
-
             $profile_data['name'] = $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName();
             if ($profile_image) {
-                $profile_pic_name = $profile_image->getClientOriginalName();
-                $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
+                $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
+                $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
                 $profile_data['pro_pic'] = $profile_pic;
             }
             if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
@@ -292,10 +305,19 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $nid_image_front_name = $this->personalRequest->getNidFront() ? $this->personalRequest->getNidFront()->getClientOriginalName() : null;
-            $nid_image_front = $this->personalRequest->getNidFront() ? $this->getPicture($this->profile, $this->personalRequest->getNidFront(), 'nid_image_front') : null;
-            $nid_image_back_name = $this->personalRequest->getNidBack() ? $this->personalRequest->getNidBack()->getClientOriginalName() : null;
-            $nid_image_back = $this->personalRequest->getNidBack() ? $this->getPicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null;
+            $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
+            $nid_front = $this->personalRequest->getNidFront();
+            $nid_back = $this->personalRequest->getNidBack();
+
+            if ($nid_front) {
+                $nid_image_front_name = $this->isFile($nid_front) ? $nid_front->getClientOriginalName() : array_last(explode('/', $nid_front));
+                $nid_image_front = $this->isFile($nid_front) ? $this->getPicture($this->profile, $nid_front, 'nid_image_front') : $nid_front;
+            }
+            if ($nid_back) {
+                $nid_image_back_name = $this->isFile($nid_back) ? $nid_back->getClientOriginalName() : array_last(explode('/', $nid_back));
+                $nid_image_back = $this->isFile($nid_back) ? $this->getPicture($this->profile, $nid_back, 'nid_image_back') : $nid_back;
+            }
+
             $profile_data = [
                 'mobile' => $this->personalRequest->getPhone(),
                 'address' => $this->personalRequest->getAddress(),
@@ -322,8 +344,14 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $tin_certificate_name = $this->financialRequest->getTinCertificate() ? $this->financialRequest->getTinCertificate()->getClientOriginalName() : null;
-            $tin_certificate_link = $this->financialRequest->getTinCertificate() ? $this->getPicture($this->profile, $this->financialRequest->getTinCertificate(), 'tin_certificate') : null;
+            $tin_certificate_name = $tin_certificate_link = null;
+            $tin_certificate = $this->personalRequest->getNidFront();
+
+            if ($tin_certificate) {
+                $tin_certificate_name = $this->isFile($tin_certificate) ? $tin_certificate->getClientOriginalName() : array_last(explode('/', $tin_certificate));
+                $tin_certificate_link = $this->isFile($tin_certificate) ? $this->getPicture($this->profile, $tin_certificate, 'tin_certificate') : $tin_certificate;
+            }
+
             $profile_data = [
                 'tin_no' => $this->financialRequest->getTinNumber(),
                 'tin_certificate' => $tin_certificate_link,
