@@ -232,15 +232,13 @@ class Updater
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
-
-            $business_member_requester = $this->businessMemberRequester
-                ->setRole($this->businessRole->id)
-                ->setManagerEmployee($this->basicRequest->getManagerEmployee());
-
+            $business_member_data = [
+                'business_role_id' => $this->businessRole->id,
+                'manager_id' => $this->basicRequest->getManagerEmployee(),
+            ];
             $this->businessMember = $this->businessMemberUpdater
                 ->setBusinessMember($this->businessMember)
-                ->setRequester($business_member_requester)
-                ->update();
+                ->update($business_member_data);
 
             DB::commit();
             return [$this->businessMember, $profile_pic_name, $profile_pic];
@@ -269,11 +267,15 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_requester = $this->businessMemberRequester->setJoinDate($this->officialRequest->getJoinDate())
-                ->setGrade($this->officialRequest->getGrade())
-                ->setEmployeeType($this->officialRequest->getEmployeeType())
-                ->setPreviousInstitution($this->officialRequest->getPreviousInstitution());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            $business_member_data = [
+                'join_date' => $this->officialRequest->getJoinDate(),
+                'grade' => $this->officialRequest->getGrade(),
+                'employee_type' => $this->officialRequest->getEmployeeType(),
+                'previous_institution' => $this->officialRequest->getPreviousInstitution(),
+            ];
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->update($business_member_data);
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
@@ -370,8 +372,12 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_requester = $this->businessMemberRequester->setStatus($this->coWorkerRequester->getStatus());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            $business_member_data = [
+                'status' => $this->coWorkerRequester->getStatus()
+            ];
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->update($business_member_data);
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
