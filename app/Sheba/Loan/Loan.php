@@ -442,7 +442,7 @@ class Loan
         $data['loan_status'] = $partner_loan->status;
         if(!$last_claim || ($last_claim && $last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
         {
-            $data['robi_loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = $partner_loan->loan_amount;
             $data['due_balance'] = 0;
             $data['status_message'] = 'আপনি সর্বোচ্চ' .convertNumbersToBangla($partner_loan->loan_amount). 'পর্যন্ত লোন গ্রহণ করতে পারবেন';
             $data['status_type'] = 'info';
@@ -451,7 +451,7 @@ class Loan
         }
         if($last_claim && $last_claim->status == 'pending')
         {
-            $data['robi_loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = $partner_loan->loan_amount;
             $data['due_balance'] = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
             $data['status_type'] = 'warning';
@@ -460,7 +460,7 @@ class Loan
         }
         if($last_claim && $last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id))
         {
-            $data['robi_loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = $partner_loan->loan_amount;
             $data['due_balance'] = $this->getDue($last_claim->loan_id);
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যাল্যান্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
             $data['status_type'] = 'success';
@@ -470,12 +470,26 @@ class Loan
 
         if($last_claim && $last_claim->status == 'declined')
         {
-            $data['robi_loan_balance'] = $partner_loan->loan_amount;
+            $data['loan_balance'] = $partner_loan->loan_amount;
             $data['due_balance'] = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
             $data['status_type'] = 'error';
             $data['can_claim']   = 0;
             $data['should_pay'] = 0;
+        }
+        $data['recent_claims'] = [];
+        $recent_claims = (new LoanClaim())->getRecent($request->loan_id);
+        if($recent_claims)
+        {
+            foreach ($recent_claims as $claim)
+            {
+                array_push($data['recent_claims'],[
+                    'status' => $claim->status,
+                    'amount' => $claim->amount,
+                    'log'   => $claim->log,
+                    'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
+                ]);
+            }
         }
 
         return $data;
