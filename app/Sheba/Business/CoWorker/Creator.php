@@ -157,7 +157,7 @@ class Creator
                 } else {
                     $new_member = $this->createMember($profile);
                 }
-                $this->sendExistingUserMail($profile);
+                #$this->sendExistingUserMail($profile);
                 $this->businessMember = $this->createBusinessMember($this->business, $new_member);
             }
             DB::commit();
@@ -196,7 +196,7 @@ class Creator
             'pro_pic' => $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()),
         ];
         $profile = $this->profileRepository->store($data);
-        dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
+        #dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
         return $profile;
     }
 
