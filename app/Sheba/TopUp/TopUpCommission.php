@@ -30,7 +30,7 @@ abstract class TopUpCommission
     public function setTopUpOrder(TopUpOrder $top_up_order)
     {
         $this->topUpOrder = $top_up_order;
-        $this->amount     = $this->topUpOrder->amount;
+        $this->amount = $this->topUpOrder->amount;
 
         $this->setAgent($top_up_order->agent)->setTopUpVendor($top_up_order->vendor)->setVendorCommission();
 
@@ -45,10 +45,10 @@ abstract class TopUpCommission
      */
     protected function setVendorCommission()
     {
-        $commissions              = $this->vendor->commissions()->where('type', get_class($this->agent));
-        $commissions_copy         = clone $commissions;
+        $commissions = $this->vendor->commissions()->where('type', get_class($this->agent));
+        $commissions_copy = clone $commissions;
         $commission_of_individual = $commissions_copy->where('type_id', $this->agent->id)->first();
-        $this->vendorCommission   = $commission_of_individual ?: $commissions->whereNull('type_id')->first();
+        $this->vendorCommission = $commission_of_individual ?: $commissions->whereNull('type_id')->first();
         return $this;
     }
 
@@ -138,14 +138,15 @@ abstract class TopUpCommission
     protected function refundAgentsCommission()
     {
         $this->setModifier($this->agent);
-        $amount                  = $this->topUpOrder->amount;
+        $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
-        $log                     = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
         $this->refundUser($amount_after_commission, $log);
     }
 
     private function refundUser($amount, $log)
     {
+        if ($amount == 0) return;
         /*
          * WALLET TRANSACTION NEED TO REMOVE
          *  $this->agent->creditWallet($amount);
