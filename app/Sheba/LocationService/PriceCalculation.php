@@ -56,7 +56,8 @@ class PriceCalculation extends PriceCalculationAbstract
             $this->setMinPrice($original_price);
         }
         $surcharge = $this->getSurcharge();
-        $original_price = $surcharge ? $original_price + $surcharge : $original_price;
+        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($original_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
+        $original_price = $surcharge ? $original_price + $surcharge_amount : $original_price;
         return $original_price;
 
     }
