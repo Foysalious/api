@@ -26,6 +26,14 @@ class Repayment
         return $total_credit == $total_debit;
     }
 
+    public function getDue()
+    {
+        $total_debit = Model::where('loan_id',$this->loanId)->sum('debit');
+        $total_credit = Model::where('loan_id',$this->loanId)->sum('credit');
+
+        return $total_credit - $total_debit;
+    }
+
     public function get($claim_id)
     {
 

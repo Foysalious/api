@@ -40,4 +40,15 @@ class LoanClaim
         return Model::where('loan_id',$loan_id)->get();
 
     }
+
+    public function getRecent($loan_id)
+    {
+        return Model::where('loan_id',$loan_id)->orderBy('id','desc')->take(3)->get();
+
+    }
+
+    public function getPending($loan_id)
+    {
+        return Model::where('loan_id',$loan_id)->where('status','pending')->orderBy('id','desc')->first();
+    }
 }
