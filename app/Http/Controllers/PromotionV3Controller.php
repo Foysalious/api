@@ -1,11 +1,13 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use Illuminate\Http\Request;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\PriceCalculation\PriceCalculationFactory;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Sheba\Voucher\DTO\Params\CheckParamsForOrder;
@@ -16,7 +18,7 @@ use App\Exceptions\LocationService\LocationServiceNotFoundException;
 class PromotionV3Controller extends Controller
 {
 
-    public function add($customer, Request $request, PriceCalculation $price_calculation,
+    public function add($customer, Request $request,
                         DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation, ServiceRequest $service_request)
     {
         ini_set('memory_limit', '4096M');
@@ -30,6 +32,7 @@ class PromotionV3Controller extends Controller
             $location = $hyper_local ? $hyper_local->location->id : $location;
         }
         $service_requestObjects = $service_request->setServices(json_decode($request->services, 1))->get();
+        $price_calculation = $this->resolvePriceCalculation($service_requestObjects[0]->getCategory());
         $order_amount = $this->calculateOrderAmount($price_calculation, $discount_calculation, $upsell_calculation, $location, $service_requestObjects);
         if (!$order_amount) return api_response($request, null, 403);
 
@@ -48,8 +51,7 @@ class PromotionV3Controller extends Controller
         }
     }
 
-    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, ServiceRequest $serviceRequest,
-                                       PriceCalculation $price_calculation, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
+    public function autoApplyPromotion($customer, Request $request, VoucherSuggester $voucherSuggester, ServiceRequest $serviceRequest, DiscountCalculation $discount_calculation, UpsellCalculation $upsell_calculation)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 660);
@@ -57,7 +59,7 @@ class PromotionV3Controller extends Controller
         $this->validate($request, ['services' => 'string|required']);
         $service_requestObjects = $serviceRequest->setServices(json_decode($request->services, 1))->get();
         $location = $request->location;
-
+        $price_calculation = $this->resolvePriceCalculation($service_requestObjects[0]->getCategory());
         if ($request->has('lat') && $request->has('lng')) {
             $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
             $location = $hyper_local ? $hyper_local->location->id : $location;
@@ -88,7 +90,7 @@ class PromotionV3Controller extends Controller
         }
     }
 
-    private function calculateOrderAmount(PriceCalculation $price_calculation, DiscountCalculation $discount_calculation,
+    private function calculateOrderAmount($price_calculation, DiscountCalculation $discount_calculation,
                                           UpsellCalculation $upsell_calculation, $location_id, $service_requestObjects)
     {
         $order_amount = 0.00;
@@ -101,15 +103,13 @@ class PromotionV3Controller extends Controller
 
             if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
 
-            $price_calculation->setLocationService($location_service)->setOption($service_requestObject->getOption())->setQuantity($service_requestObject->getQuantity());
+            $price_calculation->setService($service_requestObject->getService())->setOption($service_requestObject->getOption())->setQuantity($service_requestObject->getQuantity());
+            $service_requestObject->getCategory()->isRentACarOutsideCity() ? $price_calculation->setPickupThanaId($service_requestObject->getPickupThana()->id)->setDestinationThanaId($service_requestObject->getDestinationThana()->id) : $price_calculation->setLocationService($location_service);
             $upsell_unit_price = $upsell_calculation->setLocationService($location_service)->setOption($service_requestObject->getOption())
                 ->setQuantity($service_requestObject->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
-            $service_amount = $upsell_unit_price ? ($upsell_unit_price * $service_requestObject->getQuantity()) : $price_calculation->getTotalOriginalPrice();
-
-            if ($service_requestObject->getCategory()->isRentACar())
-                $service_amount = $price_calculation->getTotalOriginalPrice();
-
-            $discount_calculation->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($service_requestObject->getQuantity())->calculate();
+            if($upsell_unit_price) $price_calculation->setUpsellUnitPrice($upsell_unit_price);
+            $service_amount = $price_calculation->getTotalOriginalPrice();
+            $discount_calculation->setService($service_requestObject->getService())->setLocationService($location_service)->setOriginalPrice($service_amount)->setQuantity($service_requestObject->getQuantity())->calculate();
             $order_amount += $discount_calculation->getDiscountedPrice();
         }
 
@@ -133,5 +133,12 @@ class PromotionV3Controller extends Controller
         })->sortByDesc(function ($promotion) {
             return $promotion['priority'];
         })->values()->all();
+    }
+
+    private function resolvePriceCalculation(Category $category)
+    {
+        $priceCalculationFactory = new PriceCalculationFactory();
+        $priceCalculationFactory->setCategory($category);
+        return $priceCalculationFactory->get();
     }
 }

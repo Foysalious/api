@@ -13,6 +13,7 @@ use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
+use Sheba\PriceCalculation\PriceCalculationFactory;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 
@@ -26,7 +27,6 @@ class ServicePriceCalculation
     /** @var ServiceRequestObject[] */
     private $serviceRequestObject;
     private $location;
-    /** @var PriceCalculation */
     private $priceCalculation;
     /** @var UpsellCalculation */
     private $upsellCalculation;
@@ -39,10 +39,9 @@ class ServicePriceCalculation
     private $delivery_charge;
     private $job_discount_handler;
 
-    public function __construct(ServiceRequest $serviceRequest, PriceCalculation $priceCalculation, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function __construct(ServiceRequest $serviceRequest, UpsellCalculation $upsell_calculation, DiscountCalculation $discountCalculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
         $this->serviceRequest = $serviceRequest;
-        $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->upsellCalculation = $upsell_calculation;
         $this->delivery_charge = $delivery_charge;
@@ -102,13 +101,16 @@ class ServicePriceCalculation
         $services_list = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
             $service = $selected_service->getService();
+            $this->priceCalculation = $this->resolvePriceCalculation($service->category);
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
-            $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+            $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
+            $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
             $service_data = [
                 'service_id' => $service->id,
                 'service_name' => $service->name,
@@ -161,5 +163,12 @@ class ServicePriceCalculation
             'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
         ] : null;
         return $category;
+    }
+
+    private function resolvePriceCalculation(Category $category)
+    {
+        $priceCalculationFactory = new PriceCalculationFactory();
+        $priceCalculationFactory->setCategory($category);
+        return $priceCalculationFactory->get();
     }
 }
