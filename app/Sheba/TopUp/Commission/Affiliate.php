@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Commission;
 
-use App\Models\TopUpOrder;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -40,6 +39,7 @@ class Affiliate extends TopUpCommission
 
     private function deductFromAmbassador($amount, $log)
     {
+        if ($amount == 0) return;
         /*
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->agent->ambassador->debitWallet($amount);
