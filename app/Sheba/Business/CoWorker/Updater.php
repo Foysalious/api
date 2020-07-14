@@ -229,7 +229,7 @@ class Updater
                 $profile_data['pro_pic'] = $profile_pic;
             }
             if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
-            $this->profileRepository->updateRaw($this->profile, $profile_data);
+            $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
 
