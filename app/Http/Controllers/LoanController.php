@@ -862,4 +862,17 @@ class LoanController extends Controller
         }
     }
 
+    public function accountInfo(Request $request, $partner, $loan_id, Loan $loan)
+    {
+        try{
+            $request->merge(['loan_id' => $loan_id]);
+            $data = $loan->accountInfo($request);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
 }
