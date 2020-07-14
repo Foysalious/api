@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\BusinessMember;
 
-
 class Requester
 {
     private $managerEmployee;

@@ -1,11 +1,13 @@
 <?php namespace Sheba\Business\BusinessMember;
 
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\BusinessMember;
 
 class Updater
 {
+    use ModificationFields;
 
     /** BusinessMemberRepositoryInterface $businessMemberRepository */
     private $businessMemberRepository;
@@ -13,7 +15,6 @@ class Updater
     private $requester;
     /** BusinessMember $businessMember */
     private $businessMember;
-
 
     /**
      * Updater constructor.
@@ -56,8 +57,9 @@ class Updater
             'grade' => $this->requester->getGrade() ? $this->requester->getGrade() :  $this->businessMember->grade,
             'employee_type' => $this->requester->getEmployeeType() ? $this->requester->getEmployeeType() :  $this->businessMember->employee_type,
             'previous_institution' => $this->requester->getPreviousInstitution() ? $this->requester->getPreviousInstitution() :  $this->businessMember->previous_institution,
-            'status' => $this->requester->getStatus() ? $this->requester->getStatus() :  $this->businessMember->status,
+            'status' => $this->requester->getStatus() ? $this->requester->getStatus() :  $this->businessMember->status
         ];
-        return $this->businessMemberRepository->update($this->businessMember, $data);
+
+        return $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($data));
     }
 }
