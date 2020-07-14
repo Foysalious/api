@@ -74,8 +74,8 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'employees'], function ($api) {
-                    $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
                     $api->get('/', 'B2b\CoWorkerController@index');
+                    $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
                     $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
                     $api->group(['prefix' => '{employee}'], function ($api) {

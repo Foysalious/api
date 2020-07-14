@@ -145,7 +145,6 @@ class Creator
                 $this->businessMember = $this->createBusinessMember($this->business, $new_member);
             } else {
                 $old_member = $profile->member;
-
                 if ($old_member) {
                     if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
                         $this->setError(409, "This person is already added.");
@@ -156,10 +155,10 @@ class Creator
                     $new_member = $old_member;
                 } else {
                     $new_member = $this->createMember($profile);
+                    $this->businessMember = $this->createBusinessMember($this->business, $new_member);
                 }
-                #$this->sendExistingUserMail($profile);
-                $this->businessMember = $this->createBusinessMember($this->business, $new_member);
             }
+            #$this->sendExistingUserMail($profile);
             DB::commit();
             return $new_member;
         } catch (Throwable $e) {
@@ -188,12 +187,13 @@ class Creator
     private function createProfile()
     {
         $password = str_random(6);
+        $default_image = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg';
         $data = [
             '_token' => str_random(255),
             'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
             'email' => $this->basicRequest->getEmail(),
             'password' => bcrypt($password),
-            'pro_pic' => $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()),
+            'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
         ];
         $profile = $this->profileRepository->store($data);
         #dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
