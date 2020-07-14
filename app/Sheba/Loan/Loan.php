@@ -564,6 +564,56 @@ class Loan
         return $this->filterList($request, $output);
     }
 
+    public function microLoanData(Request $request) {
+        $data = $this->getMicroLoans($request->user);
+        $registered_partner = Retailer::all();
+        $formatted_data = (object) [
+            'applied_loan' => count($data),
+            'loan_rejected' => 0,
+            'loan_disburse' => 0,
+            'loan_approved' => 0,
+            'loan_closed' => 0,
+            'total_registration' => count($registered_partner),
+        ];
+        foreach ($data as $loan) {
+            if ($loan["status"] === "rejected") {
+                $formatted_data->loan_rejected++;
+            }
+            if ($loan["status"] === "approved") {
+                $formatted_data->loan_approved++;
+            }
+            if ($loan["status"] === "disbursed") {
+                $formatted_data->loan_disburse++;
+            }
+            if ($loan["status"] === "closed") {
+                $formatted_data->loan_closed++;
+            }
+        }
+        return $formatted_data;
+    }
+
+    private function getLoans($user) {
+        $bank_id = null;
+        if ($user instanceof BankUser)
+            $bank_id = $user->bank->id;
+        $query = $this->repo;
+        if ($bank_id) {
+            $query = $query->where('partner_bank_loans.bank_id', $bank_id);
+        }
+        return $query->with(['bank'])->get();
+    }
+
+    private function getMicroLoans($user) {
+        $bank_id = null;
+        if ($user instanceof BankUser)
+            $bank_id = $user->bank->id;
+        $query = $this->repo;
+        if ($bank_id) {
+            $query = $query->where('partner_bank_loans.bank_id', $bank_id)->where('type', 'micro');
+        }
+        return $query->with(['bank'])->get();
+    }
+
     private function filterList(Request $request, Collection $output)
     {
         if ($request->has('q')) {

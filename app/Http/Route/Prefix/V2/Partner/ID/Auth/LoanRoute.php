@@ -13,6 +13,7 @@ class LoanRoute
 
         $api->group(['prefix'=>'loans','middleware'=>'jwtGlobalAuth'], function ($api) {
             $api->post('/upload-retailer-list','LoanController@uploadRetailerList');
+            $api->get('/dashboard','LoanController@getDashboardData');
             $api->post('/strategic-partner-dashboard','LoanController@strategicPartnerDashboard');
             $api->get('/', 'LoanController@index');
             $api->post('/from-portal','LoanController@storeFromPortals');
