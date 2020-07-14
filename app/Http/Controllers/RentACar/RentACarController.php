@@ -200,7 +200,7 @@ class RentACarController extends Controller
 
     public function getSurchargeOfService($service)
     {
-        return ServiceSurcharge::where('service_id', $service->id)->first();;
+        return ServiceSurcharge::where('service_id', $service->id)->first();
     }
 
     public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)

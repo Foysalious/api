@@ -53,6 +53,9 @@ class CarRentalPriceCalculation extends PriceCalculationAbstract
     {
         $service = $this->getService();
         $this->carRentalPrice = CarRentalPrice::where('pickup_thana_id', $this->pickupThanaId)->where('destination_thana_id', $this->destinationThanaId)->first();
+
+        if(!$this->carRentalPrice) return null;
+
         if ($service->isFixed()) return $this->getFixedPrice($this->carRentalPrice->prices);
         return $this->getOptionPrice($this->carRentalPrice->prices);
     }
