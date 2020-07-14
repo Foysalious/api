@@ -139,7 +139,7 @@ class CoWorkerController extends Controller
             'role' => 'required|string',
             'manager_employee' => 'sometimes|required'
         ];
-        if ($this->isFile($request)) {
+        if ($this->isFile($request->pro_pic)) {
             $validation_data += ['pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'];
         } else {
             $validation_data += ['pro_pic' => 'sometimes|required|string'];
@@ -165,12 +165,12 @@ class CoWorkerController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param $file
      * @return bool
      */
-    private function isFile(Request $request)
+    private function isFile($file)
     {
-        if ($request->pro_pic instanceof Image || $request->pro_pic instanceof UploadedFile) return true;
+        if ($file instanceof Image || $file instanceof UploadedFile) return true;
         return false;
     }
 
@@ -215,14 +215,21 @@ class CoWorkerController extends Controller
             'nationality ' => 'sometimes|required|string',
             'nid_number ' => 'sometimes|required|integer'
         ];
-        if ($this->isFile($request)) {
+        if ($this->isFile($request->nid_front)) {
             $validation_data += [
-                'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-                'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
+                'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'
             ];
         } else {
             $validation_data += [
-                'nid_front ' => 'sometimes|required|string',
+                'nid_front ' => 'sometimes|required|string'
+            ];
+        }
+        if ($this->isFile($request->nid_back)) {
+            $validation_data += [
+                'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'
+            ];
+        } else {
+            $validation_data += [
                 'nid_back ' => 'sometimes|required|string'
             ];
         }
@@ -263,7 +270,7 @@ class CoWorkerController extends Controller
             'bank_name ' => 'sometimes|required|string',
             'bank_account_number ' => 'sometimes|required|string'
         ];
-        if ($this->isFile($request)) {
+        if ($this->isFile($request->tin_certificate)) {
             $validation_data += [
                 'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
             ];
