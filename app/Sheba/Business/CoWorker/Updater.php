@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use phpDocumentor\Reflection\File;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
@@ -224,8 +225,8 @@ class Updater
 
             $profile_data['name'] = $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName();
             if ($profile_image) {
-                $profile_pic_name = $profile_image->getClientOriginalName();
-                $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
+                $profile_pic_name = $profile_image instanceof File ? $profile_image->getClientOriginalName() : 'unknown';
+                $profile_pic = $profile_image instanceof File ? $this->getPicture($this->profile, $profile_image) : $profile_image;
                 $profile_data['pro_pic'] = $profile_pic;
             }
             if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
