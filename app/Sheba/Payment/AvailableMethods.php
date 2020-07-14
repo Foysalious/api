@@ -4,6 +4,7 @@ use App\Models\Payable;
 use Exception;
 use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
@@ -14,60 +15,67 @@ class AvailableMethods
      * @param $version_code
      * @param $platform_name
      * @param $user_type
-     * @return array
-     * @throws Exceptions\InvalidPaymentMethod
+     * @return PaymentMethodDetails[]
+     * @throws Exception
      */
     public static function getDetails($payable_type, $payable_type_id, $version_code, $platform_name, $user_type)
     {
-        $payable_type = $payable_type ?: "order";
+        $methods = self::getMethods($payable_type, $payable_type_id, $user_type);
 
-        $payable = new Payable();
+        $details = [];
+        foreach ($methods as $method) {
+            $detail = new PaymentMethodDetails($method);
+            if ($method == PaymentStrategy::CBL) {
+                $detail->setIsPublished(self::getCblStatus($version_code, $platform_name));
+            }
+            $details[] =  $detail;
+        }
+
+        return $details;
+    }
+
+    /**
+     * @param $payable_type
+     * @param $payable_type_id
+     * @param $user_type
+     * @return array
+     * @throws Exception
+     */
+    public static function getMethods($payable_type, $payable_type_id, $user_type)
+    {
+        $payable_type = $payable_type ?: "order";
 
         switch ($payable_type) {
             case 'order':
                 $methods = self::getRegularPayments();
-                $payable->type = Types::PARTNER_ORDER;
                 break;
             case 'subscription':
                 $methods = self::getSubscriptionPayments();
-                $payable->type = Types::SUBSCRIPTION_ORDER;
                 break;
             case 'voucher':
                 $methods = self::getVoucherPayments();
-                $payable->type = Types::GIFT_CARD_PURCHASE;
                 break;
             case 'movie_ticket':
-                $payable->type = Types::MOVIE_TICKET_PURCHASE;
             case 'transport_ticket':
                 $methods = self::getTicketsPayments($user_type);
-                $payable->type = Types::TRANSPORT_TICKET_PURCHASE;
                 break;
             case 'business':
                 $methods = self::getBusinessPayments();
-                $payable->type = Types::PROCUREMENT;
                 break;
             case 'utility':
                 $methods = self::getUtilityPayments();
-                $payable->type = Types::UTILITY_ORDER;
                 break;
             case 'payment_link':
                 $methods = self::getPaymentLinkPayments($payable_type_id);
-                $payable->type = Types::PAYMENT_LINK;
                 break;
             case 'wallet_recharge':
                 $methods = self::getWalletRechargePayments();
-                $payable->type = Types::WALLET_RECHARGE;
                 break;
             default:
                 throw new Exception('Invalid Payable Type');
         }
 
-        $details = [];
-        foreach ($methods as $method) {
-            $details[] = PaymentStrategy::getDetails($method, $version_code, $platform_name, $payable);
-        }
-
-        return $details;
+        return $methods;
     }
 
     public static function getRegularPayments()
@@ -163,4 +171,17 @@ class AvailableMethods
             PaymentStrategy::SSL_DONATION
         ];
     }
+
+    /**
+     * @param $version_code
+     * @param $platform_name
+     * @return bool
+     */
+    private static function getCblStatus($version_code, $platform_name)
+    {
+        if (!$version_code) return true;
+
+        return $platform_name && $platform_name == 'ios' ? true : ($version_code > 30112);
+    }
+
 }
