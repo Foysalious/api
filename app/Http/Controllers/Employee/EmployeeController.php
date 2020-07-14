@@ -3,9 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Models\Member;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\CoWorkerListTransformer;
 use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
@@ -15,7 +13,6 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
-use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\CoWorker\ProfileCompletionCalculator;
 use Sheba\Business\CoWorker\Requests\BasicRequest;

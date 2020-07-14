@@ -135,7 +135,7 @@ class CoWorkerController extends Controller
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'manager_employee' => 'sometimes|required|integer'
+            'manager_employee' => 'sometimes|required'
         ]);
         $member = $request->manager_member;
         $this->setModifier($member);
@@ -147,7 +147,10 @@ class CoWorkerController extends Controller
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
 
-        list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater->setBasicRequest($basic_request)->setMember($member_id)->basicInfoUpdate();
+        list($business_member, $profile_pic_name, $profile_pic) = $this->coWorkerUpdater
+            ->setBasicRequest($basic_request)
+            ->setMember($member_id)
+            ->basicInfoUpdate();
 
         if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
         return api_response($request, null, 404);
