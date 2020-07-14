@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\BusinessMember;
 
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Carbon\Carbon;
 
 class Creator
 {
@@ -28,11 +29,15 @@ class Creator
         return $this;
     }
 
-    /**
-     * @return $this
-     */
+
     public function create()
     {
-        return $this;
+        $data = [
+            'business_id' => $this->requester->getBusinessId(),
+            'member_id' => $this->requester->getMemberId(),
+            'manager_id' => $this->requester->getManagerEmployee(),
+            'business_role_id' => $this->requester->getRole()
+        ];
+        return $this->businessMemberRepository->create($data);
     }
 }
