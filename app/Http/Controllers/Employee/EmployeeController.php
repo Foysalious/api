@@ -227,11 +227,18 @@ class EmployeeController extends Controller
         return api_response($request, null, 200, ['details' => $employee_details]);
     }
 
+    /**
+     * @param Request $request
+     * @param BasicRequest $basic_request
+     * @param PersonalRequest $personalRequest
+     * @param Updater $updater
+     * @return JsonResponse
+     */
     public function updateBasicInformation(Request $request, BasicRequest $basic_request, PersonalRequest $personalRequest, Updater $updater)
     {
         $validation_rules = [
             'name' => 'required|string',
-            'mobile' => 'required|string|mobile:bd',
+            'mobile' => 'sometimes|string|mobile:bd',
             'department' => 'required|string',
             'designation' => 'required|string'
         ];
@@ -245,23 +252,22 @@ class EmployeeController extends Controller
         $basic_request->setFirstName($request->name)->setDepartment($request->department)->setRole($request->designation);
         if ($request->has('manager')) $basic_request->setManagerEmployee($request->manager);
 
-        $mobile = BDMobileFormatter::format($request->mobile);
-        $updater->setBasicRequest($basic_request)->setMember($member->id)->setMobile($mobile);
+        $updater->setBasicRequest($basic_request)->setMember($member->id);
+
+        if ($request->has('mobile')) {
+            $mobile = BDMobileFormatter::format($request->mobile);
+            $updater->setMobile($mobile);
+            $profile = $updater->getProfile();
+            $personalRequest->setPhone($mobile)
+                ->setDateOfBirth($profile->date_of_birth)->setAddress($profile->address)
+                ->setNationality($profile->nationality)->setNidNumber($profile->nid_number)
+                ->setNidFront($profile->nid_front)->setNidBack($profile->nid_back);
+        }
 
         if ($updater->hasError())
             return api_response($request, null, $updater->getErrorCode(), ['message' => $updater->getErrorMessage()]);
 
         $updater->basicInfoUpdate();
-
-        $profile = $updater->getProfile();
-        $personalRequest->setPhone($mobile)
-            ->setDateOfBirth($profile->date_of_birth)
-            ->setAddress($profile->address)
-            ->setNationality($profile->nationality)
-            ->setNidNumber($profile->nid_number)
-            ->setNidFront($profile->nid_front)
-            ->setNidBack($profile->nid_back);
-
         $updater->setPersonalRequest($personalRequest)->personalInfoUpdate();
 
         return api_response($request, null, 200);
