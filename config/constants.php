@@ -1248,6 +1248,16 @@ return [
                 'cap'        => 0
             ]
         ],
+        'DDN'           => [
+            'AGENT'      => [
+                'percentage' => 5,
+                'cap'        => 200,
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0,
+                'cap'        => 0
+            ]
+        ]
     ],
     'PARTNER_BUSINESS_TYPES'                      => [
         [

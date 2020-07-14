@@ -69,7 +69,7 @@ class Payable extends Model
     {
         if (Types::isInvalid($type)) throw new InvalidArgumentException("Invalid payable type.");
 
-        $this->type = $type;
+        $this->attributes['type'] = $type;
     }
 
     public function getReadableTypeAttribute()
