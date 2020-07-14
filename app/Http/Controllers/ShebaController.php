@@ -297,7 +297,7 @@ class ShebaController extends Controller {
 
     private function mergePaymentLinkInfo(&$info, Payable $payable)
     {
-        $payment_link = $this->paymentLinkRepo->getPaymentLinkByLinkId($payable->type_id);
+        $payment_link = $this->paymentLinkRepo->find($payable->type_id);
         $receiver = $payment_link->getPaymentReceiver();
         $payer = $payable->user->profile;
         $info = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
@@ -331,7 +331,7 @@ class ShebaController extends Controller {
         $user_type = $request->type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
-        $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
+        $payments = AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type);
         return api_response($request, $payments, 200, [
             'payments' => $payments,
             'discount_message' => 'Pay online and stay relaxed!!!'

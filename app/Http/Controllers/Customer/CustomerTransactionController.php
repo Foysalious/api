@@ -28,7 +28,7 @@ class CustomerTransactionController extends Controller
             }
             $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')
                 ->with('partnerOrder.order')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
-            $bonus_logs = $bonus_logs->with('spentOn')->skip($offset)->take($limit)->get();
+            $bonus_logs = $bonus_logs->with('spentOn')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
             $transactions->each(function ($transaction) {
                 $transaction['valid_till'] = null;
                 if ($transaction->partnerOrder) {
