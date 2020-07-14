@@ -4,6 +4,7 @@ use App\Models\TopUpOrder;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Throwable;
 
 class Affiliate extends TopUpCommission
 {
@@ -18,19 +19,21 @@ class Affiliate extends TopUpCommission
 
     private function storeAmbassadorCommission()
     {
-        $this->topUpOrder->ambassador_commission = $this->calculateAmbassadorCommission($this->topUpOrder->amount);
+        $commission = (double)$this->calculateAmbassadorCommission($this->topUpOrder->amount);
+        if ($commission == 0) return;
+        $this->topUpOrder->ambassador_commission = $commission;
         $this->topUpOrder->save();
     }
 
     private function storeAmbassadorWalletTransaction()
     {
-
-        $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";;
-       /*
-        * WALLET TRANSACTION NEED TO REMOVE
-        *  $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
-        $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);*/
-        $model=$this->agent->ambassador;
+        if ($this->topUpOrder->ambassador_commission == 0) return;
+        $log = "{$this->agent->profile->name} gifted {$this->topUpOrder->ambassador_commission} Tk. for {$this->topUpOrder->amount} Tk. topup";
+        /*
+         * WALLET TRANSACTION NEED TO REMOVE
+         *  $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
+         $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);*/
+        $model = $this->agent->ambassador;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
             ->setAmount($this->topUpOrder->ambassador_commission)->setLog($log)->dispatch();
     }
@@ -41,7 +44,7 @@ class Affiliate extends TopUpCommission
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->agent->ambassador->debitWallet($amount);
         $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
-        $model=$this->agent->ambassador;
+        $model = $this->agent->ambassador;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('debit')
             ->setAmount($amount)->setLog($log)->dispatch();
     }
@@ -74,6 +77,7 @@ class Affiliate extends TopUpCommission
                     "event_type" => 'App\Models\Affiliate',
                     "event_id" => $this->topUpOrder->agent->id
                 ]);
-        } catch (\Throwable $e) {}
+        } catch (Throwable $e) {
+        }
     }
 }
