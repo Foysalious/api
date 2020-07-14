@@ -27,8 +27,8 @@ class CustomerTransactionController extends Controller
                 $bonus_logs->where('type', ucwords($request->type));
             }
             $transactions = $transactions->select('id', 'customer_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id', 'created_at')
-                ->with('partnerOrder.order')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
-            $bonus_logs = $bonus_logs->with('spentOn')->orderBy('id', 'desc')->skip($offset)->take($limit)->get();
+                ->with('partnerOrder.order')->orderBy('id', 'desc')->get();
+            $bonus_logs = $bonus_logs->with('spentOn')->get();
             $transactions->each(function ($transaction) {
                 $transaction['valid_till'] = null;
                 if ($transaction->partnerOrder) {
