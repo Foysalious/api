@@ -894,20 +894,8 @@ class ProcurementController extends Controller
 
         $bid = $this->getBid($bid_repository, $tender, $partner);
         if ($bid) {
-            $field_results = $this->getFieldResultBy($bid, $request);
-            if ($field_results instanceof JsonResponse) {
-                $json_response = $field_results->getData();
-                return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
-            }
-
-            $updater->setBid($bid)
-                ->setStatus($request->status)
-                ->setFieldResults($field_results)
-                ->setProposal($request->proposal)
-                ->setPrice($request->price)
-                ->update();
-
-            return api_response($request, null, 200);
+            if ($bid->status == BidStatuses::SENT) $bid->delete();
+            else return api_response($request, null, 420, ['reason' => 'already_submitted', 'message' => 'You already submit a proposal on this tender and those proposal on a working stage']);
         }
 
         $procurement->load('items.fields');
