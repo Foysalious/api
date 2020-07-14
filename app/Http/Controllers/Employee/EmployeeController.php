@@ -4,18 +4,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\BusinessBasicInformation;
+use App\Transformers\Business\CoWorkerListTransformer;
+use App\Transformers\Business\CoWorkerMinimumTransformer;
 use App\Transformers\BusinessEmployeeDetailsTransformer;
 use App\Transformers\BusinessEmployeesTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionChecker;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\CoWorker\ProfileCompletionCalculator;
+use Sheba\Business\CoWorker\Requests\BasicRequest;
+use Sheba\Business\CoWorker\Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
+use Sheba\ModificationFields;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
@@ -23,7 +31,11 @@ use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 
 class EmployeeController extends Controller
 {
+    use BusinessBasicInformation, ModificationFields;
+
+    /** @var MemberRepositoryInterface $repo */
     private $repo;
+    /** @var ApprovalRequestRepositoryInterface $approvalRequestRepo */
     private $approvalRequestRepo;
 
     /**
@@ -214,5 +226,66 @@ class EmployeeController extends Controller
         $employee_details = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['details' => $employee_details]);
+    }
+
+    public function updateBasicInformation(Request $request, BasicRequest $basic_request, Updater $updater)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+            'phone' => 'required|string',
+            'department' => 'required|string',
+            'designation' => 'required|string'
+        ]);
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $member = $this->repo->find($business_member['member_id']);
+        $this->setModifier($member);
+
+        $basic_request->setFirstName($request->name)->setDepartment($request->department)->setRole($request->designation);
+        if ($request->has('manager')) $basic_request->setManagerEmployee($request->manager);
+
+        $updater->setBasicRequest($basic_request)->setMember($member->id)->basicInfoUpdate();
+
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getManagersList(Request $request)
+    {
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $business = $this->getBusiness($request);
+        $member = $this->repo->find($business_member['member_id']);
+        $members = $business->members()->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
+            },
+            'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ]);
+
+        $members = $members->get()->unique();
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $employees = new Collection($members, new CoWorkerMinimumTransformer());
+        $employees = collect($manager->createData($employees)->toArray()['data']);
+
+        $employees = $employees->reject(function($employee) use ($member) { return $employee['id'] == $member->id; });
+
+        if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
+        return api_response($request, null, 404);
     }
 }

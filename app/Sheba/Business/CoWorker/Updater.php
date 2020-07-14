@@ -13,6 +13,7 @@ use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
+use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Repositories\ProfileRepository;
@@ -75,6 +76,8 @@ class Updater
     private $profileBankInfoRepository;
     /** MemberRepositoryInterface $memberRepository */
     private $memberRepository;
+    /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
+    private $businessRoleRepository;
 
     /**
      * Updater constructor.
@@ -89,13 +92,14 @@ class Updater
      * @param BusinessMemberUpdater $business_member_updater
      * @param ProfileBankInfoInterface $profile_bank_information
      * @param MemberRepositoryInterface $member_repository
+     * @param BusinessRoleRepositoryInterface $business_role_repository
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
-                                MemberRepositoryInterface $member_repository)
+                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -108,6 +112,7 @@ class Updater
         $this->businessMemberUpdater = $business_member_updater;
         $this->profileBankInfoRepository = $profile_bank_information;
         $this->memberRepository = $member_repository;
+        $this->businessRoleRepository = $business_role_repository;
     }
 
     /**
@@ -213,19 +218,29 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $profile_pic_name = $this->basicRequest->getProPic()->getClientOriginalName();
-            $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
-            $profile_data = [
-                'pro_pic' => $profile_pic,
-                'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
-                'email' => $this->basicRequest->getEmail(),
-            ];
-            $this->profileRepository->update($this->profile, $profile_data);
-            $this->businessRole = $this->businessRoleCreate();
+            $profile_data = [];
+            $profile_pic_name = $profile_pic = null;
+            $profile_image = $this->basicRequest->getProPic();
 
-            $business_member_requester = $this->businessMemberRequester->setRole($this->businessRole->id)
+            $profile_data['name'] = $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName();
+            if ($profile_image) {
+                $profile_pic_name = $profile_image->getClientOriginalName();
+                $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
+                $profile_data['pro_pic'] = $profile_pic;
+            }
+            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
+            $this->profileRepository->updateRaw($this->profile, $profile_data);
+
+            $this->businessRole = $this->getBusinessRole();
+
+            $business_member_requester = $this->businessMemberRequester
+                ->setRole($this->businessRole->id)
                 ->setManagerEmployee($this->basicRequest->getManagerEmployee());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->setRequester($business_member_requester)
+                ->update();
 
             DB::commit();
             return [$this->businessMember, $profile_pic_name, $profile_pic];
@@ -233,6 +248,18 @@ class Updater
             DB::rollback();
             return null;
         }
+    }
+
+    private function getBusinessRole()
+    {
+        $business_role = $this->businessRoleRepository
+            ->whereLike('name', $this->basicRequest->getRole())
+            ->where('business_department_id', $this->basicRequest->getDepartment())
+            ->first();
+
+        if ($business_role) return $business_role;
+
+        return $this->businessRoleCreate();
     }
 
     /**
@@ -358,8 +385,11 @@ class Updater
      */
     private function businessRoleCreate()
     {
-        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
-            ->setName($this->basicRequest->getRole())->setIsPublished(1);
+        $business_role_requester = $this->roleRequester
+            ->setDepartment($this->basicRequest->getDepartment())
+            ->setName($this->basicRequest->getRole())
+            ->setIsPublished(1);
+
         return $this->roleCreator->setRequester($business_role_requester)->create();
     }
 
@@ -375,6 +405,7 @@ class Updater
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
+
         return $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
     }
 
