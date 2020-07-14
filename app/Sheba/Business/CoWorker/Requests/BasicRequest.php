@@ -147,7 +147,7 @@ class BasicRequest
      */
     public function setManagerEmployee($manager_employee)
     {
-        $this->managerEmployee = $manager_employee;
+        $this->managerEmployee = $manager_employee ? $manager_employee : null;
         return $this;
     }
 

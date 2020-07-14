@@ -135,7 +135,7 @@ class CoWorkerController extends Controller
             'email' => 'required|email',
             'department' => 'required|integer',
             'role' => 'required|string',
-            'manager_employee' => 'sometimes|required|integer'
+            'manager_employee' => 'sometimes|required'
         ]);
         $member = $request->manager_member;
         $this->setModifier($member);
