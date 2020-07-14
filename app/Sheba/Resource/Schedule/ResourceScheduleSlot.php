@@ -186,10 +186,9 @@ class ResourceScheduleSlot
     private function hasAvailableBookingTime(Carbon $day)
     {
         $date_string = $day->toDateString();
-        $collection = $this->shebaSlots->getIterator();
-        $this->shebaSlots->each(function ($slot) use ($date_string, $collection) {
-            $nextSlot = next($collection);
-            $prevSlot = prev($collection);
+        foreach ($this->shebaSlots as $key => $slot) {
+            $prevSlot = $this->shebaSlots->has($key-1) ? $this->shebaSlots[$key-1] : null;
+            $nextSlot = $this->shebaSlots->has($key+1) ? $this->shebaSlots[$key+1] : null;
             if ($slot->is_available && $nextSlot && !$nextSlot->is_available && $prevSlot && !$prevSlot->is_available) {
                 $start_time = Carbon::parse($date_string . ' ' . $slot->start);
                 $end_time = Carbon::parse($date_string . ' ' . $slot->end);
@@ -197,7 +196,7 @@ class ResourceScheduleSlot
                 $slot['unavailability_reason'] = $slot['is_available'] ? $slot->unavailability_reason : 'booking time';
                 $slot['message'] = $slot['is_available'] ? null : 'এই সময়ে কাজটি শেষ করার জন্য আপনার কাছে পর্যাপ্ত সময় নেই';
             }
-        });
+        }
     }
 
     private function formatSlots(Carbon $day, $slots)

@@ -19,6 +19,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Affiliate\VerificationStatus;
 use Sheba\Auth\Auth;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
+use Sheba\Dal\ResourceStatusChangeLog\Model as ResourceStatusChangeLogModel;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\NidInfo\ImageSide;
@@ -300,6 +301,9 @@ class ProfileController extends Controller
             $affiliate = $profile->affiliate ?: null;
             if (!empty($affiliate)) {
                 $this->updateVerificationStatus($affiliate);
+                if(isset($profile->resource))
+                    $this->setToPendingStatus($profile->resource);
+
                 $submitted_by = get_class($affiliate);
                 $nidLogData = $profileNIDSubmissionLogRepo->processData($profile->id, $submitted_by, $log);
                 $profileNIDSubmissionLogRepo->create($nidLogData);
@@ -395,5 +399,32 @@ class ProfileController extends Controller
         }
 
         return true;
+    }
+
+    private function setToPendingStatus($resource)
+    {
+        $previous_status = $resource->status;
+        $pending_status = VerificationStatus::PENDING;
+        $resource->update($this->withUpdateModificationField(['status' => 'pending']));
+
+        if ($previous_status != $pending_status)
+            $this->shootStatusChangeLog($resource);
+    }
+
+    private function shootStatusChangeLog($resource)
+    {
+        $data = [
+            'from' => $resource->status,
+            'to' => 'pending',
+            'resource_id' => $resource->id,
+            'reason' => 'nid_info_submit',
+            'log' => 'status changed to pending as resource submit profile info for verification'
+        ];
+        ResourceStatusChangeLogModel::create($this->withCreateModificationField($data));
+    }
+
+    public function KycNidCheckAndUpdateInfo(Request $request,ProfileRepositoryInterface $profile_repo)
+    {
+
     }
 }
