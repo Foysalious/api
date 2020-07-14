@@ -215,33 +215,21 @@ class CoWorkerController extends Controller
             'nationality ' => 'sometimes|required|string',
             'nid_number ' => 'sometimes|required|integer'
         ];
-        if ($this->isFile($request->nid_front)) {
-            $validation_data += [
-                'nid_front ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'
-            ];
-        } else {
-            $validation_data += [
-                'nid_front ' => 'sometimes|required|string'
-            ];
-        }
-        if ($this->isFile($request->nid_back)) {
-            $validation_data += [
-                'nid_back ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'
-            ];
-        } else {
-            $validation_data += [
-                'nid_back ' => 'sometimes|required|string'
-            ];
-        }
+        $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
+        $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
+
         $member = $request->manager_member;
         $this->setModifier($member);
+
         $personal_request = $this->personalRequest->setPhone($request->mobile)
             ->setDateOfBirth($request->date_of_birth)
             ->setAddress($request->address)
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
-            ->setNidFront($request->file('nid_front'))->setNidBack($request->file('nid_back'));
+            ->setNidFront($request->file('nid_front'))
+            ->setNidBack($request->file('nid_back'));
+
         list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
             ->setMember($member_id)
             ->personalInfoUpdate();
@@ -523,10 +511,7 @@ class CoWorkerController extends Controller
      */
     public function addBusinessRole($business, Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required|string', 'department_id' => 'required|integer',
-
-        ]);
+        $this->validate($request, ['name' => 'required|string', 'department_id' => 'required|integer']);
         $business = $request->business;
         $member = $request->manager_member;
         $this->setModifier($member);
