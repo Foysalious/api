@@ -5,7 +5,6 @@ use Sheba\Business\Procurement\StatusCalculator;
 
 class ProcurementListTransformer extends TransformerAbstract
 {
-
     /**
      * @param $procurement
      * @return array
