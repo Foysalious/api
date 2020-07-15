@@ -39,7 +39,7 @@ class BasicRequest
      */
     public function setProPic($pro_pic)
     {
-        $this->proPic = $this->isNull($pro_pic) ? null : $pro_pic;
+        $this->proPic = $pro_pic;
         return $this;
     }
 
@@ -57,7 +57,7 @@ class BasicRequest
      */
     public function setFirstName($first_name)
     {
-        $this->firstName = $this->isNull($first_name) ? null : $first_name;
+        $this->firstName = $first_name;
         return $this;
     }
 
@@ -75,7 +75,7 @@ class BasicRequest
      */
     public function setLastName($last_name)
     {
-        $this->lastName = $this->isNull($last_name) ? null : $last_name;
+        $this->lastName = $last_name;
         return $this;
     }
 
@@ -93,7 +93,7 @@ class BasicRequest
      */
     public function setEmail($email)
     {
-        $this->email = $this->isNull($email) ? null : $email;
+        $this->email = $email;
         return $this;
     }
 
@@ -111,7 +111,7 @@ class BasicRequest
      */
     public function setDepartment($department)
     {
-        $this->department = $this->isNull($department) ? null : $department;
+        $this->department = $department;
         return $this;
     }
 
@@ -129,7 +129,7 @@ class BasicRequest
      */
     public function setRole($role)
     {
-        $this->role = $this->isNull($role) ? null : $role;
+        $this->role = $role;
         return $this;
     }
 

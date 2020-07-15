@@ -38,9 +38,9 @@ class Creator
             'manager_id' => $this->requester->getManagerEmployee(),
             'business_role_id' => $this->requester->getRole(),
             'status' => $this->requester->getStatus(),
-            'join_date' => $this->requester->getJoinDate(),
-            'is_super' => $this->requester->getIsSuper(),
+            'join_date' => $this->requester->getJoinDate()
         ];
+        if ($this->requester->getIsSuper()) $data['is_super'] = $this->requester->getIsSuper();
         return $this->businessMemberRepository->create($data);
     }
 }

@@ -228,12 +228,12 @@ class Updater
 
     private function getBusinessRole()
     {
-        $business_role = $this->businessRoleRepository
+        /*$business_role = $this->businessRoleRepository
             ->whereLike('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
 
-        if ($business_role) return $business_role;
+        if ($business_role) return $business_role;*/
 
         return $this->businessRoleCreate();
     }
@@ -250,13 +250,26 @@ class Updater
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
 
-            if ($profile_image) {
+            if ($profile_image != 'null') {
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
             }
-            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
-            if ($this->basicRequest->getFirstName()) $profile_data['name'] = $this->basicRequest->getFirstName();
-            if ($profile_image) $profile_data['pro_pic'] = $profile_pic;
+            if ($this->basicRequest->getEmail() == 'null') {
+                $profile_data['email'] = $this->basicRequest->getEmail();
+            } else {
+                $profile_data['email'] = $this->basicRequest->getEmail();
+            }
+
+            if ($this->basicRequest->getFirstName() == 'null') {
+                $profile_data['name'] = null;
+            } else {
+                $profile_data['name'] = $this->basicRequest->getFirstName();
+            }
+            if ($profile_image == 'null') {
+                $profile_data['pro_pic'] = null;
+            } else {
+                $profile_data['pro_pic'] = $profile_pic;
+            }
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
