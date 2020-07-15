@@ -276,7 +276,7 @@ class JobController extends Controller
             } else {
                 $service_list = $formatServices->setJob($job)->formatServices();
                 $services = array();
-                foreach ($job->jobServices as $jobService) {
+                foreach ($job->jobServices->sortByDesc('id') as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
                     $min_price = (double)$jobService->min_price;
                     array_push($services, array(
