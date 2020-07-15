@@ -622,7 +622,7 @@ class Loan
         }
 
         if($user->strategic_partner_id) {
-            $query = $query->whereBetween('created_at',[$from_date,$to_date])
+            $query = $query->whereBetween('created_at',[$from_date. " 00:00:00",$to_date. " 23:59:59"])
                 ->where('type', LoanTypes::MICRO);
         }
 
