@@ -30,7 +30,28 @@ class Documents implements Arrayable
     private $loanDetails;
     private $granter;
     private $bank_information;
+    private $type;
+    private $version;
 
+    /**
+     * @param mixed $type
+     * @return Documents
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $version
+     * @return Documents
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
         $this->loanDetails = $request;

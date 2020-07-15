@@ -21,7 +21,18 @@ class FinanceInfo implements Arrayable
     private $loanDetails;
     private $profile;
     private $bank_information;
+    private $type;
+    private $version;
 
+    /**
+     * @param mixed $version
+     * @return FinanceInfo
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $loanRequest = null)
     {
         $this->partner     = $partner;
@@ -147,5 +158,11 @@ class FinanceInfo implements Arrayable
                 'bkash_account_types' => constants('BKASH_ACCOUNT_TYPE')
             ]
         ]);
+    }
+
+    public function setType($type)
+    {
+        $this->type=$type;
+        return $this;
     }
 }

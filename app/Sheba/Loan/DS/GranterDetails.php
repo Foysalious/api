@@ -33,7 +33,28 @@ class GranterDetails implements Arrayable
      * @var PartnerLoanRequest
      */
     private $loanDetails;
+    private $type;
+    private $version;
 
+    /**
+     * @param mixed $type
+     * @return GranterDetails
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $version
+     * @return GranterDetails
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
         $this->partner     = $partner;
