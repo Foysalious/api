@@ -864,7 +864,7 @@ class LoanController extends Controller
     {
         try{
             $request->merge(['loan_id' => $loan_id]);
-            $data = $loan->claimList($request);
+            $data = $loan->claimList($loan_id);
             return api_response($request, null, 200, ['data' => $data]);
         } catch (Throwable $e){
             app('sentry')->captureException($e);
