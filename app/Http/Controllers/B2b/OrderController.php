@@ -189,6 +189,7 @@ class OrderController extends Controller
                 'time' => 'required|string',
                 'issue_id' => 'sometimes|required|integer',
             ], ['mobile' => 'Invalid mobile number!']);
+
             $business = $request->business;
             $member = $request->manager_member;
             $customer = $member->profile->customer;
@@ -204,10 +205,17 @@ class OrderController extends Controller
                 if (!$address) $address = $this->memberManager->createAddress($member, $business);
             }
             $order = new Checkout($customer);
-            $request->merge(['customer' => $customer,
+            $request->merge([
+                'customer' => $customer,
                 'address_id' => $address->id,
-                'name' => $business->name, 'payment_method' => 'cod', 'mobile' => $member->profile->mobile,
-                'business_id' => $business->id, 'sales_channel' => $request->sales_channel?:constants('SALES_CHANNELS')['B2B']['name'], 'voucher' => $request->voucher]);
+                'name' => $request->has('delivery_name') ? $request->delivery_name : $business->name,
+                'payment_method' => 'cod',
+                'mobile' => $request->has('mobile') ? $request->mobile : $member->profile->mobile,
+                'business_id' => $business->id,
+                'sales_channel' => $request->sales_channel ?: constants('SALES_CHANNELS')['B2B']['name'],
+                'voucher' => $request->voucher
+            ]);
+
             $order = $order->placeOrder($request);
             if ($order) {
                 if ($request->has('issue_id')) {
@@ -228,6 +236,7 @@ class OrderController extends Controller
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
