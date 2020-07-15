@@ -565,7 +565,8 @@ class Loan
     }
 
     public function microLoanData(Request $request) {
-        $data = $this->getMicroLoans($request->user);
+        $data = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
+        $statuses     = constants('LOAN_STATUS');
         $registered_partner = Retailer::all();
         $formatted_data = (object) [
             'applied_loan' => count($data),
@@ -576,16 +577,16 @@ class Loan
             'total_registration' => count($registered_partner),
         ];
         foreach ($data as $loan) {
-            if ($loan["status"] === "rejected") {
+            if ($loan["status"] === $statuses["rejected"]) {
                 $formatted_data->loan_rejected++;
             }
-            if ($loan["status"] === "approved") {
+            if ($loan["status"] === $statuses["approved"]) {
                 $formatted_data->loan_approved++;
             }
-            if ($loan["status"] === "disbursed") {
+            if ($loan["status"] === $statuses["disbursed"]) {
                 $formatted_data->loan_disburse++;
             }
-            if ($loan["status"] === "closed") {
+            if ($loan["status"] === $statuses["closed"]) {
                 $formatted_data->loan_closed++;
             }
         }
@@ -603,17 +604,26 @@ class Loan
         return $query->with(['bank'])->get();
     }
 
-    private function getMicroLoans($user) {
+    private function getMicroLoans($user, $from_date, $to_date) {
+        if (!$from_date) {
+            $from_date = date("Y-m-01");
+        }
+        if (!$to_date) {
+            $to_date = date("Y-m-d");
+        }
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
         $query = $this->repo;
         if ($bank_id) {
-            $query = $query->where('partner_bank_loans.bank_id', $bank_id)->where('type', 'micro');
+            $query = $query->whereBetween('created_at',[$from_date. " 00:00:00",$to_date. " 23:59:59"])
+                ->where('partner_bank_loans.bank_id', $bank_id)
+                ->where('type', LoanTypes::MICRO);
         }
 
         if($user->strategic_partner_id) {
-            $query = $query->where('type', 'micro');
+            $query = $query->whereBetween('created_at',[$from_date,$to_date])
+                ->where('type', LoanTypes::MICRO);
         }
 
         return $query->get();
