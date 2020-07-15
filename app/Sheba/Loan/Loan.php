@@ -351,19 +351,19 @@ class Loan
     {
         $data = [
             'loan_id' => $request->loan_id,
-            'amount' => $request->amount,
-            'status' => Statuses::PENDING,
-            'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
+            'amount'  => $request->amount,
+            'status'  => Statuses::PENDING,
+            'log'     => '৳' . convertNumbersToBangla($request->amount) . ' লোন দাবি করা হয়েছে',
         ];
         (new LoanClaim())->createRequest($data);
 
-      /*  $data = [
-            'loan_id' => $request->loan_id,
-            'debit'   => $request->amount,
-            'credit'  => 0,
-            'type'    => 'micro',
-        ];
-        (new Repayment())->storeDebit($data);*/
+        /*  $data = [
+              'loan_id' => $request->loan_id,
+              'debit'   => $request->amount,
+              'credit'  => 0,
+              'type'    => 'micro',
+          ];
+          (new Repayment())->storeDebit($data);*/
 
         return true;
     }
@@ -374,24 +374,18 @@ class Loan
         $pending_claim = (new LoanClaim())->getPending($loan_id);
         $data['claim_list'] = [];
         $data['pending_claim'] = null;
-        //$data['can_claim'] = 1;
-       // $data['should_pay'] = 0;
-       // list($data['can_claim'],$data['should_pay']) = $this->canClaimShouldPay($request);
-
-
-        if($pending_claim){
-            $data['pending_claim']['status'] = $pending_claim->status;
-            $data['pending_claim']['amount'] = $pending_claim->amount;
-            $data['pending_claim']['log'] = $pending_claim->log;
+        if ($pending_claim) {
+            $data['pending_claim']['status']     = $pending_claim->status;
+            $data['pending_claim']['amount']     = $pending_claim->amount;
+            $data['pending_claim']['log']        = $pending_claim->log;
             $data['pending_claim']['created_at'] = Carbon::parse($pending_claim->created_at)->format('Y-m-d H:i:s');
         }
 
-        foreach ($claims as $claim)
-        {
-            array_push($data['claim_list'],[
-                'status' => $claim->status,
-                'amount' => $claim->amount,
-                'log'   => $claim->log,
+        foreach ($claims as $claim) {
+            array_push($data['claim_list'], [
+                'status'     => $claim->status,
+                'amount'     => $claim->amount,
+                'log'        => $claim->log,
                 'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
             ]);
         }
@@ -400,13 +394,13 @@ class Loan
 
     public function canClaimShouldPay($request)
     {
-        $can_claim =  1;
-        $should_pay = 1;
-        $partner_loan = PartnerBankLoan::where('partner_id',$request->partner->id)->where('type','micro')->orderBy('id','desc')->first();
-        $last_claim = (new LoanClaim())->setLoan($partner_loan->id)->lastClaim();
-        if(($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)))))
+        $can_claim    = 1;
+        $should_pay   = 1;
+        $partner_loan = PartnerBankLoan::where('partner_id', $request->partner->id)->where('type', 'micro')->orderBy('id', 'desc')->first();
+        $last_claim   = (new LoanClaim())->setLoan($partner_loan->id)->lastClaim();
+        if (($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)))))
             $can_claim = 0;
-        if(!$last_claim || $last_claim->status == 'pending' ||  $last_claim->status == 'declined' || ($last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
+        if (!$last_claim || $last_claim->status == 'pending' || $last_claim->status == 'declined' || ($last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
             $should_pay = 0;
 
         return [$can_claim, $should_pay];
@@ -415,11 +409,11 @@ class Loan
 
     public function canClaim($request)
     {
-        $can_claim = true;
-        $partner_loan = PartnerBankLoan::where('id',$request->loan_id)->first();
-        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
+        $can_claim    = true;
+        $partner_loan = PartnerBankLoan::where('id', $request->loan_id)->first();
+        $last_claim   = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
         if (($partner_loan->status != 'disbursed') || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)))))
-            $can_claim =  false;
+            $can_claim = false;
         return $can_claim;
     }
 
@@ -435,59 +429,53 @@ class Loan
 
     public function accountInfo($request)
     {
-        $data = [];
-        $partner_loan = PartnerBankLoan::where('id',$request->loan_id)->first();
-        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
+        $data         = [];
+        $partner_loan = PartnerBankLoan::where('id', $request->loan_id)->first();
+        $last_claim   = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
 
-        $data['loan_status'] = $partner_loan->status;
+        $data['loan_status']    = $partner_loan->status;
         $data['granted_amount'] = $partner_loan->loan_amount;
-        if(!$last_claim || ($last_claim && $last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
-        {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
-            $data['status_message'] = 'আপনি সর্বোচ্চ' .convertNumbersToBangla($partner_loan->loan_amount). 'পর্যন্ত লোন গ্রহণ করতে পারবেন';
-            $data['status_type'] = 'info';
-            $data['can_claim']   = 1;
-            $data['should_pay'] = 0;
+        if (!$last_claim || ($last_claim && $last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id))) {
+            $data['loan_balance']   = 0;
+            $data['due_balance']    = 0;
+            $data['status_message'] = 'আপনি সর্বোচ্চ' . convertNumbersToBangla($partner_loan->loan_amount) . 'পর্যন্ত লোন গ্রহণ করতে পারবেন';
+            $data['status_type']    = 'info';
+            $data['can_claim']      = 1;
+            $data['should_pay']     = 0;
         }
-        if($last_claim && $last_claim->status == 'pending')
-        {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
+        if ($last_claim && $last_claim->status == 'pending') {
+            $data['loan_balance']   = 0;
+            $data['due_balance']    = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
-            $data['status_type'] = 'warning';
-            $data['can_claim']   = 0;
-            $data['should_pay'] = 0;
+            $data['status_type']    = 'warning';
+            $data['can_claim']      = 0;
+            $data['should_pay']     = 0;
         }
-        if($last_claim && $last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id))
-        {
-            $data['loan_balance'] = $last_claim->amount;
-            $data['due_balance'] = $this->getDue($last_claim->loan_id);
+        if ($last_claim && $last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)) {
+            $data['loan_balance']   = $last_claim->amount;
+            $data['due_balance']    = $this->getDue($last_claim->loan_id);
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যাল্যান্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
-            $data['status_type'] = 'success';
-            $data['can_claim']   = 0;
-            $data['should_pay'] = 1;
+            $data['status_type']    = 'success';
+            $data['can_claim']      = 0;
+            $data['should_pay']     = 1;
         }
 
-        if($last_claim && $last_claim->status == 'declined')
-        {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
+        if ($last_claim && $last_claim->status == 'declined') {
+            $data['loan_balance']   = 0;
+            $data['due_balance']    = 0;
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
-            $data['status_type'] = 'error';
-            $data['can_claim']   = 0;
-            $data['should_pay'] = 0;
+            $data['status_type']    = 'error';
+            $data['can_claim']      = 0;
+            $data['should_pay']     = 0;
         }
         $data['recent_claims'] = [];
-        $recent_claims = (new LoanClaim())->getRecent($request->loan_id);
-        if($recent_claims)
-        {
-            foreach ($recent_claims as $claim)
-            {
-                array_push($data['recent_claims'],[
-                    'status' => $claim->status,
-                    'amount' => $claim->amount,
-                    'log'   => $claim->log,
+        $recent_claims         = (new LoanClaim())->getRecent($request->loan_id);
+        if ($recent_claims) {
+            foreach ($recent_claims as $claim) {
+                array_push($data['recent_claims'], [
+                    'status'     => $claim->status,
+                    'amount'     => $claim->amount,
+                    'log'        => $claim->log,
                     'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
                 ]);
             }
@@ -502,33 +490,29 @@ class Loan
         return $personal;
     }
 
-    public function businessInfo($type = null)
+    public function businessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource))->setType($type)->setVersion($this->version);
+        return (new BusinessInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function financeInfo()
     {
-        $finance = (new FinanceInfo($this->partner, $this->resource));
-        return $finance;
+        return (new FinanceInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function nomineeGranter()
     {
-        $nominee_granter = (new NomineeGranterInfo($this->partner, $this->resource));
-        return $nominee_granter;
+        return (new NomineeGranterInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function granterDetails()
     {
-        $granter = (new GranterDetails($this->partner, $this->resource));
-        return $granter;
+        return (new GranterDetails($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function documents()
     {
-        $document = (new Documents($this->partner, $this->resource));
-        return $document;
+        return (new Documents($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function history()
@@ -564,15 +548,16 @@ class Loan
         return $this->filterList($request, $output);
     }
 
-    public function microLoanData(Request $request) {
-        $data = $this->getMicroLoans($request->user);
+    public function microLoanData(Request $request)
+    {
+        $data               = $this->getMicroLoans($request->user);
         $registered_partner = Retailer::all();
-        $formatted_data = (object) [
-            'applied_loan' => count($data),
-            'loan_rejected' => 0,
-            'loan_disburse' => 0,
-            'loan_approved' => 0,
-            'loan_closed' => 0,
+        $formatted_data     = (object)[
+            'applied_loan'       => count($data),
+            'loan_rejected'      => 0,
+            'loan_disburse'      => 0,
+            'loan_approved'      => 0,
+            'loan_closed'        => 0,
             'total_registration' => count($registered_partner),
         ];
         foreach ($data as $loan) {
@@ -592,7 +577,8 @@ class Loan
         return $formatted_data;
     }
 
-    private function getLoans($user) {
+    private function getLoans($user)
+    {
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
@@ -603,7 +589,8 @@ class Loan
         return $query->with(['bank'])->get();
     }
 
-    private function getMicroLoans($user) {
+    private function getMicroLoans($user)
+    {
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
@@ -612,7 +599,7 @@ class Loan
             $query = $query->where('partner_bank_loans.bank_id', $bank_id)->where('type', 'micro');
         }
 
-        if($user->strategic_partner_id) {
+        if ($user->strategic_partner_id) {
             $query = $query->where('type', 'micro');
         }
 

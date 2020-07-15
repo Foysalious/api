@@ -30,7 +30,18 @@ class NomineeGranterInfo implements Arrayable
      * @var PartnerLoanRequest
      */
     private $loanDetails;
+    private $type;
+    private $version;
 
+    /**
+     * @param mixed $version
+     * @return NomineeGranterInfo
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
         $this->partner     = $partner;
@@ -173,4 +184,11 @@ class NomineeGranterInfo implements Arrayable
             'nominee' => array_merge((new NomineeInfo($this->nominee ? $this->nominee->toArray() : []))->toArray(), ['nominee_relation' => $this->profile->nominee_relation])
         ];
     }
+
+    public function setType($type)
+    {
+        $this->type=$type;
+        return $this;
+    }
+
 }
