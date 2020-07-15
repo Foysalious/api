@@ -33,7 +33,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonName($name)
     {
-        $this->name = $this->isNull($name) ? null : $name;
+        $this->name = $name;
         return $this;
     }
 
@@ -51,7 +51,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonMobile($mobile)
     {
-        $this->mobile = $this->isNull($mobile) ? null : formatMobile($mobile);
+        $this->mobile = $mobile;
         return $this;
     }
 
@@ -69,7 +69,7 @@ class EmergencyRequest
      */
     public function setRelationshipEmergencyContractPerson($relationship)
     {
-        $this->relationship = $this->isNull($relationship) ? null : $relationship;
+        $this->relationship = $relationship;
         return $this;
     }
 

@@ -37,7 +37,7 @@ class PersonalRequest
      */
     public function setPhone($phone)
     {
-        $this->phone = $this->isNull($phone) ? null : formatMobile($phone);
+        $this->phone = $phone;
         return $this;
     }
 
@@ -55,7 +55,7 @@ class PersonalRequest
      */
     public function setDateOfBirth($date_of_birth)
     {
-        $this->dateOfBirth = $this->isNull($date_of_birth) ? null : $date_of_birth;
+        $this->dateOfBirth = $date_of_birth;
         return $this;
     }
 
@@ -73,8 +73,7 @@ class PersonalRequest
      */
     public function setAddress($address)
     {
-        dd($address,$this->isNull($address));
-        $this->address = $this->isNull($address) ? null : $address;
+        $this->address = $address;
         return $this;
     }
 
@@ -92,7 +91,7 @@ class PersonalRequest
      */
     public function setNationality($nationality)
     {
-        $this->nationality = $this->isNull($nationality) ? null : $nationality;
+        $this->nationality = $nationality;
         return $this;
     }
 
@@ -110,7 +109,7 @@ class PersonalRequest
      */
     public function setNidNumber($nid_number)
     {
-        $this->nidNumber = $this->isNull($nid_number) ? null : $nid_number;
+        $this->nidNumber = $nid_number;
         return $this;
     }
 
@@ -128,7 +127,7 @@ class PersonalRequest
      */
     public function setNidFront($nid_front)
     {
-        $this->nidFront = $this->isNull($nid_front) ? null : $nid_front;
+        $this->nidFront = $nid_front;
         return $this;
     }
 
@@ -146,7 +145,7 @@ class PersonalRequest
      */
     public function setNidBack($nid_back)
     {
-        $this->nidBack = $this->isNull($nid_back) ? null : $nid_back;
+        $this->nidBack = $nid_back;
         return $this;
     }
 

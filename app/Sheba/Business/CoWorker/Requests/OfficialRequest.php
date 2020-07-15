@@ -34,7 +34,7 @@ class OfficialRequest
      */
     public function setJoinDate($join_date)
     {
-        $this->joinDate = $this->isNull($join_date) ? null : $join_date;
+        $this->joinDate = $join_date;
         return $this;
     }
 
@@ -52,7 +52,7 @@ class OfficialRequest
      */
     public function setGrade($grade)
     {
-        $this->grade = $this->isNull($grade) ? null : $grade;
+        $this->grade = $grade;
         return $this;
     }
 
@@ -71,7 +71,7 @@ class OfficialRequest
      */
     public function setEmployeeType($employee_type)
     {
-        $this->employeeType = $this->isNull($employee_type) ? null : $employee_type;
+        $this->employeeType = $employee_type;
         return $this;
     }
 
@@ -89,7 +89,7 @@ class OfficialRequest
      */
     public function setPreviousInstitution($previous_institution)
     {
-        $this->previousInstitution = $this->isNull($previous_institution) ? null : $previous_institution;
+        $this->previousInstitution = $previous_institution;
         return $this;
     }
 
