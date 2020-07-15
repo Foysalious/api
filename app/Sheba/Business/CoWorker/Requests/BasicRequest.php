@@ -12,7 +12,7 @@ class BasicRequest
     private $department;
     /** @var $role | Designation */
     private $role;
-    /** @var $managerEmployee | Manager */
+    /** @var $managerEmployee | Manager | Business Member */
     private $managerEmployee;
 
     /**
@@ -39,7 +39,7 @@ class BasicRequest
      */
     public function setProPic($pro_pic)
     {
-        $this->proPic = $pro_pic;
+        $this->proPic = $this->isNull($pro_pic) ? null : $pro_pic;
         return $this;
     }
 
@@ -57,7 +57,7 @@ class BasicRequest
      */
     public function setFirstName($first_name)
     {
-        $this->firstName = $first_name;
+        $this->firstName = $this->isNull($first_name) ? null : $first_name;
         return $this;
     }
 
@@ -75,7 +75,7 @@ class BasicRequest
      */
     public function setLastName($last_name)
     {
-        $this->lastName = $last_name;
+        $this->lastName = $this->isNull($last_name) ? null : $last_name;
         return $this;
     }
 
@@ -93,7 +93,7 @@ class BasicRequest
      */
     public function setEmail($email)
     {
-        $this->email = $email;
+        $this->email = $this->isNull($email) ? null : $email;
         return $this;
     }
 
@@ -111,7 +111,7 @@ class BasicRequest
      */
     public function setDepartment($department)
     {
-        $this->department = $department;
+        $this->department = $this->isNull($department) ? null : $department;
         return $this;
     }
 
@@ -129,7 +129,7 @@ class BasicRequest
      */
     public function setRole($role)
     {
-        $this->role = $role;
+        $this->role = $this->isNull($role) ? null : $role;
         return $this;
     }
 
@@ -147,7 +147,7 @@ class BasicRequest
      */
     public function setManagerEmployee($manager_employee)
     {
-        $this->managerEmployee = $manager_employee ? $manager_employee : null;
+        $this->managerEmployee = $this->isNull($manager_employee) ? null : $manager_employee;
         return $this;
     }
 
@@ -157,5 +157,16 @@ class BasicRequest
     public function getManagerEmployee()
     {
         return $this->managerEmployee;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

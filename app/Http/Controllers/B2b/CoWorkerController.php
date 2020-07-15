@@ -140,14 +140,12 @@ class CoWorkerController extends Controller
             'role' => 'required|string',
             'manager_employee' => 'sometimes|required'
         ];
-        if ($this->isFile($request->pro_pic)) {
-            $validation_data += ['pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'];
-        } else {
-            $validation_data += ['pro_pic' => 'sometimes|required|string'];
-        }
+        $validation_data['pro_pic'] = $this->isFile($request->pro_pic) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
+
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
+
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
@@ -161,7 +159,10 @@ class CoWorkerController extends Controller
             ->setMember($member_id)
             ->basicInfoUpdate();
 
-        if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
+        if ($business_member) return api_response($request, 1, 200, [
+            'profile_pic_name' => $profile_pic_name,
+            'profile_pic' => $profile_pic
+        ]);
         return api_response($request, null, 404);
     }
 
