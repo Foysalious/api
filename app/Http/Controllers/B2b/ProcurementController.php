@@ -894,20 +894,8 @@ class ProcurementController extends Controller
 
         $bid = $this->getBid($bid_repository, $tender, $partner);
         if ($bid) {
-            $field_results = $this->getFieldResultBy($bid, $request);
-            if ($field_results instanceof JsonResponse) {
-                $json_response = $field_results->getData();
-                return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
-            }
-
-            $updater->setBid($bid)
-                ->setStatus($request->status)
-                ->setFieldResults($field_results)
-                ->setProposal($request->proposal)
-                ->setPrice($request->price)
-                ->update();
-
-            return api_response($request, null, 200);
+            if ($bid->status == BidStatuses::SENT) $bid->delete();
+            else return api_response($request, null, 420, ['reason' => 'already_submitted', 'message' => 'You already submit a proposal on this tender and those proposal on a working stage']);
         }
 
         $procurement->load('items.fields');
@@ -1031,9 +1019,8 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
         if ($procurement->status != StatusCalculator::IS_PENDING)
-            return api_response($request, null, 422, [
-                'description' => 'Tender not Found'
-            ]);
+            return api_response($request, null, 422, ['message' => 'Vendor already hired']);
+
         $price_quotation_fields = $this->generateItemData($procurement, 'price_quotation');
         $technical_evaluation_fields = $this->generateItemData($procurement, 'technical_evaluation');
         $company_evaluation_fields = $this->generateItemData($procurement, 'company_evaluation');
