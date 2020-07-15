@@ -44,6 +44,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'profile' => [
                 'id' => $profile->id,
                 'name' => $profile->name,
+                'profile_picture_name' => $profile->pro_pic ? array_last(explode('/', $profile->pro_pic)) : null,
                 'profile_picture' => $profile->pro_pic,
                 'email' => $profile->email,
             ],
@@ -92,9 +93,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'nationality' => $profile->nationality,
             'nid_no' => $profile->nid_no,
             'profile_id' => $profile->id,
+            'nid_image_front_name' => $profile->nid_image_front ? array_last(explode('/', $profile->nid_image_front)) : null,
             'nid_image_front' => $profile->nid_image_front,
+            'nid_image_back_name' => $profile->nid_image_back ? array_last(explode('/', $profile->nid_image_back)) : null,
             'nid_image_back' => $profile->nid_image_back,
-            'personal_info_completion' => $personal_info_completion,
+            'personal_info_completion' => $personal_info_completion
         ];
     }
 
@@ -113,6 +116,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $financial_info_completion = round((($count / 1) * 20), 0);
         return [
             'tin_no' => $profile->tin_no,
+            'tin_certificate_name' => $profile->tin_certificate ? array_last(explode('/', $profile->tin_certificate)) : null,
             'tin_certificate' => $profile->tin_certificate,
             'bank_name' => $bank_name,
             'account_no' => $account_no,
