@@ -368,17 +368,12 @@ class Loan
         return true;
     }
 
-    public function claimList($request)
+    public function claimList($loan_id)
     {
-        $claims                = (new LoanClaim())->getAll($request->loan_id);
-        $pending_claim         = (new LoanClaim())->getPending($request->loan_id);
-        $data['claim_list']    = [];
+        $claims = (new LoanClaim())->getAll($loan_id);
+        $pending_claim = (new LoanClaim())->getPending($loan_id);
+        $data['claim_list'] = [];
         $data['pending_claim'] = null;
-        $data['can_claim']     = 1;
-        $data['should_pay']    = 0;
-        list($data['can_claim'], $data['should_pay']) = $this->canClaimShouldPay($request);
-
-
         if ($pending_claim) {
             $data['pending_claim']['status']     = $pending_claim->status;
             $data['pending_claim']['amount']     = $pending_claim->amount;
@@ -661,6 +656,7 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
+        $details['claims'] = $this->claimList($loan_id);
         return $details;
     }
 
