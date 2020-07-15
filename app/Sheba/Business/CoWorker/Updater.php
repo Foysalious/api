@@ -312,7 +312,6 @@ class Updater
             $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
             $nid_front = $this->personalRequest->getNidFront();
             $nid_back = $this->personalRequest->getNidBack();
-
             if ($nid_front) {
                 $nid_image_front_name = $this->isFile($nid_front) ? $nid_front->getClientOriginalName() : array_last(explode('/', $nid_front));
                 $nid_image_front = $this->isFile($nid_front) ? $this->getPicture($this->profile, $nid_front, 'nid_image_front') : $nid_front;
@@ -322,15 +321,15 @@ class Updater
                 $nid_image_back = $this->isFile($nid_back) ? $this->getPicture($this->profile, $nid_back, 'nid_image_back') : $nid_back;
             }
 
-            $profile_data = [
-                'mobile' => $this->personalRequest->getPhone(),
-                'address' => $this->personalRequest->getAddress(),
-                'nationality' => $this->personalRequest->getNationality(),
-                'nid_no' => $this->personalRequest->getNidNumber(),
-                'nid_image_front' => $nid_image_front,
-                'nid_image_back' => $nid_image_back,
-                'dob' => $this->personalRequest->getDateOfBirth()
-            ];
+            $profile_data = [];
+            if ($this->personalRequest->getPhone()) $profile_data += ['mobile ' => $this->personalRequest->getPhone()];
+            if ($this->personalRequest->getAddress()) $profile_data += ['address ' => $this->personalRequest->getAddress()];
+            if ($this->personalRequest->getNationality()) $profile_data += ['nationality ' => $this->personalRequest->getNationality()];
+            if ($this->personalRequest->getNidNumber()) $profile_data += ['nid_no ' => $this->personalRequest->getNidNumber()];
+            if ($nid_front) $profile_data += ['nid_image_front ' => $nid_front];
+            if ($nid_back) $profile_data += ['nid_image_back ' => $nid_back];
+            if ($this->personalRequest->getDateOfBirth()) $profile_data += ['dob ' => $this->personalRequest->getDateOfBirth()];
+
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
