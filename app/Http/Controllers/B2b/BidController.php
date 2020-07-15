@@ -39,6 +39,13 @@ class BidController extends Controller
         $this->procurementRepository = $procurement_repository;
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function index($business, $procurement, Request $request, AccessControl $access_control)
     {
         $access_control->setBusinessMember($request->business_member);
@@ -110,6 +117,7 @@ class BidController extends Controller
                     'total_price' => $bid->price,
                 ]);
             }
+
             array_push($bid_lists, [
                 'id' => $bid->id,
                 'status' => $bid->status,
@@ -119,7 +127,8 @@ class BidController extends Controller
                 'bidder_avg_rating' => round($reviews->avg('rating'), 2) > 0 ? round($reviews->avg('rating'), 2) : 5,
                 'is_favourite' => $bid->is_favourite,
                 'created_at' => $bid->created_at->format('d/m/y'),
-                'item' => $item_type
+                'item' => $item_type,
+                'price' => (float)$bid->bidder_price ?: (float)$bid->price
             ]);
         }
 
