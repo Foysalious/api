@@ -380,6 +380,7 @@ class Loan
 
 
         if($pending_claim){
+            $data['pending_claim']['id'] = $pending_claim->id;
             $data['pending_claim']['status'] = $pending_claim->status;
             $data['pending_claim']['amount'] = $pending_claim->amount;
             $data['pending_claim']['log'] = $pending_claim->log;
@@ -389,6 +390,7 @@ class Loan
         foreach ($claims as $claim)
         {
             array_push($data['claim_list'],[
+                'id'    => $claim->id,
                 'status' => $claim->status,
                 'amount' => $claim->amount,
                 'log'   => $claim->log,
@@ -494,6 +496,11 @@ class Loan
         }
 
         return $data;
+    }
+
+    public function claimStatusUpdate($request)
+    {
+       return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
     }
 
     public function personalInfo()
