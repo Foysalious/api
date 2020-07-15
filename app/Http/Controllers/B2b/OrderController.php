@@ -236,7 +236,6 @@ class OrderController extends Controller
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
