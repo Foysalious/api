@@ -38,26 +38,26 @@ class PriceCalculation extends PriceCalculationAbstract
     public function getTotalOriginalPrice()
     {
         $unit_price = $this->upsellUnitPrice ? $this->upsellUnitPrice : $this->getUnitPrice();
+        $surcharge = $this->getSurcharge();
+        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($unit_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
+        $unit_price_with_surcharge = $unit_price + $surcharge_amount;
         $min_price = $this->getMinPriceFromDB();
         $this->setMinPrice($min_price);
         $service = $this->getService();
         $rent_a_car_price_applied = 0;
         if ($service->category->isRentACar() && ($this->locationService->base_prices && $this->locationService->base_quantity)) {
             $base_quantity = $this->getBaseQuantity();
-            $extra_price_after_base_quantity = ($this->quantity > $base_quantity) ? ($unit_price * ($this->quantity - $base_quantity)) : 0;
+            $extra_price_after_base_quantity = ($this->quantity > $base_quantity) ? ($unit_price_with_surcharge * ($this->quantity - $base_quantity)) : 0;
             $original_price = $this->getBasePrice() + $extra_price_after_base_quantity;
             $rent_a_car_price_applied = 1;
         } else {
-            $original_price = $unit_price * $this->quantity;
+            $original_price = $unit_price_with_surcharge * $this->quantity;
         }
         if ($original_price < $min_price) {
             $original_price = $min_price;
         } elseif ($rent_a_car_price_applied) {
             $this->setMinPrice($original_price);
         }
-        $surcharge = $this->getSurcharge();
-        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($original_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
-        $original_price = $surcharge ? $original_price + $surcharge_amount : $original_price;
         return $original_price;
 
     }

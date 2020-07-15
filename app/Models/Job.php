@@ -38,6 +38,7 @@ class Job extends BaseModel implements MorphCommentable
     protected $dates = ['delivered_date', 'estimated_delivery_date', 'estimated_visiting_date'];
 
     public $servicePrice;
+    public $totalServiceSurcharge;
     public $serviceCost;
     public $serviceCostRate;
     public $materialPrice;
@@ -352,10 +353,16 @@ class Job extends BaseModel implements MorphCommentable
     private function getServicePrice()
     {
         $total_service_price = 0;
+        $total_service_surcharge = 0;
         foreach ($this->jobServices as $jobService) {
-            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ?
-                $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
+            $surcharge_amount = $jobService->surcharge_percentage ? ($jobService->unit_price * $jobService->surcharge_percentage) / 100 : 0;
+            $unit_price_with_surcharge = $jobService->unit_price + $surcharge_amount;
+            $total_service_price += ($jobService->min_price > ($unit_price_with_surcharge * $jobService->quantity) ?
+                $jobService->min_price : ($unit_price_with_surcharge * $jobService->quantity));
+
+            $total_service_surcharge += ($surcharge_amount * $jobService->quantity);
         }
+        $this->totalServiceSurcharge = $total_service_surcharge;
         return $total_service_price;
     }
 
