@@ -279,8 +279,15 @@ class JobController extends Controller
                 foreach ($job->jobServices as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
                     $min_price = (double)$jobService->min_price;
-                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'quantity' => $jobService->quantity,
-                        'price' => $total, 'min_price' => $min_price, 'is_min_price_applied' => $min_price > $total ? 1 : 0));
+                    array_push($services, array(
+                        'name' => $jobService->service != null ? $jobService->service->name : null,
+                        'quantity' => $jobService->quantity,
+                        'job_service_id' => $jobService->id,
+                        'service_id' => $jobService->service->id,
+                        'price' => $total,
+                        'min_price' => $min_price,
+                        'is_min_price_applied' => $min_price > $total ? 1 : 0
+                    ));
                 }
             }
             $partnerOrder = $job->partnerOrder;
