@@ -110,7 +110,7 @@ class BusinessInfo implements Arrayable
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->basic_information ? $this->basic_information->updated_at : null
-        ], $this->version && $this->version == 2 ? CompletionStatics::businessV2() : CompletionStatics::business()))->get();
+        ],  CompletionStatics::business($this->version,$this->type)))->get();
     }
 
     /**
