@@ -382,12 +382,18 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getMember();
-            $member_data = [
-                'emergency_contract_person_name' => $this->emergencyRequest->getEmergencyContractPersonName(),
-                'emergency_contract_person_number' => $this->emergencyRequest->getEmergencyContractPersonMobile(),
-                'emergency_contract_person_relationship' => $this->emergencyRequest->getRelationshipEmergencyContractPerson(),
-            ];
+            $member_data = [];
+            if ($this->emergencyRequest->getEmergencyContractPersonName()) {
+                $member_data['emergency_contract_person_name'] = $this->emergencyRequest->getEmergencyContractPersonName();
+            }
+            if ($this->emergencyRequest->getEmergencyContractPersonMobile()) {
+                $member_data['emergency_contract_person_number'] = $this->emergencyRequest->getEmergencyContractPersonMobile();
+            }
+            if ($this->emergencyRequest->getRelationshipEmergencyContractPerson()) {
+                $member_data['emergency_contract_person_relationship'] = $this->emergencyRequest->getRelationshipEmergencyContractPerson();
+            }
             $this->memberRepository->update($this->member, $member_data);
+
             DB::commit();
             return $this->member;
         } catch (Throwable $e) {

@@ -297,16 +297,21 @@ class CoWorkerController extends Controller
      */
     public function emergencyInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'name ' => 'sometimes|required|string',
-            'mobile' => 'string|mobile:bd',
-            'relationship ' => 'sometimes|required|string'
-        ]);
-        $member = $request->manager_member;
-        $this->setModifier($member);
+        $validation_data = [
+            'name ' => 'sometimes|required',
+            'mobile' => 'string',
+            'relationship ' => 'sometimes|required'
+        ];
+        $validation_data['mobile'] = $this->isNull($request->mobile) ? 'sometimes|string|mobile:bd' : 'string';
+        $this->validate($request, $validation_data);
+
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+
         $emergency_request = $this->emergencyRequest->setEmergencyContractPersonName($request->name)
             ->setEmergencyContractPersonMobile($request->mobile)
             ->setRelationshipEmergencyContractPerson($request->relationship);
+
         $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setMember($member_id)->emergencyInfoUpdate();
         if ($member) return api_response($request, 1, 200);
         return api_response($request, null, 404);

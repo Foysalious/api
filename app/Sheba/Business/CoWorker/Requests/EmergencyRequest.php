@@ -33,7 +33,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonName($name)
     {
-        $this->name = $name;
+        $this->name = $this->isNull($name) ? null : $name;
         return $this;
     }
 
@@ -51,7 +51,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonMobile($mobile)
     {
-        $this->mobile = $mobile ? formatMobile($mobile) : null;
+        $this->mobile = $this->isNull($mobile) ? null : formatMobile($mobile);
         return $this;
     }
 
@@ -69,7 +69,7 @@ class EmergencyRequest
      */
     public function setRelationshipEmergencyContractPerson($relationship)
     {
-        $this->relationship = $relationship;
+        $this->relationship = $this->isNull($relationship) ? null : $relationship;
         return $this;
     }
 
@@ -79,5 +79,16 @@ class EmergencyRequest
     public function getRelationshipEmergencyContractPerson()
     {
         return $this->relationship;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }
