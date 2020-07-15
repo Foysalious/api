@@ -611,7 +611,12 @@ class Loan
         if ($bank_id) {
             $query = $query->where('partner_bank_loans.bank_id', $bank_id)->where('type', 'micro');
         }
-        return $query->with(['bank'])->get();
+
+        if($user->strategic_partner_id) {
+            $query = $query->where('type', 'micro');
+        }
+
+        return $query->get();
     }
 
     private function filterList(Request $request, Collection $output)
