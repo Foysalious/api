@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\BankingInfo\GeneralBanking;
 use FontLib\EOT\File;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -223,6 +224,7 @@ class CoWorkerController extends Controller
             'nationality' => 'sometimes|required',
             'nid_number' => 'sometimes|required'
         ];
+
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
@@ -263,33 +265,27 @@ class CoWorkerController extends Controller
      */
     public function financialInfoEdit($business, $member_id, Request $request)
     {
-        $validation_data = [
-            'tin_number ' => 'sometimes|required|string',
-            'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-            'bank_name ' => 'sometimes|required|string',
-            'bank_account_number ' => 'sometimes|required|string'
-        ];
-        if ($this->isFile($request->tin_certificate)) {
-            $validation_data += [
-                'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-            ];
-        } else {
-            $validation_data += [
-                'tin_certificate ' => 'sometimes|required|string'
-            ];
-        }
+        $validation_data = ['tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required'];
+        $validation_data ['tin_certificate '] = $this->isFile($request->tin_certificate) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
-            ->setTinCertificate($request->file('tin_certificate'))
+            ->setTinCertificate($request->tin_certificate)
             ->setBankName($request->bank_name)
             ->setBankAccNumber($request->bank_account_number);
-        list($profile, $image_name, $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
+
+        list($profile,
+            $image_name,
+            $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
             ->setMember($member_id)
             ->financialInfoUpdate();
-        if ($profile) return api_response($request, 1, 200, ['tin_certificate_name' => $image_name, 'tin_certificate_link' => $image_link]);
+
+        if ($profile) return api_response($request, 1, 200, [
+            'tin_certificate_name' => $image_name,
+            'tin_certificate_link' => $image_link
+        ]);
         return api_response($request, null, 404);
     }
 

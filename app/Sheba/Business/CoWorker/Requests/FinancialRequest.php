@@ -34,7 +34,7 @@ class FinancialRequest
      */
     public function setTinNumber($tin_number)
     {
-        $this->tinNumber = $tin_number;
+        $this->tinNumber = $this->isNull($tin_number) ? null : $tin_number;
         return $this;
     }
 
@@ -52,7 +52,7 @@ class FinancialRequest
      */
     public function setTinCertificate($tin_certificate)
     {
-        $this->tinCertificate = $tin_certificate;
+        $this->tinCertificate = $this->isNull($tin_certificate) ? null : $tin_certificate;
         return $this;
     }
 
@@ -70,7 +70,7 @@ class FinancialRequest
      */
     public function setBankName($bank_name)
     {
-        $this->bankName = $bank_name;
+        $this->bankName = $this->isNull($bank_name) ? null : $bank_name;
         return $this;
     }
 
@@ -88,7 +88,7 @@ class FinancialRequest
      */
     public function setBankAccNumber($bank_account_number)
     {
-        $this->bankAccountNumber = $bank_account_number;
+        $this->bankAccountNumber = $this->isNull($bank_account_number) ? null : $bank_account_number;
         return $this;
     }
 
@@ -98,5 +98,16 @@ class FinancialRequest
     public function getBankAccNumber()
     {
         return $this->bankAccountNumber;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

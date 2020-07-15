@@ -348,24 +348,23 @@ class Updater
         try {
             $this->getProfile();
             $tin_certificate_name = $tin_certificate_link = null;
-            $tin_certificate = $this->personalRequest->getNidFront();
+            $tin_certificate = $this->financialRequest->getTinCertificate();
 
             if ($tin_certificate) {
                 $tin_certificate_name = $this->isFile($tin_certificate) ? $tin_certificate->getClientOriginalName() : array_last(explode('/', $tin_certificate));
                 $tin_certificate_link = $this->isFile($tin_certificate) ? $this->getPicture($this->profile, $tin_certificate, 'tin_certificate') : $tin_certificate;
             }
-
-            $profile_data = [
-                'tin_no' => $this->financialRequest->getTinNumber(),
-                'tin_certificate' => $tin_certificate_link,
-            ];
+            $profile_data = [];
+            if ($this->financialRequest->getTinNumber()) $profile_data['tin_no'] = $this->financialRequest->getTinNumber();
+            if ($tin_certificate) $profile_data['tin_certificate'] = $tin_certificate;
             $this->profileRepository->update($this->profile, $profile_data);
-            $profile_bank_data = [
-                'bank_name' => $this->financialRequest->getBankName(),
-                'account_no' => $this->financialRequest->getBankAccNumber(),
-                'profile_id' => $this->profile->id,
-            ];
+
+            $profile_bank_data = [];
+            if ($this->financialRequest->getBankName()) $profile_bank_data['bank_name'] = $this->financialRequest->getBankName();
+            if ($this->financialRequest->getBankAccNumber()) $profile_bank_data['account_no'] = $this->financialRequest->getBankAccNumber();
+            if ($this->profile->id) $profile_bank_data['profile_id'] = $this->profile->id;
             $this->profileBankInfoRepository->create($profile_bank_data);
+
             DB::commit();
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
