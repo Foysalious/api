@@ -39,11 +39,10 @@ class CarRentalPriceCalculation extends PriceCalculationAbstract
     public function getTotalOriginalPrice()
     {
         $unit_price = $this->getUnitPrice();
-        $original_price = $unit_price * $this->quantity;
         $surcharge = $this->getSurcharge();
-        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($original_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
-        $original_price = $surcharge ? $original_price + $surcharge_amount : $original_price;
-        return $original_price;
+        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($unit_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
+        $unit_price_with_surcharge = $unit_price + $surcharge_amount;
+        return $unit_price_with_surcharge * $this->quantity;
     }
 
     /**
