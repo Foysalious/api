@@ -1,11 +1,16 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Intervention\Image\Image;
+use phpDocumentor\Reflection\File;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
@@ -13,6 +18,7 @@ use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
+use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Repositories\ProfileRepository;
@@ -31,7 +37,7 @@ use DB;
 
 class Updater
 {
-    use CdnFileManager, FileManager, ModificationFields;
+    use CdnFileManager, FileManager, ModificationFields, HasErrorCodeAndMessage;
 
     /** @var FileRepository $fileRepository */
     private $fileRepository;
@@ -75,6 +81,9 @@ class Updater
     private $profileBankInfoRepository;
     /** MemberRepositoryInterface $memberRepository */
     private $memberRepository;
+    /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
+    private $businessRoleRepository;
+    private $mobile;
 
     /**
      * Updater constructor.
@@ -89,13 +98,14 @@ class Updater
      * @param BusinessMemberUpdater $business_member_updater
      * @param ProfileBankInfoInterface $profile_bank_information
      * @param MemberRepositoryInterface $member_repository
+     * @param BusinessRoleRepositoryInterface $business_role_repository
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
-                                MemberRepositoryInterface $member_repository)
+                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -108,6 +118,7 @@ class Updater
         $this->businessMemberUpdater = $business_member_updater;
         $this->profileBankInfoRepository = $profile_bank_information;
         $this->memberRepository = $member_repository;
+        $this->businessRoleRepository = $business_role_repository;
     }
 
     /**
@@ -177,7 +188,9 @@ class Updater
     public function setMember($member)
     {
         $this->member = Member::findOrFail($member);
+        $this->profile = $this->member->profile;
         $this->businessMember = $this->member->businessMember;
+
         return $this;
     }
 
@@ -206,6 +219,28 @@ class Updater
     }
 
     /**
+     * @param $image
+     * @return bool
+     */
+    private function isFile($image)
+    {
+        if ($image instanceof Image || $image instanceof UploadedFile) return true;
+        return false;
+    }
+
+    private function getBusinessRole()
+    {
+        $business_role = $this->businessRoleRepository
+            ->whereLike('name', $this->basicRequest->getRole())
+            ->where('business_department_id', $this->basicRequest->getDepartment())
+            ->first();
+
+        if ($business_role) return $business_role;
+
+        return $this->businessRoleCreate();
+    }
+
+    /**
      * @return array|null
      */
     public function basicInfoUpdate()
@@ -213,24 +248,32 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $profile_pic_name = $this->basicRequest->getProPic()->getClientOriginalName();
-            $profile_pic = $this->getPicture($this->profile, $this->basicRequest->getProPic());
-            $profile_data = [
-                'pro_pic' => $profile_pic,
-                'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
-                'email' => $this->basicRequest->getEmail(),
-            ];
+            $profile_data = [];
+            $profile_pic_name = $profile_pic = null;
+            $profile_image = $this->basicRequest->getProPic();
+            $profile_data['name'] = $this->basicRequest->getFirstName();
+            if ($profile_image) {
+                $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
+                $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
+                $profile_data['pro_pic'] = $profile_pic;
+            }
+            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
             $this->profileRepository->update($this->profile, $profile_data);
-            $this->businessRole = $this->businessRoleCreate();
 
-            $business_member_requester = $this->businessMemberRequester->setRole($this->businessRole->id)
-                ->setManagerEmployee($this->basicRequest->getManagerEmployee());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            $this->businessRole = $this->getBusinessRole();
+            $business_member_data = [
+                'business_role_id' => $this->businessRole->id,
+                'manager_id' => $this->basicRequest->getManagerEmployee(),
+            ];
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->update($business_member_data);
 
             DB::commit();
             return [$this->businessMember, $profile_pic_name, $profile_pic];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -242,15 +285,20 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_requester = $this->businessMemberRequester->setJoinDate($this->officialRequest->getJoinDate())
-                ->setGrade($this->officialRequest->getGrade())
-                ->setEmployeeType($this->officialRequest->getEmployeeType())
-                ->setPreviousInstitution($this->officialRequest->getPreviousInstitution());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            $business_member_data = [
+                'join_date' => $this->officialRequest->getJoinDate(),
+                'grade' => $this->officialRequest->getGrade(),
+                'employee_type' => $this->officialRequest->getEmployeeType(),
+                'previous_institution' => $this->officialRequest->getPreviousInstitution(),
+            ];
+            $this->businessMember = $this->businessMemberUpdater
+                ->setBusinessMember($this->businessMember)
+                ->update($business_member_data);
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -263,17 +311,26 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $nid_image_front_name = $this->personalRequest->getNidFront() ? $this->personalRequest->getNidFront()->getClientOriginalName() : null;
-            $nid_image_front = $this->personalRequest->getNidFront() ? $this->getPicture($this->profile, $this->personalRequest->getNidFront(), 'nid_image_front') : null;
-            $nid_image_back_name = $this->personalRequest->getNidBack() ? $this->personalRequest->getNidBack()->getClientOriginalName() : null;
-            $nid_image_back = $this->personalRequest->getNidBack() ? $this->getPicture($this->profile, $this->personalRequest->getNidBack(), 'nid_image_back') : null;
+            $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
+            $nid_front = $this->personalRequest->getNidFront();
+            $nid_back = $this->personalRequest->getNidBack();
+
+            if ($nid_front) {
+                $nid_image_front_name = $this->isFile($nid_front) ? $nid_front->getClientOriginalName() : array_last(explode('/', $nid_front));
+                $nid_image_front = $this->isFile($nid_front) ? $this->getPicture($this->profile, $nid_front, 'nid_image_front') : $nid_front;
+            }
+            if ($nid_back) {
+                $nid_image_back_name = $this->isFile($nid_back) ? $nid_back->getClientOriginalName() : array_last(explode('/', $nid_back));
+                $nid_image_back = $this->isFile($nid_back) ? $this->getPicture($this->profile, $nid_back, 'nid_image_back') : $nid_back;
+            }
+
             $profile_data = [
                 'mobile' => $this->personalRequest->getPhone(),
                 'address' => $this->personalRequest->getAddress(),
                 'nationality' => $this->personalRequest->getNationality(),
                 'nid_no' => $this->personalRequest->getNidNumber(),
-                'nid_image_front' => $nid_image_front_name,
-                'nid_image_back' => $nid_image_back_name,
+                'nid_image_front' => $nid_image_front,
+                'nid_image_back' => $nid_image_back,
                 'dob' => $this->personalRequest->getDateOfBirth()
             ];
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
@@ -281,6 +338,7 @@ class Updater
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -293,8 +351,14 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
-            $tin_certificate_name = $this->financialRequest->getTinCertificate() ? $this->financialRequest->getTinCertificate()->getClientOriginalName() : null;
-            $tin_certificate_link = $this->financialRequest->getTinCertificate() ? $this->getPicture($this->profile, $this->financialRequest->getTinCertificate(), 'tin_certificate') : null;
+            $tin_certificate_name = $tin_certificate_link = null;
+            $tin_certificate = $this->personalRequest->getNidFront();
+
+            if ($tin_certificate) {
+                $tin_certificate_name = $this->isFile($tin_certificate) ? $tin_certificate->getClientOriginalName() : array_last(explode('/', $tin_certificate));
+                $tin_certificate_link = $this->isFile($tin_certificate) ? $this->getPicture($this->profile, $tin_certificate, 'tin_certificate') : $tin_certificate;
+            }
+
             $profile_data = [
                 'tin_no' => $this->financialRequest->getTinNumber(),
                 'tin_certificate' => $tin_certificate_link,
@@ -310,6 +374,7 @@ class Updater
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -332,6 +397,7 @@ class Updater
             return $this->member;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -343,12 +409,13 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_requester = $this->businessMemberRequester->setStatus($this->coWorkerRequester->getStatus());
-            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->setRequester($business_member_requester)->update();
+            $business_member_data = ['status' => $this->coWorkerRequester->getStatus()];
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
             DB::commit();
             return $this->businessMember;
         } catch (Throwable $e) {
             DB::rollback();
+            app('sentry')->captureException($e);
             return null;
         }
     }
@@ -358,8 +425,11 @@ class Updater
      */
     private function businessRoleCreate()
     {
-        $business_role_requester = $this->roleRequester->setDepartment($this->basicRequest->getDepartment())
-            ->setName($this->basicRequest->getRole())->setIsPublished(1);
+        $business_role_requester = $this->roleRequester
+            ->setDepartment($this->basicRequest->getDepartment())
+            ->setName($this->basicRequest->getRole())
+            ->setIsPublished(1);
+
         return $this->roleCreator->setRequester($business_role_requester)->create();
     }
 
@@ -375,6 +445,7 @@ class Updater
             $filename = substr($profile->{$image_for}, strlen(config('sheba.s3_url')));
             $this->deleteOldImage($filename);
         }
+
         return $this->fileRepository->uploadToCDN($this->makePicName($profile, $photo, $image_for), $photo, 'images/profiles/' . $image_for . '_');
     }
 
@@ -396,5 +467,20 @@ class Updater
     private function makePicName($profile, $photo, $image_for = 'profile')
     {
         return $filename = Carbon::now()->timestamp . '_' . $image_for . '_image_' . $profile->id . '.' . $photo->extension();
+    }
+
+    /**
+     * @param $mobile
+     * @return $this
+     */
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
+        $profile = $this->profileRepository->checkExistingMobile($mobile);
+        if (!$profile) return $this;
+        if ($profile->id != $this->member->profile->id)
+            $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
+
+        return $this;
     }
 }

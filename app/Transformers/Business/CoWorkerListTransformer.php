@@ -8,9 +8,11 @@ class CoWorkerListTransformer extends TransformerAbstract
     public function transform(Member $member)
     {
         $profile = $member->profile;
-        $role = $member->businessMember->role;
+        $business_member = $member->businessMember;
+        $role = $business_member->role;
         return [
             'id' => $member->id,
+            'business_member_id' => $business_member->id,
             'profile' => [
                 'id' => $profile->id,
                 'name' => $profile->name,

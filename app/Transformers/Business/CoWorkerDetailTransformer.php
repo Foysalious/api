@@ -91,6 +91,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'address' => $profile->address,
             'nationality' => $profile->nationality,
             'nid_no' => $profile->nid_no,
+            'profile_id' => $profile->id,
             'nid_image_front' => $profile->nid_image_front,
             'nid_image_back' => $profile->nid_image_back,
             'personal_info_completion' => $personal_info_completion,

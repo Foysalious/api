@@ -10,8 +10,10 @@ class BasicRequest
     private $lastName;
     private $email;
     private $department;
-    private $role;    #Designation
-    private $managerEmployee;  #Manager
+    /** @var $role | Designation */
+    private $role;
+    /** @var $managerEmployee | Manager */
+    private $managerEmployee;
 
     /**
      * @param $business_member
@@ -85,7 +87,6 @@ class BasicRequest
         return $this->lastName;
     }
 
-
     /**
      * @param $email
      * @return $this
@@ -103,7 +104,6 @@ class BasicRequest
     {
         return $this->email;
     }
-
 
     /**
      * @param $department
@@ -147,7 +147,7 @@ class BasicRequest
      */
     public function setManagerEmployee($manager_employee)
     {
-        $this->managerEmployee = $manager_employee;
+        $this->managerEmployee = $manager_employee ? $manager_employee : null;
         return $this;
     }
 
