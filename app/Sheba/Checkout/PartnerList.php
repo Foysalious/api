@@ -373,6 +373,7 @@ class PartnerList
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
+            $partner['agent_commission'] = $partner->discounted_price ? $partner->discounted_price * (constants('AFFILIATE_REWARD')['SERVICE_REFER']['AGENT']['percentage']/100) : 0;
         }
     }
 
