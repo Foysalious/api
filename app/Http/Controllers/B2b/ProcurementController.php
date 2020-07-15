@@ -1019,9 +1019,8 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
         if ($procurement->status != StatusCalculator::IS_PENDING)
-            return api_response($request, null, 422, [
-                'description' => 'Tender not Found'
-            ]);
+            return api_response($request, null, 422, ['message' => 'Vendor already hired']);
+
         $price_quotation_fields = $this->generateItemData($procurement, 'price_quotation');
         $technical_evaluation_fields = $this->generateItemData($procurement, 'technical_evaluation');
         $company_evaluation_fields = $this->generateItemData($procurement, 'company_evaluation');
