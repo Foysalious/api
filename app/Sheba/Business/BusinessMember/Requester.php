@@ -11,6 +11,7 @@ class Requester
     private $status;
     private $businessId;
     private $memberId;
+    private $isSuper;
 
     /**
      * @param $manager_employee
@@ -136,6 +137,24 @@ class Requester
     public function getStatus()
     {
         return $this->status;
+    }
+
+    /**
+     * @param $is_super
+     * @return $this
+     */
+    public function setIsSuper($is_super)
+    {
+        $this->isSuper = $is_super;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIsSuper()
+    {
+        return $this->isSuper;
     }
 
     /**
