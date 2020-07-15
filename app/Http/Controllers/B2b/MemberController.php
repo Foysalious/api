@@ -2,7 +2,9 @@
 
 use App\Models\Attachment;
 use App\Sheba\Business\ACL\AccessControl;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
@@ -10,6 +12,8 @@ use Sheba\Attachments\FilesAttachment;
 use Sheba\Business\BusinessCommonInformationCreator;
 use Sheba\Business\BusinessCreator;
 use Sheba\Business\BusinessCreatorRequest;
+use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessUpdater;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -21,6 +25,21 @@ use DB;
 class MemberController extends Controller
 {
     use ModificationFields, FilesAttachment;
+    /** BusinessMemberRequester $businessMemberRequester */
+    private $businessMemberRequester;
+    /** BusinessMemberCreator $businessMemberCreator */
+    private $businessMemberCreator;
+
+    /**
+     * MemberController constructor.
+     * @param BusinessMemberRequester $business_member_requester
+     * @param BusinessMemberCreator $business_member_creator
+     */
+    public function __construct(BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator)
+    {
+        $this->businessMemberRequester = $business_member_requester;
+        $this->businessMemberCreator = $business_member_creator;
+    }
 
     /**
      * @param $member
@@ -60,9 +79,7 @@ class MemberController extends Controller
             } else {
                 $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
                 $common_info_creator->setBusiness($business)->setMember($member)->create();
-
-                $member_business_data = ['business_id' => $business->id, 'member_id' => $member->id, 'is_super' => 1, 'join_date' => Carbon::now()];
-                BusinessMember::create($this->withCreateModificationField($member_business_data));
+                $this->createBusinessMember($business, $member);
             }
             DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
@@ -76,6 +93,26 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $business
+     * @param $member
+     * @return Model
+     */
+    private function createBusinessMember($business, $member)
+    {
+        $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
+            ->setMemberId($member->id)
+            ->setStatus('active')
+            ->setIsSuper(1)
+            ->setJoinDate(Carbon::now());
+        return $this->businessMemberCreator->setRequester($business_member_requester)->create();
+    }
+
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getBusinessInfo($member, Request $request)
     {
         try {
@@ -104,6 +141,12 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function getMemberInfo($member, Request $request, AccessControl $access_control)
     {
         try {
@@ -138,6 +181,10 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -159,6 +206,11 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse|RedirectResponse
+     */
     public function storeAttachment($member, Request $request)
     {
         try {
@@ -188,6 +240,11 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getAttachments($member, Request $request)
     {
         try {
