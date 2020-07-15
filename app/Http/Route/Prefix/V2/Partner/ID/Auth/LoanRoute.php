@@ -34,6 +34,7 @@ class LoanRoute
             $api->get('{partner_bank_loan}/logs-for-agent', 'LoanController@getChangeLogsForAgent');
             $api->delete('{partner_bank_loan}/delete-documents', 'LoanController@deleteDocument');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
+            $api->post('/{loan_id}/update-claim-status','LoanController@claimStatusUpdate');
 
         });
 

@@ -885,4 +885,25 @@ class LoanController extends Controller
 
     }
 
+    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'claim_id' => 'required',
+                'from' => 'required|in:pending,approved,declined',
+                'to' => 'required|in:pending,approved,declined'
+            ]);
+            $request->merge(['loan_id' => $loan_id]);
+            $loan->claimStatusUpdate($request);
+            return api_response($request, null, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
 }

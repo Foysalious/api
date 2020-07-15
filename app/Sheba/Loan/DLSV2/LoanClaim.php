@@ -11,11 +11,18 @@ class LoanClaim
     use ModificationFields;
     private $loanClaimRequest;
     private $loanId;
+    private $claimId;
 
     public function setLoan($loan_id)
     {
          $this->loanId = $loan_id;
          return $this;
+    }
+
+    public function setClaim($claim_id)
+    {
+        $this->claimId = $claim_id;
+        return $this;
     }
 
     /**
@@ -26,6 +33,16 @@ class LoanClaim
         return Model::where('loan_id',$this->loanId)->orderBy('id','desc')->first();
 
         //return Model::lastClaim($this->loanId);
+    }
+
+    public function updateStatus($to)
+    {
+
+        $claim = Model::where('id',$this->claimId)->first();
+        $claim->status = $to;
+        //***
+        $claim->log = $to == 'approved' ? '৳' .convertNumbersToBangla($claim->amount) .' লোন দাবি গৃহীত হয়েছে' : '৳' .convertNumbersToBangla($claim->amount) .' লোন দাবি বাতিল করা হয়েছে';
+        return $claim->update();
     }
 
     public function createRequest($data)
