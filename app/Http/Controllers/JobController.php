@@ -314,6 +314,7 @@ class JobController extends Controller
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
+            $bill['isRentCar'] = $job->isRentCar();
             $bill['is_on_premise'] = (int)$job->isOnPremise();
             $bill['delivery_charge'] = $original_delivery_charge;
             $bill['delivery_discount'] = $delivery_discount;
@@ -329,6 +330,9 @@ class JobController extends Controller
             $bill['destination'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
                 'thana' => $job->carRentalJobDetail->destination_address
             ] : null;
+            $bill['is_surcharge_applied'] = 1;
+            $bill['surcharge_percentage'] = 10;
+            $bill['surcharge_amount'] = 100;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
