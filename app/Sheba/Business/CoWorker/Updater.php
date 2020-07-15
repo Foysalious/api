@@ -249,13 +249,14 @@ class Updater
             $profile_data = [];
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
-            $profile_data['name'] = $this->basicRequest->getFirstName();
+
             if ($profile_image) {
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
-                $profile_data['pro_pic'] = $profile_pic;
             }
             if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
+            if ($this->basicRequest->getFirstName()) $profile_data['name'] = $this->basicRequest->getFirstName();
+            if ($profile_image) $profile_data['pro_pic'] = $profile_pic;
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
@@ -284,10 +285,10 @@ class Updater
         DB::beginTransaction();
         try {
             $business_member_data = [];
-            if ($this->officialRequest->getJoinDate()) $business_member_data += ['join_date' => $this->officialRequest->getJoinDate()];
-            if ($this->officialRequest->getGrade()) $business_member_data += ['grade' => $this->officialRequest->getGrade()];
-            if ($this->officialRequest->getEmployeeType()) $business_member_data += ['employee_type' => $this->officialRequest->getEmployeeType()];
-            if ($this->officialRequest->getPreviousInstitution()) $business_member_data += ['previous_institution' => $this->officialRequest->getPreviousInstitution()];
+            if ($this->officialRequest->getJoinDate()) $business_member_data['join_date'] = $this->officialRequest->getJoinDate();
+            if ($this->officialRequest->getGrade()) $business_member_data['grade'] = $this->officialRequest->getGrade();
+            if ($this->officialRequest->getEmployeeType()) $business_member_data['employee_type'] = $this->officialRequest->getEmployeeType();
+            if ($this->officialRequest->getPreviousInstitution()) $business_member_data['previous_institution'] = $this->officialRequest->getPreviousInstitution();
             $this->businessMember = $this->businessMemberUpdater
                 ->setBusinessMember($this->businessMember)
                 ->update($business_member_data);
@@ -321,13 +322,13 @@ class Updater
             }
 
             $profile_data = [];
-            if ($this->personalRequest->getPhone()) $profile_data += ['mobile ' => $this->personalRequest->getPhone()];
-            if ($this->personalRequest->getAddress()) $profile_data += ['address ' => $this->personalRequest->getAddress()];
-            if ($this->personalRequest->getNationality()) $profile_data += ['nationality ' => $this->personalRequest->getNationality()];
-            if ($this->personalRequest->getNidNumber()) $profile_data += ['nid_no ' => $this->personalRequest->getNidNumber()];
-            if ($nid_front) $profile_data += ['nid_image_front ' => $nid_front];
-            if ($nid_back) $profile_data += ['nid_image_back ' => $nid_back];
-            if ($this->personalRequest->getDateOfBirth()) $profile_data += ['dob ' => $this->personalRequest->getDateOfBirth()];
+            if ($this->personalRequest->getPhone()) $profile_data['mobile'] = $this->personalRequest->getPhone();
+            if ($this->personalRequest->getAddress()) $profile_data['address'] = $this->personalRequest->getAddress();
+            if ($this->personalRequest->getNationality()) $profile_data['nationality'] = $this->personalRequest->getNationality();
+            if ($this->personalRequest->getNidNumber()) $profile_data['nid_no'] = $this->personalRequest->getNidNumber();
+            if ($nid_front) $profile_data['nid_image_front'] = $nid_image_front;
+            if ($nid_back) $profile_data['nid_image_back'] = $nid_image_back;
+            if ($this->personalRequest->getDateOfBirth()) $profile_data['dob'] = $this->personalRequest->getDateOfBirth();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
@@ -356,7 +357,7 @@ class Updater
             }
             $profile_data = [];
             if ($this->financialRequest->getTinNumber()) $profile_data['tin_no'] = $this->financialRequest->getTinNumber();
-            if ($tin_certificate) $profile_data['tin_certificate'] = $tin_certificate;
+            if ($tin_certificate) $profile_data['tin_certificate'] = $tin_certificate_link;
             $this->profileRepository->update($this->profile, $profile_data);
 
             $profile_bank_data = [];
