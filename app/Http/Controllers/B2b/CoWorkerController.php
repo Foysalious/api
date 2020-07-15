@@ -209,16 +209,15 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = [
-            'mobile' => 'string|mobile:bd',
-            'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'address ' => 'sometimes|required|string',
-            'nationality ' => 'sometimes|required|string',
-            'nid_number ' => 'sometimes|required|integer'
+            'mobile' => 'sometimes|required',
+            'date_of_birth' => 'sometimes|required',
+            'address' => 'sometimes|required',
+            'nationality' => 'sometimes|required',
+            'nid_number' => 'sometimes|required'
         ];
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
-
         $member = $request->manager_member;
         $this->setModifier($member);
 
@@ -227,10 +226,14 @@ class CoWorkerController extends Controller
             ->setAddress($request->address)
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
-            ->setNidFront($request->file('nid_front'))
-            ->setNidBack($request->file('nid_back'));
+            ->setNidFront($request->nid_front)
+            ->setNidBack($request->nid_back);
 
-        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
+        list($profile,
+            $nid_image_front_name,
+            $nid_image_front,
+            $nid_image_back_name,
+            $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
             ->setMember($member_id)
             ->personalInfoUpdate();
         if ($profile) {
