@@ -175,6 +175,17 @@ class CoWorkerController extends Controller
     }
 
     /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
+    }
+
+    /**
      * @param $business
      * @param $member_id
      * @param Request $request
@@ -182,15 +193,12 @@ class CoWorkerController extends Controller
      */
     public function officialInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'grade' => 'sometimes|required|string',
-            'employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern',
-            'previous_institution' => 'sometimes|required|string',
-        ]);
-        $member = $request->manager_member;
-        $this->setModifier($member);
-
+        $validation_data = ['grade' => 'sometimes|required', 'previous_institution' => 'sometimes|required'];
+        if (!$this->isNull($request->employee_type)) $validation_data += ['employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern'];
+        if (!$this->isNull($request->join_date)) $validation_data += ['join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')];
+        $this->validate($request, $validation_data);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
         $official_request = $this->officialRequest->setJoinDate($request->join_date)
             ->setGrade($request->grade)
             ->setEmployeeType($request->employee_type)

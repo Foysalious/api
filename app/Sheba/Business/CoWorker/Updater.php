@@ -283,12 +283,11 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_data = [
-                'join_date' => $this->officialRequest->getJoinDate(),
-                'grade' => $this->officialRequest->getGrade(),
-                'employee_type' => $this->officialRequest->getEmployeeType(),
-                'previous_institution' => $this->officialRequest->getPreviousInstitution(),
-            ];
+            $business_member_data = [];
+            if ($this->officialRequest->getJoinDate()) $business_member_data += ['join_date' => $this->officialRequest->getJoinDate()];
+            if ($this->officialRequest->getGrade()) $business_member_data += ['grade' => $this->officialRequest->getGrade()];
+            if ($this->officialRequest->getEmployeeType()) $business_member_data += ['employee_type' => $this->officialRequest->getEmployeeType()];
+            if ($this->officialRequest->getPreviousInstitution()) $business_member_data += ['previous_institution' => $this->officialRequest->getPreviousInstitution()];
             $this->businessMember = $this->businessMemberUpdater
                 ->setBusinessMember($this->businessMember)
                 ->update($business_member_data);
