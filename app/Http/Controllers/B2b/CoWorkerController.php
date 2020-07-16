@@ -344,7 +344,6 @@ class CoWorkerController extends Controller
                 ]);
             }
         ]);
-
         if ($request->has('department')) {
             $members->where(function ($query) use ($request) {
                 $query->whereHas('businessMember.role.businessDepartment', function ($query) use ($request) {

@@ -28,8 +28,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $business_member = $member->businessMember;
         $role = $business_member ? $business_member->role : null;
         $department = $role ? $role->businessDepartment : null;
-
-        $department = $department ? $department->name : null;
+        $department_name = $department ? $department->name : null;
+        $department_id = $department ? $department->id : null;
         $designation = $role ? $role->name : null;
 
         $count = 0;
@@ -48,7 +48,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
                 'profile_picture' => $profile->pro_pic,
                 'email' => $profile->email,
             ],
-            'department' => $department,
+            'department' => $department_name,
+            'department_id' => $department_id,
             'designation' => $designation,
             'manager_detail' => $business_member->manager_id ? $this->getManagerDetails($business_member->manager_id) : null,
             'basic_info_completion' => $basic_info_completion,
@@ -106,7 +107,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $profile = $member->profile;
         $profile_bank_info = $profile->banks->last();
 
-        $bank_name = $profile_bank_info ? $profile_bank_info->bank_name : null;
+        $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
         $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
         $count = 0;
         if ($profile->tin_no ||
@@ -162,15 +163,15 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $manager_business_member = BusinessMember::findOrFail($manager_id);
         $manager_member = $manager_business_member->member;
         $manager_profile = $manager_member->profile;
-        return $manager_profile->name;
         return [
             'id' => $manager_member->id,
+            'business_member' => $manager_business_member->id,
             'name' => $manager_profile->name,
-            'mobile' => $manager_profile->mobile,
-            'email' => $manager_profile->email,
-            'pro_pic' => $manager_profile->pro_pic,
-            'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
-            'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
+            #'mobile' => $manager_profile->mobile
+            #'email' => $manager_profile->email,
+            #'pro_pic' => $manager_profile->pro_pic,
+            #'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
+            #'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
         ];
     }
 }
