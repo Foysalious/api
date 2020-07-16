@@ -368,16 +368,16 @@ class Loan
         return true;
     }
 
-    public function claimList($loan_id)
+    public function claimList($loan_id, $all=false, $month=null, $year = null)
     {
-        $claims = (new LoanClaim())->getAll($loan_id);
+        if(!$all)
+            $claims = (new LoanClaim())->getByYearAndMonth($loan_id,$month,$year);
+        else
+            $claims = (new LoanClaim())->getAll($loan_id);
+
         $pending_claim = (new LoanClaim())->getPending($loan_id);
         $data['claim_list'] = [];
         $data['pending_claim'] = null;
-        //$data['can_claim'] = 1;
-       // $data['should_pay'] = 0;
-       // list($data['can_claim'],$data['should_pay']) = $this->canClaimShouldPay($request);
-
 
         if($pending_claim){
             $data['pending_claim']['id'] = $pending_claim->id;
@@ -397,6 +397,7 @@ class Loan
                 'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
             ]);
         }
+
         return $data;
     }
 
@@ -686,7 +687,7 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
-        $details['claims'] = $this->claimList($loan_id);
+        $details['claims'] = $this->claimList($loan_id,true);
         return $details;
     }
 
