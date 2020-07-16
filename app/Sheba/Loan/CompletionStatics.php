@@ -17,8 +17,8 @@ class CompletionStatics
             'industry_and_business_nature',
             'trade_license'
         ];
-        $micro  = array_merge($term  ,['full_time_employee','product_price','office_rent','utility_bill','marketing_cost','other_cost','registration_no','avg_sell','min_sell','max_sell','location','yearly_income','business_category','establishment_year']);
-        $oldApp = array_merge($micro , [
+        $micro  = array_merge($term  ,['part_time_employee','product_price','employee_salary','office_rent','utility_bill','marketing_cost','other_cost','registration_no','avg_sell','min_sell','max_sell','yearly_income','establishment_year','addresss']);
+        $oldApp = array_merge($term , [
             'trade_license_issue_date',
             'registration_no',
             'registration_year',

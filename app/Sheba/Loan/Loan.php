@@ -509,9 +509,9 @@ class Loan
         return $personal;
     }
 
-    public function businessInfo($type = null)
+    public function businessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource))->setType($type)->setVersion($this->version);
+        return (new BusinessInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function financeInfo()
