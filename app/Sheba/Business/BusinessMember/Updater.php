@@ -53,8 +53,8 @@ class Updater
      */
     public function update(array $data)
     {
-        $this->formatData($data);
-        return $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($this->businessMemberData));
+        #$this->formatData($data);
+        return $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($data));
     }
 
     private function formatData($data)
