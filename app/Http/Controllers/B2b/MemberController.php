@@ -15,6 +15,7 @@ use Sheba\Business\BusinessCreatorRequest;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
 use Sheba\Business\BusinessUpdater;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Member;
@@ -149,36 +150,41 @@ class MemberController extends Controller
      */
     public function getMemberInfo($member, Request $request, AccessControl $access_control)
     {
-        try {
-            $member = Member::find((int)$member);
-            $business = $member->businesses->first();
-            $profile = $member->profile;
-            $access_control->setBusinessMember($member->businessMember);
-            $info = [
-                'profile_id' => $profile->id,
-                'name' => $profile->name,
-                'mobile' => $profile->mobile,
-                'email' => $profile->email,
-                'pro_pic' => $profile->pro_pic,
-                'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
-                'gender' => $profile->gender,
-                'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
-                'nid_no' => $profile->nid_no,
-                'address' => $profile->address,
-                'business_id' => $business ? $business->id : null,
-                'remember_token' => $member->remember_token,
-                'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
-                'access' => [
-                    'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
-                    'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
-                    'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
-                ]
-            ];
-            return api_response($request, $info, 200, ['info' => $info]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $member = Member::find((int)$member);
+        // $business = $member->businesses()->first();
+        $business = $member->businesses()->wherePivot('status', '<>', Statuses::INACTIVE)->first();
+        $business_members = BusinessMember::where('member_id', $member->id)->get();
+        if (!$business_members->isEmpty()) {
+            $business_members = $business_members->reject(function ($business_member) {
+                return $business_member->status == Statuses::INACTIVE;
+            });
+            if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
+
+        $profile = $member->profile;
+        $access_control->setBusinessMember($member->businessMember);
+        $info = [
+            'profile_id' => $profile->id,
+            'name' => $profile->name,
+            'mobile' => $profile->mobile,
+            'email' => $profile->email,
+            'pro_pic' => $profile->pro_pic,
+            'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
+            'gender' => $profile->gender,
+            'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
+            'nid_no' => $profile->nid_no,
+            'address' => $profile->address,
+            'business_id' => $business ? $business->id : null,
+            'remember_token' => $member->remember_token,
+            'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'access' => [
+                'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
+                'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
+                'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
+            ]
+        ];
+
+        return api_response($request, $info, 200, ['info' => $info]);
     }
 
     /**
