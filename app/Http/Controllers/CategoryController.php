@@ -419,10 +419,10 @@ class CategoryController extends Controller
                 $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
                 $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                    /*if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                         $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    }
+                    }*/
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location);
                     })->select(
