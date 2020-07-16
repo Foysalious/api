@@ -466,7 +466,7 @@ class Loan
         {
             $data['loan_balance'] = $last_claim->amount;
             $data['due_balance'] = $this->getDue($last_claim->loan_id);
-            $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যাল্যান্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
+            $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
             $data['status_type'] = 'success';
             $data['can_claim']   = 0;
             $data['should_pay'] = 1;
@@ -510,9 +510,9 @@ class Loan
         return $personal;
     }
 
-    public function businessInfo($type = null)
+    public function businessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource))->setType($type)->setVersion($this->version);
+        return (new BusinessInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function financeInfo()
