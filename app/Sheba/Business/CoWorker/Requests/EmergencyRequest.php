@@ -51,7 +51,7 @@ class EmergencyRequest
      */
     public function setEmergencyContractPersonMobile($mobile)
     {
-        $this->mobile = $mobile ? formatMobile($mobile) : null;
+        $this->mobile = $mobile;
         return $this;
     }
 
@@ -79,5 +79,16 @@ class EmergencyRequest
     public function getRelationshipEmergencyContractPerson()
     {
         return $this->relationship;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

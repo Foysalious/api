@@ -100,4 +100,15 @@ class OfficialRequest
     {
         return $this->previousInstitution;
     }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
+    }
 }

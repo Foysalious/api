@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Sheba\BankingInfo\GeneralBanking;
 use FontLib\EOT\File;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -139,14 +140,12 @@ class CoWorkerController extends Controller
             'role' => 'required|string',
             'manager_employee' => 'sometimes|required'
         ];
-        if ($this->isFile($request->pro_pic)) {
-            $validation_data += ['pro_pic' => 'sometimes|required|mimes:jpg,jpeg,png,pdf'];
-        } else {
-            $validation_data += ['pro_pic' => 'sometimes|required|string'];
-        }
+        $validation_data['pro_pic'] = $this->isFile($request->pro_pic) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
+
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
+
         $basic_request = $this->basicRequest->setProPic($request->pro_pic)
             ->setFirstName($request->first_name)
             ->setLastName($request->last_name)
@@ -160,7 +159,10 @@ class CoWorkerController extends Controller
             ->setMember($member_id)
             ->basicInfoUpdate();
 
-        if ($business_member) return api_response($request, 1, 200, ['profile_pic_name' => $profile_pic_name, 'profile_pic' => $profile_pic]);
+        if ($business_member) return api_response($request, 1, 200, [
+            'profile_pic_name' => $profile_pic_name,
+            'profile_pic' => $profile_pic
+        ]);
         return api_response($request, null, 404);
     }
 
@@ -175,6 +177,17 @@ class CoWorkerController extends Controller
     }
 
     /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
+    }
+
+    /**
      * @param $business
      * @param $member_id
      * @param Request $request
@@ -182,15 +195,12 @@ class CoWorkerController extends Controller
      */
     public function officialInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'grade' => 'sometimes|required|string',
-            'employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern',
-            'previous_institution' => 'sometimes|required|string',
-        ]);
-        $member = $request->manager_member;
-        $this->setModifier($member);
-
+        $validation_data = ['grade' => 'sometimes|required', 'previous_institution' => 'sometimes|required'];
+        if (!$this->isNull($request->employee_type)) $validation_data += ['employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern'];
+        if (!$this->isNull($request->join_date)) $validation_data += ['join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')];
+        $this->validate($request, $validation_data);
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
         $official_request = $this->officialRequest->setJoinDate($request->join_date)
             ->setGrade($request->grade)
             ->setEmployeeType($request->employee_type)
@@ -209,16 +219,16 @@ class CoWorkerController extends Controller
     public function personalInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = [
-            'mobile' => 'string|mobile:bd',
-            'date_of_birth ' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'address ' => 'sometimes|required|string',
-            'nationality ' => 'sometimes|required|string',
-            'nid_number ' => 'sometimes|required|integer'
+            'mobile' => 'sometimes|required',
+            'date_of_birth' => 'sometimes|required',
+            'address' => 'sometimes|required',
+            'nationality' => 'sometimes|required',
+            'nid_number' => 'sometimes|required'
         ];
+
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
-
         $member = $request->manager_member;
         $this->setModifier($member);
 
@@ -227,10 +237,14 @@ class CoWorkerController extends Controller
             ->setAddress($request->address)
             ->setNationality($request->nationality)
             ->setNidNumber($request->nid_number)
-            ->setNidFront($request->file('nid_front'))
-            ->setNidBack($request->file('nid_back'));
+            ->setNidFront($request->nid_front)
+            ->setNidBack($request->nid_back);
 
-        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
+        list($profile,
+            $nid_image_front_name,
+            $nid_image_front,
+            $nid_image_back_name,
+            $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
             ->setMember($member_id)
             ->personalInfoUpdate();
         if ($profile) {
@@ -252,33 +266,27 @@ class CoWorkerController extends Controller
      */
     public function financialInfoEdit($business, $member_id, Request $request)
     {
-        $validation_data = [
-            'tin_number ' => 'sometimes|required|string',
-            'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-            'bank_name ' => 'sometimes|required|string',
-            'bank_account_number ' => 'sometimes|required|string'
-        ];
-        if ($this->isFile($request->tin_certificate)) {
-            $validation_data += [
-                'tin_certificate ' => 'sometimes|required|mimes:jpg,jpeg,png,pdf',
-            ];
-        } else {
-            $validation_data += [
-                'tin_certificate ' => 'sometimes|required|string'
-            ];
-        }
+        $validation_data = ['tin_number ' => 'sometimes|required', 'bank_name ' => 'sometimes|required', 'bank_account_number ' => 'sometimes|required'];
+        $validation_data ['tin_certificate '] = $this->isFile($request->tin_certificate) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
 
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
-            ->setTinCertificate($request->file('tin_certificate'))
+            ->setTinCertificate($request->tin_certificate)
             ->setBankName($request->bank_name)
             ->setBankAccNumber($request->bank_account_number);
-        list($profile, $image_name, $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
+
+        list($profile,
+            $image_name,
+            $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
             ->setMember($member_id)
             ->financialInfoUpdate();
-        if ($profile) return api_response($request, 1, 200, ['tin_certificate_name' => $image_name, 'tin_certificate_link' => $image_link]);
+
+        if ($profile) return api_response($request, 1, 200, [
+            'tin_certificate_name' => $image_name,
+            'tin_certificate_link' => $image_link
+        ]);
         return api_response($request, null, 404);
     }
 
@@ -290,16 +298,21 @@ class CoWorkerController extends Controller
      */
     public function emergencyInfoEdit($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'name ' => 'sometimes|required|string',
-            'mobile' => 'string|mobile:bd',
-            'relationship ' => 'sometimes|required|string'
-        ]);
-        $member = $request->manager_member;
-        $this->setModifier($member);
+        $validation_data = [
+            'name ' => 'sometimes|required',
+            'mobile' => 'string',
+            'relationship ' => 'sometimes|required'
+        ];
+        $validation_data['mobile'] = $this->isNull($request->mobile) ? 'sometimes|string|mobile:bd' : 'string';
+        $this->validate($request, $validation_data);
+
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+
         $emergency_request = $this->emergencyRequest->setEmergencyContractPersonName($request->name)
             ->setEmergencyContractPersonMobile($request->mobile)
             ->setRelationshipEmergencyContractPerson($request->relationship);
+
         $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setMember($member_id)->emergencyInfoUpdate();
         if ($member) return api_response($request, 1, 200);
         return api_response($request, null, 404);

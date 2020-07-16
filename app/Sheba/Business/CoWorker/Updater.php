@@ -1,32 +1,30 @@
 <?php namespace Sheba\Business\CoWorker;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
-use Intervention\Image\Image;
-use phpDocumentor\Reflection\File;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
+use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
+use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
+use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
+use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
 use Sheba\Business\CoWorker\Requests\EmergencyRequest;
 use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
-use Sheba\Helpers\HasErrorCodeAndMessage;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
-use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
-use Sheba\Business\BusinessMember\Updater as BusinessMemberUpdater;
 use Sheba\Business\Role\Requester as RoleRequester;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
-use Sheba\Business\Role\Creator as RoleCreator;
 use Sheba\Business\Role\Updater as RoleUpdater;
-use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
-use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
-use Sheba\Repositories\Interfaces\ProfileBankInfoInterface;
+use Sheba\Business\Role\Creator as RoleCreator;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Repositories\ProfileRepository;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\FileManagers\CdnFileManager;
 use App\Repositories\FileRepository;
 use Sheba\FileManagers\FileManager;
+use Illuminate\Http\UploadedFile;
 use App\Models\BusinessMember;
+use Intervention\Image\Image;
 use Sheba\ModificationFields;
 use App\Models\BusinessRole;
 use App\Models\Profile;
@@ -230,12 +228,12 @@ class Updater
 
     private function getBusinessRole()
     {
-        $business_role = $this->businessRoleRepository
+        /*$business_role = $this->businessRoleRepository
             ->whereLike('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
 
-        if ($business_role) return $business_role;
+        if ($business_role) return $business_role;*/
 
         return $this->businessRoleCreate();
     }
@@ -251,13 +249,27 @@ class Updater
             $profile_data = [];
             $profile_pic_name = $profile_pic = null;
             $profile_image = $this->basicRequest->getProPic();
-            $profile_data['name'] = $this->basicRequest->getFirstName();
-            if ($profile_image) {
+
+            if ($profile_image != 'null') {
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
+            }
+            if ($this->basicRequest->getEmail() == 'null') {
+                $profile_data['email'] = $this->basicRequest->getEmail();
+            } else {
+                $profile_data['email'] = $this->basicRequest->getEmail();
+            }
+
+            if ($this->basicRequest->getFirstName() == 'null') {
+                $profile_data['name'] = null;
+            } else {
+                $profile_data['name'] = $this->basicRequest->getFirstName();
+            }
+            if ($profile_image == 'null') {
+                $profile_data['pro_pic'] = null;
+            } else {
                 $profile_data['pro_pic'] = $profile_pic;
             }
-            if ($this->basicRequest->getEmail()) $profile_data['email'] = $this->basicRequest->getEmail();
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
@@ -285,12 +297,28 @@ class Updater
     {
         DB::beginTransaction();
         try {
-            $business_member_data = [
-                'join_date' => $this->officialRequest->getJoinDate(),
-                'grade' => $this->officialRequest->getGrade(),
-                'employee_type' => $this->officialRequest->getEmployeeType(),
-                'previous_institution' => $this->officialRequest->getPreviousInstitution(),
-            ];
+            $business_member_data = [];
+            if ($this->officialRequest->getJoinDate() == 'null') {
+                $business_member_data['join_date'] = null;
+            } else {
+                $business_member_data['join_date'] = $this->officialRequest->getJoinDate();
+            }
+
+            if ($this->officialRequest->getGrade() == 'null') {
+                $business_member_data['grade'] = null;
+            } else {
+                $business_member_data['grade'] = $this->officialRequest->getGrade();
+            }
+            if ($this->officialRequest->getEmployeeType() == 'null') {
+                $business_member_data['employee_type'] = null;
+            } else {
+                $business_member_data['employee_type'] = $this->officialRequest->getEmployeeType();
+            }
+            if ($this->officialRequest->getPreviousInstitution() == 'null') {
+                $business_member_data['previous_institution'] = null;
+            } else {
+                $business_member_data['previous_institution'] = $this->officialRequest->getPreviousInstitution();
+            }
             $this->businessMember = $this->businessMemberUpdater
                 ->setBusinessMember($this->businessMember)
                 ->update($business_member_data);
@@ -314,25 +342,52 @@ class Updater
             $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
             $nid_front = $this->personalRequest->getNidFront();
             $nid_back = $this->personalRequest->getNidBack();
-
-            if ($nid_front) {
+            if ($nid_front != 'null') {
                 $nid_image_front_name = $this->isFile($nid_front) ? $nid_front->getClientOriginalName() : array_last(explode('/', $nid_front));
                 $nid_image_front = $this->isFile($nid_front) ? $this->getPicture($this->profile, $nid_front, 'nid_image_front') : $nid_front;
             }
-            if ($nid_back) {
+            if ($nid_back != 'null') {
                 $nid_image_back_name = $this->isFile($nid_back) ? $nid_back->getClientOriginalName() : array_last(explode('/', $nid_back));
                 $nid_image_back = $this->isFile($nid_back) ? $this->getPicture($this->profile, $nid_back, 'nid_image_back') : $nid_back;
             }
 
-            $profile_data = [
-                'mobile' => $this->personalRequest->getPhone(),
-                'address' => $this->personalRequest->getAddress(),
-                'nationality' => $this->personalRequest->getNationality(),
-                'nid_no' => $this->personalRequest->getNidNumber(),
-                'nid_image_front' => $nid_image_front,
-                'nid_image_back' => $nid_image_back,
-                'dob' => $this->personalRequest->getDateOfBirth()
-            ];
+            $profile_data = [];
+            if ($this->personalRequest->getPhone() == 'null') {
+                $profile_data['mobile'] = null;
+            } else {
+                $profile_data['mobile'] = $this->personalRequest->getPhone();
+            }
+            if ($this->personalRequest->getAddress() == 'null') {
+                $profile_data['address'] = null;
+            } else {
+                $profile_data['address'] = $this->personalRequest->getAddress();
+            }
+            if ($this->personalRequest->getNationality() == 'null') {
+                $profile_data['nationality'] = null;
+            } else {
+                $profile_data['nationality'] = $this->personalRequest->getNationality();
+            }
+            if ($this->personalRequest->getNidNumber() == 'null') {
+                $profile_data['nid_no'] = null;
+            } else {
+                $profile_data['nid_no'] = $this->personalRequest->getNidNumber();
+            }
+            if ($nid_front == 'null') {
+                $profile_data['nid_image_front'] = null;
+            } else {
+                $profile_data['nid_image_front'] = $nid_image_front;
+            }
+            if ($nid_back == 'null') {
+                $profile_data['nid_image_back'] = null;
+            } else {
+                $profile_data['nid_image_back'] = $nid_image_back;
+            }
+            if ($this->personalRequest->getDateOfBirth() == 'null') {
+                $profile_data['dob'] = null;
+            } else {
+                $profile_data['dob'] = $this->personalRequest->getDateOfBirth();
+            }
+
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
@@ -352,27 +407,47 @@ class Updater
         try {
             $this->getProfile();
             $tin_certificate_name = $tin_certificate_link = null;
-            $tin_certificate = $this->personalRequest->getNidFront();
+            $tin_certificate = $this->financialRequest->getTinCertificate();
 
-            if ($tin_certificate) {
+            if ($tin_certificate != 'null') {
                 $tin_certificate_name = $this->isFile($tin_certificate) ? $tin_certificate->getClientOriginalName() : array_last(explode('/', $tin_certificate));
                 $tin_certificate_link = $this->isFile($tin_certificate) ? $this->getPicture($this->profile, $tin_certificate, 'tin_certificate') : $tin_certificate;
             }
-
-            $profile_data = [
-                'tin_no' => $this->financialRequest->getTinNumber(),
-                'tin_certificate' => $tin_certificate_link,
-            ];
+            $profile_data = [];
+            if ($this->financialRequest->getTinNumber() == 'null') {
+                $profile_data['tin_no'] = null;
+            } else {
+                $profile_data['tin_no'] = $this->financialRequest->getTinNumber();
+            }
+            if ($tin_certificate == 'null') {
+                $profile_data['tin_certificate'] = null;
+            } else {
+                $profile_data['tin_certificate'] = $tin_certificate_link;
+            }
             $this->profileRepository->update($this->profile, $profile_data);
-            $profile_bank_data = [
-                'bank_name' => $this->financialRequest->getBankName(),
-                'account_no' => $this->financialRequest->getBankAccNumber(),
-                'profile_id' => $this->profile->id,
-            ];
-            $this->profileBankInfoRepository->create($profile_bank_data);
+
+            $profile_bank_data = [];
+            if ($this->financialRequest->getBankName() == 'null') {
+                $profile_bank_data['bank_name'] = null;
+            } else {
+                $profile_bank_data['bank_name'] = $this->financialRequest->getBankName();
+            }
+            if ($this->financialRequest->getBankAccNumber() == 'null') {
+                $profile_bank_data['account_no'] = null;
+            } else {
+                $profile_bank_data['account_no'] = $this->financialRequest->getBankAccNumber();
+            }
+            if ($this->financialRequest->getBankAccNumber() == 'null') {
+                $profile_bank_data['profile_id'] = null;
+            } else {
+                $profile_bank_data['profile_id'] = $this->profile->id;
+            }
+            if ($this->financialRequest->getBankAccNumber() != 'null') $this->profileBankInfoRepository->create($profile_bank_data);
+
             DB::commit();
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
+            dd($e);
             DB::rollback();
             app('sentry')->captureException($e);
             return null;
@@ -387,11 +462,23 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getMember();
-            $member_data = [
-                'emergency_contract_person_name' => $this->emergencyRequest->getEmergencyContractPersonName(),
-                'emergency_contract_person_number' => $this->emergencyRequest->getEmergencyContractPersonMobile(),
-                'emergency_contract_person_relationship' => $this->emergencyRequest->getRelationshipEmergencyContractPerson(),
-            ];
+            $member_data = [];
+            if ($this->emergencyRequest->getEmergencyContractPersonName() == 'null') {
+                $member_data['emergency_contract_person_name'] = null;
+            } else {
+                $member_data['emergency_contract_person_name'] = $this->emergencyRequest->getEmergencyContractPersonName();
+            }
+
+            if ($this->emergencyRequest->getEmergencyContractPersonMobile() == 'null') {
+                $member_data['emergency_contract_person_number'] = null;
+            } else {
+                $member_data['emergency_contract_person_number'] = formatMobile($this->emergencyRequest->getEmergencyContractPersonMobile());
+            }
+            if ($this->emergencyRequest->getRelationshipEmergencyContractPerson() == 'null') {
+                $member_data['emergency_contract_person_relationship'] = null;
+            } else {
+                $member_data['emergency_contract_person_relationship'] = $this->emergencyRequest->getRelationshipEmergencyContractPerson();
+            }
             $this->memberRepository->update($this->member, $member_data);
             DB::commit();
             return $this->member;

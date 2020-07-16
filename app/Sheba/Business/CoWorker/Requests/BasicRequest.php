@@ -12,7 +12,7 @@ class BasicRequest
     private $department;
     /** @var $role | Designation */
     private $role;
-    /** @var $managerEmployee | Manager */
+    /** @var $managerEmployee | Manager | Business Member */
     private $managerEmployee;
 
     /**
@@ -147,7 +147,7 @@ class BasicRequest
      */
     public function setManagerEmployee($manager_employee)
     {
-        $this->managerEmployee = $manager_employee ? $manager_employee : null;
+        $this->managerEmployee = $this->isNull($manager_employee) ? null : $manager_employee;
         return $this;
     }
 
@@ -157,5 +157,16 @@ class BasicRequest
     public function getManagerEmployee()
     {
         return $this->managerEmployee;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

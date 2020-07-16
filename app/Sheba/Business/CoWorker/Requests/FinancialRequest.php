@@ -99,4 +99,15 @@ class FinancialRequest
     {
         return $this->bankAccountNumber;
     }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
+    }
 }

@@ -37,7 +37,7 @@ class PersonalRequest
      */
     public function setPhone($phone)
     {
-        $this->phone = $phone ? formatMobile($phone) : null;
+        $this->phone = $phone;
         return $this;
     }
 
@@ -155,5 +155,16 @@ class PersonalRequest
     public function getNidBack()
     {
         return $this->nidBack;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        return false;
     }
 }

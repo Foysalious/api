@@ -172,14 +172,15 @@ class Creator
 
     /**
      * @param $business
-     * @param $co_member
+     * @param $member
      * @return Model
      */
-    private function createBusinessMember($business, $co_member)
+    private function createBusinessMember($business, $member)
     {
         $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
-            ->setMemberId($co_member->first()->id)
+            ->setMemberId($member->id)
             ->setRole($this->businessRole->id)
+            ->setStatus('active')
             ->setManagerEmployee($this->basicRequest->getManagerEmployee());
         return $this->businessMemberCreator->setRequester($business_member_requester)->create();
     }
@@ -217,11 +218,11 @@ class Creator
 
     private function getBusinessRole()
     {
-        $business_role = $this->businessRoleRepository
+        /*$business_role = $this->businessRoleRepository
             ->whereLike('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
-        if ($business_role) return $business_role;
+        if ($business_role) return $business_role;*/
         return $this->businessRoleCreate();
     }
 
