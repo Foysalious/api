@@ -52,11 +52,21 @@ class LoanClaim
         return $this->loanClaimRequest;
     }
 
+    public function getByYearAndMonth($loan_id,$year,$month)
+    {
+        return Model::where('loan_id',$loan_id)
+            ->whereYear('created_at','=',$year)->whereMonth('created_at','=',$month)
+            ->get();
+
+    }
+
     public function getAll($loan_id)
     {
         return Model::where('loan_id',$loan_id)->get();
 
     }
+
+
 
     public function getRecent($loan_id)
     {
