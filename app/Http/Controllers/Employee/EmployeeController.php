@@ -17,7 +17,7 @@ use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\CoWorker\ProfileCompletionCalculator;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
-use Sheba\Business\CoWorker\Updater;
+use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
@@ -53,9 +53,7 @@ class EmployeeController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        return api_response($request, null, 200, [
-            'info' => (new EmployeeTransformer())->transform($this->repo->find($business_member['member_id']))
-        ]);
+        return api_response($request, null, 200, ['info' => (new EmployeeTransformer())->transform($this->repo->find($business_member['member_id']))]);
     }
 
     public function updateMe(Request $request, ProfileRepository $profile_repo)
@@ -153,12 +151,6 @@ class EmployeeController extends Controller
         return api_response($request, $business_member, 200, ['info' => $data]);
     }
 
-    private function getBusinessMember(Request $request)
-    {
-        $auth_info = $request->auth_info;
-        return $auth_info['business_member'];
-    }
-
     /**
      * @param Request $request
      * @return JsonResponse
@@ -238,10 +230,11 @@ class EmployeeController extends Controller
     {
         $validation_rules = [
             'name' => 'required|string',
-            'mobile' => 'sometimes|string|mobile:bd',
             'department' => 'required|string',
             'designation' => 'required|string'
         ];
+
+        if ($request->has('mobile')) $validation_rules['mobile'] = 'string|mobile:bd';
         $this->validate($request, $validation_rules);
 
         $business_member = $this->getBusinessMember($request);
@@ -249,26 +242,19 @@ class EmployeeController extends Controller
         $member = $this->repo->find($business_member['member_id']);
         $this->setModifier($member);
 
-        $basic_request->setFirstName($request->name)->setDepartment($request->department)->setRole($request->designation);
-        if ($request->has('manager')) $basic_request->setManagerEmployee($request->manager);
-
-        $updater->setBasicRequest($basic_request)->setMember($member->id);
-
-        if ($request->has('mobile')) {
-            $mobile = BDMobileFormatter::format($request->mobile);
-            $updater->setMobile($mobile);
-            $profile = $updater->getProfile();
-            $personalRequest->setPhone($mobile)
-                ->setDateOfBirth($profile->date_of_birth)->setAddress($profile->address)
-                ->setNationality($profile->nationality)->setNidNumber($profile->nid_number)
-                ->setNidFront($profile->nid_front)->setNidBack($profile->nid_back);
-        }
+        $request->mobile = ($request->has('mobile')) ? BDMobileFormatter::format($request->mobile) : null;
+        $request->manager = ($request->has('manager')) ? $request->manager : null;
+        $updater->setBusinessMember($business_member)
+            ->setName($request->name)
+            ->setMobile($request->mobile)
+            ->setDepartment($request->department)
+            ->setDesignation($request->designation)
+            ->setManager($request->manager);
 
         if ($updater->hasError())
             return api_response($request, null, $updater->getErrorCode(), ['message' => $updater->getErrorMessage()]);
 
-        $updater->basicInfoUpdate();
-        $updater->setPersonalRequest($personalRequest)->personalInfoUpdate();
+        $updater->update();
 
         return api_response($request, null, 200);
     }
