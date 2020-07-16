@@ -20,4 +20,9 @@ class ServiceSurcharge extends Model
     {
         return $query->where('end_date', '>=', Carbon::now());
     }
+
+    public function isPercentage()
+    {
+        return $this->is_amount_percentage;
+    }
 }

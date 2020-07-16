@@ -59,8 +59,7 @@ abstract class PriceCalculationAbstract
 
     public function getSurcharge()
     {
-        $surcharge = ServiceSurcharge::where('service_id', $this->service->id)->runningSurcharges()->first();
-        return $surcharge ? $surcharge->amount : 0;
+        return ServiceSurcharge::where('service_id', $this->service->id)->runningSurcharges()->first();
     }
 
     abstract public function getTotalOriginalPrice();
