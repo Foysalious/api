@@ -902,7 +902,7 @@ class LoanController extends Controller
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->claimStatusUpdate($request);
-            return api_response($request, null, 200);
+            return api_response($request, null, 200,['data' => ["code"=>200]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
