@@ -257,6 +257,7 @@ class JobController extends Controller
                 $q->with('service');
             }]);
             $job->calculate(true);
+
             if (count($job->jobServices) == 0) {
                 $services = array();
                 $service_list = array();
@@ -337,7 +338,7 @@ class JobController extends Controller
             ] : null;
             $bill['is_surcharge_applied'] = 1;
             $bill['surcharge_percentage'] = 10;
-            $bill['surcharge_amount'] = 100;
+            $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
