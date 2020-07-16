@@ -303,7 +303,7 @@ class CoWorkerController extends Controller
             'mobile' => 'string',
             'relationship ' => 'sometimes|required'
         ];
-        $validation_data['mobile'] = $this->isNull($request->mobile) ? 'sometimes|string|mobile:bd' : 'string';
+        $validation_data['mobile'] = $this->isNull($request->mobile) ? 'string' : 'sometimes|string|mobile:bd';
         $this->validate($request, $validation_data);
 
         $manager_member = $request->manager_member;
