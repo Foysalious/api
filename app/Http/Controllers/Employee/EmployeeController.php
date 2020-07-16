@@ -52,8 +52,15 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
+        $member = $business_member->member;
 
-        return api_response($request, null, 200, ['info' => (new EmployeeTransformer())->transform($this->repo->find($business_member['member_id']))]);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($member, new EmployeeTransformer());
+        $employee_details = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['info' => $employee_details]);
     }
 
     public function updateMe(Request $request, ProfileRepository $profile_repo)
