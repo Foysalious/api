@@ -59,15 +59,12 @@ class Updater
 
     private function formatData($data)
     {
-        /** Basic */
         if (isset($data['business_role_id'])) $this->businessMemberData['business_role_id'] = $data['business_role_id'];
         if (isset($data['manager_id'])) $this->businessMemberData['manager_id'] = $data['manager_id'];
-        /** Official */
         if (isset($data['join_date'])) $this->businessMemberData['join_date'] = $data['join_date'];
         if (isset($data['grade'])) $this->businessMemberData['grade'] = $data['grade'];
         if (isset($data['employee_type'])) $this->businessMemberData['employee_type'] = $data['employee_type'];
         if (isset($data['previous_institution'])) $this->businessMemberData['previous_institution'] = $data['previous_institution'];
-        /** Status */
         if (isset($data['status'])) $this->businessMemberData['status'] = $data['status'];
     }
 }
