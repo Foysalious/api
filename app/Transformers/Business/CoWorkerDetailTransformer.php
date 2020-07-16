@@ -106,7 +106,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $profile = $member->profile;
         $profile_bank_info = $profile->banks->last();
 
-        $bank_name = $profile_bank_info ? $profile_bank_info->bank_name : null;
+        $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
         $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
         $count = 0;
         if ($profile->tin_no ||
