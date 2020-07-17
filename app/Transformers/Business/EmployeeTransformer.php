@@ -30,7 +30,10 @@ class EmployeeTransformer extends TransformerAbstract
             'department_id' => $department ? $department->id : null,
             'department' => $department ? $department->name : null,
             'designation' => $role ? $role->name : null,
-            'manager_id' => $business_member->manager_id
+            'manager' => $business_member->manager ? [
+                'id' => $business_member->manager_id,
+                'name' => $business_member->manager->member->profile->name
+            ] : null
         ];
     }
 }

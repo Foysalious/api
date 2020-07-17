@@ -54,7 +54,6 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $member = $business_member->member;
 
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($member, new EmployeeTransformer());
