@@ -5,16 +5,16 @@ use App\Models\Reward;
 
 class ResourceReward extends ShebaReward
 {
+    /** @var Resource* */
     private $resource;
     private $limit;
     private $offset;
     private $type;
 
-    public function __construct(Resource $resource)
+    public function __construct()
     {
         $this->limit = 100;
         $this->offset = 0;
-        $this->resource = $resource;
     }
 
     /**
@@ -44,6 +44,16 @@ class ResourceReward extends ShebaReward
     public function setOffset($offset)
     {
         $this->offset = $offset;
+        return $this;
+    }
+
+    /**
+     * @param Resource $resource
+     * @return ResourceReward
+     */
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
         return $this;
     }
 
@@ -80,12 +90,11 @@ class ResourceReward extends ShebaReward
     }
 
 
-
     public function upcoming()
     {
         $rewards = Reward::upcoming()->forResource()->with('constraints')->skip($this->offset)->take($this->limit);
-        if($this->type === 'campaign') $rewards = $rewards->typeCampaign();
-        if($this->type === 'action') $rewards = $rewards->typeAction();
+        if ($this->type === 'campaign') $rewards = $rewards->typeCampaign();
+        if ($this->type === 'action') $rewards = $rewards->typeAction();
         $rewards = $rewards->get();
         $final = [];
         foreach ($rewards as $reward) {
