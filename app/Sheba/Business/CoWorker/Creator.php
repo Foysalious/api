@@ -192,9 +192,8 @@ class Creator
                 }
             }
 
-            #$this->sendExistingUserMail($profile);
             DB::commit();
-
+            // $this->sendExistingUserMail($profile);
             return $new_member;
         } catch (Throwable $e) {
             DB::rollback();
@@ -234,10 +233,13 @@ class Creator
             'password' => bcrypt($password),
             'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
         ];
-        $profile = $this->profileRepository->store($data);
-        #dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
+        /*dispatch(
+            (new SendBusinessRequestEmail($this->basicRequest->getEmail()))
+                ->setPassword($password)
+                ->setTemplate('emails.co-worker-invitation')
+        );*/
 
-        return $profile;
+        return $this->profileRepository->store($data);
     }
 
     /**

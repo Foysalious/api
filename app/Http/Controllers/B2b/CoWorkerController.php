@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -13,6 +14,8 @@ use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Reports\ExcelHandler;
+use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
 use App\Jobs\SendBusinessRequestEmail;
@@ -325,6 +328,9 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
+
+        list($offset, $limit) = calculatePagination($request);
+
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
@@ -537,9 +543,12 @@ class CoWorkerController extends Controller
     /**
      * @param $business
      * @param Request $request
+     * @param ExcelHandler $excel_handler
      * @return JsonResponse
+     * @throws NotAssociativeArray
+     * @throws Exception
      */
-    public function sendInvitation($business, Request $request)
+    public function sendInvitation($business, Request $request, ExcelHandler $excel_handler)
     {
         $this->validate($request, ['emails' => "required"]);
 
@@ -551,14 +560,14 @@ class CoWorkerController extends Controller
         $emails = json_decode($request->emails);
         foreach ($emails as $email) {
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                array_push($errors, 'Invalid email address');
+                array_push($errors, ['email' => $email, 'message' => 'Invalid email address']);
                 continue;
             }
             $this->basicRequest->setEmail($email);
             $this->coWorkerCreator->setBusiness($business)->setEmail($email)->setStatus(Statuses::INVITED)->setBasicRequest($this->basicRequest);
 
             if ($this->coWorkerCreator->hasError()) {
-                array_push($errors, $this->coWorkerCreator->getErrorMessage());
+                array_push($errors, ['email' => $email, 'message' => $this->coWorkerCreator->getErrorMessage()]);
                 $this->coWorkerCreator->resetError();
                 continue;
             }
@@ -566,8 +575,14 @@ class CoWorkerController extends Controller
             $this->coWorkerCreator->basicInfoStore();
         }
 
-        if ($errors && $this->isFailedToCreateAllCoworker($errors, $emails))
-            return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+        if ($errors && $this->isFailedToCreateAllCoworker($errors, $emails)) {
+            $file_name = Carbon::now()->timestamp . "_co_worker_invite_error_$business->id.csv";
+            $file = $excel_handler->setName('Co worker Invite')->setFilename($file_name)->createReport($errors)->save();
+            $file_path = $this->saveFileToCDN($file, getCoWorkerInviteErrorFolder(), $file_name);
+
+            unlink($file);
+            return api_response($request, null, 422, ['message' => 'Error', 'link' => $file_path]);
+        }
 
         return api_response($request, null, 200, ['message' => implode(', ', $errors)]);
     }
