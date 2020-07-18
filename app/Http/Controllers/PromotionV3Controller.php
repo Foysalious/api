@@ -101,7 +101,7 @@ class PromotionV3Controller extends Controller
                 throw new LocationServiceNotFoundException('Service #' . $service_requestObject->getServiceId() . ' is not available at this location', 403);
             }
 
-            if ($location_service->service->isOptions()) $price_calculation->setLocationService($location_service);
+            if ($location_service->service->isOptions() && !$service_requestObject->getCategory()->isRentACarOutsideCity()) $price_calculation->setLocationService($location_service);
 
             $price_calculation->setService($service_requestObject->getService())->setOption($service_requestObject->getOption())->setQuantity($service_requestObject->getQuantity());
             $service_requestObject->getCategory()->isRentACarOutsideCity() ? $price_calculation->setPickupThanaId($service_requestObject->getPickupThana()->id)->setDestinationThanaId($service_requestObject->getDestinationThana()->id) : $price_calculation->setLocationService($location_service);
