@@ -128,9 +128,9 @@ class RentACarController extends Controller
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
                 'unit_price' => $car_prices[$key] ? (double) $car_prices[$key] : null,
-                'sheba_contribution' => $discount_calculation->shebaContribution,
-                'partner_contribution' => $discount_calculation->partnerContribution,
-                'is_discount_percentage' => $discount_calculation->isDiscountPercentage
+                'sheba_contribution' => $discount_calculation->getShebaContribution(),
+                'partner_contribution' => $discount_calculation->getPartnerContribution(),
+                'is_discount_percentage' => $discount_calculation->getIsDiscountPercentage()
             ];
             $cars[] = $answer;
         }
