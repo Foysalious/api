@@ -1,7 +1,5 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Sheba\BankingInfo\GeneralBanking;
-use FontLib\EOT\File;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -32,7 +30,6 @@ use Sheba\ModificationFields;
 use App\Models\BusinessRole;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
-use App\Models\Profile;
 use App\Models\Member;
 use Carbon\Carbon;
 use DB;
@@ -549,14 +546,40 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $member = $request->manager_member;
         $this->setModifier($member);
+        $errors = [];
 
-        foreach (json_decode($request->emails) as $email) {
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) continue;
+        $emails = json_decode($request->emails);
+        foreach ($emails as $email) {
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                array_push($errors, 'Invalid email address');
+                continue;
+            }
             $this->basicRequest->setEmail($email);
-            $this->coWorkerCreator->setBasicRequest($this->basicRequest)->create();
+            $this->coWorkerCreator->setBusiness($business)->setEmail($email)->setStatus(Statuses::INVITED)->setBasicRequest($this->basicRequest);
+
+            if ($this->coWorkerCreator->hasError()) {
+                array_push($errors, $this->coWorkerCreator->getErrorMessage());
+                $this->coWorkerCreator->resetError();
+                continue;
+            }
+
+            $this->coWorkerCreator->basicInfoStore();
         }
 
-        return api_response($request, null, 200);
+        if ($errors && $this->isFailedToCreateAllCoworker($errors, $emails))
+            return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+
+        return api_response($request, null, 200, ['message' => implode(', ', $errors)]);
+    }
+
+    /**
+     * @param array $errors
+     * @param $emails
+     * @return bool
+     */
+    private function isFailedToCreateAllCoworker(array $errors, $emails)
+    {
+        return count($errors) == count($emails);
     }
 
     /**

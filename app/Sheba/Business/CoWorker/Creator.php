@@ -70,6 +70,8 @@ class Creator
     private $memberRepository;
     /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
     private $businessRoleRepository;
+    private $email;
+    private $status;
 
     /**
      * Updater constructor.
@@ -135,12 +137,40 @@ class Creator
         return $this;
     }
 
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->checkEmailUsedWithAnotherProfile();
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkEmailUsedWithAnotherProfile()
+    {
+        $profile = $this->profileRepository->checkExistingEmail($this->email);
+        if (!$profile) return $this;
+        if (!$profile->member) return $this;
+        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+            $this->setError(409, "This person is already added");
+        }
+        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+            $this->setError(422, "This person is already added with another business");
+        }
+
+        return $this;
+    }
+
     public function basicInfoStore()
     {
         DB::beginTransaction();
         try {
             $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
-            $this->businessRole = $this->getBusinessRole();
+
+            if ($this->basicRequest->getRole())
+                $this->businessRole = $this->getBusinessRole();
+
             $new_member = null;
             if (!$profile) {
                 $profile = $this->createProfile();
@@ -150,10 +180,10 @@ class Creator
                 $old_member = $profile->member;
                 if ($old_member) {
                     if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-                        $this->setError(409, "This person is already added.");
+                        $this->setError(422, "This person is already added.");
                     }
                     if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-                        $this->setError(422, "This person is already connected with another business.");
+                        $this->setError(422, "This person is already added with another business.");
                     }
                     $new_member = $old_member;
                 } else {
@@ -161,8 +191,10 @@ class Creator
                     $this->businessMember = $this->createBusinessMember($this->business, $new_member);
                 }
             }
+
             #$this->sendExistingUserMail($profile);
             DB::commit();
+
             return $new_member;
         } catch (Throwable $e) {
             DB::rollback();
@@ -177,11 +209,14 @@ class Creator
      */
     private function createBusinessMember($business, $member)
     {
+        $business_role_id = $this->businessRole ? $this->businessRole->id : null;
+        $status = $this->status ?: Statuses::ACTIVE;
         $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
             ->setMemberId($member->id)
-            ->setRole($this->businessRole->id)
-            ->setStatus('active')
+            ->setRole($business_role_id)
+            ->setStatus($status)
             ->setManagerEmployee($this->basicRequest->getManagerEmployee());
+
         return $this->businessMemberCreator->setRequester($business_member_requester)->create();
     }
 
@@ -201,6 +236,7 @@ class Creator
         ];
         $profile = $this->profileRepository->store($data);
         #dispatch((new SendBusinessRequestEmail($this->basicRequest->getEmail()))->setPassword($password)->setTemplate('emails.co-worker-invitation'));
+
         return $profile;
     }
 
@@ -218,11 +254,11 @@ class Creator
 
     private function getBusinessRole()
     {
-        /*$business_role = $this->businessRoleRepository
+        $business_role = $this->businessRoleRepository
             ->whereLike('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
-        if ($business_role) return $business_role;*/
+        if ($business_role) return $business_role;
         return $this->businessRoleCreate();
     }
 
@@ -240,6 +276,16 @@ class Creator
     }
 
     /**
+     * @param mixed $status
+     * @return Creator
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
+    /**
      * @param $profile
      */
     private function sendExistingUserMail($profile)
@@ -252,5 +298,10 @@ class Creator
         }
         $CMail->setTemplate('emails.co-worker-invitation');
         dispatch($CMail);
+    }
+
+    public function resetError()
+    {
+        return $this->errorCode = null;
     }
 }
