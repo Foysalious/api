@@ -264,7 +264,7 @@ class TopUpController extends Controller
             $limit = 100000;
         }
 
-        $topups = $topups->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
+        $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
         
         $topup_data = [];
         foreach ($topups as $topup) {
