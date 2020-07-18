@@ -159,8 +159,9 @@ abstract class ActionChecker
         if ($this->business->isIpBasedAttendanceEnable()) {
             if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) $this->remoteAttendance();
             $this->setSuccessfulResponseMessage();
+        } else {
+            $this->remoteAttendance();
         }
-        $this->remoteAttendance();
     }
 
     private function remoteAttendance()
