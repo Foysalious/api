@@ -127,9 +127,9 @@ class RentACarController extends Controller
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
-                'sheba_contribution' => $discount_calculation->shebaContribution,
-                'partner_contribution' => $discount_calculation->partnerContribution,
-                'is_discount_percentage' => $discount_calculation->isDiscountPercentage
+                'sheba_contribution' => $discount_calculation->getShebaContribution(),
+                'partner_contribution' => $discount_calculation->getPartnerContribution(),
+                'is_discount_percentage' => $discount_calculation->getIsDiscountPercentage()
             ];
             $cars[] = $answer;
         }
@@ -177,9 +177,9 @@ class RentACarController extends Controller
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
                 'unit_price' => $car_prices[$key],
-                'sheba_contribution' => $discount_calculation->shebaContribution,
-                'partner_contribution' => $discount_calculation->partnerContribution,
-                'is_discount_percentage' => $discount_calculation->isDiscountPercentage
+                'sheba_contribution' => $discount_calculation->getShebaContribution(),
+                'partner_contribution' => $discount_calculation->getPartnerContribution(),
+                'is_discount_percentage' => $discount_calculation->getIsDiscountPercentage()
             ];
             $cars[] = $answer;
         }
