@@ -62,6 +62,14 @@ class PriceCalculation extends PriceCalculationAbstract
 
     }
 
+    public function getSurchargeAmount()
+    {
+        $unit_price = $this->upsellUnitPrice ? $this->upsellUnitPrice : $this->getUnitPrice();
+        $surcharge = $this->getSurcharge();
+        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($unit_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
+        return $surcharge_amount * $this->quantity;
+    }
+
     /**
      * @return float|null
      * @throws CorruptedPriceStructureException
