@@ -24,15 +24,15 @@ class CategoryTreeDataStore implements DataStoreObject
     {
         $location = Location::where('id', $this->categoryTreeRequest->getLocationId())->published()->hasGeoInformation()->first();
         if (!$location || !$location->hyperLocal) return null;
-        $best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
+        /*$best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
         $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
-            ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
+            ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();*/
         $categories = Category::published()
             ->whereHas('locations', function ($q) {
                 $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
             })
-            ->whereHas('children', function ($q) use ($best_deal_category_ids) {
-                $q->select('id', 'parent_id')->published()->whereNotIn('id', $best_deal_category_ids)
+            ->whereHas('children', function ($q) {
+                $q->select('id', 'parent_id')->published()/*->whereNotIn('id', $best_deal_category_ids)*/
                     ->whereHas('locations', function ($q) {
                         $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
                     })->whereHas('services', function ($q) {
@@ -41,7 +41,7 @@ class CategoryTreeDataStore implements DataStoreObject
                         });
                     });
             })
-            ->with(['children' => function ($q) use ($best_deal_category_ids) {
+            ->with(['children' => function ($q) {
                 $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'is_auto_sp_enabled')
                     ->whereHas('locations', function ($q) {
                         $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
@@ -49,7 +49,7 @@ class CategoryTreeDataStore implements DataStoreObject
                         $q->select('services.id')->published()->whereHas('locations', function ($q) {
                             $q->select('locations.id')->where('locations.id', $this->categoryTreeRequest->getLocationId());
                         });
-                    })->whereNotIn('id', $best_deal_category_ids)
+                    })/*->whereNotIn('id', $best_deal_category_ids)*/
                     ->published()->orderBy('order');
             }])
             ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'is_auto_sp_enabled')

@@ -103,9 +103,7 @@ class ProcurementPaymentRequestController extends Controller
             ->setPaymentRequest($payment_request)
             ->setBid($bid)
             ->get();
-
-        return App::make('dompdf.wrapper')
-            ->loadView('pdfs.procurement_invoice', compact('procurement_info'))
-            ->download('invoice.pdf');
+        #return view('pdfs.procurement_invoice', compact('procurement_info'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
     }
 }
