@@ -85,12 +85,6 @@ class RentACarController extends Controller
 
     }
 
-    public function getCarTypes($variables)
-    {
-        $car_type_option = $variables['options'][0];
-        return $car_type_option ? explode(',', $car_type_option['answers']) : null;
-    }
-
     public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)
     {
         $pickup_lat = $request->pickup_lat;
