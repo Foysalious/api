@@ -19,6 +19,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
+use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\FileManagers\CdnFileManager;
@@ -36,6 +37,7 @@ use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
+use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
@@ -885,7 +887,7 @@ class LoanController extends Controller
 
     }
 
-    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
+    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan, RobiTopUpWalletTransfer $robiTopUpWalletTransfer)
     {
         try {
             $this->validate($request, [
@@ -895,6 +897,14 @@ class LoanController extends Controller
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->claimStatusUpdate($request);
+            if($request->to === Statuses::APPROVED) {
+                $claim_amount = $loan->getClaimAmount($request);
+                $affiliate = $loan->getAffiliate($request);
+                if(isset($affiliate) && $claim_amount > 0)
+                    $robiTopUpWalletTransfer->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
+                else
+                    dd("No transfer");
+            }
             return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

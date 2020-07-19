@@ -52,6 +52,18 @@ class LoanClaim
         return $this->loanClaimRequest;
     }
 
+    public function getClaimAmount()
+    {
+        $claim_request = Model::find($this->claimId);
+        return $claim_request ? $claim_request->amount : 0;
+    }
+
+    public function getAffiliate()
+    {
+        $claim_request = Model::find($this->claimId);
+        return $claim_request->resource->profile->affiliate;
+    }
+
     public function getAll($loan_id)
     {
         return Model::where('loan_id',$loan_id)->get();

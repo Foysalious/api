@@ -3,6 +3,7 @@
 namespace Sheba\Loan;
 
 use App\Exceptions\NotFoundException;
+use App\Models\Affiliate;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
@@ -501,6 +502,16 @@ class Loan
     public function claimStatusUpdate($request)
     {
        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
+    }
+
+    public function getClaimAmount($request)
+    {
+        return (new LoanClaim())->setClaim($request->claim_id)->getClaimAmount();
+    }
+
+    public function getAffiliate($request)
+    {
+        return (new LoanClaim())->setClaim($request->claim_id)->getAffiliate();
     }
 
     public function personalInfo()
