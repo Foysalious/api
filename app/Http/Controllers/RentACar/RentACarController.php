@@ -72,9 +72,14 @@ class RentACarController extends Controller
             $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
             if (!$location_service) return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
 
-            $cars = $service_model->category->isRentACarOutsideCity()
-                ? $this->getCarsForOutsideCity($service, $discount_calculation)
-                : $this->getCarsForInsideCity($service, $discount_calculation);
+            $variables = json_decode($service->getService()->variables, true);
+            $car_types = $this->getCarTypes($variables);
+
+            $car_prices = $service_model->category->isRentACarOutsideCity()
+                ? $this->getOptionUnitPricesOfServiceForOutsideCity($service_model, $service->getPickupThana(), $service->getDestinationThana())
+                : $location_service ? json_decode($location_service->prices, true) : [];;
+
+
 
             return api_response($request, null, 200, ['cars' => $cars]);
         } catch (InsideCityPickUpAddressNotFoundException $e) {
@@ -99,6 +104,7 @@ class RentACarController extends Controller
         $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
 
         $price_calculation = $this->resolvePriceCalculation($service_model->category);
+
 
 
         foreach ($car_types as $key => $car) {

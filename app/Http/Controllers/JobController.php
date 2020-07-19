@@ -336,9 +336,9 @@ class JobController extends Controller
             $bill['destination'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
                 'thana' => $job->carRentalJobDetail->destination_address
             ] : null;
-            $bill['is_surcharge_applied'] = 1;
-            $bill['surcharge_percentage'] = 10;
-            $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
+            $bill['is_surcharge_applied'] = $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
+            $bill['surcharge_percentage'] = $job->jobServices[0] ? (double) $job->jobServices[0]->surcharge_percentage : 0;
+            $bill['surcharge_amount'] = (double) $job->totalServiceSurcharge;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {
