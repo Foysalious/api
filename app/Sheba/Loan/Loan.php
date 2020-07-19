@@ -2,8 +2,6 @@
 
 namespace Sheba\Loan;
 
-use App\Exceptions\NotFoundException;
-use App\Models\Affiliate;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
@@ -22,13 +20,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use ReflectionException;
+use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Sheba\Dal\LoanClaimRequest\Statuses;
-use Sheba\Dal\LoanPayment\Model;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
-
-use Sheba\Dal\RetailerMembers\RetailerMember;
-use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
@@ -46,7 +41,6 @@ use Sheba\Loan\Exceptions\AlreadyRequestedForLoan;
 use Sheba\Loan\Exceptions\InsufficientWalletCredit;
 use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\InvalidTypeException;
-use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
@@ -348,6 +342,10 @@ class Loan
     }
 
 
+    /**
+     * @param $request
+     * @return bool
+     */
     public function claim($request)
     {
         $data = [
@@ -357,19 +355,17 @@ class Loan
             'status' => Statuses::PENDING,
             'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
         ];
-        (new LoanClaim())->createRequest($data);
 
-      /*  $data = [
-            'loan_id' => $request->loan_id,
-            'debit'   => $request->amount,
-            'credit'  => 0,
-            'type'    => 'micro',
-        ];
-        (new Repayment())->storeDebit($data);*/
-
-        return true;
+        return (new LoanClaim())->createRequest($data);
     }
 
+    /**
+     * @param $loan_id
+     * @param bool $all
+     * @param null $month
+     * @param null $year
+     * @return mixed
+     */
     public function claimList($loan_id, $all=false, $month=null, $year = null)
     {
         if(!$all)
@@ -403,50 +399,52 @@ class Loan
         return $data;
     }
 
-    public function canClaimShouldPay($request)
-    {
-        $can_claim =  1;
-        $should_pay = 1;
-        $partner_loan = PartnerBankLoan::where('partner_id',$request->partner->id)->where('type','micro')->orderBy('id','desc')->first();
-        $last_claim = (new LoanClaim())->setLoan($partner_loan->id)->lastClaim();
-        if(($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)))))
-            $can_claim = 0;
-        if(!$last_claim || $last_claim->status == 'pending' ||  $last_claim->status == 'declined' || ($last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
-            $should_pay = 0;
 
-        return [$can_claim, $should_pay];
-
-    }
-
+    /**
+     * @param $request
+     * @return bool
+     */
     public function canClaim($request)
     {
         $can_claim = true;
-        $partner_loan = PartnerBankLoan::where('id',$request->loan_id)->first();
+        $partner_loan = $this->repo->find($request->loan_id);
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        if (($partner_loan->status != 'disbursed') || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == 'pending' || ($last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id)))))
+
+        if (($partner_loan->status != LoanStatuses::DISBURSED) || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == Statuses::PENDING|| ($last_claim->status == Statuses::APPROVED && !$this->hasClearedDue($last_claim->id)))))
             $can_claim =  false;
         return $can_claim;
     }
 
-    public function isEligibleForClaim($loan_id)
+    /**
+     * @param $claim_id
+     * @return bool
+     */
+    public function hasClearedDue($claim_id)
     {
-        return (new Repayment())->setLoan($loan_id)->isEligibleForClaim();
+        return $this->getDue($claim_id) > 0 ? false : true;
     }
 
-    public function getDue($loan_id)
+    /**
+     * @param $claim_id
+     * @return mixed
+     */
+    public function getDue($claim_id)
     {
-        return (new Repayment())->setLoan($loan_id)->getDue();
+        return (new Repayment())->setClaim($claim_id)->getDue();
     }
 
+    /**
+     * @param $request
+     * @return array
+     */
     public function accountInfo($request)
     {
         $data = [];
-        $partner_loan = PartnerBankLoan::where('id',$request->loan_id)->first();
+        $partner_loan = $this->repo->find($request->loan_id);
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-
         $data['loan_status'] = $partner_loan->status;
         $data['granted_amount'] = $partner_loan->loan_amount;
-        if(!$last_claim || ($last_claim && $last_claim->status == 'approved' && $this->isEligibleForClaim($last_claim->loan_id)))
+        if(!$last_claim || ($last_claim && $last_claim->status == Statuses::APPROVED && $this->hasClearedDue($last_claim->id)))
         {
             $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
@@ -455,7 +453,7 @@ class Loan
             $data['can_claim']   = 1;
             $data['should_pay'] = 0;
         }
-        if($last_claim && $last_claim->status == 'pending')
+        if($last_claim && $last_claim->status == Statuses::PENDING)
         {
             $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
@@ -464,17 +462,17 @@ class Loan
             $data['can_claim']   = 0;
             $data['should_pay'] = 0;
         }
-        if($last_claim && $last_claim->status == 'approved' && !$this->isEligibleForClaim($last_claim->loan_id))
+        if($last_claim && $last_claim->status == Statuses::APPROVED && ($due = $this->getDue($last_claim->id)) > 0)
         {
-            $data['loan_balance'] = $last_claim->amount;
-            $data['due_balance'] = $this->getDue($last_claim->loan_id);
+            $data['loan_balance'] = $data['granted_amount'] - $due;
+            $data['due_balance'] = $due;
             $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
             $data['status_type'] = 'success';
             $data['can_claim']   = 0;
             $data['should_pay'] = 1;
         }
 
-        if($last_claim && $last_claim->status == 'declined')
+        if($last_claim && $last_claim->status == Statuses::DECLINED)
         {
             $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
@@ -483,8 +481,19 @@ class Loan
             $data['can_claim']   = 0;
             $data['should_pay'] = 0;
         }
-        $data['recent_claims'] = [];
-        $recent_claims = (new LoanClaim())->getRecent($request->loan_id);
+        $data['recent_claims'] = $this->getRecentClaims($request->loan_id);
+
+        return $data;
+    }
+
+    /**
+     * @param $loan_id
+     * @return array|mixed
+     */
+    private function getRecentClaims($loan_id)
+    {
+        $data['recent_claims'] =[];
+        $recent_claims = (new LoanClaim())->getRecent($loan_id);
         if($recent_claims)
         {
             foreach ($recent_claims as $claim)
@@ -497,13 +506,16 @@ class Loan
                 ]);
             }
         }
-
-        return $data;
+        return $data['recent_claims'];
     }
 
+    /**
+     * @param $request
+     * @return bool
+     */
     public function claimStatusUpdate($request)
     {
-       return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
     }
 
     public function getClaimAmount($request)

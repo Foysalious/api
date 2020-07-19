@@ -838,6 +838,13 @@ class LoanController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function claim(Request $request, $partner, $loan_id, Loan $loan)
     {
         try {
@@ -862,6 +869,13 @@ class LoanController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function claimList(Request $request, $partner, $loan_id, Loan $loan)
     {
         try{
@@ -881,6 +895,13 @@ class LoanController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function accountInfo(Request $request, $partner, $loan_id, Loan $loan)
     {
         try{
@@ -894,6 +915,13 @@ class LoanController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param $loan_id
+     * @param Loan $loan
+     * @param RobiTopUpWalletTransfer $robiTopUpWalletTransfer
+     * @return JsonResponse
+     */
     public function claimStatusUpdate(Request $request, $loan_id, Loan $loan, RobiTopUpWalletTransfer $robiTopUpWalletTransfer)
     {
         try {
