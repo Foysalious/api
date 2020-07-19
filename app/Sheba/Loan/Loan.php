@@ -515,17 +515,7 @@ class Loan
      */
     public function claimStatusUpdate($request)
     {
-        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
-    }
-
-    public function getClaimAmount($request)
-    {
-        return (new LoanClaim())->setClaim($request->claim_id)->getClaimAmount();
-    }
-
-    public function getAffiliate($request)
-    {
-        return (new LoanClaim())->setClaim($request->claim_id)->getAffiliate();
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to, $request);
     }
 
     public function personalInfo()

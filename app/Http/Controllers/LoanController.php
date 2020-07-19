@@ -12,14 +12,12 @@ use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
-use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
-use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\FileManagers\CdnFileManager;
@@ -932,13 +930,6 @@ class LoanController extends Controller
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->claimStatusUpdate($request);
-            if($request->to === Statuses::APPROVED) {
-                $claim_amount = $loan->getClaimAmount($request);
-                $affiliate = $loan->getAffiliate($request);
-                if (isset($affiliate) && $claim_amount > 0)
-                    $robiTopUpWalletTransfer->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
-
-            }
             return api_response($request, null, 200,['data' => ["code"=>200]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
