@@ -4,6 +4,7 @@
 use App\Models\Affiliate;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\RobiTopupWalletTransaction\Model as RobiTopupWalletTransaction;
 
 Class RobiTopUpWalletTransfer
 {
@@ -36,13 +37,16 @@ Class RobiTopUpWalletTransfer
     private function storeTransactionRecord()
     {
         $formatted_data = [
+            'affiliate_id' => $this->affiliate->id,
             'type' => ucfirst($this->type),
             'log' => $this->getLog(),
             'created_at' => Carbon::now(),
             'balance' => $this->getCalculatedBalance(),
-            'amount' => $this->amount
+            'amount' => $this->amount,
         ];
-        $this->affiliate->robi_topup_wallet_transactions()->save($formatted_data);
+        $transaction_data = (new RobiTopupWalletTransaction())->fill($formatted_data);
+        $this->affiliate->robi_topup_wallet_transactions()->save($transaction_data);
+
     }
 
     public function process($data = [])

@@ -907,8 +907,9 @@ class LoanController extends Controller
             if($request->to === Statuses::APPROVED) {
                 $claim_amount = $loan->getClaimAmount($request);
                 $affiliate = $loan->getAffiliate($request);
-                if(isset($affiliate) && $claim_amount > 0)
+                if (isset($affiliate) && $claim_amount > 0)
                     $robiTopUpWalletTransfer->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
+
             }
             return api_response($request, null, 200,['data' => ["code"=>200]]);
         } catch (ValidationException $e) {
