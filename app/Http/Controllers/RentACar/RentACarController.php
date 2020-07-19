@@ -75,10 +75,6 @@ class RentACarController extends Controller
             $variables = json_decode($service->getService()->variables, true);
             $car_types = $this->getCarTypes($variables);
 
-            $car_prices = $service_model->category->isRentACarOutsideCity()
-                ? $this->getOptionUnitPricesOfServiceForOutsideCity($service_model, $service->getPickupThana(), $service->getDestinationThana())
-                : $location_service ? json_decode($location_service->prices, true) : [];
-
             $cars = [];
             $price_calculation = $this->resolvePriceCalculation($service_model->category);
 
@@ -91,7 +87,7 @@ class RentACarController extends Controller
                 $original_price = $price_calculation->getTotalOriginalPrice();
                 $discount_calculation->setService($service_model)->setLocationService($location_service)->setOriginalPrice($original_price)->calculate();
                 $discounted_price =  $discount_calculation->getDiscountedPrice();
-                $unit_price = $car_prices[$key] ? (double) $car_prices[$key] : null;
+                $unit_price = $price_calculation->getUnitPrice();
                 $surcharge = $price_calculation->getSurcharge();
                 $surcharge_amount =  $surcharge
                     ? $surcharge->is_amount_percentage
@@ -135,16 +131,6 @@ class RentACarController extends Controller
     {
         $car_type_option = $variables['options'][0];
         return $car_type_option ? explode(',', $car_type_option['answers']) : null;
-    }
-
-    public function getOptionUnitPricesOfServiceForOutsideCity($service, $pickup_thana, $destination_thana)
-    {
-        $car_rental_prices = CarRentalPrice::where([
-            ['service_id', $service->id],
-            ['pickup_thana_id',  $pickup_thana->id],
-            ['destination_thana_id', $destination_thana->id]
-        ])->first();
-        return $car_rental_prices ? json_decode($car_rental_prices->prices, true) : null;
     }
 
     public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)
