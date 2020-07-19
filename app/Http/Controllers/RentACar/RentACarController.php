@@ -124,10 +124,10 @@ class RentACarController extends Controller
                 'original_price' => $original_price,
                 'discount' => $discount_calculation->getDiscount(),
                 'quantity' => $service->getQuantity(),
-                'unit_price' => $car_prices[$key] ? (double) $car_prices[$key] : null,
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
+                'unit_price' => $car_prices[$key] ? (double) $car_prices[$key] : null,
                 'sheba_contribution' => $discount_calculation->getShebaContribution(),
                 'partner_contribution' => $discount_calculation->getPartnerContribution(),
                 'is_discount_percentage' => $discount_calculation->getIsDiscountPercentage()
