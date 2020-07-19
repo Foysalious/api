@@ -27,6 +27,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Location\FromGeo;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\Logistics\Repository\OrderRepository;
@@ -252,7 +253,7 @@ class JobController extends Controller
         return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
-    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices, FromGeo $from_geo)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
@@ -304,6 +305,13 @@ class JobController extends Controller
                 'amount' => $partnerOrder->order->voucher->amount
             ] : null;
 
+            $from_geo = $from_geo->setThanas();
+
+            $pickup_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo, true) : null;
+            $pickup_thana = $pickup_geo ?  $from_geo->getThana($pickup_geo['lat'], $pickup_geo['lng']) :null;
+            $destination_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo, true) : null;
+            $destination_thana = $destination_geo ?  $from_geo->getThana($destination_geo['lat'], $destination_geo['lng']) :null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -332,11 +340,11 @@ class JobController extends Controller
             $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
             $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
             $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
-            $bill['pick_up'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
-                'thana' => $job->carRentalJobDetail->pick_up_address
+            $bill['pick_up'] = $pickup_thana ? [
+                'thana' => $pickup_thana->name
             ] : null;
-            $bill['destination'] = $job->carRentalJobDetail && $job->carRentalJobDetail->pick_up_address ? [
-                'thana' => $job->carRentalJobDetail->destination_address
+            $bill['destination'] = $destination_thana ? [
+                'thana' => $destination_thana->name
             ] : null;
             $bill['is_surcharge_applied'] = $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
             $bill['surcharge_percentage'] = $job->jobServices[0] ? (double) $job->jobServices[0]->surcharge_percentage : 0;

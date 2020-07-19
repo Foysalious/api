@@ -16,6 +16,7 @@ use Sheba\Location\FromGeo;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\PriceCalculation\PriceCalculationFactory;
+use Sheba\RentACar\Cars;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Throwable;
@@ -67,54 +68,11 @@ class RentACarController extends Controller
             $services = json_decode($request->services, 1);
             $services = $service_request_object = $service_request->setServices($services)->get();
             $service = $services[0];
-            $service_model = $service->getService();
 
             $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
             if (!$location_service) return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
 
-            $variables = json_decode($service->getService()->variables, true);
-            $car_types = $this->getCarTypes($variables);
-
-            $cars = [];
-            $price_calculation = $this->resolvePriceCalculation($service_model->category);
-
-
-
-            foreach ($car_types as $key => $car) {
-                $option = [$key];
-                $price_calculation->setService($service_model)->setOption($option)->setQuantity($service->getQuantity());
-                $service_model->category->isRentACarOutsideCity() ? $price_calculation->setPickupThanaId($service->getPickupThana()->id)->setDestinationThanaId($service->getDestinationThana()->id) : $price_calculation->setLocationService($location_service);
-                $original_price = $price_calculation->getTotalOriginalPrice();
-                $discount_calculation->setService($service_model)->setLocationService($location_service)->setOriginalPrice($original_price)->calculate();
-                $discounted_price =  $discount_calculation->getDiscountedPrice();
-                $unit_price = $price_calculation->getUnitPrice();
-                $surcharge = $price_calculation->getSurcharge();
-                $surcharge_amount =  $surcharge
-                    ? $surcharge->is_amount_percentage
-                        ? ($unit_price / 100) * $surcharge->amount
-                        : $surcharge->amount
-                    : null;
-                $answer = [
-                    'name' => $car,
-                    'image' => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/sheba_xyz/png/'.$variables['helpers']['assets'][$key].'.png',
-                    'number_of_seats' => $variables['helpers']['capacity'][$key],
-                    'info' => $variables['helpers']['descriptions'][$key],
-                    'discounted_price' => $discounted_price,
-                    'original_price' => $original_price,
-                    'discount' => $discount_calculation->getDiscount(),
-                    'quantity' => $service->getQuantity(),
-                    'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
-                    'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
-                    'surcharge_amount' => $surcharge_amount,
-                    'unit_price' => $unit_price,
-                    'sheba_contribution' => $discount_calculation->getShebaContribution(),
-                    'partner_contribution' => $discount_calculation->getPartnerContribution(),
-                    'is_discount_percentage' => $discount_calculation->getIsDiscountPercentage()
-                ];
-                $cars[] = $answer;
-            }
-
-
+            $cars = (new Cars($discount_calculation, $location_service, $service))->getCars();
 
             return api_response($request, null, 200, ['cars' => $cars]);
         } catch (InsideCityPickUpAddressNotFoundException $e) {
@@ -125,12 +83,6 @@ class RentACarController extends Controller
             return api_response($request, null, 400, ['message' => 'Please try with inside city for this location.', 'code' => 702]);
         }
 
-    }
-
-    public function getCarTypes($variables)
-    {
-        $car_type_option = $variables['options'][0];
-        return $car_type_option ? explode(',', $car_type_option['answers']) : null;
     }
 
     public function getPickupAndDestinationThana(Request $request, FromGeo $fromGeo)
