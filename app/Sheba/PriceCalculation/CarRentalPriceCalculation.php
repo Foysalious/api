@@ -45,6 +45,14 @@ class CarRentalPriceCalculation extends PriceCalculationAbstract
         return $unit_price_with_surcharge * $this->quantity;
     }
 
+    public function getSurchargeAmount()
+    {
+        $unit_price = $this->getUnitPrice();
+        $surcharge = $this->getSurcharge();
+        $surcharge_amount = $surcharge ? ($surcharge->isPercentage() ? ($unit_price * $surcharge->amount) / 100 : $surcharge->amount) : 0;
+        return $surcharge_amount * $this->quantity;
+    }
+
     /**
      * @return float|null
      * @throws CorruptedPriceStructureException

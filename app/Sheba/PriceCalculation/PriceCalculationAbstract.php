@@ -64,6 +64,8 @@ abstract class PriceCalculationAbstract
 
     abstract public function getTotalOriginalPrice();
 
+    abstract public function getSurchargeAmount();
+
     abstract public function getUnitPrice();
 
     abstract protected function getFixedPrice($prices);
