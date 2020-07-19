@@ -42,12 +42,14 @@ Class RobiTopUpWalletTransfer
             'balance' => $this->getCalculatedBalance(),
             'amount' => $this->amount
         ];
+        $this->affiliate->robi_topup_wallet_transactions()->save($formatted_data);
     }
 
     public function process($data = [])
     {
         DB::transaction(function () use ($data, &$transaction) {
             $this->transfer();
+            $this->storeTransactionRecord();
         });
     }
 
@@ -58,7 +60,7 @@ Class RobiTopUpWalletTransfer
 
     private function getCalculatedBalance()
     {
-        $last_inserted_transaction = $this->affiliate->orderBy('id', 'desc')->first();
+        $last_inserted_transaction = $this->affiliate->robi_topup_wallet_transactions()->orderBy('id', 'desc')->first();
         $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
     }

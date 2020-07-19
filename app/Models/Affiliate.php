@@ -5,6 +5,7 @@ use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Sheba\Dal\Affiliate\Events\AffiliateSaved;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\RobiTopupWalletTransaction\Model as RobiTopupWalletTransaction;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -165,6 +166,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function transactions()
     {
         return $this->hasMany(AffiliateTransaction::class);
+    }
+
+    public function robi_topup_wallet_transactions()
+    {
+        return $this->hasMany(RobiTopupWalletTransaction::class);
     }
 
     public function earningAmountDateBetween(TimeFrame $time_frame)
