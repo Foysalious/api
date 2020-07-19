@@ -368,12 +368,16 @@ class CoWorkerController extends Controller
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($members, new CoWorkerListTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
-
+        $total_employees = count($employees);
+        if ($request->has('limit')) $employees = collect($employees)->splice($offset, $limit);
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
         if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
 
-        if (count($employees) > 0) return api_response($request, $employees, 200, ['employees' => $employees]);
+        if (count($employees) > 0) return api_response($request, $employees, 200, [
+            'employees' => $employees,
+            'total_employees' => $total_employees
+        ]);
         return api_response($request, null, 404);
     }
 
