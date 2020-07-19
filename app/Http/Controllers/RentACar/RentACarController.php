@@ -72,9 +72,14 @@ class RentACarController extends Controller
             $location_service = LocationService::where([['location_id', $service->getHyperLocal()->location_id], ['service_id', $service->getServiceId()]])->first();
             if (!$location_service) return api_response($request, null, 400, ['message' => 'This service isn\'t available at this location.', 'code' => 701]);
 
-            $cars = $service_model->category->isRentACarOutsideCity()
-                ? $this->getCarsForOutsideCity($service, $discount_calculation)
-                : $this->getCarsForInsideCity($service, $discount_calculation);
+            $variables = json_decode($service->getService()->variables, true);
+            $car_types = $this->getCarTypes($variables);
+
+            $car_prices = $service_model->category->isRentACarOutsideCity()
+                ? $this->getOptionUnitPricesOfServiceForOutsideCity($service_model, $service->getPickupThana(), $service->getDestinationThana())
+                : $location_service ? json_decode($location_service->prices, true) : [];;
+
+
 
             return api_response($request, null, 200, ['cars' => $cars]);
         } catch (InsideCityPickUpAddressNotFoundException $e) {
@@ -101,6 +106,7 @@ class RentACarController extends Controller
         $price_calculation = $this->resolvePriceCalculation($service_model->category);
 
 
+
         foreach ($car_types as $key => $car) {
             $option = [$key];
             $price_calculation->setService($service_model)->setOption($option)->setQuantity($service->getQuantity());
@@ -124,7 +130,6 @@ class RentACarController extends Controller
                 'original_price' => $original_price,
                 'discount' => $discount_calculation->getDiscount(),
                 'quantity' => $service->getQuantity(),
-                'unit_price' => $car_prices[$key] ? (double) $car_prices[$key] : null,
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
