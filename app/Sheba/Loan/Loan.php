@@ -24,7 +24,6 @@ use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
-use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
@@ -516,7 +515,7 @@ class Loan
      */
     public function claimStatusUpdate($request)
     {
-        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to);
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->to, $request);
     }
 
     public function personalInfo()

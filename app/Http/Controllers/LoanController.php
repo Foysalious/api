@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
-use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +35,7 @@ use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
+use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
@@ -917,9 +917,10 @@ class LoanController extends Controller
      * @param Request $request
      * @param $loan_id
      * @param Loan $loan
+     * @param RobiTopUpWalletTransfer $robiTopUpWalletTransfer
      * @return JsonResponse
      */
-    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
+    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan, RobiTopUpWalletTransfer $robiTopUpWalletTransfer)
     {
         try {
             $this->validate($request, [

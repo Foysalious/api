@@ -3,6 +3,8 @@
 
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
+use Sheba\Dal\LoanClaimRequest\Statuses;
+use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\ModificationFields;
 
 class LoanClaim
@@ -43,15 +45,22 @@ class LoanClaim
 
     /**
      * @param $to
+     * @param $request
      */
-    public function updateStatus($to)
+    public function updateStatus($to, $request)
     {
-
         $claim = (new LoanClaimRepo(new LoanClaimModel()))->find($this->claimId);
         $claim->status = $to;
-        $claim->log = $this->getLog($claim->amount,$to);
+        $claim->log = $this->getLog($claim->amount, $to);
         $claim->update();
-        if($to == 'approved') return (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($claim->amount)->storeCreditPaymentEntry();
+        if ($to == Statuses::APPROVED) {
+            (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($claim->amount)->storeCreditPaymentEntry();
+            $claim_amount = $this->setClaim($request->claim_id)->getClaimAmount();
+            $affiliate = $this->setClaim($request->claim_id)->getAffiliate();
+            if (isset($affiliate) && $claim_amount > 0)
+                (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
+        }
+        return true;
     }
 
     /**
@@ -68,6 +77,18 @@ class LoanClaim
         ];
 
         return $log[$to];
+    }
+
+    public function getClaimAmount()
+    {
+        $claim_request = LoanClaimModel::find($this->claimId);
+        return $claim_request ? $claim_request->amount : 0;
+    }
+
+    public function getAffiliate()
+    {
+        $claim_request = LoanClaimModel::find($this->claimId);
+        return $claim_request->resource->profile->affiliate;
     }
 
     /**
