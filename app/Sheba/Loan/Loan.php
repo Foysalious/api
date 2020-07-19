@@ -352,6 +352,7 @@ class Loan
     {
         $data = [
             'loan_id' => $request->loan_id,
+            'resource_id' => $request->manager_resource->id,
             'amount' => $request->amount,
             'status' => Statuses::PENDING,
             'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
@@ -369,16 +370,16 @@ class Loan
         return true;
     }
 
-    public function claimList($loan_id)
+    public function claimList($loan_id, $all=false, $month=null, $year = null)
     {
-        $claims = (new LoanClaim())->getAll($loan_id);
+        if(!$all)
+            $claims = (new LoanClaim())->getByYearAndMonth($loan_id,$month,$year);
+        else
+            $claims = (new LoanClaim())->getAll($loan_id);
+
         $pending_claim = (new LoanClaim())->getPending($loan_id);
         $data['claim_list'] = [];
         $data['pending_claim'] = null;
-        //$data['can_claim'] = 1;
-       // $data['should_pay'] = 0;
-       // list($data['can_claim'],$data['should_pay']) = $this->canClaimShouldPay($request);
-
 
         if($pending_claim){
             $data['pending_claim']['id'] = $pending_claim->id;
@@ -398,6 +399,7 @@ class Loan
                 'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
             ]);
         }
+
         return $data;
     }
 
@@ -466,7 +468,7 @@ class Loan
         {
             $data['loan_balance'] = $last_claim->amount;
             $data['due_balance'] = $this->getDue($last_claim->loan_id);
-            $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যাল্যান্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
+            $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
             $data['status_type'] = 'success';
             $data['can_claim']   = 0;
             $data['should_pay'] = 1;
@@ -520,9 +522,9 @@ class Loan
         return $personal;
     }
 
-    public function businessInfo($type = null)
+    public function businessInfo()
     {
-        return (new BusinessInfo($this->partner, $this->resource))->setType($type)->setVersion($this->version);
+        return (new BusinessInfo($this->partner, $this->resource))->setType($this->type)->setVersion($this->version);
     }
 
     public function financeInfo()
@@ -697,7 +699,7 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
-        $details['claims'] = $this->claimList($loan_id);
+        $details['claims'] = $this->claimList($loan_id,true);
         return $details;
     }
 
