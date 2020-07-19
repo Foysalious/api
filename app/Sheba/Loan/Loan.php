@@ -351,6 +351,7 @@ class Loan
     {
         $data = [
             'loan_id' => $request->loan_id,
+            'resource_id' => $request->manager_resource->id,
             'amount' => $request->amount,
             'status' => Statuses::PENDING,
             'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
