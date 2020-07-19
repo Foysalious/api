@@ -1,9 +1,9 @@
 <?php namespace App\Sheba\Loan\DLSV2;
 
 
-use Sheba\Dal\LoanClaimRequest\Model;
+use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
+use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\ModificationFields;
-use Sheba\Dal\LoanClaimRequest;
 
 class LoanClaim
 {
@@ -13,12 +13,20 @@ class LoanClaim
     private $loanId;
     private $claimId;
 
+    /**
+     * @param $loan_id
+     * @return $this
+     */
     public function setLoan($loan_id)
     {
          $this->loanId = $loan_id;
          return $this;
     }
 
+    /**
+     * @param $claim_id
+     * @return $this
+     */
     public function setClaim($claim_id)
     {
         $this->claimId = $claim_id;
@@ -30,52 +38,84 @@ class LoanClaim
      */
     public function lastClaim()
     {
-        return Model::where('loan_id',$this->loanId)->orderBy('id','desc')->first();
-
-        //return Model::lastClaim($this->loanId);
+        return LoanClaimModel::lastClaim($this->loanId)->first();
     }
 
+    /**
+     * @param $to
+     */
     public function updateStatus($to)
     {
 
-        $claim = Model::where('id',$this->claimId)->first();
+        $claim = (new LoanClaimRepo(new LoanClaimModel()))->find($this->claimId);
         $claim->status = $to;
-        //***
-        $claim->log = $to == 'approved' ? '৳' .convertNumbersToBangla($claim->amount) .' লোন দাবি গৃহীত হয়েছে' : '৳' .convertNumbersToBangla($claim->amount) .' লোন দাবি বাতিল করা হয়েছে';
-        return $claim->update();
+        $claim->log = $this->getLog($claim->amount,$to);
+        $claim->update();
+        if($to == 'approved') return (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($claim->amount)->storeCreditPaymentEntry();
     }
 
+    /**
+     * @param $amount
+     * @param $to
+     * @return string
+     */
+    public function getLog($amount, $to)
+    {
+        $log = [
+            'approved' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি গৃহীত হয়েছে',
+            'declined' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি বাতিল করা হয়েছে',
+            'pending' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি করা হয়েছে'
+        ];
+
+        return $log[$to];
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
     public function createRequest($data)
     {
-        $this->loanClaimRequest = new LoanClaimRequest\Model($this->withCreateModificationField($data));
-        $this->loanClaimRequest->save();
-        return $this->loanClaimRequest;
+        $this->loanClaimRequest = new LoanClaimModel($this->withCreateModificationField($data));
+        return $this->loanClaimRequest->save();
     }
 
-    public function getByYearAndMonth($loan_id,$year,$month)
+    /**
+     * @param $loan_id
+     * @param $year
+     * @param $month
+     * @return mixed
+     */
+    public function getByYearAndMonth($loan_id, $year, $month)
     {
-        return Model::where('loan_id',$loan_id)
-            ->whereYear('created_at','=',$year)->whereMonth('created_at','=',$month)
-            ->get();
-
+        return (new LoanClaimRepo(new LoanClaimModel()))->getByYearAndMonth($loan_id,$year,$month);
     }
 
+    /**
+     * @param $loan_id
+     * @return mixed
+     */
     public function getAll($loan_id)
     {
-        return Model::where('loan_id',$loan_id)->get();
+        return (new LoanClaimRepo(new LoanClaimModel()))->getByLoanID($loan_id);
 
     }
 
-
-
+    /**
+     * @param $loan_id
+     * @return mixed
+     */
     public function getRecent($loan_id)
     {
-        return Model::where('loan_id',$loan_id)->orderBy('id','desc')->take(3)->get();
-
+        return (new LoanClaimRepo(new LoanClaimModel()))->getRecent($loan_id);
     }
 
+    /**
+     * @param $loan_id
+     * @return mixed
+     */
     public function getPending($loan_id)
     {
-        return Model::where('loan_id',$loan_id)->where('status','pending')->orderBy('id','desc')->first();
+        return (new LoanClaimRepo(new LoanClaimModel()))->getPending($loan_id);
     }
 }
