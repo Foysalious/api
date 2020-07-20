@@ -16,20 +16,28 @@ class Statics
     public static function loanList()
     {
         return [
-            'loan_list' => [
-                [
-                    'title'     => 'Micro Loan',
-                    'title_bn'  => 'রবি টপআপ লোন',
-                    'loan_type' => LoanTypes::MICRO,
-                    'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
-                ],
-                [
-                    'title'     => 'Term Loan',
-                    'title_bn'  => 'টার্ম লোন',
-                    'loan_type' => LoanTypes::TERM,
-                    'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
-                ]
-            ]
+            self::termLoanData(),
+            self::microLoanData()
+        ];
+    }
+
+    public static function termLoanData()
+    {
+        return [
+            'title'     => 'Term Loan',
+            'title_bn'  => 'টার্ম লোন',
+            'loan_type' => LoanTypes::TERM,
+            'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
+        ];
+    }
+
+    public static function microLoanData()
+    {
+        return [
+            'title'     => 'Dana Classic',
+            'title_bn'  => 'ডানা ক্লাসিক',
+            'loan_type' => LoanTypes::MICRO,
+            'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
         ];
     }
 
