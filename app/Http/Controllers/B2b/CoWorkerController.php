@@ -347,20 +347,17 @@ class CoWorkerController extends Controller
                 ]);
             }
         ]);
+
         if ($request->has('department')) {
-            $members->where(function ($query) use ($request) {
-                $query->whereHas('businessMember.role.businessDepartment', function ($query) use ($request) {
-                    $query->where('name', $request->department);
+            $members = $members->whereHas('businessMember', function ($q) use ($request) {
+                $q->whereHas('role', function ($q) use ($request) {
+                    $q->whereHas('businessDepartment', function ($q) use ($request) {
+                        $q->where('business_departments.id', $request->department);
+                    });
                 });
             });
         }
-        if ($request->has('status')) {
-            $members->where(function ($query) use ($request) {
-                $query->whereHas('businessMember', function ($query) use ($request) {
-                    $query->where('status', $request->status);
-                });
-            });
-        }
+        
         $members = $members->get()->unique();
         if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
@@ -368,11 +365,15 @@ class CoWorkerController extends Controller
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($members, new CoWorkerListTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
-        $total_employees = count($employees);
-        if ($request->has('limit')) $employees = collect($employees)->splice($offset, $limit);
+
+
+        if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
         if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+
+        $total_employees = count($employees);
+        $employees = collect($employees)->splice($offset, $limit);
 
         if (count($employees) > 0) return api_response($request, $employees, 200, [
             'employees' => $employees,
@@ -650,6 +651,13 @@ class CoWorkerController extends Controller
         return $members->filter(function ($member) use ($request) {
             $profile = $member->profile;
             return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        });
+    }
+
+    private function findByStatus($employees, $status)
+    {
+        return collect($employees)->filter(function ($employee) use ($status) {
+            return $employee['status'] == $status;
         });
     }
 }
