@@ -357,7 +357,7 @@ class CoWorkerController extends Controller
                 });
             });
         }
-        
+
         $members = $members->get()->unique();
         if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
@@ -580,16 +580,28 @@ class CoWorkerController extends Controller
             $this->coWorkerCreator->basicInfoStore();
         }
 
-        if ($errors && $this->isFailedToCreateAllCoworker($errors, $emails)) {
+        if ($errors) {
             $file_name = Carbon::now()->timestamp . "_co_worker_invite_error_$business->id.csv";
             $file = $excel_handler->setName('Co worker Invite')->setFilename($file_name)->createReport($errors)->save();
             $file_path = $this->saveFileToCDN($file, getCoWorkerInviteErrorFolder(), $file_name);
-
             unlink($file);
-            return api_response($request, null, 422, ['message' => 'Error', 'link' => $file_path]);
+
+            if ($this->isFailedToCreateAllCoworker($errors, $emails)) {
+                return api_response($request, null, 422, [
+                    'message' => 'Error! No coworker added',
+                    'description' => 'No coworker added. To get failed invited co-worker list, download this excel',
+                    'link' => $file_path
+                ]);
+            }
+
+            return api_response($request, null, 303, [
+                'message' => 'Some coworker Invited successfully',
+                'description' => 'Coworker Invited successfully. To get failed invited co-worker list, download this excel',
+                'link' => $file_path
+            ]);
         }
 
-        return api_response($request, null, 200, ['message' => implode(', ', $errors)]);
+        return api_response($request, null, 200);
     }
 
     /**

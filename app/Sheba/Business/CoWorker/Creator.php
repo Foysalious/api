@@ -72,6 +72,8 @@ class Creator
     private $businessRoleRepository;
     private $email;
     private $status;
+    /** @var string $password */
+    private $password;
 
     /**
      * Updater constructor.
@@ -164,41 +166,34 @@ class Creator
 
     public function basicInfoStore()
     {
-        DB::beginTransaction();
-        try {
-            $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
+        $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
 
-            if ($this->basicRequest->getRole())
-                $this->businessRole = $this->getBusinessRole();
+        if ($this->basicRequest->getRole())
+            $this->businessRole = $this->getBusinessRole();
 
-            $new_member = null;
-            if (!$profile) {
-                $profile = $this->createProfile();
+        $new_member = null;
+        if (!$profile) {
+            $profile = $this->createProfile();
+            $new_member = $this->createMember($profile);
+            $this->businessMember = $this->createBusinessMember($this->business, $new_member);
+        } else {
+            $old_member = $profile->member;
+            if ($old_member) {
+                if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+                    $this->setError(422, "This person is already added.");
+                }
+                if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+                    $this->setError(422, "This person is already added with another business.");
+                }
+                $new_member = $old_member;
+            } else {
                 $new_member = $this->createMember($profile);
                 $this->businessMember = $this->createBusinessMember($this->business, $new_member);
-            } else {
-                $old_member = $profile->member;
-                if ($old_member) {
-                    if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-                        $this->setError(422, "This person is already added.");
-                    }
-                    if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-                        $this->setError(422, "This person is already added with another business.");
-                    }
-                    $new_member = $old_member;
-                } else {
-                    $new_member = $this->createMember($profile);
-                    $this->businessMember = $this->createBusinessMember($this->business, $new_member);
-                }
             }
-
-            DB::commit();
-            // $this->sendExistingUserMail($profile);
-            return $new_member;
-        } catch (Throwable $e) {
-            DB::rollback();
-            return null;
         }
+
+        $this->sendExistingUserMail($profile);
+        return $new_member;
     }
 
     /**
@@ -224,20 +219,15 @@ class Creator
      */
     private function createProfile()
     {
-        $password = str_random(6);
+        $this->password = str_random(6);
         $default_image = 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/profiles/avatar/default.jpg';
         $data = [
             '_token' => str_random(255),
             'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
             'email' => $this->basicRequest->getEmail(),
-            'password' => bcrypt($password),
+            'password' => bcrypt($this->password),
             'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
         ];
-        /*dispatch(
-            (new SendBusinessRequestEmail($this->basicRequest->getEmail()))
-                ->setPassword($password)
-                ->setTemplate('emails.co-worker-invitation')
-        );*/
 
         return $this->profileRepository->store($data);
     }
@@ -292,14 +282,17 @@ class Creator
      */
     private function sendExistingUserMail($profile)
     {
-        $CMail = new SendBusinessRequestEmail($profile->email);
+        $coworker_invite_email = new SendBusinessRequestEmail($profile->email);
+        if ($this->password) $coworker_invite_email->setPassword($this->password);
         if (empty($profile->password)) {
-            $profile->password = str_random(6);
-            $CMail->setPassword($profile->password);
-            $profile->save();
+            $password = str_random(6);
+            $this->profileRepository->updateRaw($profile, ['password' => $password]);
+            $coworker_invite_email->setPassword($password);
         }
-        $CMail->setTemplate('emails.co-worker-invitation');
-        dispatch($CMail);
+
+        $coworker_invite_email->setSubject("Login to sBusiness & Digigo")->setTemplate('emails.co-worker-invitation-v2');
+        // $coworker_invite_email->handle();
+        dispatch($coworker_invite_email);
     }
 
     public function resetError()
