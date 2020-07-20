@@ -70,10 +70,11 @@ class LoanClaim
      */
     public function getLog($amount, $to)
     {
+
         $log = [
-            'approved' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি গৃহীত হয়েছে',
-            'declined' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি বাতিল করা হয়েছে',
-            'pending' => '৳' . convertNumbersToBangla($amount) . ' লোন দাবি করা হয়েছে'
+            'approved' => '৳' . convertNumbersToBangla($amount,true,0) . ' লোন দাবি গৃহীত হয়েছে',
+            'declined' => '৳' . convertNumbersToBangla($amount,true, 0) . ' লোন দাবি বাতিল করা হয়েছে',
+            'pending' => '৳' . convertNumbersToBangla($amount, true, 0) . ' লোন দাবি করা হয়েছে'
         ];
 
         return $log[$to];
