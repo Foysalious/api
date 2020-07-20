@@ -34,8 +34,8 @@ class Statics
     public static function microLoanData()
     {
         return [
-            'title'     => 'Dana Classic',
-            'title_bn'  => 'ডানা ক্লাসিক',
+            'title'     => 'Dana Classic Loan',
+            'title_bn'  => 'ডানা ক্লাসিক লোন',
             'loan_type' => LoanTypes::MICRO,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
         ];
