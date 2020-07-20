@@ -55,7 +55,7 @@ class LoanClaim
         $claim->update();
         if ($to == Statuses::APPROVED) {
             (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($claim->amount)->storeCreditPaymentEntry();
-            $claim_amount = $this->setClaim($request->claim_id)->getClaimAmount();
+            $claim_amount = $claim->amount;
             $affiliate = $this->setClaim($request->claim_id)->getAffiliate();
             if (isset($affiliate) && $claim_amount > 0)
                 (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
@@ -78,12 +78,6 @@ class LoanClaim
         ];
 
         return $log[$to];
-    }
-
-    public function getClaimAmount()
-    {
-        $claim_request = LoanClaimModel::find($this->claimId);
-        return $claim_request ? $claim_request->amount : 0;
     }
 
     public function getAffiliate()
