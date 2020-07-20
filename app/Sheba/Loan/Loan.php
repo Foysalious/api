@@ -227,7 +227,8 @@ class Loan
             'big_banner' => Statics::bigBanner(),
             'banner'     => Statics::banner(),
         ];
-        $data = array_merge($data, Statics::webViews(), ['running_loan' => $this->getRunningLoan()], Statics::loanList(), ['details' => Statics::homepage()]);
+//        dd($this->getApplyLoanList());
+        $data = array_merge($data, Statics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => Statics::homepage()]);
         return $data;
     }
 
@@ -353,7 +354,7 @@ class Loan
             'resource_id' => $request->manager_resource->id,
             'amount' => $request->amount,
             'status' => Statuses::PENDING,
-            'log' => '৳' .convertNumbersToBangla($request->amount) .' লোন দাবি করা হয়েছে',
+            'log' => '৳' .convertNumbersToBangla($request->amount,true,0) .' লোন দাবি করা হয়েছে',
         ];
 
         return (new LoanClaim())->createRequest($data);
@@ -905,6 +906,28 @@ class Loan
         if (!empty($changeLog))
             return $changeLog->created_at;
         return null;
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function getApplyLoanList()
+    {
+        $running_loans = $this->getRunningLoan();
+        $apply_loan_list = Statics::loanList();
+        $apply_statuses = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::CLOSED];
+        foreach ($running_loans as $running_loan){
+            if(!in_array($running_loan['data']['status'], $apply_statuses)){
+                foreach ($apply_loan_list as $key => $loan){
+                    if($running_loan['data']['type'] == $loan['loan_type']) {
+                        unset($apply_loan_list[$key]);
+                        $apply_loan_list = array_values($apply_loan_list);
+                    }
+                }
+            }
+        }
+        return $apply_loan_list;
     }
 
     /**
