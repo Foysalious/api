@@ -88,13 +88,14 @@ class Creator
      * @param BusinessMemberUpdater $business_member_updater
      * @param ProfileBankInfoInterface $profile_bank_information
      * @param MemberRepositoryInterface $member_repository
+     * @param BusinessRoleRepositoryInterface $business_role_repository
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository,
                                 BusinessMemberRepositoryInterface $business_member_repository,
                                 RoleRequester $role_requester, RoleCreator $role_creator, RoleUpdater $role_updater,
                                 BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator,
                                 BusinessMemberUpdater $business_member_updater, ProfileBankInfoInterface $profile_bank_information,
-                                MemberRepositoryInterface $member_repository)
+                                MemberRepositoryInterface $member_repository, BusinessRoleRepositoryInterface $business_role_repository)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -107,6 +108,7 @@ class Creator
         $this->businessMemberUpdater = $business_member_updater;
         $this->profileBankInfoRepository = $profile_bank_information;
         $this->memberRepository = $member_repository;
+        $this->businessRoleRepository = $business_role_repository;
     }
 
     /**
@@ -171,29 +173,21 @@ class Creator
         if ($this->basicRequest->getRole())
             $this->businessRole = $this->getBusinessRole();
 
-        $new_member = null;
+        $member = null;
         if (!$profile) {
             $profile = $this->createProfile();
-            $new_member = $this->createMember($profile);
-            $this->businessMember = $this->createBusinessMember($this->business, $new_member);
+            $member = $this->createMember($profile);
+            $this->businessMember = $this->createBusinessMember($this->business, $member);
         } else {
-            $old_member = $profile->member;
-            if ($old_member) {
-                if ($old_member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
-                    $this->setError(422, "This person is already added.");
-                }
-                if ($old_member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
-                    $this->setError(422, "This person is already added with another business.");
-                }
-                $new_member = $old_member;
-            } else {
-                $new_member = $this->createMember($profile);
-                $this->businessMember = $this->createBusinessMember($this->business, $new_member);
+            $member = $profile->member;
+            if (!$member) {
+                $member = $this->createMember($profile);
+                $this->businessMember = $this->createBusinessMember($this->business, $member);
             }
         }
 
         $this->sendExistingUserMail($profile);
-        return $new_member;
+        return $member;
     }
 
     /**
