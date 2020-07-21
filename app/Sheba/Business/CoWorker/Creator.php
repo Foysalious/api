@@ -186,7 +186,8 @@ class Creator
             }
         }
 
-        $this->sendExistingUserMail($profile);
+        // TEMPORARY TURNED OF FOR TEST - OPEN LATER
+        // $this->sendExistingUserMail($profile);
         return $member;
     }
 
