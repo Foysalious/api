@@ -515,6 +515,10 @@ class Loan
         return $data;
     }
 
+    /**
+     * @param $request
+     * @return mixed
+     */
     public function approvedClaimMsgSeen($request)
     {
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
@@ -544,6 +548,7 @@ class Loan
             foreach ($recent_claims as $claim)
             {
                 array_push($data['recent_claims'],[
+                    'id' => $claim->id,
                     'status' => $claim->status,
                     'amount' => $claim->amount,
                     'log'   => $claim->log,
@@ -554,6 +559,10 @@ class Loan
         return $data['recent_claims'];
     }
 
+    /**
+     * @param $loan_id
+     * @return array|mixed
+     */
     private function getRecentRepayments($loan_id)
     {
         $data['recent_repayments'] =[];
