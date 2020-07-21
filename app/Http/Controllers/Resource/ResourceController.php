@@ -14,6 +14,7 @@ use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
+use Sheba\Resource\Service\ServiceList;
 
 class ResourceController extends Controller
 {
@@ -108,5 +109,12 @@ class ResourceController extends Controller
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);
+    }
+
+    public function getService(Request $request, ServiceList $serviceList)
+    {
+        $services = $serviceList->setRequest($request)->getAllServices();
+
+        return api_response($request, $services, 200, ['services' => $services]);
     }
 }

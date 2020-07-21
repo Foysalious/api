@@ -3,6 +3,7 @@
 
 use App\Models\Job;
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
 
 class ServiceList
 {
@@ -109,6 +110,34 @@ class ServiceList
                 return $service;
             }
         })->values();
+        return $services;
+    }
+
+    public function getAllServices()
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $this->request->auth_user;
+        $resource = $auth_user->getResource();
+
+        $services = $resource->firstPartner()->services;
+
+        $services = $services->map(function ($service, $key) {
+            $formatted_service = [
+                'id' => $service->id,
+                'name' => $service->name,
+                'variable_type' => $service->variable_type,
+                'min_quantity' => $service->min_quantity,
+                'unit' => $service->unit,
+                'app_thumb' => $service->app_thumb,
+            ];
+            if ($service->variable_type == 'Options') {
+                $formatted_service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
+            } else {
+                $formatted_service['questions'] = [];
+            }
+            return $formatted_service;
+        });
+
         return $services;
     }
 }
