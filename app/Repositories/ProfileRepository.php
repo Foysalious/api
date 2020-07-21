@@ -17,7 +17,6 @@ use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
-
 class ProfileRepository
 {
     use ModificationFields;

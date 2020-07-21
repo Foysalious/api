@@ -83,6 +83,7 @@ class BillInvoiceDataGenerator
             'from' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
+                'logo' => $this->business->logo,
                 'mobile' => $this->business->getContactNumber()
             ],
             'to' => [
@@ -94,7 +95,8 @@ class BillInvoiceDataGenerator
             'terms' => $this->bid->terms,
             'sub_total' => (double)$this->procurement->totalPrice,
             'grand_total' => (double)$this->procurement->totalPrice,
-            'due' => (double)$this->procurement->due
+            'due' => (double)$this->procurement->due,
+            "tk_sign" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png"
         ];
         if ($data['type'] == self::INVOICE) $data += [
             'code' => $this->procurement->invoiceCode(),

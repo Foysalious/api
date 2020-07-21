@@ -301,10 +301,10 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
-            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            $category->load(['children' => function ($q) use ($best_deal_category, $location, $request) {
-                $q->published()->whereNotIn('id', $best_deal_category);
+            /*$best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();*/
+            $category->load(['children' => function ($q) use ($location, $request) {
+                $q->published();/*->whereNotIn('id', $best_deal_category)*/
                 if ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
@@ -321,9 +321,10 @@ class CategoryController extends Controller
                     }
                 });
             }]);
-            $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+            $children = $category->children;
+            /*$children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
                 return !in_array($sub_category->id, $best_deal_category);
-            });
+            });*/
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -418,10 +419,10 @@ class CategoryController extends Controller
                 $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
                 $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                    /*if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                         $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    }
+                    }*/
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location);
                     })->select(

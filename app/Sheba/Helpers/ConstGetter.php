@@ -34,4 +34,9 @@ trait ConstGetter
     {
         return in_array($value, static::get());
     }
+
+    public static function isInvalid($value)
+    {
+        return !static::isValid($value);
+    }
 }
