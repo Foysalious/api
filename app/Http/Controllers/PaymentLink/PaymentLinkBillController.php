@@ -28,7 +28,7 @@ class PaymentLinkBillController extends Controller
                               Creator $customer_creator, PaymentLinkRepositoryInterface $repo)
     {
         $this->validate($request, [
-            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments()),
+            'payment_method' => 'required|in:' . implode(',', AvailableMethods::getPaymentLinkPayments($request->identifier)),
             'amount' => 'numeric',
             'purpose' => 'string',
             'identifier' => 'required',

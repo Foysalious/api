@@ -38,6 +38,11 @@ class Vendor extends BaseModel implements TopUpAgent, HasWalletTransaction
         return $this->hasMany(VendorTransaction::class);
     }
 
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
+    }
+
     /**
      * @return TopUpCommission
      */
