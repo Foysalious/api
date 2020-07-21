@@ -215,7 +215,7 @@ class PersonalInfo implements Arrayable
             'mobile'                  => $profile->mobile,
             'birthday'                => $profile->dob,
             'nid_no'                  => $profile->nid_no,
-            'father_name'             => $this->resource->father_name,
+            'father_name'             => $this->resource->father_name? $this->resource->father_name: null,
             'mother_name'             => $this->resource->mother_name,
             'present_address'         => $present_address,
         ];
