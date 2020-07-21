@@ -151,6 +151,7 @@ class FinanceInfo implements Arrayable
     private function getDataFromProfile()
     {
         return array_merge((new BankInformation(($this->bank_information ? $this->bank_information->toArray() : [])))->toArray(), [
+            'is_retailer_bkash_agent' => $this->partner->bkash_account_type == "agent" ? 1 : 0,
             'acc_types' => constants('BANK_ACCOUNT_TYPE'),
             'bkash'     => [
                 'bkash_no'            => $this->partner->bkash_no,
