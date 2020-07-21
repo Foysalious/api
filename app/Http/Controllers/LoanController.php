@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
+use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -920,7 +921,7 @@ class LoanController extends Controller
      * @param RobiTopUpWalletTransfer $robiTopUpWalletTransfer
      * @return JsonResponse
      */
-    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan, RobiTopUpWalletTransfer $robiTopUpWalletTransfer)
+    public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
     {
         try {
             $this->validate($request, [
@@ -930,7 +931,7 @@ class LoanController extends Controller
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->claimStatusUpdate($request);
-            return api_response($request, null, 200,['data' => ["code"=>200]]);
+            return api_response($request, null, 200,['data' => ["code" => 200]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => 'িছু একটা সমস্যা হয়েছে যার কারণে আপনার আবেদনটি জমা দেয়া সম্ভব হয়নি']);
@@ -940,5 +941,48 @@ class LoanController extends Controller
         }
 
     }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
+    public function approvedClaimMsgSeen(Request $request, $partner, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'success_msg_seen' => 'required|in:0,1',
+            ]);
+            $request->merge(['loan_id' => $loan_id]);
+            $loan->approvedClaimMsgSeen($loan_id);
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function repaymentList(Request $request, $partner, $loan_id, Loan $loan)
+    {
+        try{
+            $this->validate($request,[
+                'month' => 'required|numeric',
+                'year' => 'required|numeric'
+            ]);
+            $request->merge(['loan_id' => $loan_id]);
+            $data = $loan->repaymentList($loan_id,false, $request->year, $request->month);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400,['message' => $message]);
+        } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
 
 }

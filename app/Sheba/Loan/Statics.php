@@ -92,6 +92,16 @@ class Statics
         return $type == LoanTypes::MICRO ? $fee[LoanTypes::MICRO] : $fee[LoanTypes::TERM];
     }
 
+    public static function getMicroLoanAnnualFee()
+    {
+       return config('loan.micro_loan_annual_fee');
+    }
+
+    public static function getClaimTransactionFee()
+    {
+        return config('loan.micro_loan_claim_transaction_fee');
+    }
+
     public static function getMinimumDay($type)
     {
         $day = config('loan.minimum_day');

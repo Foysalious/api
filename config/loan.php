@@ -17,5 +17,7 @@ return [
         LoanTypes::MICRO => env('MICRO_LOAN_MAXIMUM_AMOUNT', 25000)
     ],
     'repayment_defaulter_default_duration' => 7,
-    'micro_loan_assigned_bank_id'          => env('MICRO_LOAN_ASSIGNED_BANK', 1)
+    'micro_loan_claim_transaction_fee'     => 10,
+    'micro_loan_assigned_bank_id'          => env('MICRO_LOAN_ASSIGNED_BANK', 1),
+    'micro_loan_annual_fee'                 => 100
 ];
