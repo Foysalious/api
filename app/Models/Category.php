@@ -117,11 +117,6 @@ class Category extends Model
         return $this->hasOne(CrosssaleServiceModel::class);
     }
 
-    /**
-     *
-     * Other Methods
-     */
-
     public function scopeParents($query)
     {
         $query->where([

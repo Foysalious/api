@@ -16,4 +16,5 @@ class GeocodeController extends Controller
         if (!$address->hasAddress()) return api_response($request, null, 404);
         return api_response($request, $address, 200, ['location' => ['address' => $address->getAddress()]]);
     }
+
 }
