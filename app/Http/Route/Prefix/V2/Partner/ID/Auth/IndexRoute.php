@@ -84,7 +84,7 @@ class IndexRoute
                 $api->post('/{loan_id}/claim','LoanController@claim');
                 $api->get('/{loan_id}/claim-list','LoanController@claimList');
                 $api->get('/{loan_id}/account-info','LoanController@accountInfo');
-                $api->post('/{loan_id}/approvedClaimMsgSeen','LoanController@claim-approval-msg-seen');
+                $api->post('/{loan_id}/claim-approval-msg-seen','LoanController@approvedClaimMsgSeen');
                 $api->get('/{loan_id}/repayment-list','LoanController@repaymentList');
 
                 $api->post('/', 'SpLoanController@store');

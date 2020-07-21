@@ -956,7 +956,7 @@ class LoanController extends Controller
                 'success_msg_seen' => 'required|in:0,1',
             ]);
             $request->merge(['loan_id' => $loan_id]);
-            $loan->approvedClaimMsgSeen($loan_id);
+            $loan->approvedClaimMsgSeen($request);
             return api_response($request, null, 200);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
