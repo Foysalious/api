@@ -13,6 +13,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Schedule\ResourceScheduleChecker;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 
 class ResourceController extends Controller
@@ -108,5 +109,26 @@ class ResourceController extends Controller
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);
+    }
+
+    public function checkSchedule(Request $request, ResourceScheduleSlot $slot, ResourceScheduleChecker $resourceScheduleChecker)
+    {
+        $this->validate($request, [
+            'category' => 'required|numeric',
+            'partner' => 'required|numeric',
+            'date' => 'required|date_format:Y-m-d',
+            'time' => 'required|string',
+        ]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $category = Category::find($request->category);
+        $partner= Partner::find($request->partner);
+        $slot->setCategory($category)->setPartner($partner);
+        $request->has('limit') ? $slot->setLimit($request->limit) : $slot->setLimit(7);
+        $dates = $slot->getSchedulesByResource($resource);
+        $schedule = $resourceScheduleChecker->setSchedules($dates)->setDate($request->date)->setTime($request->time)->checkScheduleAvailability();
+        if (empty($schedule)) return api_response($request, $schedule, 404, ["message" => 'Schedule not found.']);
+        return api_response($request, $schedule, 200, ['schedule' => $schedule]);
     }
 }
