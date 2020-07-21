@@ -1,7 +1,16 @@
 <?php namespace App\Repositories;
 
+
+use App\Models\Affiliate;
+use App\Models\Job;
+use App\Models\Notification;
+use App\Models\OfferShowcase;
+use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
+use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
+use App\Sheba\Affiliate\PushNotification\TopUpFailed;
+use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
@@ -188,7 +197,7 @@ class NotificationRepository
      * @param $type
      * @return mixed|string
      */
-    private function getNotificationIcon($event_id, $type)
+    protected function getNotificationIcon($event_id, $type)
     {
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
         if ($offer && $offer->thumb != '')
@@ -199,6 +208,37 @@ class NotificationRepository
     }
 
     /**
+     * @param $notification_id
+     * @return array
+     */
+    public function getManagerNotification($notification_id)
+    {
+        try {
+            $notification             = Notification::find($notification_id);
+            $notification->timestamps = false;
+            $notification->is_seen    = 1;
+            $notification->save();
+            $event = app($notification->event_type);
+            if ($event) {
+                $offer = $notification->event_type && $notification->event_id ? $event::find($notification->event_id) : new OfferShowcase();
+                return [
+                    'banner'      => $offer->app_banner ? $offer->app_banner : null,
+                    'title'       => $offer->title ? $offer->title : $notification->title ?: config('constants.NOTIFICATION_DEFAULTS.title'),
+                    'type'        => $notification->type ? $notification->type : config('constants.NOTIFICATION_DEFAULTS.type'),
+                    'description' => $offer->detail_description ? strip_tags($offer->detail_description) : config('constants.NOTIFICATION_DEFAULTS.short_description'),
+                    'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
+                    "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
+                    "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : 'dummy target type',
+                    "target_id"   => $offer->target_id ? $offer->target_id : 'dummy target id',
+                ];
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+        }
+    }
+
+    /**
+     * @param $model
      * @param $notification_id
      * @return array
      */
@@ -258,6 +298,16 @@ class NotificationRepository
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
+    }
+
+
+    public function pushNotificationToAffiliate($type,$agent_id,$mobile)
+    {
+        switch ($type) {
+            case 'topup_failed': return (new TopupFailed($agent_id,$mobile))->send();
+            case 'purchase_movie_ticket_failed': return (new MovieTicketPurchaseFailed($agent_id,$mobile))->send();
+            case 'purchase_transport_ticket_failed': return (new TransportTicketPurchaseFailed($agent_id,$mobile))->send();
+        }
     }
 
     private function sendNotificationToCRM()
