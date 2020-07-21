@@ -365,4 +365,9 @@ class Service extends Model
     {
         return $this->publication_status;
     }
+
+    public function surcharges()
+    {
+        return $this->hasMany(ServiceSurcharge::class);
+    }
 }
