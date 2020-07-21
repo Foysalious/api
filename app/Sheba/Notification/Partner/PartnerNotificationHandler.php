@@ -101,7 +101,7 @@ class PartnerNotificationHandler extends Handler
      */
     public function notifyForProcurement(array $partner_ids)
     {
-        notify()->partners($partner_ids)->sendToAll([
+        notify()->partners($partner_ids)->send([
             'event_type'  => $this->eventType ?: PartnerNotificationEventGetter::NEW_PROCUREMENT,
             'event_id'    => $this->eventId ?: null,
             'title'       => $this->title,
