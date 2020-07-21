@@ -304,7 +304,7 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
-            $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtAuth');
+            $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
         });
         return $api;
     }

@@ -86,26 +86,15 @@ class ProfileController extends Controller
 
     public function getDetail(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|mobile:bd'
-            ]);
+        $this->validate($request, [
+            'mobile' => 'required|mobile:bd'
+        ]);
 
-            $profile = Profile::where('mobile', '+88' . $request->mobile)->first();
+        $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
 
-            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile Not Found']);
-            return api_response($request, null, 200, ['profile' => [
-                'name' => $profile->name
-            ]]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Profile Not Found']);
+        return api_response($request, null, 200, ['profile' => [
+            'name' => $profile->name
+        ]]);
     }
 }
