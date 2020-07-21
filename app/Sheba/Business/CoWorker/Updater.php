@@ -329,6 +329,7 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
+
             $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
             $nid_front = $this->personalRequest->getNidFront();
             $nid_back = $this->personalRequest->getNidBack();
@@ -342,41 +343,13 @@ class Updater
             }
 
             $profile_data = [];
-            if ($this->personalRequest->getPhone() == 'null') {
-                $profile_data['mobile'] = null;
-            } else {
-                $profile_data['mobile'] = $this->personalRequest->getPhone();
-            }
-            if ($this->personalRequest->getAddress() == 'null') {
-                $profile_data['address'] = null;
-            } else {
-                $profile_data['address'] = $this->personalRequest->getAddress();
-            }
-            if ($this->personalRequest->getNationality() == 'null') {
-                $profile_data['nationality'] = null;
-            } else {
-                $profile_data['nationality'] = $this->personalRequest->getNationality();
-            }
-            if ($this->personalRequest->getNidNumber() == 'null') {
-                $profile_data['nid_no'] = null;
-            } else {
-                $profile_data['nid_no'] = $this->personalRequest->getNidNumber();
-            }
-            if ($nid_front == 'null') {
-                $profile_data['nid_image_front'] = null;
-            } else {
-                $profile_data['nid_image_front'] = $nid_image_front;
-            }
-            if ($nid_back == 'null') {
-                $profile_data['nid_image_back'] = null;
-            } else {
-                $profile_data['nid_image_back'] = $nid_image_back;
-            }
-            if ($this->personalRequest->getDateOfBirth() == 'null') {
-                $profile_data['dob'] = null;
-            } else {
-                $profile_data['dob'] = $this->personalRequest->getDateOfBirth();
-            }
+            $profile_data['mobile'] = ($this->personalRequest->getPhone() == 'null')  ? null : $this->personalRequest->getPhone();
+            $profile_data['address'] = ($this->personalRequest->getAddress() == 'null') ? null: $this->personalRequest->getAddress();
+            $profile_data['nationality'] = ($this->personalRequest->getNationality() == 'null') ? null : $this->personalRequest->getNationality();
+            $profile_data['nid_no'] = ($this->personalRequest->getNidNumber() == 'null') ? null : $this->personalRequest->getNidNumber();
+            $profile_data['nid_image_front'] = ($nid_front == 'null') ? null : $nid_image_front;
+            $profile_data['nid_image_back'] = ($nid_back == 'null') ? null : $nid_image_back;
+            $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();

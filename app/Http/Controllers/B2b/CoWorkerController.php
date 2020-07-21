@@ -239,8 +239,10 @@ class CoWorkerController extends Controller
         $this->validate($request, $validation_data);
         $member = $request->manager_member;
         $this->setModifier($member);
+        if ($request->has('mobile')) $request->mobile = formatMobile($request->mobile);
 
-        $personal_request = $this->personalRequest->setPhone($request->mobile)
+        $personal_request = $this->personalRequest
+            ->setPhone($request->mobile)
             ->setDateOfBirth($request->date_of_birth)
             ->setAddress($request->address)
             ->setNationality($request->nationality)
@@ -248,21 +250,15 @@ class CoWorkerController extends Controller
             ->setNidFront($request->nid_front)
             ->setNidBack($request->nid_back);
 
-        list($profile,
-            $nid_image_front_name,
-            $nid_image_front,
-            $nid_image_back_name,
-            $nid_image_back) = $this->coWorkerUpdater->setPersonalRequest($personal_request)
-            ->setMember($member_id)
-            ->personalInfoUpdate();
-        if ($profile) {
-            return api_response($request, 1, 200, [
-                'nid_image_front_name' => $nid_image_front_name,
-                'nid_image_front' => $nid_image_front,
-                'nid_image_back_name' => $nid_image_back_name,
-                'nid_image_back' => $nid_image_back
-            ]);
-        }
+        $this->coWorkerUpdater->setPersonalRequest($personal_request)->setMember($member_id)->setMobile($request->mobile);
+        if ($this->coWorkerUpdater->hasError())
+            return api_response($request, null, $this->coWorkerUpdater->getErrorCode(), ['message' => $this->coWorkerUpdater->getErrorMessage()]);
+
+        list($profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back) = $this->coWorkerUpdater->personalInfoUpdate();
+
+        if ($profile)
+            return api_response($request, NULL, 200, ['nid_image_front_name' => $nid_image_front_name, 'nid_image_front' => $nid_image_front, 'nid_image_back_name' => $nid_image_back_name, 'nid_image_back' => $nid_image_back]);
+
         return api_response($request, null, 404);
     }
 
