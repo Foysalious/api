@@ -522,7 +522,7 @@ class Loan
     public function approvedClaimMsgSeen($request)
     {
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        return  (new LoanClaim())->setClaim($last_claim->claim_id)->updateApprovedMsgSeen($request->success_msg_seen);
+        return  (new LoanClaim())->setClaim($last_claim->id)->updateApprovedMsgSeen($request->success_msg_seen);
     }
 
 
