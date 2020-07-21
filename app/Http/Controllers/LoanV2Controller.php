@@ -235,8 +235,8 @@ class LoanV2Controller extends Controller
             $manager_resource = $request->manager_resource;
             $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
-                'completion' => $info->completion()
+                'info'       => $info->toArray($request->loan_type),
+                'completion' => $info->completion($request->loan_type)
             ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -250,7 +250,9 @@ class LoanV2Controller extends Controller
     public function updatePersonalInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, ['loan_type' => 'required|in:term,micro']);
+            $this->validate($request, [
+                'loan_type' => 'required|in:' . implode(',', LoanTypes::get())
+            ]);
 
             $this->validate($request, PersonalInfo::getValidators());
             $partner          = $request->partner;
