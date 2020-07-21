@@ -227,7 +227,6 @@ class Loan
             'big_banner' => Statics::bigBanner(),
             'banner' => Statics::banner(),
         ];
-//        dd($this->getApplyLoanList());
         $data = array_merge($data, Statics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => Statics::homepage()]);
         return $data;
     }
@@ -515,10 +514,14 @@ class Loan
         return $data;
     }
 
+    /**
+     * @param $request
+     * @return mixed
+     */
     public function approvedClaimMsgSeen($request)
     {
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        return  (new LoanClaim())->setClaim($last_claim->claim_id)->updateApprovedMsgSeen($request->success_msg_seen);
+        return  (new LoanClaim())->setClaim($last_claim->id)->updateApprovedMsgSeen($request->success_msg_seen);
     }
 
 
@@ -544,6 +547,7 @@ class Loan
             foreach ($recent_claims as $claim)
             {
                 array_push($data['recent_claims'],[
+                    'id' => $claim->id,
                     'status' => $claim->status,
                     'amount' => $claim->amount,
                     'log'   => $claim->log,
@@ -554,6 +558,10 @@ class Loan
         return $data['recent_claims'];
     }
 
+    /**
+     * @param $loan_id
+     * @return array|mixed
+     */
     private function getRecentRepayments($loan_id)
     {
         $data['recent_repayments'] =[];
@@ -981,7 +989,7 @@ class Loan
     {
         $running_loans = $this->getRunningLoan();
         $apply_loan_list = Statics::loanList();
-        $apply_statuses = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::CLOSED];
+        $apply_statuses = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::DECLINED, LoanStatuses::CLOSED];
         foreach ($running_loans as $running_loan){
             if(!in_array($running_loan['data']['status'], $apply_statuses)){
                 foreach ($apply_loan_list as $key => $loan){

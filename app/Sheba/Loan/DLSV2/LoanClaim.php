@@ -85,11 +85,11 @@ class LoanClaim
      */
     private function checkAndDeductAnnualFee($claim)
     {
-        $last_annual_payment_date = $claim->loan->annual_fee_payment_at;
+        $last_annual_payment_date = $claim->loan->last_annual_fee_payment_at;
         if(empty($last_annual_payment_date) || Carbon::parse(Carbon::now())->diffInDays($last_annual_payment_date) > 365)
         {
             (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(Statics::getMicroLoanAnnualFee())->storeCreditPaymentEntryForAnnualFee();
-            $claim->loan->loan_annual_fee_payment_at = Carbon::now()->addDays(365);
+            $claim->loan->last_annual_fee_payment_at = Carbon::now()->addDays(365);
             return $claim->loan->update();
         }
     }
@@ -97,7 +97,7 @@ class LoanClaim
     /**
      * @param $claim
      */
-    private function deductClaimApprovalFee($claim)
+    private function deductClaimApprovalFee()
     {
         (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(Statics::getClaimTransactionFee())->storeCreditPaymentEntryForClaimTransactionFee();
     }

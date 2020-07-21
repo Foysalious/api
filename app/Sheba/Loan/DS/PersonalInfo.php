@@ -62,7 +62,7 @@ class PersonalInfo implements Arrayable
      * @throws EmailUsed
      * @throws ReflectionException
      */
-    public function update(Request $request)
+    public function update(Request $request, $loan_type = null)
     {
         if ($request->has('email'))
             $this->validateEmail($request->email);
@@ -88,6 +88,12 @@ class PersonalInfo implements Arrayable
             'spouse_name' => $request->spouse_name,
             'mother_name' => $request->mother_name,
         ];
+        if ( $loan_type ===  LoanTypes::MICRO) {
+            $profile_data = array_except($profile_data, ['gender', 'birth_place', 'occupation', 'email', 'nid_issue_date',
+                'monthly_living_cost', 'total_asset_amount', 'monthly_loan_installment_amount']);
+            $basic_data = array_except($basic_data, ['permanent_address', 'other_id', 'other_id_issue_date']);
+            $resource_data = array_except($resource_data, ['spouse_name']);
+        }
         $this->profile->update($this->withBothModificationFields($profile_data));
         $this->resource->update($this->withBothModificationFields($resource_data));
         $this->basic_information->update($this->withBothModificationFields($basic_data));
@@ -111,9 +117,9 @@ class PersonalInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    public function completion()
+    public function completion($loan_type = null)
     {
-        $data = $this->toArray();
+        $data = $this->toArray($loan_type);
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
@@ -127,9 +133,9 @@ class PersonalInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    public function toArray()
+    public function toArray($loan_type = null)
     {
-        return $this->loanDetails ? $this->dataFromLoanRequest() : $this->dataFromProfile();
+        return $this->loanDetails ? $this->dataFromLoanRequest() : $this->dataFromProfile($loan_type);
     }
 
     /**
@@ -199,35 +205,43 @@ class PersonalInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    private function dataFromProfile()
+    private function dataFromProfile($loan_type)
     {
         $profile           = $this->profile;
         $permanent_address = (new PermanentAddress($this->basic_information))->toArray();
         $present_address   = (new PresentAddress($this->basic_information))->toArray();
-        return [
+        $data = [
             'name'                    => $profile->name,
             'mobile'                  => $profile->mobile,
+            'birthday'                => $profile->dob,
+            'nid_no'                  => $profile->nid_no,
+            'father_name'             => $this->resource->father_name? $this->resource->father_name: null,
+            'mother_name'             => $this->resource->mother_name,
+            'present_address'         => $present_address,
+        ];
+
+        if(LoanTypes::MICRO === $loan_type) {
+            return $data;
+        }
+        $otherData = [
             'gender'                  => $profile->gender,
             'email'                   => $profile->email,
             'genders'                 => constants('GENDER'),
             'picture'                 => $profile->pro_pic,
-            'birthday'                => $profile->dob,
-            'present_address'         => $present_address,
             'permanent_address'       => $permanent_address,
             'is_same_address'         => self::isSameAddress($present_address, $permanent_address),
-            'father_name'             => $this->resource->father_name,
             'spouse_name'             => $this->resource->spouse_name,
-            'mother_name'             => $this->resource->mother_name,
             'birth_place'             => $profile->birth_place,
             'occupation_lists'        => constants('SUGGESTED_OCCUPATION'),
             'occupation'              => $profile->occupation,
             'expenses'                => (new Expenses($profile->toArray()))->toArray(),
-            'nid_no'                  => $profile->nid_no,
             'nid_issue_date'          => $profile->nid_issue_date,
             'other_id'                => $this->basic_information->other_id,
             'other_id_issue_date'     => $this->basic_information->other_id_issue_date,
             'utility_bill_attachment' => $profile->utility_bill_attachment
         ];
+
+        return array_merge($data,$otherData);
     }
 
     public static function isSameAddress($present, $permanent)
