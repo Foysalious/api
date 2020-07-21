@@ -176,29 +176,29 @@ class Documents implements Arrayable
     {
         $data = [
             'picture'           => $this->profile->pro_pic,
-
+            'nid_image_front'   => $this->profile->nid_image_front,
+            'nid_image_back'    => $this->profile->nid_image_back,
             'business_document' => [
-                'tin_certificate'          => $this->profile->tin_certificate,
                 'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
+                'tin_certificate'          => $this->profile->tin_certificate,
                 'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
             ],
-            'grantor_document'  => [
-                'picture'         => !empty($this->granter) ? $this->granter->pro_pic : null,
-                'nid_front_image' => !empty($this->granter) ? $this->granter->nid_image_front : null,
-                'nid_back_image'  => !empty($this->granter) ? $this->granter->nid_image_back : null,
-            ]
         ];
         if(LoanTypes::MICRO === $loan_type) {
+            $data['business_document'] = array_except($data['business_document'], ['tin_certificate', 'statement']);
             return $data;
         }
         $otherDoc = [
             'is_verified'       => $this->resource->is_verified,
-            'nid_image_front'   => $this->profile->nid_image_front,
-            'nid_image_back'    => $this->profile->nid_image_back,
+            'grantor_document'  => [
+                'picture'         => !empty($this->granter) ? $this->granter->pro_pic : null,
+                'nid_front_image' => !empty($this->granter) ? $this->granter->nid_image_front : null,
+                'nid_back_image'  => !empty($this->granter) ? $this->granter->nid_image_back : null,
+            ],
             'nominee_document'  => [
-            'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
-            'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
-            'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
+                'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
+                'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
+                'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
             ],
         ];
         return array_merge($data,$otherDoc);
