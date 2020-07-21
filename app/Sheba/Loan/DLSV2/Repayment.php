@@ -8,11 +8,13 @@ use Sheba\ModificationFields;
 class Repayment
 {
     use ModificationFields;
+
     private $loanId;
     private $repayment;
     private $claimId;
     private $amount;
     private $repaymentRepo;
+    private $defaulterDuration;
 
     public function __construct()
     {
@@ -44,7 +46,7 @@ class Repayment
      */
     public function setAmount($amount)
     {
-        $this->amount= $amount;
+        $this->amount = $amount;
         return $this;
     }
 
@@ -71,6 +73,12 @@ class Repayment
 
     }
 
+    public function setDefaulterDuration($defaulter_duration)
+    {
+        $this->defaulterDuration = $defaulter_duration;
+        return $this;
+    }
+
     /**
      * @return bool
      */
@@ -82,11 +90,57 @@ class Repayment
             'credit' => $this->amount,
             'debit' => 0,
             'type' => '',
-            'log' => 'amount transferred to robi loan wallet',
-            'defaulter_date' => Carbon::now()->addDays(30)
+            'log' => 'লোন বাবদ ক্রেডিট লিমিট থেকে গ্রহন করা হয়েছে'
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
         return $this->repayment->save();
+    }
+
+    public function storeCreditPaymentEntryForAnnualFee()
+    {
+        $data = [
+            'loan_id' => $this->loanId,
+            'loan_claim_request_id' => $this->claimId,
+            'credit' => $this->amount,
+            'debit' => 0,
+            'type' => '',
+            'log' => 'বার্ষিক ফি বাবদ চার্জ করা হয়েছে',
+        ];
+        $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
+        return $this->repayment->save();
+    }
+
+    public function storeCreditPaymentEntryForClaimTransactionFee()
+    {
+        $data = [
+            'loan_id' => $this->loanId,
+            'loan_claim_request_id' => $this->claimId,
+            'credit' => $this->amount,
+            'debit' => 0,
+            'type' => '',
+            'log' => 'দাবির ফি বাবদ চার্জ করা হয়েছে',
+        ];
+        $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
+        return $this->repayment->save();
+    }
+
+
+    public function getByYearAndMonth($loan_id, $year, $month)
+    {
+        return (new RepaymentRepo(new RepaymentModel()))->getByYearAndMonth($loan_id,$year,$month);
+    }
+
+
+    public function getAll($loan_id)
+    {
+        return (new RepaymentRepo(new RepaymentModel()))->getByLoanID($loan_id);
+
+    }
+
+
+    public function getRecent($loan_id)
+    {
+        return (new RepaymentRepo(new RepaymentModel()))->getRecent($loan_id);
     }
 
 
