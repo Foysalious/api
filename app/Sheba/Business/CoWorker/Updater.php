@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use App\Models\Business;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -82,6 +83,9 @@ class Updater
     /** @var BusinessRoleRepositoryInterface $businessRoleRepository */
     private $businessRoleRepository;
     private $mobile;
+    private $email;
+    /** @var Business $business */
+    private $business;
 
     /**
      * Updater constructor.
@@ -228,12 +232,12 @@ class Updater
 
     private function getBusinessRole()
     {
-        /*$business_role = $this->businessRoleRepository
+        $business_role = $this->businessRoleRepository
             ->whereLike('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
 
-        if ($business_role) return $business_role;*/
+        if ($business_role) return $business_role;
 
         return $this->businessRoleCreate();
     }
@@ -254,22 +258,10 @@ class Updater
                 $profile_pic_name = $this->isFile($profile_image) ? $profile_image->getClientOriginalName() : array_last(explode('/', $profile_image));
                 $profile_pic = $this->isFile($profile_image) ? $this->getPicture($this->profile, $profile_image) : $profile_image;
             }
-            if ($this->basicRequest->getEmail() == 'null') {
-                $profile_data['email'] = $this->basicRequest->getEmail();
-            } else {
-                $profile_data['email'] = $this->basicRequest->getEmail();
-            }
+            $profile_data['email'] = ($this->basicRequest->getEmail() == 'null') ? null : $this->basicRequest->getEmail();
+            $profile_data['name'] = ($this->basicRequest->getFirstName() == 'null') ? null : $this->basicRequest->getFirstName();
+            $profile_data['pro_pic'] = ($profile_image == 'null') ? null : $profile_pic;
 
-            if ($this->basicRequest->getFirstName() == 'null') {
-                $profile_data['name'] = null;
-            } else {
-                $profile_data['name'] = $this->basicRequest->getFirstName();
-            }
-            if ($profile_image == 'null') {
-                $profile_data['pro_pic'] = null;
-            } else {
-                $profile_data['pro_pic'] = $profile_pic;
-            }
             $this->profileRepository->update($this->profile, $profile_data);
 
             $this->businessRole = $this->getBusinessRole();
@@ -277,9 +269,7 @@ class Updater
                 'business_role_id' => $this->businessRole->id,
                 'manager_id' => $this->basicRequest->getManagerEmployee(),
             ];
-            $this->businessMember = $this->businessMemberUpdater
-                ->setBusinessMember($this->businessMember)
-                ->update($business_member_data);
+            $this->businessMember = $this->businessMemberUpdater->setBusinessMember($this->businessMember)->update($business_member_data);
 
             DB::commit();
             return [$this->businessMember, $profile_pic_name, $profile_pic];
@@ -339,6 +329,7 @@ class Updater
         DB::beginTransaction();
         try {
             $this->getProfile();
+
             $nid_image_front_name = $nid_image_front = $nid_image_back_name = $nid_image_back = null;
             $nid_front = $this->personalRequest->getNidFront();
             $nid_back = $this->personalRequest->getNidBack();
@@ -352,41 +343,13 @@ class Updater
             }
 
             $profile_data = [];
-            if ($this->personalRequest->getPhone() == 'null') {
-                $profile_data['mobile'] = null;
-            } else {
-                $profile_data['mobile'] = $this->personalRequest->getPhone();
-            }
-            if ($this->personalRequest->getAddress() == 'null') {
-                $profile_data['address'] = null;
-            } else {
-                $profile_data['address'] = $this->personalRequest->getAddress();
-            }
-            if ($this->personalRequest->getNationality() == 'null') {
-                $profile_data['nationality'] = null;
-            } else {
-                $profile_data['nationality'] = $this->personalRequest->getNationality();
-            }
-            if ($this->personalRequest->getNidNumber() == 'null') {
-                $profile_data['nid_no'] = null;
-            } else {
-                $profile_data['nid_no'] = $this->personalRequest->getNidNumber();
-            }
-            if ($nid_front == 'null') {
-                $profile_data['nid_image_front'] = null;
-            } else {
-                $profile_data['nid_image_front'] = $nid_image_front;
-            }
-            if ($nid_back == 'null') {
-                $profile_data['nid_image_back'] = null;
-            } else {
-                $profile_data['nid_image_back'] = $nid_image_back;
-            }
-            if ($this->personalRequest->getDateOfBirth() == 'null') {
-                $profile_data['dob'] = null;
-            } else {
-                $profile_data['dob'] = $this->personalRequest->getDateOfBirth();
-            }
+            $profile_data['mobile'] = ($this->personalRequest->getPhone() == 'null')  ? null : $this->personalRequest->getPhone();
+            $profile_data['address'] = ($this->personalRequest->getAddress() == 'null') ? null: $this->personalRequest->getAddress();
+            $profile_data['nationality'] = ($this->personalRequest->getNationality() == 'null') ? null : $this->personalRequest->getNationality();
+            $profile_data['nid_no'] = ($this->personalRequest->getNidNumber() == 'null') ? null : $this->personalRequest->getNidNumber();
+            $profile_data['nid_image_front'] = ($nid_front == 'null') ? null : $nid_image_front;
+            $profile_data['nid_image_back'] = ($nid_back == 'null') ? null : $nid_image_back;
+            $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
             DB::commit();
@@ -568,6 +531,42 @@ class Updater
         if ($profile->id != $this->member->profile->id)
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
 
+        return $this;
+    }
+
+    public function setEmail($email)
+    {
+        $this->email = $email;
+        $this->checkEmailUsedWithAnotherProfile();
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkEmailUsedWithAnotherProfile()
+    {
+        $profile = $this->profileRepository->checkExistingEmail($this->email);
+        if (!$profile) return $this;
+        if (!$profile->member) return $this;
+        if ($profile->member->id == $this->member->id) return $this;
+        if ($profile->member->businesses()->where('businesses.id', $this->business->id)->count() > 0) {
+            $this->setError(409, "This person is already added");
+        }
+        if ($profile->member->businesses()->where('businesses.id', '<>', $this->business->id)->count() > 0) {
+            $this->setError(422, "This person is already added with another business");
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param Business $business
+     * @return $this
+     */
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
         return $this;
     }
 }
