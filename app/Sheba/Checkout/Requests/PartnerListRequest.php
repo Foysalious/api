@@ -1,7 +1,9 @@
 <?php namespace Sheba\Checkout\Requests;
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Service;
 use Dingo\Api\Routing\Helpers;
@@ -131,7 +133,6 @@ class PartnerListRequest
         return $service_ids->unique()->toArray();
     }
 
-
     private function setPortalName()
     {
         $this->portalName = $this->request->header('portal-name');
@@ -228,9 +229,21 @@ class PartnerListRequest
 
     public function getLocationId()
     {
-        if($this->location) return $this->location;
+        if ($this->location) return $this->location;
 
         $hyper_local = HyperLocal::insidePolygon($this->lat, $this->lng)->first();
+        if (!$hyper_local)
+            throw new HyperLocationNotFoundException('Your are out of service area.');
+
         return $hyper_local->location_id;
+    }
+
+    /**
+     * @return Location
+     * @throws HyperLocationNotFoundException
+     */
+    public function getLocation()
+    {
+        return Location::find($this->getLocationId());
     }
 }

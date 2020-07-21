@@ -10,7 +10,7 @@ class PosOrderPaymentTransformer extends TransformerAbstract
         return [
             'amount' => $payment->amount,
             'transaction_type' => $payment->transaction_type,
-            'method' => $payment->method,
+            'method' => empty($payment->emi_month) ? $payment->method : 'emi',
             'date' => $payment->created_at->format('Y-m-d h:i A')
         ];
     }

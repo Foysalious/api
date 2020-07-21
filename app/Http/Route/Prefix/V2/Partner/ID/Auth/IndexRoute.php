@@ -1,15 +1,17 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
+use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
+
 class IndexRoute
 {
     public function set($api)
     {
-
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
+            $api->post('help', 'HelpController@create');
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
@@ -123,6 +125,7 @@ class IndexRoute
                         $api->delete('/','Pos\OrderController@delete');
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
+                        $api->post('/tag-customer', 'Pos\OrderController@tagCustomer');
                         $api->get('/send-email', 'Pos\OrderController@sendEmail');
                         $api->get('/download-invoice', 'Pos\OrderController@downloadInvoice');
                         $api->post('store-note', 'Pos\OrderController@storeNote');
@@ -208,10 +211,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'jobs'], function ($api) {
-                $api->group([
-                    'prefix'     => '{job}',
-                    'middleware' => ['partner_job.auth']
-                ], function ($api) {
+                $api->group(['prefix'     => '{job}', 'middleware' => ['partner_job.auth']], function ($api) {
                     $api->put('/', 'PartnerJobController@update');
                     $api->group(['prefix' => 'materials'], function ($api) {
                         $api->get('/', 'PartnerJobController@getMaterials');
@@ -288,9 +288,17 @@ class IndexRoute
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+            $api->group(['prefix' => 'kyc'], function ($api) {
+                $api->get('check-verification', 'Partner\ProfileController@checkVerification');
+                $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
+                $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
+                $api->get('check-first-time-user', 'Partner\ProfileController@checkFirstTimeUser');
+
+            });
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
+            (new ReferralRoute())->individuals($api);
         });
     }
 }

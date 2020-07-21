@@ -5,6 +5,8 @@ use League\Fractal\TransformerAbstract;
 
 class BusinessEmployeesTransformer extends TransformerAbstract
 {
+    CONST NO_DEPARTMENT_VALUE = 'OTHER';
+
     /**
      * @param $members
      * @return array
@@ -15,7 +17,7 @@ class BusinessEmployeesTransformer extends TransformerAbstract
         $departments_name = [];
         $members->each(function ($member) use (&$employee_based_on_departments, &$departments_name) {
             $profile = $member->profile;
-            $department_name = $this->isMemberRolePresent($member) ? $member->businessMember->role->businessDepartment->name : 'no_department';
+            $department_name = $this->isMemberRolePresent($member) ? $member->businessMember->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
 
             array_push($departments_name, $department_name);
             $employee_based_on_departments[$department_name][] = [
@@ -26,7 +28,18 @@ class BusinessEmployeesTransformer extends TransformerAbstract
             ];
         });
 
-        return ['employees' => $employee_based_on_departments, 'departments' => array_values(array_unique($departments_name))];
+        $departments = array_values(array_unique($departments_name));
+        
+        if (in_array(self::NO_DEPARTMENT_VALUE, $departments_name)) {
+            $v = $employee_based_on_departments[self::NO_DEPARTMENT_VALUE];
+            unset($employee_based_on_departments[self::NO_DEPARTMENT_VALUE]);
+            $employee_based_on_departments[self::NO_DEPARTMENT_VALUE] = $v;
+
+            unset($departments[array_search(self::NO_DEPARTMENT_VALUE, $departments)]);
+            array_push($departments, self::NO_DEPARTMENT_VALUE);
+        }
+
+        return ['employees' => $employee_based_on_departments, 'departments' => array_values($departments)];
     }
 
     /**

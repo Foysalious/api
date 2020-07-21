@@ -1,24 +1,19 @@
 <?php namespace Sheba\Logistics\Listeners;
 
-
 use Sheba\Dal\JobService\Events\JobServiceSaved;
 use Sheba\Dal\JobService\JobService;
-use Sheba\Logistics\UpdatePriceHandler;
-use Sheba\Report\Listeners\BaseSavedListener;
+use Sheba\Logistics\Exceptions\LogisticServerError;
 
-class JobServiceListener extends BaseSavedListener
+class JobServiceListener extends BaseListener
 {
-    private $priceHandler;
-
-    public function __construct(UpdatePriceHandler $priceHandler)
-    {
-        $this->priceHandler = $priceHandler;
-    }
-
+    /**
+     * @param JobServiceSaved $event
+     * @throws LogisticServerError
+     */
     public function handle(JobServiceSaved $event)
     {
         /** @var JobService $job_service */
         $job_service = $event->model;
-        $this->priceHandler->setPartnerOrder($job_service->job->partnerOrder)->update();
+        $this->update($job_service->job->partnerOrder);
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\InfoCall;
 use App\Models\Job;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Location;
 use App\Models\Order;
@@ -205,7 +206,9 @@ class Checkout
 
     private function buildDeliveryCharge()
     {
-        return (new DeliveryCharge())->setCategory($this->category)->setCategoryPartnerPivot($this->partner->categories->first()->pivot);
+        return (new DeliveryCharge())->setCategory($this->category)
+            ->setLocation($this->partnerListRequest->getLocation())
+            ->setCategoryPartnerPivot($this->partner->categories->first()->pivot);
     }
 
     private function createCarRentalDetail($service)
@@ -297,6 +300,7 @@ class Checkout
     private function createJob(PartnerOrder $partner_order, $data)
     {
         $preferred_time = new PreferredTime($data['time']);
+        $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner($this->partner);
         $job_data = [
             'category_id' => $data['category_id'],
             'partner_order_id' => $partner_order->id,
@@ -307,8 +311,8 @@ class Checkout
             'crm_id' => $data['crm_id'],
             'job_additional_info' => $data['additional_information'],
             'category_answers' => $data['category_answers'],
-            'commission_rate' => $this->category->commission($this->partner->id),
-            'material_commission_rate' => config('sheba.material_commission_rate'),
+            'commission_rate' => $commissions->getServiceCommission(),
+            'material_commission_rate' => $commissions->getMaterialCommission(),
             'discount' => isset($data['discount']) ? $data['discount'] : 0,
             'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
             'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,

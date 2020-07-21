@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Sheba\Checkout\CommissionCalculator;
 
 class PartnerService extends Model
 {
@@ -25,7 +26,8 @@ class PartnerService extends Model
 
     public function commission()
     {
-        return $this->partner->categories()->find($this->service->category->id)->pivot->commission;
+        $commissions = (new CommissionCalculator())->setCategory($this->service->category)->setPartner($this->partner);
+        return $commissions->getServiceCommission();
     }
 
     public function discounts()

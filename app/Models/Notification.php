@@ -38,10 +38,13 @@ class Notification extends Model
         $type = strtolower($this->event_type);
         if (stripos($type, 'support')) return 'support';
         if (stripos($type, 'announcement')) return 'announcement';
+        if (stripos($type, 'job')) return 'job';
         elseif (stripos($type, 'vehicle')) return 'vehicle';
         elseif (stripos($type, 'driver')) return 'driver';
         elseif (stripos($type, 'procurement')) return 'procurement';
         elseif (stripos($type, 'bid')) return 'bid';
         elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
+        elseif (stripos($type, 'leave')) return 'leave';
+        elseif (stripos($type, 'approvalRequest')) return 'approval_request';
     }
 }

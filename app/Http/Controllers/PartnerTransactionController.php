@@ -31,12 +31,6 @@ class PartnerTransactionController extends Controller
                 $bonuses->push($this->formatBonusTransaction($bonus_log));
             }
             $transactions = collect(array_merge($transactions->toArray(), $bonuses->toArray()));
-            if ($request->has('month') && $request->has('year')) {
-                $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
-                    $created_at = Carbon::parse($transaction['created_at']);
-                    return ($created_at->month == $request->month && $created_at->year == $request->year);
-                });
-            }
             $balance = 0;
             $transactions = $transactions->sortBy('created_at')->map(function ($transaction, $key) use ($partner, &$balance) {
                 $transaction['amount'] = (double)$transaction['amount'];
@@ -48,6 +42,13 @@ class PartnerTransactionController extends Controller
                 $transaction['balance'] = round($transaction['balance'], 2);
                 return $transaction;
             })->sortByDesc('created_at');
+            if ($request->has('month') && $request->has('year')) {
+                $transactions = $transactions->filter(function ($transaction, $key) use ($request) {
+                    $created_at = Carbon::parse($transaction['created_at']);
+                    return ($created_at->month == $request->month && $created_at->year == $request->year);
+                });
+            }
+
             $final = array_slice($transactions->values()->all(), $offset, $limit);
             return count($final) > 0 ? api_response($request, $final, 200, [
                 'transactions' => $final,
@@ -76,7 +77,13 @@ class PartnerTransactionController extends Controller
         ]);
     }
 
-    public function payToSheba(Request $request)
+    /**
+     * @param Request $request
+     * @param Registrar $registrar
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function payToSheba(Request $request, Registrar $registrar)
     {
         try {
             $this->validate($request, [
@@ -84,7 +91,7 @@ class PartnerTransactionController extends Controller
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
 
-            $transaction = (new Registrar())->register($request->partner, $request->type, $request->transaction_id);
+            $transaction = $registrar->register($request->partner, $request->type, $request->transaction_id);
             $request->merge(['transaction_amount' => $transaction['amount'], 'transaction_account' => $transaction['from_account']]);
 
             if ($res = $this->reconcile($request)) {

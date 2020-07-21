@@ -17,8 +17,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\Rating\Rule',
                         'parameters' => [
                             'rate' => [
-                                'type'  => 'number',
-                                'min'   => 0
+                                'type' => 'number',
+                                'min' => 0
                             ]
                         ]
                     ],
@@ -28,8 +28,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Rule',
                         'parameters' => [
                             'amount' => [
-                                'type'  => 'number',
-                                'min'   => 0,
+                                'type' => 'number',
+                                'min' => 0,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\WalletRecharge\Parameter\Amount'
                             ]
                         ]
@@ -40,8 +40,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Rule',
                         'parameters' => [
                             'amount' => [
-                                'type'  => 'number',
-                                'min'   => 0,
+                                'type' => 'number',
+                                'min' => 0,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\Amount'
                             ],
                             'portals' => [
@@ -54,8 +54,8 @@ class EventDataConverter
                                 'type' => 'select',
                                 'possible_value' => [
                                     'Not_Responded' => 'Not Responded',
-                                    'Schedule_Due'  => 'Schedule Due',
-                                    'Serve_Due'     => 'Serve Due'
+                                    'Schedule_Due' => 'Schedule Due',
+                                    'Serve_Due' => 'Serve Due'
                                 ],
                                 'is_multi_selectable' => 1,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\OrderServed\Parameter\ExcludedStatus'
@@ -124,8 +124,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Rule',
                         'parameters' => [
                             'count' => [
-                                'type'  => 'number',
-                                'min'   => 0,
+                                'type' => 'number',
+                                'min' => 0,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\DailyUsage\Parameter\Count'
                             ],
                             'created_from' => [
@@ -143,8 +143,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Rule',
                         'parameters' => [
                             'amount' => [
-                                'type'  => 'number',
-                                'min'   => 0,
+                                'type' => 'number',
+                                'min' => 0,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PaymentLinkUsage\Parameter\Amount'
                             ],
                         ]
@@ -155,8 +155,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Rule',
                         'parameters' => [
                             'amount' => [
-                                'type'  => 'number',
-                                'min'   => 0,
+                                'type' => 'number',
+                                'min' => 0,
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\Amount'
                             ],
                             'created_from' => [
@@ -175,8 +175,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Partner\Campaign\OrderServed\Rule',
                         'parameters' => [
                             'target' => [
-                                'type'  => 'number',
-                                'min'   => 0
+                                'type' => 'number',
+                                'min' => 0
                             ],
                             'portals' => [
                                 'type' => 'select',
@@ -187,8 +187,8 @@ class EventDataConverter
                                 'type' => 'select',
                                 'possible_value' => [
                                     'Not_Responded' => 'Not Responded',
-                                    'Schedule_Due'  => 'Schedule Due',
-                                    'Serve_Due'     => 'Serve Due'
+                                    'Schedule_Due' => 'Schedule Due',
+                                    'Serve_Due' => 'Serve Due'
                                 ],
                                 'is_multi_selectable' => 1
                             ]
@@ -197,7 +197,7 @@ class EventDataConverter
                 ]
             ],
             'customer' => [
-                'action'    => [
+                'action' => [
                     'wallet_cashback' => [
                         'name' => 'Wallet Cashback',
                         'event_class' => 'Sheba\Reward\Event\Customer\Action\WalletCashback\Event',
@@ -210,8 +210,8 @@ class EventDataConverter
                         'rule_class' => 'Sheba\Reward\Event\Customer\Action\OrderServedAndPaid\Rule',
                         'parameters' => [
                             'amount' => [
-                                'type'  => 'number',
-                                'min'   => 0
+                                'type' => 'number',
+                                'min' => 0
                             ],
                             'sales_channels' => [
                                 'type' => 'select',
@@ -226,7 +226,65 @@ class EventDataConverter
                         ]
                     ]
                 ],
-                'campaign'  => []
+                'campaign' => []
+            ],
+            'resource' => [
+                'campaign' =>
+                    [
+                        'order_serve' => [
+                            'name' => 'Order Serve',
+                            'event_class' => 'Sheba\Reward\Event\Resource\Campaign\OrderServed\Event',
+                            'rule_class' => 'Sheba\Reward\Event\Resource\Campaign\OrderServed\Rule',
+                            'parameters' => [
+                                'target' => [
+                                    'type' => 'number',
+                                    'min' => 0
+                                ],
+                                'portals' => [
+                                    'type' => 'select',
+                                    'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                    'is_multi_selectable' => 1
+                                ],
+                                'excluded_status' => [
+                                    'type' => 'select',
+                                    'possible_value' => [
+                                        'Not_Responded' => 'Not Responded',
+                                        'Schedule_Due' => 'Schedule Due',
+                                        'Serve_Due' => 'Serve Due'
+                                    ],
+                                    'is_multi_selectable' => 1
+                                ],
+                                'rating' => [
+                                    'type' => 'number',
+                                    'min' => 1
+                                ],
+                                'five_star_rating' => [
+                                    'type' => 'select',
+                                    'possible_value' => [
+                                        'with_compliment' => 'with_complement',
+                                        'without_compliment' => 'without_complement',
+                                    ],
+                                    'is_multi_selectable' => 0
+                                ],
+                                'complain_ratio' => [
+                                    'type' => 'number',
+                                    'min' => 0
+                                ],
+                                'serve_ratio_from_spro' => [
+                                    'type' => 'number',
+                                    'min' => 0
+                                ],
+                                'rating_point_ratio' => [
+                                    'type' => 'number',
+                                    'min' => 1
+                                ],
+                                'gmv' => [
+                                    'type' => 'number',
+                                    'min' => 0
+                                ],
+                            ]
+                        ]
+                    ]
             ]
         ]);
     }

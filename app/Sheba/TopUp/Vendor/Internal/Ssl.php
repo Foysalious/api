@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Internal;
+<?php namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpOrder;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -18,7 +16,7 @@ trait Ssl
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \SoapFault
+     * @throws \Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {

@@ -1,5 +1,6 @@
 <?php namespace App\Http\Route\Prefix\V2;
 
+use App\Http\Route\Prefix\V2\Resource\ResourceRoute;
 use App\Http\Route\Prefix\V2\Partner\PartnerRoute;
 
 class Route
@@ -14,6 +15,7 @@ class Route
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
             (new HelpRoute())->set($api);
+            (new ResourceRoute())->set($api);
             $api->post('training-status-update', 'ResourceController@trainingStatusUpdate');
             $api->post('profile-check', 'Profile\ProfileController@checkProfile');
             $api->post('newsletter', 'NewsletterController@create');
@@ -57,6 +59,10 @@ class Route
             $api->group(['prefix' => 'ssl'], function ($api) {
                 $api->post('validate', 'SslController@validatePayment');
             });
+            $api->group(['prefix' => 'ok-wallet/payments'], function ($api) {
+                $api->post('success', 'OkWalletController@validatePayment');
+                $api->post('fail', 'OkWalletController@validatePayment');
+            });
             $api->group(['prefix' => 'bkash'], function ($api) {
                 $api->post('validate', 'BkashController@validatePayment');
                 $api->group(['prefix' => 'tokenized'], function ($api) {
@@ -89,6 +95,11 @@ class Route
                     $api->post('success', 'CblController@validateCblPGR');
                     $api->post('fail', 'CblController@validateCblPGR');
                     $api->post('cancel', 'CblController@validateCblPGR');
+                });
+                $api->group(['prefix' => 'port-wallet'], function ($api) {
+                    $api->post('ipn', 'PortWalletController@ipn');
+                    $api->get('redirect-without-validate', 'PortWalletController@redirectWithoutValidation');
+                    $api->get('validate-on-redirect', 'PortWalletController@validateOnRedirect');
                 });
             });
             $api->group(['prefix' => 'login'], function ($api) {
@@ -174,10 +185,13 @@ class Route
             $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
             $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
+            $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
             $api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
+            $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
+
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');
@@ -185,6 +199,8 @@ class Route
                 (new MovieTicketRoute())->set($api);
             });
             $api->get('refresh-token', 'ProfileController@refresh');
+            $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
+            $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
         });
         return $api;
     }

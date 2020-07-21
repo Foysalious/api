@@ -20,12 +20,16 @@ use Illuminate\Http\Request;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
+use Sheba\Resource\Jobs\Collection\CollectMoney;
+use Sheba\Services\FormatServices;
+use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
 
 class PartnerOrderController extends Controller
 {
     use ModificationFields;
+
     private $partnerOrderRepository;
     private $partnerJobRepository;
 
@@ -179,13 +183,14 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function getBillsV2($partner, Request $request)
+    public function getBillsV2($partner, Request $request, FormatServices $formatServices)
     {
         try {
             $partner_order = $request->partner_order;
             $partner_order->calculate(true);
             foreach ($partner_order->jobs as $job) {
                 $services = [];
+                $service_list = [];
                 if (count($job->jobServices) == 0) {
                     array_push($services, [
                         'name' => $job->service_name,
@@ -193,7 +198,15 @@ class PartnerOrderController extends Controller
                         'unit' => $job->service->unit,
                         'price' => (double)$job->servicePrice
                     ]);
+                    array_push($service_list, [
+                        'name' => $job->service_name,
+                        'service_group' => [],
+                        'unit' => $job->service->unit,
+                        'quantity' => (double)$job->service_quantity,
+                        'price' => (double)$job->servicePrice
+                    ]);
                 } else {
+                    $service_list = $formatServices->setJob($job)->formatServices();
                     foreach ($job->jobServices as $job_service) {
                         array_push($services, [
                             'name' => $job_service->service ? $job_service->service->name : null,
@@ -217,6 +230,7 @@ class PartnerOrderController extends Controller
                 'sheba_commission' => ramp((double)$partner_order->profit),
                 'partner_commission' => (double)$partner_order->totalCost,
                 'service' => $services,
+                'service_list' => $service_list,
                 'is_paid' => (double)$partner_order->due == 0,
                 'is_due' => (double)$partner_order->due > 0,
                 'is_closed' => $partner_order->closed_at != null,
@@ -362,25 +376,14 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function collectMoney($partner, Request $request)
+    public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, ['amount' => 'required|numeric']);
-            $partner_order = $request->partner_order;
-            $request->merge(['resource' => $request->manager_resource]);
-            $response = (new ResourceJobRepository())->collectMoney($partner_order, $request);
-            if ($response) {
-                if ($response->code == 200) {
-                    return api_response($request, $response, 200, ['message' => $request->amount . 'Tk have been successfully collected.']);
-                } else {
-                    return api_response($request, $response, $response->code);
-                }
-            }
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['amount' => 'required|numeric']);
+        $user_agent_information->setRequest($request);
+        $collect_money->setResource($request->manager_resource)->setPartnerOrder($request->partner_order)->setUserAgentInformation($user_agent_information)
+            ->setCollectionAmount($request->amount);
+        $response = $collect_money->collect();
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     /**

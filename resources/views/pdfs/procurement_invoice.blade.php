@@ -1,7 +1,7 @@
 <?php
-    $formatted_type = ucwords($procurement_info['type'])
+$formatted_type = ucwords($procurement_info['type'])
 ?>
-<!DOCTYPE html>
+        <!DOCTYPE html>
 
 <html lang="en">
 <head>
@@ -9,7 +9,6 @@
     <title>{{ $formatted_type }}</title>
     <meta name="description" content="">
     <meta name="author" content="Fazal Mahmud Niloy">
-    <meta name="keyword" content="">
     <style>
         @media print {
             table {
@@ -21,10 +20,6 @@
                 page-break-inside: avoid;
                 page-break-after: auto
             }
-
-            /*td    { page-break-inside:avoid; !*page-break-after:auto*! }*/
-            /*thead { display: table-header-group}
-            tfoot { display: table-footer-group}*/
         }
 
         /*invoice page*/
@@ -35,69 +30,79 @@
             border: 0;
             width: 100%;
         }
+
         hr {
             border: solid 1px #d1d7e6;
         }
-        .invoiceInfo {
+
+        .companyInfo {
+            width: 100%;
             border: 0;
         }
+
         .addresses {
             width: 100%;
             border: 0;
-            margin-top: 50px;
+            margin: 10px 0 0 12px;
         }
+
         .addressRow {
             font-weight: bold;
             height: 36px;
             vertical-align: top;
         }
+
         .itemsTable {
             width: 100%;
             margin-top: 30px;
             border: 0;
         }
+
         .itemsSpec {
             font-weight: bold;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
             background: #f8f8fb;
         }
+
         .itemsSpecLabel {
             border-top: solid 0.5px #bac0cc;
             border-bottom: solid 0.5px #bac0cc;
         }
+
         .border-left {
             border-left: solid 0.5px #bac0cc;
         }
+
         .padding-left {
             padding-left: 15px;
         }
+
         .border-right {
             border-right: solid 0.5px #bac0cc;
         }
+
         .itemsList {
             border-top: solid 0.5px #bac0cc;
             border-bottom: solid 0.5px #bac0cc;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
         }
+
         .total {
             font-weight: bold;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+            color: #333333;
         }
-        /*invoice page end*/
 
-        ​
+        /*invoice page end*/
 
         @font-face {
             font-family: Lato;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-left {
-            text-align: left;
         }
 
         body {
@@ -111,44 +116,6 @@
             border-collapse: collapse;
         }
 
-        .table1th {
-            /*font-family: Lato;*/
-            font-weight: normal;
-            opacity: 0.8;
-            font-size: 10px;
-            text-align: left;
-        }
-
-        .tableHeadRegular {
-            opacity: 0.8;
-            font-family: Lato;
-            font-size: 10px;
-            font-weight: bold;
-            padding: 9px 20px;
-            text-align: left;
-            background-color: #fff8f8fb;
-        }
-
-        .tQuestion {
-            font-size: 10px;
-            font-weight: bold;
-            font-family: Lato;
-            opacity: 0.8;
-        }
-
-        .tAnswer {
-            font-size: 10px;
-            opacity: 0.6;
-            font-weight: normal;
-            font-family: Lato;
-            padding-top: 5px;
-        }
-
-        .pageCounter:after {
-            content: counter(page);
-        }
-
-
         @page {
             margin-top: 20px;
         }
@@ -161,19 +128,6 @@
             margin-top: 110px;
             background-color: #f8f8fb;
         }
-
-        .expense-table {
-
-        }
-
-        .expense-table__header {
-
-        }
-
-        .expense-table__header td {
-
-        }
-
 
         /* Footer */
         .footer {
@@ -199,6 +153,7 @@
             text-align: center;
             color: #000000;
         }
+
         .footerPrompt {
             opacity: 0.6;
             font-size: 10px;
@@ -206,46 +161,89 @@
             height: 20px;
         }
 
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 5px;
+            border: solid 1px rgba(0, 0, 0, 0.05);
+        }
 
-        /*.footer-row:after {*/
-        /*    content: "";*/
-        /*    display: table;*/
-        /*    clear: both;*/
-        /*}*/
+        .companyInfoName {
+            font-weight: bold;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+        }
 
-        /*.footer-row-header,*/
-        /*.footer-row-info {*/
-        /*    float: left;*/
-        /*    width: 25%;*/
-        /*    padding: 10px;*/
-        /*}*/
+        .companyInfoAddress {
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
+        }
 
-        /*.footer-row-header span {*/
-        /*    font-size: 12px;*/
-        /*    font-weight: bold;*/
-        /*    text-align: center;*/
-        /*    color: #000000;*/
-        /*}*/
+        .companyInfoWorkOrderTitle {
+            opacity: 0.6;
+            font-family: Lato;
+            font-size: 14px;
+        }
 
-        /*.footer-row-info span {*/
-        /*    font-size: 10px;*/
-        /*    text-align: center;*/
-        /*    color: #000000;*/
-        /*}*/
+        .companyInfoWorkOrderCode {
+            opacity: 0.8;
+            font-family: Lato;
+            font-size: 14px;
+            font-weight: bold;
+        }
 
+        .companyInfoBillInfo {
+            font-family: Helvetica;
+            font-size: 12px;
+            color: #646465;
+        }
 
-        ​
+        .companyInfoBillInfoDetails {
+            font-family: Helvetica;
+            font-size: 12px;
+            color: #000000;
+        }
 
-        /*new styles end*/
+        .addressesInfo {
+            width: 100%;
+            margin-top: 60px;
+            border: solid 1px #d2d8e6;
+            background-color: #f8f8fb;
+        }
+
+        .addressRowDetail {
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
+        }
+
+        .billHeader {
+            background-color: #f8f8fb;
+        }
+
+        .billHeader td {
+            border: solid 1px #d2d8e6;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .totalDetail {
+            padding-top: 4px;
+            padding-bottom: 4px;
+        }
     </style>
+    <meta name="keyword" content="">
 </head>
-
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
 
 {{--FOOTER START--}}
 <table class="footer">
     <tr>
-        <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here. </td>
+        <td colspan="2" class="footerPrompt">This is a digital version of W/O ,No signature is required here.</td>
     </tr>
     <tr>
         <td style="font-size: 10px; opacity: 0.8; font-weight: normal; width: 70px; padding-bottom: 0px">
@@ -263,130 +261,189 @@
         <td>{{ $formatted_type }}</td>
     </tr>
     <tr>
-        <td><hr></td>
+        <td>
+            <hr style="margin-top: 5px">
+        </td>
     </tr>
 </table>
 
-<table class="invoiceInfo">
-    <tr>
-        <td>{{ $formatted_type }} ID: </td>
-        <td>{{ $procurement_info['code'] }}</td>
-    </tr>
-    <tr>
-        <td>{{ $formatted_type }} Submitted Date : </td>
-        <td>{{ $procurement_info['submitted_date'] }}</td>
-    </tr>
-    @if ($procurement_info['type'] == 'bill')
-    <tr>
-        <td>{{ $formatted_type }} Payment Date : </td>
-        <td>{{ $procurement_info['payment_date'] }}</td>
-    </tr>
-    <tr>
-        <td>Payment Method : </td>
-        <td>{{ $procurement_info['payment_method'] }}</td>
-    </tr>
-    @endif
-</table>
-
-<table class="addresses">
-    <tr class="addressRow">
-        <td style="margin-bottom: 16px">To Address</td>
-        <td style="margin-bottom: 16px">For Address</td>
-    </tr>
+<table class="companyInfo">
     <tr>
         <td>
             <table style="border: 0">
                 <tr>
-                    <td>Name:</td>
-                    <td>{{ $procurement_info['to']['name'] }}</td>
-                </tr>
-                <tr>
-                    <td>Address:</td>
-                    <td>{{ $procurement_info['to']['address'] }}</td>
-                </tr>
-                <tr>
-                    <td>Mobile:</td>
-                    <td>{{ $procurement_info['to']['mobile'] }}</td>
+                    <td><img src="{{ $procurement_info['from']['logo'] }}" alt="logo" class="logo"></td>
+                    <td class="padding-left"><span
+                                class="companyInfoName">{{ $procurement_info['from']['name'] }}</span> <br>
+                        <span class="companyInfoAddress">{{ $procurement_info['from']['address'] }}</span></td>
                 </tr>
             </table>
         </td>
         <td>
-            <table style="border: 0">
+            <table style="border: 0; margin-left: auto">
                 <tr>
-                    <td>Name:</td>
-                    <td>{{ $procurement_info['from']['name'] }}</td>
+                    <td class="companyInfoWorkOrderTitle">{{ $formatted_type }} ID</td>
+                    <td class="companyInfoWorkOrderTitle">:</td>
+                    <td class="companyInfoWorkOrderCode">{{ $procurement_info['code'] }}</td>
                 </tr>
                 <tr>
-                    <td>Address:</td>
-                    <td>{{ $procurement_info['from']['address'] }}</td>
+                    <td class="companyInfoBillInfo">{{ $formatted_type }} Submitted Date</td>
+                    <td class="companyInfoBillInfo">:</td>
+                    <td class="companyInfoBillInfoDetails">{{ $procurement_info['submitted_date'] }}</td>
                 </tr>
-                <tr>
-                    <td>Mobile:</td>
-                    <td>{{ $procurement_info['from']['mobile'] }}</td>
-                </tr>
+                @if ($procurement_info['type'] == 'bill')
+                    <tr>
+                        <td class="companyInfoBillInfo">{{ $formatted_type }} Payment Date</td>
+                        <td class="companyInfoBillInfo">:</td>
+                        <td class="companyInfoBillInfoDetails">{{ $procurement_info['payment_date'] }}</td>
+                    </tr>
+                    <tr>
+                        <td class="companyInfoBillInfo">Payment Method</td>
+                        <td class="companyInfoBillInfo">:</td>
+                        <td class="companyInfoBillInfoDetails">{{ $procurement_info['payment_method'] }}</td>
+                    </tr>
+                @endif
             </table>
         </td>
     </tr>
 </table>
 
-<table class="itemsTable">
+<div class="addressesInfo">
+    <table class="addresses">
+        <tr class="addressRow">
+            <td style="margin-bottom: 16px">To Address</td>
+            <td style="margin-bottom: 16px">From Address</td>
+        </tr>
+        <tr class="addressRowDetail">
+            <td>
+                <table cellpadding="5" style="border: 0">
+                    <tr>
+                        <td>Name</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['to']['name'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Address</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['to']['address'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['to']['mobile'] }}</td>
+                    </tr>
+                </table>
+            </td>
+            <td>
+                <table cellpadding="5" style="border: 0">
+                    <tr>
+                        <td>Name</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['from']['name'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Address</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['from']['address'] }}</td>
+                    </tr>
+                    <tr>
+                        <td>Mobile</td>
+                        <td>:</td>
+                        <td>{{ $procurement_info['from']['mobile'] }}</td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<table class="itemsTable" cellpadding="10">
+    <tr class="billHeader">
+        <td class="billHeaderTD padding-left" colspan="6">BILL</td>
+    </tr>
     <tr class="itemsSpec">
-        <td class="itemsSpecLabel border-left padding-left ">Item Name</td>
-        <td class="itemsSpecLabel">Specification</td>
-        <td class="itemsSpecLabel">Unit</td>
-        <td class="itemsSpecLabel">Unit Price</td>
-        <td class="itemsSpecLabel border-right">Total Price</td>
+        <th class="itemsSpecLabel border-left padding-left">SL NO</th>
+        <th class="itemsSpecLabel border-left padding-left">Item Name/Description</th>
+        <th class="itemsSpecLabel border-left padding-left">Specification</th>
+        <th class="itemsSpecLabel border-left padding-left">Unit</th>
+        <th class="itemsSpecLabel border-left padding-left">Unit Price</th>
+        <th class="itemsSpecLabel border-left padding-left">Price</th>
     </tr>
 
-    @foreach($procurement_info['items'] as $item)
+    @foreach($procurement_info['items'] as $key => $item)
         <tr class="itemsList">
+            <td class="itemsList border-left padding-left">{{ ++$key }}</td>
             <td class="itemsList border-left padding-left">{{ $item['title'] }}</td>
-            <td class="itemsList">{{ $item['short_description'] }}</td>
-            <td class="itemsList">{{ $item['unit'] }}</td>
-            <td class="itemsList">৳ {{ $item['unit_price'] }}</td>
-            <td class="itemsList border-right">৳ {{ $item['total_price'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['short_description'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['unit'] }}</td>
+            <td class="itemsList border-left padding-left">{{ $item['unit_price'] }}</td>
+            <td class="itemsList border-left padding-left border-right">{{ $item['total_price'] }}</td>
         </tr>
     @endforeach
 
     <tr class="total">
-        <td colspan="3"></td>
-        <td>Sub total</td>
-        <td>৳ {{ $procurement_info['sub_total'] }}</td>
-    </tr>
-
-    <tr class="total">
-        <td colspan="3"></td>
-        <td>Grand Total</td>
-        <td>৳ {{ $procurement_info['grand_total'] }}</td>
+        <td colspan="4"></td>
+        <td class="padding-left" style="padding-bottom: 4px">Sub total</td>
+        <td class="padding-left" style="padding-bottom: 4px">
+            <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+            {{ $procurement_info['sub_total'] }}
+        </td>
     </tr>
 
     @if ($procurement_info['type'] == 'invoice')
-    <tr class="total">
-        <td colspan="3"></td>
-        <td>Amount to be paid</td>
-        <td>৳ {{ $procurement_info['amount_to_be_paid'] }}</td>
-    </tr>
+        <tr class="total">
+            <td colspan="4"></td>
+            <td class="padding-left totalDetail">Amount to be paid</td>
+            <td class="padding-left totalDetail">
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+                {{ $procurement_info['amount_to_be_paid'] }}
+            </td>
+        </tr>
 
-    <tr class="total">
-        <td colspan="3"></td>
-        <td>due</td>
-        <td>৳ {{ $procurement_info['due_after_amount_to_be_paid'] }}</td>
-    </tr>
+        <tr class="total">
+            <td colspan="4"></td>
+            <td class="padding-left totalDetail">due</td>
+            <td class="padding-left totalDetail">
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+                {{ $procurement_info['due_after_amount_to_be_paid'] }}
+            </td>
+        </tr>
     @endif
 
     @if ($procurement_info['type'] == 'bill')
         <tr class="total">
-            <td colspan="3"></td>
-            <td>Paid</td>
-            <td>৳ {{ $procurement_info['paid'] }}</td>
+            <td colspan="4"></td>
+            <td class="padding-left totalDetail">Paid</td>
+            <td class="padding-left totalDetail">
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+                {{ $procurement_info['paid'] }}
+            </td>
         </tr>
 
         <tr class="total">
-            <td colspan="3"></td>
-            <td>due</td>
-            <td>৳ {{ $procurement_info['due'] }}</td>
+            <td colspan="4"></td>
+            <td class="padding-left totalDetail">due</td>
+            <td class="padding-left totalDetail">
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+                {{ $procurement_info['due'] }}
+            </td>
         </tr>
     @endif
+
+    <tr>
+        <td colspan="6">
+            <hr style="margin: 2px 0 2px">
+        </td>
+    </tr>
+
+    <tr class="total">
+        <td colspan="4"></td>
+        <td class="padding-left totalDetail">Grand Total</td>
+        <td class="padding-left totalDetail">
+            <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+            {{ $procurement_info['grand_total'] }}
+        </td>
+    </tr>
 </table>
 
 <script type="text/php">
@@ -398,6 +455,7 @@
         $x = $pdf->get_width() - $fontMetrics->get_text_width($text, $font, $size) + 49;
         $pdf->page_text($x, $y, $text, $font, $size);
     }
+
 </script>
 </body>
 </html>

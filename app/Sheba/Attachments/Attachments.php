@@ -67,7 +67,7 @@ class Attachments
         $attachment = new Attachment();
         try {
             DB::transaction(function () use ($attachment, $data) {
-                $attachment->attachable_type = $this->model_name . class_basename($this->attachableModel);
+                $attachment->attachable_type = get_class($this->attachableModel);
                 $attachment->attachable_id = $this->attachableModel->id;
                 $attachment->title = $data['title'];
                 $attachment->file = $data['file'];

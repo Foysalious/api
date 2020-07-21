@@ -10,6 +10,7 @@ use Sheba\Cache\CategoryGroup\CategoryGroupCacheFactory;
 use Sheba\Cache\Location\LocationCacheFactory;
 use Sheba\Cache\CacheName as CacheName;
 use Sheba\Cache\Schema\SchemaCacheFactory;
+use Sheba\Cache\Sitemap\SitemapCacheFactory;
 
 class CacheFactoryConfigurator
 {
@@ -28,5 +29,6 @@ class CacheFactoryConfigurator
         elseif ($name == CacheName::CATEGORY_CHILDREN) return new CategoryChildrenCacheFactory();
         elseif ($name == CacheName::SECONDARY_CATEGORY_SERVICES) return new ServicesCacheFactory();
         elseif ($name == CacheName::HIGH_DEMAND_CATEGORY) return new CategoryHighDemandCacheFactory();
+        elseif ($name == CacheName::SITEMAP) return new SitemapCacheFactory();
     }
 }

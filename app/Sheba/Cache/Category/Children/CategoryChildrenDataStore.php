@@ -33,7 +33,7 @@ class CategoryChildrenDataStore implements DataStoreObject
         $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
         $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
         $category->load(['children' => function ($q) use ($best_deal_category, $location) {
-            $q->select('id', 'name', 'parent_id', 'app_thumb', 'thumb', 'app_banner', 'banner', 'short_description', 'long_description')->published()->orderBy('order')
+            $q->select('id', 'name', 'parent_id', 'app_thumb', 'thumb', 'app_banner', 'banner', 'short_description', 'long_description', 'is_vat_applicable')->published()->orderBy('order')
                 ->whereNotIn('id', $best_deal_category)->whereHas('locations', function ($q) use ($location) {
                     $q->where('locations.id', $location->id);
                 })->whereHas('services', function ($q) use ($location) {

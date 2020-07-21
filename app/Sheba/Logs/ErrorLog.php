@@ -1,5 +1,6 @@
 <?php namespace Sheba\Logs;
 
+use App\Sheba\Release\Release;
 use Exception;
 use Illuminate\Http\Request;
 
@@ -38,10 +39,15 @@ class ErrorLog
 
     public function send()
     {
+        if (!app()->bound('sentry')) return;
+
         $sentry = app('sentry');
         if ($this->request) $this->context['request'] = $this->request->all();
         if ($this->errorMessage) $this->context['message'] = $this->errorMessage;
         if (count($this->context) > 0) $sentry->user_context($this->context);
+
+        if ($version = (new Release())->get()) $sentry->setRelease($version);
+
         $sentry->captureException($this->exception);
     }
 

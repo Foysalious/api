@@ -10,8 +10,12 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
+use Sheba\Portals\Portals;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
+use Throwable;
 use Validator;
 use DB;
 
@@ -55,7 +59,7 @@ class FacebookController extends Controller
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -105,7 +109,7 @@ class FacebookController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -113,21 +117,31 @@ class FacebookController extends Controller
 
     private function resolveAccountKit($code)
     {
-        $version = (int)\request()->header('Version-Code');
+        if (!$this->isUsingShebaAccountKit()) return $this->fbKit->authenticateKit($code);
+
+        $access_token_request = new AccessTokenRequest();
+        $access_token_request->setAuthorizationCode($code);
+        $account_kit = app(ShebaAccountKit::class);
+        $mobile = $account_kit->getMobile($access_token_request);
+        if (!$mobile) return null;
+        return ['mobile' => $mobile];
+    }
+
+    /**
+     * @return bool
+     */
+    private function isUsingShebaAccountKit()
+    {
+        $version = convertSemverToInt(\request()->header('Version-Code'));
         $portal_name = \request()->header('portal-name');
         $platform_name = \request()->header('Platform-Name');
-        if ($portal_name == 'customer-portal' || ($version > 30211 && $portal_name == 'customer-app') || ($version > 12003 && $portal_name == 'bondhu-app') || ($version > 2145 && $portal_name == 'resource-app') ||
-            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios')) {
-            $access_token_request = new AccessTokenRequest();
-            $access_token_request->setAuthorizationCode($code);
-            $account_kit = app(ShebaAccountKit::class);
-            $kit = [];
-            $mobile = $account_kit->getMobile($access_token_request);
-            if (!$mobile) return null;
-            $kit['mobile'] = $mobile;
-            return $kit;
-        }
-        return $this->fbKit->authenticateKit($code);
+
+        return $portal_name == 'customer-portal' ||
+            ($version > 30211 && $portal_name == 'customer-app') ||
+            ($version > 12003 && $portal_name == 'bondhu-app') ||
+            ($version > 2145 && $portal_name == 'resource-app') ||
+            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios') ||
+            $portal_name == Portals::BUSINESS_WEB;
     }
 
     private function getFacebookProfileInfo($token)
@@ -135,51 +149,38 @@ class FacebookController extends Controller
         try {
             $client = new Client();
             $res = $client->request('GET', 'https://graph.facebook.com/me?fields=id,name,email,gender,picture.height(400).width(400)&access_token=' . $token);
-            $data = json_decode($res->getBody(), true);
-            return $data;
+
+            return json_decode($res->getBody(), true);
         } catch (RequestException $e) {
             return false;
         }
     }
 
-    public function continueWithKit(Request $request)
+    public function continueWithKit(Request $request, AuthUser $authUser, ProfileRepositoryInterface $profileRepository)
     {
-        try {
-            $this->validate($request, [
-                'code' => "required",
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
-            ]);
-            $code_data = $this->resolveAccountKit($request->code);
-            if (!$code_data) {
-                return api_response($request, null, 401);
-            }
-            $code_data['mobile'] = formatMobile($code_data['mobile']);
-            $from = $this->profileRepository->getAvatar($request->from);
-            $profile = $this->profileRepository->ifExist($code_data['mobile'], 'mobile');
-            if ($profile == false) {
-                array_add($request, 'mobile', $code_data['mobile']);
-                $profile = $this->profileRepository->registerMobile($request->all());
-                $this->profileRepository->registerAvatarByKit($from, $profile);
-            }
-            if ($profile->$from == null) {
-                $this->profileRepository->registerAvatarByKit($from, $profile);
-                $profile = Profile::find($profile->id);
-            }
-            $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
-            if ($info != null) {
-                return api_response($request, $info, 200, ['info' => $info]);
-            }
-            return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, [
+            'code' => "required",
+            'from' => 'required|string|in:' . implode(',', constants('FROM'))
+        ]);
+        $code_data = $this->resolveAccountKit($request->code);
+        if (!$code_data) return api_response($request, null, 401);
+        $code_data['mobile'] = formatMobile($code_data['mobile']);
+        $profile = $profileRepository->findByMobile($code_data['mobile'])->first();
+        if ($profile && $profile->isBlackListed()) return api_response($request, null, 403, ['message' => "Your account is blocked."]);
+        $from = $this->profileRepository->getAvatar($request->from);
+        if ($profile == false) {
+            array_add($request, 'mobile', $code_data['mobile']);
+            $profile = $this->profileRepository->registerMobile($request->all());
+            $this->profileRepository->registerAvatarByKit($from, $profile);
         }
+        if ($profile->$from == null) {
+            $this->profileRepository->registerAvatarByKit($from, $profile);
+            $profile = Profile::find($profile->id);
+        }
+        $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
+        if (!$info) return api_response($request, null, 404);
+        $info['jwt']['token'] = $authUser->setProfile($profile)->generateToken();
+        return api_response($request, $info, 200, ['info' => $info]);
     }
 
     public function continueWithFacebook(Request $request)
@@ -212,7 +213,7 @@ class FacebookController extends Controller
                 }
             }
             return response()->json(['code' => 404, 'msg' => 'Not found!']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -227,5 +228,4 @@ class FacebookController extends Controller
         ], ['in' => 'from value is invalid!']);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
-
 }

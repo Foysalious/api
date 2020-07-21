@@ -6,7 +6,7 @@ use App\Models\JobDeclineLog;
 use App\Models\JobNoResponseLog;
 use App\Models\JobScheduleDueLog;
 use App\Models\JobStatusChangeLog;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Voucher;
 use Carbon\Carbon;
 use Sheba\ModificationFields;

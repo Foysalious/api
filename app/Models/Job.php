@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Query\Builder;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Comment\JobNotificationHandler;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
@@ -25,6 +26,7 @@ use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 
 class Job extends BaseModel implements MorphCommentable
 {
@@ -216,6 +218,11 @@ class Job extends BaseModel implements MorphCommentable
     public function cancelRequest()
     {
         return $this->hasMany(JobCancelRequest::class);
+    }
+
+    public function pendingCancelRequests()
+    {
+        return $this->cancelRequest()->where('status', CancelRequestStatuses::PENDING);
     }
 
     public function partnerChangeLog()
@@ -1108,11 +1115,21 @@ class Job extends BaseModel implements MorphCommentable
         return !$this->review;
     }
 
+    public function hasResource()
+    {
+        return (int)$this->resource_id;
+    }
+
     /**
      * @inheritDoc
      */
     public function getNotificationHandlerClass()
     {
         return JobNotificationHandler::class;
+    }
+
+    public function hasPendingCancelRequest()
+    {
+        return $this->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->count() > 0;
     }
 }

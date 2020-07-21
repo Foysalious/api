@@ -1,18 +1,18 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
-use Carbon\Carbon;
+use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
+use Sheba\Business\Attendance\Creator as AttendanceCreator;
 use Sheba\Dal\Attendance\EloquentImplementation;
 use Sheba\Dal\Attendance\Model as Attendance;
-use Sheba\Dal\Attendance\Statuses;
-use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Dal\AttendanceActionLog\Actions;
-use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
-use Sheba\Business\Attendance\Creator as AttendanceCreator;
-use DB;
+use Sheba\Dal\Attendance\Statuses;
+use App\Models\BusinessMember;
+use App\Models\Business;
 use Sheba\Location\Geo;
+use Carbon\Carbon;
+use DB;
 
 class AttendanceAction
 {
@@ -34,7 +34,14 @@ class AttendanceAction
     private $userAgent;
     private $lat;
     private $lng;
+    private $isRemote;
 
+    /**
+     * AttendanceAction constructor.
+     * @param EloquentImplementation $attendance_repository
+     * @param AttendanceCreator $attendance_creator
+     * @param Creator $attendance_action_log_creator
+     */
     public function __construct(EloquentImplementation $attendance_repository, AttendanceCreator $attendance_creator, AttendanceActionLogCreator $attendance_action_log_creator)
     {
         $this->today = Carbon::now();
@@ -108,7 +115,6 @@ class AttendanceAction
 
     public function doAction()
     {
-        /** @var ActionChecker\ActionChecker $action */
         $action = $this->checkTheAction();
         if ($action->isSuccess()) $this->doDatabaseTransaction();
         return $action;
@@ -124,6 +130,7 @@ class AttendanceAction
         $action = $processor->setActionName($this->action)->getAction();
         $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business);
         $action->check();
+        $this->isRemote = $action->getIsRemote();
         return $action;
     }
 
@@ -136,7 +143,8 @@ class AttendanceAction
                 ->setAttendance($this->attendance)
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
-                ->setUserAgent($this->userAgent);
+                ->setUserAgent($this->userAgent)
+                ->setIsRemote($this->isRemote);
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Auth;
 
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
 
 class Auth
 {
@@ -20,6 +21,11 @@ class Auth
         return $this;
     }
 
+
+    /**
+     * @return AuthUser
+     * @throws \Sheba\Authentication\AuthenticationFailedException
+     */
     public function authenticate()
     {
         /** @var Authentication $authentication */

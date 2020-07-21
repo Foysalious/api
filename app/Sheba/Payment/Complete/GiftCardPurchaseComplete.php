@@ -30,7 +30,7 @@ class GiftCardPurchaseComplete extends PaymentComplete
                     'amount' => (double)$gift_card->credit,
                     'log' => "$gift_card->credit tk gift card purchased",
                     'status' => 'valid',
-                    'valid_till' => Carbon::now()->addMonth(config('sheba.gift_card_validity_month')),
+                    'valid_till' => Carbon::now()->addMonth((int)$gift_card->validity_in_months),
                     'created_by_name' => $this->payment->payable->getName()
                 ]);
                 BonusLog::create([
@@ -39,7 +39,7 @@ class GiftCardPurchaseComplete extends PaymentComplete
                     'type' => 'Credit',
                     'amount' => (double)$gift_card->credit,
                     'log' => "$gift_card->credit tk gift card purchased",
-                    'valid_till' => Carbon::now()->addMonth(config('sheba.gift_card_validity_month')),
+                    'valid_till' => Carbon::now()->addMonth((int)$gift_card->validity_in_months),
                     'created_by_name' => $this->payment->payable->getName(),
                     'created_at' => Carbon::now()
                 ]);

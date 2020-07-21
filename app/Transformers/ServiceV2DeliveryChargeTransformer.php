@@ -1,6 +1,7 @@
 <?php namespace App\Transformers;
 
 use App\Models\Category;
+use App\Models\Location;
 use League\Fractal\TransformerAbstract;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
@@ -15,17 +16,21 @@ class ServiceV2DeliveryChargeTransformer extends TransformerAbstract
     private $deliveryCharge;
     /** @var JobDiscountHandler $jobDiscountHandler */
     private $jobDiscountHandler;
+    /** @var Location $location */
+    private $location;
 
     /**
      * ServiceV2Transformer constructor.
      *
      * @param DeliveryCharge $delivery_charge
      * @param JobDiscountHandler $job_discount_handler
+     * @param Location $location
      */
-    public function __construct(DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
+    public function __construct(DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler, Location $location)
     {
         $this->deliveryCharge = $delivery_charge;
         $this->jobDiscountHandler = $job_discount_handler;
+        $this->location = $location;
     }
 
     /**
@@ -35,7 +40,7 @@ class ServiceV2DeliveryChargeTransformer extends TransformerAbstract
      */
     public function transform(Category $category)
     {
-        $original_delivery_charge = $this->deliveryCharge->setCategory($category)->get();
+        $original_delivery_charge = $this->deliveryCharge->setCategory($category)->setLocation($this->location)->get();
         $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($original_delivery_charge);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($category)->setCheckingParams($discount_checking_params)->calculate();
         /** @var Discount $delivery_discount */

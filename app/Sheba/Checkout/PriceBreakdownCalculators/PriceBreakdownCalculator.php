@@ -1,6 +1,5 @@
 <?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
-
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Checkout\Services\ServicePricingAndBreakdown;
@@ -25,7 +24,7 @@ abstract class PriceBreakdownCalculator
     public function setPartnerListRequest(PartnerListRequest $request)
     {
         $this->request = $request;
-        $this->deliveryCharge->setCategory($this->request->selectedCategory);
+        $this->deliveryCharge->setCategory($this->request->selectedCategory)->setLocation($this->request->getLocation());
         return $this;
     }
 

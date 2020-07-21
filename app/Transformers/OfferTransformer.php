@@ -28,7 +28,8 @@ class OfferTransformer extends TransformerAbstract
             'is_flash' => $offer->is_flash,
             'is_applied' => $offer->is_applied,
             'is_campaign' => $offer->is_campaign,
-            'promo_code' => $offer->isVoucher() ? $offer->target->code : null
+            'promo_code' => $offer->isVoucher() ? $offer->target->code : null,
+            'slug' => $offer->isCategory() || $offer->isService() ? $offer->target->getSlug() : null
         ];
     }
 

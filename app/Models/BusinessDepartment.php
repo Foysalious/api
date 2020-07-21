@@ -38,4 +38,9 @@ class BusinessDepartment extends Model
     {
         return $this->approvalFlows()->where('type', $type)->first();
     }
+
+    public function scopePublished($query)
+    {
+        return $query->where('is_published', 1);
+    }
 }

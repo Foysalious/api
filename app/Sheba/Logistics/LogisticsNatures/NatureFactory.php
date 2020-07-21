@@ -13,7 +13,7 @@ class NatureFactory
      */
     public static function getLogisticNature(Job $job, $order_key)
     {
-        $nature = $job->category->logistic_nature;
+        $nature = $job->logistic_nature;
 
         return ((function () use ($nature, $order_key) {
             if ($nature == Natures::ONE_WAY) {

@@ -10,6 +10,8 @@ abstract class Setting
     /** @var Partner $partner */
     protected $partner;
 
+    protected $version;
+
     public function __construct(Setting $next = null)
     {
         $this->next = $next;

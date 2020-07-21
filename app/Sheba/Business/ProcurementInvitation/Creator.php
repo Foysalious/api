@@ -51,7 +51,7 @@ class Creator
             'partner_id' => $this->partner->id,
             'procurement_id' => $this->procurement->id,
         ]);
-        return $this->procurementInvitationRepository->create($data);
+        return $this->procurementInvitationRepository->create($this->withCreateModificationField($data));
     }
 
     private function checkDuplicateInvitation()

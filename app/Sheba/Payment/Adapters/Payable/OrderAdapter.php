@@ -4,11 +4,14 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobStatuses;
+use Sheba\Payment\Adapters\Error\PayableInitiateErrorException;
 
-class OrderAdapter extends BaseAdapter implements PayableAdapter
+class OrderAdapter implements PayableAdapter
 {
     /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
@@ -18,14 +21,36 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     /** @var Job $job */
     private $job;
     private $emiMonth;
+    private $paymentMethod;
 
-    public function __construct(PartnerOrder $partner_order, $is_advanced_payment = false)
+
+    public function __construct()
     {
-        $this->partnerOrder = $partner_order;
-        $this->partnerOrder->calculate(true);
-        $this->isAdvancedPayment = $is_advanced_payment;
+        $this->isAdvancedPayment = 0;
         $this->emiMonth = null;
+    }
+
+    /**
+     * @param PartnerOrder $partnerOrder
+     * @return OrderAdapter
+     */
+    public function setPartnerOrder($partnerOrder)
+    {
+        $this->partnerOrder = $partnerOrder;
+        $this->partnerOrder->calculate(true);
+        $this->setJob($this->partnerOrder->getActiveJob());
         $this->setUser();
+        return $this;
+    }
+
+    /**
+     * @param bool $isAdvancedPayment
+     * @return OrderAdapter
+     */
+    public function setIsAdvancedPayment($isAdvancedPayment)
+    {
+        $this->isAdvancedPayment = $isAdvancedPayment;
+        return $this;
     }
 
     /**
@@ -38,15 +63,27 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         return $this;
     }
 
+    public function setPaymentMethod($method)
+    {
+        $this->paymentMethod = $method;
+        return $this;
+    }
+
+    private function setJob($job)
+    {
+        $this->job = $job;
+        return $this;
+    }
+
     public function getPayable(): Payable
     {
-        $this->job = $this->partnerOrder->getActiveJob();
+        if (!$this->canInit()) throw new PayableInitiateErrorException('Payable can not be initiated');
         $payable = new Payable();
         $payable->type = 'partner_order';
         $payable->type_id = $this->partnerOrder->id;
         $payable->user_id = $this->userId;
         $payable->user_type = $this->userType;
-        $due = (double)$this->partnerOrder->dueWithLogistic;
+        $due = (double)$this->partnerOrder->getCustomerPayable();
         $payable->amount = $this->calculateAmount($due);
         $payable->emi_month = $this->resolveEmiMonth($payable);
         $payable->completion_type = $this->isAdvancedPayment ? 'advanced_order' : "order";
@@ -118,6 +155,14 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     public function setModelForPayable($model)
     {
         // TODO: Implement setModelForPayable() method.
+    }
+
+    public function canInit(): bool
+    {
+        if ((double)$this->partnerOrder->getCustomerPayable() <= 0) return false;
+        if ($this->partnerOrder->isCancelled()) return false;
+        if (in_array($this->job->status, [JobStatuses::DECLINED]) || $this->job->hasPendingCancelRequest()) return false;
+        return true;
     }
 
 }

@@ -21,4 +21,9 @@ class ValidationExceptionHandler extends Handler
         /** @var ValidationException $exception */
         return getValidationErrorMessage($exception->validator->errors()->all());
     }
+
+    public function report()
+    {
+        logError($this->exception, $this->request, $this->getMessage());
+    }
 }

@@ -4,6 +4,7 @@ $helper_files = [
     "app/Sheba/ResourceScheduler/functions.php",
     "app/Sheba/FileManagers/functions.php",
     "app/Sheba/Partner/functions.php",
+    "app/Sheba/Logs/functions.php",
     "app/Sheba/Helpers/Formatters/functions.php",
     "app/Sheba/Helpers/Time/functions.php",
     "app/Sheba/Helpers/String/functions.php",

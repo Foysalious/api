@@ -2,7 +2,7 @@
 
 use App\Models\Job;
 use Sheba\Dal\JobService\JobService;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Illuminate\Support\Facades\DB;
 use Sheba\Jobs\Discount;
 use Sheba\ModificationFields;

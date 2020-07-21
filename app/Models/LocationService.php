@@ -18,6 +18,11 @@ class LocationService extends Model
         return $this->belongsTo(Service::class);
     }
 
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
     public function getUpSellPriceAttribute($upsell_price)
     {
         return json_decode($upsell_price);

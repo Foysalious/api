@@ -22,6 +22,7 @@ class PartnerOrderReport extends Model
         'declined_date',
         'report_updated_at',
         'created_date',
+        'request_created_date',
         'schedule_date'
     ];
 }

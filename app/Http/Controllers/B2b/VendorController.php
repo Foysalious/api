@@ -33,7 +33,7 @@ class VendorController extends Controller
                 'resource_mobile' => 'required|string|mobile:bd'
             ]);
             $business = $request->business;
-            $member = $request->member;
+            $member = $request->manager_member;
             $this->setModifier($member);
 
             /** @var CreateRequest $request */
@@ -88,7 +88,7 @@ class VendorController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
             }
 
-            $admin_member = $request->member;
+            $admin_member = $request->manager_member;
             $business = $request->business;
             $this->setModifier($admin_member);
 

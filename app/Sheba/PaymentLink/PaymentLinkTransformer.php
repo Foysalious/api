@@ -1,5 +1,7 @@
 <?php namespace Sheba\PaymentLink;
 
+use App\Models\Partner;
+use App\Models\PosCustomer;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
 
@@ -27,7 +29,6 @@ class PaymentLinkTransformer
         return $this->response->linkId;
     }
 
-
     public function getReason()
     {
         return $this->response->reason;
@@ -43,7 +44,6 @@ class PaymentLinkTransformer
         return $this->response->linkIdentifier;
     }
 
-
     public function getAmount()
     {
         return $this->response->amount;
@@ -57,6 +57,26 @@ class PaymentLinkTransformer
     public function getIsDefault()
     {
         return $this->response->isDefault;
+    }
+
+    public function getEmiMonth()
+    {
+        return isset($this->response->emiMonth) ? $this->response->emiMonth : null;
+    }
+
+    public function isEmi()
+    {
+        return !is_null($this->getEmiMonth());
+    }
+
+    public function getInterest()
+    {
+        return isset($this->response->interest) ? $this->response->interest : null;
+    }
+
+    public function getBankTransactionCharge()
+    {
+        return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
     }
 
     /**
@@ -74,7 +94,7 @@ class PaymentLinkTransformer
     public function getPayer()
     {
         $order = $this->getTarget();
-        return $order ? $order->customer->profile : null;
+        return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
 
     /**
@@ -94,5 +114,24 @@ class PaymentLinkTransformer
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
             return $model_name . 'PosOrder';
+    }
+
+    private function getPaymentLinkPayer()
+    {
+        $model_name = "App\\Models\\";
+        if (isset($this->response->payerId)) {
+            $model_name = $model_name . pamelCase($this->response->payerType);
+            /** @var PosCustomer $customer */
+            $customer = $model_name::find($this->response->payerId);
+            return $customer ? $customer->profile : null;
+        }
+    }
+
+    public function isForMissionSaveBangladesh()
+    {
+        $receiver = $this->getPaymentReceiver();
+        if ($receiver instanceof Partner) return false;
+        /** @var Partner $receiver */
+        return $receiver->isMissionSaveBangladesh();
     }
 }

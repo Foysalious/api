@@ -19,4 +19,12 @@ class ProposalLetter
     protected $disbursement_to;
     protected $client_profile;
     protected $availability;
+    protected $supplier_category;
+    protected $performance_with_IPDC;
+    protected $no_of_client;
+    protected $approved_amount;
+    protected $disbursement_amount;
+    protected $repayment_amount;
+    protected $exposure_limit;
+    protected $remark;
 }

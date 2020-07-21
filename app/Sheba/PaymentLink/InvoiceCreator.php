@@ -42,10 +42,12 @@ class InvoiceCreator
         $pos_order = $this->paymentLinkTransFormer->getTarget();
         if ($pos_order) $pos_order = $pos_order->calculate();
         $info = [
+            'payment_id' => $this->payment->id,
             'amount' => $this->payment->payable->amount,
             'method' => $this->payment->paymentDetails->last()->readable_method,
             'description' => $this->payment->payable->description,
             'created_at' => $this->payment->created_at->format('jS M, Y, h:i A'),
+            'created_at_date'=>$this->payment->created_at->format('d M Y'),
             'payment_receiver' => [
                 'name' => $user->name,
                 'image' => $user->logo,

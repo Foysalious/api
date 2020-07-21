@@ -1,6 +1,9 @@
 <?php namespace Sheba\Map\Client;
 
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
+use Sheba\Map\Distance;
+use Sheba\Map\MapClientNoResultException;
 use Sheba\Location\Geo;
 use GuzzleHttp\Client as HTTPClient;
 use Sheba\Map\Address;
@@ -38,7 +41,8 @@ class BarikoiClient implements Client
     /**
      * @param Address $address
      * @return Geo
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
      */
     public function getGeoFromAddress(Address $address): Geo
     {
@@ -49,8 +53,13 @@ class BarikoiClient implements Client
             ]
         ]);
         $response = json_decode($response->getBody());
-        if (!isset($response->geocoded_address->latitude)) return null;
+        if (!isset($response->geocoded_address->latitude)) throw new MapClientNoResultException('Invalid Address');
         $geo = new Geo();
         return $geo->setLat($response->geocoded_address->latitude)->setLng($response->geocoded_address->longitude);
+    }
+
+    public function getDistanceBetweenTwoPoints(Geo $from, Geo $to) :Distance
+    {
+        // TODO: Implement getDistanceBetweenTwoPoints() method.
     }
 }

@@ -37,15 +37,19 @@ abstract class Handler
             'message' => $this->getMessage()
         ];
 
-        if($this->wantsTrace()) {
+        if ($this->wantsTrace()) {
             $response['exception'] = [
                 'message' => $this->exception->getMessage(),
                 'file' => $this->exception->getFile(),
-                'line' => $this->exception->getLine()
+                'line' => $this->exception->getLine(),
             ];
         }
+        return response()->json($response);
+    }
 
-        return api_response($this->request, null, $this->getCode(), $response);
+    public function report()
+    {
+        logError($this->exception);
     }
 
     /**
@@ -60,6 +64,6 @@ abstract class Handler
 
     protected function wantsTrace()
     {
-        return ($this->request->has('debug') && $this->request->debug) || config('app.env') == 'local';
+        return ($this->request->has('debug') && $this->request->debug) || config('app.env') != 'production';
     }
 }

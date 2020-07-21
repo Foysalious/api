@@ -1,13 +1,14 @@
 <?php namespace Sheba\Jobs;
 
 use App\Models\Job;
-use App\Models\JobUpdateLog;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\ResourceJobRepository;
 use App\Sheba\UserRequestInformation;
 use Illuminate\Http\Request;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\PushNotificationHandler;
+use Sheba\Resource\Jobs\SendJobAssignNotificationToResource;
 use Sheba\Resource\ResourceTypes;
 use Throwable;
 use App\Repositories\PartnerRepository;
@@ -94,6 +95,7 @@ class StatusChanger
 
         try {
             $this->sendAssignResourcePushNotifications($job);
+            dispatch((new SendJobAssignNotificationToResource($resource_id, $job)));
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }

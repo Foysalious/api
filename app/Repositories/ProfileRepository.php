@@ -17,7 +17,6 @@ use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
-
 class ProfileRepository
 {
     use ModificationFields;
@@ -281,6 +280,7 @@ class ProfileRepository
             $resource = new Resource();
             $resource->profile_id = $user->id;
             $resource->remember_token = str_random(255);
+            $resource->status = $user->affiliate ? $user->affiliate->verification_status : 'unverified';
             $resource->save();
             return $resource;
         } elseif ($avatar == env('AFFILIATE_AVATAR_NAME')) {

@@ -49,8 +49,12 @@ class CreateRequest
     public function setSubDomain($name)
     {
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
+
+        $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
+        if ($is_unicode) $name = "Partner No Name";
+
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Partner::select('sub_domain')->lists('sub_domain')->toArray();
+        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         $counter = 0;
         while (in_array($name, array_merge($blacklist, $already_used))) {
             $name = $base_name . $counter;

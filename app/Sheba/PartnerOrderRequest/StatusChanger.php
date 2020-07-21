@@ -6,6 +6,7 @@ use App\Sheba\Order\OrderRequestResend;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Dal\PartnerOrderRequest\Statuses;
@@ -82,7 +83,6 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        $job = $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($job->partnerOrder)->setPartner($request->partner)->getCalculatedJob();
         $this->jobStatusChanger->acceptJobAndAssignResource($request);
         if ($this->jobStatusChanger->hasError()) {
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
@@ -91,7 +91,12 @@ class StatusChanger
         DB::transaction(function () use ($request, $partner_order, $job) {
             $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
             $partner_order->update(['partner_id' => $request->partner->id]);
-            $job->update(['commission_rate' => $job->category->commission($request->partner->id)]);
+
+            $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
+            $job->update([
+                'commission_rate' => $commissions->getServiceCommission(),
+                'material_commission_rate' => $commissions->getMaterialCommission()
+            ]);
 
             $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
         });

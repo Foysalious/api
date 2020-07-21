@@ -4,6 +4,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\ModificationFields;
@@ -35,22 +36,19 @@ class LeaveSettingsController extends Controller
 
     /**
      * @param Request $request
-     * @param LeaveTypesRepoInterface $leave_types_repo
+     * @param LeaveTypeCreator $leave_type_creator
      * @return JsonResponse
      */
-    public function store(Request $request, LeaveTypesRepoInterface $leave_types_repo)
+    public function store(Request $request, LeaveTypeCreator $leave_type_creator)
     {
         $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
 
-        $this->setModifier($business_member->member);
-        $data = [
-            'business_id' => $business_member['business_id'],
-            'title' => $request->title,
-            'total_days' => $request->total_days
-        ];
-        $leave_setting = $leave_types_repo->create($this->withCreateModificationField($data));
+        $leave_setting = $leave_type_creator->setBusiness($request->business)->setMember($business_member->member)
+            ->setTitle($request->title)->setTotalDays($request->total_days)
+            ->create();
+
         return api_response($request, null, 200, ['leave_setting' => $leave_setting->id]);
     }
 

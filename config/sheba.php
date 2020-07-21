@@ -129,7 +129,9 @@ return [
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
         'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
-        'destination_fields_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD')),
+        'destination_fields_service_ids' => array_map('intval', explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD'))),
+        'service_ids' => array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS'))),
+        'slug' => 'car-rental'
     ],
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
@@ -140,5 +142,13 @@ return [
     'use_cdn_for_asset' => env('SHEBA_USE_CDN_FOR_ASSET', true),
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
-    ]
+    ],
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
+    'resource_max_withdraw_limit' => 1000,
+    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
+    'email' => 'info@sheba.xyz',
+    'lpg_service_id' => env('LPG_SERVICE_ID'),
+    'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID')
 ];

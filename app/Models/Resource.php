@@ -1,10 +1,19 @@
 <?php namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\ResourceStatusChangeLog\Model;
+use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
+use Sheba\Wallet\Wallet;
+use Sheba\Reward\Rewardable;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Illuminate\Database\Eloquent\Relations\Relation;
 
-class Resource extends Model
+class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
+    use Wallet;
+
     protected $guarded = ['id'];
+    protected $casts = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -16,6 +25,11 @@ class Resource extends Model
         return $this->hasMany(Review::class);
     }
 
+    public function statusChangeLog()
+    {
+        return $this->hasMany(Model::class);
+    }
+
     public function profile()
     {
         return $this->belongsTo(Profile::class);
@@ -24,6 +38,11 @@ class Resource extends Model
     public function jobs()
     {
         return $this->hasMany(Job::class);
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(ResourceTransaction::class);
     }
 
     public function associatePartners()
@@ -39,6 +58,17 @@ class Resource extends Model
     public function partnerResources()
     {
         return $this->hasMany(PartnerResource::class);
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function withdrawalRequests()
+    {
+        Relation::morphMap(['resource' => 'App\Models\Resource']);
+        return $this->morphMany(WithdrawalRequest::class, 'requester');
     }
 
     public function typeIn($partner)
@@ -104,5 +134,15 @@ class Resource extends Model
         return $this->jobs->filter(function ($job) {
             return $job->status === 'Served';
         })->count();
+    }
+
+    public function totalWalletAmount()
+    {
+        return $this->wallet;
+    }
+
+    public function isAllowedToSendWithdrawalRequest()
+    {
+        return !($this->withdrawalRequests()->active()->count() > 0);
     }
 }

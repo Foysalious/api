@@ -12,8 +12,7 @@ use ReflectionException;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
-class BusinessInfo implements Arrayable
-{
+class BusinessInfo implements Arrayable {
     use ModificationFields;
     /**
      * @var Resource
@@ -30,8 +29,7 @@ class BusinessInfo implements Arrayable
     private $business_additional_information;
     private $sales_information;
 
-    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
-    {
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null) {
 
         $this->loanDetails = $request;
         if ($partner) {
@@ -46,8 +44,7 @@ class BusinessInfo implements Arrayable
         }
     }
 
-    public static function getValidator()
-    {
+    public static function getValidator() {
         return [
             'business_type'      => 'string',
             'location'           => 'required|string',
@@ -60,8 +57,7 @@ class BusinessInfo implements Arrayable
      * @param Request $request
      * @throws ReflectionException
      */
-    public function update(Request $request)
-    {
+    public function update(Request $request) {
         $partner_data       = [
             'business_type'                   => $request->business_type,
             'smanager_business_type'          => $request->smanager_business_type,
@@ -97,8 +93,7 @@ class BusinessInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    public function completion()
-    {
+    public function completion() {
         $data = $this->toArray();
         return (new Completion($data, [
             $this->profile->updated_at,
@@ -119,16 +114,14 @@ class BusinessInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    public function toArray()
-    {
+    public function toArray() {
         return $this->loanDetails ? $this->dataFromLoanRequest() + self::staticsData() : $this->dataFromProfile();
     }
 
     /**
      * @throws ReflectionException
      */
-    private function dataFromLoanRequest()
-    {
+    private function dataFromLoanRequest() {
         $data = $this->loanDetails->getData();
         if (isset($data['business'])) {
 
@@ -155,8 +148,7 @@ class BusinessInfo implements Arrayable
         return $output;
     }
 
-    public static function getKeys()
-    {
+    public static function getKeys() {
         return [
             'business_name',
             'business_type',
@@ -180,17 +172,17 @@ class BusinessInfo implements Arrayable
             'business_category',
             'sector',
             'industry_and_business_nature',
-            'date_of_establishment'
+            'date_of_establishment',
+            'strategic_partner',
+            'short_name'
         ];
     }
 
-    private function getTotalOnlineOrderServed()
-    {
+    private function getTotalOnlineOrderServed() {
         return $this->partner->jobs()->where('status', 'Served')->count();
     }
 
-    public static function staticsData()
-    {
+    public static function staticsData() {
         return [
             'business_types'          => constants('PARTNER_BUSINESS_TYPES'),
             'smanager_business_types' => constants('PARTNER_SMANAGER_BUSINESS_TYPE'),
@@ -204,8 +196,7 @@ class BusinessInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    private function dataFromProfile()
-    {
+    private function dataFromProfile() {
 
         return [
                    'business_name'                    => $this->partner->name,

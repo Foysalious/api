@@ -58,6 +58,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $payable->completion_type = "payment_link";
         $payable->success_url = config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
         $payable->created_at = Carbon::now();
+        $payable->emi_month = $this->paymentLink->getEmiMonth();
         $payable->save();
         return $payable;
     }
@@ -82,5 +83,10 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     public function setEmiMonth($month)
     {
         // TODO: Implement setEmiMonth() method.
+    }
+
+    public function canInit(): bool
+    {
+        return true;
     }
 }
