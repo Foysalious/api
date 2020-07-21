@@ -60,7 +60,8 @@ class CarRentalPriceCalculation extends PriceCalculationAbstract
     public function getUnitPrice()
     {
         $service = $this->getService();
-        $this->carRentalPrice = CarRentalPrice::where('pickup_thana_id', $this->pickupThanaId)->where('destination_thana_id', $this->destinationThanaId)->first();
+        $this->carRentalPrice = CarRentalPrice::where('pickup_thana_id', $this->pickupThanaId)->where('destination_thana_id', $this->destinationThanaId)
+            ->where('service_id',$this->service->id)->first();
 
         if(!$this->carRentalPrice) return null;
 
