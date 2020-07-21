@@ -75,6 +75,7 @@ class IndexRoute
                     $api->post('pictures', 'LoanController@updateProfilePictures');
                     $api->post('bank-statement', 'LoanController@updateBankStatement');
                     $api->post('trade-license', 'LoanController@updateTradeLicense');
+                    $api->post('/proof-of-photograph', 'LoanV2Controller@updateProfOfBusinessPhoto');
                     $api->get('/information-completion', 'LoanCompletionController@getLoanInformationCompletion');
                     $api->get('/homepage', 'LoanController@getHomepage');
                     $api->get('/bank-interest', 'LoanController@getBankInterest');
