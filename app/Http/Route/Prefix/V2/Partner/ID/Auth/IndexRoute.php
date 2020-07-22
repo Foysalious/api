@@ -87,6 +87,7 @@ class IndexRoute
                 $api->get('/{loan_id}/account-info','LoanController@accountInfo');
                 $api->post('/{loan_id}/claim-approval-msg-seen','LoanController@approvedClaimMsgSeen');
                 $api->get('/{loan_id}/repayment-list','LoanController@repaymentList');
+                $api->post('/{loan_id}/repayment-from-wallet','LoanController@repaymentFromWallet');
 
                 $api->post('/', 'SpLoanController@store');
                 $api->get('/personal-info', 'SpLoanController@getPersonalInformation');

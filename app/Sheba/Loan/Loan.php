@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
 use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\DLSV2\Repayment;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
@@ -303,7 +304,8 @@ class Loan
             $data['details_link'] = Statics::getDetailsLink($this->type);
             $data['loan_fee'] = Statics::getFee($this->type);
             $data['maximum_day'] = Statics::getMinimumDay($this->type);
-            $data['maximum_loan_amount'] = Statics::getMinimumAmount($this->type);
+            $data['minimum_loan_amount'] = Statics::getMinimumAmount($this->type);
+            $data['maximum_loan_amount'] = Statics::getMaximumAmount($this->type);
         }
 
         return $data;
@@ -400,11 +402,7 @@ class Loan
 
     public function repaymentList($loan_id, $all = false, $month = null, $year = null)
     {
-        if (!$all)
-            $repayments = (new Repayment())->getByYearAndMonth($loan_id, $month, $year);
-        else
-            $repayments = (new Repayment())->getAll($loan_id);
-
+        $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -590,6 +588,40 @@ class Loan
     public function claimStatusUpdate($request)
     {
         return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from,$request->to);
+    }
+
+    /**
+     * @param $request
+     * @throws InsufficientWalletCreditForRepayment
+     */
+    public function repaymentFromWallet($request)
+    {
+        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
+        $this->balanceCheck($request->amount);
+        DB::transaction(function () use ($last_claim, $request) {
+            $this->debitFromWallet($request->loan_id, $request->amount);
+            (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
+        });
+    }
+
+    /**
+     * @param $amount
+     * @return bool
+     * @throws InsufficientWalletCreditForRepayment
+     */
+    private function balanceCheck($amount){
+
+        if((double)$this->partner->wallet < $amount)
+            Throw new InsufficientWalletCreditForRepayment();
+        return true;
+
+    }
+
+    private function debitFromWallet($loan_id,$amount)
+    {
+        $this->setModifier($this->resource);
+        (new WalletTransactionHandler())->setModel($this->partner)->setAmount($amount)->setSource(TransactionSources::LOAN_REPAYMENT)->setType('debit')->setLog("$amount BDT has been collected from {$this->resource->profile->name} as Loan Repayment  for  loan: $loan_id")->store();
+         return true;
     }
 
     public function personalInfo()
