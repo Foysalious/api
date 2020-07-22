@@ -91,7 +91,7 @@ class PersonalInfo implements Arrayable
         if ( $loan_type ===  LoanTypes::MICRO) {
             $profile_data = array_except($profile_data, ['gender', 'birth_place', 'occupation', 'email', 'nid_issue_date',
                 'monthly_living_cost', 'total_asset_amount', 'monthly_loan_installment_amount']);
-            $basic_data = array_except($basic_data, ['permanent_address', 'other_id', 'other_id_issue_date']);
+            $basic_data = array_except($basic_data, ['present_address', 'other_id', 'other_id_issue_date']);
             $resource_data = array_except($resource_data, ['spouse_name']);
         }
         $this->profile->update($this->withBothModificationFields($profile_data));
@@ -217,7 +217,7 @@ class PersonalInfo implements Arrayable
             'nid_no'                  => $profile->nid_no,
             'father_name'             => $this->resource->father_name? $this->resource->father_name: null,
             'mother_name'             => $this->resource->mother_name,
-            'present_address'         => $present_address,
+            'permanent_address'       => $permanent_address,
         ];
 
         if(LoanTypes::MICRO === $loan_type) {
@@ -228,7 +228,7 @@ class PersonalInfo implements Arrayable
             'email'                   => $profile->email,
             'genders'                 => constants('GENDER'),
             'picture'                 => $profile->pro_pic,
-            'permanent_address'       => $permanent_address,
+            'present_address'         => $present_address,
             'is_same_address'         => self::isSameAddress($present_address, $permanent_address),
             'spouse_name'             => $this->resource->spouse_name,
             'birth_place'             => $profile->birth_place,
