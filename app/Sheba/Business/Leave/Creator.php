@@ -3,6 +3,8 @@
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Models\Member;
+use App\Models\Profile;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Exception;
@@ -13,6 +15,7 @@ use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
@@ -42,9 +45,12 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $substitute;
     private $createdBy;
     /** @var UploadedFile[] */
     private $attachments = [];
+    /** @var PushNotificationHandler $pushNotificationHandler */
+    private $pushNotificationHandler;
 
     /**
      * Creator constructor.
@@ -53,16 +59,19 @@ class Creator
      * @param ApprovalRequestCreator $approval_request_creator
      * @param TimeFrame $time_frame
      * @param Attachments $attachment_manager
+     * @param PushNotificationHandler $push_notification_handler
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
                                 ApprovalRequestCreator $approval_request_creator,
-                                TimeFrame $time_frame, Attachments $attachment_manager)
+                                TimeFrame $time_frame, Attachments $attachment_manager,
+                                PushNotificationHandler $push_notification_handler)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
         $this->approval_request_creator = $approval_request_creator;
         $this->timeFrame = $time_frame;
         $this->attachmentManager = $attachment_manager;
+        $this->pushNotificationHandler = $push_notification_handler;
     }
 
     public function setTitle($title)
@@ -98,7 +107,8 @@ class Creator
             return $this;
         }
 
-        $this->approvers = $this->calculateApprovers($approval_flow, $department);
+        #$this->approvers = $this->calculateApprovers($approval_flow, $department);
+        $this->approvers = [11];
         if (empty($this->approvers)) {
             $this->setError(422, 'No Approver set yet!');
             return $this;
@@ -152,6 +162,12 @@ class Creator
         return $this->endDate->diffInDays($this->startDate) + 1;
     }
 
+    public function setSubstitute($substitute_id)
+    {
+        $this->substitute = $substitute_id;
+        return $this;
+    }
+
     /**
      * @return mixed
      * @throws Exception
@@ -162,6 +178,7 @@ class Creator
             'title' => $this->title,
             'note' => $this->note,
             'business_member_id' => $this->businessMember->id,
+            'substitute_id' => $this->substitute,
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
@@ -177,6 +194,7 @@ class Creator
                 ->setRequestable($leave)
                 ->create();
             $this->createAttachments($leave);
+            if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
         });
         return $leave;
     }
@@ -189,6 +207,32 @@ class Creator
                 ->setFile($attachment)
                 ->store();
         }
+    }
+
+    public function sendPushToSubstitute(Leave $leave)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $leave->businessMember;
+        /** @var BusinessMember $substitute_business_member */
+        $substitute_business_member = BusinessMember::findOrFail($leave->substitute_id);
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
+        $leave_applicant = $member->profile->name;
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
+        $channel = config('sheba.push_notification_channel_name.employee');
+
+        $notification_data = [
+            "title" => 'Substitute Setup',
+            "message" => "$leave_applicant chose you a substitute",
+            "event_type" => 'leave',
+            "event_id" => $leave->id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel,
+            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+        ];
+
+        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
     }
 
     private function getManager($business_member)

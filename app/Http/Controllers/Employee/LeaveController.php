@@ -85,11 +85,13 @@ class LeaveController extends Controller
      */
     public function store(Request $request, LeaveCreator $leave_creator)
     {
-        $this->validate($request, [
+        $validation_data = [
             'start_date' => 'required|before_or_equal:end_date',
             'end_date' => 'required',
             'attachments.*' => 'file'
-        ]);
+        ];
+        if (0) $validation_data['substitute'] = 'required|integer';
+        $this->validate($request, $validation_data);
         $business_member = $this->getBusinessMember($request);
         $member = $this->getMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -100,6 +102,7 @@ class LeaveController extends Controller
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setNote($request->note)
+            ->setSubstitute($request->substitute)
             ->setCreatedBy($member);
         if ($request->attachments && is_array($request->attachments)) $leave_creator->setAttachments($request->attachments);
         if ($leave_creator->hasError())
