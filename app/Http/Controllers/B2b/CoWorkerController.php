@@ -585,8 +585,8 @@ class CoWorkerController extends Controller
         }
 
         if ($errors) {
-            $file_name = Carbon::now()->timestamp . "_co_worker_invite_error_$business->id.csv";
-            $file = $excel_handler->setName('Co worker Invite')->setFilename($file_name)->createReport($errors)->save();
+            $file_name = Carbon::now()->timestamp . "_co_worker_invite_error_$business->id.xlsx";
+            $file = $excel_handler->setName('Co worker Invite')->setFilename($file_name)->setDownloadFormat('xlsx')->createReport($errors)->save();
             $file_path = $this->saveFileToCDN($file, getCoWorkerInviteErrorFolder(), $file_name);
             unlink($file);
 
