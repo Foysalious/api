@@ -1,14 +1,11 @@
-<?php
-
-
-namespace Sheba\Notification\Partner;
-
+<?php namespace Sheba\Notification\Partner;
 
 use App\Models\Job;
 use App\Models\Notification;
 use App\Models\OfferShowcase;
 use App\Models\Order;
 use App\Models\PartnerOrder;
+use Throwable;
 
 class PartnerNotificationEventGetter
 {
@@ -44,20 +41,19 @@ class PartnerNotificationEventGetter
             $this->notification->version    = $job->partner_order->getVersion();
             return;
         }
+
         $this->notification->event_type = null;
         $this->notification->event_id   = null;
-
     }
 
     private function setOrderData()
     {
-
         $this->notification->event_code = (Order::find($this->notification->event_id))->code();
     }
 
     private function setPartnerOrderData()
     {
-        $partner_order                  = PartnerOrder::find($this->notification->event_id);
+        $partner_order = PartnerOrder::find($this->notification->event_id);
         $this->notification->event_code = $partner_order->code();
         $this->notification->version    = $partner_order->getVersion();
         $this->notification->status     = ((PartnerOrder::find($this->notification->event_id))->calculate(true))->status;
@@ -70,7 +66,6 @@ class PartnerNotificationEventGetter
 
     public function getDetails()
     {
-
         try {
             $eventType = app($this->eventType);
             if ($eventType) {
@@ -79,14 +74,14 @@ class PartnerNotificationEventGetter
                 return $this->getDetailsFromNotification();
             }
             return $this->getDetailsFromNotification();
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return $this->getDetailsFromNotification();
         }
     }
 
     private function getDetailsFromNotification()
     {
-        $notification            = constants('NOTIFICATION_DEFAULTS');
+        $notification = constants('NOTIFICATION_DEFAULTS');
         $defaultFromNotification = ['title' => $this->notification->title, 'description' => $this->notification->description ?: $notification['description'], 'target_link' => $this->notification->link, 'target_type' => str_replace('App\Models\\', "", $this->eventType), 'target_id' => $this->notification->event_id];
         if ($this->eventType == self::NEW_PROCUREMENT) {
             $defaultFromNotification['target_type'] = self::EXTERNAL_TYPE;
@@ -94,12 +89,12 @@ class PartnerNotificationEventGetter
             $defaultFromNotification['banner']      = config('partner.procurement_banner');
         }
         $notification = array_merge($notification, $defaultFromNotification);
+
         return $notification;
     }
 
     private function getDetailsFromOffer(OfferShowcase $offer)
     {
-        ;
         return [
             'banner'      => $offer->app_banner ?: config('constants.NOTIFICATION_DEFAULTS.banner'),
             'title'       => $offer->title ? $offer->title : $this->notification->title ?: config('constants.NOTIFICATION_DEFAULTS.title'),

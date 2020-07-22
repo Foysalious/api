@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Notification\Partner;
-
+<?php namespace Sheba\Notification\Partner;
 
 use App\Models\Job;
 use App\Models\Notification;
@@ -72,10 +68,13 @@ abstract class Handler
         $this->link = $link;
         return $this;
     }
+
     public function setModel(Model $model)
     {
         $this->model = $model;
     }
-    abstract function getList($offset,$limit);
-    abstract function getDetails($notification);
+
+    abstract public function getList($offset, $limit);
+
+    abstract public function getDetails($notification);
 }
