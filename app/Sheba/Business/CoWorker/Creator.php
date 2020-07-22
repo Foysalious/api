@@ -285,8 +285,8 @@ class Creator
         }
 
         $coworker_invite_email->setSubject("Login to sBusiness & Digigo")->setTemplate('emails.co-worker-invitation-v2');
-        $coworker_invite_email->handle();
-        // dispatch($coworker_invite_email);
+        // $coworker_invite_email->handle();
+        dispatch($coworker_invite_email);
     }
 
     public function resetError()
