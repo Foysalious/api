@@ -157,9 +157,7 @@ class GranterDetails implements Arrayable
             'address',
             'dob',
             'occupation',
-            'net_worth',
-            $type && $type == LoanTypes::MICRO ? 'nid_image_back' : null,
-            $type && $type == LoanTypes::MICRO ? 'nid_image_front' : null
+            'net_worth'
         ]))->get();
     }
 
