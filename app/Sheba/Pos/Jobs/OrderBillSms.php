@@ -8,19 +8,22 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\Pos\Notifier\SmsHandler;
 
-class OrderBillSms extends Job implements ShouldQueue {
+class OrderBillSms extends Job implements ShouldQueue
+{
     use InteractsWithQueue, SerializesModels;
+
     /**
      * @var PosOrder
      */
-    private   $order;
+    private $order;
     protected $tries = 1;
 
     /**
      * Create a new job instance.
      * @param PosOrder $order
      */
-    public function __construct(PosOrder $order) {
+    public function __construct(PosOrder $order)
+    {
         $this->order = $order;
     }
 
@@ -29,7 +32,9 @@ class OrderBillSms extends Job implements ShouldQueue {
      * @param SmsHandler $handler
      * @throws Exception
      */
-    public function handle(SmsHandler $handler) {
+    public function handle(SmsHandler $handler)
+    {
+        if ($this->attempts() > 2) return;
         $handler->setOrder($this->order)->handle();
     }
 }
