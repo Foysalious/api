@@ -94,7 +94,7 @@ class Statics
 
     public static function getMicroLoanAnnualFee()
     {
-       return config('loan.micro_loan_annual_fee');
+        return config('loan.micro_loan_annual_fee');
     }
 
     public static function getClaimTransactionFee()
@@ -117,5 +117,12 @@ class Statics
     public static function getDetailsLink($type)
     {
         return $type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");
+    }
+
+    public static function getAgreements()
+    {
+        $partner_portal = env('SHEBA_PARTNER_URL');
+        return ['licence_agreement' => "$partner_portal/api/micro-loan-terms", 'ipdc_data_agreement' => "$partner_portal/api/micro-loan-report-share", 'ipdc_cib_agreement' => "$partner_portal/api/micro-loan-data-share"];
+
     }
 }

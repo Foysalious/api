@@ -173,7 +173,7 @@ class LoanV2Controller extends Controller
             $this->validate($request, [
                 'loan_amount' => 'required|numeric',
                 'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get()),
-                'duration'    => 'required_if:loan_type,'.LoanTypes::MICRO.'|integer'
+                'duration'    => 'required_if:loan_type,' . LoanTypes::MICRO . '|integer'
             ]);
             /** @var Partner $partner */
             $partner  = $request->partner;
@@ -257,7 +257,7 @@ class LoanV2Controller extends Controller
             $this->validate($request, PersonalInfo::getValidators());
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request);
+            (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request, $request->loan_type );
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -277,8 +277,9 @@ class LoanV2Controller extends Controller
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            $agreements       = Statics::getAgreements();
             return api_response($request, $info, 200, [
-                'info'       => $info->toArray(),
+                'info'       => $info->toArray() + $agreements,
                 'completion' => $info->completion()
             ]);
         } catch (Throwable $e) {
@@ -305,10 +306,33 @@ class LoanV2Controller extends Controller
         }
     }
 
+    public function updateProfOfBusinessPhoto(Request $request)
+    {
+        try {
+            $this->validate($request, ['picture' => 'required|mimes:jpeg,png']);
+            /** @var Partner $partner */
+            $partner          = $request->partner;
+            $type             = $request->loan_type ?: LoanTypes::TERM;
+            $manager_resource = $request->manager_resource;
+            $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            if ($info->hasProofOfBusinessPhoto()) {
+                $this->deleteOldImage($info->getProofOfBusinessPhoto());
+            }
+            $url = $this->saveProofOfPhoto($request->picture, $partner->id);
+            $info->updateProofOfBusinessPhoto($url);
+            return api_response($request, $url, 200, ['picture' => $url]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function claimList(Request $request, $loan_id, Loan $loan)
     {
         try {
-
 
 
         } catch (Throwable $e) {
@@ -512,6 +536,12 @@ class LoanV2Controller extends Controller
     {
         list($bank_statement, $statement_filename) = $this->makeBankStatement($image_file, 'bank_statement');
         return $this->saveImageToCDN($bank_statement, getBankStatementImagesFolder(), $statement_filename);
+    }
+
+    private function saveProofOfPhoto($image_file, $partner_id)
+    {
+        list($image, $image_file_name) = $this->makePartnerProofOfBusiness($image_file, 'proof_of_business');
+        return $this->saveFileToCDN($image, getPartnerProofOfBusinessFolder(false, $partner_id), $image_file_name);
     }
 
     public function updateTradeLicense($partner, Request $request)
