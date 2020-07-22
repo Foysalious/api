@@ -89,6 +89,11 @@ class Creator
         $this->businessMember = $business_member;
         $this->getManager($this->businessMember);
 
+        if ($this->substitute == $this->businessMember->id) {
+            $this->setError(422, 'You can\'t be your own substitute!');
+            return $this;
+        }
+
         if (empty($this->managers)) {
             $this->setError(422, 'Manager not set yet!');
             return $this;
@@ -107,8 +112,7 @@ class Creator
             return $this;
         }
 
-        #$this->approvers = $this->calculateApprovers($approval_flow, $department);
-        $this->approvers = [11];
+        $this->approvers = $this->calculateApprovers($approval_flow, $department);
         if (empty($this->approvers)) {
             $this->setError(422, 'No Approver set yet!');
             return $this;
