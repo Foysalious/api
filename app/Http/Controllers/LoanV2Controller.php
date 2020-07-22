@@ -382,13 +382,10 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
-                $info = $loan->setPartner($partner)->setResource($resource)->granterDetails();
-            else
-                $info = $loan->setPartner($partner)->setResource($resource)->granterDetails();
+            $info = $loan->setPartner($partner)->setResource($resource)->granterDetails();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
-                'completion' => $info->completion($request->loan_type)
+                'completion' => $info->completion()
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

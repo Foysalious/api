@@ -157,9 +157,7 @@ class GranterDetails implements Arrayable
             'address',
             'dob',
             'occupation',
-            'net_worth',
-            $type && $type == LoanTypes::MICRO ? 'nid_image_back' : null,
-            $type && $type == LoanTypes::MICRO ? 'nid_image_front' : null
+            'net_worth'
         ]))->get();
     }
 
@@ -187,10 +185,10 @@ class GranterDetails implements Arrayable
             $nid_image_back = (new FileRepository())->uploadToCDN($this->makePicName($nid_image_back, "_nid_image_back"), $nid_image_back, 'images/profiles/');
         }
         if(isset($nid_image_back) && isset($nid_image_front)){
-            $profile->update(([
+            $profile->update([
                 'nid_image_back' => $nid_image_back,
                 'nid_image_front' => $nid_image_front
-            ]));
+            ]);
         }
     }
 

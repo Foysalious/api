@@ -22,6 +22,7 @@ class PartnerLoanRequest implements Arrayable
     public $duration;
     public $monthly_installment;
     public $interest_rate;
+    public $groups;
     /** @var LoanRequestDetails $final_details */
     public $final_details;
     public $created_by;
@@ -173,7 +174,8 @@ class PartnerLoanRequest implements Arrayable
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
             'next_status' => $output,
-            'loan_group'    => constants('LOAN_GROUP')
+            'loan_groups'    => constants('LOAN_GROUP'),
+            'groups' => $this->partnerBankLoan->groups
         ];
     }
 
