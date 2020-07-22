@@ -91,8 +91,8 @@ abstract class LogisticNature
      */
     protected function getCustomerPoint()
     {
-        return (new Point())->setName($this->customerDeliveryAddress->name ?? $this->partnerOrder->order->delivery_name)
-            ->setAddress($this->customerDeliveryAddress->address)
+        return (new Point())->setName($this->customerDeliveryAddress->name ? $this->partnerOrder->order->delivery_name : $this->partnerOrder->order->customer->profile->name)
+            ->setAddress($this->customerDeliveryAddress->address ? $this->customerDeliveryAddress->address : $this->customerDeliveryAddress->location->name)
             ->setImage($this->customer->pro_pic)
             ->setMobile($this->customerDeliveryAddress->mobile ?: $this->customer->mobile)
             ->setCoordinate($this->customerDeliveryAddress->getCoordinate());
