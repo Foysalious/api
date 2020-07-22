@@ -49,10 +49,12 @@ class ResourceScheduleChecker
                 foreach ($date['slots'] as $slot) {
                     if ($slot['key'] == $this->time) {
                         $schedule['slot'] = $slot;
+                        break;
                     }
                 }
             }
         }
+        $schedule = isset($schedule['date']) && isset($schedule['slot']) ? $schedule : [];
         return $schedule;
     }
 }
