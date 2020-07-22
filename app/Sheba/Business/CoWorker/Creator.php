@@ -276,17 +276,21 @@ class Creator
      */
     private function sendExistingUserMail($profile)
     {
-        $coworker_invite_email = new SendBusinessRequestEmail($profile->email);
-        if ($this->password) $coworker_invite_email->setPassword($this->password);
-        if (empty($profile->password)) {
-            $password = str_random(6);
-            $this->profileRepository->updateRaw($profile, ['password' => $password]);
-            $coworker_invite_email->setPassword($password);
-        }
+        try {
+            $coworker_invite_email = new SendBusinessRequestEmail($profile->email);
+            if ($this->password) $coworker_invite_email->setPassword($this->password);
+            if (empty($profile->password)) {
+                $password = str_random(6);
+                $this->profileRepository->updateRaw($profile, ['password' => $password]);
+                $coworker_invite_email->setPassword($password);
+            }
 
-        $coworker_invite_email->setSubject("Login to sBusiness & Digigo")->setTemplate('emails.co-worker-invitation-v2');
-        // $coworker_invite_email->handle();
-        dispatch($coworker_invite_email);
+            $coworker_invite_email->setSubject("Login to sBusiness & Digigo")->setTemplate('emails.co-worker-invitation-v2');
+            // $coworker_invite_email->handle();
+            dispatch($coworker_invite_email);
+        }  catch (Throwable $e) {
+            app('sentry')->captureException($e);
+        }
     }
 
     public function resetError()
