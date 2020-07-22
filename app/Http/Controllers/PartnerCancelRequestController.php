@@ -24,6 +24,7 @@ class PartnerCancelRequestController extends Controller
         $error = $partner_requestor->hasError();
         if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
         dispatch(new SendCancelRequest($job, $cancel_reason, 0, 0));
+        sleep(5);
         return api_response($request, 1, 200, ['message' => "You've successfully submitted the request. Please give some time to process."]);
     }
 
