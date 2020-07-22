@@ -143,5 +143,25 @@ class Repayment
         return (new RepaymentRepo(new RepaymentModel()))->getRecent($loan_id);
     }
 
+    public function repaymentFromWallet(){
+
+        $data = [
+            'loan_id' => $this->loanId,
+            'loan_claim_request_id' => $this->claimId,
+            'credit' => 0,
+            'debit' => $this->amount,
+            'type' => 'By Sheba',
+            'log' => 'লোন এর টাকা জমা দেয়া হয়েছে।',
+        ];
+        $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
+        return $this->repayment->save();
+    }
+
+    private function balanceCheck()
+    {
+
+
+    }
+
 
 }

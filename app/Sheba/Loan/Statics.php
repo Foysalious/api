@@ -108,9 +108,15 @@ class Statics
         return $type == LoanTypes::MICRO ? $day[LoanTypes::MICRO] : $day[LoanTypes::TERM];
     }
 
-    public static function getMinimumAmount($type)
+    public static function getMaximumAmount($type)
     {
         $amount = config('loan.maximum_amount');
+        return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
+    }
+
+    public static function getMinimumAmount($type)
+    {
+        $amount = config('loan.minimum_amount');
         return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
     }
 

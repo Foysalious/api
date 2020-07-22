@@ -11,6 +11,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
 use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
 use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
@@ -918,7 +919,6 @@ class LoanController extends Controller
      * @param Request $request
      * @param $loan_id
      * @param Loan $loan
-     * @param RobiTopUpWalletTransfer $robiTopUpWalletTransfer
      * @return JsonResponse
      */
     public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
@@ -964,6 +964,13 @@ class LoanController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function repaymentList(Request $request, $partner, $loan_id, Loan $loan)
     {
         try{
@@ -978,6 +985,34 @@ class LoanController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400,['message' => $message]);
         } catch (Throwable $e){
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
+    public function repaymentFromWallet(Request $request, $partner, $loan_id, Loan $loan)
+    {
+        try {
+            $this->validate($request, [
+                'amount' => 'required'
+            ]);
+            $partner = $request->partner;
+            $resource = $request->manager_resource;
+            $request->merge(['loan_id' => $loan_id]);
+            $loan->setPartner($partner)->setResource($resource)->repaymentFromWallet($request);
+            return api_response($request, null, 200, ['message' => 'আপনার তথ্যাবলী যাচাইয়ের পর আপনার সাথে যোগাযোগ করা হবে।']);
+
+
+        } catch (InsufficientWalletCreditForRepayment $e) {
+            return api_response($request, null, 403, ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
