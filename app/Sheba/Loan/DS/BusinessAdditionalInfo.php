@@ -15,6 +15,10 @@ class BusinessAdditionalInfo implements Arrayable
     protected $marketing_cost;
     protected $other_cost;
     protected $yearly_sales;
+    protected $proof_of_photograph;
+    protected $licence_agreement_checked;
+    protected $ipdc_data_agreement_checked;
+    protected $ipdc_cib_agreement_checked;
     protected $address;
 
     /**

@@ -33,6 +33,7 @@ class BusinessInfo implements Arrayable
     private $sales_information;
     private $type;
     private $version;
+    private $data;
 
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
@@ -110,7 +111,7 @@ class BusinessInfo implements Arrayable
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->basic_information ? $this->basic_information->updated_at : null
-        ],  CompletionStatics::business($this->version,$this->type)))->get();
+        ], CompletionStatics::business($this->version, $this->type)))->get();
     }
 
     /**
@@ -245,5 +246,38 @@ class BusinessInfo implements Arrayable
     {
         $this->version = $version;
         return $this;
+    }
+
+    /**
+     * @param $url
+     * @throws ReflectionException
+     */
+    public function updateProofOfBusinessPhoto($url)
+    {
+
+        if (empty($this->data)) $this->data = $this->toArray();
+        $this->data['business_additional_information']['proof_of_photograph'] = $url;
+        $this->partner->business_additional_information                       = (new BusinessAdditionalInfo($this->data['business_additional_information']))->toString();
+        $this->partner->save();
+    }
+
+    /**
+     * @return bool
+     * @throws ReflectionException
+     */
+    public function hasProofOfBusinessPhoto()
+    {
+        $this->data = $this->toArray();
+        return isset($this->data['business_additional_information']['proof_of_photograph']) && !empty($data['business_additional_information']['proof_of_photograph']);
+    }
+
+    /**
+     * @return mixed
+     * @throws ReflectionException
+     */
+    public function getProofOfBusinessPhoto()
+    {
+        if (empty($this->data)) $this->data = $this->toArray();
+        return $this->data['business_additional_information']['proof_of_photograph'];
     }
 }
