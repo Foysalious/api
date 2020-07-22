@@ -411,8 +411,8 @@ class Loan
             array_push($data['repayment_list'], [
                 'id' => $repayment->id,
                 'claim_id' => $repayment->loan_claim_request_id,
-                'amount' => (int)$repayment->deit == 0 ? $repayment->credit : $repayment->deit,
-                'amount_type' => (int)$repayment->deit == 0 ? 'credit' : 'debit',
+                'amount' => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
+                'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
                 'log' => $repayment->log,
                 'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
             ]);
@@ -573,8 +573,8 @@ class Loan
                 array_push($data['recent_repayments'],[
                     'id' => $repayment->id,
                     'claim_id' => $repayment->loan_claim_request_id,
-                    'amount' => (int)$repayment->deit == 0 ? $repayment->credit : $repayment->deit,
-                    'amount_type' => (int)$repayment->deit == 0 ? 'credit' : 'debit',
+                    'amount' => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
+                    'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
                     'log' => $repayment->log,
                     'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
                 ]);
