@@ -349,7 +349,7 @@ class LoanV2Controller extends Controller
             $info             = (new Loan())->setPartner($partner)->setResource($manager_resource)->financeInfo();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
-                'completion' => $info->completion()
+                'completion' => $info->completion($request->loan_type)
             ]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -360,7 +360,10 @@ class LoanV2Controller extends Controller
     public function updateFinanceInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, FinanceInfo::getValidators($request->loan_type));
+            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
+                $this->validate($request, FinanceInfo::getValidatorsForMicro());
+            else
+                $this->validate($request, FinanceInfo::getValidators());
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($resource)->financeInfo()->update($request);

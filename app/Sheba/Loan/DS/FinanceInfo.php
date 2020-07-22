@@ -46,16 +46,28 @@ class FinanceInfo implements Arrayable
         }
     }
 
-    public static function getValidators($loan_type = null)
+    public static function getValidators()
     {
         return [
             'acc_name' => 'required|string',
             'acc_no' => 'required|string',
             'bank_name' => 'required|string',
             'branch_name' => 'required|string',
-            'acc_type' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|in:savings,current' : "string|in:savings,current",
-            'bkash_no' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|mobile:bd' : "string|mobile:bd",
-            'bkash_account_type' => $loan_type && $loan_type == LoanTypes::MICRO ? 'required|string|in:personal,agent,merchant' : "string|in:personal,agent,merchant"
+            'acc_type' => "required|string|in:savings,current",
+            'bkash_no' => "string|mobile:bd",
+            'bkash_account_type' => "string|in:personal,agent,merchant"
+        ];
+    }
+
+    public static function getValidatorsForMicro()
+    {
+        return [
+            'acc_name' => 'string',
+            'acc_no' => 'string',
+            'bank_name' => 'string',
+            'branch_name' => 'string',
+            'bkash_no' => 'required|string|mobile:bd',
+            'is_retailer_bkash_agent' => 'required|in:1,0'
         ];
     }
 
@@ -66,6 +78,8 @@ class FinanceInfo implements Arrayable
     public function update(Request $request)
     {
         $bank_data    = (new BankInformation($request->all()))->noNullableArray();
+        if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
+            $request->bkash_account_type = $request->is_retailer_bkash_agent == 1 ? "agent" : $this->partner->bkash_account_type;
         $partner_data = [
             'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
             'bkash_account_type' => $request->bkash_account_type
@@ -84,7 +98,7 @@ class FinanceInfo implements Arrayable
      * @return array
      * @throws ReflectionException
      */
-    public function completion()
+    public function completion($loan_type = null)
     {
         $data = $this->toArray();
         return (new Completion($data, [
@@ -97,7 +111,9 @@ class FinanceInfo implements Arrayable
             'credit_sum',
             'monthly_avg_credit_sum',
             'disbursement_amount',
-            'period'
+            'period',
+            $loan_type && $loan_type == LoanTypes::MICRO ? 'bkash_account_type' : null,
+            $loan_type && $loan_type == LoanTypes::MICRO ? 'acc_type' : null,
         ]))->get();
     }
 
@@ -151,6 +167,7 @@ class FinanceInfo implements Arrayable
     private function getDataFromProfile()
     {
         return array_merge((new BankInformation(($this->bank_information ? $this->bank_information->toArray() : [])))->toArray(), [
+            'is_retailer_bkash_agent' => $this->partner->bkash_account_type == "agent" ? 1 : 0,
             'acc_types' => constants('BANK_ACCOUNT_TYPE'),
             'bkash'     => [
                 'bkash_no'            => $this->partner->bkash_no,
