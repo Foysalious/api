@@ -132,15 +132,15 @@ class BillUpdate
             if ($service_to_add['variable_type'] == 'Fixed') {
                 $services->push($this->formatFixedService($service_to_add));
             } else {
+                $matched = 0;
                 foreach ($services as &$service) {
                     if ($service['id'] == $service_to_add['service_id']) {
                         $service['service_group']->push($this->formatGroupedService($service_to_add));
+                       $matched++;
                         //TODO: Need to Update Quantity
                     }
-                    else {
-                        $services->push($this->formatOptionService($service_to_add));
-                    }
                 }
+                if ($matched==0) $services->push($this->formatOptionService($service_to_add));
             }
         }
         return $services;
