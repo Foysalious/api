@@ -918,7 +918,6 @@ class LoanController extends Controller
      * @param Request $request
      * @param $loan_id
      * @param Loan $loan
-     * @param RobiTopUpWalletTransfer $robiTopUpWalletTransfer
      * @return JsonResponse
      */
     public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
