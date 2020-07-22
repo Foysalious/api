@@ -1309,5 +1309,10 @@ return [
     'PARTNER_BUSINESS_SECTORS'                    => [
         'Service',
         'Non Service'
+    ],
+    'LOAN_GROUP'                                       => [
+        'G1',
+        'G2',
+        'G3'
     ]
 ];
