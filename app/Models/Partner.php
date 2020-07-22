@@ -941,4 +941,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->id . str_random(8 - (strlen($this->id)));
     }
+
+    public function isMissionSaveBangladesh()
+    {
+        return $this->id == config('sheba.mission_save_bangladesh_partner_id');
+    }
 }

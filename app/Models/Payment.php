@@ -37,6 +37,11 @@ class Payment extends Model
         return $query->where('status', Statuses::INITIATED);
     }
 
+    public function scopeInitiationFailed($query)
+    {
+        return $query->where('status', Statuses::INITIATION_FAILED);
+    }
+
     public function scopeStillValidityLeft($query)
     {
         return $query->where('valid_till', '>', Carbon::now());

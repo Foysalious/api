@@ -56,4 +56,8 @@ class ProcurementAdapter implements PayableAdapter
     {
         return config('sheba.business_url');
     }
+    public function canInit(): bool
+    {
+        return true;
+    }
 }

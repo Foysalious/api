@@ -2,6 +2,7 @@
 
 use App\Models\Affiliate;
 use App\Models\Customer;
+use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\PartnerRepository;
 use App\Repositories\PaymentStatusChangeLogRepository;
@@ -117,8 +118,11 @@ class WalletController extends Controller
             $transaction = '';
             DB::transaction(function () use ($payment, $user, $bonus_credit, &$transaction) {
                 $spent_model = $payment->payable->getPayableType();
-                $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->deduct($payment->payable->amount);
-
+                $is_spend_on_order = $spent_model && ($spent_model instanceof PartnerOrder);
+                $category = $is_spend_on_order ? $spent_model->jobs->first()->category : null;
+                $category_name = $category ? $category->name : '';
+                $bonus_log = $is_spend_on_order ? 'Service Purchased ' . $category_name : 'Purchased ' . class_basename($spent_model);
+                $remaining   = $bonus_credit->setUser($user)->setPayableType($spent_model)->setLog($bonus_log)->deduct($payment->payable->amount);
                 if ($remaining > 0 && $user->wallet > 0) {
                     if ($user->wallet < $remaining) {
                         $remaining              = $user->wallet;

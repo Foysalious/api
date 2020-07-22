@@ -132,12 +132,15 @@ class BillUpdate
             if ($service_to_add['variable_type'] == 'Fixed') {
                 $services->push($this->formatFixedService($service_to_add));
             } else {
+                $matched = 0;
                 foreach ($services as &$service) {
                     if ($service['id'] == $service_to_add['service_id']) {
                         $service['service_group']->push($this->formatGroupedService($service_to_add));
+                       $matched++;
                         //TODO: Need to Update Quantity
                     }
                 }
+                if ($matched==0) $services->push($this->formatOptionService($service_to_add));
             }
         }
         return $services;
@@ -206,5 +209,25 @@ class BillUpdate
             }
         }, $services_group);
         return $services_group;
+    }
+
+    private function formatOptionService($service)
+    {
+        return array(
+            'id' => null,
+            'name' => $service['service_name'],
+            'service_group' => [
+                [
+                    'job_service_id' => null,
+                    'variables' => json_decode($service['variables']),
+                    'unit' => $service['unit'],
+                    'quantity' => $service['quantity'],
+                    'price' => $service['unit_price'] * $service['quantity']
+                ]
+            ],
+            'unit' => $service['unit'],
+            'quantity' => $service['quantity'],
+            'price' => $service['unit_price'] * $service['quantity']
+        );
     }
 }
