@@ -12,6 +12,11 @@ return [
         LoanTypes::TERM  => env('TERM_LOAN_MINIMUM_DAY', 15),
         LoanTypes::MICRO => env('MICRO_LOAN_MINIMUM_DAY', 7)
     ],
+    'minimum_amount'                       => [
+        LoanTypes::TERM  => env('TERM_LOAN_MINIMUM_AMOUNT', 5000),
+        LoanTypes::MICRO => env('MICRO_LOAN_MINIMUM_AMOUNT', 1000)
+    ],
+
     'maximum_amount'                       => [
         LoanTypes::TERM  => env('TERM_LOAN_MAXIMUM_AMOUNT', 50000),
         LoanTypes::MICRO => env('MICRO_LOAN_MAXIMUM_AMOUNT', 25000)
