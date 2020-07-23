@@ -835,24 +835,16 @@ class ProcurementController extends Controller
      * @param $bid
      * @param Request $request
      * @param WorkOrderDataGenerator $data_generator
-     * @param Updater $updater
      * @return void
      */
-    public function downloadWorkOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator, Updater $updater)
+    public function downloadWorkOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
     {
         $business = $request->business;
         $bid = Bid::findOrFail((int)$bid);
-        $procurement = $this->procurementRepository->find($procurement);
-        if (!$procurement->work_order_link) {
-            DB::transaction(function () use ($updater, $data_generator, $business, $procurement, $bid) {
-                $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->generatePDF();
-                $this->procurementRepository->update($procurement, ['work_order_link' => $work_order]);
-                #$this->procurementRequestHandler->setWorkOrder($work_order);
-                #$updater->setProcurement($procurement)->setRequestHandler($this->procurementRequestHandler)->update();
-            });
-        }
-        $procurement = $procurement->fresh();
-        return api_response($request, null, 200, ['work_order' => $procurement->work_order_link]);
+        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->get();
+        #return view('pdfs.work_order', compact('work_order'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.work_order', compact('work_order'))->download('work_order.pdf');
+
     }
 
     /**

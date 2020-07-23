@@ -5,6 +5,7 @@ use App\Models\Business;
 use App\Models\Procurement;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Storage;
+use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class WorkOrderDataGenerator
@@ -16,10 +17,13 @@ class WorkOrderDataGenerator
     private $procurementRepo;
     /** @var Business $business */
     private $business;
+    /** @var PdfHandler $pdfHandler */
+    private $pdfHandler;
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repo)
+    public function __construct(ProcurementRepositoryInterface $procurement_repo, PdfHandler $pdf_handler)
     {
         $this->procurementRepo = $procurement_repo;
+        $this->pdfHandler = $pdf_handler;
     }
 
     /**
@@ -97,12 +101,14 @@ class WorkOrderDataGenerator
         return $item_fields;
     }
 
-    public function generatePDF()
+    public function storeInCloud()
     {
-        $work_order = $this->get();
-        $file = App::make('dompdf.wrapper')->loadView('pdfs.work_order', compact('work_order'))->save('work_order.pdf');
-        $filename = 'tender-work-order/file/' . time() . "_" . 'work_order.pdf';
-        Storage::disk('s3')->put($filename, $file->output(), 'public');
-        return config('sheba.s3_url') . $filename;
+        $work_order = ['work_order' => $this->get()];
+        return $this->pdfHandler->setData($work_order)
+            ->setName($this->procurement->id)
+            ->setFolder('tender-work-order/file/')
+            ->setViewPath('pdfs.')
+            ->setViewFile('work_order')
+            ->save();
     }
 }

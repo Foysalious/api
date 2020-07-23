@@ -139,7 +139,6 @@ class Updater
         $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
         $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
         $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
-        $this->data['work_order_link'] = $this->requestHandler->getWorkOrder() ? $this->requestHandler->getWorkOrder() : $this->procurement->work_order_link;
     }
 
     public function itemFieldsUpdate(Request $request)
