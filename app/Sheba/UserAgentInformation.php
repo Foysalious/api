@@ -31,25 +31,25 @@ class UserAgentInformation
         $this->request = null;
     }
 
-    public function setIp($ip)
+    private function setIp($ip)
     {
         $this->ip = $ip;
         return $this;
     }
 
-    public function setVersionCode($versionCode)
+    private function setVersionCode($versionCode)
     {
         $this->versionCode = $versionCode;
         return $this;
     }
 
-    public function setPortalName($portalName)
+    private function setPortalName($portalName)
     {
         $this->portalName = $portalName;
         return $this;
     }
 
-    public function setUserAgent($userAgent)
+    private function setUserAgent($userAgent)
     {
         $this->userAgent = $userAgent;
         return $this;
