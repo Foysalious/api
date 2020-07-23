@@ -215,8 +215,8 @@ class TopUpController extends Controller
 
         if ($type == 'customer') $agent = "App\\Models\\Customer";
         elseif ($type == 'partner') $agent = "App\\Models\\Partner";
-        elseif ($type == 'business') $agent = "App\\Models\\Business";
-        elseif ($type == 'Company') $agent = "App\\Models\\Business";
+        elseif ($type == 'business') $agent = "App\\Models\\BusinessStatics";
+        elseif ($type == 'Company') $agent = "App\\Models\\BusinessStatics";
 
         return $agent;
     }

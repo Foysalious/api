@@ -6,7 +6,7 @@ use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Loan\RobiTopUpWalletTransfer;
-use Sheba\Loan\Statics;
+use Sheba\Loan\GeneralStatics;
 use Sheba\ModificationFields;
 
 class LoanClaim
@@ -88,7 +88,7 @@ class LoanClaim
         $last_annual_payment_date = $claim->loan->last_annual_fee_payment_at;
         if(empty($last_annual_payment_date) || Carbon::parse(Carbon::now())->diffInDays($last_annual_payment_date) > 365)
         {
-            (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(Statics::getMicroLoanAnnualFee())->storeCreditPaymentEntryForAnnualFee();
+            (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(GeneralStatics::getMicroLoanAnnualFee())->storeCreditPaymentEntryForAnnualFee();
             $claim->loan->last_annual_fee_payment_at = Carbon::now()->addDays(365);
             return $claim->loan->update();
         }
@@ -99,7 +99,7 @@ class LoanClaim
      */
     private function deductClaimApprovalFee()
     {
-        (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(Statics::getClaimTransactionFee())->storeCreditPaymentEntryForClaimTransactionFee();
+        (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount(GeneralStatics::getClaimTransactionFee())->storeCreditPaymentEntryForClaimTransactionFee();
     }
 
 

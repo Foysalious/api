@@ -95,7 +95,7 @@ class MemberController extends Controller
                 ];
                 return api_response($request, $info, 200, ['info' => $info]);
             } else {
-                return api_response($request, null, 404, ["message" => 'Business not found.']);
+                return api_response($request, null, 404, ["message" => 'BusinessStatics not found.']);
             }
 
         } catch (Throwable $e) {

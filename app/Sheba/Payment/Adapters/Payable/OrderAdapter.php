@@ -128,7 +128,7 @@ class OrderAdapter implements PayableAdapter
             $this->userType = "App\\Models\\Partner";
         } elseif ($order->business_id) {
             $this->userId = $order->business_id;
-            $this->userType = "App\\Models\\Business";
+            $this->userType = "App\\Models\\BusinessStatics";
         } else {
             $this->userId = $order->customer_id;
             $this->userType = "App\\Models\\Customer";
@@ -137,13 +137,13 @@ class OrderAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
+        if ($this->userType == "App\\Models\\BusinessStatics") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
     private function getFailUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
+        if ($this->userType == "App\\Models\\BusinessStatics") return config('sheba.business_url');
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 

@@ -26,6 +26,6 @@ class HiredVehicle extends Model
 
     public function scopeHiredByBusiness($query, $business_id)
     {
-        return $query->where([['hired_by_type', "App\\Models\\Business"], ['hired_by_id', $business_id]]);
+        return $query->where([['hired_by_type', "App\\Models\\BusinessStatics"], ['hired_by_id', $business_id]]);
     }
 }
