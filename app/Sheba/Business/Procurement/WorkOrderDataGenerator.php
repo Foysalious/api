@@ -3,6 +3,8 @@
 use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Procurement;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class WorkOrderDataGenerator
@@ -26,7 +28,7 @@ class WorkOrderDataGenerator
      */
     public function setProcurement($procurement)
     {
-        $this->procurement = $this->procurementRepo->find((int)$procurement);
+        $this->procurement = $procurement instanceof Procurement ? $procurement : $this->procurementRepo->find((int)$procurement);
         $this->procurement->calculate();
         return $this;
     }
@@ -93,5 +95,14 @@ class WorkOrderDataGenerator
         }
 
         return $item_fields;
+    }
+
+    public function generatePDF()
+    {
+        $work_order = $this->get();
+        $file = App::make('dompdf.wrapper')->loadView('pdfs.work_order', compact('work_order'))->save('work_order.pdf');
+        $filename = 'tender-work-order/file/' . time() . "_" . 'work_order.pdf';
+        Storage::disk('s3')->put($filename, $file->output(), 'public');
+        return config('sheba.s3_url') . $filename;
     }
 }
