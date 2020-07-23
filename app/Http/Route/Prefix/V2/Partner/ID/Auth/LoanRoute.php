@@ -11,7 +11,7 @@ class LoanRoute
             $api->post('/password/reset','Auth\PasswordController@resetPasswordForBank');
         });
 
-        $api->group(['prefix'=>'loans','middleware'=>'jwtGlobalAuth'], function ($api) {
+        $api->group(['prefix'=>'loans'], function ($api) {
             $api->post('/upload-retailer-list','LoanController@uploadRetailerList');
             $api->get('/dashboard','LoanController@getDashboardData');
             $api->post('/strategic-partner-dashboard','LoanController@strategicPartnerDashboard');
@@ -35,6 +35,7 @@ class LoanRoute
             $api->delete('{partner_bank_loan}/delete-documents', 'LoanController@deleteDocument');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
             $api->post('/{loan_id}/update-claim-status','LoanController@claimStatusUpdate');
+            $api->get('loan-disbursement-report','LoanReportController@loanDisbursementReport');
 
         });
 
