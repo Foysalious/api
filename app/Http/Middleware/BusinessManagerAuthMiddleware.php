@@ -35,7 +35,7 @@ class BusinessManagerAuthMiddleware
 
             return $next($request);
         } else {
-            return api_response($request, null, 404, ["message" => 'BusinessStatics not found.']);
+            return api_response($request, null, 404, ["message" => 'Business not found.']);
         }
     }
 

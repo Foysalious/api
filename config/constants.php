@@ -311,8 +311,8 @@ return [
         'Idea' => 'Features to make life easier',
         'Assignment' => 'Analysis or research task',
         'Improvement' => 'Improvement of existing feature ',
-        'Risk' => 'BusinessStatics is having serious impact',
-        'Issue' => 'BusinessStatics can be effected today or tomorrow'
+        'Risk' => 'Business is having serious impact',
+        'Issue' => 'Business can be effected today or tomorrow'
     ],
     'FLAG_SEVERITY_LEVELS' => [
         'Critical' => 'Critical',

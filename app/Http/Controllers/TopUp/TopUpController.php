@@ -34,7 +34,7 @@ class TopUpController extends Controller
         try {
             if ($request->type == 'customer') $agent = "App\\Models\\Customer";
             elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
-            elseif ($request->type == 'business') $agent = "App\\Models\\BusinessStatics";
+            elseif ($request->type == 'business') $agent = "App\\Models\\Business";
             else $agent = "App\\Models\\Affiliate";
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
             $error_message = "Currently, we’re supporting";
@@ -221,8 +221,8 @@ class TopUpController extends Controller
 
         if ($type == 'customer') $agent = "App\\Models\\Customer";
         elseif ($type == 'partner') $agent = "App\\Models\\Partner";
-        elseif ($type == 'business') $agent = "App\\Models\\BusinessStatics";
-        elseif ($type == 'Company') $agent = "App\\Models\\BusinessStatics";
+        elseif ($type == 'business') $agent = "App\\Models\\Business";
+        elseif ($type == 'Company') $agent = "App\\Models\\Business";
 
         return $agent;
     }

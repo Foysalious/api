@@ -98,7 +98,7 @@ class BusinessCommonInformationCreator
 
     public function create()
     {
-        /** BusinessStatics Leave Types */
+        /** Business Leave Types */
         foreach (DefaultType::getWithKeys() as $key => $value) {
             $this->leaveTypeCreator->setBusiness($this->business)
                 ->setMember($this->member)
@@ -107,25 +107,25 @@ class BusinessCommonInformationCreator
                 ->create();
         }
 
-        /** BusinessStatics Office Hours */
+        /** Business Office Hours */
         $this->officeTimingCreateRequest = $this->officeTimingCreateRequest->setBusiness($this->business)
             ->setStartTime(OfficeTime::START_TIME)
             ->setEndTime(OfficeTime::END_TIME);
         $this->officeHoursCreator->setOfficeTimingCreateRequest($this->officeTimingCreateRequest)->create();
 
-        /**  BusinessStatics Weekend */
+        /**  Business Weekend */
         $weekdays = ['friday', 'saturday'];
         foreach ($weekdays as $weekday) {
             $this->weekendCreateRequest = $this->weekendCreateRequest->setBusiness($this->business)->setWeekday($weekday);
             $this->weekendCreator->setWeekendCreateRequest($this->weekendCreateRequest)->create();
         }
 
-        /** BusinessStatics Attendance Type */
+        /** Business Attendance Type */
         $this->attendanceTypeCreateRequest = $this->attendanceTypeCreateRequest->setBusiness($this->business)
             ->setAttendanceType(AttendanceType::ATTENDANCE_TYPE);
         $this->attendanceTypesCreator->setAttendanceTypeCreateRequest($this->attendanceTypeCreateRequest)->create();
 
-        /** BusinessStatics Government Holiday */
+        /** Business Government Holiday */
         $this->businessGovtHolidayCreatorRequest = $this->businessGovtHolidayCreatorRequest->setBusiness($this->business);
         $this->businessGovtHolidayCreator->setBusinessGovtHolidayCreatorRequest($this->businessGovtHolidayCreatorRequest)->create();
 
