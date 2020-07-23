@@ -42,12 +42,6 @@ class SendCancelRequest
         return $this;
     }
 
-    public function setJob($job)
-    {
-        $this->job = $job;
-        return $this;
-    }
-
     public function setIsEscalated($isEscalated)
     {
         $this->isEscalated = $isEscalated;
