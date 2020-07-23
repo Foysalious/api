@@ -41,14 +41,14 @@ class Driver extends Model
 
     public function scopeWhoseOwnerIsBusiness($query, $business_id = null)
     {
-        $query = $query->where('owner_type', "App\\Models\\BusinessStatics");
+        $query = $query->where('owner_type', "App\\Models\\Business");
         if (!$business_id) $query = $query->where('owner_id', (int)$business_id);
         return $query;
     }
 
     public function scopeWhoseOwnerIsNotBusiness($query)
     {
-        return $query->where('owner_type', '<>', "App\\Models\\BusinessStatics");
+        return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 
     public function getLicenseAcceptanceDay($today, $license_number_end_date)

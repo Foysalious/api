@@ -15,6 +15,6 @@ class HiredDriver extends Model
 
     public function scopeWhoseOwnerIsNotBusiness($query)
     {
-        return $query->where('owner_type', '<>', "App\\Models\\BusinessStatics");
+        return $query->where('owner_type', '<>', "App\\Models\\Business");
     }
 }

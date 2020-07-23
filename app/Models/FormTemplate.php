@@ -34,6 +34,6 @@ class FormTemplate extends Model
 
     public function scopeBusinessOwner($query, $business_id)
     {
-        return $query->where('owner_type', "App\\Models\\BusinessStatics")->where('owner_id', $business_id);
+        return $query->where('owner_type', "App\\Models\\Business")->where('owner_id', $business_id);
     }
 }

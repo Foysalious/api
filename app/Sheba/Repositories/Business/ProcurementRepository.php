@@ -20,7 +20,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
     public function ofBusiness($business_id)
     {
-        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\BusinessStatics");
+        return $this->model->where('owner_id', $business_id)->where('owner_type', "App\\Models\\Business");
     }
 
     public function builder()
