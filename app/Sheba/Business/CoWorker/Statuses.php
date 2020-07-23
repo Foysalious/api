@@ -9,4 +9,9 @@ class Statuses
     const INVITED = 'invited';
     const ACTIVE = 'active';
     const INACTIVE = 'inactive';
+
+    public static function getAccessible()
+    {
+        return [self::ACTIVE, self::INVITED];
+    }
 }

@@ -150,10 +150,11 @@ class MemberController extends Controller
      */
     public function getMemberInfo($member, Request $request, AccessControl $access_control)
     {
+        /** @var Member $member */
         $member = Member::find((int)$member);
-        // $business = $member->businesses()->first();
-        $business = $member->businesses()->wherePivot('status', '<>', Statuses::INACTIVE)->first();
+        $business = $member->businessMember ? $member->businessMember->business : null;
         $business_members = BusinessMember::where('member_id', $member->id)->get();
+
         if (!$business_members->isEmpty()) {
             $business_members = $business_members->reject(function ($business_member) {
                 return $business_member->status == Statuses::INACTIVE;

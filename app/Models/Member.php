@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Expense\Expense;
 
 class Member extends Model
@@ -22,9 +23,19 @@ class Member extends Model
         return $this->hasMany(Inspection::class);
     }
 
-    public function businessMember()
+    /*public function businessMember()
     {
         return $this->hasOne(BusinessMember::class);
+    }*/
+
+    public function getBusinessMemberAttribute()
+    {
+        return $this->businessMembers()->whereIn('status', Statuses::getAccessible())->first();
+    }
+
+    public function businessMembers()
+    {
+        return $this->hasMany(BusinessMember::class);
     }
 
     public function notifications()
