@@ -1,15 +1,17 @@
 <?php namespace App\Http\Route\Prefix\V3;
+
 class Route
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'v3',
-            'namespace' => 'App\Http\Controllers'
-        ], function ($api) {
+        $api->group(['prefix' => 'v3', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new CustomerRoute())->set($api);
             (new AffiliateRoute())->set($api);
             (new PartnerRoute())->set($api);
+            (new BusinessRoute())->set($api);
+
             $api->get('locations', 'Location\LocationController@index');
+            $api->get('thana/reverse', 'Location\LocationController@getThanaFromLatLng');
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
@@ -20,9 +22,10 @@ class Route
                 $api->get('send-order-requests', 'Partner\PartnerListController@getPartners');
                 $api->get('/', 'Partner\PartnerListController@get');
             });
-
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
+                $api->get('cars', 'RentACar\RentACarController@getCars');
+                $api->get('thana', 'RentACar\RentACarController@getPickupAndDestinationThana');
             });
             $api->group(['prefix' => 'register'], function ($api) {
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
@@ -48,7 +51,7 @@ class Route
             });
             $api->get('training-videos', 'TrainingVideoController@index');
             $api->get('sitemap', 'SitemapController@index');
+            $api->get('settings/car', 'HomePageSettingController@getCarV3');
         });
-
     }
 }

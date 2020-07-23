@@ -59,7 +59,7 @@ class PaymentManager
     {
         if ($this->method) return $this->method;
 
-        $this->method = PaymentStrategy::getMethod($this->methodName, $this->payable->user);
+        $this->method = PaymentStrategy::getMethod($this->methodName, $this->payable);
 
         return $this->method;
     }

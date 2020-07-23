@@ -207,9 +207,9 @@ class JobList
             $formatted_job->put('total_price', (double)$job->partnerOrder->totalPrice);
             $formatted_job->put('category_id', $job->category_id);
             $formatted_job->put('category_name', $job->category->name);
-            $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress->address);
-            $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress->location->name);
-            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress->mobile);
+            $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
+            $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
+            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile :  $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
             $formatted_job->put('is_rent_a_car', $job->isRentCar());

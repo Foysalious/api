@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
 use Sheba\Wallet\Wallet;
 use Sheba\Reward\Rewardable;
@@ -22,6 +23,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function statusChangeLog()
+    {
+        return $this->hasMany(Model::class);
     }
 
     public function profile()

@@ -523,6 +523,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasMany(SubscriptionOrder::class);
     }
 
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
+    }
+
     public function getSubscriptionRulesAttribute($rules)
     {
         return json_decode($rules);
@@ -940,5 +945,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function referCode()
     {
         return $this->id . str_random(8 - (strlen($this->id)));
+    }
+
+    public function isMissionSaveBangladesh()
+    {
+        return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 }

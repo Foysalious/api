@@ -1,15 +1,16 @@
 <?php namespace App\Http\Controllers;
 
+use App\Jobs\SendCancelRequest;
 use App\Models\JobCancelReason;
 
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Sheba\CancelRequest\PartnerRequestor;
-use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
 
 class PartnerCancelRequestController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, DispatchesJobs;
 
     public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor)
     {
@@ -18,13 +19,13 @@ class PartnerCancelRequestController extends Controller
         $reasons = JobCancelReason::where('is_published_for_sp', 1)->pluck('id');
         $reasons = implode(',', array_flatten($reasons));
         $this->validate($request, ['cancel_reason' => "in:$reasons"]);
-        $partner_requestor->setJob($job)->setReason(JobCancelReason::find($request->cancel_reason)->key)->setEscalatedStatus(0);
-
-        $error = $partner_requestor->hasError($request);
+        $cancel_reason = JobCancelReason::find($request->cancel_reason)->key;
+        $partner_requestor->setJob($job)->setReason($cancel_reason)->setEscalatedStatus(0);
+        $error = $partner_requestor->hasError();
         if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
-
-        $partner_requestor->request();
-        return api_response($request, 1, 200, ['message' => "Cancel Request create successfully"]);
+        dispatch(new SendCancelRequest($job, $cancel_reason, 0, 0));
+        sleep(5);
+        return api_response($request, 1, 200, ['message' => "You've successfully submitted the request. Please give some time to process."]);
     }
 
     public function cancelReasons(Request $request)

@@ -173,4 +173,37 @@ class ResourceRepository extends BaseRepository
             $this->deleteImageFromCDN($old_nid_image);
         }
     }
+
+    private function updateIsFirstTime(ReSrc $resource)
+    {
+        $resource->update($this->withUpdateModificationField(['is_first_time' => 0]));
+    }
+
+    public function getFirstTimeUserData(Request $request)
+    {
+        $resource = $request->manager_resource;
+        $profile  = $resource->profile;
+        $is_first_time = 0;
+        if($resource->is_first_time){
+            $this->updateIsFirstTime($resource);
+            $is_first_time = 1;
+            if($profile->affiliate)
+                return [
+                    "message"         => "ইতোমধ্যে আপনার একটি sBondhu একাউন্ট রয়েছে, অনুগ্রহ করে sBondhu অ্যাপ ওপেন করুন। এখন থেকে আপনার sManager এবং sBondhu একাউন্ট একই আইডি এবং পিন দিয়ে লগ ইন করতে হবে",
+                    "affiliate_exist" => 1,
+                    "is_first_time"   => $is_first_time,
+                ];
+            return [
+                "message"         => "sManager এ প্রদত্ত তথ্য দিয়ে sBondhu একাউন্ট তৈরি হয়ে যাবে। sBondhu তে লগ ইন করুণ",
+                "affiliate_exist" => 0,
+                "is_first_time"   => $is_first_time,
+            ];
+        }
+        else{
+            return [
+                "message" => "Not first time user",
+                "is_first_time"   => $is_first_time,
+            ];
+        }
+    }
 }
