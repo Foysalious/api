@@ -18,10 +18,10 @@ class SendCancelRequestJob extends Job implements ShouldQueue
 
     public function handle(CancelRequestFactory $cancelRequestFactory)
     {
+        if ($this->attempts() > 2) return;
         $requester = $cancelRequestFactory->setRequestedBy($this->sendCancelRequest->getRequestedByType())->get();
         $requester->setRequest($this->sendCancelRequest);
         if ($requester->hasError()) return;
-        if ($this->attempts() > 2) return;
         $requester->request();
     }
 }
