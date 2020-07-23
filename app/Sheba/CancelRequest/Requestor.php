@@ -6,6 +6,7 @@ use Sheba\Dal\Payable\Types;
 use Sheba\Dal\Payment\PaymentRepositoryInterface;
 use Sheba\Repositories\CancelRequestRepository;
 use Sheba\Repositories\JobRepository;
+use Sheba\UserAgentInformation;
 
 abstract class Requestor
 {
@@ -17,6 +18,8 @@ abstract class Requestor
     private $isEscalated;
     /** @var PaymentRepositoryInterface */
     private $paymentRepository;
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
 
     public function __construct(CancelRequestRepository $cancel_requests, JobRepository $job_repo, PaymentRepositoryInterface $paymentRepository)
     {
@@ -52,7 +55,15 @@ abstract class Requestor
         return $this;
     }
 
+    public function setUserAgentInformation($userAgentInformation)
+    {
+        $this->userAgentInformation = $userAgentInformation;
+        return $this;
+    }
+
     abstract function request();
+
+    abstract protected function getUserType();
 
     abstract protected function notify();
 
@@ -62,7 +73,11 @@ abstract class Requestor
             'job_id' => $this->job->id,
             'cancel_reason' => $this->reason,
             'from_status' => $this->job->status,
-            'is_escalated' => $this->isEscalated
+            'is_escalated' => $this->isEscalated,
+            'portal_name' => $this->userAgentInformation->getPortalName(),
+            'ip' => $this->userAgentInformation->getIp(),
+            'user_agent' => $this->userAgentInformation->getUserAgent(),
+            'created_by_type' => $this->getUserType()
         ];
         $this->cancelRequests->create($data);
     }

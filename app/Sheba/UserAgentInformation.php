@@ -7,30 +7,71 @@ class UserAgentInformation
 {
     /** @var Request */
     private $request;
+    private $ip;
+    private $versionCode;
+    private $portalName;
+    private $userAgent;
 
     public function setRequest(Request $request)
     {
         $this->request = $request;
+        $this->resolve();
+        return $this;
+    }
+
+    /**
+     *  request set to null because it can't be serialized in Laravel
+     */
+    private function resolve()
+    {
+        $this->setPortalName($this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal');
+        $this->setIp($this->request->ip());
+        $this->setVersionCode($this->request->header('Version-Code'));
+        $this->setUserAgent($this->request->header('User-Agent'));
+        $this->request = null;
+    }
+
+    public function setIp($ip)
+    {
+        $this->ip = $ip;
+        return $this;
+    }
+
+    public function setVersionCode($versionCode)
+    {
+        $this->versionCode = $versionCode;
+        return $this;
+    }
+
+    public function setPortalName($portalName)
+    {
+        $this->portalName = $portalName;
+        return $this;
+    }
+
+    public function setUserAgent($userAgent)
+    {
+        $this->userAgent = $userAgent;
         return $this;
     }
 
     public function getPortalName()
     {
-        return $this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal';
+        return $this->portalName;
     }
 
     public function getIp()
     {
-        return $this->request->ip();
+        return $this->ip;
     }
 
     public function getVersionCode()
     {
-        return $this->request->header('Version-Code');
+        return $this->versionCode;
     }
 
     public function getUserAgent()
     {
-        return $this->request->header('User-Agent');
+        return $this->userAgent;
     }
 }

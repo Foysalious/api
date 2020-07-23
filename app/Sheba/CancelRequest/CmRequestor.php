@@ -1,12 +1,14 @@
 <?php namespace Sheba\CancelRequest;
 
 use App\Models\Department;
+use App\Models\User;
 use Auth;
+use Exception;
 
 class CmRequestor extends Requestor
 {
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function request()
     {
@@ -16,7 +18,7 @@ class CmRequestor extends Requestor
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     protected function notify()
     {
@@ -26,5 +28,10 @@ class CmRequestor extends Requestor
             "link" => url("order/" . $order->id),
             "type" => notificationType('Danger')
         ]);
+    }
+
+    protected function getUserType()
+    {
+        return get_class(new User());
     }
 }

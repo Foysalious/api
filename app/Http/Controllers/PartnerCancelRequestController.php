@@ -1,18 +1,19 @@
 <?php namespace App\Http\Controllers;
 
-use App\Jobs\SendCancelRequest;
 use App\Models\JobCancelReason;
 
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Sheba\CancelRequest\PartnerRequestor;
+use Sheba\CancelRequest\SendCancelRequestJob;
 use Sheba\ModificationFields;
+use Sheba\UserAgentInformation;
 
 class PartnerCancelRequestController extends Controller
 {
     use ModificationFields, DispatchesJobs;
 
-    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor)
+    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor, UserAgentInformation $userAgentInformation)
     {
         $this->setModifier($request->manager_resource);
         $job = $request->job;
@@ -23,7 +24,8 @@ class PartnerCancelRequestController extends Controller
         $partner_requestor->setJob($job)->setReason($cancel_reason)->setEscalatedStatus(0);
         $error = $partner_requestor->hasError();
         if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
-        dispatch(new SendCancelRequest($job, $cancel_reason, 0, 0));
+        $userAgentInformation->setRequest($request);
+        dispatch(new SendCancelRequestJob($job, $cancel_reason, null, 0, 0,  $userAgentInformation));
         sleep(5);
         return api_response($request, 1, 200, ['message' => "You've successfully submitted the request. Please give some time to process."]);
     }
