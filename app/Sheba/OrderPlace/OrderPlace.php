@@ -123,14 +123,13 @@ class OrderPlace
     /** @var JobUpdateLogCreator */
     private $jobUpdateLogCreator;
 
-    public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
-    public function __construct(JobUpdateLogCreator $jobUpdateLogCreator, Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
+    public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
+                                Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
                                 UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
     {
         $this->jobUpdateLogCreator = $jobUpdateLogCreator;
-        $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->orderVoucherData = $orderVoucherData;
         $this->partnerListBuilder = $partnerListBuilder;
@@ -444,7 +443,7 @@ class OrderPlace
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
-            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
+            if ($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
