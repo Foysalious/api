@@ -66,7 +66,7 @@ class SslRechargeResponseCodes
             '353' => "This MSISDN has already been recharged once moments ago.",
             '354' => "Your account with VR is currently inactive.",
             '380' => "This Recharge could not be confirmed and is tagged as permanent failure.",
-            '398' => "General Exception.",
+            '398' => "GeneralStatics Exception.",
             '399' => "Unknown Status due to Technical fault or any other general or critical error.",
             '400' => "This Recharge has been canceled by the client.",
             '800' => "Test Successful Recharge. Recharge is marked as complete for testing purpose.",

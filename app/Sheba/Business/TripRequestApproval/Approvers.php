@@ -71,7 +71,7 @@ class Approvers
     }
 
     /**
-     * Business Members of this Department
+     * BusinessStatics Members of this Department
      *
      * @return $this
      */

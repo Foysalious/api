@@ -10,10 +10,14 @@ use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Http\Request;
 use ReflectionException;
 use Sheba\Loan\Completion;
+use Sheba\Loan\CompletionStatics;
+use Sheba\Loan\Statics\BusinessStatics;
 use Sheba\ModificationFields;
 
-class BusinessInfo implements Arrayable {
+class BusinessInfo implements Arrayable
+{
     use ModificationFields;
+
     /**
      * @var Resource
      */
@@ -28,8 +32,12 @@ class BusinessInfo implements Arrayable {
     private $basic_information;
     private $business_additional_information;
     private $sales_information;
+    private $type;
+    private $version;
+    private $data;
 
-    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null) {
+    public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
+    {
 
         $this->loanDetails = $request;
         if ($partner) {
@@ -43,32 +51,23 @@ class BusinessInfo implements Arrayable {
             $this->profile  = $resource->profile;
         }
     }
-
-    public static function getValidator() {
-        return [
-            'business_type'      => 'string',
-            'location'           => 'required|string',
-            'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'full_time_employee' => 'numeric'
-        ];
-    }
-
     /**
      * @param Request $request
      * @throws ReflectionException
      */
-    public function update(Request $request) {
+    public function update(Request $request)
+    {
         $partner_data       = [
-            'business_type'                   => $request->business_type,
-            'smanager_business_type'          => $request->smanager_business_type,
-            'ownership_type'                  => $request->ownership_type,
-            'stock_price'                     => (double)$request->stock_price,
-            'address'                         => $request->location,
-            'full_time_employee'              => $request->full_time_employee,
-            'part_time_employee'              => $request->part_time_employee,
-            'sales_information'               => (new SalesInfo($request->last_six_month_sales_information))->toString(),
-            'business_additional_information' => (new BusinessAdditionalInfo($request->business_additional_information))->toString(),
-            'yearly_income'                   => $request->yearly_income
+            'business_type'           => $request->business_type,
+            'smanager_business_type'  => $request->smanager_business_type,
+            'ownership_type'          => $request->ownership_type,
+            'stock_price'             => (double)$request->stock_price,
+            'address'                 => $request->location,
+            'full_time_employee'      => $request->full_time_employee,
+            'part_time_employee'      => $request->part_time_employee,
+            'sales_information'       => (new SalesInfo($request->last_six_month_sales_information))->toString(),
+            BusinessStatics::INFO_KEY => (new BusinessAdditionalInfo($request->business_additional_information))->toString(),
+            'yearly_income'           => $request->yearly_income
         ];
         $partner_basic_data = [
             'establishment_year'       => $request->establishment_year,
@@ -77,6 +76,8 @@ class BusinessInfo implements Arrayable {
             'trade_license_issue_date' => $request->trade_license_issue_date,
             'business_category'        => $request->business_category,
             'sector'                   => $request->sector,
+            'registration_no'          => $request->registration_no,
+            'registration_year'        => $request->registration_year
         ];
         $this->profile->update($this->withUpdateModificationField(['tin_no' => $request->tin_no]));
         $this->partner->update($this->withBothModificationFields($partner_data));
@@ -93,35 +94,30 @@ class BusinessInfo implements Arrayable {
      * @return array
      * @throws ReflectionException
      */
-    public function completion() {
+    public function completion()
+    {
         $data = $this->toArray();
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
             $this->basic_information ? $this->basic_information->updated_at : null
-        ], [
-            'fixed_asset',
-            'security_check',
-            'business_category',
-            'sector',
-            'industry_and_business_nature',
-            'trade_license',
-            'trade_license_issue_date',
-        ]))->get();
+        ], CompletionStatics::business($this->version, $this->type)))->get();
     }
 
     /**
      * @return array
      * @throws ReflectionException
      */
-    public function toArray() {
-        return $this->loanDetails ? $this->dataFromLoanRequest() + self::staticsData() : $this->dataFromProfile();
+    public function toArray()
+    {
+        return $this->loanDetails ? $this->dataFromLoanRequest() + BusinessStatics::data() : $this->dataFromProfile();
     }
 
     /**
      * @throws ReflectionException
      */
-    private function dataFromLoanRequest() {
+    private function dataFromLoanRequest()
+    {
         $data = $this->loanDetails->getData();
         if (isset($data['business'])) {
 
@@ -131,72 +127,34 @@ class BusinessInfo implements Arrayable {
         } else {
             $data = [];
         }
-        $keys   = self::getKeys();
+        $keys   = BusinessStatics::keys();
         $output = [];
         foreach ($keys as $key) {
-            if ($key == 'business_additional_information') {
+            if ($key == BusinessStatics::INFO_KEY) {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
-                $output[$key] = (new BusinessAdditionalInfo($set))->toArray();
-            } elseif ($key == 'last_six_month_sales_information') {
+                $output[$key] = $this->version === 2 ? (new BusinessAdditionalInfo($set))->toVersionArray() : (new BusinessAdditionalInfo($set))->toArray();
+            } elseif ($key == BusinessStatics::SALES_INFO_KEY) {
                 $set          = array_key_exists($key, $data) ? $data[$key] : null;
                 $output[$key] = (new SalesInfo($set))->toArray();
             } else {
                 $output[$key] = array_key_exists($key, $data) ? $data[$key] : null;
             }
         }
-        $output['online_order'] = $this->getTotalOnlineOrderServed();
+        $output[BusinessStatics::ONLINE_ORDER_KEY] = $this->getTotalOnlineOrderServed();
         return $output;
     }
-
-    public static function getKeys() {
-        return [
-            'business_name',
-            'business_type',
-            'smanager_business_type',
-            'ownership_type',
-            'stock_price',
-            'location',
-            'establishment_year',
-            'tin_no',
-            'trade_license',
-            'trade_license_issue_date',
-            'yearly_income',
-            'tin_certificate',
-            'full_time_employee',
-            'part_time_employee',
-            'business_additional_information',
-            'last_six_month_sales_information',
-            'annual_cost',
-            'fixed_asset',
-            'security_check',
-            'business_category',
-            'sector',
-            'industry_and_business_nature',
-            'date_of_establishment',
-            'strategic_partner',
-            'short_name'
-        ];
-    }
-
-    private function getTotalOnlineOrderServed() {
+    private function getTotalOnlineOrderServed()
+    {
         return $this->partner->jobs()->where('status', 'Served')->count();
     }
 
-    public static function staticsData() {
-        return [
-            'business_types'          => constants('PARTNER_BUSINESS_TYPES'),
-            'smanager_business_types' => constants('PARTNER_SMANAGER_BUSINESS_TYPE'),
-            'ownership_types'         => constants('PARTNER_OWNER_TYPES'),
-            'business_categories'     => constants('PARTNER_BUSINESS_CATEGORIES'),
-            'sectors'                 => constants('PARTNER_BUSINESS_SECTORS')
-        ];
-    }
 
     /**
      * @return array
      * @throws ReflectionException
      */
-    private function dataFromProfile() {
+    private function dataFromProfile()
+    {
 
         return [
                    'business_name'                    => $this->partner->name,
@@ -209,14 +167,65 @@ class BusinessInfo implements Arrayable {
                    'tin_no'                           => $this->profile->tin_no,
                    'tin_certificate'                  => $this->profile->tin_certificate,
                    'trade_license'                    => $this->basic_information->trade_license,
-                   'trade_license_issue_date'         => $this->basic_information->trade_license_issue_date,
+                   'trade_license_issue_date'         => Carbon::parse($this->basic_information->trade_license_issue_date)->format('Y-m-d'),
+                   'registration_no'                  => $this->basic_information->registration_no,
+                   'registration_year'                => $this->basic_information->registration_year,
                    'business_category'                => $this->basic_information->business_category,
                    'sector'                           => $this->basic_information->sector,
                    'yearly_income'                    => $this->partner->yearly_income,
                    'full_time_employee'               => (int)$this->partner->full_time_employee ?: null,
                    'part_time_employee'               => (int)$this->partner->part_time_employee ?: null,
-                   'business_additional_information'  => (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
-                   'last_six_month_sales_information' => (new SalesInfo($this->sales_information))->toArray()
-               ] + self::staticsData();
+                   BusinessStatics::INFO_KEY          => $this->version === 2 ? (new BusinessAdditionalInfo($this->business_additional_information))->toVersionArray() : (new BusinessAdditionalInfo($this->business_additional_information))->toArray(),
+                   BusinessStatics::SALES_INFO_KEY => (new SalesInfo($this->sales_information))->toArray()
+               ] + BusinessStatics::data();
+    }
+
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $version
+     * @return BusinessInfo
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
+
+    /**
+     * @param $url
+     * @throws ReflectionException
+     */
+    public function updateProofOfBusinessPhoto($url)
+    {
+
+        if (empty($this->data)) $this->data = $this->toArray();
+        $this->data[BusinessStatics::INFO_KEY][BusinessStatics::PHOTO_KEY] = $url;
+        $this->partner->{BusinessStatics::INFO_KEY}               = (new BusinessAdditionalInfo($this->data[BusinessStatics::INFO_KEY]))->toString();
+        $this->partner->save();
+    }
+
+    /**
+     * @return bool
+     * @throws ReflectionException
+     */
+    public function hasProofOfBusinessPhoto()
+    {
+        $this->data = $this->toArray();
+        return isset($this->data[BusinessStatics::INFO_KEY][BusinessStatics::PHOTO_KEY]) && !empty($data[BusinessStatics::INFO_KEY][BusinessStatics::PHOTO_KEY]);
+    }
+
+    /**
+     * @return mixed
+     * @throws ReflectionException
+     */
+    public function getProofOfBusinessPhoto()
+    {
+        if (empty($this->data)) $this->data = $this->toArray();
+        return $this->data[BusinessStatics::INFO_KEY][BusinessStatics::PHOTO_KEY];
     }
 }

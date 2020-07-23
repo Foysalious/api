@@ -641,7 +641,7 @@ if (!function_exists('getOfferThumbFolder')) {
 if (!function_exists('getBusinessLogoFolder')) {
 
     /**
-     * Get Business Logo Folder.
+     * Get BusinessStatics Logo Folder.
      *
      * @param bool $with_base_url
      * @return string
@@ -658,7 +658,7 @@ if (!function_exists('getBusinessLogoFolder')) {
 if (!function_exists('getBusinessDefaultLogo')) {
 
     /**
-     * Get Business default Logo file name.
+     * Get BusinessStatics default Logo file name.
      *
      * @return string
      */

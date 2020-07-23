@@ -17,7 +17,7 @@ class MapMiddleware
             "http://admin.dev-sheba.xyz",
             "https://admin.dev-sheba.xyz",
             "https://admin.sheba.xyz",
-            /** Business Portal */
+            /** BusinessStatics Portal */
             "http://business.dev-sheba.xyz",
             "http://b2b.sheba.test",
             "https://b2b.dev-sheba.xyz",
