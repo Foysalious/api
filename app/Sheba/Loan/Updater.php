@@ -96,13 +96,7 @@ class Updater
 
     public static function updateFields()
     {
-        return [
-            'credit_score',
-            'duration',
-            'purpose',
-            'interest_rate',
-            'loan_amount'
-        ];
+        return GeneralStatics::getUpdateFields();
     }
 
     private function loanRequestUpdate(PartnerBankLoan $loan, $field)

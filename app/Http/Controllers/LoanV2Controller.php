@@ -11,7 +11,6 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
-use App\Sheba\Loan\DLSV2\LoanClaim;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -34,7 +33,8 @@ use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Loan;
-use Sheba\Loan\Statics;
+use Sheba\Loan\GeneralStatics;
+use Sheba\Loan\Statics\BusinessStatics;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
 use Sheba\Sms\Sms;
@@ -42,6 +42,7 @@ use Throwable;
 
 class LoanV2Controller extends Controller
 {
+    const VERSION = 2;
     use CdnFileManager, FileManager, ModificationFields;
 
     /** @var FileRepository $fileRepository */
@@ -170,11 +171,7 @@ class LoanV2Controller extends Controller
     public function store($partner, Request $request, Loan $loan)
     {
         try {
-            $this->validate($request, [
-                'loan_amount' => 'required|numeric',
-                'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get()),
-                'duration'    => 'required_if:loan_type,' . LoanTypes::MICRO . '|integer'
-            ]);
+            $this->validate($request, GeneralStatics::validator(2));
             /** @var Partner $partner */
             $partner  = $request->partner;
             $resource = $request->manager_resource;
@@ -184,10 +181,10 @@ class LoanV2Controller extends Controller
                 'month'       => $request->month ?: 0,
                 'type'        => $request->loan_type ?: LoanTypes::TERM
             ];
-            $info     = $loan->setPartner($partner)->setVersion(2)->setType($request->loan_type)->setResource($resource)->setData($data)->apply();
+            $info     = $loan->setPartner($partner)->setVersion(self::VERSION)->setType($request->loan_type)->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
         } catch (InsufficientWalletCredit $e) {
-            $fee     = (double)Statics::getFee($request->loan_type);
+            $fee     = (double)GeneralStatics::getFee($request->loan_type);
             $balance = (double)$partner->wallet;
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage(), 'price' => $fee, 'remaining_balance' => $balance]);
         } catch (ValidationException $e) {
@@ -257,7 +254,7 @@ class LoanV2Controller extends Controller
             $this->validate($request, PersonalInfo::getValidators());
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request, $request->loan_type );
+            (new Loan())->setPartner($partner)->setResource($manager_resource)->personalInfo()->update($request, $request->loan_type);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -276,8 +273,8 @@ class LoanV2Controller extends Controller
             $type             = $request->loan_type ?: LoanTypes::TERM;
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
-            $agreements       = Statics::getAgreements();
+            $info             = (new Loan())->setVersion(self::VERSION)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            $agreements       = BusinessStatics::agreements();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray() + $agreements,
                 'completion' => $info->completion()
@@ -291,10 +288,10 @@ class LoanV2Controller extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, BusinessInfo::getValidator() + ['loan_type' => 'sometimes|required|in:' . implode(',', LoanTypes::get())]);
+            $this->validate($request, BusinessStatics::validator(2));
             $partner  = $request->partner;
             $resource = $request->manager_resource;
-            (new Loan())->setPartner($partner)->setVersion(2)->setType($request->loan_type)
+            (new Loan())->setPartner($partner)->setVersion(self::VERSION)->setType($request->loan_type)
                         ->setResource($resource)->businessInfo()->update($request);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
@@ -314,7 +311,7 @@ class LoanV2Controller extends Controller
             $partner          = $request->partner;
             $type             = $request->loan_type ?: LoanTypes::TERM;
             $manager_resource = $request->manager_resource;
-            $info             = (new Loan())->setVersion(2)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
+            $info             = (new Loan())->setVersion(self::VERSION)->setType($type)->setPartner($partner)->setResource($manager_resource)->businessInfo();
             if ($info->hasProofOfBusinessPhoto()) {
                 $this->deleteOldImage($info->getProofOfBusinessPhoto());
             }
@@ -360,7 +357,7 @@ class LoanV2Controller extends Controller
     public function updateFinanceInformation($partner, Request $request)
     {
         try {
-            if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
+            if (isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
                 $this->validate($request, FinanceInfo::getValidatorsForMicro());
             else
                 $this->validate($request, FinanceInfo::getValidators());
@@ -382,7 +379,7 @@ class LoanV2Controller extends Controller
         try {
             $resource = $request->manager_resource;
             $partner  = $request->partner;
-            $info = $loan->setPartner($partner)->setResource($resource)->granterDetails();
+            $info     = $loan->setPartner($partner)->setResource($resource)->granterDetails();
             return api_response($request, $info, 200, [
                 'info'       => $info->toArray(),
                 'completion' => $info->completion()
