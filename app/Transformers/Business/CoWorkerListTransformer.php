@@ -5,10 +5,21 @@ use App\Models\Member;
 
 class CoWorkerListTransformer extends TransformerAbstract
 {
+    private $isInactiveFilterApplied;
+
+    public function __construct($is_inactive_filter_applied)
+    {
+        $this->isInactiveFilterApplied = $is_inactive_filter_applied;
+    }
+
     public function transform(Member $member)
     {
         $profile = $member->profile;
-        $business_member = $member->businessMember;
+        if ($this->isInactiveFilterApplied)
+            $business_member = $member->businessMemberGenerated;
+        else
+            $business_member = $member->businessMember;
+
         $role = $business_member->role;
         return [
             'id' => $member->id,
