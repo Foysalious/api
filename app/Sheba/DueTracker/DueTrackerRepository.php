@@ -48,7 +48,7 @@ class DueTrackerRepository extends BaseRepository
         if ($request->has('q') && !empty($request->q)) {
             $query = preg_replace("/\+/", "", $request->q);
             $list  = $list->filter(function ($item) use ($query) {
-                return preg_match("%$query%i", $item['customer_name']) || preg_match("%$query%i", $item['customer_mobile']);
+                return strpos($item['customer_name'],"$query")!==false || strpos($item['customer_mobile'],"$query" )!==false;
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
