@@ -350,7 +350,7 @@ class CoWorkerController extends Controller
                     }
                 ]);
             }
-        ]);
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
 
         if ($request->has('department')) {
             $members = $members->whereHas('businessMember', function ($q) use ($request) {
@@ -369,7 +369,6 @@ class CoWorkerController extends Controller
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($members, new CoWorkerListTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
-
 
         if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
