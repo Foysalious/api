@@ -20,7 +20,7 @@ class CoWorkerListTransformer extends TransformerAbstract
                 'mobile' => $profile->mobile,
                 'email' => $profile->email,
             ],
-            'status' => $member->businessMember->status,
+            'status' => $business_member->status,
             'department_id' => $role ? $role->businessDepartment->id : null,
             'department' => $role ? $role->businessDepartment->name : null,
             'designation' => $role ? $role->name : null
