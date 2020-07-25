@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -329,28 +330,14 @@ class CoWorkerController extends Controller
      */
     public function index($business, Request $request)
     {
+        /** @var Business $business */
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
         list($offset, $limit) = calculatePagination($request);
 
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
-            },
-            'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE);
+        $members = $business->membersWithProfileAndAccessibleBusinessMember();
 
         if ($request->has('department')) {
             $members = $members->whereHas('businessMember', function ($q) use ($request) {

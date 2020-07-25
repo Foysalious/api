@@ -167,23 +167,9 @@ class EmployeeController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        /** @var Business $business */
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile');
-            },
-            'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
+        $members = $business->membersWithProfileAndAccessibleBusinessMember()->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -206,23 +192,9 @@ class EmployeeController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        /** @var Business $business */
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-
-        $business_member_with_details = $business->members()->where('business_member.id', $business_member_id)->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-            }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE)->first();
+        $business_member_with_details = $business->membersWithProfileAndAccessibleBusinessMember()->where('business_member.id', $business_member_id)->first();
 
         if (!$business_member_with_details) return api_response($request, null, 404);
 
@@ -283,32 +255,18 @@ class EmployeeController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        /** @var Business $business */
         $business = $this->getBusiness($request);
-        $member = $this->repo->find($business_member['member_id']);
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
-            },
-            'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE);
 
+        $members = $business->membersWithProfileAndAccessibleBusinessMember();
         $members = $members->get()->unique();
+
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         $employees = new Collection($members, new CoWorkerMinimumTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        $employees = $employees->reject(function($employee) use ($member) { return $employee['id'] == $member->id; });
+        $employees = $employees->reject(function($employee) use ($business_member) { return $employee['id'] == $business_member->id; });
 
         if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
         return api_response($request, null, 404);

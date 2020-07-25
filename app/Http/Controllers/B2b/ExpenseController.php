@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use Carbon\Carbon;
@@ -46,23 +47,9 @@ class ExpenseController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
+        /** @var Business $business */
         $business = $request->business;
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile');
-            },
-            'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
+        $members = $business->membersWithProfileAndAccessibleBusinessMember()->get();
 
         if ($request->has('department_id')) {
             $members = $members->filter(function ($member, $key) use ($request) {
@@ -127,12 +114,6 @@ class ExpenseController extends Controller
         $totalExpenseCount = $expenses->count();
         if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount]);
-    }
-
-    private function getMember($member_id)
-    {
-        $member = Member::findOrFail($member_id);
-        return $member;
     }
 
     public function show($business, $expense, Request $request)
