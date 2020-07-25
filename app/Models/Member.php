@@ -23,10 +23,10 @@ class Member extends Model
         return $this->hasMany(Inspection::class);
     }
 
-    /*public function businessMember()
+    public function businessMember()
     {
-        return $this->hasOne(BusinessMember::class);
-    }*/
+        return $this->businessMembers()->whereIn('status', Statuses::getAccessible());
+    }
 
     public function getBusinessMemberAttribute()
     {
@@ -81,5 +81,10 @@ class Member extends Model
             return $this->profile->mobile;
         }
         return $this->profile->email;
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', Statuses::ACTIVE);
     }
 }

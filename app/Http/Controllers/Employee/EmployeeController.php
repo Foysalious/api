@@ -17,6 +17,7 @@ use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
 use Sheba\Business\CoWorker\ProfileCompletionCalculator;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\CoWorker\UpdaterV2 as Updater;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\Attendance\Model as Attendance;
@@ -167,15 +168,22 @@ class EmployeeController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with(['profile' => function ($q) {
-            $q->select('profiles.id', 'name', 'mobile');
-        }, 'businessMember' => function ($q) {
-            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with(['role' => function ($q) {
-                $q->select('business_roles.id', 'business_department_id', 'name')->with(['businessDepartment' => function ($q) {
-                    $q->select('business_departments.id', 'business_id', 'name');
-                }]);
-            }]);
-        }])->get();
+        $members = $business->members()->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile');
+            },
+            'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -214,7 +222,8 @@ class EmployeeController extends Controller
                     }
                 ]);
             }
-        ])->first();
+        ])->wherePivot('status', '<>', Statuses::INACTIVE)->first();
+
         if (!$business_member_with_details) return api_response($request, null, 404);
 
         $manager = new Manager();
@@ -291,7 +300,7 @@ class EmployeeController extends Controller
                     }
                 ]);
             }
-        ]);
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
 
         $members = $members->get()->unique();
         $manager = new Manager();

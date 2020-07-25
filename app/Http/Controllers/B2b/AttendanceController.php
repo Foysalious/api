@@ -12,6 +12,7 @@ use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\CoWorker\Statuses as CoWorkerStatuses;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -87,16 +88,18 @@ class AttendanceController extends Controller
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
-            },
-            'businessMember' => function ($q) {
+            }, 'businessMember' => function ($q) {
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
                                 $q->select('business_departments.id', 'business_id', 'name');
-                            }]);
-                    }]);
-            }]);
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', CoWorkerStatuses::INACTIVE);
 
         if ($request->has('department_id')) {
             $members = $members->whereHas('businessMember', function ($q) use ($request) {
