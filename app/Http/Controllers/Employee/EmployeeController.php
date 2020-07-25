@@ -238,6 +238,9 @@ class EmployeeController extends Controller
             ->setDesignation($request->designation)
             ->setManager($request->manager);
 
+        if ($business_member->status == Statuses::INVITED)
+            $updater->setStatus(Statuses::ACTIVE);
+
         if ($updater->hasError())
             return api_response($request, null, $updater->getErrorCode(), ['message' => $updater->getErrorMessage()]);
 

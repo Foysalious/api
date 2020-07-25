@@ -35,6 +35,7 @@ class UpdaterV2
     private $businessRoleRepository;
     private $businessMemberUpdater;
     private $businessMemberRepository;
+    private $status;
 
     /**
      * UpdaterV2 constructor.
@@ -156,13 +157,24 @@ class UpdaterV2
         return $this;
     }
 
+    /**
+     * @param mixed $status
+     * @return UpdaterV2
+     */
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
     public function update()
     {
         $profile_data = ['name' => $this->name, 'mobile' => $this->mobile];
         $this->profileRepository->updateRaw($this->profile, $profile_data);
         $business_member_data = [
             'manager_id' => $this->manager,
-            'business_role_id' => $this->businessRole->id
+            'business_role_id' => $this->businessRole->id,
+            'status' => $this->status ?: $this->businessMember->status
         ];
         $this->businessMemberRepository->update($this->businessMember, $this->withUpdateModificationField($business_member_data));
     }
