@@ -3,6 +3,7 @@
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\Wallet\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -63,6 +64,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    public function retailers()
+    {
+        return $this->profile->retailers();
     }
 
     public function withdrawalRequests()

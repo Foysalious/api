@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\Dal\RetailerMembers\RetailerMember;
 use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 
@@ -110,6 +111,10 @@ class Profile extends Model {
 
     public function granter() {
         return $this->hasOne(Profile::class, 'id', 'grantor_id');
+    }
+
+    public function retailers() {
+        return $this->hasMany(Retailer::class, 'mobile', 'mobile');
     }
 
     public function bankUser() {
