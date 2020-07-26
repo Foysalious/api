@@ -1,7 +1,6 @@
 <?php namespace Sheba\Checkout;
 
 
-use App\Models\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
 
