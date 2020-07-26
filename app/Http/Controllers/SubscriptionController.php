@@ -5,7 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\LocationService;
 use App\Models\Service;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Location\LocationSetter;
