@@ -2,7 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
-
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 class ServiceSubscriptionDiscount extends Model
 {
     protected $guarded = ['id'];
