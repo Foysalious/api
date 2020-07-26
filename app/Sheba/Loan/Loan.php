@@ -45,6 +45,7 @@ use Sheba\Loan\Exceptions\InvalidTypeException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -211,10 +212,10 @@ class Loan
     {
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
         $data = [
-            'big_banner' => Statics::bigBanner(),
-            'banner' => Statics::banner(),
+            'big_banner' => GeneralStatics::bigBanner(),
+            'banner' => GeneralStatics::banner(),
         ];
-        $data = array_merge($data, (new RunningApplication($running))->toArray(), ['details' => Statics::homepage()]);
+        $data = array_merge($data, (new RunningApplication($running))->toArray(), ['details' => GeneralStatics::homepage()]);
         return $data;
     }
 
@@ -225,10 +226,10 @@ class Loan
     public function homepageV2()
     {
         $data = [
-            'big_banner' => Statics::bigBanner(),
-            'banner' => Statics::banner(),
+            'big_banner' => GeneralStatics::bigBanner(),
+            'banner'     => GeneralStatics::banner(),
         ];
-        $data = array_merge($data, Statics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => Statics::homepage()]);
+        $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
     }
 
@@ -301,11 +302,11 @@ class Loan
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         if ($this->version === 2) {
-            $data['details_link'] = Statics::getDetailsLink($this->type);
-            $data['loan_fee'] = Statics::getFee($this->type);
-            $data['maximum_day'] = Statics::getMinimumDay($this->type);
-            $data['minimum_loan_amount'] = Statics::getMinimumAmount($this->type);
-            $data['maximum_loan_amount'] = Statics::getMaximumAmount($this->type);
+            $data['details_link'] = GeneralStatics::getDetailsLink($this->type);
+            $data['loan_fee'] = GeneralStatics::getFee($this->type);
+            $data['maximum_day'] = GeneralStatics::getMinimumDay($this->type);
+            $data['minimum_loan_amount'] = GeneralStatics::getMinimumAmount($this->type);
+            $data['maximum_loan_amount'] = GeneralStatics::getMaximumAmount($this->type);
         }
 
         return $data;
@@ -403,6 +404,7 @@ class Loan
     public function repaymentList($loan_id, $all = false, $month = null, $year = null)
     {
         $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
+        $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -415,6 +417,8 @@ class Loan
                 'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
             ]);
         }
+        $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
+        $data['due_amount']   = $this->getDue($last_claim->id);
 
         return $data;
     }
@@ -473,6 +477,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::PENDING) {
             $data['loan_balance'] = 0;
@@ -483,6 +488,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::APPROVED && ($due = $this->getDue($last_claim->id)) > 0) {
             $is_defaulter = $this->isDefaulter($last_claim->defaulter_date);
@@ -494,6 +500,7 @@ class Loan
             $data['should_pay'] = 1;
             $data['is_defaulter'] = $is_defaulter;
             $data['success_msg_seen'] = $last_claim->approved_msg_seen;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
 
         if ($last_claim && $last_claim->status == Statuses::DECLINED) {
@@ -505,6 +512,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         $data['recent_claims'] = $this->getRecentClaims($request->loan_id);
         $data['recent_transactions'] = $this->getRecentRepayments($request->loan_id);
@@ -626,8 +634,7 @@ class Loan
 
     public function personalInfo()
     {
-        $personal = (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
-        return $personal;
+        return (new PersonalInfo($this->partner, $this->resource, $this->partnerLoanRequest));
     }
 
     public function businessInfo()
@@ -808,6 +815,7 @@ class Loan
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
         $details['claims'] = $this->claimList($loan_id,true);
+        $details['repayments'] = $this->repaymentList($loan_id,true);
         return $details;
     }
 
@@ -1020,7 +1028,7 @@ class Loan
     private function getApplyLoanList()
     {
         $running_loans = $this->getRunningLoan();
-        $apply_loan_list = Statics::loanList();
+        $apply_loan_list = GeneralStatics::loanList();
         $apply_statuses = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::DECLINED, LoanStatuses::CLOSED];
         foreach ($running_loans as $running_loan){
             if(!in_array($running_loan['data']['status'], $apply_statuses)){
@@ -1045,9 +1053,9 @@ class Loan
         $running_micro_loan = !$this->partner->loan()->type(LoanTypes::MICRO)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::MICRO)->get()->last()->toArray() : [];
         $running_loan_data  = [];
         if (count($running_term_loan))
-            $running_loan_data[] = $this->getRunningLoanData($running_term_loan, Statics::RUNNING_TERM_LOAN_ICON);
+            $running_loan_data[] = $this->getRunningLoanData($running_term_loan, GeneralStatics::RUNNING_TERM_LOAN_ICON, GeneralStatics::TERM_TITLE_BD);
         if (count($running_micro_loan))
-            $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, Statics::RUNNING_MICRO_LOAN_ICON);
+            $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, GeneralStatics::RUNNING_MICRO_LOAN_ICON, GeneralStatics::MICRO_TITLE_BD);
 
         return $running_loan_data;
     }
@@ -1058,11 +1066,12 @@ class Loan
      * @return array|array[]
      * @throws ReflectionException
      */
-    private function getRunningLoanData($running_loan, $icon_url)
+    private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
         return [
-            "data" => (new RunningApplication($running_loan))->toArray(),
-            "icon" => $icon_url
+            "data"     => (new RunningApplication($running_loan))->toArray(),
+            "icon"     => $icon_url,
+            "title_bn" => $title_bn
         ];
     }
 
@@ -1125,7 +1134,7 @@ class Loan
     {
         if ($this->version !== 2) return true;
         if (!in_array($this->type, LoanTypes::get())) throw new InvalidTypeException();
-        $fee = (double)Statics::getFee($this->type);
+        $fee = (double)GeneralStatics::getFee($this->type);
         if ((double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
             (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();

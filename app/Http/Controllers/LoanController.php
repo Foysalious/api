@@ -36,8 +36,10 @@ use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
+use Sheba\Loan\GeneralStatics;
 use Sheba\Loan\Loan;
 use Sheba\Loan\RobiTopUpWalletTransfer;
+use Sheba\Loan\Statics\BusinessStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
@@ -183,10 +185,7 @@ class LoanController extends Controller
     public function store($partner, Request $request, Loan $loan)
     {
         try {
-            $this->validate($request, [
-                'loan_amount' => 'required|numeric',
-                'duration'    => 'required|integer',
-            ]);
+            $this->validate($request, GeneralStatics::validator(1));
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             $data     = [
@@ -282,7 +281,7 @@ class LoanController extends Controller
     public function updateBusinessInformation($partner, Request $request)
     {
         try {
-            $this->validate($request, BusinessInfo::getValidator());
+            $this->validate($request, BusinessStatics::validator(1));
             $partner  = $request->partner;
             $resource = $request->manager_resource;
             (new Loan())->setPartner($partner)->setResource($resource)->businessInfo()->update($request);

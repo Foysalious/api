@@ -1,17 +1,31 @@
 <?php
 
 
-namespace Sheba\Loan;
+namespace Sheba\Loan\Statics;
 
 
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 
-class Statics
+class GeneralStatics
 {
     const BIG_BANNER              = 'images/offers_images/banners/loan_banner_v5_1440_628.jpg';
     const BANNER                  = 'images/offers_images/banners/loan_banner_v5_720_324.jpg';
     const RUNNING_MICRO_LOAN_ICON = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png";
     const RUNNING_TERM_LOAN_ICON  = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png";
+    const TERM_TITLE_BD           = "টার্ম লোন";
+    const MICRO_TITLE_BD          = "ডানা ক্লাসিক লোন";
+
+    public static function validator($version)
+    {
+        return $version == 2 ? [
+            'loan_amount' => 'required|numeric',
+            'loan_type'   => 'sometimes|required|in:' . implode(',', LoanTypes::get()),
+            'duration'    => 'required_if:loan_type,' . LoanTypes::MICRO . '|integer'
+        ] : [
+            'loan_amount' => 'required|numeric',
+            'duration'    => 'required|integer',
+        ];
+    }
 
     public static function loanList()
     {
@@ -25,7 +39,7 @@ class Statics
     {
         return [
             'title'     => 'Term Loan',
-            'title_bn'  => 'টার্ম লোন',
+            'title_bn'  => self::TERM_TITLE_BD,
             'loan_type' => LoanTypes::TERM,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
         ];
@@ -35,7 +49,7 @@ class Statics
     {
         return [
             'title'     => 'Dana Classic Loan',
-            'title_bn'  => 'ডানা ক্লাসিক লোন',
+            'title_bn'  => self::MICRO_TITLE_BD,
             'loan_type' => LoanTypes::MICRO,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
         ];
@@ -120,15 +134,25 @@ class Statics
         return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
     }
 
+    public static  function  getMinimumRepaymentAmount()
+    {
+        return config('loan.minimum_repayment_amount');
+    }
+
     public static function getDetailsLink($type)
     {
         return $type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");
     }
 
-    public static function getAgreements()
+    public static function getUpdateFields()
     {
-        $partner_portal = env('SHEBA_PARTNER_URL');
-        return ['licence_agreement' => "$partner_portal/api/micro-loan-terms", 'ipdc_data_agreement' => "$partner_portal/api/micro-loan-report-share", 'ipdc_cib_agreement' => "$partner_portal/api/micro-loan-data-share"];
-
+        return [
+            'credit_score',
+            'duration',
+            'purpose',
+            'interest_rate',
+            'loan_amount',
+            'groups'
+        ];
     }
 }

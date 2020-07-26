@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Illuminate\Database\Eloquent\Model;
 
 class PartnerBankLoan extends Model
@@ -30,4 +31,15 @@ class PartnerBankLoan extends Model
     {
         return $query->where('type', $type);
     }
+
+    public function scopeTypeAndStatus($query, $type, $status)
+    {
+        return $query->where('type', $type)->where('status',$status);
+    }
+
+    public function rejectedLog()
+    {
+        $this->changeLogs()->where('title','status')->where('to', LoanStatuses::DECLINED)->orWhere('to', LoanStatuses::REJECTED)->get()->last();
+    }
+
 }
