@@ -163,7 +163,9 @@ class OrderController extends Controller
             DB::rollback();
             logError($e);
             return api_response($request, null, 500);
+
         } catch (Throwable $e) {
+
             DB::rollback();
             logError($e);
             return api_response($request, null, 500);

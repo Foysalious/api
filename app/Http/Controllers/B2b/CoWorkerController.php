@@ -201,14 +201,28 @@ class CoWorkerController extends Controller
             $manager_member = $manager_business_member->member;
             $manager_profile = $manager_member->profile;
             $manager_member_detail = [
-                'id' => $manager_member->id, 'name' => $manager_profile->name, 'mobile' => $manager_profile->mobile, 'email' => $manager_profile->email, 'pro_pic' => $manager_profile->pro_pic, 'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null, 'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
+                'id' => $manager_member->id,
+                'name' => $manager_profile->name,
+                'mobile' => $manager_profile->mobile,
+                'email' => $manager_profile->email,
+                'pro_pic' => $manager_profile->pro_pic,
+                'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
+                'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
             ];
         }
 
         if (!$member) return api_response($request, null, 404);
         $profile = $member->profile;
         $employee = [
-            'id' => $member->id, 'name' => $profile->name, 'mobile' => $profile->mobile, 'email' => $profile->email, 'pro_pic' => $profile->pro_pic, 'dob' => Carbon::parse($profile->dob)->format('M j, Y'), 'designation' => $member->businessMember->role ? $member->businessMember->role->name : null, 'department' => $member->businessMember->role && $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null, 'manager_detail' => $manager_member_detail
+            'id' => $member->id,
+            'name' => $profile->name,
+            'mobile' => $profile->mobile,
+            'email' => $profile->email,
+            'pro_pic' => $profile->pro_pic,
+            'dob' => Carbon::parse($profile->dob)->format('M j, Y'),
+            'designation' => $member->businessMember->role ? $member->businessMember->role->name : null,
+            'department' => $member->businessMember->role && $member->businessMember->role->businessDepartment ? $member->businessMember->role->businessDepartment->name : null,
+            'manager_detail' => $manager_member_detail
         ];
 
         if (count($employee) > 0)
@@ -219,7 +233,10 @@ class CoWorkerController extends Controller
 
     public function update($business, $employee, Request $request)
     {
-        $this->validate($request, ['manager_employee_id' => 'required|integer']);
+        $this->validate($request, [
+            'manager_employee_id' => 'required|integer',
+        ]);
+        if ($employee == $request->manager_employee_id) return api_response($request, null, 420, ['message' => 'You cannot be your own manager']);
         $business_member = BusinessMember::where([['business_id', $business], ['member_id', $employee]])->first();
         $manager_business_member = BusinessMember::where([['business_id', $business], ['member_id', $request->manager_employee_id]])->first();
         if ((int)$business != $manager_business_member->business_id || (int)$business != $business_member->business_id) return api_response($request, null, 404);

@@ -1,14 +1,19 @@
 <?php namespace Sheba\TopUp;
 
-use Sheba\Affiliate\VerificationStatus;
+use App\Models\Affiliate;
+use App\Models\Partner;
+use Carbon\Carbon;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpRequest
 {
+    CONST MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+
     private $mobile;
     private $amount;
     private $type;
+    /** @var TopUpAgent */
     private $agent;
     private $vendorId;
     /** @var Vendor */
@@ -52,6 +57,11 @@ class TopUpRequest
         return $this;
     }
 
+    /**
+     * @param $vendor_id
+     * @return $this
+     * @throws \Exception
+     */
     public function setVendorId($vendor_id)
     {
         $this->vendorId = $vendor_id;
@@ -121,11 +131,14 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
-        if (get_class($this->agent) == "App\Models\Partner") {
+        if ($this->agent instanceof Partner) {
             $this->errorMessage = "Temporary turned off.";
             return 1;
+        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
         }
-        
+
         return 0;
     }
 
@@ -168,5 +181,11 @@ class TopUpRequest
     {
         $this->bulk_id = $bulk_id;
         return $this;
+    }
+
+    private function hasLastTopupWithinIntervalTime()
+    {
+        $last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
+        return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
 }

@@ -16,7 +16,6 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
      */
     public function findByIdentifier($identifier);
 
-
     /**
      * @param $url
      * @return UrlTransformer
@@ -29,4 +28,10 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
      * @throws \GuzzleHttp\Exception\GuzzleException
      */
     public function create(array $attributes);
+
+    /**
+     * @param $id
+     * @return PaymentLinkTransformer|null
+     */
+    public function find($id);
 }

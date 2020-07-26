@@ -1,5 +1,8 @@
 <?php namespace Sheba\CancelRequest;
 
+use App\Models\Order;
+use App\Models\Resource;
+
 class PartnerRequestor extends Requestor
 {
     public function request()
@@ -11,6 +14,7 @@ class PartnerRequestor extends Requestor
 
     protected function notify()
     {
+        /** @var Order $order */
         $order = $this->job->partnerOrder->order;
         $link = config('sheba.admin_url') . 'order/' . $order->id;
         notify()->user($this->job->crm)->send([
@@ -18,5 +22,10 @@ class PartnerRequestor extends Requestor
             "link" => $link,
             "type" => notificationType('Danger')
         ]);
+    }
+
+    protected function getUserType()
+    {
+        return get_class(new Resource());
     }
 }

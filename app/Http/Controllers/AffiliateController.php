@@ -3,8 +3,10 @@
 use App\Models\Affiliate;
 use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
+use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerAffiliation;
+use App\Models\PartnerOrder;
 use App\Models\PartnerTransaction;
 use App\Models\Profile;
 use App\Models\ProfileBankInformation;
@@ -33,6 +35,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Logs\Customer\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
@@ -1161,5 +1164,194 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
 
         return $result;
+    }
+
+    public function getOrderList($affiliate,Request $request)
+    {
+        try{
+            $this->validate($request, [
+                'filter' => 'sometimes|string|in:ongoing,history',
+            ]);
+            $filter = $request->filter;
+            list($offset, $limit) = calculatePagination($request);
+            $affiliate = $request->affiliate->load(['orders' => function ($q) use ($filter, $offset, $limit) {
+                $q->select('orders.id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id')->where('sales_channel',constants('SALES_CHANNELS')['DDN']['name'])->orderBy('orders.id', 'desc')
+                    ->skip($offset)->take($limit);
+
+                if ($filter) {
+                    $q->whereHas('partnerOrders', function ($q) use ($filter) {
+                        $q->$filter();
+                    });
+                }
+                $q->with(['partnerOrders' => function ($q) use ($filter, $offset, $limit) {
+                    $q->with(['partner.resources.profile', 'order' => function ($q) {
+                        $q->select('id', 'sales_channel', 'subscription_order_id');
+                    }, 'jobs' => function ($q) {
+                        $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
+                            $q->select('id', 'rating', 'job_id');
+                        }, 'usedMaterials']);
+                    }]);
+                }]);
+            }]);
+            if (count($affiliate->orders) > 0) {
+                $all_jobs = $this->getInformation($affiliate->orders);
+                $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                    return $job['cancelled_date'] != null || $job['status'] == 'Served';
+                });
+                $others = $all_jobs->diff($cancelled_served_jobs);
+                $all_jobs = $others->merge($cancelled_served_jobs);
+
+                $all_jobs->map(function ($job) {
+                    $order_job = Job::find($job['job_id']);
+                    $job['can_pay'] = $this->canPay($order_job);
+                    $job['can_take_review'] = $this->canTakeReview($order_job);
+                    return $job;
+                });
+
+            } else {
+                $all_jobs = collect();
+            }
+
+            return count($all_jobs) > 0 ? api_response($request, $all_jobs, 200, ['orders' => $all_jobs->values()->all()]) : api_response($request, null, 404);
+
+
+        }catch (ValidationException $e) {
+            app('sentry')->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+
+    }
+
+    public function getOrderDetails($affiliate,$order,Request $request)
+    {
+        try {
+            /** @var Job $job */
+            $job = Job::find($order);
+            if (empty($job)) return api_response($request,null,404);
+            $partner_order=$job->partner_order;
+            $partner_order->calculate(true);
+            $partner_order['total_paid'] = (double)$partner_order->paid;
+            $partner_order['total_due'] = (double)$partner_order->due;
+            $partner_order['total_price'] = (double)$partner_order->totalPrice;
+            $partner_order['delivery_name'] = $partner_order->order->delivery_name;
+            $partner_order['delivery_mobile'] = $partner_order->order->delivery_mobile;
+            $partner_order['delivery_address'] = $partner_order->order->delivery_address_id ? $partner_order->order->deliveryAddress->address : $partner_order->order->delivery_address;
+            $final = collect();
+            foreach ($partner_order->jobs as $job) {
+                $final->push($this->getJobInformation($job, $partner_order));
+            }
+            removeRelationsAndFields($partner_order);
+            $partner_order['jobs'] = $final;
+            return api_response($request, $partner_order, 200, ['orders' => $partner_order]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function getInformation($orders)
+    {
+        $all_jobs = collect();
+        foreach ($orders as $order) {
+            $partnerOrders = $order->partnerOrders;
+            $cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at == null;
+            });
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
+            $partnerOrder->calculate(true);
+            if (!$partnerOrder->cancelled_at) {
+                $job = ($partnerOrder->jobs->filter(function ($job) {
+                    return $job->status !== 'Cancelled';
+                }))->first();
+            } else {
+                $job = $partnerOrder->jobs->first();
+            }
+            if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
+        }
+        return $all_jobs;
+    }
+
+    private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
+    {
+        $category = $job->category;
+        $service = $job->service;
+        $show_expert = $job->canCallExpert();
+        $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
+        return collect(array(
+            'id' => $partnerOrder->id,
+            'job_id' => $job->id,
+            'subscription_order_id' => $partnerOrder->order->subscription_order_id,
+            'category_name' => $category ? $category->name : null,
+            'category_thumb' => $category ? $category->thumb : null,
+            'service_id' => $service ? $service->id : null,
+            'service_name' => $service ? $service->name : null,
+            'service_thumb' => $service ? $service->thumb : null,
+            'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
+            'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
+            'cancelled_date' => $partnerOrder->cancelled_at,
+            'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('M j, Y'),
+            'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
+            'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
+            'status' => $job->status,
+            'is_on_premise' => (int)$job->isOnPremise(),
+            'customer_favorite' => !empty($job->customerFavorite) ? $job->customerFavorite->id : null,
+            'isRentCar' => $job->isRentCar(),
+            'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
+            'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
+            'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
+            'resource_name' => $job->resource ? $job->resource->profile->name : null,
+            'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
+            'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
+            'contact_person' => $show_expert ? 'expert' : 'partner',
+            'rating' => $job->review != null ? $job->review->rating : null,
+            'price' => (double)$partnerOrder->totalPrice,
+            'order_code' => $partnerOrder->order->code(),
+            'created_at' => $partnerOrder->created_at->format('Y-m-d'),
+            'created_at_timestamp' => $partnerOrder->created_at->timestamp,
+            'version' => $partnerOrder->getVersion(),
+            'original_price' => (double)$partnerOrder->jobPrices + $job->logistic_charge,
+            'discount' => (double)$partnerOrder->totalDiscount,
+            'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
+            'complain_count' => $job->customerComplains->count(),
+            'message' => (new JobLogs($job))->getOrderMessage(),
+        ));
+    }
+
+    protected function canPay($job)
+    {
+        $due = $job->partnerOrder->calculate(true)->due;
+        $status = $job->status;
+
+        if (in_array($status, ['Declined', 'Cancelled']))
+            return false;
+        else {
+            return $due > 0;
+        }
+    }
+
+    protected function canTakeReview($job)
+    {
+        $review = $job->review;
+
+        if (!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if ($job->partnerOrder->closed_at) {
+            $closed_date = Carbon::parse($job->partnerOrder->closed_at);
+            $now = Carbon::now();
+            $difference = $closed_date->diffInDays($now);
+
+            return $difference < constants('CUSTOMER_REVIEW_OPEN_DAY_LIMIT');
+        } else {
+            return false;
+        }
     }
 }

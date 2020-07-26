@@ -35,7 +35,7 @@ class ScheduleSlot
     {
         $this->limit = 1;
         $this->scheduleStart = '09:00:00';
-        $this->scheduleEnd = '21:00:00';
+        $this->scheduleEnd = '20:00:00';
         $this->shebaSlots = $this->getShebaSlots();
         $this->preparationTime = 0;
         $this->today = Carbon::now()->addMinutes(15);
@@ -45,8 +45,8 @@ class ScheduleSlot
     {
         if ($this->portal && $this->portal == 'manager') $this->scheduleEnd = '24:00:00';
         return \App\Models\ScheduleSlot::select('start', 'end')->where([
-                ['start', '>=', DB::raw("CAST('" . $this->scheduleStart . "' As time)")], ['end', '<=', DB::raw("CAST('" . $this->scheduleEnd . "' As time)")]
-            ])->get();
+            ['start', '>=', DB::raw("CAST('" . $this->scheduleStart . "' As time)")], ['end', '<=', DB::raw("CAST('" . $this->scheduleEnd . "' As time)")]
+        ])->get();
     }
 
     public function setCategory(Category $category)
@@ -113,12 +113,12 @@ class ScheduleSlot
     private function getLeavesBetween($start, $end)
     {
         $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where(function ($q) use ($start, $end) {
-                $q->where(function ($q) use ($start, $end) {
-                    $q->whereBetween('start', [$start, $end]);
-                })->orWhere(function ($q) use ($start, $end) {
-                    $q->whereBetween('end', [$start, $end]);
-                })->orWhere('end', null);
-            })->get();
+            $q->where(function ($q) use ($start, $end) {
+                $q->whereBetween('start', [$start, $end]);
+            })->orWhere(function ($q) use ($start, $end) {
+                $q->whereBetween('end', [$start, $end]);
+            })->orWhere('end', null);
+        })->get();
         return $leaves->count() > 0 ? $leaves : null;
     }
 

@@ -75,6 +75,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->hasMany(AffiliateStatusChangeLog::class);
     }
 
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
+    }
+
     public function getBankingInfoAttribute($info)
     {
         return $info ? json_decode($info) : [];
@@ -222,6 +227,16 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->is_ambassador == 1;
     }
 
+    public function isVerified()
+    {
+        return $this->verification_status == 'verified';
+    }
+
+    public function isNotVerified()
+    {
+        return !$this->isVerified();
+    }
+
     public function topups()
     {
         return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Affiliate');
@@ -333,5 +348,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
             return formatMobileReverse($this->profile->mobile);
 
         return VoucherCodeGenerator::byName($this->profile->name);
+    }
+
+    public function orders()
+    {
+        return $this->hasManyThrough(Order::class, Affiliation::class);
+
     }
 }

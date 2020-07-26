@@ -7,7 +7,6 @@ use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -24,6 +23,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
@@ -58,8 +58,9 @@ class CategoryController extends Controller
         $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
         $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
         $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_ddn = $request->has('is_ddn') && (int)$request->is_ddn;
 
-        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration) {
+        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration,$is_ddn) {
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -68,7 +69,9 @@ class CategoryController extends Controller
                 $q->publishedForPartnerOnboarding();
             } elseif ($is_b2b) {
                 $q->publishedForB2b();
-            } else {
+            }elseif($is_ddn){
+                $q->publishedForDdn();
+            }else {
                 $q->published();
             }
         };
@@ -105,17 +108,19 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b, $is_ddn) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
-                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b) {
+                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b, $is_ddn) {
                                 if ($is_business) {
                                     $q->publishedForBusiness();
                                 } elseif ($is_b2b) {
                                     $q->publishedForB2b();
-                                } else {
+                                } elseif ($is_ddn) {
+                                    $q->publishedForDdn();
+                                }else {
                                     $q->published();
                                 }
                                 $q->whereHas('locations', function ($q) use ($location) {
@@ -297,10 +302,10 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
-            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            $category->load(['children' => function ($q) use ($best_deal_category, $location, $request) {
-                $q->published()->whereNotIn('id', $best_deal_category);
+            /*$best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();*/
+            $category->load(['children' => function ($q) use ($location, $request) {
+                $q->published();/*->whereNotIn('id', $best_deal_category)*/
                 if ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
@@ -317,9 +322,10 @@ class CategoryController extends Controller
                     }
                 });
             }]);
-            $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+            $children = $category->children;
+            /*$children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
                 return !in_array($sub_category->id, $best_deal_category);
-            });
+            });*/
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -391,6 +397,7 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
+
         if ($category != null) {
             $category_slug = $category->getSlug();
             $cross_sale_service = $category->crossSaleService;
@@ -413,10 +420,10 @@ class CategoryController extends Controller
                 $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
                 $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                    /*if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                         $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    }
+                    }*/
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location);
                     })->select(

@@ -1,5 +1,6 @@
 <?php
 return [
+    "BLOG_URL"                                    => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',
@@ -576,6 +577,12 @@ return [
             'short_name' => 'TEL',
             'prefix'     => 'T',
             'department' => 'TEL'
+        ],
+        'DDN'         => [
+            'name'       => 'DDN',
+            'short_name' => 'DDN',
+            'prefix'     => 'D',
+            'department' => 'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [
@@ -821,7 +828,7 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 200,
             'max' => 15000
         ],
         'bank'  => [
@@ -1196,8 +1203,8 @@ return [
                 'cap'        => 200
             ],
             'AMBASSADOR' => [
-                'percentage' => 2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TOP_UP'        => [
@@ -1206,8 +1213,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.02,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'MOVIE'         => [
@@ -1216,8 +1223,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TRANSPORT'     => [
@@ -1230,6 +1237,16 @@ return [
                 'cap'        => 0
             ]
         ],
+        'DDN'           => [
+            'AGENT'      => [
+                'percentage' => 5,
+                'cap'        => 200,
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0,
+                'cap'        => 0
+            ]
+        ]
     ],
     'PARTNER_BUSINESS_TYPES'                      => [
         [
@@ -1282,9 +1299,9 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
-    'ownership_type_en' => [
-        'লিমিটেড' => 'Limited',
-        'পার্টনারশিপ' => 'Partnership',
+    'ownership_type_en'                           => [
+        'লিমিটেড'        => 'Limited',
+        'পার্টনারশিপ'    => 'Partnership',
         'প্রোপ্রাইটরশিপ' => 'Proprietorship'
     ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
