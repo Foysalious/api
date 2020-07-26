@@ -55,7 +55,7 @@ abstract class ActionChecker
 
     public function setIp($ip)
     {
-        $this->ip = '103.87.213.142';
+        $this->ip = $ip;
         return $this;
     }
 
