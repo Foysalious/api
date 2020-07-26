@@ -7,7 +7,7 @@ use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
 use App\Transformers\PreferredTimeTransformer;
 use App\Transformers\ServiceV2DeliveryChargeTransformer;
