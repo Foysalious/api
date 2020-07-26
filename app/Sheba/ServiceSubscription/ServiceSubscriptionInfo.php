@@ -2,8 +2,8 @@
 
 use App\Models\Location;
 use App\Models\LocationService;
-use App\Models\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\DiscountTypes;
