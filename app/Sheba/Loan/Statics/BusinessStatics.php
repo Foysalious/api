@@ -63,7 +63,7 @@ class BusinessStatics
                    'location'           => 'string',
                    'establishment_year' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                    'full_time_employee' => 'numeric'
-               ] + (($version == 2) ? +['loan_type' => 'sometimes|required|in:' . implode(',', LoanTypes::get())] : []);
+               ] + (($version == 2) ? ['loan_type' => 'sometimes|required|in:' . implode(',', LoanTypes::get())] : []);
     }
 
     public static function agreements()
