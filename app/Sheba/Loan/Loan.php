@@ -807,6 +807,7 @@ class Loan
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
         $details['claims'] = $this->claimList($loan_id,true);
+        $details['repayments'] = $this->repaymentList($loan_id,true);
         return $details;
     }
 
