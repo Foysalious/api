@@ -3272,7 +3272,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "a73c3f325423be00912c72f934c1b530cd7467cb"
+                "reference": "ff96c6f959eff281ff0c2bb1e7545bfd69865174"
             },
             "require": {
                 "php": ">=5.4"
@@ -3299,7 +3299,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-07-26T06:47:53+00:00"
+            "time": "2020-07-26T08:46:10+00:00"
         },
         {
             "name": "sheba/notification",
@@ -4992,16 +4992,6 @@
                 "JWS",
                 "jwt"
             ],
-            "funding": [
-                {
-                    "url": "https://github.com/lcobucci",
-                    "type": "github"
-                },
-                {
-                    "url": "https://www.patreon.com/lcobucci",
-                    "type": "patreon"
-                }
-            ],
             "time": "2020-05-22T08:21:12+00:00"
         },
         {
@@ -6018,6 +6008,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": []
 }
