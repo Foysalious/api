@@ -198,8 +198,8 @@ class Creator
                 ->setRequestable($leave)
                 ->create();
             $this->createAttachments($leave);
-            if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
         });
+        if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
         return $leave;
     }
 
@@ -228,7 +228,7 @@ class Creator
 
         $notification_data = [
             "title" => 'Substitute Setup',
-            "message" => "$leave_applicant chose you a substitute",
+            "message" => "$leave_applicant choose you a substitute.",
             "event_type" => 'leave',
             "event_id" => $leave->id,
             "sound" => "notification_sound",
