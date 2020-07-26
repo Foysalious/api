@@ -12,6 +12,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Wallet\HasWallet;
@@ -279,6 +280,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function bonuses()
     {
         return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function retailers()
+    {
+        return $this->getFirstAdminResource()->retailers();
     }
 
     public function hasLeave($date)

@@ -35,6 +35,7 @@ class LoanRoute
             $api->delete('{partner_bank_loan}/delete-documents', 'LoanController@deleteDocument');
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
             $api->post('/{loan_id}/update-claim-status','LoanController@claimStatusUpdate');
+            $api->get('loan-disbursement-report','LoanReportController@loanDisbursementReport');
 
         });
 

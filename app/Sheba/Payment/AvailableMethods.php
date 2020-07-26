@@ -71,6 +71,9 @@ class AvailableMethods
             case 'wallet_recharge':
                 $methods = self::getWalletRechargePayments();
                 break;
+            case 'loan_repayment':
+                $methods = self::getLoanRepaymentPayments();
+                break;
             default:
                 throw new Exception('Invalid Payable Type');
         }
@@ -171,7 +174,7 @@ class AvailableMethods
             PaymentStrategy::SSL_DONATION
         ];
     }
-
+    
     /**
      * @param $version_code
      * @param $platform_name
@@ -184,4 +187,12 @@ class AvailableMethods
         return $platform_name && $platform_name == 'ios' ? true : ($version_code > 30112);
     }
 
+    public static function getLoanRepaymentPayments()
+    {
+        return [
+            PaymentStrategy::CBL,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::ONLINE
+        ];
+    }
 }
