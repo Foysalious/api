@@ -123,6 +123,7 @@ class ResourceController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
+        if (!$resource->categories()->where('category_id', $request->category)->first()) return api_response($request, null, 404, ["message" => "Category resource not found."]);
         $category = Category::find($request->category);
         $partner= Partner::find($request->partner);
         $date = Carbon::createFromFormat('Y-m-d', $request->date);
