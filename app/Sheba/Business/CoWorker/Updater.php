@@ -193,6 +193,14 @@ class Updater
         $this->profile = $this->member->profile;
         $this->businessMember = $this->member->businessMember;
 
+        if (!$this->businessMember) {
+            $this->businessMember = $this->businessMemberRepository->builder()
+                ->where('business_id', $this->business->id)
+                ->where('member_id', $this->member->id)
+                ->where('status', Statuses::INACTIVE)
+                ->first();
+        }
+
         return $this;
     }
 
