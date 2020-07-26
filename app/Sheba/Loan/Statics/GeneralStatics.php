@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Sheba\Loan;
+namespace Sheba\Loan\Statics;
 
 
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
@@ -132,6 +132,11 @@ class GeneralStatics
     {
         $amount = config('loan.minimum_amount');
         return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
+    }
+
+    public static  function  getMinimumRepaymentAmount()
+    {
+        return config('loan.minimum_repayment_amount');
     }
 
     public static function getDetailsLink($type)
