@@ -14,12 +14,12 @@ return [
     ],
     'minimum_amount'                       => [
         LoanTypes::TERM  => env('TERM_LOAN_MINIMUM_AMOUNT', 5000),
-        LoanTypes::MICRO => env('MICRO_LOAN_MINIMUM_AMOUNT', 1000)
+        LoanTypes::MICRO => env('MICRO_LOAN_MINIMUM_AMOUNT', 10000)
     ],
 
     'maximum_amount'                       => [
         LoanTypes::TERM  => env('TERM_LOAN_MAXIMUM_AMOUNT', 50000),
-        LoanTypes::MICRO => env('MICRO_LOAN_MAXIMUM_AMOUNT', 25000)
+        LoanTypes::MICRO => env('MICRO_LOAN_MAXIMUM_AMOUNT', 50000)
     ],
     'repayment_defaulter_default_duration' => 7,
     'micro_loan_claim_transaction_fee'     => 10,
