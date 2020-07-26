@@ -163,7 +163,7 @@ class CoWorkerController extends Controller
             ->setRole($request->role)
             ->setManagerEmployee($request->manager_employee);
 
-        $this->coWorkerUpdater->setBasicRequest($basic_request)->setMember($member_id)->setBusiness($business)->setEmail($request->email);
+        $this->coWorkerUpdater->setBasicRequest($basic_request)->setBusiness($business)->setMember($member_id)->setEmail($request->email);
 
         if ($this->coWorkerUpdater->hasError()) {
             return api_response($request, null, $this->coWorkerUpdater->getErrorCode(), ['message' => $this->coWorkerUpdater->getErrorMessage()]);
@@ -209,13 +209,17 @@ class CoWorkerController extends Controller
         if (!$this->isNull($request->employee_type)) $validation_data += ['employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern'];
         if (!$this->isNull($request->join_date)) $validation_data += ['join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')];
         $this->validate($request, $validation_data);
+
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
+        $business = $request->business;
+
         $official_request = $this->officialRequest->setJoinDate($request->join_date)
             ->setGrade($request->grade)
             ->setEmployeeType($request->employee_type)
             ->setPreviousInstitution($request->previous_institution);
-        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->setMember($member_id)->officialInfoUpdate();
+        $business_member = $this->coWorkerUpdater->setOfficialRequest($official_request)->setBusiness($business)->setMember($member_id)->officialInfoUpdate();
+
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
@@ -239,7 +243,9 @@ class CoWorkerController extends Controller
         $validation_data['nid_front'] = $this->isFile($request->nid_front) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $validation_data['nid_back'] = $this->isFile($request->nid_back) ? 'sometimes|required|mimes:jpg,jpeg,png,pdf' : 'sometimes|required|string';
         $this->validate($request, $validation_data);
+
         $member = $request->manager_member;
+        $business = $request->business;
         $this->setModifier($member);
         if ($request->has('mobile')) $request->mobile = formatMobile($request->mobile);
 
@@ -252,7 +258,7 @@ class CoWorkerController extends Controller
             ->setNidFront($request->nid_front)
             ->setNidBack($request->nid_back);
 
-        $this->coWorkerUpdater->setPersonalRequest($personal_request)->setMember($member_id)->setMobile($request->mobile);
+        $this->coWorkerUpdater->setPersonalRequest($personal_request)->setBusiness($business)->setMember($member_id)->setMobile($request->mobile);
         if ($this->coWorkerUpdater->hasError())
             return api_response($request, null, $this->coWorkerUpdater->getErrorCode(), ['message' => $this->coWorkerUpdater->getErrorMessage()]);
 
@@ -277,15 +283,17 @@ class CoWorkerController extends Controller
         $this->validate($request, $validation_data);
 
         $manager_member = $request->manager_member;
+        $business = $request->business;
         $this->setModifier($manager_member);
+
         $financial_request = $this->financialRequest->setTinNumber($request->tin_number)
             ->setTinCertificate($request->tin_certificate)
             ->setBankName($request->bank_name)
             ->setBankAccNumber($request->bank_account_number);
 
-        list($profile,
-            $image_name,
-            $image_link) = $this->coWorkerUpdater->setFinancialRequest($financial_request)
+        list($profile, $image_name, $image_link) = $this->coWorkerUpdater
+            ->setFinancialRequest($financial_request)
+            ->setBusiness($business)
             ->setMember($member_id)
             ->financialInfoUpdate();
 
@@ -313,13 +321,14 @@ class CoWorkerController extends Controller
         $this->validate($request, $validation_data);
 
         $manager_member = $request->manager_member;
+        $business = $request->business;
         $this->setModifier($manager_member);
 
         $emergency_request = $this->emergencyRequest->setEmergencyContractPersonName($request->name)
             ->setEmergencyContractPersonMobile($request->mobile)
             ->setRelationshipEmergencyContractPerson($request->relationship);
 
-        $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setMember($member_id)->emergencyInfoUpdate();
+        $member = $this->coWorkerUpdater->setEmergencyRequest($emergency_request)->setBusiness($business)->setMember($member_id)->emergencyInfoUpdate();
         if ($member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
@@ -410,17 +419,41 @@ class CoWorkerController extends Controller
      * @param $business
      * @param $member_id
      * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse
      */
-    public function show($business, $member_id, Request $request)
+    public function show($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
         $member = Member::findOrFail($member_id);
         if (!$member) return api_response($request, null, 404);
+        $business = $request->business;
+        $is_inactive_filter_applied = false;
+
+        if (!$member->businessMember) {
+            $is_inactive_filter_applied = true;
+            $business_member = $business_member_repo->builder()
+                ->where('business_id', $business->id)
+                ->where('member_id', $member->id)
+                ->where('status', Statuses::INACTIVE)
+                ->first();
+
+            $member->setRelation('businessMemberGenerated', $business_member->load([
+                'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }
+            ]));
+            $member->push();
+        }
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $member = new Item($member, new CoWorkerDetailTransformer());
+        $member = new Item($member, new CoWorkerDetailTransformer($is_inactive_filter_applied));
         $employee = $manager->createData($member)->toArray()['data'];
+
         if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
         return api_response($request, null, 404);
     }
@@ -433,13 +466,14 @@ class CoWorkerController extends Controller
      */
     public function statusUpdate($business, $member_id, Request $request)
     {
-        $this->validate($request, [
-            'status' => 'required|string|in:' . implode(',', Statuses::get())
-        ]);
+        $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
         $manager_member = $request->manager_member;
+        $business = $request->business;
         $this->setModifier($manager_member);
+
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-        $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setMember($member_id)->statusUpdate();
+        $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
+
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
@@ -458,14 +492,16 @@ class CoWorkerController extends Controller
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
+
         foreach (json_decode($request->employee_ids) as $member_id) {
             $business_member = BusinessMember::where([
                 ['member_id', $member_id], ['business_id', $business->id]
             ])->first();
             if ($business_member->status == $request->status) continue;
             $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
-            $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setMember($business_member->member->id)->statusUpdate();
+            $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($business_member->member->id)->statusUpdate();
         }
+
         return api_response($request, null, 200);
     }
 

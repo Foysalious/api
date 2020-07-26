@@ -6,26 +6,33 @@ use League\Fractal\TransformerAbstract;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
+    private $isInactiveFilterApplied;
+
+    public function __construct($is_inactive_filter_applied)
+    {
+        $this->isInactiveFilterApplied = $is_inactive_filter_applied;
+    }
+
     /**
      * @param Member $member
      * @return array
      */
     public function transform(Member $member)
     {
+        $business_member = ($this->isInactiveFilterApplied) ? $member->businessMemberGenerated : $member->businessMember;
         return [
-            'basic_info' => $this->getBasicInfo($member),
-            'official_info' => $this->getOfficialInfo($member),
+            'basic_info' => $this->getBasicInfo($member, $business_member),
+            'official_info' => $this->getOfficialInfo($business_member),
             'personal_info' => $this->getPersonalInfo($member),
             'financial_info' => $this->getFinancialInfo($member),
             'emergency_info' => $this->getEmergencyInfo($member),
-            'profile_completion' => $this->profileCompletion($member),
+            'profile_completion' => $this->profileCompletion($member, $business_member),
         ];
     }
 
-    private function getBasicInfo($member)
+    private function getBasicInfo($member, $business_member)
     {
         $profile = $member->profile;
-        $business_member = $member->businessMember;
         $role = $business_member ? $business_member->role : null;
         $department = $role ? $role->businessDepartment : null;
         $department_name = $department ? $department->name : null;
@@ -56,15 +63,15 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         ];
     }
 
-    private function getOfficialInfo($member)
+    private function getOfficialInfo($business_member)
     {
-        $business_member = $member->businessMember;
         $count = 0;
         if ($business_member->join_date ||
             $business_member->grade ||
             $business_member->employee_type ||
             $business_member->previous_institution) $count++;
         $official_info_completion = round((($count / 1) * 20), 0);
+
         return [
             'join_date' => $business_member->join_date,
             'grade' => $business_member->grade,
@@ -86,7 +93,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $profile->nationality ||
             $profile->nid_image_front ||
             $profile->nid_image_back) $count++;
+
         $personal_info_completion = round((($count / 1) * 20), 0);
+
         return [
             'mobile' => $profile->mobile,
             'date_of_birth' => $profile->dob,
@@ -109,19 +118,22 @@ class CoWorkerDetailTransformer extends TransformerAbstract
 
         $bank_name = $profile_bank_info ? ucwords(str_replace('_', ' ', $profile_bank_info->bank_name)) : null;
         $account_no = $profile_bank_info ? $profile_bank_info->account_no : null;
+
         $count = 0;
         if ($profile->tin_no ||
             $profile->tin_certificate ||
             $bank_name ||
             $account_no) $count++;
+
         $financial_info_completion = round((($count / 1) * 20), 0);
+
         return [
             'tin_no' => $profile->tin_no,
             'tin_certificate_name' => $profile->tin_certificate ? array_last(explode('/', $profile->tin_certificate)) : null,
             'tin_certificate' => $profile->tin_certificate,
             'bank_name' => $bank_name,
             'account_no' => $account_no,
-            'financial_info_completion' => $financial_info_completion,
+            'financial_info_completion' => $financial_info_completion
         ];
     }
 
@@ -131,7 +143,9 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         if ($member->emergency_contract_person_name ||
             $member->emergency_contract_person_number ||
             $member->emergency_contract_person_relationship) $count++;
+
         $emergency_info_completion = round((($count / 1) * 20), 0);
+
         return [
             'emergency_contract_person_name' => $member->emergency_contract_person_name,
             'emergency_contract_person_number' => $member->emergency_contract_person_number,
@@ -140,11 +154,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         ];
     }
 
-    private function profileCompletion($member)
+    private function profileCompletion($member, $business_member)
     {
         $count = 0;
-        $basic_info_completion = $this->getBasicInfo($member)['basic_info_completion'];
-        $official_info_completion = $this->getOfficialInfo($member)['official_info_completion'];
+        $basic_info_completion = $this->getBasicInfo($member, $business_member)['basic_info_completion'];
+        $official_info_completion = $this->getOfficialInfo($business_member)['official_info_completion'];
         $personal_info_completion = $this->getPersonalInfo($member)['personal_info_completion'];
         $financial_info_completion = $this->getFinancialInfo($member)['financial_info_completion'];
         $emergency_info_completion = $this->getEmergencyInfo($member)['emergency_info_completion'];
@@ -163,15 +177,11 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $manager_business_member = BusinessMember::findOrFail($manager_id);
         $manager_member = $manager_business_member->member;
         $manager_profile = $manager_member->profile;
+
         return [
             'id' => $manager_member->id,
             'business_member' => $manager_business_member->id,
-            'name' => $manager_profile->name,
-            #'mobile' => $manager_profile->mobile
-            #'email' => $manager_profile->email,
-            #'pro_pic' => $manager_profile->pro_pic,
-            #'designation' => $manager_member->businessMember->role ? $manager_member->businessMember->role->name : null,
-            #'department' => $manager_member->businessMember->role && $manager_member->businessMember->role->businessDepartment ? $manager_member->businessMember->role->businessDepartment->name : null,
+            'name' => $manager_profile->name
         ];
     }
 }
