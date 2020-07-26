@@ -5,6 +5,9 @@ use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\PartnerOrder;
 use Illuminate\Http\Request;
+use Sheba\AutoSpAssign\Sorter;
+use Sheba\AutoSpAssign\Sorting\PartnerSort;
+use Sheba\AutoSpAssign\Sorting\Strategy\Best;
 use Sheba\Location\Geo;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
@@ -39,7 +42,7 @@ class PartnerListController extends Controller
         return api_response($request, $partners, 200);
     }
 
-    public function get(Request $request, Geo $geo, PartnerListBuilder $partnerListBuilder, Director $partnerListDirector, ServiceRequest $serviceRequest)
+    public function get(Request $request, Geo $geo, PartnerListBuilder $partnerListBuilder, Director $partnerListDirector, ServiceRequest $serviceRequest, Sorter $sorter)
     {
         $this->validate($request, [
             'services' => 'required|string',
@@ -60,9 +63,14 @@ class PartnerListController extends Controller
         } else {
             $partnerListDirector->buildPartnerListForAdmin();
         }
-        $partners = $partnerListBuilder->get()->each(function (&$partner) {
-            removeRelationsAndFields($partner);
-        });
-        return api_response($request, $partners, 200, ['partners' => $partners->values()->all(), 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
+        $partners = $partnerListBuilder->get();
+        $eligible_partners = $sorter->setStrategy(new Best())->setPartnerIds($partners->pluck('id')->toArray())
+            ->setCategoryId($service_requestObject[0]->getCategory()->id)->getSortedPartners();
+        $final = [];
+        foreach ($eligible_partners as $eligible_partner) {
+            $partner = $partners->where('id', $eligible_partner->getId())->first();
+            array_push($final, removeRelationsAndFields($partner));
+        }
+        return api_response($request, $partners, 200, ['partners' => $final, 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
     }
 }

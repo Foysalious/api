@@ -9,6 +9,7 @@ use Sheba\AutoSpAssign\PartnerOrderRequest\Store;
 use Sheba\AutoSpAssign\Sorting\PartnerSort;
 use Sheba\AutoSpAssign\Sorting\Strategy\Basic;
 use Sheba\AutoSpAssign\Sorting\Strategy\Best;
+use Sheba\AutoSpAssign\Sorting\Strategy\Strategy;
 use Sheba\PartnerOrderRequest\Creator;
 
 class Initiator
@@ -23,11 +24,14 @@ class Initiator
     private $partnerOrderRequestCreator;
     /** @var Store */
     private $orderRequestStore;
+    /** @var Sorter */
+    private $sorter;
 
-    public function __construct(Store $order_request_store, Creator $creator)
+    public function __construct(Store $order_request_store, Creator $creator, Sorter $sorter)
     {
         $this->orderRequestStore = $order_request_store;
         $this->partnerOrderRequestCreator = $creator;
+        $this->sorter = $sorter;
     }
 
     /**
@@ -62,14 +66,13 @@ class Initiator
 
     public function initiate()
     {
-        $finder = new Finder();
-        $eligible_partners = $finder->setPartnerIds($this->partnerIds)->setCategoryId($this->partnerOrder->jobs->first()->category_id)->find();
-        $sorter = new PartnerSort();
-        $eligible_partners = $sorter->setStrategy($this->getStrategy())->sort($eligible_partners);
+        $eligible_partners = $this->sorter->setStrategy($this->getStrategy())->setPartnerIds($this->partnerIds)
+            ->setCategoryId($this->partnerOrder->jobs->first()->category_id)->getSortedPartners();
         $this->orderRequestStore->setPartnerOrderId($this->partnerOrder->id)->setPartners($eligible_partners)->set();
         $first_partner_id = [$eligible_partners[0]->getId()];
         $this->partnerOrderRequestCreator->setPartnerOrder($this->partnerOrder)->setPartners($first_partner_id)->create();
     }
+
 
     public function getStrategy()
     {
