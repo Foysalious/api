@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Sheba\Partner\Validations;
+<?php namespace App\Sheba\NID\Validations;
 
 
 class NidValidationResponse
