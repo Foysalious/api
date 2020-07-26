@@ -45,6 +45,7 @@ use Sheba\Loan\Exceptions\InvalidTypeException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -473,6 +474,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::PENDING) {
             $data['loan_balance'] = 0;
@@ -483,6 +485,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::APPROVED && ($due = $this->getDue($last_claim->id)) > 0) {
             $is_defaulter = $this->isDefaulter($last_claim->defaulter_date);
@@ -494,6 +497,7 @@ class Loan
             $data['should_pay'] = 1;
             $data['is_defaulter'] = $is_defaulter;
             $data['success_msg_seen'] = $last_claim->approved_msg_seen;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
 
         if ($last_claim && $last_claim->status == Statuses::DECLINED) {
@@ -505,6 +509,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         $data['recent_claims'] = $this->getRecentClaims($request->loan_id);
         $data['recent_transactions'] = $this->getRecentRepayments($request->loan_id);
