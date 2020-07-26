@@ -20,6 +20,7 @@ use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
 use Sheba\Location\Geo;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Order\Creator as OrderCreator;
+use Sheba\Resource\Schedule\ResourceScheduleChecker;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 
 class ResourceController extends Controller
@@ -122,6 +123,29 @@ class ResourceController extends Controller
             ]
         ];
         return api_response($request, $content, 200, ['help' => $content]);
+    }
+
+    public function checkSchedule(Request $request, ResourceScheduleSlot $slot, ResourceScheduleChecker $resourceScheduleChecker)
+    {
+        $this->validate($request, [
+            'category' => 'required|numeric',
+            'partner' => 'required|numeric',
+            'date' => 'required|date_format:Y-m-d',
+            'time' => 'required|string',
+        ]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if (!$resource->categories()->where('category_id', $request->category)->first()) return api_response($request, null, 404, ["message" => "Category resource not found."]);
+        $category = Category::find($request->category);
+        $partner= Partner::find($request->partner);
+        $date = Carbon::createFromFormat('Y-m-d', $request->date);
+        $limit = $date->diffInDays(Carbon::now()) + 1;
+        $slot->setCategory($category)->setPartner($partner)->setLimit($limit);
+        $dates = $slot->getSchedulesByResource($resource);
+        $schedule = $resourceScheduleChecker->setSchedules($dates)->setDate($request->date)->setTime($request->time)->checkScheduleAvailability();
+        if (empty($schedule)) return api_response($request, $schedule, 404, ["message" => 'Schedule not found.']);
+        return api_response($request, $schedule, 200, ['schedule' => $schedule]);
     }
 
     public function createOrder(Request $request, CustomerCreator $customerCreator, Geo $geo, CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator)
