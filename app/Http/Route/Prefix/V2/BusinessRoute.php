@@ -282,6 +282,10 @@ class BusinessRoute
                             $api->post('update', 'B2b\LeaveSettingsController@update');
                             $api->delete('delete', 'B2b\LeaveSettingsController@delete');
                         });
+                        $api->group(['prefix' => 'others'], function ($api) {
+                            $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
+                            $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
+                        });
                     });
                 });
             });
