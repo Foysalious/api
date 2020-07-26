@@ -1,6 +1,6 @@
 <?php namespace Sheba\Services;
 
-use App\Models\ServiceSubscriptionDiscount as ServiceSubscriptionDiscountModel;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount as ServiceSubscriptionDiscountModel;
 
 class ServiceSubscriptionDiscount
 {
