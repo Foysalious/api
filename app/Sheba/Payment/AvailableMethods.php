@@ -43,6 +43,9 @@ class AvailableMethods
             case 'wallet_recharge':
                 $methods = self::getWalletRechargePayments();
                 break;
+            case 'loan_repayment':
+                $methods = self::getLoanRepaymentPayments();
+                break;
             default:
                 throw new Exception('Invalid Payable Type');
         }
@@ -132,6 +135,15 @@ class AvailableMethods
     }
 
     public static function getPaymentLinkPayments()
+    {
+        return [
+            PaymentStrategy::CBL,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::ONLINE
+        ];
+    }
+
+    public static function getLoanRepaymentPayments()
     {
         return [
             PaymentStrategy::CBL,
