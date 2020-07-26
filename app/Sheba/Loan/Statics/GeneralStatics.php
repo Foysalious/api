@@ -12,6 +12,8 @@ class GeneralStatics
     const BANNER                  = 'images/offers_images/banners/loan_banner_v5_720_324.jpg';
     const RUNNING_MICRO_LOAN_ICON = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png";
     const RUNNING_TERM_LOAN_ICON  = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png";
+    const TERM_TITLE_BD           = "টার্ম লোন";
+    const MICRO_TITLE_BD          = "ডানা ক্লাসিক লোন";
 
     public static function validator($version)
     {
@@ -37,7 +39,7 @@ class GeneralStatics
     {
         return [
             'title'     => 'Term Loan',
-            'title_bn'  => 'টার্ম লোন',
+            'title_bn'  => self::TERM_TITLE_BD,
             'loan_type' => LoanTypes::TERM,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/term_loan.png"
         ];
@@ -47,7 +49,7 @@ class GeneralStatics
     {
         return [
             'title'     => 'Dana Classic Loan',
-            'title_bn'  => 'ডানা ক্লাসিক লোন',
+            'title_bn'  => self::MICRO_TITLE_BD,
             'loan_type' => LoanTypes::MICRO,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
         ];
