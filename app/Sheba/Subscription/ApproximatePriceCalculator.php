@@ -2,7 +2,7 @@
 
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
 use Exception;

@@ -4,7 +4,7 @@ use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use App\Models\ServiceSubscriptionDiscount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

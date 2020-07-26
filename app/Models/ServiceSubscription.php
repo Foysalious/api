@@ -2,9 +2,11 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\ServiceSubscription\Events\ServiceSubscriptionSaved;
 
 class ServiceSubscription extends Model
 {
+    public static $savedEventClass = ServiceSubscriptionSaved::class;
     protected $guarded = ['id'];
 
     public function service()
@@ -56,16 +58,16 @@ class ServiceSubscription extends Model
         return $this->service->category->parent->id;
     }
 
-    public function getDiscountOffers() {
-        $discount_offers = $this->discounts()->orderBy('subscription_type','desc')->get();
+    public function getDiscountOffers()
+    {
+        $discount_offers = $this->discounts()->orderBy('subscription_type', 'desc')->get();
         $offers = collect();
-        foreach($discount_offers as $offer)
-        {
-            if($offer->service_subscription_id === $this->id && $offer->isValid())
+        foreach ($discount_offers as $offer) {
+            if ($offer->service_subscription_id === $this->id && $offer->isValid())
                 $offers->push($offer);
         }
-        if(count($offers)>0)
-           return $this->parseDiscountOffers($offers[0]);
+        if (count($offers) > 0)
+            return $this->parseDiscountOffers($offers[0]);
         else return null;
     }
 
@@ -73,33 +75,31 @@ class ServiceSubscription extends Model
     {
         $offer_short_text = "Subscribe & save ";
         $amount = $discount_offer->is_discount_amount_percentage ? $discount_offer->discount_amount . '%' : '৳' . $discount_offer->discount_amount;
-        if($this->service->unit)
-            $unit =$this->service->unit;
+        if ($this->service->unit)
+            $unit = $this->service->unit;
 
-        if($discount_offer->cap != 0) $offer_short_text.=" upto ৳$discount_offer->cap";
+        if ($discount_offer->cap != 0) $offer_short_text .= " upto ৳$discount_offer->cap";
         else $offer_short_text .= $amount;
-        $offer_long_text = 'Save '.$amount;
+        $offer_long_text = 'Save ' . $amount;
 
-        if($this->service->unit)
-        {
-            $offer_long_text.= ' in every ';
-            if($discount_offer->min_discount_qty) $offer_long_text.="$discount_offer->min_discount_qty";
-            $offer_long_text.= "$unit";
+        if ($this->service->unit) {
+            $offer_long_text .= ' in every ';
+            if ($discount_offer->min_discount_qty) $offer_long_text .= "$discount_offer->min_discount_qty";
+            $offer_long_text .= "$unit";
         }
-        $offer_long_text.=' by subscribing!';
+        $offer_long_text .= ' by subscribing!';
 
         $discount_amount_for_homepage = '';
-        if($discount_offer->cap != 0) $discount_amount_for_homepage.="  ৳$discount_offer->cap";
+        if ($discount_offer->cap != 0) $discount_amount_for_homepage .= "  ৳$discount_offer->cap";
         else $discount_amount_for_homepage .= $amount;
-        if($this->service->unit)
-        {
-            $discount_amount_for_homepage.= '/';
-            if($discount_offer->min_discount_qty) $discount_amount_for_homepage.="$discount_offer->min_discount_qty";
-            $discount_amount_for_homepage.= "$unit";
+        if ($this->service->unit) {
+            $discount_amount_for_homepage .= '/';
+            if ($discount_offer->min_discount_qty) $discount_amount_for_homepage .= "$discount_offer->min_discount_qty";
+            $discount_amount_for_homepage .= "$unit";
         }
 
         $discount_amount = '';
-        if($discount_offer->cap != 0) $discount_amount.="$discount_offer->cap";
+        if ($discount_offer->cap != 0) $discount_amount .= "$discount_offer->cap";
         else $discount_amount .= $amount;
 
 
@@ -107,7 +107,7 @@ class ServiceSubscription extends Model
             'short_text' => $offer_short_text,
             'long_text' => $offer_long_text,
             'discount_amount_for_homepage' => $discount_amount_for_homepage,
-            'discount_amount' => $discount_offer->is_discount_amount_percentage? $discount_offer->discount_amount.'%' : $discount_offer->discount_amount.'',
+            'discount_amount' => $discount_offer->is_discount_amount_percentage ? $discount_offer->discount_amount . '%' : $discount_offer->discount_amount . '',
             'is_percentage' => $discount_offer->is_discount_amount_percentage
         ];
     }
@@ -117,5 +117,17 @@ class ServiceSubscription extends Model
         $this->discounts()->where([
             ['subscription_type', $type], ['min_discount_qty', '<=', $dates_count]
         ])->valid()->first();
+    }
+
+    public function getFaqAttribute($value)
+    {
+        $value = $value ?: '{}';
+        return json_decode($value);
+    }
+
+    public function getImageLink()
+    {
+        $faq = $this->faq;
+        return property_exists($faq, 'image_link') ? $faq->image_link : null;
     }
 }
