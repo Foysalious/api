@@ -1,7 +1,7 @@
-<?php namespace Sheba\Partner\Validations;
+<?php namespace Sheba\NID\Validations;
 
 
-use App\Sheba\Partner\Validations\NidValidationResponse;
+use App\Sheba\NID\Validations\NidValidationResponse;
 use Exception;
 
 class Porichoy extends NidValidator
@@ -32,7 +32,8 @@ class Porichoy extends NidValidator
             $data     = [
                 'national_id'     => $nid,
                 'person_fullname' => $fullName,
-                'person_dob'      => $dob
+                'person_dob'      => $dob,
+                "match_name"      => true
             ];
             $response = $this->client->post("{$this->baseUrl}nid-person", [
                 'headers'     => [
