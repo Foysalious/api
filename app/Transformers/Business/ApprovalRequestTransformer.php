@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Profile;
+use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
@@ -11,6 +12,7 @@ use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 
 class ApprovalRequestTransformer extends TransformerAbstract
 {
+    use BusinessBasicInformation;
     /** @var Profile Profile */
     private $profile;
 
@@ -27,8 +29,9 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        $leave_type = $requestable->leaveType()->withTrashed()->first();
 
+        $leave_type = $requestable->leaveType()->withTrashed()->first();
+        $approvers = $this->getApprover($requestable);
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -45,8 +48,24 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
-                'note' => $requestable->note
+                'note' => $requestable->note,
+                'approvers' => $approvers,
             ]
         ];
+    }
+
+    private function getApprover($requestable)
+    {
+        $approvers = [];
+        $requestable->requests->each(function ($approval_request)use (&$approvers){
+            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
+            $member = $business_member->member;
+            $profile = $member->profile;
+           $approvers[] = $approval_request->status == ApprovalRequestPresenter::statuses()['accepted'] ?
+               $profile->name . ' has approved.' :
+               $profile->name . ' not respond yet.';
+
+        });
+        return $approvers;
     }
 }
