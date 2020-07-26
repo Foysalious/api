@@ -2,6 +2,7 @@
 
 
 use App\Models\Job;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
 
@@ -119,25 +120,51 @@ class ServiceList
         $auth_user = $this->request->auth_user;
         $resource = $auth_user->getResource();
 
-        $services = $resource->firstPartner()->services;
+        $services = $resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
+            $q->where('publication_status', 1);
+            $q->orWhere('is_published_for_backend', 1);
+        })->get();
 
-        $services = $services->map(function ($service, $key) {
-            $formatted_service = [
-                'id' => $service->id,
-                'name' => $service->name,
-                'variable_type' => $service->variable_type,
-                'min_quantity' => $service->min_quantity,
-                'unit' => $service->unit,
-                'app_thumb' => $service->app_thumb,
-            ];
+        $services->each(function (&$service) {
+            $variables = json_decode($service->variables);
             if ($service->variable_type == 'Options') {
-                $formatted_service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
+                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                $service['fixed_price'] = null;
             } else {
-                $formatted_service['questions'] = [];
+                $service['questions'] = $service['option_prices'] = [];
+                $service['fixed_price'] = (double)$variables->price;
             }
-            return $formatted_service;
+            array_forget($service, 'variables');
+            removeRelationsAndFields($service);
         });
 
         return $services;
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(array(
+                'option' => collect(explode(',', $key))->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => (double)$price
+            ));
+        }
+        return $options;
     }
 }
