@@ -404,6 +404,7 @@ class Loan
     public function repaymentList($loan_id, $all = false, $month = null, $year = null)
     {
         $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
+        $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -416,6 +417,8 @@ class Loan
                 'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
             ]);
         }
+        $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
+        $data['due_amount']   = $this->getDue($last_claim->id);
 
         return $data;
     }

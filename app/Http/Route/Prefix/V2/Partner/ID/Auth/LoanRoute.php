@@ -36,6 +36,7 @@ class LoanRoute
             $api->post('/{loan_id}/upload-documents','LoanController@uploadDocuments');
             $api->post('/{loan_id}/update-claim-status','LoanController@claimStatusUpdate');
             $api->get('loan-disbursement-report','LoanReportController@loanDisbursementReport');
+            $api->get('loan-status-report','LoanReportController@loanStatusReport');
 
         });
 
