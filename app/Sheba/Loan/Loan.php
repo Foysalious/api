@@ -45,6 +45,7 @@ use Sheba\Loan\Exceptions\InvalidTypeException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
 use Sheba\Loan\Exceptions\NotShebaPartner;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -403,6 +404,7 @@ class Loan
     public function repaymentList($loan_id, $all = false, $month = null, $year = null)
     {
         $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
+        $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -415,6 +417,8 @@ class Loan
                 'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
             ]);
         }
+        $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
+        $data['due_amount']   = $this->getDue($last_claim->id);
 
         return $data;
     }
@@ -473,6 +477,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::PENDING) {
             $data['loan_balance'] = 0;
@@ -483,6 +488,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::APPROVED && ($due = $this->getDue($last_claim->id)) > 0) {
             $is_defaulter = $this->isDefaulter($last_claim->defaulter_date);
@@ -494,6 +500,7 @@ class Loan
             $data['should_pay'] = 1;
             $data['is_defaulter'] = $is_defaulter;
             $data['success_msg_seen'] = $last_claim->approved_msg_seen;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
 
         if ($last_claim && $last_claim->status == Statuses::DECLINED) {
@@ -505,6 +512,7 @@ class Loan
             $data['should_pay'] = 0;
             $data['is_defaulter'] = 0;
             $data['success_msg_seen'] = 0;
+            $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         $data['recent_claims'] = $this->getRecentClaims($request->loan_id);
         $data['recent_transactions'] = $this->getRecentRepayments($request->loan_id);
@@ -807,6 +815,7 @@ class Loan
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
         $details['claims'] = $this->claimList($loan_id,true);
+        $details['repayments'] = $this->repaymentList($loan_id,true);
         return $details;
     }
 
