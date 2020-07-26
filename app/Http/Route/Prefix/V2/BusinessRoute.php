@@ -22,6 +22,7 @@ class BusinessRoute
                     $api->group(['prefix' => '{proposal}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@proposalDetail');
                         $api->get('/send-pin', 'B2b\ProposalController@sendPin');
+                        $api->get('/work-order/download', 'B2b\ProcurementController@downloadWorkOrder');
                         $api->post('/', 'B2b\ProposalController@takeAction');
                     });
                 });

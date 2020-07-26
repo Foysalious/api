@@ -92,7 +92,6 @@ class AuthUser
         ]);
     }
 
-
     public function getAuthUser()
     {
         return $this->profile ? $this->profile : $this->avatar;
@@ -195,10 +194,12 @@ class AuthUser
     {
         if (!$this->profile) return null;
         if (!$this->profile->member || !$this->profile->member->businessMember) return null;
+        $business_member = $this->profile->member->businessMember;
+
         return [
-            'id'          => $this->profile->member->businessMember->id,
-            'business_id' => $this->profile->member->businessMember->business_id,
-            'member_id'   => $this->profile->member->businessMember->member_id,
+            'id' => $business_member->id,
+            'business_id' => $business_member->business_id,
+            'member_id' => $business_member->member_id,
         ];
     }
 

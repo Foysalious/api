@@ -2,6 +2,7 @@
 
 use App\Models\Business;
 use App\Models\BusinessMember;
+use App\Models\Member;
 use App\Models\Profile;
 use App\Repositories\ProfileRepository;
 use Illuminate\Http\JsonResponse;
@@ -48,15 +49,16 @@ class LoginController extends Controller
         if (!Hash::check($request->input('password'), $profile->password)) {
             return api_response($request, null, 401, ["message" => 'Credential mismatch']);
         }
+        /** @var Member $member */
         $member = $profile->member;
-        $businesses = $member ? $member->businesses()->wherePivot('status', '<>', Statuses::INACTIVE)->first() : null;
+        $businesses = ($member && $member->businessMember) ? $member->businessMember->business : null;
 
         if (!$member) {
             $member = $this->memberRepository->create(['profile_id' => $profile->id, 'remember_token' => str_random(255)]);
         }
 
         $info = [
-            'token' => $this->generateToken($profile),
+            'token' => $this->generateToken($member),
             'member_id' => $member->id,
             'business_id' => $businesses ? $businesses->id : null,
             'is_super' => $member->businessMember ? $member->businessMember->is_super : null
@@ -66,18 +68,19 @@ class LoginController extends Controller
     }
 
     /**
-     * @param Profile $profile
+     * @param Member $member
      * @return mixed
      */
-    private function generateToken(Profile $profile)
+    private function generateToken(Member $member)
     {
-        $member = $profile->member;
-        $businesses = $member->businesses->first() ? $member->businesses->first() : null;
+        /** @var Profile $profile */
+        $profile = $member->profile;
+        $businesses = $member->businessMember ? $member->businessMember->business : null;
 
         return JWTAuth::fromUser($profile, [
-            'member_id' => $member->id,
-            'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
-            'business_id' => $businesses ? $businesses->id : null,
+            'member_id'     => $member->id,
+            'member_type'   => $member->businessMember ? $member->businessMember->type : null,
+            'business_id'   => $businesses ? $businesses->id : null
         ]);
     }
 

@@ -219,7 +219,7 @@ class Creator
             '_token' => str_random(255),
             'name' => $this->basicRequest->getFirstName() . ' ' . $this->basicRequest->getLastName(),
             'email' => $this->basicRequest->getEmail(),
-            'password' => bcrypt($this->password),
+            'password' => $this->password,
             'pro_pic' => $this->basicRequest->getProPic() ? $this->profileRepository->saveProPic($this->basicRequest->getProPic(), $this->basicRequest->getProPic()->getClientOriginalName()) : $default_image,
         ];
 
@@ -281,7 +281,7 @@ class Creator
             if ($this->password) $coworker_invite_email->setPassword($this->password);
             if (empty($profile->password)) {
                 $password = str_random(6);
-                $this->profileRepository->updateRaw($profile, ['password' => $password]);
+                $this->profileRepository->updateRaw($profile, ['password' => bcrypt($password)]);
                 $coworker_invite_email->setPassword($password);
             }
 

@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -16,6 +17,7 @@ use Sheba\Business\CoWorker\Requests\BasicRequest;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
 use App\Jobs\SendBusinessRequestEmail;
@@ -325,51 +327,69 @@ class CoWorkerController extends Controller
     /**
      * @param $business
      * @param Request $request
+     * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse
      */
-    public function index($business, Request $request)
+    public function index($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
+        /** @var Business $business */
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
+        $is_inactive_filter_applied = false;
         list($offset, $limit) = calculatePagination($request);
 
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'pro_pic', 'mobile', 'email');
-            },
-            'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ]);
+        if ($request->has('status') && $request->status == Statuses::INACTIVE) {
+            $is_inactive_filter_applied = true;
+            $members = $business->members()->select('members.id', 'profile_id')->with([
+                'profile' => function ($q) {
+                    $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                }
+            ])->wherePivot('status', Statuses::INACTIVE)->get()->unique()
+                ->each(function ($member) use ($business_member_repo, $business) {
+                    $business_member = $business_member_repo->builder()
+                        ->where('business_id', $business->id)
+                        ->where('member_id', $member->id)
+                        ->where('status', Statuses::INACTIVE)
+                        ->first();
 
-        if ($request->has('department')) {
-            $members = $members->whereHas('businessMember', function ($q) use ($request) {
-                $q->whereHas('role', function ($q) use ($request) {
-                    $q->whereHas('businessDepartment', function ($q) use ($request) {
-                        $q->where('business_departments.id', $request->department);
+                    $member->setRelation('businessMemberGenerated', $business_member->load([
+                        'role' => function ($q) {
+                            $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                                'businessDepartment' => function ($q) {
+                                    $q->select('business_departments.id', 'business_id', 'name');
+                                }
+                            ]);
+                        }
+                    ]));
+                    $member->push();
+            });
+
+            if ($request->has('department')) {
+                $members = $members->filter(function ($member) use ($request) {
+                    return $member->businessMemberGenerated->role && $member->businessMemberGenerated->role->businessDepartment->id == $request->department;
+                });
+            }
+        } else {
+            $members = $business->membersWithProfileAndAccessibleBusinessMember();
+            if ($request->has('department')) {
+                $members = $members->whereHas('businessMember', function ($q) use ($request) {
+                    $q->whereHas('role', function ($q) use ($request) {
+                        $q->whereHas('businessDepartment', function ($q) use ($request) {
+                            $q->where('business_departments.id', $request->department);
+                        });
                     });
                 });
-            });
+            }
+            $members = $members->get()->unique();
         }
-
-        $members = $members->get()->unique();
         if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($members, new CoWorkerListTransformer());
+        $employees = new Collection($members, new CoWorkerListTransformer($is_inactive_filter_applied));
         $employees = collect($manager->createData($employees)->toArray()['data']);
-
 
         if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
