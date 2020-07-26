@@ -226,7 +226,7 @@ class Loan
     {
         $data = [
             'big_banner' => GeneralStatics::bigBanner(),
-            'banner' => GeneralStatics::banner(),
+            'banner'     => GeneralStatics::banner(),
         ];
         $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
@@ -1045,9 +1045,9 @@ class Loan
         $running_micro_loan = !$this->partner->loan()->type(LoanTypes::MICRO)->get()->isEmpty() ? $this->partner->loan()->type(LoanTypes::MICRO)->get()->last()->toArray() : [];
         $running_loan_data  = [];
         if (count($running_term_loan))
-            $running_loan_data[] = $this->getRunningLoanData($running_term_loan, GeneralStatics::RUNNING_TERM_LOAN_ICON);
+            $running_loan_data[] = $this->getRunningLoanData($running_term_loan, GeneralStatics::RUNNING_TERM_LOAN_ICON, GeneralStatics::TERM_TITLE_BD);
         if (count($running_micro_loan))
-            $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, GeneralStatics::RUNNING_MICRO_LOAN_ICON);
+            $running_loan_data[] = $this->getRunningLoanData($running_micro_loan, GeneralStatics::RUNNING_MICRO_LOAN_ICON, GeneralStatics::MICRO_TITLE_BD);
 
         return $running_loan_data;
     }
@@ -1058,11 +1058,12 @@ class Loan
      * @return array|array[]
      * @throws ReflectionException
      */
-    private function getRunningLoanData($running_loan, $icon_url)
+    private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
         return [
-            "data" => (new RunningApplication($running_loan))->toArray(),
-            "icon" => $icon_url
+            "data"     => (new RunningApplication($running_loan))->toArray(),
+            "icon"     => $icon_url,
+            "title_bn" => $title_bn
         ];
     }
 
