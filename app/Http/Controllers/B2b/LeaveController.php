@@ -266,7 +266,10 @@ class LeaveController extends Controller
         $time_frame = $business_member->getBusinessFiscalPeriod();
         /** @var Business $business */
         $business = $business_member->business;
-        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
+        $leave_types = [];
+        $business->leaveTypes()->with('leaves')->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->each(function ($leave_type) use (&$leave_types) {
+                if (!$leave_type->leaves->isEmpty()) {array_push($leave_types, ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days,]);}
+            });
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile');
