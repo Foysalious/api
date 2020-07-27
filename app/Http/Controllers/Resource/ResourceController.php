@@ -17,11 +17,15 @@ use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Customer\Creator as CustomerCreator;
 use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
+use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
+use Sheba\PartnerList\Director;
+use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\Resource\Jobs\JobList;
 use Sheba\Resource\Order\Creator as OrderCreator;
 use Sheba\Resource\Schedule\ResourceScheduleChecker;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
+use Sheba\ServiceRequest\ServiceRequest;
 
 class ResourceController extends Controller
 {
@@ -141,7 +145,7 @@ class ResourceController extends Controller
         return api_response($request, $schedule, 200, ['schedule' => $schedule]);
     }
 
-    public function createOrder(Request $request, CustomerCreator $customerCreator, Geo $geo, CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator)
+    public function createOrder(Request $request, CustomerCreator $customerCreator, Geo $geo, CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator, PartnerListBuilder $partnerListBuilder, Director $partnerListDirector, ServiceRequest $serviceRequest)
     {
         $request->merge(['mobile' => formatMobile($request->mobile)]);
         $this->validate($request, [
@@ -156,16 +160,27 @@ class ResourceController extends Controller
             'address' => 'required|string',
             'partner' => 'required|numeric',
         ], ['mobile' => 'Invalid mobile number!']);
-
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
         $customer = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
         $location = Location::find($request->location_id);
         $geo_info = json_decode($location->geo_informations);
         $geo->setLat($geo_info->lat)->setLng($geo_info->lng);
         $address = $deliveryAddressCreator->setCustomer($customer)->setAddressText($request->address)->setGeo($geo)->setName($customer->profile->name)->create();
+        $service_requestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
+        $partnerListBuilder->setGeo($geo)->setServiceRequestObjectArray($service_requestObject)->setScheduleTime($request->time)->setScheduleDate($request->date);
+        $partnerListBuilder->setPartnerIds([$request->partner]);
+        $partnerListDirector->setBuilder($partnerListBuilder);
+        $partnerListDirector->buildPartnerListForOrderPlacementAdmin();
+        $partners = $partnerListBuilder->get();
+        if (!$partners->first()) return api_response($request, null, 400);
+        $preferred_time = new PreferredTime($request->time);
+        $is_resource_available = scheduler($resource)->isAvailableForCategory($request->date, $preferred_time->getStartString(), $service_requestObject[0]->getCategory());
+        if (!$is_resource_available) return api_response($request, null, 400);
         $response = $orderCreator->setServices($request->services)->setCustomer($customer)->setMobile($request->mobile)
             ->setDate($request->date)->setTime($request->time)->setAddressId($address->id)->setAdditionalInformation($request->additional_information)
             ->setPartnerId($request->partner)->create();
-
         return api_response($request, null, $response->code, ['message' => $response->message]);
     }
 }
