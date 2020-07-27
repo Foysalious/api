@@ -18,8 +18,8 @@ class BasicInfo
         $fiscal_year = $this->business->getBusinessFiscalPeriod();
         return [
             'sandwich_leave' => $this->business->is_sandwich_leave_enable ? 1 : 0,
-            'fiscal_year' => Carbon::parse($fiscal_year->start)->format('F') . ' - ' . Carbon::parse($fiscal_year->end)->format('F'),
-            'fiscal_year_start_month' => Carbon::parse($fiscal_year->start)->month
+            'fiscal_year' => $fiscal_year->start->format('F'). ' - ' .$fiscal_year->end->format('F'),
+            'fiscal_year_start_month' => $fiscal_year->start->month
         ];
     }
 
