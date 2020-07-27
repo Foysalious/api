@@ -6,6 +6,7 @@ namespace App\Sheba\Loan\DLSV2\ExcelReport;
 
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\Resource;
 use Illuminate\Http\Request;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
@@ -48,9 +49,7 @@ class RetailerRegistrationReport
 
     private function makeData()
     {
-        $robi_retailers = Partner::whereHas('retailers', function ($q)  {
-            $q->where('retailers.strategic_partner_id', 2);
-        })->get();
+
 
     }
 

@@ -113,20 +113,15 @@ class LoanReportController extends Controller
     public function retailerRegistrationReport(Request $request, RetailerRegistrationReport $report)
     {
         try {
-            $this->validate($request, [
-                'start_date' => 'date|required',
-                'end_date' => 'date|required',
-            ]);
+            $this->validate($request, $this->reportValidator());
             return $report->setDates($request)->get();
-        }
-        catch (Throwable $e) {
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['data' => $message]);
+        } catch (Throwable $e) {
             dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
-        }
-        catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['data' => $message]);
         }
 
     }
