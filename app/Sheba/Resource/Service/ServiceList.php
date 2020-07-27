@@ -1,6 +1,7 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Partner;
 use Illuminate\Http\Request;
@@ -120,9 +121,17 @@ class ServiceList
         $auth_user = $this->request->auth_user;
         $resource = $auth_user->getResource();
 
+        if ($this->request->has('lat') && $this->request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$this->request->lat, (double)$this->request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($this->request, null, 404);
+        } else $location = 4;
+
+
         $services = $resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
             $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
+        })->whereHas('locations', function ($q) use ($location) {
+            $q->where('locations.id', $location);
         })->get();
 
         $services->each(function (&$service) {
