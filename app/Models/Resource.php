@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
@@ -14,7 +15,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     use Wallet;
 
     protected $guarded = ['id'];
-    protected $casts = ['wallet' => 'double'];
+    protected $casts   = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -66,9 +67,14 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    /**
+     * @return HasMany
+     */
     public function retailers()
     {
-        return $this->profile->retailers();
+        /** @var Profile $profile */
+        $profile = $this->profile;
+        return $profile->retailers();
     }
 
     public function withdrawalRequests()
@@ -80,7 +86,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $types = [];
+        $types   = [];
         foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
             $types[] = $unique_partner->pivot->resource_type;
         }
@@ -104,8 +110,8 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function categoriesIn($partner)
     {
-        $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $categories = collect();
+        $partner           = $partner instanceof Partner ? $partner->id : $partner;
+        $categories        = collect();
         $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
         foreach ($partner_resources as $partner_resource) {
             foreach ($partner_resource->categories as $item) {
@@ -150,5 +156,10 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
+    }
+
+    public function isAllowedForMicroLoan()
+    {
+        return $this->retailers->count() > 0;
     }
 }

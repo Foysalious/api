@@ -134,7 +134,7 @@ class GeneralStatics
         return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
     }
 
-    public static  function  getMinimumRepaymentAmount()
+    public static function getMinimumRepaymentAmount()
     {
         return config('loan.minimum_repayment_amount');
     }
@@ -154,5 +154,12 @@ class GeneralStatics
             'loan_amount',
             'groups'
         ];
+    }
+
+    public static function isValidAmount($type, $amount)
+    {
+        $min = self::getMinimumAmount($type) ?: 0;
+        $max = self::getMaximumAmount($type) ?: 0;
+        return $amount >= $min && $amount <= $max;
     }
 }

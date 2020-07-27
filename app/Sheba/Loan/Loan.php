@@ -72,18 +72,19 @@ class Loan
 
     public function __construct(FileRepository $file_repository = null)
     {
-        $this->repo = new LoanRepository();
-        $this->downloadDir = storage_path('downloads');
-        $this->zipDir = public_path('temp/documents.zip');
-        $this->user = request()->user;
-        $this->finalFields = [
-            'personal' => 'personalInfo',
-            'business' => 'businessInfo',
-            'finance' => 'financeInfo',
+        $this->repo           = new LoanRepository();
+        $this->downloadDir    = storage_path('downloads');
+        $this->zipDir         = public_path('temp/documents.zip');
+        $this->user           = request()->user;
+        $this->finalFields    = [
+            'personal'        => 'personalInfo',
+            'business'        => 'businessInfo',
+            'finance'         => 'financeInfo',
             'nominee_granter' => 'nomineeGranter',
-            'document' => 'documents'
+            'document'        => 'documents'
         ];
         $this->fileRepository = $file_repository;
+        $this->type           = LoanTypes::TERM;
 
     }
 
@@ -172,7 +173,7 @@ class Loan
     public function get($id)
     {
         /** @var PartnerBankLoan $loan */
-        $loan = $this->repo->find($id);
+        $loan    = $this->repo->find($id);
         $request = new PartnerLoanRequest($loan);
         return $request->toArray();
     }
@@ -192,10 +193,10 @@ class Loan
             throw new NotAllowedToAccess();
         }
         $loanRequest = (new PartnerLoanRequest($loan));
-        $details = $loanRequest->details();
+        $details     = $loanRequest->details();
         // $new_data = json_decode($request->get('data'),true);
         $new_data = $request->get('data');
-        $updater = (new Updater($details, $new_data));
+        $updater  = (new Updater($details, $new_data));
         DB::transaction(function () use ($updater, $loanRequest, $request, $details, $new_data) {
             $difference = $updater->findDifference()->getDifference();
             $updater->update($loanRequest, $request);
@@ -213,11 +214,11 @@ class Loan
     public function homepage()
     {
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
-        $data = [
+        $data    = [
             'big_banner' => GeneralStatics::bigBanner(),
-            'banner' => GeneralStatics::banner(),
+            'banner'     => GeneralStatics::banner(),
         ];
-        $data = array_merge($data, (new RunningApplication($running))->toArray(), ['details' => GeneralStatics::homepage()]);
+        $data    = array_merge($data, (new RunningApplication($running))->toArray(), ['details' => GeneralStatics::homepage()]);
         return $data;
     }
 
@@ -236,7 +237,7 @@ class Loan
     }
 
     /**
-     * @throws AlreadyRequestedForLoan
+     * @throws AlreadyRequestedForLoan|NotApplicableForLoan
      */
     public function apply()
     {
@@ -261,17 +262,18 @@ class Loan
 
 
     /**
-     * @throws AlreadyRequestedForLoan
+     * @throws AlreadyRequestedForLoan|NotApplicableForLoan
      */
     public function validate()
     {
         $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
-        if ($this->type===LoanTypes::MICRO){
-
+        if ($this->type === LoanTypes::MICRO && !$this->resource->isAllowedForMicroLoan()) {
+            throw new NotApplicableForLoan("Not Allowed to apply for micro loan");
         }
-//        if (!$applicable)
-//            throw new NotApplicableForLoan();
+        if (!GeneralStatics::isValidAmount($this->type, (double)$this->data['loan_amount'])) throw new NotApplicableForLoan("Invalid Loan Amount");
+        if (!$applicable)
+            throw new NotApplicableForLoan();
 
     }
 
@@ -283,7 +285,7 @@ class Loan
         $requests = $this->repo->where('partner_id', $this->partner->id)->where('type', $this->type ?: LoanTypes::TERM)->get();
         if (!$requests->isEmpty()) {
             $last_request = $requests->last();
-            $statuses = constants('LOAN_STATUS');
+            $statuses     = constants('LOAN_STATUS');
             if (!in_array($last_request->status, [
                 $statuses['closed'],
                 $statuses['withdrawal'],
@@ -307,9 +309,9 @@ class Loan
         }
         $data['is_applicable_for_loan'] = $this->isApplicableForLoan($data);
         if ($this->version === 2) {
-            $data['details_link'] = GeneralStatics::getDetailsLink($this->type);
-            $data['loan_fee'] = GeneralStatics::getFee($this->type);
-            $data['maximum_day'] = GeneralStatics::getMinimumDay($this->type);
+            $data['details_link']        = GeneralStatics::getDetailsLink($this->type);
+            $data['loan_fee']            = GeneralStatics::getFee($this->type);
+            $data['maximum_day']         = GeneralStatics::getMinimumDay($this->type);
             $data['minimum_loan_amount'] = GeneralStatics::getMinimumAmount($this->type);
             $data['maximum_loan_amount'] = GeneralStatics::getMaximumAmount($this->type);
         }
@@ -337,7 +339,7 @@ class Loan
 
     public function create()
     {
-        $data = $this->data;
+        $data       = $this->data;
         $final_info = [];
         foreach ($this->finalFields as $key => $val) {
             $final_info[$key] = $this->$val()->toArray();
@@ -357,18 +359,18 @@ class Loan
     public function claim($request)
     {
         $data = [
-            'loan_id' => $request->loan_id,
+            'loan_id'     => $request->loan_id,
             'resource_id' => $request->manager_resource->id,
-            'amount' => $request->amount,
-            'status' => Statuses::PENDING,
-            'log' => '৳' . convertNumbersToBangla($request->amount, true, 0) . ' লোন দাবি করা হয়েছে',
+            'amount'      => $request->amount,
+            'status'      => Statuses::PENDING,
+            'log'         => '৳' . convertNumbersToBangla($request->amount, true, 0) . ' লোন দাবি করা হয়েছে',
         ];
 
         return (new LoanClaim())->createRequest($data);
     }
 
     /**
-     * @param $loan_id
+     * @param      $loan_id
      * @param bool $all
      * @param null $month
      * @param null $year
@@ -381,24 +383,24 @@ class Loan
         else
             $claims = (new LoanClaim())->getAll($loan_id);
 
-        $pending_claim = (new LoanClaim())->getPending($loan_id);
-        $data['claim_list'] = [];
+        $pending_claim         = (new LoanClaim())->getPending($loan_id);
+        $data['claim_list']    = [];
         $data['pending_claim'] = null;
 
         if ($pending_claim) {
-            $data['pending_claim']['id'] = $pending_claim->id;
-            $data['pending_claim']['status'] = $pending_claim->status;
-            $data['pending_claim']['amount'] = $pending_claim->amount;
-            $data['pending_claim']['log'] = $pending_claim->log;
+            $data['pending_claim']['id']         = $pending_claim->id;
+            $data['pending_claim']['status']     = $pending_claim->status;
+            $data['pending_claim']['amount']     = $pending_claim->amount;
+            $data['pending_claim']['log']        = $pending_claim->log;
             $data['pending_claim']['created_at'] = Carbon::parse($pending_claim->created_at)->format('Y-m-d H:i:s');
         }
 
         foreach ($claims as $claim) {
             array_push($data['claim_list'], [
-                'id' => $claim->id,
-                'status' => $claim->status,
-                'amount' => $claim->amount,
-                'log' => $claim->log,
+                'id'         => $claim->id,
+                'status'     => $claim->status,
+                'amount'     => $claim->amount,
+                'log'        => $claim->log,
                 'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
             ]);
         }
@@ -415,16 +417,16 @@ class Loan
 
         foreach ($repayments as $repayment) {
             array_push($data['repayment_list'], [
-                'id' => $repayment->id,
-                'claim_id' => $repayment->loan_claim_request_id,
-                'amount' => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
+                'id'          => $repayment->id,
+                'claim_id'    => $repayment->loan_claim_request_id,
+                'amount'      => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
                 'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
-                'log' => $repayment->log,
-                'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
+                'log'         => $repayment->log,
+                'created_at'  => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
             ]);
         }
         $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
-        $data['due_amount']   = $last_claim ? $this->getDue($last_claim->id) : 0;
+        $data['due_amount']    = $last_claim ? $this->getDue($last_claim->id) : 0;
 
         return $data;
     }
@@ -436,9 +438,9 @@ class Loan
      */
     public function canClaim($request)
     {
-        $can_claim = true;
+        $can_claim    = true;
         $partner_loan = $this->repo->find($request->loan_id);
-        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
+        $last_claim   = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
 
         if (($partner_loan->status != LoanStatuses::DISBURSED) || ($request->amount > $partner_loan->loan_amount) || ($last_claim && ($last_claim->status == Statuses::PENDING || ($last_claim->status == Statuses::APPROVED && !$this->hasClearedDue($last_claim->id)))))
             $can_claim = false;
@@ -469,58 +471,58 @@ class Loan
      */
     public function accountInfo($request)
     {
-        $data = [];
-        $partner_loan = $this->repo->find($request->loan_id);
-        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        $data['loan_status'] = $partner_loan->status;
+        $data                   = [];
+        $partner_loan           = $this->repo->find($request->loan_id);
+        $last_claim             = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
+        $data['loan_status']    = $partner_loan->status;
         $data['granted_amount'] = $partner_loan->loan_amount;
         if (!$last_claim || ($last_claim && $last_claim->status == Statuses::APPROVED && $this->hasClearedDue($last_claim->id))) {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
-            $data['status_message'] = 'আপনি সর্বোচ্চ ' . convertNumbersToBangla($partner_loan->loan_amount,true,0) . ' পর্যন্ত লোন গ্রহণ করতে পারবেন';
-            $data['status_type'] = 'info';
-            $data['can_claim'] = 1;
-            $data['should_pay'] = 0;
-            $data['is_defaulter'] = 0;
-            $data['success_msg_seen'] = 0;
+            $data['loan_balance']             = 0;
+            $data['due_balance']              = 0;
+            $data['status_message']           = 'আপনি সর্বোচ্চ ' . convertNumbersToBangla($partner_loan->loan_amount, true, 0) . ' পর্যন্ত লোন গ্রহণ করতে পারবেন';
+            $data['status_type']              = 'info';
+            $data['can_claim']                = 1;
+            $data['should_pay']               = 0;
+            $data['is_defaulter']             = 0;
+            $data['success_msg_seen']         = 0;
             $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::PENDING) {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
-            $data['status_message'] = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
-            $data['status_type'] = 'warning';
-            $data['can_claim'] = 0;
-            $data['should_pay'] = 0;
-            $data['is_defaulter'] = 0;
-            $data['success_msg_seen'] = 0;
+            $data['loan_balance']             = 0;
+            $data['due_balance']              = 0;
+            $data['status_message']           = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
+            $data['status_type']              = 'warning';
+            $data['can_claim']                = 0;
+            $data['should_pay']               = 0;
+            $data['is_defaulter']             = 0;
+            $data['success_msg_seen']         = 0;
             $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
         if ($last_claim && $last_claim->status == Statuses::APPROVED && ($due = $this->getDue($last_claim->id)) > 0) {
-            $is_defaulter = $this->isDefaulter($last_claim->defaulter_date);
-            $data['loan_balance'] = $data['granted_amount'] - $due;
-            $data['due_balance'] = $due;
-            $data['status_message'] = $is_defaulter ? 'আপনার লোন পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্যে ৫ টাকা করে জরিমানা যোগ হচ্ছে': 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
-            $data['status_type'] = $is_defaulter ? 'defaulter' : 'success';
-            $data['can_claim'] = 0;
-            $data['should_pay'] = 1;
-            $data['is_defaulter'] = $is_defaulter;
-            $data['success_msg_seen'] = $last_claim->approved_msg_seen;
+            $is_defaulter                     = $this->isDefaulter($last_claim->defaulter_date);
+            $data['loan_balance']             = $data['granted_amount'] - $due;
+            $data['due_balance']              = $due;
+            $data['status_message']           = $is_defaulter ? 'আপনার লোন পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্যে ৫ টাকা করে জরিমানা যোগ হচ্ছে' : 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
+            $data['status_type']              = $is_defaulter ? 'defaulter' : 'success';
+            $data['can_claim']                = 0;
+            $data['should_pay']               = 1;
+            $data['is_defaulter']             = $is_defaulter;
+            $data['success_msg_seen']         = $last_claim->approved_msg_seen;
             $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
 
         if ($last_claim && $last_claim->status == Statuses::DECLINED) {
-            $data['loan_balance'] = 0;
-            $data['due_balance'] = 0;
-            $data['status_message'] = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
-            $data['status_type'] = 'error';
-            $data['can_claim'] = 1;
-            $data['should_pay'] = 0;
-            $data['is_defaulter'] = 0;
-            $data['success_msg_seen'] = 0;
+            $data['loan_balance']             = 0;
+            $data['due_balance']              = 0;
+            $data['status_message']           = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
+            $data['status_type']              = 'error';
+            $data['can_claim']                = 1;
+            $data['should_pay']               = 0;
+            $data['is_defaulter']             = 0;
+            $data['success_msg_seen']         = 0;
             $data['minimum_repayment_amount'] = GeneralStatics::getMinimumRepaymentAmount();
         }
-        $data['recent_claims'] = $this->getRecentClaims($request->loan_id);
+        $data['recent_claims']       = $this->getRecentClaims($request->loan_id);
         $data['recent_transactions'] = $this->getRecentRepayments($request->loan_id);
 
         return $data;
@@ -533,7 +535,7 @@ class Loan
     public function approvedClaimMsgSeen($request)
     {
         $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        return  (new LoanClaim())->setClaim($last_claim->id)->updateApprovedMsgSeen($request->success_msg_seen);
+        return (new LoanClaim())->setClaim($last_claim->id)->updateApprovedMsgSeen($request->success_msg_seen);
     }
 
 
@@ -552,17 +554,15 @@ class Loan
      */
     private function getRecentClaims($loan_id)
     {
-        $data['recent_claims'] =[];
-        $recent_claims = (new LoanClaim())->getRecent($loan_id);
-        if($recent_claims)
-        {
-            foreach ($recent_claims as $claim)
-            {
-                array_push($data['recent_claims'],[
-                    'id' => $claim->id,
-                    'status' => $claim->status,
-                    'amount' => $claim->amount,
-                    'log'   => $claim->log,
+        $data['recent_claims'] = [];
+        $recent_claims         = (new LoanClaim())->getRecent($loan_id);
+        if ($recent_claims) {
+            foreach ($recent_claims as $claim) {
+                array_push($data['recent_claims'], [
+                    'id'         => $claim->id,
+                    'status'     => $claim->status,
+                    'amount'     => $claim->amount,
+                    'log'        => $claim->log,
                     'created_at' => Carbon::parse($claim->created_at)->format('Y-m-d H:i:s')
                 ]);
             }
@@ -576,19 +576,17 @@ class Loan
      */
     private function getRecentRepayments($loan_id)
     {
-        $data['recent_repayments'] =[];
-        $recent_repayments = (new Repayment())->getRecent($loan_id);
-        if($recent_repayments)
-        {
-            foreach ($recent_repayments as $repayment)
-            {
-                array_push($data['recent_repayments'],[
-                    'id' => $repayment->id,
-                    'claim_id' => $repayment->loan_claim_request_id,
-                    'amount' => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
+        $data['recent_repayments'] = [];
+        $recent_repayments         = (new Repayment())->getRecent($loan_id);
+        if ($recent_repayments) {
+            foreach ($recent_repayments as $repayment) {
+                array_push($data['recent_repayments'], [
+                    'id'          => $repayment->id,
+                    'claim_id'    => $repayment->loan_claim_request_id,
+                    'amount'      => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
                     'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
-                    'log' => $repayment->log,
-                    'created_at' => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
+                    'log'         => $repayment->log,
+                    'created_at'  => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
                 ]);
             }
         }
@@ -601,7 +599,7 @@ class Loan
      */
     public function claimStatusUpdate($request)
     {
-        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from,$request->to);
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to);
     }
 
     /**
@@ -623,19 +621,20 @@ class Loan
      * @return bool
      * @throws InsufficientWalletCreditForRepayment
      */
-    private function balanceCheck($amount){
+    private function balanceCheck($amount)
+    {
 
-        if((double)$this->partner->wallet < $amount)
-            Throw new InsufficientWalletCreditForRepayment();
+        if ((double)$this->partner->wallet < $amount)
+            throw new InsufficientWalletCreditForRepayment();
         return true;
 
     }
 
-    private function debitFromWallet($loan_id,$amount)
+    private function debitFromWallet($loan_id, $amount)
     {
         $this->setModifier($this->resource);
         (new WalletTransactionHandler())->setModel($this->partner)->setAmount($amount)->setSource(TransactionSources::LOAN_REPAYMENT)->setType('debit')->setLog("$amount BDT has been collected from {$this->resource->profile->name} as Loan Repayment  for  loan: $loan_id")->store();
-         return true;
+        return true;
     }
 
     public function personalInfo()
@@ -705,16 +704,17 @@ class Loan
         return $this->filterList($request, $output);
     }
 
-    public function microLoanData(Request $request) {
-        $data = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
-        $statuses     = constants('LOAN_STATUS');
+    public function microLoanData(Request $request)
+    {
+        $data               = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
+        $statuses           = constants('LOAN_STATUS');
         $registered_partner = Retailer::all();
-        $formatted_data = (object) [
-            'applied_loan' => count($data),
-            'loan_rejected' => 0,
-            'loan_disburse' => 0,
-            'loan_approved' => 0,
-            'loan_closed' => 0,
+        $formatted_data     = (object)[
+            'applied_loan'       => count($data),
+            'loan_rejected'      => 0,
+            'loan_disburse'      => 0,
+            'loan_approved'      => 0,
+            'loan_closed'        => 0,
             'total_registration' => count($registered_partner),
         ];
         foreach ($data as $loan) {
@@ -734,7 +734,8 @@ class Loan
         return $formatted_data;
     }
 
-    private function getLoans($user) {
+    private function getLoans($user)
+    {
         $bank_id = null;
         if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
@@ -745,7 +746,8 @@ class Loan
         return $query->with(['bank'])->get();
     }
 
-    private function getMicroLoans($user, $from_date, $to_date) {
+    private function getMicroLoans($user, $from_date, $to_date)
+    {
         if (!$from_date) {
             $from_date = date("Y-m-01");
         }
@@ -757,14 +759,14 @@ class Loan
             $bank_id = $user->bank->id;
         $query = $this->repo;
         if ($bank_id) {
-            $query = $query->whereBetween('created_at',[$from_date. " 00:00:00",$to_date. " 23:59:59"])
-                ->where('partner_bank_loans.bank_id', $bank_id)
-                ->where('type', LoanTypes::MICRO);
+            $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
+                           ->where('partner_bank_loans.bank_id', $bank_id)
+                           ->where('type', LoanTypes::MICRO);
         }
 
-        if($user->strategic_partner_id) {
-            $query = $query->whereBetween('created_at',[$from_date. " 00:00:00",$to_date. " 23:59:59"])
-                ->where('type', LoanTypes::MICRO);
+        if ($user->strategic_partner_id) {
+            $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
+                           ->where('type', LoanTypes::MICRO);
         }
 
         return $query->get();
@@ -820,8 +822,8 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
-        $details['claims'] = $this->claimList($loan_id,true);
-        $details['repayments'] = $this->repaymentList($loan_id,true);
+        $details['claims']      = $this->claimList($loan_id, true);
+        $details['repayments']  = $this->repaymentList($loan_id, true);
         return $details;
     }
 
@@ -1033,13 +1035,13 @@ class Loan
      */
     private function getApplyLoanList()
     {
-        $running_loans = $this->getRunningLoan();
+        $running_loans   = $this->getRunningLoan();
         $apply_loan_list = GeneralStatics::loanList();
-        $apply_statuses = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::DECLINED, LoanStatuses::CLOSED];
-        foreach ($running_loans as $running_loan){
-            if(!in_array($running_loan['data']['status'], $apply_statuses)){
-                foreach ($apply_loan_list as $key => $loan){
-                    if($running_loan['data']['type'] == $loan['loan_type']) {
+        $apply_statuses  = [LoanStatuses::WITHDRAWAL, LoanStatuses::REJECTED, LoanStatuses::DECLINED, LoanStatuses::CLOSED];
+        foreach ($running_loans as $running_loan) {
+            if (!in_array($running_loan['data']['status'], $apply_statuses)) {
+                foreach ($apply_loan_list as $key => $loan) {
+                    if ($running_loan['data']['type'] == $loan['loan_type']) {
                         unset($apply_loan_list[$key]);
                         $apply_loan_list = array_values($apply_loan_list);
                     }
