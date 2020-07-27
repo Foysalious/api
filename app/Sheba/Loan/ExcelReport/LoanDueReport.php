@@ -5,7 +5,6 @@ namespace Sheba\Loan\ExcelReport;
 use Illuminate\Http\Request;
 use Sheba\Dal\LoanPayment\Model as LoanRepayment;
 use Sheba\Reports\ExcelHandler;
-use Sheba\Dal\LoanClaimRequest\Model as LoanClaimRequest;
 
 Class LoanDueReport
 {
@@ -52,9 +51,10 @@ Class LoanDueReport
                 'sManager Name' => $repayment->loan->manager_name,
                 'sManager Phone Number' => $repayment->loan->manager_mobile,
                 'Loan ID' => $repayment->loan->id,
-                'Due Date' => $repayment->loanClaim ? $repayment->loanClaim->defaulter_date : null,
+                'Due Amount' => $repayment->credit,
+                'Due Date' => $repayment->credit == 0 ? null : $repayment->created_at,
                 'Repayment Amount' => $repayment->debit,
-                'Repayment Date' => $repayment->created_at,
+                'Repayment Date' => $repayment->debit == 0 ? null : $repayment->created_at,
                 'Repayment Method' => $repayment->type
             ];
         }
@@ -76,7 +76,6 @@ Class LoanDueReport
             },
             'loanClaim'
         ])->whereBetween('created_at', [$this->start_date, $this->end_date])
-            ->where('debit', '<>', '0')
             ->orderBy('id','desc')
             ->get();
     }
