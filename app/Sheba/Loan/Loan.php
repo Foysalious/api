@@ -55,10 +55,12 @@ class Loan
     use CdnFileManager, FileManager, ModificationFields;
 
     private $repo;
+    /** @var Partner $partner */
     private $partner;
     private $data;
     private $profile;
     private $partnerLoanRequest;
+    /** @var Resource $resource */
     private $resource;
     private $downloadDir;
     private $zipDir;
@@ -265,6 +267,9 @@ class Loan
     {
         $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
+        if ($this->type===LoanTypes::MICRO){
+
+        }
 //        if (!$applicable)
 //            throw new NotApplicableForLoan();
 

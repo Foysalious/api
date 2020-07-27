@@ -6,16 +6,12 @@ use App\Sheba\Business\Bid\Updater;
 use App\Transformers\Business\BidDetailsTransformer;
 use App\Transformers\Business\BidHiringHistoryTransformer;
 use App\Transformers\Business\BidListTransformer;
-use App\Transformers\Business\ProcurementListTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
-use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
-use Sheba\Business\Bid\Creator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use App\Sheba\Business\ACL\AccessControl;
@@ -39,6 +35,13 @@ class BidController extends Controller
         $this->procurementRepository = $procurement_repository;
     }
 
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function index($business, $procurement, Request $request, AccessControl $access_control)
     {
         $access_control->setBusinessMember($request->business_member);
@@ -110,6 +113,7 @@ class BidController extends Controller
                     'total_price' => $bid->price,
                 ]);
             }
+
             array_push($bid_lists, [
                 'id' => $bid->id,
                 'status' => $bid->status,
@@ -119,7 +123,8 @@ class BidController extends Controller
                 'bidder_avg_rating' => round($reviews->avg('rating'), 2) > 0 ? round($reviews->avg('rating'), 2) : 5,
                 'is_favourite' => $bid->is_favourite,
                 'created_at' => $bid->created_at->format('d/m/y'),
-                'item' => $item_type
+                'item' => $item_type,
+                'price' => (float)$bid->bidder_price ?: (float)$bid->price
             ]);
         }
 
@@ -344,6 +349,7 @@ class BidController extends Controller
             'technical_evaluation' => $technical_evaluation ? $technical_evaluation->fields ? $technical_evaluation->fields->toArray() : null : null,
             'company_evaluation' => $company_evaluation ? $company_evaluation->fields ? $company_evaluation->fields->toArray() : null : null,
         ];
+        
         #return view('pdfs.quotation_details', compact('bid_details'));
         return App::make('dompdf.wrapper')->loadView('pdfs.quotation_details', compact('bid_details'))->download("quotation_details.pdf");
     }

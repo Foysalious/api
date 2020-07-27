@@ -49,7 +49,7 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         ini_set('memory_limit', '4096M');
-        ini_set('max_execution_time', 120);
+        ini_set('max_execution_time', 420);
         try {
             $status  = $request->status;
             $partner = $request->partner;

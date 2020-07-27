@@ -136,12 +136,10 @@ class Updater
         $this->data['procurement_start_date'] = $this->requestHandler->getProcurementStartDate() ? $this->requestHandler->getProcurementStartDate() : $this->procurement->procurement_start_date;
         $this->data['procurement_end_date'] = $this->requestHandler->getProcurementEndDate() ? $this->requestHandler->getProcurementEndDate() : $this->procurement->procurement_end_date;
         $this->data['payment_options'] = $this->requestHandler->getPaymentOptions() ? $this->requestHandler->getPaymentOptions() : null;
-
         $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
         $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
         $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
     }
-
 
     public function itemFieldsUpdate(Request $request)
     {

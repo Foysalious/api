@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Presenters\PresentableDTOPresenter;
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
 use App\Models\Category;
@@ -14,6 +15,7 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
+use Illuminate\Http\JsonResponse;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
@@ -32,6 +34,7 @@ use Sheba\EMI\Calculator;
 use Sheba\EMI\CalculatorForManager;
 use Sheba\Partner\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
+use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -303,7 +306,7 @@ class ShebaController extends Controller
 
     private function mergePaymentLinkInfo(&$info, Payable $payable)
     {
-        $payment_link = $this->paymentLinkRepo->getPaymentLinkByLinkId($payable->type_id);
+        $payment_link = $this->paymentLinkRepo->find($payable->type_id);
         $receiver = $payment_link->getPaymentReceiver();
         $payer = $payable->user->profile;
         $info = array_merge($info, $this->getInfoForPaymentLink($payer, $receiver));
@@ -327,7 +330,7 @@ class ShebaController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      * @throws Exception
      */
     public function getPayments(Request $request)
@@ -337,7 +340,11 @@ class ShebaController extends Controller
         $user_type = $request->type;
         if (!$user_type) $user_type = getUserTypeFromRequestHeader($request);
         if (!$user_type) $user_type = "customer";
-        $payments = AvailableMethods::getDetails($request->payable_type, $version_code, $platform_name, $user_type);
+
+        $payments = array_map(function (PaymentMethodDetails $details) {
+            return (new PresentableDTOPresenter($details))->toArray();
+        }, AvailableMethods::getDetails($request->payable_type, $request->payable_type_id, $version_code, $platform_name, $user_type));
+
         return api_response($request, $payments, 200, [
             'payments' => $payments,
             'discount_message' => 'Pay online and stay relaxed!!!'

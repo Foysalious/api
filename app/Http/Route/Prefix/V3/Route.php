@@ -11,6 +11,7 @@ class Route
             (new BusinessRoute())->set($api);
 
             $api->get('locations', 'Location\LocationController@index');
+            $api->get('thana/reverse', 'Location\LocationController@getThanaFromLatLng');
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
@@ -23,6 +24,8 @@ class Route
             });
             $api->group(['prefix' => 'rent-a-car'], function ($api) {
                 $api->get('prices', 'RentACar\RentACarController@getPrices');
+                $api->get('cars', 'RentACar\RentACarController@getCars');
+                $api->get('thana', 'RentACar\RentACarController@getPickupAndDestinationThana');
             });
             $api->group(['prefix' => 'register'], function ($api) {
                 $api->post('accountkit', 'AccountKit\AccountKitController@continueWithKit');
@@ -51,6 +54,7 @@ class Route
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
+            $api->get('settings/car', 'HomePageSettingController@getCarV3');
         });
     }
 }

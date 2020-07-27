@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Partner;
 use App\Models\Procurement;
 use League\Fractal\TransformerAbstract;
 
@@ -18,13 +19,15 @@ class BidListTransformer extends TransformerAbstract
 
     public function transform($bid)
     {
+        /** @var Partner $bidder */
         $bidder = $bid->bidder;
         return [
             'id' => $bid->id,
             'service_provider' => [
                 'id' => $bidder->id,
                 'name' => $bidder->name,
-                'image' => $bid->bidder->logo,
+                'mobile' => $bidder->getManagerMobile(),
+                'image' => $bidder->logo,
                 'status' => $this->getStatus($bidder),
                 'rating' => number_format($bidder->reviews()->avg('rating'), 1),
             ],
