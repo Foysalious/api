@@ -261,6 +261,7 @@ class LeaveController extends Controller
             'sort' => 'sometimes|string|in:asc,desc',
             'file' => 'sometimes|string|in:excel'
         ]);
+
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -268,10 +269,15 @@ class LeaveController extends Controller
         $time_frame = $business_member->getBusinessFiscalPeriod();
         /** @var Business $business */
         $business = $business_member->business;
+
         $leave_types = [];
         $business->leaveTypes()->with('leaves')->withTrashed()->select('id', 'title', 'total_days')->get()->each(function ($leave_type) use (&$leave_types) {
-                if (!$leave_type->leaves->isEmpty()) {array_push($leave_types, ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days,]);}
-            });
+            if (!$leave_type->leaves->isEmpty()) {
+                $leave_type_data = ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days];
+                array_push($leave_types, $leave_type_data);
+            }
+        });
+
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile');
