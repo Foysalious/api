@@ -267,7 +267,7 @@ class LeaveController extends Controller
         /** @var Business $business */
         $business = $business_member->business;
         $leave_types = [];
-        $business->leaveTypes()->with('leaves')->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->each(function ($leave_type) use (&$leave_types) {
+        $business->leaveTypes()->with('leaves')->withTrashed()->select('id', 'title', 'total_days')->get()->each(function ($leave_type) use (&$leave_types) {
                 if (!$leave_type->leaves->isEmpty()) {array_push($leave_types, ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days,]);}
             });
         $members = $business->members()->select('members.id', 'profile_id')->with([
