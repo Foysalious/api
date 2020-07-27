@@ -1,10 +1,6 @@
 <?php
 return [
-    "BLOG_URL" => env('BLOG_URL'),
-    'LOAN_TYPE' => [
-        'term_loan' => 'term',
-        'micro_loan'=> 'micro'
-    ],
+    "BLOG_URL"                                    => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',
@@ -654,11 +650,11 @@ return [
         env('SHEBA_CUSTOMER_APP')    => 'customer',
         'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'resource',
-        env('SHEBA_MANGER_APP')      => 'resource',
-        'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser',
-        'retailer-portal'            => 'StrategicPartnerMember'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser',
+        'retailer-portal' => 'StrategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',

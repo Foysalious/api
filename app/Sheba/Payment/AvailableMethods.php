@@ -1,11 +1,8 @@
 <?php namespace Sheba\Payment;
 
-use App\Models\Payable;
 use Exception;
-use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
-use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
 {
@@ -174,7 +171,16 @@ class AvailableMethods
             PaymentStrategy::SSL_DONATION
         ];
     }
-    
+
+
+    public static function getLoanRepaymentPayments()
+    {
+        return [
+            PaymentStrategy::CBL,
+            PaymentStrategy::BKASH,
+            PaymentStrategy::ONLINE
+        ];
+    }
     /**
      * @param $version_code
      * @param $platform_name
@@ -185,14 +191,5 @@ class AvailableMethods
         if (!$version_code) return true;
 
         return $platform_name && $platform_name == 'ios' ? true : ($version_code > 30112);
-    }
-
-    public static function getLoanRepaymentPayments()
-    {
-        return [
-            PaymentStrategy::CBL,
-            PaymentStrategy::BKASH,
-            PaymentStrategy::ONLINE
-        ];
     }
 }

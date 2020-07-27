@@ -55,10 +55,12 @@ class Loan
     use CdnFileManager, FileManager, ModificationFields;
 
     private $repo;
+    /** @var Partner $partner */
     private $partner;
     private $data;
     private $profile;
     private $partnerLoanRequest;
+    /** @var Resource $resource */
     private $resource;
     private $downloadDir;
     private $zipDir;
@@ -265,6 +267,9 @@ class Loan
     {
         $this->validateAlreadyRequested();
         $applicable = $this->getCompletion()['is_applicable_for_loan'];
+        if ($this->type===LoanTypes::MICRO){
+
+        }
 //        if (!$applicable)
 //            throw new NotApplicableForLoan();
 
@@ -405,6 +410,7 @@ class Loan
     {
         $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
         $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
+
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -418,7 +424,7 @@ class Loan
             ]);
         }
         $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
-        $data['due_amount']   = $this->getDue($last_claim->id);
+        $data['due_amount']   = $last_claim ? $this->getDue($last_claim->id) : 0;
 
         return $data;
     }
