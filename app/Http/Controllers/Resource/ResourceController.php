@@ -26,13 +26,6 @@ use Sheba\Resource\Service\ServiceList;
 
 class ResourceController extends Controller
 {
-    private $profileRepository;
-
-    public function __construct()
-    {
-        $this->profileRepository = new ProfileRepository();
-    }
-
     public function getProfile(Request $request)
     {
         /** @var AuthUser $auth_user */
