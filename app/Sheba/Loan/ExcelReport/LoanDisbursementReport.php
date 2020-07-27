@@ -51,6 +51,7 @@ Class LoanDisbursementReport
                 'sManager Name' => $claim->loan->manager_name,
                 'sManager Phone Number' => $claim->loan->manager_mobile,
                 'Loan ID' => $claim->loan->id,
+                'Loan Status' => $claim->loan->status,
                 'Disbursement Date' => $claim->loan->created_at,
                 'Disbursement Amount' => $claim->loan->loan_amount,
                 'Claim Date' => $claim->created_at,
