@@ -477,7 +477,7 @@ class Loan
         if (!$last_claim || ($last_claim && $last_claim->status == Statuses::APPROVED && $this->hasClearedDue($last_claim->id))) {
             $data['loan_balance'] = 0;
             $data['due_balance'] = 0;
-            $data['status_message'] = 'আপনি সর্বোচ্চ' . convertNumbersToBangla($partner_loan->loan_amount) . 'পর্যন্ত লোন গ্রহণ করতে পারবেন';
+            $data['status_message'] = 'আপনি সর্বোচ্চ ' . convertNumbersToBangla($partner_loan->loan_amount,true,0) . ' পর্যন্ত লোন গ্রহণ করতে পারবেন';
             $data['status_type'] = 'info';
             $data['can_claim'] = 1;
             $data['should_pay'] = 0;
