@@ -405,6 +405,7 @@ class Loan
     {
         $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
         $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
+
         $data['repayment_list'] = [];
 
         foreach ($repayments as $repayment) {
@@ -418,7 +419,7 @@ class Loan
             ]);
         }
         $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
-        $data['due_amount']   = $this->getDue($last_claim->id);
+        $data['due_amount']   = $last_claim ? $this->getDue($last_claim->id) : 0;
 
         return $data;
     }
