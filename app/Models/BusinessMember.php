@@ -11,6 +11,7 @@ class BusinessMember extends Model
 {
     protected $guarded = ['id',];
     protected $table = 'business_member';
+    protected $dates = ['join_date'];
     protected $casts = ['is_super' => 'int'];
 
     public function member()
