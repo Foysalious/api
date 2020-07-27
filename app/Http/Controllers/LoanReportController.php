@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Loan\ExcelReport\IPDCSmsSendingReport;
 use Sheba\Loan\ExcelReport\LoanDisbursementReport;
+use Sheba\Loan\ExcelReport\LoanDueReport;
 
 class LoanReportController extends Controller
 {
@@ -35,6 +36,25 @@ class LoanReportController extends Controller
      * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
      */
     public function ipdcSmsSendingReport(Request $request, IPDCSmsSendingReport $report)
+    {
+        try {
+            $this->validate($request, $this->reportValidator());
+            return $report->setDates($request)->get();
+        }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['data' => $message]);
+        }
+
+    }
+
+    /**
+     * @param Request $request
+     * @param LoanDueReport $report
+     * @return bool|\Illuminate\Http\JsonResponse
+     * @throws \Sheba\Reports\Exceptions\NotAssociativeArray
+     */
+    public function loanDueReport(Request $request, LoanDueReport $report)
     {
         try {
             $this->validate($request, $this->reportValidator());

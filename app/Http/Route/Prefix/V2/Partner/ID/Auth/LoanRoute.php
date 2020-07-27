@@ -37,6 +37,7 @@ class LoanRoute
             $api->post('/{loan_id}/update-claim-status','LoanController@claimStatusUpdate');
             $api->get('loan-disbursement-report','LoanReportController@loanDisbursementReport');
             $api->get('ipdc-sms-sending-report','LoanReportController@ipdcSmsSendingReport');
+            $api->get('loan-due-report','LoanReportController@loanDueReport');
             $api->get('loan-status-report','LoanReportController@loanStatusReport');
 
         });
