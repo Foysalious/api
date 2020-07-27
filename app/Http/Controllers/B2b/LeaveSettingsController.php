@@ -126,11 +126,11 @@ class LeaveSettingsController extends Controller
         $business_member = $request->business_member;
         $this->setModifier($business_member->member);
 
-        $info_update = $updater->setBusiness($request->business)
-                                ->setMember($business_member->member)
-                                ->setSandwichLeave($request->sandwich_leave)
-                                ->setFiscalYear($request->fiscal_year)
-                                ->update();
+        $updater->setBusiness($request->business)
+                 ->setMember($business_member->member)
+                 ->setSandwichLeave($request->sandwich_leave)
+                 ->setFiscalYear($request->fiscal_year)
+                 ->update();
         return api_response($request, null, 200);
     }
 }
