@@ -1,14 +1,11 @@
 <?php namespace Sheba\Business\LeaveType\OtherSettings;
 
 use App\Models\Business;
+use Carbon\Carbon;
 
 class BasicInfo
 {
     private $business;
-
-    public function __construct()
-    {
-    }
 
     public function setBusiness(Business $business)
     {
@@ -18,19 +15,12 @@ class BasicInfo
 
     public function getInfo()
     {
-        $fiscal_year_month_num = (int)$this->business->fiscal_year;
-        $fiscal_year_end_month_num = $fiscal_year_month_num === 1 ? 12 : $fiscal_year_month_num - 1;
-        $fiscal_year_start = $this->getMonthName($fiscal_year_month_num);
-        $fiscal_year_end = $this->getMonthName($fiscal_year_end_month_num);
+        $fiscal_year = $this->business->getBusinessFiscalPeriod();
         return [
             'sandwich_leave' => $this->business->is_sandwich_leave_enable ? 1 : 0,
-            'fiscal_year' => $fiscal_year_start . ' - ' . $fiscal_year_end
+            'fiscal_year' => $fiscal_year->start->format('F'). ' - ' .$fiscal_year->end->format('F'),
+            'fiscal_year_start_month' => $fiscal_year->start->month
         ];
-    }
-
-    private function getMonthName($monthNum)
-    {
-        return date('F', mktime(0, 0, 0, $monthNum, 10));
     }
 
 }

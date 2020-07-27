@@ -12,10 +12,6 @@ class Updater
     private $sandwichLeave;
     private $fiscalYear;
 
-    public function __construct()
-    {
-    }
-
     public function setBusiness(Business $business)
     {
         $this->business = $business;
