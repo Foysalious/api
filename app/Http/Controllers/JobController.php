@@ -27,6 +27,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Location\FromGeo;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\Logistics\Repository\OrderRepository;
@@ -145,8 +146,10 @@ class JobController extends Controller
         $job_collection->put('is_on_premise', $job->isOnPremise());
         $job_collection->put('customer_favorite', $job->customerFavorite ? $job->customerFavorite->id : null);
         $job_collection->put('order_code', $job->partnerOrder->order->code());
+        $job_collection->put('pick_up_location', $job->carRentalJobDetail && $job->carRentalJobDetail->pickUpLocation ? $job->carRentalJobDetail->pickUpLocation->name : null);
         $job_collection->put('pick_up_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->pick_up_address : null);
         $job_collection->put('pick_up_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo) : null);
+        $job_collection->put('destination_location', $job->carRentalJobDetail && $job->carRentalJobDetail->destinationLocation ? $job->carRentalJobDetail->destinationLocation->name : null);
         $job_collection->put('destination_address', $job->carRentalJobDetail ? $job->carRentalJobDetail->destination_address : null);
         $job_collection->put('destination_address_geo', $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null);
         $job_collection->put('drop_off_date', $job->carRentalJobDetail ? (Carbon::parse($job->carRentalJobDetail->drop_off_date)->format('jS F, Y')) : null);
@@ -250,13 +253,14 @@ class JobController extends Controller
         return (double)$job->totalDiscount == 0 && !$partner_order->order->voucher_id && $partner_order->due != 0 && !$partner_order->cancelled_at && !$partner_order->closed_at ? 1 : 0;
     }
 
-    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices)
+    public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices, FromGeo $from_geo)
     {
         try {
             $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
                 $q->with('service');
             }]);
             $job->calculate(true);
+
             if (count($job->jobServices) == 0) {
                 $services = array();
                 $service_list = array();
@@ -276,11 +280,18 @@ class JobController extends Controller
             } else {
                 $service_list = $formatServices->setJob($job)->formatServices();
                 $services = array();
-                foreach ($job->jobServices as $jobService) {
+                foreach ($job->jobServices->sortByDesc('id') as $jobService) {
                     $total = (double)$jobService->unit_price * (double)$jobService->quantity;
                     $min_price = (double)$jobService->min_price;
-                    array_push($services, array('name' => $jobService->service != null ? $jobService->service->name : null, 'quantity' => $jobService->quantity,
-                        'price' => $total, 'min_price' => $min_price, 'is_min_price_applied' => $min_price > $total ? 1 : 0));
+                    array_push($services, array(
+                        'name' => $jobService->service != null ? $jobService->service->name : null,
+                        'quantity' => $jobService->quantity,
+                        'job_service_id' => $jobService->id,
+                        'service_id' => $jobService->service->id,
+                        'price' => $total,
+                        'min_price' => $min_price,
+                        'is_min_price_applied' => $min_price > $total ? 1 : 0
+                    ));
                 }
             }
             $partnerOrder = $job->partnerOrder;
@@ -294,6 +305,13 @@ class JobController extends Controller
                 'amount' => $partnerOrder->order->voucher->amount
             ] : null;
 
+            $from_geo = $from_geo->setThanas();
+
+            $pickup_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo, true) : null;
+            $pickup_thana = $pickup_geo ?  $from_geo->getThana($pickup_geo['lat'], $pickup_geo['lng']) :null;
+            $destination_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo, true) : null;
+            $destination_thana = $destination_geo ?  $from_geo->getThana($destination_geo['lat'], $destination_geo['lng']) :null;
+
             $bill = collect();
             $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
             $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
@@ -305,12 +323,14 @@ class JobController extends Controller
             $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
             $bill['services'] = $services;
             $bill['service_list'] = $service_list;
+            $bill['category_name'] = $job->category->name;
             $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
             $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
             $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
             $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
             $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
             $bill['status'] = $job->status;
+            $bill['isRentCar'] = $job->isRentCar();
             $bill['is_on_premise'] = (int)$job->isOnPremise();
             $bill['delivery_charge'] = $original_delivery_charge;
             $bill['delivery_discount'] = $delivery_discount;
@@ -320,6 +340,15 @@ class JobController extends Controller
             $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
             $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
             $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
+            $bill['pick_up'] = $pickup_thana ? [
+                'thana' => $pickup_thana->name
+            ] : null;
+            $bill['destination'] = $destination_thana ? [
+                'thana' => $destination_thana->name
+            ] : null;
+            $bill['is_surcharge_applied'] = $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
+            $bill['surcharge_percentage'] = $job->jobServices[0] ? (double) $job->jobServices[0]->surcharge_percentage : 0;
+            $bill['surcharge_amount'] = (double) $job->totalServiceSurcharge;
 
             return api_response($request, $bill, 200, ['bill' => $bill]);
         } catch (Throwable $e) {

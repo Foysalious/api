@@ -174,6 +174,16 @@ class HomePageSettingController extends Controller
         }
     }
 
+    public function getCarV3(Request $request)
+    {
+        try {
+            $settings = json_decode(Redis::get('car_settings_v3'));
+            return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
     public function formatWeb(array $settings, $location)
     {
         $customer_category_orders = [1, 3, 73, 101, 183, 184, 226, 186, 221, 224, 185, 225, 226, 235, 236, 333];

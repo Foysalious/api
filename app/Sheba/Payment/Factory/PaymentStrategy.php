@@ -3,7 +3,6 @@
 use App\Models\Customer;
 use App\Models\Partner;
 use App\Models\Payable;
-use App\Sheba\PaymentLink\PaymentLinkOrder;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
@@ -15,7 +14,6 @@ use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
 use Sheba\Payment\Methods\Wallet;
 use Sheba\Payment\PayableUser;
-use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PaymentStrategy
 {
@@ -70,9 +68,7 @@ class PaymentStrategy
         $user = $payable->user;
 
         if ($payable->isPaymentLink()) {
-            return SslBuilder::shouldUseForPaymentLink($payable->getPaymentLink()) ?
-                self::SSL :
-                self::PORT_WALLET;
+            return SslBuilder::shouldUseForPaymentLink($payable) ? self::SSL : self::PORT_WALLET;
         }
 
         if ($user instanceof Customer) return self::SSL;
