@@ -32,6 +32,7 @@ return [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
         'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
@@ -156,5 +157,6 @@ return [
     'tp_proxy_url' => env('TP_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
-    'lpg_service_id' => env('LPG_SERVICE_ID',676)
+    'lpg_service_id' => env('LPG_SERVICE_ID',676),
+    'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID')
 ];

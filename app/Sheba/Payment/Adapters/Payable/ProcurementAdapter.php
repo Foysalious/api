@@ -9,11 +9,13 @@ class ProcurementAdapter implements PayableAdapter
     private $emiMonth;
     /** @var Procurement */
     private $procurement;
-
+    /** @var mixed $bid */
+    private $bid;
 
     public function setModelForPayable($model)
     {
         $this->procurement = $model;
+        $this->bid = $this->procurement->getActiveBid();
         return $this;
     }
 
@@ -25,7 +27,6 @@ class ProcurementAdapter implements PayableAdapter
 
     public function getPayable(): Payable
     {
-        $bid = $this->procurement->getActiveBid();
         $this->procurement->calculate();
         $payable = new Payable();
         $payable->type = 'procurement';
@@ -49,13 +50,14 @@ class ProcurementAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        return config('sheba.business_url');
+        return config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
     }
 
     private function getFailUrl()
     {
-        return config('sheba.business_url');
+        return config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
     }
+
     public function canInit(): bool
     {
         return true;

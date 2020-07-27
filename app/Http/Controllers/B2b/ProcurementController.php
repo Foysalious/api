@@ -499,8 +499,8 @@ class ProcurementController extends Controller
             ->setProcurementEndDate($request->procurement_end_date)
             ->setPaymentOptions($request->payment_options);
         $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
-        return api_response($request, null, 200, ["message" => "Successful"]);
 
+        return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
     /**
@@ -520,6 +520,7 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
         $updater->setProcurement($procurement)->itemFieldsUpdate($request);
+
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
@@ -614,6 +615,7 @@ class ProcurementController extends Controller
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
+
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -893,20 +895,8 @@ class ProcurementController extends Controller
 
         $bid = $this->getBid($bid_repository, $tender, $partner);
         if ($bid) {
-            $field_results = $this->getFieldResultBy($bid, $request);
-            if ($field_results instanceof JsonResponse) {
-                $json_response = $field_results->getData();
-                return api_response($request, null, $json_response->code, ['message' => $json_response->message]);
-            }
-
-            $updater->setBid($bid)
-                ->setStatus($request->status)
-                ->setFieldResults($field_results)
-                ->setProposal($request->proposal)
-                ->setPrice($request->price)
-                ->update();
-
-            return api_response($request, null, 200);
+            if ($bid->status == BidStatuses::SENT) $bid->delete();
+            else return api_response($request, null, 420, ['reason' => 'already_submitted', 'message' => 'You already submit a proposal on this tender and those proposal on a working stage']);
         }
 
         $procurement->load('items.fields');
@@ -1030,9 +1020,8 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($tender);
         if (!$procurement) return api_response($request, null, 404, ['message' => 'Tender not Found']);
         if ($procurement->status != StatusCalculator::IS_PENDING)
-            return api_response($request, null, 422, [
-                'description' => 'Tender not Found'
-            ]);
+            return api_response($request, null, 422, ['message' => 'Vendor already hired']);
+
         $price_quotation_fields = $this->generateItemData($procurement, 'price_quotation');
         $technical_evaluation_fields = $this->generateItemData($procurement, 'technical_evaluation');
         $company_evaluation_fields = $this->generateItemData($procurement, 'company_evaluation');
