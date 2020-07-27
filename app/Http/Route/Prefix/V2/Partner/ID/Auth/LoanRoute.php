@@ -39,6 +39,7 @@ class LoanRoute
             $api->get('ipdc-sms-sending-report','LoanReportController@ipdcSmsSendingReport');
             $api->get('loan-due-report','LoanReportController@loanDueReport');
             $api->get('loan-status-report','LoanReportController@loanStatusReport');
+            $api->get('retailer-registration-report','LoanReportController@retailerRegistrationReport');
 
         });
 
