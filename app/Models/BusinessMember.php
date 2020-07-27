@@ -97,8 +97,9 @@ class BusinessMember extends Model
 
     public function getBusinessFiscalPeriod()
     {
+        $business_fiscal_start_month = $this->business->fiscal_year ?: Business::BUSINESS_FISCAL_START_MONTH;
         $time_frame = new TimeFrame();
-        return $time_frame->forAFiscalYear(Carbon::now(), Business::BUSINESS_FISCAL_START_MONTH);
+        return $time_frame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
     }
 
     private function getCountOfUsedDays(Collection $leaves, $time_frame)
