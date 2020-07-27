@@ -51,6 +51,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'id' => $requestable->id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
+                'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'type' => $leave_type->title,
