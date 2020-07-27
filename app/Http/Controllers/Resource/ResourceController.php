@@ -113,6 +113,8 @@ class ResourceController extends Controller
 
     public function getService(Request $request, ServiceList $serviceList)
     {
+        $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
+
         $services = $serviceList->setRequest($request)->getAllServices();
 
         return api_response($request, $services, 200, ['services' => $services]);

@@ -121,11 +121,11 @@ class ServiceList
         $auth_user = $this->request->auth_user;
         $resource = $auth_user->getResource();
 
-        if ($this->request->has('lat') && $this->request->has('lng')) {
-            $hyperLocation = HyperLocal::insidePolygon((double)$this->request->lat, (double)$this->request->lng)->with('location')->first();
-            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id; else return api_response($this->request, null, 404);
-        } else $location = 4;
+        $hyperLocation = HyperLocal::insidePolygon((double)$this->request->lat, (double)$this->request->lng)->with('location')->first();
 
+        if (is_null($hyperLocation)) return api_response($this->request, null, 404);
+
+        $location = $hyperLocation->location->id;
 
         $services = $resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
             $q->where('publication_status', 1);
