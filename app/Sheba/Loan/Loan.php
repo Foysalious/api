@@ -408,29 +408,6 @@ class Loan
         return $data;
     }
 
-    public function repaymentList($loan_id, $all = false, $month = null, $year = null)
-    {
-        $repayments = !$all ? (new Repayment())->getByYearAndMonth($loan_id, $month, $year) : (new Repayment())->getAll($loan_id);
-        $last_claim = (new LoanClaim())->setLoan($loan_id)->lastClaim();
-
-        $data['repayment_list'] = [];
-
-        foreach ($repayments as $repayment) {
-            array_push($data['repayment_list'], [
-                'id'          => $repayment->id,
-                'claim_id'    => $repayment->loan_claim_request_id,
-                'amount'      => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
-                'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
-                'log'         => $repayment->log,
-                'created_at'  => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
-            ]);
-        }
-        $data['credit_amount'] = $this->repo->find($loan_id)->loan_amount;
-        $data['due_amount']    = $last_claim ? $this->getDue($last_claim->id) : 0;
-
-        return $data;
-    }
-
 
     /**
      * @param $request
@@ -600,41 +577,6 @@ class Loan
     public function claimStatusUpdate($request)
     {
         return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to);
-    }
-
-    /**
-     * @param $request
-     * @throws InsufficientWalletCreditForRepayment
-     */
-    public function repaymentFromWallet($request)
-    {
-        $last_claim = (new LoanClaim())->setLoan($request->loan_id)->lastClaim();
-        $this->balanceCheck($request->amount);
-        DB::transaction(function () use ($last_claim, $request) {
-            $this->debitFromWallet($request->loan_id, $request->amount);
-            (new Repayment())->setLoan($request->loan_id)->setClaim($last_claim->id)->setAmount($request->amount)->repaymentFromWallet();
-        });
-    }
-
-    /**
-     * @param $amount
-     * @return bool
-     * @throws InsufficientWalletCreditForRepayment
-     */
-    private function balanceCheck($amount)
-    {
-
-        if ((double)$this->partner->wallet < $amount)
-            throw new InsufficientWalletCreditForRepayment();
-        return true;
-
-    }
-
-    private function debitFromWallet($loan_id, $amount)
-    {
-        $this->setModifier($this->resource);
-        (new WalletTransactionHandler())->setModel($this->partner)->setAmount($amount)->setSource(TransactionSources::LOAN_REPAYMENT)->setType('debit')->setLog("$amount BDT has been collected from {$this->resource->profile->name} as Loan Repayment  for  loan: $loan_id")->store();
-        return true;
     }
 
     public function personalInfo()
@@ -822,8 +764,6 @@ class Loan
         $loan                   = (new PartnerLoanRequest($request));
         $details                = $loan->details();
         $details['next_status'] = $loan->getNextStatus($loan_id);
-        $details['claims']      = $this->claimList($loan_id, true);
-        $details['repayments']  = $this->repaymentList($loan_id, true);
         return $details;
     }
 
@@ -1071,6 +1011,7 @@ class Loan
     /**
      * @param $running_loan
      * @param $icon_url
+     * @param $title_bn
      * @return array|array[]
      * @throws ReflectionException
      */

@@ -1,7 +1,6 @@
-<?php
+<?php namespace App\Http\Controllers\Loan;
 
-namespace App\Http\Controllers;
-
+use App\Http\Controllers\Controller;
 use App\Sheba\Loan\DLSV2\ExcelReport\LoanStatusReport;
 use App\Sheba\Loan\DLSV2\ExcelReport\RetailerRegistrationReport;
 use Illuminate\Http\JsonResponse;
