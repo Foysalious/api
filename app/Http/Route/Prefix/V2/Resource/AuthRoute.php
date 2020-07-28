@@ -53,7 +53,7 @@ class AuthRoute
             });
             $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
             $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
-            $api->post('orders', 'Resource\ResourceOrderController@store');
+            $api->post('orders', 'Resource\ResourceOrderController@placeOrder');
         });
     }
 }

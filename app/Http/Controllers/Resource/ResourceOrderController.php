@@ -8,17 +8,13 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
-use Sheba\Customer\Creator as CustomerCreator;
-use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
 use Sheba\Jobs\AcceptJobAndAssignResource;
 use Sheba\Location\Geo;
-use Sheba\Order\Creator as OrderCreator;
-use Sheba\Order\CheckAvailabilityForOrderPlace;
-use Sheba\ServiceRequest\ServiceRequest;
+use Sheba\Order\OrderCreateRequest;
 
 class ResourceOrderController extends Controller
 {
-    public function store(Request $request, CustomerCreator $customerCreator, Geo $geo, CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator, CheckAvailabilityForOrderPlace $checkAvailabilityForOrderPlace, ServiceRequest $serviceRequest, AcceptJobAndAssignResource $acceptJobAndAssignResource)
+    public function placeOrder(Request $request, Geo $geo, OrderCreateRequest $orderCreateRequest, AcceptJobAndAssignResource $acceptJobAndAssignResource)
     {
         $request->merge(['mobile' => formatMobile($request->mobile)]);
         $this->validate($request, [
@@ -40,23 +36,15 @@ class ResourceOrderController extends Controller
         $location = Location::find($request->location_id);
         $geo_info = json_decode($location->geo_informations);
         $geo->setLat($geo_info->lat)->setLng($geo_info->lng);
-        $serviceRequestObject = $serviceRequest->setServices(json_decode($request->services, 1))->get();
-        $is_partner_available = $checkAvailabilityForOrderPlace->setGeo($geo)->setServiceRequestObject($serviceRequestObject)->setDate($request->date)->setTime($request->time)->setPartnerId($request->partner)->checkPartner();
-        if (!$is_partner_available) return api_response($request, null, 403, ['message' => "Partner Not available"]);
-        if ($request->assign_resource) {
-            $is_resource_available = $checkAvailabilityForOrderPlace->setResource($resource)->checkResource();
-            if (!$is_resource_available) return api_response($request, null, 403, ['message' => "Resource Not available"]);
-        }
-        $customer = $customerCreator->setMobile($request->mobile)->setName($request->name)->create();
-        $address = $deliveryAddressCreator->setCustomer($customer)->setAddressText($request->address)->setGeo($geo)->setName($customer->profile->name)->create();
-        $response = $orderCreator->setServices($request->services)->setCustomer($customer)->setMobile($request->mobile)
-            ->setDate($request->date)->setTime($request->time)->setAddressId($address->id)->setAdditionalInformation($request->additional_information)
-            ->setPartnerId($request->partner)->setSalesChannel($request->sales_channel)->setPaymentMethod($request->payment_method)->create();
-        if ($request->assign_resource && $response->code == 200) {
-            $job = Job::find($response->job_id);
+        $orderCreateRequest->setGeo($geo)->setServices($request->services)->setDate($request->date)->setTime($request->time)->setPartnerId($request->partner);
+        if ($request->assign_resource) $orderCreateRequest->setResource($resource);
+        $orderCreateRequest->setMobile($request->mobile)->setName($request->name)->setAddress($request->address)->setAdditionalInformation($request->additional_information)->setSalesChannel($request->sales_channel)->setPaymentMethod($request->payment_method);
+        $response = $orderCreateRequest->create();
+        if ($request->assign_resource && $response->hasSuccess()) {
+            $job = Job::find($response->getResponse()->job_id);
             $partner = Partner::find($request->partner);
             $acceptJobAndAssignResource->setJob($job)->setPartner($partner)->setResource($resource)->setRequest($request)->acceptJobAndAssignResource();
         }
-        return api_response($request, null, $response->code, ['message' => $response->message]);
+        return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
     }
 }
