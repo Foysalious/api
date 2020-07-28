@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\DLSV2\LoanAccount;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -760,7 +761,6 @@ class LoanController extends Controller
 
     public function getChangeLogsForAgent(Request $request, PartnerBankLoan $partner_bank_loan)
     {
-
         try {
             (new RequestValidator($partner_bank_loan))->validate();
             list($offset, $limit) = calculatePagination($request);
@@ -838,15 +838,19 @@ class LoanController extends Controller
      * @param Request $request
      * @param $partner
      * @param $loan_id
+     * @param LoanAccount $loan_account
      * @param Loan $loan
      * @return JsonResponse
      */
-    public function accountInfo(Request $request, $partner, $loan_id, Loan $loan)
+    public function accountInfo(Request $request, $partner, $loan_id, LoanAccount $loan_account,Loan $loan)
     {
         try{
             $request->merge(['loan_id' => $loan_id]);
-            $data = $loan->accountInfo($request);
+            $loan->validateRequest($request);
+            $data = $loan_account->accountInfo($request);
             return api_response($request, null, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e){
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

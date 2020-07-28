@@ -9,7 +9,9 @@ use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Loan;
+use Throwable;
 
 class ClaimController extends Controller
 {
@@ -27,11 +29,14 @@ class ClaimController extends Controller
                 'amount' => 'required|numeric|min:1000'
             ]);
             $request->merge(['loan_id' => $loan_id]);
+            $loan->validateRequest($request);
 
             if(!$loan->canClaim($request))
                 throw new NotEligibleForClaim();
             $loan->claim($request);
             return api_response($request, null, 200, ['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (NotEligibleForClaim $e) {
             return api_response($request, null, 403, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
@@ -53,18 +58,21 @@ class ClaimController extends Controller
      */
     public function claimList(Request $request, $partner, $loan_id, Loan $loan)
     {
-        try{
-            $this->validate($request,[
+        try {
+            $this->validate($request, [
                 'month' => 'required|numeric',
                 'year' => 'required|numeric'
             ]);
             $request->merge(['loan_id' => $loan_id]);
-            $data = $loan->claimList($loan_id,false, $request->year, $request->month);
+            $loan->validateRequest($request);
+            $data = $loan->claimList($loan_id, false, $request->year, $request->month);
             return api_response($request, null, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400,['message' => $message]);
-        } catch (Throwable $e){
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -111,8 +119,11 @@ class ClaimController extends Controller
                 'success_msg_seen' => 'required|in:0,1',
             ]);
             $request->merge(['loan_id' => $loan_id]);
+            $loan->validateRequest($request);
             $loan->approvedClaimMsgSeen($request);
             return api_response($request, null, 200);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
