@@ -3,28 +3,21 @@
 use App\Http\Controllers\Controller;
 use App\Models\BankUser;
 use App\Models\Comment;
-use App\Models\Location;
 use App\Models\PartnerBankInformation;
 use App\Models\PartnerBankLoan;
 use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
-use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
-use App\Sheba\Loan\DLSV2\Exceptions\NotEligibleForClaim;
-use App\Sheba\Loan\DLSV2\LoanClaim;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
-use Maatwebsite\Excel\Facades\Excel;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
-use Sheba\Dal\Retailer\Retailer;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Loan\DocumentDeleter;
-use Sheba\Loan\DS\BusinessInfo;
 use Sheba\Loan\DS\FinanceInfo;
 use Sheba\Loan\DS\NomineeGranterInfo;
 use Sheba\Loan\DS\PersonalInfo;
@@ -35,10 +28,9 @@ use Sheba\Loan\Exceptions\InvalidStatusTransaction;
 use Sheba\Loan\Exceptions\LoanException;
 use Sheba\Loan\Exceptions\NotAllowedToAccess;
 use Sheba\Loan\Exceptions\NotApplicableForLoan;
-use Sheba\Loan\GeneralStatics;
 use Sheba\Loan\Loan;
-use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Statics\BusinessStatics;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\Reports\PdfHandler;
@@ -861,9 +853,5 @@ class LoanController extends Controller
         }
 
     }
-
-
-
-
 
 }
