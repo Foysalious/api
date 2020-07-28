@@ -70,7 +70,16 @@ class Repayment
 
     public function storeDebit($data)
     {
-
+        $data = [
+            'loan_id' => $this->loanId,
+            'loan_claim_request_id' => $this->claimId,
+            'credit' => 0,
+            'debit' => $this->amount,
+            'type' => 'By Sheba',
+            'log' => 'লোন এর টাকা জমা দেয়া হয়েছে।',
+        ];
+        $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
+        return $this->repayment->save();
     }
 
     public function setDefaulterDuration($defaulter_duration)
