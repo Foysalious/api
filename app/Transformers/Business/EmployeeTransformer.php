@@ -15,6 +15,7 @@ class EmployeeTransformer extends TransformerAbstract
         $business_member = $member->businessMember;
         $role = $business_member ? $business_member->role : null;
         $department = $role ? $role->businessDepartment : null;
+
         return [
             'id' => $member->id,
             'name' => $profile->name,
@@ -26,8 +27,13 @@ class EmployeeTransformer extends TransformerAbstract
             'nid_no' => $profile->nid_no,
             'address' => $profile->address,
             'blood_group' => $profile->blood_group,
+            'department_id' => $department ? $department->id : null,
             'department' => $department ? $department->name : null,
-            'designation' => $role ? $role->name : null
+            'designation' => $role ? $role->name : null,
+            'manager' => $business_member->manager ? [
+                'id' => $business_member->manager_id,
+                'name' => $business_member->manager->member->profile->name
+            ] : null
         ];
     }
 }

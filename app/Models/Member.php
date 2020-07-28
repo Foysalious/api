@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Expense\Expense;
 
 class Member extends Model
@@ -24,7 +25,17 @@ class Member extends Model
 
     public function businessMember()
     {
-        return $this->hasOne(BusinessMember::class);
+        return $this->businessMembers()->whereIn('status', Statuses::getAccessible());
+    }
+
+    public function getBusinessMemberAttribute()
+    {
+        return $this->businessMembers()->whereIn('status', Statuses::getAccessible())->first();
+    }
+
+    public function businessMembers()
+    {
+        return $this->hasMany(BusinessMember::class);
     }
 
     public function notifications()
@@ -70,5 +81,10 @@ class Member extends Model
             return $this->profile->mobile;
         }
         return $this->profile->email;
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', Statuses::ACTIVE);
     }
 }

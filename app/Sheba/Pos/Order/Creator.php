@@ -19,7 +19,8 @@ use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Pos\Validators\OrderCreateValidator;
 use Sheba\Voucher\DTO\Params\CheckParamsForPosOrder;
 
-class Creator {
+class Creator
+{
     /** @var array $data */
     private $data;
     /** @var PosOrderRepository $orderRepo */
@@ -44,7 +45,8 @@ class Creator {
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
-                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo) {
+                                OrderCreateValidator $create_validator, DiscountHandler $discount_handler, PosServiceRepositoryInterface $posServiceRepo)
+    {
         $this->orderRepo       = $order_repo;
         $this->itemRepo        = $item_repo;
         $this->paymentCreator  = $payment_creator;
@@ -57,11 +59,13 @@ class Creator {
     /**
      * @return array
      */
-    public function hasError() {
+    public function hasError()
+    {
         return $this->createValidator->hasError();
     }
 
-    public function hasDueError() {
+    public function hasDueError()
+    {
         if ($this->resolveCustomerId() !== null) return false;
         if ($this->data['paid_amount'] - $this->getNetPrice() >= 0) return false;
         return ['code' => 421, 'msg' => 'Can not make due order with out customer'];
@@ -71,24 +75,28 @@ class Creator {
      * @param array $data
      * @return $this
      */
-    public function setData(array $data) {
+    public function setData(array $data)
+    {
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
         return $this;
     }
 
-    public function setCustomer(PosCustomer $customer) {
+    public function setCustomer(PosCustomer $customer)
+    {
         $this->customer = $customer;
         return $this;
     }
 
-    public function setPartner(Partner $partner) {
+    public function setPartner(Partner $partner)
+    {
         $this->partner = $partner;
         return $this;
     }
 
-    public function setAddress($address) {
+    public function setAddress($address)
+    {
         $this->address = $address;
         return $this;
     }
@@ -98,7 +106,8 @@ class Creator {
      * @throws InvalidDiscountType
      * @throws ExpenseTrackingServerError
      */
-    public function create() {
+    public function create()
+    {
         $order_data['partner_id']            = $this->partner->id;
         $order_data['customer_id']           = $this->resolveCustomerId();
         $order_data['address']               = $this->address;
@@ -152,13 +161,15 @@ class Creator {
     /**
      * @return mixed|null
      */
-    private function resolveCustomerId() {
+    private function resolveCustomerId()
+    {
         if ($this->customer) return $this->customer->id;
         else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
     }
 
 
-    private function resolvePaymentMethod() {
+    private function resolvePaymentMethod()
+    {
         if (isset($this->data['payment_method']))
             $this->paymentMethod = $this->data['payment_method'];
         else
@@ -166,7 +177,8 @@ class Creator {
 
     }
 
-    private function createPartnerWiseOrderId(Partner $partner) {
+    private function createPartnerWiseOrderId(Partner $partner)
+    {
         $lastOrder    = $partner->posOrders()->orderBy('id', 'desc')->first();
         $lastOrder_id = $lastOrder ? $lastOrder->partner_wise_order_id : 0;
         return $lastOrder_id + 1;
@@ -176,7 +188,8 @@ class Creator {
      * @param $service_wholesale_applicable
      * @return bool
      */
-    private function isWholesalePriceApplicable($service_wholesale_applicable) {
+    private function isWholesalePriceApplicable($service_wholesale_applicable)
+    {
         return isset($this->data['is_wholesale_applied']) && $this->data['is_wholesale_applied'] && $service_wholesale_applicable;
     }
 
@@ -184,7 +197,8 @@ class Creator {
      * @param PosOrder $order
      * @throws InvalidDiscountType
      */
-    private function voucherCalculation(PosOrder $order) {
+    private function voucherCalculation(PosOrder $order)
+    {
         if (isset($this->data['voucher_code']) && !empty($this->data['voucher_code'])) {
             $code             = strtoupper($this->data['voucher_code']);
             $customer_id      = $this->resolveCustomerId();
@@ -206,25 +220,26 @@ class Creator {
      * @param PosOrder $order
      * @throws ExpenseTrackingServerError
      */
-    private function storeIncome(PosOrder $order) {
+    private function storeIncome(PosOrder $order)
+    {
         /** @var AutomaticEntryRepository $entry */
         $entry   = app(AutomaticEntryRepository::class);
         $order   = $order->calculate();
         $amount  = (double)$order->getNetBill();
         $profile = $order->customer ? $order->customer->profile : new Profile();
         $entry->setPartner($this->partner)
-            ->setParty($profile)
-            ->setAmount($amount)
-            ->setAmountCleared($order->getPaid())
-            ->setHead(AutomaticIncomes::POS)
-            ->setSourceType(class_basename($order))
-            ->setInterest($order->interest)
-            ->setSourceId($order->id)
-            ->setEmiMonth($order->emi_month)
-            ->setInterest($order->interest)
-            ->setBankTransactionCharge($order->bank_transaction_charge)
-            ->setPaymentMethod($this->paymentMethod)
-            ->store();
+              ->setParty($profile)
+              ->setAmount($amount)
+              ->setAmountCleared($order->getPaid())
+              ->setHead(AutomaticIncomes::POS)
+              ->setSourceType(class_basename($order))
+              ->setInterest($order->interest)
+              ->setSourceId($order->id)
+              ->setEmiMonth($order->emi_month)
+              ->setInterest($order->interest)
+              ->setBankTransactionCharge($order->bank_transaction_charge)
+              ->setPaymentMethod($this->paymentMethod)
+              ->store();
     }
 
     /**
@@ -233,11 +248,13 @@ class Creator {
      * @param $service_wholesale_applicable
      * @return bool
      */
-    private function isServiceDiscountApplicable($is_service_discount_applied, $data, $service_wholesale_applicable) {
+    private function isServiceDiscountApplicable($is_service_discount_applied, $data, $service_wholesale_applicable)
+    {
         return $is_service_discount_applied && (!$data['is_wholesale_applied'] || ($data['is_wholesale_applied'] && !$service_wholesale_applicable));
     }
 
-    private function getNetPrice() {
+    private function getNetPrice()
+    {
         $total_price             = 0;
         $service_discount_amount = 0;
         $voucher_discount_amount = 0;
@@ -247,8 +264,8 @@ class Creator {
         $services                = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
-            $original_service             = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-            if(is_null($original_service)) $original_service=$this->posServiceRepo->defaultInstance($service);
+            $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if (is_null($original_service)) $original_service = $this->posServiceRepo->defaultInstance($service);
             $service_id[]                 = isset($service['id']) && !empty($service['id']) ? $service['id'] : 0;
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
             $service['unit_price']        = (isset($service['updated_price']) && $service['updated_price']) ? $service['updated_price'] : ($this->isWholesalePriceApplicable($service_wholesale_applicable) ? $original_service->wholesale_price : $original_service->price);
@@ -256,8 +273,7 @@ class Creator {
 
             $this->discountHandler->setPosService($original_service)->setType(DiscountTypes::SERVICE)->setData($service);
             if ($this->discountHandler->hasDiscount()) $service_discount = $this->discountHandler->getBeforeData();
-            if (isset($service_discount)) $service_discount_amount = $this->getDiscountAmount($service_discount);
-
+            if (isset($service_discount)) $service_discount_amount += $this->getDiscountAmount($service_discount);
         }
         $this->discountHandler->setType(DiscountTypes::ORDER)->setData($this->data);
         if ($this->discountHandler->hasDiscount()) $order_discount = $this->discountHandler->setOrderAmount($total_price - $service_discount_amount)->getBeforeData();
@@ -279,7 +295,8 @@ class Creator {
         return $net_price;
     }
 
-    private function getDiscountAmount($discount) {
+    private function getDiscountAmount($discount)
+    {
         return (isset($discount) && isset($discount['amount'])) ? $discount['amount'] : 0;
     }
 }
