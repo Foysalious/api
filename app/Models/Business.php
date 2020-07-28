@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
@@ -19,6 +20,7 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -35,6 +37,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function members()
     {
         return $this->belongsToMany(Member::class)->withTimestamps();
+    }
+
+    public function membersWithProfileAndAccessibleBusinessMember()
+    {
+        return $this->members()->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
     }
 
     public function businessSms()
