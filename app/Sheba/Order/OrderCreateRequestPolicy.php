@@ -1,12 +1,13 @@
 <?php namespace Sheba\Order;
 
+use App\Exceptions\NotFoundException;
 use App\Models\Resource;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 
-class CheckAvailabilityForOrderPlace
+class OrderCreateRequestPolicy
 {
     protected $geo;
     protected $partnerListBuilder;
@@ -24,43 +25,81 @@ class CheckAvailabilityForOrderPlace
         $this->partnerListDirector = $partnerListDirector;
     }
 
+    /**
+     * @param Geo $geo
+     * @return OrderCreateRequestPolicy
+     */
     public function setGeo(Geo $geo)
     {
         $this->geo = $geo;
         return $this;
     }
 
+    /**
+     * @param array $serviceRequestObject
+     * @return OrderCreateRequestPolicy
+     */
     public function setServiceRequestObject(array $serviceRequestObject)
     {
         $this->serviceRequestObject = $serviceRequestObject;
         return $this;
     }
 
+    /**
+     * @param $date
+     * @return OrderCreateRequestPolicy
+     */
     public function setDate($date)
     {
         $this->date = $date;
         return $this;
     }
 
+    /**
+     * @param $time
+     * @return OrderCreateRequestPolicy
+     */
     public function setTime($time)
     {
         $this->time = $time;
         return $this;
     }
 
+    /**
+     * @param $id
+     * @return OrderCreateRequestPolicy
+     */
     public function setPartnerId($id)
     {
         $this->partnerId = $id;
         return $this;
     }
 
+    /**
+     * @param Resource $resource
+     * @return OrderCreateRequestPolicy
+     */
     public function setResource(Resource $resource)
     {
         $this->resource = $resource;
         return $this;
     }
 
-    public function checkPartner()
+    /**
+     * @return bool
+     * @throws NotFoundException
+     */
+    public function canCreate()
+    {
+        if (!$this->checkPartner()) throw new NotFoundException('Partner Not Available', 403);
+        if ($this->resource && !$this->checkResource())  throw new NotFoundException('Resource Not Available', 403);
+        return true;
+    }
+
+    /**
+     * @return bool
+     */
+    private function checkPartner()
     {
         $this->partnerListBuilder->setGeo($this->geo)->setServiceRequestObjectArray($this->serviceRequestObject)->setScheduleTime($this->time)->setScheduleDate($this->date);
         $this->partnerListBuilder->setPartnerIds([$this->partnerId]);
@@ -71,7 +110,10 @@ class CheckAvailabilityForOrderPlace
         return false;
     }
 
-    public function checkResource()
+    /**
+     * @return bool
+     */
+    private function checkResource()
     {
         $preferred_time = new PreferredTime($this->time);
         return scheduler($this->resource)->isAvailableForCategory($this->date, $preferred_time->getStartString(), $this->serviceRequestObject[0]->getCategory());
