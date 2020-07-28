@@ -178,7 +178,7 @@ class Creator
     private function setTotalDays()
     {
         $leave_day_into_holiday_or_weekend = 0;
-        if ($this->business->is_sandwich_leave_enable) {
+        if (!$this->business->is_sandwich_leave_enable) {
             $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
             $data = [];
             foreach ($business_holiday as $holiday) {
