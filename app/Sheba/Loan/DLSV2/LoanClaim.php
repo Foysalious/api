@@ -6,7 +6,7 @@ use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Loan\RobiTopUpWalletTransfer;
-use Sheba\Loan\GeneralStatics;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\ModificationFields;
 
 class LoanClaim

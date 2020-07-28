@@ -7,8 +7,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
+use Sheba\Loan\Exceptions\NotAllowedToAccess;
+use Sheba\Loan\Loan;
 use Sheba\Loan\LoanRepayments;
 use Sheba\Payment\AvailableMethods;
+use Throwable;
 
 class RepaymentController extends Controller
 {
@@ -21,39 +24,45 @@ class RepaymentController extends Controller
     }
 
     /**
-     * @param Request        $request
+     * @param Request $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments
+     * @param Loan $loan
      * @return JsonResponse
+     * @throws \Sheba\Loan\Exceptions\NotAllowedToAccess
      */
-    public function repaymentList(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments)
+    public function repaymentList(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments, Loan $loan)
     {
-        try{
-            $this->validate($request,[
+        try {
+            $this->validate($request, [
                 'month' => 'required|numeric',
                 'year' => 'required|numeric'
             ]);
             $request->merge(['loan_id' => $loan_id]);
-            $data = $loanRepayments->repaymentList($loan_id,false, $request->year, $request->month);
+            $loan->validateRequest($request);
+            $data = $loanRepayments->repaymentList($loan_id, false, $request->year, $request->month);
             return api_response($request, null, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400,['message' => $message]);
-        } catch (Throwable $e){
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
     /**
-     * @param Request        $request
+     * @param Request $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments
+     * @param Loan $loan
      * @return JsonResponse
      */
-    public function repaymentFromWallet(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments)
+    public function repaymentFromWallet(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments, Loan $loan)
     {
         try {
             $this->validate($request, [
@@ -62,9 +71,12 @@ class RepaymentController extends Controller
             $partner = $request->partner;
             $resource = $request->manager_resource;
             $request->merge(['loan_id' => $loan_id]);
+            $loan->validateRequest($request);
             $loanRepayments->setPartner($partner)->setResource($resource)->repaymentFromWallet($request);
             return api_response($request, null, 200, ['message' => 'আপনার তথ্যাবলী যাচাইয়ের পর আপনার সাথে যোগাযোগ করা হবে।']);
 
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (InsufficientWalletCreditForRepayment $e) {
             return api_response($request, null, 403, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
