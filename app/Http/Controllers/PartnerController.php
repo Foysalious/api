@@ -1443,6 +1443,20 @@ class PartnerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function getBusinessTypes(Request $request)
+    {
+        try {
+            return api_response($request, null, 200, ['partner_business_types' => constants('PARTNER_BUSINESS_TYPE')]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getWalletBalance(Request $request)
     {
         try {

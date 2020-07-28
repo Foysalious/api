@@ -15,6 +15,7 @@ class PartnerRoute
             $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
             $api->get('resource-types', 'PartnerController@getResourceTypes');
+            $api->get('business-types', 'PartnerController@getBusinessTypes');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
