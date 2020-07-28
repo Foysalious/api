@@ -3397,7 +3397,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "b49c2d38124af44bbc18e75685131ddf2fb767dd"
+                "reference": "658801128191988808fd4d2ff0a42d3ce96a89e6"
             },
             "require": {
                 "php": ">=5.4"
@@ -3421,7 +3421,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-07-24T05:49:28+00:00"
+            "time": "2020-07-27T05:48:55+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -6008,5 +6008,6 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
