@@ -124,7 +124,6 @@ class OrderPlace
     private $jobUpdateLogCreator;
 
     public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
-                                Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
                                 UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
