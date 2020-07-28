@@ -1,4 +1,4 @@
-<?php namespace Sheba\Resource\Order;
+<?php namespace Sheba\Order;
 
 use App\Models\Customer;
 use GuzzleHttp\Client;
@@ -13,6 +13,8 @@ class Creator
     protected $addressId;
     protected $additionalInformation;
     protected $partnerId;
+    protected $salesChannel;
+    protected $paymentMethod;
 
     public function setCustomer(Customer $customer)
     {
@@ -62,6 +64,18 @@ class Creator
         return $this;
     }
 
+    public function setSalesChannel($salesChannel)
+    {
+        $this->salesChannel = $salesChannel;
+        return $this;
+    }
+
+    public function setPaymentMethod($paymentMethod)
+    {
+        $this->paymentMethod = $paymentMethod;
+        return $this;
+    }
+
     public function create()
     {
         $client = new Client();
@@ -71,8 +85,8 @@ class Creator
             'name' => $this->customer->profile->name,
             'mobile' => $this->mobile,
             'remember_token' => $this->customer->remember_token,
-            'sales_channel' => 'App',
-            'payment_method' => 'cod',
+            'sales_channel' => $this->salesChannel,
+            'payment_method' => $this->paymentMethod,
             'date' => $this->date,
             'time' => $this->time,
             'additional_information' => $this->additionalInformation,
