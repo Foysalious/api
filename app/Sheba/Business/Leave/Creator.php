@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Leave;
 
+use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
@@ -7,10 +8,13 @@ use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Helpers\TimeFrame;
@@ -51,6 +55,10 @@ class Creator
     private $attachments = [];
     /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
+    /** @var Business $business */
+    private $business;
+    private $businessHoliday;
+    private $businessWeekend;
 
     /**
      * Creator constructor.
@@ -60,11 +68,14 @@ class Creator
      * @param TimeFrame $time_frame
      * @param Attachments $attachment_manager
      * @param PushNotificationHandler $push_notification_handler
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
-                                ApprovalRequestCreator $approval_request_creator,
-                                TimeFrame $time_frame, Attachments $attachment_manager,
-                                PushNotificationHandler $push_notification_handler)
+                                ApprovalRequestCreator $approval_request_creator, TimeFrame $time_frame,
+                                Attachments $attachment_manager, PushNotificationHandler $push_notification_handler,
+                                BusinessHolidayRepoInterface $business_holiday_repo,
+                                BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
@@ -72,6 +83,8 @@ class Creator
         $this->timeFrame = $time_frame;
         $this->attachmentManager = $attachment_manager;
         $this->pushNotificationHandler = $push_notification_handler;
+        $this->businessHoliday = $business_holiday_repo;
+        $this->businessWeekend = $business_weekend_repo;
     }
 
     public function setTitle($title)
@@ -87,6 +100,7 @@ class Creator
     public function setBusinessMember(BusinessMember $business_member)
     {
         $this->businessMember = $business_member;
+        $this->business = $this->businessMember->business;
         $this->getManager($this->businessMember);
 
         if ($this->substitute == $this->businessMember->id) {
@@ -163,7 +177,29 @@ class Creator
 
     private function setTotalDays()
     {
-        return $this->endDate->diffInDays($this->startDate) + 1;
+        $leave_day_into_holiday_or_weekend = 0;
+        if ($this->business->is_sandwich_leave_enable) {
+            $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
+            $data = [];
+            foreach ($business_holiday as $holiday) {
+                $start_date = $holiday->start_date;
+                $end_date = $holiday->end_date;
+                for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
+                    $data[] = $d->format('Y-m-d');
+                }
+            }
+            $dates_of_holidays_formatted = $data;
+            $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+
+            $period = CarbonPeriod::create($this->startDate, $this->endDate);
+            foreach ($period as $date) {
+                $day_name_in_lower_case = strtolower($date->format('l'));
+                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
+                if (in_array($date->toDateString(), $dates_of_holidays_formatted)) { $leave_day_into_holiday_or_weekend++; continue; }
+            }
+        }
+
+        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     public function setSubstitute($substitute_id)
