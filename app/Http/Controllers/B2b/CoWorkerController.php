@@ -648,15 +648,15 @@ class CoWorkerController extends Controller
 
             if ($this->isFailedToCreateAllCoworker($errors, $emails)) {
                 return api_response($request, null, 422, [
-                    'message' => 'Error! No coworker added',
-                    'description' => 'No coworker added. To get failed invited co-worker list, download this excel',
+                    'message' => 'Alert! Invitations failed',
+                    'description' => "Invited co-worker/s already exist in the co-worker list. Download the excel file to see details",
                     'link' => $file_path
                 ]);
             }
 
             return api_response($request, null, 303, [
-                'message' => 'Some coworker Invited successfully',
-                'description' => 'Coworker Invited successfully. To get failed invited co-worker list, download this excel',
+                'message' => 'Alert! Some invitations failed',
+                'description' => "Invited co-worker/s already exist in the co-worker list. Download the excel file to see details",
                 'link' => $file_path
             ]);
         }
