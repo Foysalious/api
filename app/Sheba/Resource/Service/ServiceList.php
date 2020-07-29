@@ -130,9 +130,9 @@ class ServiceList
     }
 
     public function getAllServices() {
-        $hyperLocation = HyperLocal::insidePolygon($this->geo['lat'], $this->geo['lng'])->with('location')->first();
+        $hyperLocation = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->with('location')->first();
 
-        if (is_null($hyperLocation)) return api_response($this->request, null, 404);
+        if (is_null($hyperLocation)) return null;
 
         $location = $hyperLocation->location->id;
 

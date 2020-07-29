@@ -4,6 +4,7 @@ use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\Resource;
+use Sheba\Location\Geo;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Resource\ResourceHomeTransformer;
 use App\Transformers\Resource\ResourceProfileTransformer;
@@ -118,13 +119,12 @@ class ResourceController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $geo = [
-            'lat' => (double)$request->lat,
-            'lng' => (double)$request->lng
-        ];
+        $geo = new Geo((double)$request->lat, (double)$request->lng);
 
         $services = $serviceList->setResource($resource)->setGeo($geo)->getAllServices();
 
-        return api_response($request, $services, 200, ['services' => $services]);
+        return $services
+            ? api_response($request, $services, 200, ['services' => $services])
+            : api_response($request, null, 404);
     }
 }
