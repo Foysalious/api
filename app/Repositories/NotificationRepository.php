@@ -149,8 +149,6 @@ class NotificationRepository
 
     /**
      * @param $model
-<<<<<<< HEAD
-=======
      * @param $offset
      * @param $limit
      * @return mixed
@@ -240,7 +238,6 @@ class NotificationRepository
 
     /**
      * @param $model
->>>>>>> feature/dls-v2
      * @param $notification_id
      * @return array
      */
