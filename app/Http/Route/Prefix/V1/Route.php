@@ -306,6 +306,7 @@ class Route
             });
             $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('/notifications', 'BankUser\NotificationController@index');
+                $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
             });
         });
         return $api;
