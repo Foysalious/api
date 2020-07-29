@@ -55,12 +55,12 @@ class RepaymentController extends Controller
     {
         try {
             $this->validate($request, [
-                'month' => 'required|numeric',
-                'year'  => 'required|numeric'
+                'month' => 'numeric',
+                'year'  => 'numeric'
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->validateRequest($request);
-            $data = $loanRepayments->repaymentList($loan_id, false, $request->year, $request->month);
+            $data = $loanRepayments->repaymentList($loan_id, $request->has('month') &&  $request->has('year')  ?  false : true, $request->year, $request->month);
             return api_response($request, null, 200, ['data' => $data]);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
