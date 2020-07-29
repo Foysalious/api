@@ -128,7 +128,7 @@ class BusinessMember extends Model
 
         $leaves->each(function ($leave) use (&$used_days, $time_frame, $business_weekend, $dates_of_holidays_formatted, $leave_day_into_holiday_or_weekend) {
             if ($this->isLeaveFullyInAFiscalYear($time_frame, $leave)) {
-                $used_days += $leave->total_days - $leave_day_into_holiday_or_weekend;
+                $used_days += $leave->total_days;
                 return;
             }
 
