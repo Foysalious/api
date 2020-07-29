@@ -48,7 +48,6 @@ use Sheba\Loan\Exceptions\NotShebaPartner;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
-use Sheba\PushNotificationHandler;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
@@ -214,19 +213,6 @@ class Loan
      */
     public function homepage()
     {
-        $topic = config('sheba.push_notification_topic_name.manager') . $this->partner->id;
-        $channel = config('sheba.push_notification_channel_name.manager');
-        $sound = config('sheba.push_notification_sound.manager');
-        (new PushNotificationHandler())->send([
-            "title" => 'New Order',
-            "message" => "প্রিয় asd আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
-            "sound" => "notification_sound",
-            "event_type" => 'PartnerOrder',
-            "event_id" => 1,
-            "link" => "new_order"
-        ], $topic, $channel, $sound);
-        dd("ok");
-
         $running = !$this->partner->loan->isEmpty() ? $this->partner->loan->last()->toArray() : [];
         $data    = [
             'big_banner' => GeneralStatics::bigBanner(),
