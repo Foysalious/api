@@ -13,6 +13,8 @@ class ServiceList
     private $job;
     /** @var Request */
     private $request;
+    private $resource;
+    private $geo;
 
     public function setJob(Job $job)
     {
@@ -115,19 +117,26 @@ class ServiceList
         return $services;
     }
 
-    public function getAllServices()
+    public function setResource($resource)
     {
-        /** @var AuthUser $auth_user */
-        $auth_user = $this->request->auth_user;
-        $resource = $auth_user->getResource();
+        $this->resource = $resource;
+        return $this;
+    }
 
-        $hyperLocation = HyperLocal::insidePolygon((double)$this->request->lat, (double)$this->request->lng)->with('location')->first();
+    public function setGeo($geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
+
+    public function getAllServices() {
+        $hyperLocation = HyperLocal::insidePolygon($this->geo['lat'], $this->geo['lng'])->with('location')->first();
 
         if (is_null($hyperLocation)) return api_response($this->request, null, 404);
 
         $location = $hyperLocation->location->id;
 
-        $services = $resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
+        $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
             $q->where('publication_status', 1);
         })->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);

@@ -115,7 +115,15 @@ class ResourceController extends Controller
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
 
-        $services = $serviceList->setRequest($request)->getAllServices();
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $geo = [
+            'lat' => (double)$request->lat,
+            'lng' => (double)$request->lng
+        ];
+
+        $services = $serviceList->setResource($resource)->setGeo($geo)->getAllServices();
 
         return api_response($request, $services, 200, ['services' => $services]);
     }
