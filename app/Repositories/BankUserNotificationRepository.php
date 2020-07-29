@@ -1,8 +1,10 @@
 <?php namespace App\Repositories;
 
+use App\Models\Notification;
+use App\Models\OfferShowcase;
 use Illuminate\Http\Request;
 
-Class BankUserNotificationRepository
+Class BankUserNotificationRepository extends NotificationRepository
 {
     public function getBankUserNotifications($model, $offset, $limit)
     {
@@ -10,9 +12,17 @@ Class BankUserNotificationRepository
         if (count($notifications) > 0)
             $notifications = $notifications->map(function ($notification) {
                 array_add($notification, 'time', $notification->created_at->diffForHumans());
+                $icon = $this->getNotificationIcon($notification->event_id, $notification->type);
+                array_add($notification, 'icon', $icon);
                 return $notification;
             });
 
         return $notifications;
+    }
+
+    public function setNotificationSeen($id)
+    {
+        Notification::where('id',$id)->update(['is_seen' => 1]);
+        return "Success";
     }
 }
