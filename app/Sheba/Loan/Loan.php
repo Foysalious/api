@@ -233,7 +233,7 @@ class Loan
             'big_banner'        => GeneralStatics::bigBanner(),
             'banner'            => GeneralStatics::banner(),
             'robi_retailer'     => $robi_retailer,
-            'exception_message' => $robi_retailer ? null : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
+            'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
             'is_bkash_agent'    => $this->isBkashAgent()
         ];
         $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
@@ -872,7 +872,7 @@ class Loan
      */
     private function checkIsRobiRetailer()
     {
-        return $this->partner->retailer->where('strategic_partner_id',2)->count() ? 1 : 0;
+        return $this->partner->retailers->where('strategic_partner_id',2)->count() ? 1 : 0;
     }
 
     /**
