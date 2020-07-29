@@ -2,7 +2,7 @@
 
 use App\Models\Job;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
-use App\Models\JobNoResponseLog;
+use Sheba\Dal\JobNoResponseLog\JobNoResponseLog;
 use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
 use Sheba\Analysis\PartnerPerformance\Data\InnerData;
 use Sheba\Analysis\PartnerPerformance\Data\OuterData;
