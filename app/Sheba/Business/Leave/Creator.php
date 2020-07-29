@@ -179,23 +179,14 @@ class Creator
     {
         $leave_day_into_holiday_or_weekend = 0;
         if (!$this->business->is_sandwich_leave_enable) {
-            $business_holiday = $this->businessHoliday->getAllByBusiness($this->business);
-            $data = [];
-            foreach ($business_holiday as $holiday) {
-                $start_date = $holiday->start_date;
-                $end_date = $holiday->end_date;
-                for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
-                    $data[] = $d->format('Y-m-d');
-                }
-            }
-            $dates_of_holidays_formatted = $data;
+            $business_holiday = $this->businessHoliday->getAllDateArrayByBusiness($this->business);
             $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
 
             $period = CarbonPeriod::create($this->startDate, $this->endDate);
             foreach ($period as $date) {
                 $day_name_in_lower_case = strtolower($date->format('l'));
                 if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                if (in_array($date->toDateString(), $dates_of_holidays_formatted)) { $leave_day_into_holiday_or_weekend++; continue; }
+                if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
             }
         }
 

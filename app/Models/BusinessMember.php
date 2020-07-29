@@ -90,13 +90,22 @@ class BusinessMember extends Model
             return $leave_type->where('id', $leave_type_id);
         })->get();
 
-        return $this->getCountOfUsedDays($leaves, $time_frame);
+        $business_holiday = app(BusinessHolidayRepoInterface::class)->getAllDateArrayByBusiness($this->business);
+        $business_weekend = app(BusinessWeekendRepoInterface::class)->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+
+        return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
     }
 
-    public function getCountOfUsedLeaveDaysByFiscalYear(Collection $leaves)
+    /**
+     * @param Collection $leaves
+     * @param array $business_holiday
+     * @param array $business_weekend
+     * @return int
+     */
+    public function getCountOfUsedLeaveDaysByFiscalYear(Collection $leaves, array $business_holiday, array $business_weekend)
     {
         $time_frame = $this->getBusinessFiscalPeriod();
-        return $this->getCountOfUsedDays($leaves, $time_frame);
+        return $this->getCountOfUsedDays($leaves, $time_frame, $business_holiday, $business_weekend);
     }
 
     public function getBusinessFiscalPeriod()
@@ -106,27 +115,12 @@ class BusinessMember extends Model
         return $time_frame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
     }
 
-    private function getCountOfUsedDays(Collection $leaves, $time_frame)
+    private function getCountOfUsedDays(Collection $leaves, $time_frame, array $business_holiday, array $business_weekend)
     {
         $used_days = 0;
-        $business_weekend = $dates_of_holidays_formatted = [];
-
         $leave_day_into_holiday_or_weekend = 0;
-        if (!$this->business->is_sandwich_leave_enable) {
-            $business_holiday = app(BusinessHolidayRepoInterface::class)->getAllByBusiness($this->business);
-            $data = [];
-            foreach ($business_holiday as $holiday) {
-                $start_date = $holiday->start_date;
-                $end_date = $holiday->end_date;
-                for ($d = $start_date; $d->lte($end_date); $d->addDay()) {
-                    $data[] = $d->format('Y-m-d');
-                }
-            }
-            $dates_of_holidays_formatted = $data;
-            $business_weekend = app(BusinessWeekendRepoInterface::class)->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
-        }
 
-        $leaves->each(function ($leave) use (&$used_days, $time_frame, $business_weekend, $dates_of_holidays_formatted, $leave_day_into_holiday_or_weekend) {
+        $leaves->each(function ($leave) use (&$used_days, $time_frame, $business_weekend, $business_holiday, $leave_day_into_holiday_or_weekend) {
             if ($this->isLeaveFullyInAFiscalYear($time_frame, $leave)) {
                 $used_days += $leave->total_days;
                 return;
@@ -135,11 +129,13 @@ class BusinessMember extends Model
             $start_date = $leave->start_date->lt($time_frame->start) ? $time_frame->start : $leave->start_date;
             $end_date = $leave->end_date->gt($time_frame->end) ? $time_frame->end : $leave->end_date;
 
-            $period = CarbonPeriod::create($start_date, $end_date);
-            foreach ($period as $date) {
-                $day_name_in_lower_case = strtolower($date->format('l'));
-                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                if (in_array($date->toDateString(), $dates_of_holidays_formatted)) { $leave_day_into_holiday_or_weekend++; continue; }
+            if (!$this->business->is_sandwich_leave_enable) {
+                $period = CarbonPeriod::create($start_date, $end_date);
+                foreach ($period as $date) {
+                    $day_name_in_lower_case = strtolower($date->format('l'));
+                    if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
+                    if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+                }
             }
 
             $used_days += ($end_date->diffInDays($start_date) + 1) - $leave_day_into_holiday_or_weekend;
