@@ -85,7 +85,7 @@ class OrderCreateRequest
         return $this;
     }
 
-    public function setGeoFromLocationId()
+    private function setGeoFromLocationId()
     {
         $location = Location::find($this->locationId);
         $geo = new Geo();
