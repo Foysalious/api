@@ -6,6 +6,7 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +28,7 @@ class OrderCreateRequest
     protected $date;
     protected $time;
     protected $partnerId;
+    protected $locationId;
     /** @var OrderCreateRequestPolicy */
     protected $policy;
     /** @var Resource */
@@ -80,6 +82,26 @@ class OrderCreateRequest
     public function setGeo(Geo $geo)
     {
         $this->geo = $geo;
+        return $this;
+    }
+
+    public function setGeoFromLocationId()
+    {
+        $location = Location::find($this->locationId);
+        $geo = new Geo();
+        $geo_info = json_decode($location->geo_informations);
+        $geo->setLat($geo_info->lat)->setLng($geo_info->lng);
+        $this->setGeo($geo);
+    }
+
+    /**
+     * @param mixed $locationId
+     * @return OrderCreateRequest
+     */
+    public function setLocationId($locationId)
+    {
+        $this->locationId = (int)$locationId;
+        $this->setGeoFromLocationId();
         return $this;
     }
 

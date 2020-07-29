@@ -11,7 +11,7 @@ use Sheba\Order\OrderCreateRequest;
 
 class ResourceOrderController extends Controller
 {
-    public function placeOrder(Request $request, Geo $geo, OrderCreateRequest $orderCreateRequest)
+    public function placeOrder(Request $request, OrderCreateRequest $orderCreateRequest)
     {
         $request->merge(['mobile' => formatMobile($request->mobile)]);
         $this->validate($request, [
@@ -30,10 +30,7 @@ class ResourceOrderController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        $location = Location::find($request->location_id);
-        $geo_info = json_decode($location->geo_informations);
-        $geo->setLat($geo_info->lat)->setLng($geo_info->lng);
-        $response = $orderCreateRequest->setGeo($geo)->setServices($request->services)->setDate($request->date)->setTime($request->time)
+        $response = $orderCreateRequest->setLocationId($request->location_id)->setServices($request->services)->setDate($request->date)->setTime($request->time)
             ->setPartnerId($request->partner)->setMobile($request->mobile)->setName($request->name)->setAddress($request->address)
             ->setAdditionalInformation($request->additional_information)->setSalesChannel($request->sales_channel)
             ->setPaymentMethod($request->payment_method)->setAssignResource($request->assign_resource)->setRequest($request)->setResource($resource)->create();
