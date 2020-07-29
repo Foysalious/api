@@ -1,7 +1,7 @@
 <?php namespace Sheba\Analysis\PartnerPerformance\Calculators;
 
 use App\Models\Job;
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 use App\Models\JobNoResponseLog;
 use App\Models\JobScheduleDueLog;
 use Sheba\Analysis\PartnerPerformance\Data\InnerData;
