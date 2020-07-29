@@ -8,7 +8,7 @@ use Sheba\Payment\Methods\PaymentMethod;
 
 class Nagad extends PaymentMethod
 {
-
+    const NAME='nagad';
     /**
      * @param Payable $payable
      * @return Payment
@@ -16,7 +16,8 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        return $this->createPayment($payable);
+        $payment= $this->createPayment($payable);
+
     }
 
     public function validate(Payment $payment): Payment
@@ -26,6 +27,6 @@ class Nagad extends PaymentMethod
 
     public function getMethodName()
     {
-        // TODO: Implement getMethodName() method.
+        return self::NAME;
     }
 }

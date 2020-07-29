@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Sheba\Dal\LoanPayment\Model as RepaymentModel;
 use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Illuminate\Database\Eloquent\Model;
 
@@ -40,6 +41,9 @@ class PartnerBankLoan extends Model
     public function rejectedLog()
     {
         $this->changeLogs()->where('title','status')->where('to', LoanStatuses::DECLINED)->orWhere('to', LoanStatuses::REJECTED)->get()->last();
+    }
+    public function payments(){
+        return $this->hasMany(RepaymentModel::class);
     }
 
 }

@@ -2,10 +2,10 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\LoanCompletionController;
-use App\Http\Controllers\LoanCompletionV2Controller;
-use App\Http\Controllers\LoanController;
-use App\Http\Controllers\LoanV2Controller;
+use App\Http\Controllers\Loan\LoanCompletionController;
+use App\Http\Controllers\Loan\LoanCompletionV2Controller;
+use App\Http\Controllers\Loan\LoanController;
+use App\Http\Controllers\Loan\LoanV2Controller;
 use Closure;
 
 class DLSApiVersioning

@@ -305,6 +305,10 @@ class Route
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+            $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('/notifications', 'BankUser\NotificationController@index');
+            });
+
         });
         return $api;
     }
