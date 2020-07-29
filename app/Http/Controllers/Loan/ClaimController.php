@@ -84,6 +84,29 @@ class ClaimController extends Controller
      * @param Loan $loan
      * @return JsonResponse
      */
+    public function claimListForPortal(Request $request, $loan_id, Loan $loan)
+    {
+        try {
+            $request->merge(['loan_id' => $loan_id]);
+            $data = $loan->claimList($loan_id, true);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $loan_id
+     * @param Loan $loan
+     * @return JsonResponse
+     */
     public function claimStatusUpdate(Request $request, $loan_id, Loan $loan)
     {
         try {
