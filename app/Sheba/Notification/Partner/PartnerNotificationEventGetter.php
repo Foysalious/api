@@ -11,7 +11,7 @@ class PartnerNotificationEventGetter
 {
     private $notification;
     private $eventType;
-    const EXTERNAL_TYPE   = 'EXTERNAL_PROJECT';
+    const EXTERNAL_TYPE   = 'ExternalProject';
     const NEW_PROCUREMENT = 'NEW_PROCUREMENT';
 
     public function __construct(Notification $notification)
