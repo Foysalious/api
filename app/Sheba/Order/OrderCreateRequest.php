@@ -5,11 +5,15 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Models\Job;
+use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Customer\Creator as CustomerCreator;
 use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
+use Sheba\Jobs\AcceptJobAndAssignResource;
 use Sheba\Location\Geo;
 use Sheba\Order\Creator as OrderCreator;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
@@ -44,9 +48,21 @@ class OrderCreateRequest
     protected $serviceRequest;
     protected $salesChannel;
     protected $paymentMethod;
+    protected $assignResource;
+    private $job;
+    private $partner;
+    /**
+     * @var AcceptJobAndAssignResource
+     */
+    protected $acceptJobAndAssignResource;
+    /**
+     * @var Request
+     */
+    protected $request;
 
     public function __construct(OrderCreateRequestPolicy $policy, Response $response, CustomerCreator $customerCreator,
-                                CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator, ServiceRequest $serviceRequest)
+                                CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator, ServiceRequest $serviceRequest,
+                                AcceptJobAndAssignResource $acceptJobAndAssignResource)
     {
         $this->policy = $policy;
         $this->response = $response;
@@ -54,6 +70,7 @@ class OrderCreateRequest
         $this->deliveryAddressCreator = $deliveryAddressCreator;
         $this->orderCreator = $orderCreator;
         $this->serviceRequest = $serviceRequest;
+        $this->acceptJobAndAssignResource = $acceptJobAndAssignResource;
     }
 
     /**
@@ -176,6 +193,25 @@ class OrderCreateRequest
         return $this;
     }
 
+    /**
+     * @param $assignResource
+     * @return OrderCreateRequest
+     */
+    public function setAssignResource($assignResource)
+    {
+        $this->assignResource = $assignResource;
+        return $this;
+    }
+
+    /**
+     * @param Request $request
+     * @return OrderCreateRequest
+     */
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        return $this;
+    }
 
     /**
      * @return Response
@@ -195,6 +231,11 @@ class OrderCreateRequest
                 ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
             $this->response->setResponse($response);
         }
+        if ($this->assignResource && $this->response->hasSuccess()) {
+            $this->job = Job::find($this->response->getResponse()->job_id);
+            $this->partner = Partner::find($this->partnerId);
+            $this->acceptJobAndAssignResource();
+        }
         return $this->response;
     }
 
@@ -210,7 +251,7 @@ class OrderCreateRequest
     private function canCreate()
     {
         $this->policy->setGeo($this->geo)->setServiceRequestObject($this->getServiceRequestObject())->setDate($this->date)->setTime($this->time)->setPartnerId($this->partnerId);
-        if ($this->resource) $this->policy->setResource($this->resource);
+        if ($this->assignResource) $this->policy->setResource($this->resource);
         return $this->policy->canCreate();
     }
 
@@ -239,6 +280,10 @@ class OrderCreateRequest
     private function getServiceRequestObject()
     {
         return $this->serviceRequest->setServices(json_decode($this->services, 1))->get();
+    }
 
+    private function acceptJobAndAssignResource()
+    {
+        $this->acceptJobAndAssignResource->setJob($this->job)->setPartner($this->partner)->setResource($this->resource)->setRequest($this->request)->acceptJobAndAssignResource();
     }
 }
