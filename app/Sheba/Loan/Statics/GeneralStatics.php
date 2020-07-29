@@ -8,12 +8,13 @@ use Sheba\Dal\PartnerBankLoan\LoanTypes;
 
 class GeneralStatics
 {
-    const BIG_BANNER              = 'images/offers_images/banners/loan_banner_v5_1440_628.jpg';
-    const BANNER                  = 'images/offers_images/banners/loan_banner_v5_720_324.jpg';
-    const RUNNING_MICRO_LOAN_ICON = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png";
-    const RUNNING_TERM_LOAN_ICON  = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png";
-    const TERM_TITLE_BD           = "টার্ম লোন";
-    const MICRO_TITLE_BD          = "ডানা ক্লাসিক লোন";
+    const BIG_BANNER                = 'images/offers_images/banners/loan_banner_v5_1440_628.jpg';
+    const BANNER                    = 'images/offers_images/banners/loan_banner_v5_720_324.jpg';
+    const RUNNING_MICRO_LOAN_ICON   = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png";
+    const RUNNING_TERM_LOAN_ICON    = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png";
+    const TERM_TITLE_BD             = "টার্ম লোন";
+    const MICRO_TITLE_BD            = "ডানা ক্লাসিক লোন";
+    const NOT_ROBI_RETAILER_MESSAGE = "প্রিয় গ্রাহক, আপনি রবি রিটেইলার নন। ডানা ক্লাসিক লোনের জন্য অ্যাপ্লিকেশন করতে আপনাকে অবশ্যই রবি রিটেইলার হতে হবে।";
 
     public static function validator($version)
     {
