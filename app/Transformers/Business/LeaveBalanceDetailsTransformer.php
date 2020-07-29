@@ -60,7 +60,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
             'employee_pro_pic' => $profile->pro_pic,
             'employee_mobile' => $profile->mobile,
             'employee_id' => $business_member->id,
-            'join_date' => $business_member->join_date->format('F Y'),
+            'join_date' => $business_member->join_date ? $business_member->join_date->format('F Y') : null,
             'designation' => $role ? $role->name : null,
             'department' => $role ? $role->businessDepartment->name : null,
             'approved_count' => $leaves_approved_count,
