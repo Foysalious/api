@@ -1,6 +1,6 @@
 <?php namespace Sheba\Order;
 
-use App\Exceptions\NotFoundException;
+use App\Exceptions\NotAvailableException;
 use App\Models\Resource;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
@@ -87,12 +87,12 @@ class OrderCreateRequestPolicy
 
     /**
      * @return bool
-     * @throws NotFoundException
+     * @throws NotAvailableException
      */
     public function canCreate()
     {
-        if (!$this->checkPartner()) throw new NotFoundException('Partner Not Available', 403);
-        if ($this->resource && !$this->checkResource())  throw new NotFoundException('Resource Not Available', 403);
+        if (!$this->checkPartner()) throw new NotAvailableException('Partner Not Available', 403);
+        if ($this->resource && !$this->checkResource())  throw new NotAvailableException('Resource Not Available', 403);
         return true;
     }
 

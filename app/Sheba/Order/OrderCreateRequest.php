@@ -1,11 +1,13 @@
 <?php namespace Sheba\Order;
 
 use App\Exceptions\HyperLocationNotFoundException as HyperLocationNotFoundException;
+use App\Exceptions\NotAvailableException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Job;
+use App\Models\Location;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Database\Eloquent\Model;
@@ -27,6 +29,7 @@ class OrderCreateRequest
     protected $date;
     protected $time;
     protected $partnerId;
+    protected $locationId;
     /** @var OrderCreateRequestPolicy */
     protected $policy;
     /** @var Resource */
@@ -80,6 +83,26 @@ class OrderCreateRequest
     public function setGeo(Geo $geo)
     {
         $this->geo = $geo;
+        return $this;
+    }
+
+    private function setGeoFromLocationId()
+    {
+        $location = Location::find($this->locationId);
+        $geo = new Geo();
+        $geo_info = json_decode($location->geo_informations);
+        $geo->setLat($geo_info->lat)->setLng($geo_info->lng);
+        $this->setGeo($geo);
+    }
+
+    /**
+     * @param mixed $locationId
+     * @return OrderCreateRequest
+     */
+    public function setLocationId($locationId)
+    {
+        $this->locationId = (int)$locationId;
+        $this->setGeoFromLocationId();
         return $this;
     }
 
@@ -218,19 +241,21 @@ class OrderCreateRequest
      * @throws DestinationCitySameAsPickupException
      * @throws HyperLocationNotFoundException
      * @throws InsideCityPickUpAddressNotFoundException
-     * @throws NotFoundException
+     * @throws NotAvailableException
      * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
      * @throws ValidationException
      */
     public function create()
     {
-        if ($this->canCreate()) {
-            $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setMobile($this->mobile)
-                ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
-                ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
-            $this->response->setResponse($response);
+        if (!$this->canCreate()) {
+            $this->response->setCode(403)->setMessage('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন');
+            return $this->response;
         }
+        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setMobile($this->mobile)
+            ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
+            ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
+        $this->response->setResponse($response);
         if ($this->assignResource && $this->response->hasSuccess()) {
             $this->job = Job::find($this->response->getResponse()->job_id);
             $this->partner = Partner::find($this->partnerId);
@@ -243,10 +268,10 @@ class OrderCreateRequest
      * @return bool
      * @throws DestinationCitySameAsPickupException
      * @throws InsideCityPickUpAddressNotFoundException
-     * @throws NotFoundException
      * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
      * @throws ValidationException
+     * @throws NotAvailableException
      */
     private function canCreate()
     {
