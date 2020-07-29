@@ -1,9 +1,9 @@
 <?php namespace Sheba\Analysis\PartnerPerformance\Calculators;
 
 use App\Models\Job;
-use App\Models\JobCancelReason;
-use App\Models\JobNoResponseLog;
-use App\Models\JobScheduleDueLog;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
+use Sheba\Dal\JobNoResponseLog\JobNoResponseLog;
+use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
 use Sheba\Analysis\PartnerPerformance\Data\InnerData;
 use Sheba\Analysis\PartnerPerformance\Data\OuterData;
 use Sheba\Analysis\PartnerPerformance\Data\PartnerPerformanceData;
