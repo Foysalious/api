@@ -1,5 +1,7 @@
 <?php namespace App\Repositories;
 
+use Illuminate\Http\Request;
+
 Class BankUserNotificationRepository
 {
     public function getBankUserNotifications($model, $offset, $limit)
