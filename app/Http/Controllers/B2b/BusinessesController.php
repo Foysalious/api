@@ -104,8 +104,9 @@ class BusinessesController extends Controller
             foreach ($partners as $partner) {
                 $master_categories = collect();
                 $partner->categories->map(function ($category) use ($master_categories) {
-                    $parent_category = $category->parent;
-                    $master_categories->push($parent_category);
+                    if($category->parent) {
+                        $master_categories->push($category->parent);
+                    }
                 });
                 $master_categories = $master_categories->unique()->pluck('name');
                 $vendor = [
