@@ -22,11 +22,11 @@ class LoanRepaymentComplete extends PaymentComplete
         /** @var Payable $payable */
         $payable = $this->payment->payable;
         /** @var PartnerBankLoan $loan */
-        $loan = $payable->getPayableType();
-        $lastClaim=(new LoanClaim())->setLoan($loan->id)->lastClaim();
+        $loan      = $payable->getPayableType();
+        $lastClaim = (new LoanClaim())->setLoan($loan->id)->lastClaim();
         (new Repayment())->setLoan($loan->id)
                          ->setAmount($payable->amount)
                          ->setClaim($lastClaim->id)
-                         ->storeDebit(['log']);
+                         ->storeDebit("Online, Payment ID : {$this->payment->id}");
     }
 }
