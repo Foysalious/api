@@ -50,9 +50,8 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $profile = $member->profile;
         /** @var BusinessRole $role */
         $role = $business_member->role;
-        $business_member_leaves = $business_member->leaves();
-        $leaves_rejected_count = $business_member_leaves->where('status', 'rejected')->count();
-        $leaves_approved_count = $business_member_leaves->where('status', 'accepted')->count();
+        $leaves_rejected_count = $business_member->leaves()->where('status', 'rejected')->count();
+        $leaves_approved_count = $business_member->leaves()->where('status', 'accepted')->count();
         /** @var Leave $leaves */
         $leaves = $business_member->leaves;
         return [
