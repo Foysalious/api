@@ -306,7 +306,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($members, new LeaveBalanceTransformer($leave_types));
+        $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $business));
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {

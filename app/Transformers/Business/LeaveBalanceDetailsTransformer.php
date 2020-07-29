@@ -55,6 +55,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $leaves_approved_count = $business_member_leaves->where('status', 'accepted')->count();
         /** @var Leave $leaves */
         $leaves = $business_member->leaves;
+
         return [
             'employee_name' => $profile->name,
             'employee_pro_pic' => $profile->pro_pic,
