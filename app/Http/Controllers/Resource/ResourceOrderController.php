@@ -1,14 +1,11 @@
 <?php namespace App\Http\Controllers\Resource;
 
-use App\Models\Job;
 use App\Models\Location;
-use App\Models\Partner;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Authentication\AuthUser;
-use Sheba\Jobs\AcceptJobAndAssignResource;
 use Sheba\Location\Geo;
 use Sheba\Order\OrderCreateRequest;
 
