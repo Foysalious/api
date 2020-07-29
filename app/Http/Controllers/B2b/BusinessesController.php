@@ -89,17 +89,22 @@ class BusinessesController extends Controller
     public function getVendorsList($business, Request $request)
     {
         $business = $request->business;
-        $partners = $business->partners()
-            ->with('categories')
-            ->select('id', 'name', 'mobile', 'logo', 'address')
-            ->get();
+        $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address')->with([
+            'categories' => function ($q) {
+                $q->select('categories.id', 'parent_id', 'name')->with([
+                    'parent' => function($q) {
+                        $q->select('id', 'parent_id', 'name');
+                    }
+                ]);
+            }
+        ])->get();
         $vendors = collect();
 
         if ($business) {
             foreach ($partners as $partner) {
                 $master_categories = collect();
                 $partner->categories->map(function ($category) use ($master_categories) {
-                    $parent_category = $category->parent()->select('id', 'name')->first();
+                    $parent_category = $category->parent;
                     $master_categories->push($parent_category);
                 });
                 $master_categories = $master_categories->unique()->pluck('name');
