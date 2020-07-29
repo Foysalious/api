@@ -287,11 +287,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->getFirstAdminResource()->retailers();
     }
 
-    public function retailer()
-    {
-        return $this->hasMany(Retailer::class, 'mobile', 'mobile');
-    }
-
     public function hasLeave($date)
     {
         $date = $date == null ? Carbon::now() : new Carbon($date);
