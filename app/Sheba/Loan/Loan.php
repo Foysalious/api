@@ -48,6 +48,7 @@ use Sheba\Loan\Exceptions\NotShebaPartner;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
@@ -707,7 +708,6 @@ class Loan
      */
     public function statusChange($loan_id, Request $request)
     {
-
         $partner_bank_loan = $this->repo->find($loan_id);
         $user              = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
@@ -749,7 +749,7 @@ class Loan
             $event_id   = $partner_bank_loan->id;
             $this->sendLoanNotification($title, $event_type, $event_id);
         });
-
+        $this->sendPushNotification($old_status, $new_status, $partner_bank_loan);
 
     }
 
@@ -766,6 +766,24 @@ class Loan
             "event_id"   => $event_id
         ]);
     }
+
+    private function sendPushNotification($old_status, $new_status, $partner_bank_loan)
+    {
+        $class   = class_basename($partner_bank_loan);
+        $topic   = config('sheba.push_notification_topic_name.manager') . $partner_bank_loan->partner_id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound   = config('sheba.push_notification_sound.manager');
+        $notification_data = [
+            "title" => 'Loan status changed',
+            "message" => "Loan status has been updated from $old_status to $new_status",
+            "sound" => "notification_sound",
+            "event_type" => "App\\Models\\$class",
+            "event_id" => $partner_bank_loan->id
+        ];
+
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
 
     /**
      * @param $loan_id
