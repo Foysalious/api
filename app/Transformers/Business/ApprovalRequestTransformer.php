@@ -62,10 +62,21 @@ class ApprovalRequestTransformer extends TransformerAbstract
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
             $profile = $member->profile;
-            $approvers[] = $approval_request->status == Status::ACCEPTED ?
-                $profile->name . ' has approved.' : $profile->name . ' not responded yet.';
+            $approvers[] = $this->approvarWithStatus($approval_request, $profile);
 
         });
         return $approvers;
+    }
+
+    /**
+     * @param $approval_request
+     * @param $profile
+     * @return string
+     */
+    private function approvarWithStatus($approval_request, $profile)
+    {
+        if ($approval_request->status == Status::ACCEPTED) return $profile->name . ' has approved.';
+        elseif ($approval_request->status == Status::REJECTED) return $profile->name . 'has rejected.';
+        else return $profile->name . ' not responded yet.';
     }
 }
