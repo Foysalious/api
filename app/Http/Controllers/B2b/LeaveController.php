@@ -271,11 +271,17 @@ class LeaveController extends Controller
         $business = $business_member->business;
 
         $leave_types = [];
-        $business->leaveTypes()->with('leaves')->withTrashed()->select('id', 'title', 'total_days')->get()->each(function ($leave_type) use (&$leave_types) {
-            if (!$leave_type->leaves->isEmpty()) {
-                $leave_type_data = ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days];
+        $business->leaveTypes()->with(['leaves' => function ($q) { return $q->accepted(); }])
+            ->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
+            ->get()
+            ->each(function ($leave_type) use (&$leave_types) {
+                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
+                $leave_type_data = [
+                    'id' => $leave_type->id,
+                    'title' => $leave_type->title,
+                    'total_days' => $leave_type->total_days
+                ];
                 array_push($leave_types, $leave_type_data);
-            }
         });
 
         $members = $business->members()->select('members.id', 'profile_id')->with([
@@ -297,7 +303,7 @@ class LeaveController extends Controller
                     }
                 ])->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
+        ])->get();
 
         if ($request->has('department') || $request->has('search'))
             $members = $this->membersFilterByDeptSearchByName($members, $request);
@@ -320,8 +326,8 @@ class LeaveController extends Controller
 
         return api_response($request, null, 200, [
             'leave_balances' => $leave_balances,
-            'total_records' => $total_records,
-            'leave_types' => $leave_types
+            'leave_types' => $leave_types,
+            'total_records' => $total_records
         ]);
     }
 

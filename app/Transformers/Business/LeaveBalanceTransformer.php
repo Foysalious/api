@@ -40,7 +40,7 @@ class LeaveBalanceTransformer extends TransformerAbstract
         $employee_wise_leave_balance = [];
         $members->each(function ($member) use (&$employee_wise_leave_balance) {
             /** @var BusinessMember $business_member */
-            $this->businessMember = $member->businessMember;
+            $this->businessMember = $member->businessMemberWithoutStatusCheck();
 
             array_push($employee_wise_leave_balance, [
                 'id' => $this->businessMember->id,
