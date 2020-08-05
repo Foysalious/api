@@ -230,14 +230,14 @@ class Loan
     public function homepageV2()
     {
         $robi_retailer = $this->checkIsRobiRetailer();
-        $data = [
+        $data          = [
             'big_banner'        => GeneralStatics::bigBanner(),
             'banner'            => GeneralStatics::banner(),
             'robi_retailer'     => $robi_retailer,
             'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
             'is_bkash_agent'    => $this->isBkashAgent()
         ];
-        $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
+        $data          = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
     }
 
@@ -311,7 +311,7 @@ class Loan
     {
         $loan = $this->repo->find($request->loan_id);
 
-        if($loan->partner_id != $request->partner->id)
+        if ($loan->partner_id != $request->partner->id)
             throw new NotAllowedToAccess();
     }
 
@@ -748,21 +748,9 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
+            Notifications::sendPushNotification($old_status, $new_status, $partner_bank_loan);
         });
-        Notifications::sendPushNotification($old_status, $new_status, $partner_bank_loan);
     }
-
-    private function sendLoanNotification($title, $event_type, $event_id)
-    {
-
-    }
-
-    private function sendPushNotification($old_status, $new_status, $partner_bank_loan)
-    {
-
-    }
-
-
     /**
      * @param $loan_id
      * @return bool|string
@@ -868,7 +856,7 @@ class Loan
      */
     private function checkIsRobiRetailer()
     {
-        return $this->partner->retailers->where('strategic_partner_id',2)->count() ? 1 : 0;
+        return $this->partner->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0;
     }
 
     /**
@@ -927,16 +915,16 @@ class Loan
      */
     private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
-        $unit_en = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
-        $unit_bn = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
-        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"]/12;
+        $unit_en  = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
+        $unit_bn  = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
+        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"] / 12;
         return [
-            "data"     => (new RunningApplication($running_loan))->toArray(),
-            "icon"     => $icon_url,
-            "title_bn" => $title_bn,
+            "data"          => (new RunningApplication($running_loan))->toArray(),
+            "icon"          => $icon_url,
+            "title_bn"      => $title_bn,
             "loan_duration" => [
                 "duration_en" => $duration . $unit_en,
-                "duration_bn" => en2bnNumber($duration). $unit_bn
+                "duration_bn" => en2bnNumber($duration) . $unit_bn
             ]
         ];
     }
