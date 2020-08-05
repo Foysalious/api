@@ -178,6 +178,7 @@ class Documents implements Arrayable
             'picture'           => $this->profile->pro_pic,
             'nid_image_front'   => $this->profile->nid_image_front,
             'nid_image_back'    => $this->profile->nid_image_back,
+            'is_verified'       => $this->resource->is_verified,
             'business_document' => [
                 'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
                 'tin_certificate'          => $this->profile->tin_certificate,
@@ -189,7 +190,6 @@ class Documents implements Arrayable
             return $data;
         }
         $otherDoc = [
-            'is_verified'       => $this->resource->is_verified,
             'grantor_document'  => [
                 'picture'         => !empty($this->granter) ? $this->granter->pro_pic : null,
                 'nid_front_image' => !empty($this->granter) ? $this->granter->nid_image_front : null,
