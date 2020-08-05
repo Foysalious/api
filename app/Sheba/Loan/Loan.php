@@ -949,10 +949,17 @@ class Loan
      */
     private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
+        $unit_en = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
+        $unit_bn = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
+        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"]/12;
         return [
             "data"     => (new RunningApplication($running_loan))->toArray(),
             "icon"     => $icon_url,
-            "title_bn" => $title_bn
+            "title_bn" => $title_bn,
+            "loan_duration" => [
+                "duration_en" => $duration . $unit_en,
+                "duration_bn" => en2bnNumber($duration). $unit_bn
+            ]
         ];
     }
 
