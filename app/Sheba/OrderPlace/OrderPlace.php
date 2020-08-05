@@ -1,5 +1,6 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
@@ -344,9 +345,13 @@ class OrderPlace
         return $this;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function setDeliveryAddressFromId()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
+        if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
