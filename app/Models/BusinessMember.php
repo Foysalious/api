@@ -121,6 +121,7 @@ class BusinessMember extends Model
         $leave_day_into_holiday_or_weekend = 0;
 
         $leaves->each(function ($leave) use (&$used_days, $time_frame, $business_weekend, $business_holiday, $leave_day_into_holiday_or_weekend) {
+            if (!$this->isLeaveInCurrentFiscalYear($time_frame, $leave)) return;
             if ($this->isLeaveFullyInAFiscalYear($time_frame, $leave)) {
                 $used_days += $leave->total_days;
                 return;
@@ -145,6 +146,12 @@ class BusinessMember extends Model
     }
 
     private function isLeaveFullyInAFiscalYear($fiscal_year_time_frame, Leave $leave)
+    {
+        return $leave->start_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end) &&
+            $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
+    }
+
+    private function isLeaveInCurrentFiscalYear($fiscal_year_time_frame, Leave $leave)
     {
         return $leave->start_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end) &&
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
