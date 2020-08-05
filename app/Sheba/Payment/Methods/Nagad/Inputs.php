@@ -9,12 +9,16 @@ use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
 
 class Inputs
 {
-    private $publicKey;
     private $merchantId;
 
-    public function __construct()
+    public static function headers()
     {
-        $this->merchantId = config('nagad.merchant_id');
+        return [
+            'Content-Type'     => 'Application/json',
+            'X-KM-Api-Version' => 'v-0.2.0',
+            'X-KM-IP-V4'       => request()->ip(),
+            'X-KM-Client-Type' => 'MOBILE_WEB'
+        ];
     }
 
     /**
@@ -22,33 +26,54 @@ class Inputs
      * @return array
      * @throws EncryptionFailed
      */
-    public function init($transactionID)
+    public static function init($transactionID)
     {
-        $date = Carbon::now()->format('YmdHis');
-        return ['dateTime' => $date, 'sensitiveData' => $this->sensitiveData($transactionID, $date)];
+        return  self::data($transactionID);
     }
 
     /**
-     * @param array $data
+     * @param string $data
      * @return string
      * @throws EncryptionFailed
      */
-    static function getEncoded(array $data)
+    static function getEncoded($data)
     {
         if (!$key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')))) throw new EncryptionFailed();
-        if (!openssl_public_encrypt(json_encode($data), $encrypted, $key, OPENSSL_PKCS1_PADDING)) throw new EncryptionFailed();
+        if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
         return base64_encode($encrypted);
     }
 
     /**
      * @param $transactionId
-     * @param $date
-     * @return string
+     * @return array
      * @throws EncryptionFailed
      */
-    private function sensitiveData($transactionId, $date)
+    private static function data($transactionId)
     {
-        $data = ['merchantId' => $this->merchantId, 'orderId' => $transactionId, 'dateTime' => $date, 'challenge' => bin2hex(openssl_random_pseudo_bytes(40))];
-        return self::getEncoded($data);
+        $date = Carbon::now()->format('YmdHis');
+        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'dateTime' => $date, 'challenge' => self::generateRandomString(40)]);
+        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data),'dateTime'=>$date];
+    }
+
+    private static function generateRandomString($length = 40)
+    {
+        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $charactersLength = strlen($characters);
+        $randomString = '';
+        for ($i = 0; $i < $length; $i++) {
+            $randomString .= $characters[rand(0, $charactersLength - 1)];
+        }
+        return $randomString;
+    }
+    static function generateSignature($data)
+    {
+        $private_key = file_get_contents(config('nagad.private_key_path'));
+        openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);
+        return base64_encode($signature);
+    }
+
+    static function orderID()
+    {
+        return 'SHEBA' . time();
     }
 }

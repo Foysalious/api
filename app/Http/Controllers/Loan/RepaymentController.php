@@ -28,27 +28,32 @@ class RepaymentController extends Controller
                 'amount'         => 'required|numeric|min:10|max:100000',
             ]);
             /** @var PartnerBankLoan $loan */
-            $loan    = $repo->find($loan_id);
+            $loan = $repo->find($loan_id);
+            if (empty($loan)) {
+                throw new \Exception("Loan Not Found");
+            }
             $method  = $request->payment_method;
-            $payable = $adapter->setAmount((double)$request->amount)->setLoan($loan)->getPayable();
+            $payable = $adapter->setAmount((double)$request->amount)->setUser($request->partner)
+                               ->setLoan($loan)->getPayable();
             $payment = $manager->setMethodName($method)->setPayable($payable)->init();
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
 
         } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors());
+            $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments
-     * @param Loan $loan
+     * @param Loan           $loan
      * @return JsonResponse
      */
     public function repaymentList(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments, Loan $loan)
@@ -74,11 +79,11 @@ class RepaymentController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments
-     * @param Loan $loan
+     * @param Loan           $loan
      * @return JsonResponse
      */
     public function repaymentFromWallet(Request $request, $partner, $loan_id, LoanRepayments $loanRepayments, Loan $loan)

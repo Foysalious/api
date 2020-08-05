@@ -7,6 +7,7 @@ use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl\Cbl;
+use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
@@ -64,6 +65,8 @@ class PaymentStrategy
                 return app(OkWallet::class);
             case self::PORT_WALLET:
                 return app(PortWallet::class);
+            case self::NAGAD:
+                return app(Nagad::class);
         }
     }
 

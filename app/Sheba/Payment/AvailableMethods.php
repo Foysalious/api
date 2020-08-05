@@ -25,7 +25,7 @@ class AvailableMethods
             if ($method == PaymentStrategy::CBL) {
                 $detail->setIsPublished(self::getCblStatus($version_code, $platform_name));
             }
-            $details[] =  $detail;
+            $details[] = $detail;
         }
 
         return $details;
@@ -176,11 +176,10 @@ class AvailableMethods
     public static function getLoanRepaymentPayments()
     {
         return [
-            PaymentStrategy::CBL,
-            PaymentStrategy::BKASH,
-            PaymentStrategy::ONLINE
+            PaymentStrategy::NAGAD,
         ];
     }
+
     /**
      * @param $version_code
      * @param $platform_name

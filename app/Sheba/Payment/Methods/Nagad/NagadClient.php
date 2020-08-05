@@ -4,22 +4,22 @@
 namespace Sheba\Payment\Methods\Nagad;
 
 
-use Sheba\TPProxy\TPProxyClient;
-use Sheba\TPProxy\TPRequest;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use Sheba\TPProxy\TPProxyServerError;
 
 class NagadClient
 {
-    /** @var TPProxyClient */
-    private $tpClient;
+    private $client;
     private $baseUrl;
     private $merchantId;
     private $publicKey;
     private $privateKey;
     private $contextPath;
 
-    public function __construct(TPProxyClient $client)
+    public function __construct(Client $client)
     {
-        $this->tpClient    = $client;
+        $this->client      = $client;
         $this->baseUrl     = config('nagad.base_url');
         $this->merchantId  = config('nagad.merchant_id');
         $this->publicKey   = file_get_contents(config('nagad.public_key_path'));
@@ -27,12 +27,18 @@ class NagadClient
         $this->contextPath = config('nagad.context_path');
     }
 
-    public function init($amount, $transactionId)
+    /**
+     * @param $amount
+     * @param $transactionId
+     * @return mixed
+     * @throws Exception\EncryptionFailed
+     * @throws TPProxyServerError
+     */
+    public function init($transactionId)
     {
-        $url = "$this->baseUrl/$this->contextPath/api/dfs/checkout/initialize/$this->merchantId/$transactionId";
-        $request=(new TPRequest())
-            ->setMethod(TPRequest::METHOD_POST)
-            ->setUrl($url)
-            ->setInput();
+        $url     = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
+        $data    = Inputs::init($transactionId);
+        $request = decodeGuzzleResponse($this->client->request('POST', $url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
+        return $request;
     }
 }
