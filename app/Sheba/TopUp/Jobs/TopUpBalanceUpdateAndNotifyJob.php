@@ -29,7 +29,7 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     public function __construct(TopUpOrder $topup_order, $response)
     {
         $this->topup_order = $topup_order;
-        $this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
+        //$this->topUpGatewayFactory = $this->getTopUpGatewayFactory();
         $this->topUpGateway = $this->getGatewayModel();
         $this->response = $response;
     }
