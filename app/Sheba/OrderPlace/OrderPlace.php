@@ -6,6 +6,7 @@ use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;

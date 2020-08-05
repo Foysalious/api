@@ -27,6 +27,7 @@ use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\JobMaterialLog\JobMaterialLog;
 use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
 
