@@ -8,7 +8,16 @@ use Sheba\Payment\Methods\PaymentMethod;
 
 class Nagad extends PaymentMethod
 {
-    const NAME='nagad';
+    const NAME = 'nagad';
+    /** @var NagadClient $client */
+    private $client;
+
+    public function __construct()
+    {
+        parent::__construct();
+        $this->client = app(NagadClient::class);
+    }
+
     /**
      * @param Payable $payable
      * @return Payment
@@ -16,8 +25,11 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment= $this->createPayment($payable);
-
+        $payment                         = $this->createPayment($payable);
+        $payment->gateway_transaction_id = Inputs::orderID();
+        $payment->save();
+        $initResponse = $this->client->init($payment->gateway_transaction_id);
+        dd($initResponse);
     }
 
     public function validate(Payment $payment): Payment

@@ -5,6 +5,7 @@ namespace Sheba\Loan;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
@@ -230,14 +231,14 @@ class Loan
     public function homepageV2()
     {
         $robi_retailer = $this->checkIsRobiRetailer();
-        $data = [
+        $data          = [
             'big_banner'        => GeneralStatics::bigBanner(),
             'banner'            => GeneralStatics::banner(),
             'robi_retailer'     => $robi_retailer,
             'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
             'is_bkash_agent'    => $this->isBkashAgent()
         ];
-        $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
+        $data          = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
     }
 
@@ -311,7 +312,7 @@ class Loan
     {
         $loan = $this->repo->find($request->loan_id);
 
-        if($loan->partner_id != $request->partner->id)
+        if ($loan->partner_id != $request->partner->id)
             throw new NotAllowedToAccess();
     }
 
@@ -549,14 +550,13 @@ class Loan
     {
         $data               = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
         $statuses           = constants('LOAN_STATUS');
-        $registered_partner = Retailer::all();
         $formatted_data     = (object)[
             'applied_loan'       => count($data),
             'loan_rejected'      => 0,
             'loan_disburse'      => 0,
             'loan_approved'      => 0,
             'loan_closed'        => 0,
-            'total_registration' => count($registered_partner),
+            'total_registration' => $this->getRegisteredRetailerCount()
         ];
         foreach ($data as $loan) {
             if ($loan["status"] === $statuses["rejected"]) {
@@ -573,6 +573,22 @@ class Loan
             }
         }
         return $formatted_data;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function getRegisteredRetailerCount()
+    {
+        $retailers = Retailer::whereHas('profile', function ($q) {
+            $q->has('resource');
+        })->get();
+
+        $resource_ids = [];
+        foreach ($retailers as $retailer)
+            array_push($resource_ids, $retailer->profile->resource->id);
+
+        return PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->count('partner_id');
     }
 
     private function getLoans($user)
@@ -747,43 +763,10 @@ class Loan
             $class      = class_basename($partner_bank_loan);
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
-            $this->sendLoanNotification($title, $event_type, $event_id);
-            $this->sendPushNotification($old_status, $new_status, $partner_bank_loan);
+            Notifications::sendLoanNotification($title, $event_type, $event_id);
+            Notifications::sendPushNotification($old_status, $new_status, $partner_bank_loan);
         });
     }
-
-    private function sendLoanNotification($title, $event_type, $event_id)
-    {
-        notify()->departments([
-            9,
-            13
-        ])->send([
-            "title"      => $title,
-            'link'       => env('SHEBA_BACKEND_URL') . "/sp-loan/$event_id",
-            "type"       => notificationType('Info'),
-            "event_type" => $event_type,
-            "event_id"   => $event_id
-        ]);
-    }
-
-    private function sendPushNotification($old_status, $new_status, $partner_bank_loan)
-    {
-        $class   = class_basename($partner_bank_loan);
-        $topic   = config('sheba.push_notification_topic_name.manager') . $partner_bank_loan->partner_id;
-        $channel = config('sheba.push_notification_channel_name.manager');
-        $sound   = config('sheba.push_notification_sound.manager');
-        $notification_data = [
-            "title" => 'Loan status changed',
-            "message" => "Loan status has been updated from $old_status to $new_status",
-            "sound" => "notification_sound",
-            "event_type" => "App\\Models\\$class",
-            "event_id" => $partner_bank_loan->id
-        ];
-
-        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
-    }
-
-
     /**
      * @param $loan_id
      * @return bool|string
@@ -889,7 +872,7 @@ class Loan
      */
     private function checkIsRobiRetailer()
     {
-        return $this->partner->retailers->where('strategic_partner_id',2)->count() ? 1 : 0;
+        return $this->partner->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0;
     }
 
     /**
@@ -948,16 +931,16 @@ class Loan
      */
     private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
-        $unit_en = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
-        $unit_bn = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
-        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"]/12;
+        $unit_en  = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
+        $unit_bn  = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
+        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"] / 12;
         return [
-            "data"     => (new RunningApplication($running_loan))->toArray(),
-            "icon"     => $icon_url,
-            "title_bn" => $title_bn,
+            "data"          => (new RunningApplication($running_loan))->toArray(),
+            "icon"          => $icon_url,
+            "title_bn"      => $title_bn,
             "loan_duration" => [
                 "duration_en" => $duration . $unit_en,
-                "duration_bn" => en2bnNumber($duration). $unit_bn
+                "duration_bn" => en2bnNumber($duration) . $unit_bn
             ]
         ];
     }

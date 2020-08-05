@@ -61,7 +61,9 @@ class Payable extends Model
     {
         return $this->type == Types::PROCUREMENT;
     }
-
+    public function isLoan(){
+        return $this->type==Types::PARTNER_BANK_LOAN;
+    }
     /**
      * @param $type
      */
@@ -92,6 +94,8 @@ class Payable extends Model
             return 'payment_link';
         } else if ($this->isProcurement()) {
             return 'procurement';
+        }else if ($this->isLoan()){
+            return 'loan';
         }
     }
 
