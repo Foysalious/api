@@ -76,8 +76,8 @@ class LoanRoute
             $api->post('/{loan_id}/claim', 'Loan\\ClaimController@claim');
             $api->get('/{loan_id}/claim-list', 'Loan\\ClaimController@claimList');
             $api->post('/{loan_id}/claim-approval-msg-seen', 'Loan\\ClaimController@approvedClaimMsgSeen');
-            $api->get('/{loan_id}/repayment-list', 'Loan\\LoanRepaymentController@repaymentList');
-            $api->post('/{loan_id}/repayment-from-wallet', 'Loan\\LoanRepaymentController@repaymentFromWallet');
+            $api->get('/{loan_id}/repayment-list', 'Loan\\RepaymentController@repaymentList');
+            $api->post('/{loan_id}/repayment-from-wallet', 'Loan\\RepaymentController@repaymentFromWallet');
             $api->post('/{loan_id}/pay', 'Loan\\RepaymentController@init');
             $api->post('/', 'SpLoanController@store');
             $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
