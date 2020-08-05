@@ -132,4 +132,7 @@ class Profile extends Model
     {
         return (int)$this->is_blacklisted;
     }
+    public function searchOtherUsingNid($nid){
+        return self::where('nid_no',$nid)->where('id','!=',$this->id)->first();
+    }
 }

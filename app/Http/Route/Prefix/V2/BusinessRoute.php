@@ -9,11 +9,30 @@ class BusinessRoute
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
+
+        $api->group(['prefix' => 'businesses/tenders'], function ($api) {
+            $api->get('/', 'B2b\ProcurementController@tenders');
+            $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
+            $api->get('landings', 'B2b\ProcurementController@landings');
+            $api->group(['prefix' => '{tender}'], function ($api) {
+                $api->get('/', 'B2b\ProcurementController@tenderShow');
+                $api->group(['prefix' => 'proposal'], function ($api) {
+                    $api->get('/', 'B2b\ProcurementController@tenderProposalEdit');
+                    $api->post('/', 'B2b\ProcurementController@tenderProposalStore');
+                    $api->group(['prefix' => '{proposal}'], function ($api) {
+                        $api->get('/', 'B2b\ProcurementController@proposalDetail');
+                        $api->get('/send-pin', 'B2b\ProposalController@sendPin');
+                        $api->post('/', 'B2b\ProposalController@takeAction');
+                    });
+                });
+            });
+        });
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
+                $api->get('/banks', 'B2b\BusinessesController@getBanks');
                 $api->get('/vendors/{vendor}/info', 'B2b\BusinessesController@getVendorInfo');
                 $api->get('/vendors/{vendor}/resource-info', 'B2b\BusinessesController@getVendorAdminInfo');
                 $api->post('orders', 'B2b\OrderController@placeOrder');
@@ -38,12 +57,38 @@ class BusinessRoute
                     $api->get('daily', 'B2b\AttendanceController@getDailyStats');
                     $api->get('monthly', 'B2b\AttendanceController@getMonthlyStats');
                 });
+                $api->group(['prefix' => 'office-time'], function ($api) {
+                    $api->get('/', 'B2b\AttendanceController@getOfficeTime');
+                    $api->post('/update', 'B2b\AttendanceController@updateOfficeTime');
+                });
+                $api->group(['prefix' => 'attendance-setting'], function ($api) {
+                    $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
+                    $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
+                });
+                $api->group(['prefix' => 'holidays'], function ($api) {
+                    $api->get('/', 'B2b\AttendanceController@getHolidays');
+                    $api->post('/', 'B2b\AttendanceController@storeHoliday');
+                    $api->group(['prefix' => '{holiday}'], function ($api) {
+                        $api->post('/', 'B2b\AttendanceController@update');
+                        $api->delete('/', 'B2b\AttendanceController@destroy');
+                    });
+                });
                 $api->group(['prefix' => 'employees'], function ($api) {
-                    $api->post('/', 'B2b\CoWorkerController@store');
                     $api->get('/', 'B2b\CoWorkerController@index');
-                    $api->get('/{employee}', 'B2b\CoWorkerController@show');
-                    $api->post('/{employee}', 'B2b\CoWorkerController@update');
-                    $api->get('/{employee}/expense/pdf', 'B2b\CoWorkerController@show');
+                    $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
+                    $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
+                    $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
+                    $api->group(['prefix' => '{employee}'], function ($api) {
+                        $api->post('/basic-info', 'B2b\CoWorkerController@basicInfoEdit');
+                        $api->post('/official-info', 'B2b\CoWorkerController@officialInfoEdit');
+                        $api->post('/personal-info', 'B2b\CoWorkerController@personalInfoEdit');
+                        $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
+                        $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
+                        $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
+                        $api->get('/', 'B2b\CoWorkerController@show');
+                        $api->post('/', 'B2b\CoWorkerController@update');
+                        $api->get('/expense/pdf', 'B2b\CoWorkerController@show');
+                    });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
@@ -102,6 +147,8 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'procurements'], function ($api) {
                     $api->post('/', 'B2b\ProcurementController@store');
+                    $api->get('/create', 'B2b\ProcurementController@create');
+                    $api->get('/tags', 'B2b\ProcurementController@getTags');
                     $api->get('/orders', 'B2b\ProcurementController@procurementOrders');
                     $api->group(['prefix' => '{procurement}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@show');
@@ -115,11 +162,14 @@ class BusinessRoute
                             $api->post('/', 'AttachmentController@storeAttachment');
                             $api->get('/', 'AttachmentController@getAttachments');
                         });
+                        $api->post('/update-item', 'B2b\ProcurementController@updateItem');
+                        $api->get('/invitations', 'B2b\ProcurementController@invitedPartners');
                         $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
+                        $api->get('/hiring-history', 'B2b\BidController@getHiringHistory');
                         $api->get('bills/clear', 'B2b\ProcurementController@clearBills');
                         $api->get('/timeline', 'B2b\ProcurementController@orderTimeline');
                         $api->group(['prefix' => 'bids'], function ($api) {

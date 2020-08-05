@@ -1,6 +1,5 @@
 <?php namespace Sheba\ShebaAccountKit\Requests;
 
-
 class ApiTokenRequest
 {
     private $appId;
@@ -15,6 +14,5 @@ class ApiTokenRequest
     {
         return $this->appId;
     }
-
 }
 

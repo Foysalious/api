@@ -1,6 +1,5 @@
 <?php namespace App\Jobs\Business;
 
-
 use App\Jobs\Job;
 use App\Models\Partner;
 use App\Models\Procurement;
@@ -11,8 +10,13 @@ use Illuminate\Queue\SerializesModels;
 class SendRFQCreateNotificationToPartners extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+    /** @var Procurement $procurement */
     private $procurement;
 
+    /**
+     * SendRFQCreateNotificationToPartners constructor.
+     * @param Procurement $procurement
+     */
     public function __construct(Procurement $procurement)
     {
         $this->procurement = $procurement;
@@ -34,5 +38,4 @@ class SendRFQCreateNotificationToPartners extends Job implements ShouldQueue
             }
         }
     }
-
 }

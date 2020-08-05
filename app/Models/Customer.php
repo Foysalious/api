@@ -89,6 +89,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         return $this->morphMany(Voucher::class, 'owner');
     }
 
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
+    }
+
     public function topups()
     {
         return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Customer');

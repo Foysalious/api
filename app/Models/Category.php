@@ -117,11 +117,6 @@ class Category extends Model
         return $this->hasOne(CrosssaleServiceModel::class);
     }
 
-    /**
-     *
-     * Other Methods
-     */
-
     public function scopeParents($query)
     {
         $query->where([
@@ -325,6 +320,11 @@ class Category extends Model
     public function isRentACar()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
+    }
+
+    public function isRentACarOutsideCity()
+    {
+        return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_OUTSIDE_ID'))));
     }
 
     public function getSlug()

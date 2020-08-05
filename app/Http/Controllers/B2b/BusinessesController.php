@@ -1,11 +1,16 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
+use App\Models\BusinessMember;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Sheba\BankingInfo\GeneralBanking;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -15,13 +20,20 @@ use Illuminate\Http\Request;
 use App\Models\Business;
 use Carbon\Carbon;
 use DB;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
+use Throwable;
 
 class BusinessesController extends Controller
 {
     use ModificationFields;
+    const DIGIGO_PORTAL = 'digigo-portal';
+    private $digigo_management_emails = [
+        'one' => 'khairun@sheba.xyz'
+    ];
     private $sms;
 
     public function __construct(Sms $sms)
@@ -57,7 +69,7 @@ class BusinessesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -76,36 +88,37 @@ class BusinessesController extends Controller
 
     public function getVendorsList($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo', 'address')->get();
-            $vendors = collect();
-            if ($business) {
-                foreach ($partners as $partner) {
-                    $master_categories = collect();
-                    $partner->categories->map(function ($category) use ($master_categories) {
-                        $parent_category = $category->parent()->select('id', 'name')->first();
-                        $master_categories->push($parent_category);
-                    });
-                    $master_categories = $master_categories->unique()->pluck('name');
-                    $vendor = [
-                        "id" => $partner->id,
-                        "name" => $partner->name,
-                        "logo" => $partner->logo,
-                        "address" => $partner->address,
-                        "mobile" => $partner->getContactNumber(),
-                        'type' => $master_categories
-                    ];
-                    $vendors->push($vendor);
-                }
-                return api_response($request, $vendors, 200, ['vendors' => $vendors]);
-            } else {
-                return api_response($request, 1, 404);
+        $business = $request->business;
+        $partners = $business->partners()
+            ->with('categories')
+            ->select('id', 'name', 'mobile', 'logo', 'address')
+            ->get();
+        $vendors = collect();
+
+        if ($business) {
+            foreach ($partners as $partner) {
+                $master_categories = collect();
+                $partner->categories->map(function ($category) use ($master_categories) {
+                    $parent_category = $category->parent()->select('id', 'name')->first();
+                    $master_categories->push($parent_category);
+                });
+                $master_categories = $master_categories->unique()->pluck('name');
+                $vendor = [
+                    "id" => $partner->id,
+                    "name" => $partner->name,
+                    "logo" => $partner->logo,
+                    "address" => $partner->address,
+                    "mobile" => $partner->getContactNumber(),
+                    'type' => $master_categories
+                ];
+
+                $vendors->push($vendor);
             }
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+
+            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
         }
+
+        return api_response($request, 1, 404);
     }
 
     public function getVendorInfo($business, $vendor, Request $request)
@@ -140,7 +153,7 @@ class BusinessesController extends Controller
                 "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
             ];
             return api_response($request, $vendor, 200, ['vendor' => $vendor]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -156,11 +169,11 @@ class BusinessesController extends Controller
                 "name" => $resource->profile->name,
                 "mobile" => $resource->profile->mobile,
                 "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
+                "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -227,7 +240,7 @@ class BusinessesController extends Controller
             $business = $request->business;
             $this->setModifier($business);
             return api_response($request, null, 200);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -239,7 +252,7 @@ class BusinessesController extends Controller
      * @param ExcelHandler $excel
      * @param TransactionReportData $data
      * @throws NotAssociativeArray
-     * @throws \Exception
+     * @throws Exception
      */
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
     {
@@ -253,12 +266,123 @@ class BusinessesController extends Controller
 
     public function contactUs(Request $request)
     {
-        $this->validate($request, ['name' => 'required|string', 'email' => 'required|email', 'message' => 'required|string']);
-        Mail::raw($request->message, function ($m) use ($request) {
-            $m->from($request->email, $request->name);
-            $m->to('b2b@sheba.xyz');
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'message' => 'required|string',
+            'portal' => 'sometimes|required|in:' . self::DIGIGO_PORTAL
+        ]);
+
+        if ($request->portal == self::DIGIGO_PORTAL) {
+            foreach ($this->digigo_management_emails as $management_email) {
+                $this->sendMail($request->message, $request->email, $request->name, $management_email);
+            }
+        } else {
+            $this->sendMail($request->message, $request->email, $request->name);
+        }
+        return api_response($request, null, 200);
+    }
+
+    public function getBanks(Request $request)
+    {
+        $banks = [];
+        foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
+            array_push($banks, [
+                'key' => $bank,
+                'value' => ucwords(str_replace('_',' ',$bank)),
+            ]);
+        }
+        return api_response($request, null, 200, ['banks' => $banks]);
+    }
+
+    private function sendMail($message, $email, $name, $to = 'b2b@sheba.xyz')
+    {
+        Mail::raw($message, function ($m) use ($email, $name, $to) {
+            $m->from($email, $name);
+            $m->to($to);
             $m->subject('Contact Us');
         });
-        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repository
+     * @return JsonResponse
+     */
+    public function getVendorsListV3($business, Request $request, ProfileRepositoryInterface $profile_repository)
+    {
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 404);
+
+        $vendors = collect();
+        $sheba_verified_vendors = collect();
+
+        $business->partners()
+            ->with('resources.profile')
+            ->select('id', 'name', 'logo', 'address')
+            ->get()
+            ->each(function ($partner) use ($vendors) {
+                $vendor = [
+                    "id"    => $partner->id,
+                    "name"  => $partner->name,
+                    "logo"  => $partner->logo,
+                    "mobile"=> $partner->getContactNumber()
+                ];
+
+                $vendors->push($vendor);
+            });
+
+        if ($request->has('q')) {
+            $needle = $request->q;
+            $vendors = $vendors->filter(function ($vendor) use ($needle) {
+                return (stripos($vendor['mobile'], $needle) !== false) ||
+                    (stripos($vendor['name'], $needle) !== false);
+            })->values();
+
+            if ($vendors->isEmpty()) {
+                $mobile_validator = BangladeshiMobileValidator::validate($request->q);
+                if (!$mobile_validator)
+                    return api_response($request, null, 400, [
+                        'own_vendors' => $vendors,
+                        'sheba_verified_vendors' => $sheba_verified_vendors,
+                        'message' => 'Mobile number not proper bangladeshi number. Give a proper bangladeshi number, like 01678242973'
+                    ]);
+
+                $mobile = formatMobile($request->q);
+                /** @var Partner $partner */
+                $partner = $this->getPartner($profile_repository, $mobile);
+                if ($partner)
+                    $sheba_verified_vendors->push([
+                        'id' => $partner->id,
+                        'name' => $partner->name,
+                        'logo' => $partner->logo,
+                        'mobile' => $partner->getContactNumber()
+                    ]);
+            }
+        }
+
+        return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => $sheba_verified_vendors]);
+    }
+
+    /**
+     * @param ProfileRepositoryInterface $profile_repository
+     * @param $mobile
+     * @return mixed|null
+     */
+    private function getPartner(ProfileRepositoryInterface $profile_repository, $mobile)
+    {
+        /** @var Profile $profile */
+        $profile = $profile_repository->findByMobile($mobile)->first();
+        if (!$profile || !$profile->resource) return null;
+
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        if (!$resource->firstPartner()) return null;
+
+        $partner = $resource->firstPartner();
+        if ($partner->status != PartnerStatuses::VERIFIED) return null;
+
+        return $partner;
     }
 }
