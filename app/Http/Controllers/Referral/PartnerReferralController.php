@@ -30,7 +30,11 @@ class PartnerReferralController extends Controller
                     'total_income'  => $income,
                     'total_sms'     => $total_sms,
                     'total_success' => $total_success,
-                    'total_step'    => count(config('partner.referral_steps'))
+                    'total_step'    => count(config('partner.referral_steps')),
+                    'stepwise_income' => collect(config('partner.referral_steps'))
+                        ->map(function($item) {
+                            return $item['amount'];
+                        })
                 ]
             ]);
         } catch (InvalidFilter $e) {
