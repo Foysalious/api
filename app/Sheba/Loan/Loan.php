@@ -5,6 +5,7 @@ namespace Sheba\Loan;
 use App\Models\BankUser;
 use App\Models\Partner;
 use App\Models\PartnerBankLoan;
+use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
@@ -549,14 +550,13 @@ class Loan
     {
         $data               = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
         $statuses           = constants('LOAN_STATUS');
-        $registered_partner = Retailer::all();
         $formatted_data     = (object)[
             'applied_loan'       => count($data),
             'loan_rejected'      => 0,
             'loan_disburse'      => 0,
             'loan_approved'      => 0,
             'loan_closed'        => 0,
-            'total_registration' => count($registered_partner),
+            'total_registration' => $this->getRegisteredRetailerCount()
         ];
         foreach ($data as $loan) {
             if ($loan["status"] === $statuses["rejected"]) {
@@ -573,6 +573,22 @@ class Loan
             }
         }
         return $formatted_data;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function getRegisteredRetailerCount()
+    {
+        $retailers = Retailer::whereHas('profile', function ($q) {
+            $q->has('resource');
+        })->get();
+
+        $resource_ids = [];
+        foreach ($retailers as $retailer)
+            array_push($resource_ids, $retailer->profile->resource->id);
+
+        return PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->count('partner_id');
     }
 
     private function getLoans($user)
