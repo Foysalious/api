@@ -748,9 +748,8 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             $this->sendLoanNotification($title, $event_type, $event_id);
+            $this->sendPushNotification($old_status, $new_status, $partner_bank_loan);
         });
-        $this->sendPushNotification($old_status, $new_status, $partner_bank_loan);
-
     }
 
     private function sendLoanNotification($title, $event_type, $event_id)
