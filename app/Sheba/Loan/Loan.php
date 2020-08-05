@@ -48,6 +48,7 @@ use Sheba\Loan\Exceptions\NotShebaPartner;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
@@ -228,9 +229,13 @@ class Loan
      */
     public function homepageV2()
     {
+        $robi_retailer = $this->checkIsRobiRetailer();
         $data = [
-            'big_banner' => GeneralStatics::bigBanner(),
-            'banner'     => GeneralStatics::banner(),
+            'big_banner'        => GeneralStatics::bigBanner(),
+            'banner'            => GeneralStatics::banner(),
+            'robi_retailer'     => $robi_retailer,
+            'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
+            'is_bkash_agent'    => $this->isBkashAgent()
         ];
         $data = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
@@ -703,7 +708,6 @@ class Loan
      */
     public function statusChange($loan_id, Request $request)
     {
-
         $partner_bank_loan = $this->repo->find($loan_id);
         $user              = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
@@ -743,25 +747,21 @@ class Loan
             $class      = class_basename($partner_bank_loan);
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
-            $this->sendLoanNotification($title, $event_type, $event_id);
+            Notifications::sendLoanNotification($title, $event_type, $event_id);
         });
-
-
+        Notifications::sendPushNotification($old_status, $new_status, $partner_bank_loan);
     }
 
     private function sendLoanNotification($title, $event_type, $event_id)
     {
-        notify()->departments([
-            9,
-            13
-        ])->send([
-            "title"      => $title,
-            'link'       => env('SHEBA_BACKEND_URL') . "/sp-loan/$event_id",
-            "type"       => notificationType('Info'),
-            "event_type" => $event_type,
-            "event_id"   => $event_id
-        ]);
+
     }
+
+    private function sendPushNotification($old_status, $new_status, $partner_bank_loan)
+    {
+
+    }
+
 
     /**
      * @param $loan_id
@@ -864,6 +864,22 @@ class Loan
     }
 
     /**
+     * @return int
+     */
+    private function checkIsRobiRetailer()
+    {
+        return $this->partner->retailers->where('strategic_partner_id',2)->count() ? 1 : 0;
+    }
+
+    /**
+     * @return int
+     */
+    private function isBkashAgent()
+    {
+        return $this->partner->bkash_account_type == "agent" ? 1 : 0;
+    }
+
+    /**
      * @return array
      * @throws ReflectionException
      */
@@ -911,10 +927,17 @@ class Loan
      */
     private function getRunningLoanData($running_loan, $icon_url, $title_bn)
     {
+        $unit_en = $running_loan["type"] == LoanTypes::MICRO ? " days" : " years";
+        $unit_bn = $running_loan["type"] == LoanTypes::MICRO ? " দিন" : " বছর";
+        $duration = $running_loan["type"] == LoanTypes::MICRO ? $running_loan["duration"] : $running_loan["duration"]/12;
         return [
             "data"     => (new RunningApplication($running_loan))->toArray(),
             "icon"     => $icon_url,
-            "title_bn" => $title_bn
+            "title_bn" => $title_bn,
+            "loan_duration" => [
+                "duration_en" => $duration . $unit_en,
+                "duration_bn" => en2bnNumber($duration). $unit_bn
+            ]
         ];
     }
 

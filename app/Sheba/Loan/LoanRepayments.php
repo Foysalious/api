@@ -107,4 +107,13 @@ class LoanRepayments
 
         return $data;
     }
+
+    /**
+     * @param $claim_id
+     * @return mixed
+     */
+    public function getDue($claim_id)
+    {
+        return (new Repayment())->setClaim($claim_id)->getDue();
+    }
 }

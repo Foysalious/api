@@ -19,6 +19,8 @@ class LoanRoute
             $api->get('/', 'Loan\\LoanController@index');
             $api->post('/from-portal', 'Loan\\LoanController@storeFromPortals');
             $api->get('/{loan_id}/details', 'Loan\\LoanController@show');
+            $api->get('/{loan_id}/claim-list', 'Loan\\ClaimController@claimListForPortal');
+            $api->get('/{loan_id}/repayment-list', 'Loan\\RepaymentController@repaymentListForPortal');
             $api->post('/{loan_id}', 'Loan\\LoanController@update');
             $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
             /* $api->post('/{loan_id}/upload-documents','Loan\\LoanController@uploadDocuments');*/
@@ -74,8 +76,8 @@ class LoanRoute
             $api->post('/{loan_id}/claim', 'Loan\\ClaimController@claim');
             $api->get('/{loan_id}/claim-list', 'Loan\\ClaimController@claimList');
             $api->post('/{loan_id}/claim-approval-msg-seen', 'Loan\\ClaimController@approvedClaimMsgSeen');
-            $api->get('/{loan_id}/repayment-list', 'Loan\\LoanRepaymentController@repaymentList');
-            $api->post('/{loan_id}/repayment-from-wallet', 'Loan\\LoanRepaymentController@repaymentFromWallet');
+            $api->get('/{loan_id}/repayment-list', 'Loan\\RepaymentController@repaymentList');
+            $api->post('/{loan_id}/repayment-from-wallet', 'Loan\\RepaymentController@repaymentFromWallet');
             $api->post('/{loan_id}/pay', 'Loan\\RepaymentController@init');
             $api->post('/', 'SpLoanController@store');
             $api->get('/personal-info', 'SpLoanController@getPersonalInformation');

@@ -42,7 +42,6 @@ class RepaymentController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -61,7 +60,7 @@ class RepaymentController extends Controller
         try {
             $this->validate($request, [
                 'month' => 'required|numeric',
-                'year'  => 'required|numeric'
+                'year' => 'required|numeric'
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->validateRequest($request);
@@ -79,7 +78,31 @@ class RepaymentController extends Controller
     }
 
     /**
-     * @param Request        $request
+     * @param Request $request
+     * @param                $loan_id
+     * @param LoanRepayments $loanRepayments
+     * @param Loan $loan
+     * @return JsonResponse
+     */
+    public function repaymentListForPortal(Request $request, $loan_id, LoanRepayments $loanRepayments, Loan $loan)
+    {
+        try {
+            $request->merge(['loan_id' => $loan_id]);
+            $data = $loanRepayments->repaymentList($loan_id, true);
+            return api_response($request, null, 200, ['data' => $data]);
+        } catch (NotAllowedToAccess $e) {
+            return api_response($request, null, 400, ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments

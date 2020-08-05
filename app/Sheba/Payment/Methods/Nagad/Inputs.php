@@ -16,9 +16,29 @@ class Inputs
         return [
             'Content-Type'     => 'Application/json',
             'X-KM-Api-Version' => 'v-0.2.0',
-            'X-KM-IP-V4'       => request()->ip(),
+            'X-KM-IP-V4'       =>request()->ip(),
             'X-KM-Client-Type' => 'MOBILE_WEB'
         ];
+    }
+
+    static function get_client_ip()
+    {
+        $ipaddress = '';
+        if (isset($_SERVER['HTTP_CLIENT_IP']))
+            $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+        else if (isset($_SERVER['HTTP_X_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+        else if (isset($_SERVER['HTTP_X_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+        else if (isset($_SERVER['HTTP_FORWARDED_FOR']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+        else if (isset($_SERVER['HTTP_FORWARDED']))
+            $ipaddress = $_SERVER['HTTP_FORWARDED'];
+        else if (isset($_SERVER['REMOTE_ADDR']))
+            $ipaddress = $_SERVER['REMOTE_ADDR'];
+        else
+            $ipaddress = 'UNKNOWN';
+        return $ipaddress;
     }
 
     /**
@@ -28,7 +48,7 @@ class Inputs
      */
     public static function init($transactionID)
     {
-        return  self::data($transactionID);
+        return self::data($transactionID);
     }
 
     /**
@@ -38,7 +58,7 @@ class Inputs
      */
     static function getEncoded($data)
     {
-        if (!$key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')))) throw new EncryptionFailed();
+       $key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')));
         if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
         return base64_encode($encrypted);
     }
@@ -52,19 +72,20 @@ class Inputs
     {
         $date = Carbon::now()->format('YmdHis');
         $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'dateTime' => $date, 'challenge' => self::generateRandomString(40)]);
-        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data),'dateTime'=>$date];
+        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data), 'dateTime' => $date];
     }
 
     private static function generateRandomString($length = 40)
     {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters       = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
-        $randomString = '';
+        $randomString     = '';
         for ($i = 0; $i < $length; $i++) {
             $randomString .= $characters[rand(0, $charactersLength - 1)];
         }
         return $randomString;
     }
+
     static function generateSignature($data)
     {
         $private_key = file_get_contents(config('nagad.private_key_path'));

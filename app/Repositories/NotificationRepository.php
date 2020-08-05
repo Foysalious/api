@@ -196,7 +196,7 @@ class NotificationRepository
      * @param $type
      * @return mixed|string
      */
-    private function getNotificationIcon($event_id, $type)
+    protected function getNotificationIcon($event_id, $type)
     {
         $offer = OfferShowcase::query()->where('id', $event_id)->first();
         if ($offer && $offer->thumb != '')
