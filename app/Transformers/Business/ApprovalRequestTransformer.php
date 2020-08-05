@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
+use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
@@ -57,13 +58,12 @@ class ApprovalRequestTransformer extends TransformerAbstract
     private function getApprover($requestable)
     {
         $approvers = [];
-        $requestable->requests->each(function ($approval_request)use (&$approvers){
+        $requestable->requests->each(function ($approval_request) use (&$approvers) {
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
             $profile = $member->profile;
-           $approvers[] = $approval_request->status == ApprovalRequestPresenter::statuses()['accepted'] ?
-               $profile->name . ' has approved.' :
-               $profile->name . ' not respond yet.';
+            $approvers[] = $approval_request->status == Status::ACCEPTED ?
+                $profile->name . ' has approved.' : $profile->name . ' not responded yet.';
 
         });
         return $approvers;

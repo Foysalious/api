@@ -96,8 +96,10 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMember($request);
         if ($this->isNeedSubstitute($business_member)) $validation_data['substitute'] = 'required|integer';
         $this->validate($request, $validation_data);
+
         $member = $this->getMember($request);
         if (!$business_member) return api_response($request, null, 404);
+
         $leave = $leave_creator->setTitle($request->title)
             ->setSubstitute($request->substitute)
             ->setBusinessMember($business_member)
@@ -106,6 +108,7 @@ class LeaveController extends Controller
             ->setEndDate($request->end_date)
             ->setNote($request->note)
             ->setCreatedBy($member);
+
         if ($request->attachments && is_array($request->attachments)) $leave_creator->setAttachments($request->attachments);
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
@@ -164,8 +167,8 @@ class LeaveController extends Controller
     private function isNeedSubstitute(BusinessMember $business_member)
     {
         $leave_approvers = [];
-        ApprovalFlow::where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
-            $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers()->pluck('id')->toArray()));
+        ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
+            $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
         });
         if (in_array($business_member->id, $leave_approvers)) return true;
         return false;

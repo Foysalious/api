@@ -99,7 +99,7 @@ class Creator
      */
     public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = $business_member;
+        $this->businessMember = $business_member->load('member', 'business');
         $this->business = $this->businessMember->business;
         $this->getManager($this->businessMember);
 
