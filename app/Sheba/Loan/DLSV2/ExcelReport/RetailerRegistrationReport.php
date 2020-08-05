@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerBankLoan;
 use App\Models\Resource;
 use Illuminate\Http\Request;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 
@@ -50,7 +51,28 @@ class RetailerRegistrationReport
     private function makeData()
     {
 
+        $partners = Partner::whereBetween('created_at', [$this->start_date, $this->end_date])->get();
 
+            $robi_retailers = [];
+            foreach($partners as $partner)
+            {
+                if($this->is_retailer($partner))
+                {
+                    array_push($robi_retailers,$partner);
+                }
+            }
+
+            dd($robi_retailers);
+
+    }
+
+    /**
+     * @param $partner
+     * @return bool
+     */
+    private function is_retailer($partner)
+    {
+         return $partner->retailers()->where('strategic_partner_id',2)->first() ? : false;
     }
 
 }
