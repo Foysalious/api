@@ -1,7 +1,7 @@
-<?php namespace Sheba\Partner\Validations;
+<?php namespace Sheba\NID\Validations;
 
 
-use App\Sheba\Partner\Validations\NidValidationResponse;
+use App\Sheba\NID\Validations\NidValidationResponse;
 use GuzzleHttp\Client;
 
 abstract class NidValidator
