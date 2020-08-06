@@ -1,11 +1,15 @@
 <?php namespace Sheba\ServiceRequest;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Geo;
+use Sheba\Map\MapClientNoResultException;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequest
@@ -27,11 +31,15 @@ class ServiceRequest
 
     /**
      * @return  ServiceRequestObject[]
-     * @throws ServiceIsUnpublishedException
-     * @throws ValidationException
      * @throws DestinationCitySameAsPickupException
      * @throws InsideCityPickUpAddressNotFoundException
+     * @throws MultipleCategoryServiceRequestException
      * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws ServiceIsUnpublishedException
+     * @throws ValidationException
+     * @throws HyperLocationNotFoundException
+     * @throws GuzzleException
+     * @throws MapClientNoResultException
      */
     public function get()
     {
@@ -58,6 +66,7 @@ class ServiceRequest
             $serviceRequestObject->build();
             array_push($final, $serviceRequestObject);
         }
+        $this->checkForMultipleCategory($final);
         return $final;
     }
 
@@ -68,6 +77,20 @@ class ServiceRequest
     {
         $this->validator->setServices($this->services)->validate();
         if ($this->validator->hasError()) throw new ValidationException($this->validator->getErrors());
+    }
+
+
+    /**
+     * @param ServiceRequestObject[] $services
+     * @throws MultipleCategoryServiceRequestException
+     */
+    private function checkForMultipleCategory($services)
+    {
+        $category_ids = [];
+        foreach ($services as $service) {
+            array_push($category_ids, $service->getCategory()->id);
+        }
+        if (count(array_unique($category_ids)) > 1) throw new MultipleCategoryServiceRequestException();
     }
 
 }

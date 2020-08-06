@@ -4,23 +4,50 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Sheba\Business\Attendance\MonthlyStat;
+use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
-use Sheba\Business\Attendance\Monthly\Stat;
+use Sheba\Business\Attendance\Setting\ActionType;
+use Sheba\Business\CoWorker\Statuses as CoWorkerStatuses;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
+use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
+use Sheba\Dal\BusinessAttendanceTypes\Contract as BusinessAttendanceTypesRepoInterface;
+use Sheba\Dal\BusinessOffice\Contract as BusinessOfficeRepoInterface;
 use Sheba\Helpers\TimeFrame;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Business\OfficeTiming\Updater as OfficeTimingUpdater;
+use Sheba\Business\Attendance\Setting\Creator as SettingCreator;
+use Sheba\Business\Attendance\Setting\Updater as SettingUpdater;
+use Sheba\Business\Attendance\Setting\Deleter as SettingDeleter;
+use Sheba\Business\Attendance\Setting\AttendanceSettingTransformer;
+use Sheba\Business\Attendance\Type\Updater as TypeUpdater;
+use Sheba\Business\Holiday\HolidayList;
+use Sheba\Business\Holiday\Creator as HolidayCreator;
+use Sheba\Business\Holiday\Updater as HolidayUpdater;
+use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Throwable;
 
 class AttendanceController extends Controller
 {
+    use ModificationFields, BusinessBasicInformation;
+
+    /** @var BusinessHolidayRepoInterface $holidayRepository */
+    private $holidayRepository;
+
+    public function __construct(BusinessHolidayRepoInterface $business_holidays_repo)
+    {
+        $this->holidayRepository = $business_holidays_repo;
+        return $this;
+    }
+
     /**
      * @param $business
      * @param Request $request
@@ -61,16 +88,18 @@ class AttendanceController extends Controller
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
-            },
-            'businessMember' => function ($q) {
+            }, 'businessMember' => function ($q) {
                 $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
                                 $q->select('business_departments.id', 'business_id', 'name');
-                            }]);
-                    }]);
-            }]);
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', CoWorkerStatuses::INACTIVE);
 
         if ($request->has('department_id')) {
             $members = $members->whereHas('businessMember', function ($q) use ($request) {
@@ -103,8 +132,7 @@ class AttendanceController extends Controller
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
             $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
-            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))
-                ->transform($attendances);
+            $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
@@ -259,6 +287,212 @@ class AttendanceController extends Controller
         ]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param BusinessOfficeHoursRepoInterface $office_hours
+     * @return JsonResponse
+     */
+    public function getOfficeTime($business, Request $request, BusinessWeekendRepoInterface $business_weekend_repo, BusinessOfficeHoursRepoInterface $office_hours)
+    {
+        $business = $request->business;
+        $weekends = $business_weekend_repo->getAllByBusiness($business);
+        $weekend_days = $weekends->pluck('weekday_name')->toArray();
+        $weekend_days = array_map('ucfirst', $weekend_days);
+        $office_time = $office_hours->getOfficeTime($business);
+        $data = [
+            'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
+        ];
+        return api_response($request, null, 200, ['office_timing' => $data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param OfficeTimingUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateOfficeTime(Request $request, OfficeTimingUpdater $updater)
+    {
+        $this->validate($request, [
+            'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array'
+        ],[
+          'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ]);
+        $business_member = $request->business_member;
+        $office_timing = $updater->setBusiness($request->business)->setMember($business_member->member)->setOfficeHourType($request->office_hour_type)->setStartTime($request->start_time)->setEndTime($request->end_time)->setWeekends($request->weekends)->update();
+
+        if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param BusinessAttendanceTypesRepoInterface $attendance_types_repo
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param AttendanceSettingTransformer $transformer
+     * @return JsonResponse
+     */
+    public function getAttendanceSetting($business, Request $request,
+                                         BusinessAttendanceTypesRepoInterface $attendance_types_repo,
+                                         BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
+    {
+        $business = $request->business;
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
+        $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
+
+        return api_response($request, null, 200, [
+            'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
+            'business_attendance_types' => $attendance_setting_data["attendance_types"],
+            'business_offices' => $attendance_setting_data["business_offices"]
+        ]);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param TypeUpdater $type_updater
+     * @param SettingCreator $creator
+     * @param SettingUpdater $updater
+     * @param SettingDeleter $deleter
+     * @return JsonResponse
+     */
+    public function updateAttendanceSetting($business, Request $request, TypeUpdater $type_updater,
+                                            SettingCreator $creator, SettingUpdater $updater, SettingDeleter $deleter
+)
+    {
+        $this->validate($request, ['attendance_types' => 'required|string', 'business_offices' => 'required|string']);
+
+        $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+        $errors = [];
+
+        $attendance_types = json_decode($request->attendance_types);
+        if (!is_null($attendance_types)) {
+            foreach ($attendance_types as $attendance_type) {
+                $attendance_type_id = isset($attendance_type->id) ? $attendance_type->id : null;
+
+                $type_updater->setBusiness($business)
+                    ->setTypeId($attendance_type_id)
+                    ->setType($attendance_type->type)
+                    ->setAction($attendance_type->action)
+                    ->update();
+            }
+        }
+
+        $business_offices = json_decode($request->business_offices);
+
+        if (!is_null($business_offices)) {
+            $offices = collect($business_offices);
+            $deleted_offices = $offices->where('action', ActionType::DELETE);
+            $deleted_offices->each(function ($deleted_office) use ($deleter) {
+                $deleter->setBusinessOfficeId($deleted_office->id);
+                $deleter->delete();
+            });
+
+            $added_offices = $offices->where('action', ActionType::ADD);
+            $added_offices->each(function ($added_office) use ($creator, $business, &$errors) {
+                $creator->setBusiness($business)->setName($added_office->name)->setIp($added_office->ip);
+                if ($creator->hasError()) {
+                    array_push($errors, $creator->getErrorMessage());
+                    $creator->resetError();
+                    return;
+                }
+                $creator->create();
+            });
+
+            $edited_offices = $offices->where('action', ActionType::EDIT);
+            $edited_offices->each(function ($edited_office) use ($updater, $business, &$errors) {
+                $updater->setBusinessOfficeId($edited_office->id)->setName($edited_office->name)->setIp($edited_office->ip);
+                if ($updater->hasError()) {
+                    array_push($errors, $updater->getErrorMessage());
+                    $updater->resetError();
+                    return;
+                }
+                $updater->update();
+            });
+        }
+
+        if ($errors) {
+            if ($this->isFailedToUpdateAllSettings($errors, $business_offices))
+                return api_response($request, null, 422, ['message' => implode(', ', $errors)]);
+
+            return api_response($request, null, 303, ['message' => implode(', ', $errors)]);
+        }
+
+        return api_response($request, null, 200, ['message' => "Update Successful"]);
+    }
+
+    public function getHolidays(Request $request)
+    {
+        $holiday_list = new HolidayList($request->business, $this->holidayRepository);
+        $holidays = $holiday_list->getHolidays($request);
+
+        return api_response($request, null, 200, [
+            'business_holidays' => $holidays
+        ]);
+    }
+
+    public function storeHoliday(Request $request, HolidayCreator $creator)
+    {
+        $this->validate($request, [
+            'start_date' => 'required|date_format:Y-m-d',
+            'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
+            'title' => 'required|string'
+        ]);
+        $business_member = $request->business_member;
+
+        $holiday = $creator->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setHolidayRepo($this->holidayRepository)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->setHolidayName($request->title)->create();
+        return api_response($request, null, 200, ['holiday' => $holiday]);
+    }
+
+    /**
+     * @param $business
+     * @param $holiday
+     * @param Request $request
+     * @param HolidayCreatorRequest $creator_request
+     * @param HolidayUpdater $updater
+     * @return JsonResponse
+     */
+    public function update($business, $holiday, Request $request, HolidayCreatorRequest $creator_request, HolidayUpdater $updater)
+    {
+        $this->validate($request, [
+            'start_date' => 'required|date_format:Y-m-d|',
+            'end_date' => 'required|date_format:Y-m-d||after_or_equal:start_date',
+            'title' => 'required|string'
+        ]);
+        $manager_member = $request->manager_member;
+        $holiday = $this->holidayRepository->find((int)$holiday);
+        $updater_request = $creator_request->setBusiness($request->business)
+            ->setMember($manager_member)
+            ->setStartDate($request->start_date)
+            ->setEndDate($request->end_date)
+            ->setHolidayName($request->title);
+        $updater->setHoliday($holiday)->setBusinessHolidayCreatorRequest($updater_request)->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $holiday
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function destroy($business, $holiday, Request $request)
+    {
+        $holiday = $this->holidayRepository->find((int)$holiday);
+        if (!$holiday) return api_response($request, null, 404);
+        $this->holidayRepository->delete($holiday);
+        return api_response($request, null, 200);
+    }
+
     private function attendanceSortOnDate($attendances, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
@@ -289,5 +523,15 @@ class AttendanceController extends Controller
         return $attendances->$sort_by(function ($attendance, $key) {
             return strtoupper($attendance['attendance']['check_out']['time']);
         });
+    }
+
+    /**
+     * @param array $errors
+     * @param $business_offices
+     * @return bool
+     */
+    private function isFailedToUpdateAllSettings(array $errors, $business_offices)
+    {
+        return count($errors) == count($business_offices);
     }
 }
