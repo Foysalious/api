@@ -1,30 +1,34 @@
-<?php namespace Sheba\Partner\Validations;
+<?php namespace Sheba\NID\Validations;
 
 use App\Models\Profile;
 use Carbon\Carbon;
+use Exception;
 
 class NidValidation
 {
     public static $RULES = ['nid' => 'required|digits_between:10,17|nid_number', 'full_name' => 'required', 'dob' => 'required|date_format:Y-m-d'];
-    private $vendorClass;
-    private $data;
-    private $profile;
+    private       $vendorClass;
+    private       $data;
+    private       $profile;
 
+    private $countVerify;
 
     /**
      * NidValidation constructor.
+     *
      * @param string $vendor
      * @throws InvalidVendorException
      */
     public function __construct($vendor = 'porichoy')
     {
         try {
-            $vendorClass = "Sheba\Partner\Validations\\" . ucfirst(camel_case($vendor));
+            $vendorClass = "Sheba\NID\Validations\\" . ucfirst(camel_case($vendor));
             $vendorClass = app($vendorClass);
             if (!($vendorClass instanceof NidValidator)) {
                 throw new InvalidVendorException();
             }
             $this->vendorClass = $vendorClass;
+            $this->countVerify = true;
         } catch (\Throwable $e) {
             throw new InvalidVendorException();
         }
@@ -51,18 +55,25 @@ class NidValidation
     /**
      * @param mixed $data
      * @return NidValidation
+     * @throws Exception
      */
     public function setData($data)
     {
         $this->data = $data;
+        foreach ($this->data as $key => $val) {
+            if (empty($val)) {
+                throw new Exception("Invalid $key");
+            }
+        }
         return $this;
     }
 
     /**
-     * @param $nid
+     * @param      $nid
      * @param null $fullName
      * @param null $dob
      * @return array
+     * @throws Exception
      */
     public function validate($nid, $fullName, $dob)
     {
@@ -71,7 +82,7 @@ class NidValidation
         }
         if (strlen($nid) == 13 && $dob) {
             $year = explode('-', $dob)[0];
-            $nid = ($year . $nid);
+            $nid  = ($year . $nid);
         }
         $dob = Carbon::parse($dob)->format('Y-m-d');
         $this->setData(['nid_no' => $nid, 'name' => $fullName, 'dob' => $dob]);
@@ -85,7 +96,8 @@ class NidValidation
 
     private function validateProfile()
     {
-        $date = $this->profile->last_nid_verification_request_date;
+        if (!$this->countVerify) return true;
+        $date  = $this->profile->last_nid_verification_request_date;
         $count = $this->profile->nid_verification_request_count;
         if ($date && (Carbon::parse($date))->isToday()) {
             if ($count >= 3) {
@@ -110,7 +122,7 @@ class NidValidation
             $count = $this->profile->nid_verification_request_count;
             $count++;
         }
-        $this->profile->nid_verification_request_count = $count;
+        $this->profile->nid_verification_request_count     = $count;
         $this->profile->last_nid_verification_request_date = $today;
         return $this->profile->save();
 
@@ -119,8 +131,18 @@ class NidValidation
     public function complete()
     {
         $today = Carbon::now();
-        $data = ['nid_verified' => 1, 'nid_verification_date' => $today];
-        $data = array_merge($data, $this->data);
+        $data  = ['nid_verified' => 1, 'nid_verification_date' => $today];
+        $data  = array_merge($data, $this->data);
         return $this->profile->update($data);
+    }
+
+    /**
+     * @param mixed $countVerify
+     * @return NidValidation
+     */
+    public function setCountVerify($countVerify)
+    {
+        $this->countVerify = $countVerify;
+        return $this;
     }
 }

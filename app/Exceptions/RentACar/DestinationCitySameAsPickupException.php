@@ -1,9 +1,9 @@
 <?php namespace App\Exceptions\RentACar;
 
-use Exception;
+use App\Exceptions\ApiValidationException;
 use Illuminate\Support\Facades\Log;
 
-class DestinationCitySameAsPickupException extends Exception
+class DestinationCitySameAsPickupException extends ApiValidationException
 {
     public function report()
     {
