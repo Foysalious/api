@@ -26,12 +26,11 @@ class Notifications
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound   = config('sheba.push_notification_sound.manager');
         $notification_data = [
-            "title" => 'New Order',
-            "message" => "প্রিয় X আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
-            "event_type" => 'PartnerOrder',
-            "event_id" => 98936,
-            "link" => "new_order",
-            "sound" => "notification_sound"
+            "title" => 'Loan status changed',
+            "message" => "Loan status has been updated from $old_status to $new_status",
+            "sound" => "notification_sound",
+            "event_type" => "App\\Models\\$class",
+            "event_id" => $partner_bank_loan->id
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
