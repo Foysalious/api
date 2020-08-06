@@ -73,10 +73,13 @@ class LeaveController extends Controller
         $leave = $leave_repo->find($leave);
         $business_member = $this->getBusinessMember($request);
         if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        $leave = $leave->load(['leaveType' => function ($q) {return $q->withTrashed();}]);
+
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($leave, new LeaveTransformer());
         $leave = $fractal->createData($resource)->toArray()['data'];
+
         return api_response($request, $leave, 200, ['leave' => $leave]);
     }
 
