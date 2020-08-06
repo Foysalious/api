@@ -20,7 +20,7 @@ class Notifications
             "event_id"   => $eventId
         ]);
     }
-    public static function sendPushNotification($old_status, $new_status, $partner_bank_loan){
+    public static function sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan){
         $class   = class_basename($partner_bank_loan);
         $topic   = config('sheba.push_notification_topic_name.manager') . $partner_bank_loan->partner_id;
         $channel = config('sheba.push_notification_channel_name.manager');

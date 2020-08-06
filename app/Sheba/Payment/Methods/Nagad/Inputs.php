@@ -6,6 +6,7 @@ namespace Sheba\Payment\Methods\Nagad;
 
 use Carbon\Carbon;
 use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
+use Sheba\Payment\Methods\Nagad\Response\Initialize;
 
 class Inputs
 {
@@ -16,7 +17,7 @@ class Inputs
         return [
             'Content-Type'     => 'Application/json',
             'X-KM-Api-Version' => 'v-0.2.0',
-            'X-KM-IP-V4'       =>request()->ip(),
+            'X-KM-IP-V4'       => request()->ip(),
             'X-KM-Client-Type' => 'MOBILE_WEB'
         ];
     }
@@ -52,13 +53,27 @@ class Inputs
     }
 
     /**
+     * @param            $transactionId
+     * @param Initialize $init
+     * @param            $amount
+     * @param            $callbackUrl
+     * @return array
+     * @throws EncryptionFailed
+     */
+    public static function complete($transactionId, Initialize $init, $amount, $callbackUrl)
+    {
+        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
+        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data), 'merchantCallbackURL' => $callbackUrl];
+    }
+
+    /**
      * @param string $data
      * @return string
      * @throws EncryptionFailed
      */
     static function getEncoded($data)
     {
-       $key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')));
+        $key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')));
         if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
         return base64_encode($encrypted);
     }
@@ -71,7 +86,7 @@ class Inputs
     private static function data($transactionId)
     {
         $date = Carbon::now()->format('YmdHis');
-        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'dateTime' => $date, 'challenge' => self::generateRandomString(40)]);
+        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'datetime' => $date, 'challenge' => self::generateRandomString(40)]);
         return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data), 'dateTime' => $date];
     }
 

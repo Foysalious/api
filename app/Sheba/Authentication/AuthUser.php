@@ -14,7 +14,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 /**
  * Sync with Api if any update happens
  * Class AuthUser
- *
  * @package Sheba\Authentication
  */
 class AuthUser
@@ -35,7 +34,7 @@ class AuthUser
     public function __construct()
     {
         $this->logisticUsers = app()->make(UserRepository::class);
-        $this->payload       = [];
+        $this->payload = [];
     }
 
     /**
@@ -78,20 +77,19 @@ class AuthUser
     public function generateToken()
     {
         return JWTAuth::fromUser($this->getAuthUser(), [
-            'name'            => $this->getAuthUser()->name,
-            'image'           => $this->getAuthUser()->pro_pic,
-            'profile'         => $this->generateProfileInfo(),
-            'customer'        => $this->generateCustomerInfo(),
-            'resource'        => $this->generateResourceInfo(),
-            'member'          => $this->generateMemberInfo(),
+            'name' => $this->getAuthUser()->name,
+            'image' => $this->getAuthUser()->pro_pic,
+            'profile' => $this->generateProfileInfo(),
+            'customer' => $this->generateCustomerInfo(),
+            'resource' => $this->generateResourceInfo(),
+            'member' => $this->generateMemberInfo(),
             'business_member' => $this->generateBusinessMemberInfo(),
-            'affiliate'       => $this->generateAffiliateInfo(),
-            'logistic_user'   => $this->generateLogisticUserInfo(),
-            'bank_user'       => $this->generateBankUserInfo(),
-            'avatar'          => $this->generateAvatarInfo()
+            'affiliate' => $this->generateAffiliateInfo(),
+            'logistic_user' => $this->generateLogisticUserInfo(),
+            'bank_user' => $this->generateBankUserInfo(),
+            'avatar' => $this->generateAvatarInfo()
         ]);
     }
-
 
     public function getAuthUser()
     {
@@ -156,7 +154,7 @@ class AuthUser
      */
     public function getAvatar()
     {
-        $model = $this->payload['avatar']['type'] !== 'strategicpartnermember' ? "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type'])) : "Sheba\\Dal\\StrategicPartnerMember\\StrategicPartnerMember";
+        $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
         return $model::find($this->payload['avatar']['type_id']);
     }
 
@@ -180,12 +178,12 @@ class AuthUser
         $partner = $this->getPartner();
         if (!$partner) return null;
         return [
-            'id'      => $resource->id,
+            'id' => $resource->id,
             'partner' => [
-                'id'         => $partner->id,
-                'name'       => $partner->name,
+                'id' => $partner->id,
+                'name' => $partner->name,
                 'sub_domain' => $partner->sub_domain,
-                'logo'       => $partner->logo,
+                'logo' => $partner->logo,
                 'is_manager' => $resource->isManager($partner)
             ]
         ];
@@ -195,10 +193,12 @@ class AuthUser
     {
         if (!$this->profile) return null;
         if (!$this->profile->member || !$this->profile->member->businessMember) return null;
+        $business_member = $this->profile->member->businessMember;
+
         return [
-            'id'          => $this->profile->member->businessMember->id,
-            'business_id' => $this->profile->member->businessMember->business_id,
-            'member_id'   => $this->profile->member->businessMember->member_id,
+            'id' => $business_member->id,
+            'business_id' => $business_member->business_id,
+            'member_id' => $business_member->member_id,
         ];
     }
 
@@ -226,16 +226,16 @@ class AuthUser
         $logistic_user = json_decode(json_encode($logistic_user));
 
         return [
-            'id'          => $logistic_user->id,
+            'id' => $logistic_user->id,
             'is_verified' => $logistic_user->is_verified,
-            'company'     => [
-                'id'         => $logistic_user->company->id,
-                'name'       => $logistic_user->company->name,
-                'logo'       => $logistic_user->company->logo,
+            'company' => [
+                'id' => $logistic_user->company->id,
+                'name' => $logistic_user->company->name,
+                'logo' => $logistic_user->company->logo,
                 'sub_domain' => $logistic_user->company->sub_domain,
-                'is_rider'   => $logistic_user->is_rider,
+                'is_rider' => $logistic_user->is_rider,
                 'is_manager' => $logistic_user->is_manager,
-                'rider_id'   => $logistic_user->rider_id
+                'rider_id' => $logistic_user->rider_id
             ]
         ];
     }

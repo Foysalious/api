@@ -1,4 +1,4 @@
-<?php namespace Sheba\Partner\Validations;
+<?php namespace Sheba\NID\Validations;
 
 use Sheba\Exceptions;
 use Throwable;

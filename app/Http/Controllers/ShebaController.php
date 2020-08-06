@@ -32,7 +32,7 @@ use Sheba\EMI\Banks;
 use Sheba\EMI\Calculations;
 use Sheba\EMI\Calculator;
 use Sheba\EMI\CalculatorForManager;
-use Sheba\Partner\Validations\NidValidation;
+use Sheba\NID\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\PaymentLinkTransformer;

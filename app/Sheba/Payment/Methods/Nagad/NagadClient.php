@@ -1,12 +1,9 @@
-<?php
-
-
-namespace Sheba\Payment\Methods\Nagad;
+<?php namespace Sheba\Payment\Methods\Nagad;
 
 
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
-use Sheba\TPProxy\TPProxyServerError;
+use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
+use Sheba\Payment\Methods\Nagad\Response\Initialize;
 
 class NagadClient
 {
@@ -28,39 +25,32 @@ class NagadClient
     }
 
     /**
-     * @param $amount
      * @param $transactionId
-     * @return mixed
+     * @return Initialize
      * @throws Exception\EncryptionFailed
-     * @throws TPProxyServerError
      */
     public function init($transactionId)
     {
-        $url     = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
-        $data    = Inputs::init($transactionId);
-        /*$request = decodeGuzzleResponse($this->client->request('POST', $url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
-        return $request;*/
-        $url = curl_init($url);
-        $posttoken = json_encode($data);
-        $header = array(
-            'Content-Type:application/json',
-            'X-KM-Api-Version:v-0.2.0',
-            'X-KM-IP-V4:' . Inputs::get_client_ip(),
-            'X-KM-Client-Type:PC_WEB'
-        );
+        $url  = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
+        $data = Inputs::init($transactionId);
+        $resp = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
+        return new Initialize($resp);
+    }
 
-        curl_setopt($url, CURLOPT_HTTPHEADER, $header);
-        curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
-        curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($url, CURLOPT_POSTFIELDS, $posttoken);
-        curl_setopt($url, CURLOPT_FOLLOWLOCATION, 1);
-        curl_setopt($url, CURLOPT_SSL_VERIFYHOST, 0);
-        curl_setopt($url, CURLOPT_SSL_VERIFYPEER, 0);
-
-        $resultdata = curl_exec($url);
-        $ResultArray = json_decode($resultdata, true);
-        curl_close($url);
-        dd($ResultArray);
-        return $ResultArray;
+    /**
+     * @param            $transactionId
+     * @param Initialize $resp
+     * @param            $amount
+     * @param            $callbackUrl
+     * @return CheckoutComplete
+     * @throws Exception\EncryptionFailed
+     */
+    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
+    {
+        $paymentRefId = $resp->getPaymentReferenceId();
+        $url          = "$this->baseUrl/$this->contextPath/api/dfs/check-out/complete/$paymentRefId";
+        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl);
+        $resp         = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
+        return new CheckoutComplete($resp);
     }
 }
