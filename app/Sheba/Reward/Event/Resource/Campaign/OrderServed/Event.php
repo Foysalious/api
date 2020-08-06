@@ -39,7 +39,8 @@ class Event extends Campaign
     {
         $this->query = Job::where('jobs.status', 'Served')
             ->join('partner_orders', 'partner_orders.id', '=', 'jobs.partner_order_id')
-            ->whereBetween('delivered_date', $this->timeFrame->getArray());
+            ->whereBetween('delivered_date', $this->timeFrame->getArray())
+            ->select('jobs.*');
     }
 
     private function filterResource(array $resources)
