@@ -123,7 +123,7 @@ class Payable extends Model
         } else if ($this->completion_type == 'procurement') {
             $class_name .= 'ProcurementComplete';
         } else if ($this->completion_type == 'partner_bank_loan') {
-            $class_name = 'LoanRepaymentComplete';
+            $class_name .= 'LoanRepaymentComplete';
         }
 
         return app($class_name);

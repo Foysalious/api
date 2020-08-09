@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Sheba\Payment\Complete;
+<?php namespace Sheba\Payment\Complete;
 
 
 use App\Models\PartnerBankLoan;
@@ -30,7 +27,7 @@ class LoanRepaymentComplete extends PaymentComplete
                 $lastClaim = (new LoanClaim())->setLoan($loan->id)->lastClaim();
                 (new Repayment())->setLoan($loan->id)
                                  ->setAmount($payable->amount)
-                                 ->setClaim($lastClaim->id)
+                                 ->setClaim($lastClaim ? $lastClaim->id : null)
                                  ->storeDebit("Online, Payment ID : {$this->payment->id}");
                 $this->completePayment();
             });
