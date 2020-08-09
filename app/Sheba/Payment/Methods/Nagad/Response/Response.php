@@ -50,6 +50,6 @@ abstract class Response
 
     public function toDecodedString()
     {
-        return json_decode($this->output);
+        return json_encode($this->output);
     }
 }

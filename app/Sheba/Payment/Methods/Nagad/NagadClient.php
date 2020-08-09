@@ -53,4 +53,17 @@ class NagadClient
         $resp         = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
         return new CheckoutComplete($resp);
     }
+
+    /**
+     * @param $refId
+     * @return Validator
+     * @throws Exception\InvalidOrderId
+     */
+    public function validate($refId)
+    {
+        $url  = "$this->baseUrl/$this->contextPath/api/dfs/verify/payment/$refId";
+        $resp = decodeGuzzleResponse($this->client->get($url, ['http_errors' => false]));
+        return new Validator($resp,true);
+
+    }
 }
