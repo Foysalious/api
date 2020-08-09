@@ -15,7 +15,16 @@ class CompletionStatics
             'business_category',
             'sector',
             'industry_and_business_nature',
-            'trade_license'
+            'trade_license',
+            'establishment_year',
+            'tin_certificate',
+            'sector',
+            'business_category',
+            'registration_no',
+            'en',
+            'bn',
+            'key',
+            'business_category'
         ];
         $micro  = array_merge($term, [
             'part_time_employee',
@@ -25,15 +34,11 @@ class CompletionStatics
             'utility_bills',
             'marketing_cost',
             'other_cost',
-            'registration_no',
             'avg_sell',
             'min_sell',
             'max_sell',
             'yearly_income',
-            'establishment_year',
             'address',
-            'sector',
-            'business_category',
             'business_name',
             'business_type',
             'smanager_business_type',
@@ -41,11 +46,13 @@ class CompletionStatics
             'stock_price',
             'yearly_sales',
             'full_time_employee',
-            'en',
-            'bn',
-            'key',
-            'tin_no',
-            'tin_certificate'
+            'tin_no'
+        ]);
+        $term   = array_merge($term, [
+            "proof_of_photograph",
+            "licence_agreement_checked",
+            "ipdc_data_agreement_checked",
+            "ipdc_cib_agreement_checked",
         ]);
         $oldApp = array_merge($term, [
             'trade_license_issue_date',
@@ -63,6 +70,7 @@ class CompletionStatics
             'ipdc_data_agreement_checked',
             'ipdc_cib_agreement_checked'
         ]);
-        return $version == 2 ? ($type == 'micro' ? $micro : $term ): $oldApp;
+
+        return $version == 2 ? ($type == 'micro' ? $micro : $term) : $oldApp;
     }
 }
