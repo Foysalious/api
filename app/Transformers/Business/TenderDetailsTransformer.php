@@ -35,6 +35,7 @@ class TenderDetailsTransformer extends TransformerAbstract
             'title' => $procurement->title,
             'description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
+            'is_terder_expired' => $procurement->last_date_of_submission->gte(Carbon::now()) ? 0 : 1,
             'last_date_of_submission' => [
                 'date' => $procurement->last_date_of_submission->format('d/m/Y'),
                 'icon' => config('sheba.s3_url') . 'business_assets/tender/icons/png/deadline.png',
