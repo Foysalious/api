@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Loan;
 
 use App\Models\PartnerBankLoan;
 use App\Sheba\Loan\DLSV2\Exceptions\InsufficientWalletCreditForRepayment;
+use App\Sheba\Loan\DLSV2\LoanClaim;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -31,7 +32,7 @@ class RepaymentController extends Controller
             $loan = $repo->find($loan_id);
             if (empty($loan)) {
                 throw new \Exception("Loan Not Found");
-            }
+            };
             $method  = $request->payment_method;
             $payable = $adapter->setAmount((double)$request->amount)->setUser($request->partner)
                                ->setLoan($loan)->getPayable();
@@ -60,7 +61,7 @@ class RepaymentController extends Controller
         try {
             $this->validate($request, [
                 'month' => 'required|numeric',
-                'year' => 'required|numeric'
+                'year'  => 'required|numeric'
             ]);
             $request->merge(['loan_id' => $loan_id]);
             $loan->validateRequest($request);
@@ -78,10 +79,10 @@ class RepaymentController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments
-     * @param Loan $loan
+     * @param Loan           $loan
      * @return JsonResponse
      */
     public function repaymentListForPortal(Request $request, $loan_id, LoanRepayments $loanRepayments, Loan $loan)
@@ -102,7 +103,7 @@ class RepaymentController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param Request        $request
      * @param                $partner
      * @param                $loan_id
      * @param LoanRepayments $loanRepayments

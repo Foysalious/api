@@ -31,7 +31,7 @@ class Nagad extends PaymentMethod
     {
         parent::__construct();
         $this->client       = app(NagadClient::class);
-        $this->VALIDATE_URL = config('sheba.api_url') . "v1/nagad/validate";
+        $this->VALIDATE_URL = config('sheba.api_url') . "/v1/nagad/validate";
     }
 
     /**
