@@ -11,6 +11,12 @@ class Completion
     private $updatedStamps;
     private $flatten;
     private $skipFields;
+    private $checkFields
+        = [
+            "licence_agreement_checked",
+            "ipdc_data_agreement_checked",
+            "ipdc_cib_agreement_checked"
+        ];
 
     public function __construct(array $data, array $updated_stamps, array $skipFields = [])
     {
@@ -42,8 +48,10 @@ class Completion
         $count  = 0;
         $filled = 0;
         foreach ($this->flatten as $key => $value) {
-            if (is_array($value) || $value === true || $value === false) {
-                continue;
+            if (!in_array($key,$this->checkFields)){
+                if (is_array($value) || $value === true || $value === false || is_int($key)) {
+                    continue;
+                }
             }
             if (!in_array($key, $this->skipFields)) {
                 if ($value !== null) {

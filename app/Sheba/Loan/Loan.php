@@ -764,7 +764,7 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
-            Notifications::sendPushNotification($old_status, $new_status, $partner_bank_loan);
+            Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
         });
     }
     /**

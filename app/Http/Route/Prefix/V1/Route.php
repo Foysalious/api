@@ -309,7 +309,9 @@ class Route
                 $api->get('/notifications', 'BankUser\NotificationController@index');
                 $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
             });
-
+            $api->group(['prefix'=>'nagad'],function($api){
+                $api->get('validate','NagadController@validatePayment');
+            });
         });
         return $api;
     }

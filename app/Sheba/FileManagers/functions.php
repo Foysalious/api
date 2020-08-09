@@ -565,7 +565,6 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         return $url . 'partner/trade_license/trade_';
     }
 }
-
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
     function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
     {
