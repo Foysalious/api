@@ -352,7 +352,7 @@ class Loan
 
     private function isApplicableForLoan(&$data)
     {
-        return Completion::isApplicableForLoan($data);
+        return Completion::isApplicableForLoan($data,$this->type);
     }
 
     public function create()
