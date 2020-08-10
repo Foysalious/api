@@ -3,6 +3,8 @@
 use App\Models\Category;
 use App\Models\Job;
 use App\Models\Partner;
+use App\Models\Resource;
+use Sheba\Location\Geo;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Resource\ResourceHomeTransformer;
 use App\Transformers\Resource\ResourceProfileTransformer;
@@ -114,9 +116,18 @@ class ResourceController extends Controller
 
     public function getService(Request $request, ServiceList $serviceList)
     {
-        $services = $serviceList->setRequest($request)->getAllServices();
+        $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
 
-        return api_response($request, $services, 200, ['services' => $services]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $geo = new Geo((double)$request->lat, (double)$request->lng);
+
+        $services = $serviceList->setResource($resource)->setGeo($geo)->getAllServices();
+
+        return $services
+            ? api_response($request, $services, 200, ['services' => $services])
+            : api_response($request, null, 404);
     }
 
     public function checkSchedule(Request $request, ResourceScheduleSlot $slot, ResourceScheduleChecker $resourceScheduleChecker)

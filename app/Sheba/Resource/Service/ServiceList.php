@@ -1,7 +1,9 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
 
@@ -11,6 +13,8 @@ class ServiceList
     private $job;
     /** @var Request */
     private $request;
+    private $resource;
+    private $geo;
 
     public function setJob(Job $job)
     {
@@ -113,31 +117,71 @@ class ServiceList
         return $services;
     }
 
-    public function getAllServices()
+    public function setResource($resource)
     {
-        /** @var AuthUser $auth_user */
-        $auth_user = $this->request->auth_user;
-        $resource = $auth_user->getResource();
+        $this->resource = $resource;
+        return $this;
+    }
 
-        $services = $resource->firstPartner()->services;
+    public function setGeo($geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
 
-        $services = $services->map(function ($service, $key) {
-            $formatted_service = [
-                'id' => $service->id,
-                'name' => $service->name,
-                'variable_type' => $service->variable_type,
-                'min_quantity' => $service->min_quantity,
-                'unit' => $service->unit,
-                'app_thumb' => $service->app_thumb,
-            ];
+    public function getAllServices() {
+        $hyperLocation = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->with('location')->first();
+
+        if (is_null($hyperLocation)) return null;
+
+        $location = $hyperLocation->location->id;
+
+        $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
+            $q->where('publication_status', 1);
+        })->whereHas('locations', function ($q) use ($location) {
+            $q->where('locations.id', $location);
+        })->get();
+
+        $services->each(function (&$service) {
+            $variables = json_decode($service->variables);
             if ($service->variable_type == 'Options') {
-                $formatted_service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
+                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                $service['fixed_price'] = null;
             } else {
-                $formatted_service['questions'] = [];
+                $service['questions'] = $service['option_prices'] = [];
+                $service['fixed_price'] = (double)$variables->price;
             }
-            return $formatted_service;
+            array_forget($service, 'variables');
+            removeRelationsAndFields($service);
         });
 
         return $services;
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(array(
+                'option' => collect(explode(',', $key))->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => (double)$price
+            ));
+        }
+        return $options;
     }
 }
