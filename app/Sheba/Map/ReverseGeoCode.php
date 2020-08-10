@@ -12,9 +12,9 @@ class ReverseGeoCode
     /** @var Client */
     private $client;
 
-    public function __construct()
+    public function __construct(BarikoiClient $bari_koi_client)
     {
-        $this->client = new BarikoiClient();
+        $this->client = $bari_koi_client;
 
     }
 

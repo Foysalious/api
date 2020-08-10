@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
@@ -287,7 +288,7 @@ class LeaveController extends Controller
                     }
                 ])->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
-        ])->get();
+        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
 
         if ($request->has('department') || $request->has('search'))
             $members = $this->membersFilterByDeptSearchByName($members, $request);

@@ -1,6 +1,6 @@
 <?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Partner;
 use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;
