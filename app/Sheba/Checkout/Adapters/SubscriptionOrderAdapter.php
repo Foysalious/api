@@ -10,7 +10,7 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\Payable;
 use App\Models\PaymentDetail;
 use App\Models\Resource;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
 use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;

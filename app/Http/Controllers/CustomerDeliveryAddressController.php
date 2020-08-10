@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -160,31 +160,26 @@ class CustomerDeliveryAddressController extends Controller
 
     public function store($customer, Request $request)
     {
-        try {
-            $mobile = trim(str_replace(' ', '', $request->mobile));
-            $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
-            $this->validate($request, ['address' => 'required|string']);
-            $customer = $request->customer;
-            $hyper_local = $request->has('lat') && $request->has('lng');
-            if (!$hyper_local) {
-                if ($geo = (new Geo())->geoCodeFromPlace($request->address)) {
-                    $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
-                    $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
-                }
-            }
-            if ($hyper_local) {
-                $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
-                if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
+        $mobile = trim(str_replace(' ', '', $request->mobile));
+        $request->merge(['address' => trim($request->address), 'mobile' => $mobile ?: $request->customer->profile->mobile]);
+        $this->validate($request, ['address' => 'required|string']);
+        $customer = $request->customer;
+        $hyper_local = $request->has('lat') && $request->has('lng');
+        if (!$hyper_local) {
+            if ($geo = (new Geo())->geoCodeFromPlace($request->address)) {
+                $request->merge(['lat' => $geo['lat'], 'lng' => $geo['lng']]);
                 $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
             }
-            $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
-            $new_address = new CustomerDeliveryAddress();
-            $delivery_address = $this->_store($customer, $new_address, $request);
-            return api_response($request, 1, 200, ['address' => $delivery_address->id]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+        if ($hyper_local) {
+            $hyper_local = HyperLocal::insidePolygon($request->lat, $request->lng)->with('location')->first();
+            if (!$hyper_local) return api_response($request, null, 400, ['message' => "You're out of our service area."]);
+            $request->merge(["geo_informations" => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng])]);
+        }
+        $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
+        $new_address = new CustomerDeliveryAddress();
+        $delivery_address = $this->_store($customer, $new_address, $request);
+        return api_response($request, 1, 200, ['address' => $delivery_address->id]);
     }
 
     private function setAddressProperties(CustomerDeliveryAddress $delivery_address, $request)

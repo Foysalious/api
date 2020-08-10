@@ -46,9 +46,9 @@ class DueTrackerRepository extends BaseRepository
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
         if ($request->has('q') && !empty($request->q)) {
-            $query = preg_replace("/\+/", "", $request->q);
+            $query = strtolower(preg_replace("/\+/", "", $request->q));
             $list  = $list->filter(function ($item) use ($query) {
-                return strpos($item['customer_name'],"$query")!==false || strpos($item['customer_mobile'],"$query" )!==false;
+                return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(strtolower($item['customer_mobile']), "$query") !== false;
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
@@ -169,7 +169,6 @@ class DueTrackerRepository extends BaseRepository
      * @param Partner $partner
      * @param Request $request
      * @return array
-     * @throws InvalidPartnerPosCustomer
      * @throws ExpenseTrackingServerError
      */
     public function store(Partner $partner, Request $request)
@@ -177,7 +176,7 @@ class DueTrackerRepository extends BaseRepository
 
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $this->setModifier($partner);
@@ -198,7 +197,7 @@ class DueTrackerRepository extends BaseRepository
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         $this->setModifier($partner);
         if ($request->has('amount'))
             $data['amount'] = $request->amount;

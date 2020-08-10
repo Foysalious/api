@@ -170,7 +170,7 @@ class ProcurementController extends Controller
         ]);
 
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))
-            return api_response($request, null, 403);
+            return api_response($request, null, 403, ['message' => 'You don\'t have permission to create this Tender']);
 
         $this->setModifier($request->manager_member);
 
