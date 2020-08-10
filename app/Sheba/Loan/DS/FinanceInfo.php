@@ -79,7 +79,7 @@ class FinanceInfo implements Arrayable
     {
         $bank_data    = (new BankInformation($request->all()))->noNullableArray();
         if(isset($request->loan_type) && $request->loan_type == LoanTypes::MICRO)
-            $request->bkash_account_type = $request->is_retailer_bkash_agent == 1 ? "agent" : $this->partner->bkash_account_type;
+            $request->bkash_account_type = $request->is_retailer_bkash_agent == 1 ? "agent" : null;
         $partner_data = [
             'bkash_no'           => !empty($request->bkash_no) ? formatMobile($request->bkash_no) : null,
             'bkash_account_type' => $request->bkash_account_type
