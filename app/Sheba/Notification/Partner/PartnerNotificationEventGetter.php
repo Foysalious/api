@@ -11,7 +11,8 @@ class PartnerNotificationEventGetter
 {
     private $notification;
     private $eventType;
-    const EXTERNAL_TYPE   = 'ExternalProject';
+    const EXTERNAL_TYPE   = 'EXTERNAL_PROJECT';
+    const EXTERNAL_BUTTON_TEXT = 'View details';
     const NEW_PROCUREMENT = 'NEW_PROCUREMENT';
 
     public function __construct(Notification $notification)
@@ -86,6 +87,7 @@ class PartnerNotificationEventGetter
         if ($this->eventType == self::NEW_PROCUREMENT) {
             $defaultFromNotification['target_type'] = self::EXTERNAL_TYPE;
             $defaultFromNotification['target_id']   = self::EXTERNAL_TYPE;
+            $defaultFromNotification['button_text'] = self::EXTERNAL_BUTTON_TEXT;
             $defaultFromNotification['banner']      = config('partner.procurement_banner');
         }
         $notification = array_merge($notification, $defaultFromNotification);
