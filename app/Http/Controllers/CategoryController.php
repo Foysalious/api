@@ -2,12 +2,11 @@
 
 use App\Models\Category;
 use App\Models\CategoryGroupCategory;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -24,6 +23,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;

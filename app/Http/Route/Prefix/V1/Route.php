@@ -311,6 +311,7 @@ class Route
             $api->group(['prefix'=>'nagad'],function($api){
                 $api->get('validate','NagadController@validatePayment');
             });
+            $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
         });
         return $api;
     }

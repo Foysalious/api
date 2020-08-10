@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
