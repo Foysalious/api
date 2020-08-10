@@ -23,23 +23,34 @@ class RatingInfo
 
     public function getRatingInfo()
     {
-        $partner = $this->resource->firstPartner();
         $reviews = $this->resource->reviews;
+        if (count($reviews) === 0) return null;
+        $partner = $this->resource->firstPartner();
         $total_order = $this->resource->totalJobs();
-        $breakdown = array();
-        $avg_rating = null;
-        if (count($reviews) > 0) {
-            $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
-            $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
-            $avg_rating = $this->reviewRepository->getAvgRating($reviews);
-            removeRelationsAndFields($partner);
-        }
+
+        $compliment_counts = $reviews->pluck('rates')->filter(function ($rate) {
+            return $rate->count();
+        })->flatten()->groupBy('rate_answer_id')->map(function ($answer, $index) {
+            return $answer->first()->answer ? [
+                'id' => $index,
+                'name' => $answer->first()->answer->answer,
+                'badge' => $answer->first()->answer->badge,
+                'asset' => $answer->first()->answer->asset,
+                'count' => $answer->count(),
+            ]:[];
+        })->toArray();
+        $compliment_counts = array_values($compliment_counts);
+        $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
+        $partner = $this->reviewRepository->getGeneralReviewInformation($partner);
+        $avg_rating = $this->reviewRepository->getAvgRating($reviews);
+        removeRelationsAndFields($partner);
 
         $info = array(
             'rating' => $avg_rating,
             'total_reviews' => $reviews->count(),
             'total_order' => $total_order,
-            'breakdown' => $breakdown
+            'breakdown' => $breakdown,
+            'compliments' => $compliment_counts
         );
         return $info;
     }
