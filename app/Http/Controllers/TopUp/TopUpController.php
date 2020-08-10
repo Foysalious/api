@@ -103,13 +103,10 @@ class TopUpController extends Controller
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
-
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) {
-                return api_response($request, null, 400, ['message' => 'File type not support']);
-            }
+            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
             if (get_class($agent) == "App\Models\Partner")
@@ -124,33 +121,23 @@ class TopUpController extends Controller
             $total = $data->count();
             $bulk_request = $this->storeBulkRequest($agent);
 
-            $excel_error = null;
-            $halt_top_up = false;
-            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, $halt_top_up, $top_up_excel_data_format_error) {
+            $excel_error = null; $halt_top_up = false;
+            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Mobile number Invalid, Amount Should be Integer';
+                    $halt_top_up = true; $excel_error = 'Mobile number Invalid, Amount Should be Integer';
                 } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Mobile number Invalid';
+                    $halt_top_up = true; $excel_error = 'Mobile number Invalid';
                 } elseif (!$this->isAmountInteger($value->$amount_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Amount Should be Integer';
+                    $halt_top_up = true; $excel_error = 'Amount Should be Integer';
                 } else {
                     $excel_error = null;
                 }
-                $top_up_excel_data_format_error->setAgent($agent)
-                    ->setFile($file_path)
-                    ->setRow($key + 2)
-                    ->setTotalRow($total)
-                    ->updateExcel($excel_error);
+                $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
-            #dd($halt_top_up);
             $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
             if ($halt_top_up) return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
-            #dd('Done');
 
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
@@ -159,6 +146,7 @@ class TopUpController extends Controller
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $name_field = TopUpExcel::NAME_COLUMN_TITLE;
                 if (!$value->$operator_field) return;
+
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
                     ->setBulkId($bulk_request->id)
