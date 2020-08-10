@@ -57,6 +57,5 @@ class Route
             $api->get('settings/car', 'HomePageSettingController@getCarV3');
         });
 
-
     }
 }
