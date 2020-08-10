@@ -82,7 +82,7 @@ class Loan
             'personal'        => 'personalInfo',
             'business'        => 'businessInfo',
             'finance'         => 'financeInfo',
-            'nominee_granter' => 'nomineeGranter',
+            'nominee_granter' => 'granterDetails',
             'document'        => 'documents'
         ];
         $this->fileRepository = $file_repository;
