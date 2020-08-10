@@ -91,8 +91,8 @@ abstract class LogisticNature
      */
     protected function getCustomerPoint()
     {
-        return (new Point())->setName($this->customerDeliveryAddress->name ?? $this->partnerOrder->order->delivery_name)
-            ->setAddress($this->customerDeliveryAddress->address)
+        return (new Point())->setName($this->getDeliveryName())
+            ->setAddress($this->customerDeliveryAddress->address ? $this->customerDeliveryAddress->address : $this->customerDeliveryAddress->location->name)
             ->setImage($this->customer->pro_pic)
             ->setMobile($this->customerDeliveryAddress->mobile ?: $this->customer->mobile)
             ->setCoordinate($this->customerDeliveryAddress->getCoordinate());
@@ -138,5 +138,18 @@ abstract class LogisticNature
         if (!$this->partnerOrder->isOverPaid()) return 0.00;
 
         return ($this->partnerOrder->overPaid > $this->deliveryCharge) ? $this->deliveryCharge : $this->partnerOrder->overPaid;
+    }
+
+    private function getDeliveryName()
+    {
+        if ($this->partnerOrder->order->delivery_name) {
+            return $this->partnerOrder->order->delivery_name;
+        } elseif ($this->customerDeliveryAddress->name) {
+            return $this->customerDeliveryAddress->name;
+        } elseif ($this->partnerOrder->order->customer->profile->name) {
+            return $this->partnerOrder->order->customer->profile->name;
+        } else {
+            return 'Customer';
+        }
     }
 }

@@ -163,7 +163,7 @@ class ProcurementController extends Controller
         ]);
 
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('procurement.rw'))
-            return api_response($request, null, 403);
+            return api_response($request, null, 403, ['message' => 'You don\'t have permission to create this Tender']);
 
         $this->setModifier($request->manager_member);
 
@@ -615,6 +615,7 @@ class ProcurementController extends Controller
         if (!$payment_validator->canInitiatePayment()) return api_response($request, null, 403, ['message' => "Can't send multiple requests within 1 minute."]);
         $payable = $procurement_adapter->setModelForPayable($procurement)->setEmiMonth($request->emi_month)->getPayable();
         $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
+
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 

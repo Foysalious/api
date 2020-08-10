@@ -24,7 +24,13 @@ class ProcurementComplete extends PaymentComplete
                 $creator = app(Creator::class);
                 foreach ($this->payment->paymentDetails as $payment_detail) {
                     if ($payment_detail->amount == 0) continue;
-                    $creator->setProcurement($procurement)->setAmount($payable->amount)->setPaymentMethod($payment_detail->readable_method)->setPaymentType('Debit');
+                    $log = "$payable->amount tk paid for procurement. ID: $procurement->id";
+                    $creator->setProcurement($procurement)
+                        ->setAmount($payable->amount)
+                        ->setPaymentMethod($payment_detail->readable_method)
+                        ->setPaymentType('Debit')
+                        ->setLog($log);
+
                     $creator->create();
                     $this->updateShebaCollection($procurement);
                 }

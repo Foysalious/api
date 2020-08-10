@@ -2,12 +2,11 @@
 
 use App\Models\Category;
 use App\Models\CategoryGroupCategory;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -24,6 +23,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
@@ -34,6 +34,7 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\Service\MinMaxPrice;
+use Sheba\Services\ServiceSubscriptionDiscount;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use stdClass;
 use Throwable;
@@ -369,7 +370,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount)
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
@@ -506,9 +507,19 @@ class CategoryController extends Controller
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['unit'] = $service['unit'];
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
+                    $lowest_service_subscription_discount = $subscription->validDiscounts->sortBy('discount_amount')->first();
+                    $subscription['discount'] = $lowest_service_subscription_discount ? [
+                        'discount_amount' => $lowest_service_subscription_discount->discount_amount,
+                        'is_discount_amount_percentage' => $lowest_service_subscription_discount->is_discount_amount_percentage,
+                        'cap' => $lowest_service_subscription_discount->cap,
+                        'min_discount_qty' => $lowest_service_subscription_discount->min_discount_qty,
+                        'text' => $subscriptionDiscount->setServiceSubscriptionDiscount($lowest_service_subscription_discount)->getDiscountText()
+
+                    ] : null;
                     if ($subscription->faq) {
                         $faq = json_decode($subscription->faq);
                         if ($faq->title && $faq->description) {
@@ -519,6 +530,7 @@ class CategoryController extends Controller
                             ];
                         }
                     }
+                    removeRelationsAndFields($subscription);
                     $subscriptions->push($subscription);
                 }
                 removeRelationsAndFields($service);
@@ -539,7 +551,7 @@ class CategoryController extends Controller
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions;
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
                 $category['cross_sale'] = $cross_sale_service ? [
                     'title' => $cross_sale_service->title,
                     'description' => $cross_sale_service->description,

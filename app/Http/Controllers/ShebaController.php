@@ -15,6 +15,7 @@ use App\Models\Resource;
 use App\Models\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
+use Illuminate\Http\JsonResponse;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
 use Sheba\Dal\RedirectUrl\RedirectUrl;
 use Sheba\Dal\UniversalSlug\Model as SluggableType;
@@ -31,7 +32,7 @@ use Sheba\EMI\Banks;
 use Sheba\EMI\Calculations;
 use Sheba\EMI\Calculator;
 use Sheba\EMI\CalculatorForManager;
-use Sheba\Partner\Validations\NidValidation;
+use Sheba\NID\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\PaymentLink\PaymentLinkTransformer;
@@ -323,7 +324,7 @@ class ShebaController extends Controller {
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      * @throws Exception
      */
     public function getPayments(Request $request)
