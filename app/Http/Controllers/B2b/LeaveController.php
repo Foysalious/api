@@ -265,6 +265,7 @@ class LeaveController extends Controller
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
         $time_frame = $business_member->getBusinessFiscalPeriod();
         /** @var Business $business */
         $business = $business_member->business;
