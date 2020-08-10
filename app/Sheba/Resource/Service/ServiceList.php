@@ -1,8 +1,11 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Partner;
 use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
 
 class ServiceList
 {
@@ -10,6 +13,8 @@ class ServiceList
     private $job;
     /** @var Request */
     private $request;
+    private $resource;
+    private $geo;
 
     public function setJob(Job $job)
     {
@@ -110,5 +115,73 @@ class ServiceList
             }
         })->values();
         return $services;
+    }
+
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
+        return $this;
+    }
+
+    public function setGeo($geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
+
+    public function getAllServices() {
+        $hyperLocation = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->with('location')->first();
+
+        if (is_null($hyperLocation)) return null;
+
+        $location = $hyperLocation->location->id;
+
+        $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
+            $q->where('publication_status', 1);
+        })->whereHas('locations', function ($q) use ($location) {
+            $q->where('locations.id', $location);
+        })->get();
+
+        $services->each(function (&$service) {
+            $variables = json_decode($service->variables);
+            if ($service->variable_type == 'Options') {
+                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                $service['fixed_price'] = null;
+            } else {
+                $service['questions'] = $service['option_prices'] = [];
+                $service['fixed_price'] = (double)$variables->price;
+            }
+            array_forget($service, 'variables');
+            removeRelationsAndFields($service);
+        });
+
+        return $services;
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(array(
+                'option' => collect(explode(',', $key))->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => (double)$price
+            ));
+        }
+        return $options;
     }
 }
