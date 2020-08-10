@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\TopUp;
 
+use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Partner;
@@ -9,6 +10,8 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
@@ -26,9 +29,15 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 class TopUpController extends Controller
 {
+    use FileManager, CdnFileManager;
+    private $file;
+    /** @var LaravelExcelReader */
+    private $excel = null;
+
     public function getVendor(Request $request)
     {
         try {
@@ -115,9 +124,36 @@ class TopUpController extends Controller
             });
 
             $total = $data->count();
-
             $bulk_request = $this->storeBulkRequest($agent);
+            $excel_error = null;
+            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request, &$excel_error) {
+                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+                $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+                if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
+                    $excel_error = 'Mobile number Invalid, Amount Should be Integer';
+                } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
+                    $excel_error = 'Mobile number Invalid';
+                } elseif (!$this->isAmountInteger($value->$amount_field)) {
+                    $excel_error = 'Amount Should be Integer';
+                }
+                #($file_path, $key + 2, $total)
+                #$this->file = $file;
+                #$this->row = $row;
+                #$this->totalRow = $total_row;
 
+                if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path);
+                $this->excel->getActiveSheet()->setCellValue(TopUpExcel::MESSAGE_COLUMN . ($key + 2), $excel_error);
+                $this->excel->save();
+                $excel_error = null;
+            });
+            $this->file = $file_path;
+            $name = strtolower(class_basename($agent)) . '_' . dechex($agent->id);
+            $file_name = $this->uniqueFileName($this->file, $name, $this->excel->ext);
+            $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
+            unlink($this->file);
+
+            dd($excel_error, $file_path);
+            dd('Done');
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
@@ -125,7 +161,6 @@ class TopUpController extends Controller
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $name_field = TopUpExcel::NAME_COLUMN_TITLE;
                 if (!$value->$operator_field) return;
-
                 $vendor_id = $vendor->getIdByName($value->$operator_field);
                 $request = $top_up_request->setType($value->$type_field)
                     ->setBulkId($bulk_request->id)
@@ -151,9 +186,29 @@ class TopUpController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $mobile
+     * @return bool
+     */
+    private function isMobileNumberValid($mobile)
+    {
+        return BangladeshiMobileValidator::validate(BDMobileFormatter::format($mobile));
+    }
+
+    /**
+     * @param $amount
+     * @return bool
+     */
+    private function isAmountInteger($amount)
+    {
+        if (preg_match('/^\d+$/', $amount)) return true;
+        return false;
     }
 
     public function activeBulkTopUps(Request $request)
@@ -265,17 +320,17 @@ class TopUpController extends Controller
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
-        
+
         $topup_data = [];
         foreach ($topups as $topup) {
             $topup = [
-                'payee_mobile'  => $topup->payee_mobile,
-                'payee_name'    => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount'        => $topup->amount,
-                'operator'      => $topup->vendor->name,
-                'status'        => $topup->status,
-                'created_at'    => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw'=> $topup->created_at->format('Y-m-d h:i:s')
+                'payee_mobile' => $topup->payee_mobile,
+                'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount' => $topup->amount,
+                'operator' => $topup->vendor->name,
+                'status' => $topup->status,
+                'created_at' => $topup->created_at->format('jS M, Y h:i A'),
+                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
             ];
             array_push($topup_data, $topup);
         }
