@@ -6,7 +6,7 @@ use App\Models\Grid;
 use App\Models\HomeMenu;
 use App\Models\OfferGroup;
 use App\Models\OfferShowcase;
-use App\Models\ServiceSubscription;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use App\Models\Slider;
 use Carbon\Carbon;
 use Sheba\AppSettings\HomePageSetting\DS\Item;

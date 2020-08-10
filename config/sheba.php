@@ -21,13 +21,14 @@ return [
     'job_code_start' => 16000,
     'last_partner_order_id_v1' => env('LAST_PARTNER_ORDER_ID_V1'),
     'material_commission_rate' => 5.0,
-    'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal'],
+    'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal', 'digigo-portal'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
     'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'partner-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
     ],
     'push_notification_channel_name' => [

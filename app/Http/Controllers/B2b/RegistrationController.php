@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Member;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\ProfileRepository;
 use App\Http\Controllers\Controller;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Profile;
@@ -11,25 +13,31 @@ use JWTAuth;
 use JWTFactory;
 use Session;
 use DB;
+use Throwable;
 
 class RegistrationController extends Controller
 {
     use ModificationFields;
+    /** @var ProfileRepository $profileRepository */
     private $profileRepository;
 
+    /**
+     * RegistrationController constructor.
+     * @param ProfileRepository $profile_repository
+     */
     public function __construct(ProfileRepository $profile_repository)
     {
         $this->profileRepository = $profile_repository;
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function registerV2(Request $request)
     {
         try {
-            $this->validate($request, [
-                'name' => 'required|string',
-                'email' => 'required|email',
-                'password' => 'required|min:6',
-            ]);
+            $this->validate($request, ['name' => 'required|string', 'email' => 'required|email', 'password' => 'required|min:6']);
             $email = $request->email;
             $profile = Profile::where('email', $email)->first();
             if ($profile) {
@@ -43,13 +51,15 @@ class RegistrationController extends Controller
                 DB::beginTransaction();
                 $profile = $this->profileRepository->store($data);
                 $member = $this->makeMember($profile);
-                $businesses = $member->businesses->first();
+                // $businesses = $member->businesses->first();
+                $businesses = $member->businesses()->wherePivot('status', '<>', Statuses::INACTIVE)->first();
                 $info = [
                     'token' => $this->generateToken($profile, $member),
                     'member_id' => $member->id,
                     'business_id' => $businesses ? $businesses->id : null,
                 ];
                 DB::commit();
+
                 return api_response($request, $info, 200, ['info' => $info]);
             }
         } catch (ValidationException $e) {
@@ -58,7 +68,7 @@ class RegistrationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -165,7 +175,7 @@ class RegistrationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -188,7 +198,7 @@ class RegistrationController extends Controller
         $member->profile_id = $profile->id;
         $member->remember_token = str_random(255);
         $member->save();
+
         return $member;
     }
-
 }

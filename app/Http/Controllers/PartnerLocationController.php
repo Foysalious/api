@@ -2,7 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
