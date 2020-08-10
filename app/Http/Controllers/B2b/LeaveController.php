@@ -399,7 +399,7 @@ class LeaveController extends Controller
 
             if ($request->has('department')) {
                 /** @var BusinessMember $business_member */
-                $business_member = $member->businessMember;
+                $business_member = $member->businessMemberWithoutStatusCheck();
                 /** @var BusinessRole $role */
                 $role = $business_member->role;
                 if ($role) $is_dept_matched = $role->businessDepartment->id == $request->department;

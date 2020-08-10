@@ -8,6 +8,7 @@ use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Status;
 use Sheba\Helpers\TimeFrame;
 
 class LeaveBalanceDetailsTransformer extends TransformerAbstract
@@ -50,10 +51,11 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $profile = $member->profile;
         /** @var BusinessRole $role */
         $role = $business_member->role;
-        $leaves_rejected_count = $business_member->leaves()->where('status', 'rejected')->count();
-        $leaves_approved_count = $business_member->leaves()->where('status', 'accepted')->count();
         /** @var Leave $leaves */
         $leaves = $business_member->leaves;
+
+        $leaves_approved_count = $leaves->where('status', Status::ACCEPTED)->count();
+        $leaves_rejected_count = $leaves->where('status', Status::REJECTED)->count();
 
         return [
             'employee_name' => $profile->name,
