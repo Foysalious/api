@@ -109,4 +109,9 @@ class ResourceController extends Controller
         ];
         return api_response($request, $content, 200, ['help' => $content]);
     }
+
+    public function getRatingInfo(Request $request)
+    {
+        dd(401);
+    }
 }
