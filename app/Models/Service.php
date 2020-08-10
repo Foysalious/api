@@ -15,6 +15,7 @@ use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
 use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\PartnerService\PartnerService;
 
 class Service extends Model
 {
