@@ -191,22 +191,15 @@ class ProfileController extends Controller
 
     public function forgetPassword(Request $request, Sms $sms)
     {
-        $rules = ['mobile' => 'required|mobile:bd'];
-        try {
-            $this->validate($request, $rules);
-            $mobile = BDMobileFormatter::format($request->mobile);
-            $profile = Profile::where('mobile', $mobile)->first();
-            if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
-            $password = str_random(6);
-            $smsSent = $sms->shoot($mobile, "Your password is reset to $password . Please use this password to login");
-            $profile->update(['password' => bcrypt($password)]);
-            return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
-        } catch (ValidationException $e) {
-            return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['mobile' => 'required|mobile:bd']);
+        $mobile = BDMobileFormatter::format($request->mobile);
+        $profile = Profile::where('mobile', $mobile)->first();
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
+        $password = str_random(6);
+        $smsSent = $sms->setVendor('sslwireless')->shoot($mobile, "Your password is reset to $password . Please use this password to login");
+        $profile->update(['password' => bcrypt($password)]);
+        return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
+
     }
 
     public function getProfileInfoByMobile(Request $request)
@@ -301,7 +294,7 @@ class ProfileController extends Controller
             $affiliate = $profile->affiliate ?: null;
             if (!empty($affiliate)) {
                 $this->updateVerificationStatus($affiliate);
-                if(isset($profile->resource))
+                if (isset($profile->resource))
                     $this->setToPendingStatus($profile->resource);
 
                 $submitted_by = get_class($affiliate);
@@ -423,7 +416,7 @@ class ProfileController extends Controller
         ResourceStatusChangeLogModel::create($this->withCreateModificationField($data));
     }
 
-    public function KycNidCheckAndUpdateInfo(Request $request,ProfileRepositoryInterface $profile_repo)
+    public function KycNidCheckAndUpdateInfo(Request $request, ProfileRepositoryInterface $profile_repo)
     {
 
     }
