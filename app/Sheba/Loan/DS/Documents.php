@@ -201,6 +201,9 @@ class Documents implements Arrayable
                 'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
             ],
         ];
+        if(LoanTypes::TERM === $loan_type) {
+            $otherDoc = array_except($otherDoc, ['nominee_document']);
+        }
         return array_merge($data,$otherDoc);
     }
 }
