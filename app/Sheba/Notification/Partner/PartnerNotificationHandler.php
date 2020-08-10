@@ -49,11 +49,13 @@ class PartnerNotificationHandler extends Handler
      */
     public function getList($offset, $limit)
     {
-        $notifications = $this->model->notifications()
+        $notifications_base_query = $this->model->notifications();
+        if ($this->portal == 'manager-app')
+            $notifications_base_query = $notifications_base_query->where("event_type", "<>", "App\Models\Procurement");
+
+        $notifications = $notifications_base_query
             ->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')
             ->orderBy('id', 'desc');
-        if ($this->portal == 'manager-app')
-            $notifications = $notifications->where('event_type', 'not like', '%procurement%');
 
         $unseen = $this->model->notifications()->where('is_seen', '0')->count();
         $notifications = $notifications->skip($offset)->limit($limit)->get();
@@ -77,6 +79,7 @@ class PartnerNotificationHandler extends Handler
             $offer = OfferShowcase::query()->where('id', $notification->event_id)->first();
             if ($offer && $offer->thumb != '') $notification->icon = $offer->thumb;
         }
+        
         return (new PartnerNotificationEventGetter($notification))->setEventData()->get();
     }
 
