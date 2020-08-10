@@ -1,8 +1,7 @@
 <?php namespace Sheba\Checkout;
 
 
-use App\Models\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
 
 class SubscriptionPrice extends Discount

@@ -5,7 +5,7 @@ use App\Models\CategoryGroup;
 use App\Models\ExternalProject;
 use App\Models\OfferShowcase;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use App\Models\Slide;
 use App\Models\Voucher;
 use Sheba\AppSettings\HomePageSetting\DS\Item;

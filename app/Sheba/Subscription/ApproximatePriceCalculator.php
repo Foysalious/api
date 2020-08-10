@@ -2,8 +2,8 @@
 
 use App\Models\LocationService;
 use App\Models\Service;
-use App\Models\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;
 use Exception;
 use Sheba\Service\MinMaxPrice;
