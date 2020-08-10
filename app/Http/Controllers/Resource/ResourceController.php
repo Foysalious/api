@@ -14,6 +14,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Review\RatingInfo;
+use Sheba\Resource\Review\ReviewList;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 use Sheba\Resource\Service\ServiceList;
 
@@ -128,8 +130,15 @@ class ResourceController extends Controller
             : api_response($request, null, 404);
     }
 
-    public function getRatingInfo(Request $request)
+    public function getRatingInfo(Request $request, RatingInfo $ratingInfo)
     {
-        dd(401);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+
+        $rating = $ratingInfo->setResource($resource)->getRatingInfo();
+
+
+        return api_response($request, $rating, 200, ['info' => $rating]);
     }
 }

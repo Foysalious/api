@@ -136,6 +136,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         })->count();
     }
 
+    public function totalJobs()
+    {
+        return $this->jobs->count();
+    }
+
     public function totalWalletAmount()
     {
         return $this->wallet;
