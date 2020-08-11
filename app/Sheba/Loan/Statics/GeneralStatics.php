@@ -140,6 +140,11 @@ class GeneralStatics
         return config('loan.minimum_repayment_amount');
     }
 
+    public static function getDefaulterFine()
+    {
+        return config('loan.defaulter_fine');
+    }
+
     public static function getDetailsLink($type)
     {
         return $type == LoanTypes::MICRO ? (config('sheba.partners_url') . "/api/micro-loan") : (config('sheba.partners_url') . "/api/term-loan");

@@ -93,7 +93,7 @@ class LoanAccount
         $is_defaulter                     = $this->isDefaulter($last_claim->defaulter_date);
         $data['loan_balance']             = $data['granted_amount'] - $due;
         $data['due_balance']              = $due;
-        $data['status_message']           = $is_defaulter ? 'আপনার লোন পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্যে ৫ টাকা করে জরিমানা যোগ হচ্ছে' : 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
+        $data['status_message']           = $is_defaulter ? 'আপনার লোন পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্য হাজারে '. convertNumbersToBangla(GeneralStatics::getDefaulterFine(),true, 0) .' টাকা করে যোগ হচ্ছে।' : 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
         $data['status_type']              = $is_defaulter ? 'defaulter' : 'success';
         $data['can_claim']                = 0;
         $data['should_pay']               = 1;
