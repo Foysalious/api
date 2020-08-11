@@ -26,7 +26,6 @@ use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
-use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
@@ -51,7 +50,6 @@ use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
-use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
@@ -84,11 +82,12 @@ class Loan
             'personal'        => 'personalInfo',
             'business'        => 'businessInfo',
             'finance'         => 'financeInfo',
-            'nominee_granter' => 'nomineeGranter',
+            'nominee_granter' => 'granterDetails',
             'document'        => 'documents'
         ];
         $this->fileRepository = $file_repository;
         $this->type           = LoanTypes::TERM;
+
     }
 
     public function setUser($user)
@@ -259,7 +258,7 @@ class Loan
                     $this->data['duration'] = ((int)$this->data['duration'] * 12);
                 }
             } else {
-                $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 5);
+                $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 7);
             }
             unset($this->data['month']);
             $created = $this->create();
@@ -344,33 +343,11 @@ class Loan
      */
     private function initiateFinalFields()
     {
-        $this->setFinalFields();
         $data = [];
         foreach ($this->finalFields as $key => $val) {
             $data[$key] = $this->$val();
         }
         return $data;
-    }
-
-    private function setFinalFields()
-    {
-        if ($this->version == 2) {
-            $this->finalFields = [
-                'personal'        => 'personalInfo',
-                'business'        => 'businessInfo',
-                'finance'         => 'financeInfo',
-                'nominee_granter' => 'granterDetails',
-                'document'        => 'documents'
-            ];
-        } else {
-            $this->finalFields = [
-                'personal'        => 'personalInfo',
-                'business'        => 'businessInfo',
-                'finance'         => 'financeInfo',
-                'nominee_granter' => 'nomineeGranter',
-                'document'        => 'documents'
-            ];
-        }
     }
 
     private function isApplicableForLoan(&$data)
@@ -496,11 +473,10 @@ class Loan
     /**
      * @param $request
      * @return bool
-     * @throws \Exception
      */
     public function claimStatusUpdate($request)
     {
-        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to, $request->user);
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to);
     }
 
     public function personalInfo()
@@ -570,15 +546,9 @@ class Loan
         return $this->filterList($request, $output);
     }
 
-    /**
-     * @param Request $request
-     * @return object
-     */
     public function microLoanData(Request $request)
     {
-        $from_date      = $request->from_date ?: date("Y-m-01");
-        $to_date        = $request->to_date ?: date("Y-m-d");
-        $data           = $this->getMicroLoans($request->user, $from_date, $to_date);
+        $data           = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
         $statuses       = constants('LOAN_STATUS');
         $formatted_data = (object)[
             'applied_loan'       => count($data),
@@ -586,10 +556,10 @@ class Loan
             'loan_disburse'      => 0,
             'loan_approved'      => 0,
             'loan_closed'        => 0,
-            'total_registration' => $this->getRegisteredRetailerCount($from_date, $to_date)
+            'total_registration' => $this->getRegisteredRetailerCount()
         ];
         foreach ($data as $loan) {
-            if ($loan["status"] === $statuses["declined"]) {
+            if ($loan["status"] === $statuses["rejected"]) {
                 $formatted_data->loan_rejected++;
             }
             if ($loan["status"] === $statuses["approved"]) {
@@ -606,11 +576,9 @@ class Loan
     }
 
     /**
-     * @param $from
-     * @param $to
      * @return mixed
      */
-    private function getRegisteredRetailerCount($from, $to)
+    private function getRegisteredRetailerCount()
     {
         $retailers = Retailer::whereHas('profile', function ($q) {
             $q->has('resource');
@@ -620,9 +588,7 @@ class Loan
         foreach ($retailers as $retailer)
             array_push($resource_ids, $retailer->profile->resource->id);
 
-        $all_registered_partners_ids = PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->pluck('partner_id');
-        return Partner::whereIn('id', $all_registered_partners_ids)->whereBetween('created_at', [$from, $to])->count();
-
+        return PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->count('partner_id');
     }
 
     private function getLoans($user)
@@ -639,20 +605,23 @@ class Loan
 
     private function getMicroLoans($user, $from_date, $to_date)
     {
-
+        if (!$from_date) {
+            $from_date = date("Y-m-01");
+        }
+        if (!$to_date) {
+            $to_date = date("Y-m-d");
+        }
         $bank_id = null;
-        $query   = $this->repo;
-
-        if ($user instanceof BankUser) {
+        if ($user instanceof BankUser)
             $bank_id = $user->bank->id;
-            if ($bank_id) {
-                $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
-                               ->where('partner_bank_loans.bank_id', $bank_id)
-                               ->where('type', LoanTypes::MICRO);
-            }
+        $query = $this->repo;
+        if ($bank_id) {
+            $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
+                           ->where('partner_bank_loans.bank_id', $bank_id)
+                           ->where('type', LoanTypes::MICRO);
         }
 
-        if ($user instanceof StrategicPartnerMember) {
+        if ($user->strategic_partner_id) {
             $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
                            ->where('type', LoanTypes::MICRO);
         }
@@ -755,7 +724,6 @@ class Loan
      */
     public function statusChange($loan_id, Request $request)
     {
-        /** @var PartnerBankLoan $partner_bank_loan */
         $partner_bank_loan = $this->repo->find($loan_id);
         $user              = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
@@ -788,7 +756,7 @@ class Loan
             throw new InvalidStatusTransaction();
         }
         $partner_bank_loan->status = $new_status;
-        DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description, $user) {
+        DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description) {
             $partner_bank_loan->update();
             (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user, 'status', $old_status, $new_status, $description);
             $title      = "Loan status has been updated from $old_status to $new_status";
@@ -796,13 +764,7 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
-            if ($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED) {
-                if ($partner_bank_loan->type == LoanTypes::MICRO)
-                    Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
-                $reason = $new_status == LoanStatuses::DECLINED ? $description : null;
-                Notifications::sendStatusChangeSms($partner_bank_loan, $new_status, $reason, $user);
-            }
-
+            Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
         });
     }
 
@@ -1046,10 +1008,9 @@ class Loan
         $fee = (double)GeneralStatics::getFee($this->type);
         if ($fee > 0 && (double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
-            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType(Types::debit())->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
+            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
         }
-        if ($fee > 0) throw  new InsufficientWalletCredit();
-        return false;
+        throw  new InsufficientWalletCredit();
     }
 }
