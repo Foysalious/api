@@ -483,12 +483,9 @@ return [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
         'title'             => 'Notification',
         'short_description' => "Its a simple notification",
-        'description'       => "Its a simple notification",
         'button_text'       => 'OK',
         'type'              => 'Info',
-        'target_link'       => "HOME",
-        'target_type'       => '',
-        'target_id'         => ''
+        'target_link'       => "HOME"
     ],
     'SALES_CHANNELS'                              => [
         'Call-Center' => [
@@ -653,11 +650,11 @@ return [
         env('SHEBA_CUSTOMER_APP')    => 'customer',
         'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'resource',
-        env('SHEBA_MANGER_APP')      => 'resource',
-        'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser',
-        'retailer-portal'            => 'RetailerMember'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser',
+        'retailer-portal' => 'strategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -1079,10 +1076,10 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'Resource',
-        env('SHEBA_MANGER_APP')      => 'Partner',
-        'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser',
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser',
         'retailer-portal'            => 'RetailerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
@@ -1322,5 +1319,10 @@ return [
     'PARTNER_BUSINESS_SECTORS'                    => [
         'Service',
         'Non Service'
+    ],
+    'LOAN_GROUP'                                       => [
+        'G1',
+        'G2',
+        'G3'
     ]
 ];
