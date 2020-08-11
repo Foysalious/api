@@ -177,4 +177,19 @@ class LeaveController extends Controller
         if (in_array($business_member->id, $leave_approvers)) return true;
         return false;
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLeaveSettings(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
+        $settings = ['is_substitute_required' => $is_substitute_required];
+
+        return api_response($request, null, 200, ['settings' => $settings]);
+    }
 }
