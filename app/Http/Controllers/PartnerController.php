@@ -14,7 +14,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
 use App\Models\PartnerResource;
-use App\Models\PartnerService;
+use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
 use App\Models\ReviewQuestionAnswer;
