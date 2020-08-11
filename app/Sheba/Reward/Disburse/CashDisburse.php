@@ -2,6 +2,7 @@
 
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Reward\Rewardable;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class CashDisburse
@@ -19,7 +20,7 @@ class CashDisburse
     public function credit($amount, $log, $tags = null)
     {
         $transaction = (new WalletTransactionHandler())->setModel($this->rewardable)->setSource(TransactionSources::BONUS)
-            ->setType('credit')->setAmount($amount)->setLog($log);
+            ->setType(Types::credit())->setAmount($amount)->setLog($log);
         $transaction->store();
     }
 
