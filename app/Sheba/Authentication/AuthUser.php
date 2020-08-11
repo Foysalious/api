@@ -24,7 +24,7 @@ class AuthUser
     private $resource;
     /** @var User */
     private $user;
-    /** @var Model */
+    /** @var Model|null */
     private $avatar;
     /** @var UserRepository */
     private $logisticUsers;
@@ -102,19 +102,14 @@ class AuthUser
         $this->resolveAvatar();
     }
 
-    /**
-     * @return null
-     */
     public function resolveAvatar()
     {
-        if ($this->profile) return null;
-        $avatar = $this->getAvatar();
+        if (!$this->payload['avatar']) return;
+        $avatar = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        $avatar = $avatar::find($this->payload['avatar']['type_id']);
         if ($avatar) $this->setAvatar($avatar);
     }
 
-    /**
-     * @return null
-     */
     public function resolveProfile()
     {
         if (!isset($this->payload['profile'])) return null;
@@ -154,9 +149,7 @@ class AuthUser
      */
     public function getAvatar()
     {
-        if (!$this->payload['avatar']) return null;
-        $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
-        return $model::find($this->payload['avatar']['type_id']);
+        return $this->avatar;
     }
 
     private function generateProfileInfo()
