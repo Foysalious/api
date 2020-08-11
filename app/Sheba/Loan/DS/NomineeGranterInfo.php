@@ -140,6 +140,7 @@ class NomineeGranterInfo implements Arrayable
             $this->granter ? $this->granter->updated_at : null,
             $this->nominee ? $this->nominee->updated_at : null
         ], [
+            'nid_no',
             'address',
             'dob',
             'occupation',
