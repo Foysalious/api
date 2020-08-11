@@ -119,7 +119,6 @@ class TopUpController extends Controller
                 return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
             });
             $total = $data->count();
-            $bulk_request = $this->storeBulkRequest($agent);
 
             $excel_error = null; $halt_top_up = false;
             $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error) {
@@ -139,6 +138,7 @@ class TopUpController extends Controller
             $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
             if ($halt_top_up) return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
 
+            $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
                 $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
