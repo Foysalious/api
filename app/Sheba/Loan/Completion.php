@@ -37,7 +37,7 @@ class Completion
         if ($type == LoanTypes::TERM)
             return (($data['personal']['completion_percentage'] >= 50) && ($data['business']['completion_percentage'] >= 20) && ($data['finance']['completion_percentage'] >= 70) && ($data['nominee']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] >= 50)) ? 1 : 0;
         if ($type == LoanTypes::MICRO)
-            return (($data['personal']['completion_percentage'] >= 50) && ($data['business']['completion_percentage'] >= 20) && ($data['finance']['completion_percentage'] >= 70) && ($data['documents']['completion_percentage'] >= 50)) ? 1 : 0;
+            return (($data['personal']['completion_percentage'] == 100) && ($data['business']['completion_percentage'] == 100) && ($data['finance']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] == 100)) ? 1 : 0;
 
     }
 
