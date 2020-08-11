@@ -89,36 +89,40 @@ class BusinessesController extends Controller
     public function getVendorsList($business, Request $request)
     {
         $business = $request->business;
-        $partners = $business->partners()
-            ->with('categories')
-            ->select('id', 'name', 'mobile', 'logo', 'address')
-            ->get();
+        if(!$business) return api_response($request, 1, 404);
+
+        $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address')->with([
+            'categories' => function ($q) {
+                $q->select('categories.id', 'parent_id', 'name')->with([
+                    'parent' => function ($q) {
+                        $q->select('id', 'parent_id', 'name');
+                    }
+                ]);
+            }, 'resources.profile'
+        ])->get();
         $vendors = collect();
 
-        if ($business) {
-            foreach ($partners as $partner) {
-                $master_categories = collect();
-                $partner->categories->map(function ($category) use ($master_categories) {
-                    $parent_category = $category->parent()->select('id', 'name')->first();
-                    $master_categories->push($parent_category);
-                });
-                $master_categories = $master_categories->unique()->pluck('name');
-                $vendor = [
-                    "id" => $partner->id,
-                    "name" => $partner->name,
-                    "logo" => $partner->logo,
-                    "address" => $partner->address,
-                    "mobile" => $partner->getContactNumber(),
-                    'type' => $master_categories
-                ];
+        foreach ($partners as $partner) {
+            $master_categories = collect();
+            /** @var Partner $partner */
+            $partner->categories->map(function ($category) use ($master_categories) {
+                if (!$category->parent) return;
+                $master_categories->push($category->parent);
+            });
+            $master_categories = $master_categories->unique()->pluck('name');
+            $vendor = [
+                "id" => $partner->id,
+                "name" => $partner->name,
+                "logo" => $partner->logo,
+                "address" => $partner->address,
+                "mobile" => $partner->getContactNumber(),
+                'type' => $master_categories
+            ];
 
-                $vendors->push($vendor);
-            }
-
-            return api_response($request, $vendors, 200, ['vendors' => $vendors]);
+            $vendors->push($vendor);
         }
 
-        return api_response($request, 1, 404);
+        return api_response($request, $vendors, 200, ['vendors' => $vendors]);
     }
 
     public function getVendorInfo($business, $vendor, Request $request)

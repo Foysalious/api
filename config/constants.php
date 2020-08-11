@@ -483,9 +483,12 @@ return [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
         'title'             => 'Notification',
         'short_description' => "Its a simple notification",
+        'description'       => "Its a simple notification",
         'button_text'       => 'OK',
         'type'              => 'Info',
-        'target_link'       => "HOME"
+        'target_link'       => "HOME",
+        'target_type'       => '',
+        'target_id'         => ''
     ],
     'SALES_CHANNELS'                              => [
         'Call-Center' => [
