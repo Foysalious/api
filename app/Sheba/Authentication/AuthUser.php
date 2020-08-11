@@ -154,8 +154,11 @@ class AuthUser
      */
     public function getAvatar()
     {
-        if (!$this->payload['avatar']) return null;
-        $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        if ($this->payload['avatar']['type'] == constants('AVATAR')['retailer-portal'])
+            $model = "Sheba\\Dal\\StrategicPartnerMember\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        else
+            $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+
         return $model::find($this->payload['avatar']['type_id']);
     }
 
