@@ -17,13 +17,8 @@ use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
 use Sheba\Voucher\Creator\Referral;
 
-<<<<<<< ours
 class ProfileRepository
 {
-=======
-
-class ProfileRepository {
->>>>>>> theirs
     use ModificationFields;
 
     public function getIfExist($data, $queryColumn) {
@@ -97,7 +92,7 @@ class ProfileRepository {
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar);
+                $info['token'] = $this->getJwtToken($avatar,$from);
             } elseif ($from == 'customer') {
                 $info['referral']     = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count']  = $avatar->orders->count();
@@ -111,11 +106,11 @@ class ProfileRepository {
                 $info['partners']                  = $avatar->partners->unique('partner_id')->count();
                 $info['partner']                   = (new ResourceRepository($avatar))->getPartner($avatar);
                 $info['email']                     = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
-            } elseif ($from == 'RetailerMember') {
-                $info['retailer']       = $avatar->retailer ? [
-                    'name'=>$avatar->retailer->name,
-                    'logo'=>$avatar->retailer->logo,
-                    'id'=>$avatar->retailer->id
+            } elseif ($from == 'strategicPartnerMember') {
+                $info['strategic_partner']       = $avatar->strategicPartner ? [
+                    'name'=>$avatar->strategicPartner->name,
+                    'logo'=>$avatar->strategicPartner->logo,
+                    'id'=>$avatar->strategicPartner->id
                 ] : null;
                 $info['remember_token'] = $avatar->remember_token;
                 $info['role']           = $avatar->role;
@@ -124,7 +119,7 @@ class ProfileRepository {
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = (new Accounts())->getJWTToken(class_basename($avatar), $avatar->id, $avatar->remember_token)['token'];
+                $info['token'] = (new Accounts())->getJWTToken($from, $avatar->id, $avatar->remember_token)['token'];
 
             }
             return $info;
@@ -132,8 +127,9 @@ class ProfileRepository {
         return null;
     }
 
-    public function getJwtToken($avatar) {
-        $res = (new Accounts())->getToken($avatar);
+    public function getJwtToken($avatar,$from) {
+
+        $res = (new Accounts())->getToken($avatar,$from);
         return $res["token"];
     }
 
