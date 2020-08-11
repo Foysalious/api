@@ -1,5 +1,6 @@
 <?php namespace App\Repositories;
 
+
 use App\Models\Affiliate;
 use App\Models\Job;
 use App\Models\Notification;
@@ -239,8 +240,6 @@ class NotificationRepository
     /**
      * @param $model
      * @param $notification_id
-     * @param $offset
-     * @param $limit
      * @return array
      */
     public function getUnseenNotifications($model, $notification_id)
@@ -300,6 +299,7 @@ class NotificationRepository
             "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
+
 
     public function pushNotificationToAffiliate($type,$agent_id,$mobile)
     {

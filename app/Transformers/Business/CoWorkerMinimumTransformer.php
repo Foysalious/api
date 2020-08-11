@@ -15,6 +15,10 @@ class CoWorkerMinimumTransformer extends TransformerAbstract
                 'name' => $profile->name,
                 'pro_pic' => $profile->pro_pic
             ],
+            'department' => $role ? [
+                'id' => $role->businessDepartment->id ,
+                'name' => $role->businessDepartment->name
+            ] : null,
             'designation' => $role ? $role->name : null
         ];
     }

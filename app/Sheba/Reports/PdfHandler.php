@@ -1,4 +1,5 @@
 <?php namespace Sheba\Reports;
+
 use Barryvdh\DomPDF\PDF;
 
 use Illuminate\Support\Facades\File;
@@ -24,28 +25,29 @@ class PdfHandler extends Handler
 
     public function download()
     {
-
         $this->create();
         return $this->pdf->download("$this->filename.$this->downloadFormat");
     }
+
     public function save()
     {
         $this->create();
         if (!is_dir(public_path('temp'))) {
             mkdir(public_path('temp'), 0777, true);
         }
-        $time=time();
-        $file=$this->filename . "_$time." . $this->downloadFormat;
+
+        $folder = $this->folder ?: 'invoices/pdf/';
+        $time = time();
+        $file = $this->filename . "_$time." . $this->downloadFormat;
         $path = public_path('temp') . '/' . $file;
         $this->pdf->save($path);
-        $cdn = $this->saveFileToCDN($path, 'invoices/pdf/', $file);
+        $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
         return $cdn;
-
     }
 
     protected function getViewPath()
     {
-        return "reports.pdfs.";
+        return $this->viewPath ?: "reports.pdfs.";
     }
 }
