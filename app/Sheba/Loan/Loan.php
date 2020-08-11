@@ -79,16 +79,15 @@ class Loan
         $this->downloadDir    = storage_path('downloads');
         $this->zipDir         = public_path('temp/documents.zip');
         $this->user           = request()->user;
-        $this->finalFields    = [
-            'personal'        => 'personalInfo',
-            'business'        => 'businessInfo',
-            'finance'         => 'financeInfo',
-            'nominee_granter' => 'granterDetails',
-            'document'        => 'documents'
+        $this->finalFields = [
+            'personal' => 'personalInfo',
+            'business' => 'businessInfo',
+            'finance' => 'financeInfo',
+            'nominee_granter' => 'nomineeGranter',
+            'document' => 'documents'
         ];
         $this->fileRepository = $file_repository;
         $this->type           = LoanTypes::TERM;
-
     }
 
     public function setUser($user)
@@ -344,11 +343,33 @@ class Loan
      */
     private function initiateFinalFields()
     {
+        $this->setFinalFields();
         $data = [];
         foreach ($this->finalFields as $key => $val) {
             $data[$key] = $this->$val();
         }
         return $data;
+    }
+
+    private function setFinalFields()
+    {
+        if ($this->version == 2) {
+            $this->finalFields = [
+                'personal' => 'personalInfo',
+                'business' => 'businessInfo',
+                'finance' => 'financeInfo',
+                'nominee_granter' => 'granterDetails',
+                'document' => 'documents'
+            ];
+        } else {
+            $this->finalFields = [
+                'personal' => 'personalInfo',
+                'business' => 'businessInfo',
+                'finance' => 'financeInfo',
+                'nominee_granter' => 'nomineeGranter',
+                'document' => 'documents'
+            ];
+        }
     }
 
     private function isApplicableForLoan(&$data)
