@@ -1083,7 +1083,7 @@ return [
         env('SHEBA_MANGER_APP')      => 'Partner',
         'user'                       => 'Profile',
         'bank-loan-portal'           => 'BankUser',
-        'retailer-portal'            => 'RetailerMember'
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',

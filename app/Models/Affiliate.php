@@ -41,6 +41,13 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->belongsTo(Profile::class);
     }
 
+    public function retailers()
+    {
+        /** @var Profile $profile */
+        $profile = $this->profile;
+        return $profile->retailers();
+    }
+
     public function affiliations()
     {
         return $this->hasMany(Affiliation::class);

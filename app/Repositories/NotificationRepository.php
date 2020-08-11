@@ -1,11 +1,12 @@
 <?php namespace App\Repositories;
 
-use App\Models\Partner;
+
 use App\Models\Affiliate;
 use App\Models\Job;
 use App\Models\Notification;
 use App\Models\OfferShowcase;
 use App\Models\Order;
+use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
 use App\Sheba\Affiliate\PushNotification\TopUpFailed;
@@ -298,6 +299,7 @@ class NotificationRepository
             "channel_id" => $channel
         ], $topic, $channel, $sound);
     }
+
 
     public function pushNotificationToAffiliate($type,$agent_id,$mobile)
     {

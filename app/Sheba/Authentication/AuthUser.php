@@ -105,7 +105,8 @@ class AuthUser
     public function resolveAvatar()
     {
         if (!$this->payload['avatar']) return;
-        if ($this->payload['avatar']['type'] == constants('AVATAR')['retailer-portal'])
+
+        if($this->payload['avatar']['type'] ==  constants('AVATAR_FROM_CLASS')['retailer-portal'])
             $avatar = "Sheba\\Dal\\StrategicPartnerMember\\" . ucfirst(camel_case($this->payload['avatar']['type']));
         else
             $avatar = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));

@@ -131,7 +131,10 @@ class AffiliateController extends Controller
                 'total_income'           => (double)$affiliate->getIncome(),
                 'total_service_referred' => $affiliate->affiliations->count(),
                 'total_sp_referred'      => $affiliate->partnerAffiliations->count(),
-                'last_updated'           => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A')
+                'last_updated'           => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A'),
+                'robi_topup_wallet'      => (double)$affiliate->robi_topup_wallet,
+                "is_robi_retailer"       => $affiliate->retailers->where('strategic_partner_id',2)->count() ? 1 : 0
+
             ];
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
