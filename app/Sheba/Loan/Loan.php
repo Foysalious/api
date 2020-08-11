@@ -352,7 +352,7 @@ class Loan
 
     private function isApplicableForLoan(&$data)
     {
-        return Completion::isApplicableForLoan($data,$this->type,$this->version);
+        return Completion::isApplicableForLoan($data, $this->type, $this->version);
     }
 
     public function create()
@@ -548,9 +548,9 @@ class Loan
 
     public function microLoanData(Request $request)
     {
-        $data               = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
-        $statuses           = constants('LOAN_STATUS');
-        $formatted_data     = (object)[
+        $data           = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
+        $statuses       = constants('LOAN_STATUS');
+        $formatted_data = (object)[
             'applied_loan'       => count($data),
             'loan_rejected'      => 0,
             'loan_disburse'      => 0,
@@ -767,6 +767,7 @@ class Loan
             Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
         });
     }
+
     /**
      * @param $loan_id
      * @return bool|string
@@ -1005,7 +1006,7 @@ class Loan
         if ($this->version !== 2) return true;
         if (!in_array($this->type, LoanTypes::get())) throw new InvalidTypeException();
         $fee = (double)GeneralStatics::getFee($this->type);
-        if ((double)$this->partner->wallet >= $fee) {
+        if ($fee > 0 && (double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
             (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
