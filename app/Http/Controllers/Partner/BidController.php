@@ -6,6 +6,7 @@ use App\Sheba\Business\Bid\Updater;
 use Dotenv\Exception\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Business\Bid\Creator;
+use Sheba\Business\Procurement\WorkOrderDataGenerator;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Business\ProcurementRepository;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
@@ -78,14 +79,16 @@ class BidController extends Controller
         }
     }
 
-    public function takeAction($partner, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater)
+    public function takeAction($partner, $bid, Request $request, BidRepositoryInterface $bid_repository, Updater $updater, WorkOrderDataGenerator $data_generator)
     {
         $this->validate($request, ['status' => 'required|string|in:accepted,rejected,sent,pending']);
-
         $bid = $bid_repository->find((int)$bid);
+        $procurement = $bid->procurement;
+        $business = $procurement->owner;
         $this->setModifier($request->manager_resource);
         $updater->setBid($bid)->setStatus($request->status)->updateStatus();
-
-        return api_response($request, null, 200);
+        $work_order = $data_generator->setBusiness($business)->setProcurement($procurement)->setBid($bid)->storeInCloud();
+        $procurement->update(['work_order_link' => $work_order]);
+        return api_response($request, null, 200, ['work_order' => $work_order]);
     }
 }

@@ -212,7 +212,7 @@ class Updater
     {
         $procurement = $this->procurement->fresh();
         $this->procurementRepository->update($procurement, [
-            'type' => $procurement->items->isEmpty() ? Type::BASIC: Type::ADVANCED
+            'type' => $procurement->items->isEmpty() ? Type::BASIC : Type::ADVANCED
         ]);
     }
 
