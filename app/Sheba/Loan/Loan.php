@@ -50,6 +50,7 @@ use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\Loan\Validators\RequestValidator;
 use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Loan
@@ -1008,7 +1009,7 @@ class Loan
         $fee = (double)GeneralStatics::getFee($this->type);
         if ($fee > 0 && (double)$this->partner->wallet >= $fee) {
             $this->setModifier($this->resource);
-            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType('credit')->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
+            (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType(Types::debit())->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
         }
         throw  new InsufficientWalletCredit();
