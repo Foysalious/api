@@ -654,7 +654,7 @@ return [
         env('SHEBA_MANGER_APP') => 'resource',
         'user' => 'user',
         'bank-loan-portal' => 'bankUser',
-        'retailer-portal' => 'StrategicPartnerMember'
+        'retailer-portal' => 'strategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -1076,11 +1076,12 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
+
         env('SHEBA_RESOURCE_APP') => 'Resource',
         env('SHEBA_MANGER_APP') => 'Partner',
         'user' => 'Profile',
         'bank-loan-portal' => 'BankUser',
-        'retailer-portal'            => 'RetailerMember'
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',
