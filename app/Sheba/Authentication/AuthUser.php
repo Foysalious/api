@@ -104,9 +104,16 @@ class AuthUser
 
     public function resolveAvatar()
     {
+<<<<<<< ours
         if (!$this->payload['avatar']) return;
         $avatar = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
         $avatar = $avatar::find($this->payload['avatar']['type_id']);
+=======
+
+        if ($this->profile) return null;
+        $avatar = $this->getAvatar();
+
+>>>>>>> theirs
         if ($avatar) $this->setAvatar($avatar);
     }
 
@@ -149,7 +156,16 @@ class AuthUser
      */
     public function getAvatar()
     {
+<<<<<<< ours
         return $this->avatar;
+=======
+
+        if($this->payload['avatar']['type'] ==  constants('AVATAR_FROM_CLASS')['retailer-portal'])
+            $model = "Sheba\\Dal\\StrategicPartnerMember\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        else
+            $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        return $model::find($this->payload['avatar']['type_id']);
+>>>>>>> theirs
     }
 
     private function generateProfileInfo()
