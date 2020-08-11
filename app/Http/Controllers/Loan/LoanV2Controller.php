@@ -178,7 +178,7 @@ class LoanV2Controller extends Controller
                 'month'       => $request->month ?: 0,
                 'type'        => $request->loan_type ?: LoanTypes::TERM
             ];
-            $info     = $loan->setPartner($partner)->setVersion(self::VERSION)->setType($request->loan_type)->setResource($resource)->setData($data)->apply();
+            $info     = $loan->setPartner($partner)->setVersion(self::VERSION)->setType($data['type'])->setResource($resource)->setData($data)->apply();
             return api_response($request, 1, 200, ['data' => $info]);
         } catch (InsufficientWalletCredit $e) {
             $fee     = (double)GeneralStatics::getFee($request->loan_type);
