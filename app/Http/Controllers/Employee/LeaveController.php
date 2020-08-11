@@ -170,8 +170,6 @@ class LeaveController extends Controller
      */
     private function isNeedSubstitute(BusinessMember $business_member)
     {
-        return false;
-
         $leave_approvers = [];
         ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
             $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
