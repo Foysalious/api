@@ -721,6 +721,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
+            if (isset($request->from_robi_topup_wallet) && $request->from_robi_topup_wallet == 1)
+                $topups = $topups->where('is_robi_topup_wallet', 1);
+            else
+                $topups  = $topups->where('is_robi_topup_wallet', 0);
 
             $total_topups = $topups->count();
             if ($is_excel_report) {
