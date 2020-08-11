@@ -123,7 +123,7 @@ class NotificationController extends Controller
             $pushNotificationHandler->send([
                 "title" => 'Substitute Setup',
                 "message" => "AI choose you a substitute",
-                "event_type" => 'leave',
+                "event_type" => 'substitute',
                 "event_id" => $request->leave_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
