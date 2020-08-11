@@ -41,7 +41,7 @@ class Completion
         return 1;
         if ($type == LoanTypes::MICRO)
             return (($data['personal']['completion_percentage'] == 100) && ($data['business']['completion_percentage'] == 100) && ($data['finance']['completion_percentage'] == 100) && ($data['documents']['completion_percentage'] == 100)) ? 1 : 0;
-
+        return 1;
     }
 
     public function get()
