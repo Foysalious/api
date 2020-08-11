@@ -20,6 +20,7 @@ use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
 use Sheba\Reward\BonusCredit;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\TransactionGateways;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
@@ -131,7 +132,7 @@ class WalletController extends Controller
                         $payment_detail->update();
                     }
                     $this->setModifier($user);
-                    $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType('debit')->setAmount($remaining);
+                    $transactionHandler = (new WalletTransactionHandler())->setModel($user)->setType(Types::debit())->setAmount($remaining);
                     if (in_array($payment->payable->type, ['movie_ticket_purchase', 'transport_ticket_purchase'])) {
                         $log    = sprintf(constants('TICKET_LOG')[$payment->payable->type]['log'], number_format($remaining, 2));
                         $source = ($payment->payable->type == 'movie_ticket_purchase') ? TransactionSources::MOVIE : TransactionSources::TRANSPORT;

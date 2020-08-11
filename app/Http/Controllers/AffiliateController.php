@@ -42,6 +42,7 @@ use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Transactions\InvalidTransaction;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
@@ -609,7 +610,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
          * DB::transaction(function () use ($amount, $affiliate, $data) {
             $affiliate->rechargeWallet($amount, $data);
         });*/
-        (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType('credit')->setAmount($amount)->setLog($data['log'])->dispatch();
+        (new WalletTransactionHandler())->setModel($affiliate)->setSource(TransactionSources::BKASH)->setTransactionDetails($data['transaction_details'])->setType(Types::credit())->setAmount($amount)->setLog($data['log'])->dispatch();
     }
 
     private function makeRechargeData($transaction)
@@ -721,6 +722,10 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
             if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
             if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
+            if (isset($request->from_robi_topup_wallet) && $request->from_robi_topup_wallet == 1)
+                $topups = $topups->where('is_robi_topup_wallet', 1);
+            else
+                $topups  = $topups->where('is_robi_topup_wallet', 0);
 
             $total_topups = $topups->count();
             if ($is_excel_report) {

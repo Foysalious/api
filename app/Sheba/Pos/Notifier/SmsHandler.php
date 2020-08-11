@@ -5,6 +5,7 @@ use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use Exception;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class SmsHandler {
@@ -37,7 +38,7 @@ class SmsHandler {
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             $sms->shoot();
-            (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType('debit')->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+            (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         }
 
     }
