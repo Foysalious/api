@@ -7,6 +7,7 @@ use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use DB;
 use Sheba\Repositories\AffiliateRepository;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Creator
@@ -71,7 +72,7 @@ class Creator
     {
         DB::transaction(function () {
             $log = "Affiliate earned $this->affiliateBonusAmount point for registration";
-            $this->walletTransactionHandler->setModel($this->affiliate)->setType('credit')->setAmount($this->affiliateBonusAmount)->setLog($log)->store();
+            $this->walletTransactionHandler->setModel($this->affiliate)->setType(Types::credit())->setAmount($this->affiliateBonusAmount)->setLog($log)->store();
             $this->affiliateRepo->update($this->affiliate, ['acquisition_cost' => $this->affiliateBonusAmount]);
         });
     }

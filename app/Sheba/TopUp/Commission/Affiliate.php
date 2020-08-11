@@ -2,6 +2,7 @@
 
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\TopUp\TopUpCommission;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 
@@ -33,7 +34,7 @@ class Affiliate extends TopUpCommission
          *  $this->agent->ambassador->creditWallet($this->topUpOrder->ambassador_commission);
          $this->agent->ambassador->walletTransaction(['amount' => $this->topUpOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log, 'is_gifted' => 1]);*/
         $model = $this->agent->ambassador;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::credit())
             ->setAmount($this->topUpOrder->ambassador_commission)->setLog($log)->dispatch();
     }
 
@@ -45,7 +46,7 @@ class Affiliate extends TopUpCommission
          * $this->agent->ambassador->debitWallet($amount);
         $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
         $model = $this->agent->ambassador;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('debit')
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::debit())
             ->setAmount($amount)->setLog($log)->dispatch();
     }
 

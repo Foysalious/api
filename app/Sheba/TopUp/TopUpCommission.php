@@ -6,6 +6,7 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
@@ -153,7 +154,7 @@ abstract class TopUpCommission
          $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::credit())
             ->setAmount($amount)->setLog($log)->dispatch();
     }
 }
