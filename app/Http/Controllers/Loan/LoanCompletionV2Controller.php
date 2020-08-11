@@ -8,13 +8,14 @@ use Sheba\Loan\Loan;
 
 class LoanCompletionV2Controller extends Controller
 {
+    const VERSION = 2;
     public function getLoanInformationCompletion($partner, Request $request,Loan $loan)
     {
         try {
             $this->validate($request, ['loan_type' => 'required|in:'. implode(',', LoanTypes::get())]);
             $partner = $request->partner;
             $resource = $request->manager_resource;
-            $completion = $loan->setPartner($partner)->setVersion(2)->setResource($resource)->setType($request->loan_type)->getCompletion();
+            $completion = $loan->setPartner($partner)->setVersion(self::VERSION)->setResource($resource)->setType($request->loan_type)->getCompletion();
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
