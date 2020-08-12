@@ -36,8 +36,8 @@ class Notifications
         $sound             = config('sheba.push_notification_sound.manager');
         (new self())->getTitleMessage($new_status, $partner_bank_loan);
         $notification_data = [
-            "title"      => 'Loan status changed',
-            "message"    => "Loan status has been updated from $old_status to $new_status",
+            "title"      => (new self())->title,
+            "message"    => (new self())->message,
             "sound"      => "notification_sound",
             "event_type" => "App\\Models\\$class",
             "event_id"   => $partner_bank_loan->id
@@ -69,17 +69,30 @@ class Notifications
         }
     }
 
+    /**
+     * @param $status
+     * @param $partner_bank_loan
+     */
     private function getTitleMessage($status, $partner_bank_loan)
     {
         $partner_name = $partner_bank_loan->partner->name;
-
+        $log          = $partner_bank_loan->bankLoanLogs()->orderBy('created_at','desc')->first();
+        $reason       = $log ? $log->description : null;
         if($status == Statuses::APPROVED){
             $this->title     = "অভিনন্দন! আপনার রবি রিচার্জ লোন আবেদন অনুমোদিত হয়েছে।";
             $this->message   = "প্রিয় $partner_name, আপনার রবি রিচার্জ লোন আবেদন অনুমোদন করা হয়েছে। লোন ক্রেডিট গ্রহণের জন্য অপেক্ষা করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
         }
-        elseif ( $status == Statuses::REJECTED || $status == Statuses::DECLINED){
+        elseif ( $status == Statuses::DECLINED){
             $this->title     = "দুঃখিত! আপনার রবি রিচার্জ লোন আবেদনটি মনোনীত হয়নি।";
-            $this->message   = "প্প্রিয় $partner_name, আপনার রবি রিচার্জ লোন আবেদনটি  কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+            $this->message   = "প্প্রিয় $partner_name, আপনার রবি রিচার্জ লোন আবেদনটি  $reason কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+        }
+        elseif ($status == Statuses::DISBURSED){
+            $this->title     = "আপনার রবি ক্রেডিট অ্যাকাউন্ট-এ $partner_bank_loan->loan_amount টাকা জমা হয়েছে।";
+            $this->message   = "প্রিয় $partner_name, আপনার রবি ক্রেডিট অ্যাকাউন্ট-এ $partner_bank_loan->loan_amount টাকা জমা করা হয়েছে। ব্যালেন্স জানতে আপনার sManager অ্যাপ এর লোন সেকশন চেক করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+        }
+        else{
+            $this->title     = "Loan Status has changed";
+            $this->message   = "Loan status has been changed to $status";
         }
     }
 }
