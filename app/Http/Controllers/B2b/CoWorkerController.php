@@ -247,7 +247,7 @@ class CoWorkerController extends Controller
         $member = $request->manager_member;
         $business = $request->business;
         $this->setModifier($member);
-        if ($request->has('mobile')) $request->mobile = formatMobile($request->mobile);
+        if ($request->has('mobile') && $request->mobile != 'null') $request->mobile = formatMobile($request->mobile);
 
         $personal_request = $this->personalRequest
             ->setPhone($request->mobile)
