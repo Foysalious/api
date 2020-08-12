@@ -2,13 +2,19 @@
 
 use Barryvdh\DomPDF\PDF;
 
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
+use Mpdf\Config\ConfigVariables;
+use Mpdf\Config\FontVariables;
+use Mpdf\Mpdf;
+use Mpdf\MpdfException;
 use Sheba\FileManagers\CdnFileManager;
+use Throwable;
 
 class PdfHandler extends Handler
 {
-    /** @var PDF */
     use CdnFileManager;
+    /** @var PDF $pdf*/
     private $pdf;
     private $downloadFormat = "pdf";
 
@@ -23,10 +29,41 @@ class PdfHandler extends Handler
         return $this;
     }
 
-    public function download()
+    /**
+     * @param bool $mPdf
+     * @return Response|string
+     * @throws MpdfException
+     * @throws Throwable
+     */
+    public function download($mPdf=false)
     {
         $this->create();
+
+        if ($mPdf){
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+            $mPDF = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [
+                    storage_path( '/fonts'),
+                ]),
+                'fontdata' => $fontData + [
+                        'kalpurush' => [
+                            'R' => 'Siyamrupali.ttf',
+                            'I' => 'Siyamrupali.ttf',
+                            'useOTL' => 0xFF,
+                            'useKashida' => 75,
+                        ]
+                    ],
+                'default_font' => 'kalpurush'
+            ]);
+            $data=view($this->viewFileName,$this->data)->render();
+            $mPDF->WriteHTML("$data");
+            return $mPDF->Output("$this->filename.$this->downloadFormat","d");
+        }
         return $this->pdf->download("$this->filename.$this->downloadFormat");
+
     }
 
     public function save()

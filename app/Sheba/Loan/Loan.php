@@ -795,7 +795,7 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
-            if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::REJECTED || $new_status == LoanStatuses::DECLINED)
+            if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
                 Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
             if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
             {
