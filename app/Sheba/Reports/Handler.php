@@ -152,7 +152,7 @@ abstract class Handler
         return view($this->viewFileName, $this->data);
     }
 
-    abstract public function download();
+    abstract public function download($mPdf=false);
 
     abstract public function save();
 }
