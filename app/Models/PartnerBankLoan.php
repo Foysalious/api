@@ -46,4 +46,9 @@ class PartnerBankLoan extends Model
         return $this->hasMany(RepaymentModel::class);
     }
 
+    public function bankLoanLogs()
+    {
+        return $this->hasMany(PartnerBankLoanChangeLog::class,'loan_id','id');
+    }
+
 }

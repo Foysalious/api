@@ -5,11 +5,13 @@ namespace Sheba\Loan;
 
 use App\Models\BankUser;
 use Exception;
+use Sheba\Dal\PartnerBankLoan\Statuses;
 use Sheba\Notification\NotificationHandler;
 use Sheba\PushNotificationHandler;
 
 class Notifications
 {
+
     public static function sendLoanNotification($title, $eventType, $eventId)
     {
         notify()->departments([
@@ -30,9 +32,28 @@ class Notifications
         $topic             = config('sheba.push_notification_topic_name.manager') . $partner_bank_loan->partner_id;
         $channel           = config('sheba.push_notification_channel_name.manager');
         $sound             = config('sheba.push_notification_sound.manager');
+        $partner_name = $partner_bank_loan->partner->name;
+        $log          = $partner_bank_loan->bankLoanLogs()->orderBy('created_at','desc')->first();
+        $reason       = $log ? $log->description : null;
+        $title     = "Loan Status has changed";
+        $message    = "Loan status has been changed to $new_status";
+
+        if($new_status == Statuses::APPROVED){
+            $title     = "অভিনন্দন! আপনার রবি রিচার্জ লোন আবেদন অনুমোদিত হয়েছে।";
+            $message   = "প্রিয় $partner_name, আপনার রবি রিচার্জ লোন আবেদন অনুমোদন করা হয়েছে। লোন ক্রেডিট গ্রহণের জন্য অপেক্ষা করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+        }
+        elseif ( $new_status == Statuses::DECLINED){
+            $title     = "দুঃখিত! আপনার রবি রিচার্জ লোন আবেদনটি মনোনীত হয়নি।";
+            $message   = "প্প্রিয় $partner_name, আপনার রবি রিচার্জ লোন আবেদনটি  $reason কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+        }
+        elseif ($new_status == Statuses::DISBURSED){
+            $title    = "আপনার রবি ক্রেডিট অ্যাকাউন্ট-এ $partner_bank_loan->loan_amount টাকা জমা হয়েছে।";
+            $message  = "প্রিয় $partner_name, আপনার রবি ক্রেডিট অ্যাকাউন্ট-এ $partner_bank_loan->loan_amount টাকা জমা করা হয়েছে। ব্যালেন্স জানতে আপনার sManager অ্যাপ এর লোন সেকশন চেক করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+        }
+
         $notification_data = [
-            "title"      => 'Loan status changed',
-            "message"    => "Loan status has been updated from $old_status to $new_status",
+            "title"      => $title,
+            "message"    => $message,
             "sound"      => "notification_sound",
             "event_type" => "App\\Models\\$class",
             "event_id"   => $partner_bank_loan->id
