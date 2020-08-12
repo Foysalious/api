@@ -2,6 +2,7 @@
 
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\MovieTicket\MovieTicketCommission;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class Affiliate extends MovieTicketCommission
@@ -39,7 +40,7 @@ class Affiliate extends MovieTicketCommission
          * $this->agent->ambassador->creditWallet($this->movieTicketOrder->ambassador_commission);
         $this->agent->ambassador->walletTransaction(['amount' => $this->movieTicketOrder->ambassador_commission, 'type' => 'Credit', 'log' => $log]);*/
         (new WalletTransactionHandler())->setModel($this->agent->ambassador)->setSource(TransactionSources::MOVIE)
-            ->setLog($log)->setAmount($this->movieTicketOrder->ambassador_commission)->setType('credit')
+            ->setLog($log)->setAmount($this->movieTicketOrder->ambassador_commission)->setType(Types::credit())
             ->dispatch();
     }
 
@@ -50,7 +51,7 @@ class Affiliate extends MovieTicketCommission
          * $this->agent->ambassador->debitWallet($amount);
         $this->agent->ambassador->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
         (new WalletTransactionHandler())->setModel($this->agent->ambassador)->setSource(TransactionSources::MOVIE)
-            ->setLog($log)->setAmount($amount)->setType('debit')
+            ->setLog($log)->setAmount($amount)->setType(Types::debit())
             ->dispatch();
     }
 
