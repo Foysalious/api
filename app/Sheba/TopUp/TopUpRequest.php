@@ -22,6 +22,7 @@ class TopUpRequest
     private $errorMessage;
     private $name;
     private $bulk_id;
+    private $from_robi_topup_wallet;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -103,6 +104,24 @@ class TopUpRequest
     {
         $this->mobile = formatMobile($mobile);
         return $this;
+    }
+
+    /**
+     * @param $from_robi_topup_wallet
+     * @return TopUpRequest
+     */
+    public function setRobiTopupWallet($from_robi_topup_wallet)
+    {
+        $this->from_robi_topup_wallet = $from_robi_topup_wallet;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRobiTopupWallet()
+    {
+        return $this->from_robi_topup_wallet;
     }
 
     /**

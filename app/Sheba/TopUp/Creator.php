@@ -40,6 +40,7 @@ class Creator
         $top_up_order->payee_name = $this->topUpRequest->getName();
         $top_up_order->bulk_request_id = $this->topUpRequest->getBulkId();
         $top_up_order->status = Statuses::INITIATED;
+        $top_up_order->is_robi_topup_wallet = $this->topUpRequest->getRobiTopupWallet() !== null ? :0;
         $top_up_order->vendor_id = $model->id;
         $top_up_order->gateway = $model->gateway;
         $gateway_factory = new GatewayFactory();
