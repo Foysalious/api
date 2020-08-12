@@ -75,7 +75,7 @@ class TopUpController extends Controller
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
             'amount' => 'required|min:10|max:1000|numeric',
-            'from_roi_topup_wallet' => 'sometimes|in:0,1'
+            'from_robi_topup_wallet' => 'sometimes|in:0,1'
         ]);
         $agent = $this->getAgent($request);
 
@@ -83,8 +83,8 @@ class TopUpController extends Controller
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
-        if(isset($request->from_roi_topup_wallet) && $request->from_roi_topup_wallet)
-            $top_up_request->setRobiTopupWallet($request->from_roi_topup_wallet);
+        if(isset($request->from_robi_topup_wallet) && $request->from_robi_topup_wallet)
+            $top_up_request->setRobiTopupWallet($request->from_robi_topup_wallet);
 
         if ($top_up_request->hasError())
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);

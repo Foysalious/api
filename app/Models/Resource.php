@@ -32,6 +32,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->hasMany(Model::class);
     }
 
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class,'profile_id','profile_id');
+    }
+
     public function profile()
     {
         return $this->belongsTo(Profile::class);
