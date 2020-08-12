@@ -2,6 +2,7 @@
 
 use App\Models\PartnerBankLoan;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\LoanDocumentTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use ReflectionException;
@@ -62,6 +63,9 @@ class DocumentUploader
         if (isset($detail['final_information_for_loan']['document'][$this->for][$formatted_name])) {
             $this->deleteOld($detail['final_information_for_loan']['document'][$this->for][$formatted_name]);
         }
+        if (isset($detail['final_information_for_loan']['business']['business_additional_information'][$this->for])) {
+            $this->deleteOld($detail['final_information_for_loan']['business']['business_additional_information'][$this->for]);
+        }
         $this->setData($detail, $url, $formatted_name);
         $user = $this->user;
         $loan = $this->loanRequest->partnerBankLoan;
@@ -107,7 +111,10 @@ class DocumentUploader
 
     private function setData(&$detail, $url, $formatted_name)
     {
-        if ($this->for != 'profile') {
+
+        if ($this->for == LoanDocumentTypes::PROVE_OF_PHOTOGRAPH) {
+            $detail['final_information_for_loan']['business']['business_additional_information'][$this->for] = $url;
+        } else if ($this->for != LoanDocumentTypes::PROFILE) {
             $detail['final_information_for_loan']['document'][$this->for][$formatted_name] = $url;
         } else {
             $detail['final_information_for_loan']['document'][$formatted_name] = $url;
@@ -228,5 +235,32 @@ class DocumentUploader
             throw new InvalidFileName();
         }
         return $this->uploadDocument($file, $formatted_name);
+    }
+
+    private function uploadProofOfPhotographImage($file, $formatted_name) {
+        list($file, $filename) = $this->makeLoanFile($file, $formatted_name);
+        $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
+        return [
+            $formatted_name,
+            $url
+        ];
+    }
+
+    /**
+     * @param $name
+     * @param $file
+     * @return mixed
+     * @throws InvalidFileName
+     */
+    private function uploadProofOfPhotograph($name, $file)
+    {
+        $formatted_name = $this->formatName($name);
+        $url            = null;
+        if (!in_array($formatted_name, [
+            'proof_of_photograph'
+        ])) {
+            throw new InvalidFileName();
+        }
+        return $this->uploadProofOfPhotographImage($file, $formatted_name);
     }
 }
