@@ -1,13 +1,14 @@
 <?php namespace Sheba\OrderPlace;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -346,11 +347,12 @@ class OrderPlace
     }
 
     /**
-     * @throws HyperLocationNotFoundException
+     * @throws NotFoundException
      */
     private function setDeliveryAddressFromId()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
+        if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;

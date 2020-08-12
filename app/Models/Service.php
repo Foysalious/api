@@ -5,7 +5,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
@@ -15,6 +14,7 @@ use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
 use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 
 class Service extends Model
 {

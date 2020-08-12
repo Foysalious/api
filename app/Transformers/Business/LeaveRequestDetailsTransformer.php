@@ -1,6 +1,8 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Models\Member;
 use App\Models\Profile;
 use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
@@ -33,6 +35,13 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $requestable = $approval_request->requestable;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
 
+        /** @var BusinessMember $substitute_business_member */
+        $substitute_business_member = $requestable->substitute;
+        /** @var Member $member */
+        $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
+        /** @var Profile $profile */
+        $leave_substitute = $substitute_member ? $substitute_member->profile : null;
+
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -41,15 +50,22 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'leave' => [
                 'id' => $requestable->id,
                 'name' => $this->profile->name,
+                'pro_pic' => $this->profile->pro_pic,
+                'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'type' => $leave_type->title,
                 'total_days' => (int)$requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
+                'substitute' => $substitute_business_member ? [
+                    'name' => $leave_substitute->name,
+                    'pro_pic' => $leave_substitute->pro_pic,
+                    'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
+                ] : null,
             ],
             'department' => [
                 'department_id' => $this->role ? $this->role->businessDepartment->id : null,

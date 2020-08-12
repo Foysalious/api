@@ -1,7 +1,7 @@
 <?php namespace Sheba\Logs\Customer;
 
 use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
