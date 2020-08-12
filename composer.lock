@@ -3307,7 +3307,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
-                "reference": "bb750020580cd363a72b2a4b8918218918137dde"
+                "reference": "5c77770b2cea422d4ad8d909b6bd22d152bde39d"
             },
             "require": {
                 "php": ">=5.4"
@@ -3331,7 +3331,7 @@
                 }
             ],
             "description": "Sheba notifications.",
-            "time": "2020-06-17T12:01:44+00:00"
+            "time": "2020-08-12T05:32:59+00:00"
         },
         {
             "name": "sheba/report",
@@ -6008,5 +6008,6 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": []
+    "platform-dev": [],
+    "plugin-api-version": "1.1.0"
 }
