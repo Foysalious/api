@@ -52,7 +52,7 @@ class Notifications
     public static function toBankUser($bankId, $title, $link, $eventId, $eventType = "App\Models\PartnerBankLoan")
     {
         /** @var NotificationHandler $handler */
-        $userIds = BankUser::where('bank_id', $bankId)->get();
+        $userIds = BankUser::where('bank_id', $bankId)->pluck('id');
         if (!empty($userIds)) {
             notify()->bankUsers($userIds)->send([
                 'title'      => $title,
