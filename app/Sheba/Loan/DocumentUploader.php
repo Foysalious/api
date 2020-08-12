@@ -2,6 +2,7 @@
 
 use App\Models\PartnerBankLoan;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\LoanDocumentTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use ReflectionException;
@@ -111,9 +112,9 @@ class DocumentUploader
     private function setData(&$detail, $url, $formatted_name)
     {
 
-        if ($this->for == 'proof_of_photograph') {
+        if ($this->for == LoanDocumentTypes::PROVE_OF_PHOTOGRAPH) {
             $detail['final_information_for_loan']['business']['business_additional_information'][$this->for] = $url;
-        } else if ($this->for != 'profile') {
+        } else if ($this->for != LoanDocumentTypes::PROFILE) {
             $detail['final_information_for_loan']['document'][$this->for][$formatted_name] = $url;
         } else {
             $detail['final_information_for_loan']['document'][$formatted_name] = $url;
