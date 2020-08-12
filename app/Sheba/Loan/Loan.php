@@ -26,6 +26,7 @@ use Sheba\Dal\PartnerBankLoan\Statuses as LoanStatuses;
 use Sheba\Dal\LoanClaimRequest\Statuses;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\Retailer\Retailer;
+use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
@@ -568,9 +569,15 @@ class Loan
         return $this->filterList($request, $output);
     }
 
+    /**
+     * @param Request $request
+     * @return object
+     */
     public function microLoanData(Request $request)
     {
-        $data           = $this->getMicroLoans($request->user, $request->from_date, $request->to_date);
+        $from_date = $request->from_date ? : date("Y-m-01");
+        $to_date = $request->to_date ? : date("Y-m-d");
+        $data           = $this->getMicroLoans($request->user, $from_date, $to_date);
         $statuses       = constants('LOAN_STATUS');
         $formatted_data = (object)[
             'applied_loan'       => count($data),
@@ -578,10 +585,10 @@ class Loan
             'loan_disburse'      => 0,
             'loan_approved'      => 0,
             'loan_closed'        => 0,
-            'total_registration' => $this->getRegisteredRetailerCount()
+            'total_registration' => $this->getRegisteredRetailerCount($from_date,$to_date)
         ];
         foreach ($data as $loan) {
-            if ($loan["status"] === $statuses["rejected"]) {
+            if ($loan["status"] === $statuses["declined"]) {
                 $formatted_data->loan_rejected++;
             }
             if ($loan["status"] === $statuses["approved"]) {
@@ -598,9 +605,11 @@ class Loan
     }
 
     /**
+     * @param $from
+     * @param $to
      * @return mixed
      */
-    private function getRegisteredRetailerCount()
+    private function getRegisteredRetailerCount($from, $to)
     {
         $retailers = Retailer::whereHas('profile', function ($q) {
             $q->has('resource');
@@ -610,7 +619,9 @@ class Loan
         foreach ($retailers as $retailer)
             array_push($resource_ids, $retailer->profile->resource->id);
 
-        return PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->count('partner_id');
+        $all_registered_partners_ids = PartnerResource::whereIn('resource_id', $resource_ids)->distinct()->pluck('partner_id');
+        return Partner::whereIn('id', $all_registered_partners_ids)->whereBetween('created_at', [$from, $to])->count();
+
     }
 
     private function getLoans($user)
@@ -627,23 +638,20 @@ class Loan
 
     private function getMicroLoans($user, $from_date, $to_date)
     {
-        if (!$from_date) {
-            $from_date = date("Y-m-01");
-        }
-        if (!$to_date) {
-            $to_date = date("Y-m-d");
-        }
+
         $bank_id = null;
-        if ($user instanceof BankUser)
-            $bank_id = $user->bank->id;
         $query = $this->repo;
-        if ($bank_id) {
-            $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
-                           ->where('partner_bank_loans.bank_id', $bank_id)
-                           ->where('type', LoanTypes::MICRO);
+
+        if ($user instanceof BankUser){
+            $bank_id = $user->bank->id;
+            if ($bank_id) {
+                $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
+                    ->where('partner_bank_loans.bank_id', $bank_id)
+                    ->where('type', LoanTypes::MICRO);
+            }
         }
 
-        if ($user->strategic_partner_id) {
+        if ($user instanceof StrategicPartnerMember) {
             $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
                            ->where('type', LoanTypes::MICRO);
         }
