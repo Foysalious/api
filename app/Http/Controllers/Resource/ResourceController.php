@@ -139,6 +139,6 @@ class ResourceController extends Controller
         $rating = $ratingInfo->setResource($resource)->getRatingInfo();
 
 
-        return api_response($request, $rating, 200, ['info' => $rating]);
+        return $rating ? api_response($request, $rating, 200, ['info' => $rating]) : api_response($request, null, 404);
     }
 }
