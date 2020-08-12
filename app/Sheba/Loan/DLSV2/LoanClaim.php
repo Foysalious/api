@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\Dal\LoanClaimRequest\Statuses;
+use Sheba\Loan\Notifications;
 use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\ModificationFields;
@@ -49,6 +50,7 @@ class LoanClaim
      * @param $from
      * @param $to
      * @return bool
+     * @throws \Exception
      */
     public function updateStatus($from, $to)
     {
@@ -66,6 +68,7 @@ class LoanClaim
                     (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
                 $this->deductClaimApprovalFee($claim);
                 $this->checkAndDeductAnnualFee($claim);
+                $this->sendNotificationToBankPortal();
             }
         }
 
@@ -177,6 +180,16 @@ class LoanClaim
         $claim = (new LoanClaimRepo(new LoanClaimModel()))->find($this->claimId);
         $claim->approved_msg_seen = $to;
         return $claim->update();
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function sendNotificationToBankPortal()
+    {
+        $title = "Loan amount transferred to sManager";
+        Notifications::toBankUser(1, $title, null, $this->loanId);
     }
 
 }
