@@ -19,10 +19,9 @@ class LoanCompletionV2Controller extends Controller
             $resource = $request->manager_resource;
             if($request->loan_type === LoanTypes::MICRO){
                 $retailer = $partner->retailers->where('strategic_partner_id', 2)->first();
-                $admin_resource = $partner->getFirstAdminResource();
-                $affiliate = $admin_resource->affiliate;
+                $affiliate = $resource->affiliate;
                 if(isset($retailer) && !isset($affiliate))
-                    (new AffiliateRepository())->createAffiliate($admin_resource);
+                    (new AffiliateRepository())->createAffiliate($resource);
             }
             $completion = $loan->setPartner($partner)->setVersion(self::VERSION)->setResource($resource)->setType($request->loan_type)->getCompletion();
             return api_response($request, $completion, 200, ['completion' => $completion]);
