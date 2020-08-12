@@ -379,6 +379,6 @@ class ServiceRequestObject
         $distance = $this->distanceMatrix->getDistanceMatrix($this->pickUpGeo, $this->destinationGeo);
         $this->setEstimatedTime($distance->getDurationInMinutes());
         $this->setEstimatedDistance($distance->getDistanceInKms());
-        $this->setQuantity($distance->getDistanceInKms());
+        $this->setQuantity(1);
     }
 }

@@ -1,12 +1,14 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -34,6 +36,7 @@ use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\PriceCalculation\PriceCalculationFactory;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\Exceptions\LocationIdNullException;
@@ -117,12 +120,11 @@ class OrderPlace
     /** @var JobDeliveryChargeCalculator */
     private $jobDeliveryChargeCalculator;
 
-    public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
+    public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
                                 UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
     {
-        $this->priceCalculation = $priceCalculation;
         $this->discountCalculation = $discountCalculation;
         $this->orderVoucherData = $orderVoucherData;
         $this->partnerListBuilder = $partnerListBuilder;
@@ -344,9 +346,13 @@ class OrderPlace
         return $this;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function setDeliveryAddressFromId()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
+        if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
@@ -355,6 +361,7 @@ class OrderPlace
             $this->setCustomerDeliveryAddress($new_address);
         }
         $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->setLocation($hyper_local->location);
     }
 
@@ -463,18 +470,22 @@ class OrderPlace
         $job_services = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
             $service = $selected_service->getService();
+            $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
-            $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+            $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
+            $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
-                'min_price' => $this->priceCalculation->getMinPrice(),
+                'min_price' => $this->category->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
@@ -482,7 +493,7 @@ class OrderPlace
                 'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => 0
+                'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
@@ -683,5 +694,12 @@ class OrderPlace
             return $job_service->unit_price * $job_service->quantity;
         })->sum();
         $this->orderAmount = $this->orderAmountWithoutDeliveryCharge + (double)$this->category->delivery_charge;
+    }
+
+    private function resolvePriceCalculation(Category $category)
+    {
+        $priceCalculationFactory = new PriceCalculationFactory();
+        $priceCalculationFactory->setCategory($category);
+        return $priceCalculationFactory->get();
     }
 }

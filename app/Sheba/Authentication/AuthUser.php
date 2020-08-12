@@ -24,7 +24,7 @@ class AuthUser
     private $resource;
     /** @var User */
     private $user;
-    /** @var Model */
+    /** @var Model|null */
     private $avatar;
     /** @var UserRepository */
     private $logisticUsers;
@@ -91,7 +91,6 @@ class AuthUser
         ]);
     }
 
-
     public function getAuthUser()
     {
         return $this->profile ? $this->profile : $this->avatar;
@@ -103,19 +102,14 @@ class AuthUser
         $this->resolveAvatar();
     }
 
-    /**
-     * @return null
-     */
     public function resolveAvatar()
     {
-        if ($this->profile) return null;
-        $avatar = $this->getAvatar();
+        if (!$this->payload['avatar']) return;
+        $avatar = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
+        $avatar = $avatar::find($this->payload['avatar']['type_id']);
         if ($avatar) $this->setAvatar($avatar);
     }
 
-    /**
-     * @return null
-     */
     public function resolveProfile()
     {
         if (!isset($this->payload['profile'])) return null;
@@ -155,8 +149,7 @@ class AuthUser
      */
     public function getAvatar()
     {
-        $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
-        return $model::find($this->payload['avatar']['type_id']);
+        return $this->avatar;
     }
 
     private function generateProfileInfo()
@@ -194,10 +187,12 @@ class AuthUser
     {
         if (!$this->profile) return null;
         if (!$this->profile->member || !$this->profile->member->businessMember) return null;
+        $business_member = $this->profile->member->businessMember;
+
         return [
-            'id' => $this->profile->member->businessMember->id,
-            'business_id' => $this->profile->member->businessMember->business_id,
-            'member_id' => $this->profile->member->businessMember->member_id,
+            'id' => $business_member->id,
+            'business_id' => $business_member->business_id,
+            'member_id' => $business_member->member_id,
         ];
     }
 

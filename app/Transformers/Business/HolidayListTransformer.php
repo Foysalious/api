@@ -1,31 +1,33 @@
 <?php namespace App\Transformers\Business;
 
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 
 class HolidayListTransformer extends TransformerAbstract
 {
-    private $firstDayofPreviousMonth;
-    private $lastDayofNextMonth;
+    private $firstDayOfPreviousMonth;
+    private $lastDayOfNextMonth;
 
-    public function __construct($firstDayofPreviousMonth,$lastDayofNextMonth)
+    /**
+     * HolidayListTransformer constructor.
+     * @param Carbon $firstDayOfPreviousMonth
+     * @param Carbon $lastDayOfNextMonth
+     */
+    public function __construct(Carbon $firstDayOfPreviousMonth, Carbon $lastDayOfNextMonth)
     {
-       $this->firstDayofPreviousMonth = $firstDayofPreviousMonth;
-       $this->lastDayofNextMonth = $lastDayofNextMonth;
+        $this->firstDayOfPreviousMonth = $firstDayOfPreviousMonth;
+        $this->lastDayOfNextMonth = $lastDayOfNextMonth;
     }
+
     public function transform($holiday)
     {
-        return $this->listAllDatesBetweenTwoDates($holiday->start_date, $holiday->end_date);
-    }
-
-    private function listAllDatesBetweenTwoDates($start_date, $end_date)
-    {
         $dates = [];
-        for($d = $start_date; $d->lte($end_date); $d->addDay()) {
-            if($start_date->between($this->firstDayofPreviousMonth,$this->lastDayofNextMonth))
-            {
+        for ($d = $holiday->start_date; $d->lte($holiday->end_date); $d->addDay()) {
+            if ($holiday->start_date->between($this->firstDayOfPreviousMonth, $this->lastDayOfNextMonth)) {
                 $dates[] = $d->format('Y-m-d');
             }
         }
+
         return $dates;
     }
 }
