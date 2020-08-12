@@ -496,6 +496,7 @@ class Loan
     /**
      * @param $request
      * @return bool
+     * @throws \Exception
      */
     public function claimStatusUpdate($request)
     {
