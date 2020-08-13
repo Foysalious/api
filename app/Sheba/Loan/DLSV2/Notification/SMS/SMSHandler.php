@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Loan\DLSV2\Notification\SMS;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Sheba\Dal\IPDCSmsLog\Model as IPDCSmsLogModel;
 use Sheba\ModificationFields;
@@ -61,6 +62,7 @@ class SMSHandler
 
     /**
      * @param $user
+     * @return SMSHandler
      */
     public function setUser($user)
     {
@@ -69,7 +71,6 @@ class SMSHandler
     }
 
     /**
-     * @param $user
      * @return IPDCSmsLogModel
      */
     public function shoot()
@@ -80,7 +81,6 @@ class SMSHandler
     }
 
     /**
-     * @param $user
      * @return IPDCSmsLogModel
      */
     private function shootLog()
@@ -104,7 +104,7 @@ class SMSHandler
             'used_on_id' => $this->loanId,
             'created_at' => Carbon::now(),
             'created_by' => $this->user->id,
-            'created_by_name' => $this->user->profile->name
+            'created_by_name' => ($this->user instanceof User) ? $this->user->name : $this->user->profile->name
         ];
     }
 
