@@ -1,6 +1,7 @@
 <?php namespace Sheba\OrderPlace;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\LocationService\LocationServiceNotFoundException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
@@ -33,6 +34,7 @@ use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\PriceCalculation\PriceCalculationFactory;
@@ -439,6 +441,11 @@ class OrderPlace
         $this->action->setSelectedPartner($this->selectedPartner)->setPartners($this->partnersFromList->toArray());
     }
 
+    /**
+     * @return Collection
+     * @throws LocationServiceNotFoundException
+     * @throws CorruptedPriceStructureException
+     */
     private function createJobService()
     {
         $job_services = collect();
@@ -446,6 +453,7 @@ class OrderPlace
             $service = $selected_service->getService();
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
+            if (!$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location #' . $this->location->id);
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
