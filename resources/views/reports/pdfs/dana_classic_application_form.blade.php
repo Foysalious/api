@@ -198,10 +198,17 @@
         .form-control {
             background-color: rgba(243, 247, 250, 0.7) !important;
             height: 20px;
-            display: block;
+            display: block !important;
             line-height: .8;
             width: 100%;
             padding: 0 5px;
+            font-size: 1rem;
+            font-weight: 400;
+            color: #495057;
+            background-color: #fff;
+            background-clip: padding-box;
+            border: 1px solid #ced4da;
+            border-radius: .25rem;
         }
 
         table {
@@ -454,7 +461,7 @@
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Date of trade license registration</th>
                                 <th style="width: 60%">
-                                    <div class="form-control"> no data</div>
+                                    <div class="form-control"> {{$final_information_for_loan['business']['trade_license_issue_date']}}</div>
                                 </th>
                             </tr>
                         </table>
@@ -470,7 +477,7 @@
                             <tr>
                                 <th style="width: 35%;padding-top: 5px;;">Is retailer bKash agent?</th>
                                 <th style="width: 60%">
-                                    <div class="form-control">no data</div>
+                                    <div class="form-control">{{$final_information_for_loan['finance']['bkash']['bkash_account_type'] == "agent"?"Yes":"No"}}</div>
                                 </th>
                             </tr>
                         </table>
@@ -560,6 +567,7 @@
         </table>
     </div>
 
+    <div style="page-break-before:always">&nbsp;</div>
     <div style="page-break-before:always">&nbsp;</div>
 
     <div>
