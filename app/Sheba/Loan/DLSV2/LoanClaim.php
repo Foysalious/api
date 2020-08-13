@@ -67,10 +67,10 @@ class LoanClaim
                 $claim_amount = $claim->amount;
                 $affiliate = $claim->resource->profile->affiliate;
                 if (isset($affiliate) && $claim_amount > 0)
-                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
+                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
                 $this->deductClaimApprovalFee();
                 $this->checkAndDeductAnnualFee($claim);
-                $this->sendNotificationToBankPortal();
+
             }
             $this->sendSms($to,$this->loanId,$claim->amount);
         }
@@ -207,16 +207,6 @@ class LoanClaim
         $claim = (new LoanClaimRepo(new LoanClaimModel()))->find($this->claimId);
         $claim->approved_msg_seen = $to;
         return $claim->update();
-    }
-
-    /**
-     * @return mixed
-     * @throws \Exception
-     */
-    private function sendNotificationToBankPortal()
-    {
-        $title = "Loan amount transferred to sManager";
-        Notifications::toBankUser(1, $title, null, $this->loanId);
     }
 
 }
