@@ -755,6 +755,7 @@ class Loan
      */
     public function statusChange($loan_id, Request $request)
     {
+        /** @var PartnerBankLoan $partner_bank_loan */
         $partner_bank_loan = $this->repo->find($loan_id);
         $user              = $this->user;
         if (!empty($user) && (!($user instanceof User) && ($user instanceof BankUser && $user->bank->id != $partner_bank_loan->bank_id))) {
@@ -796,9 +797,8 @@ class Loan
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
             if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
-                Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
-            if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
             {
+                Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
                 $reason = $new_status == LoanStatuses::DECLINED ? $description : null;
                 Notifications::sendStatusChangeSms($partner_bank_loan,$new_status,$reason,$user);
             }
