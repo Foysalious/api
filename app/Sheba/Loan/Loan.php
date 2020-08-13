@@ -798,11 +798,11 @@ class Loan
             Notifications::sendLoanNotification($title, $event_type, $event_id);
             if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
             {
-                Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
+                if($partner_bank_loan->type == LoanTypes::MICRO)
+                    Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
                 $reason = $new_status == LoanStatuses::DECLINED ? $description : null;
                 Notifications::sendStatusChangeSms($partner_bank_loan,$new_status,$reason,$user);
             }
-
 
         });
     }
