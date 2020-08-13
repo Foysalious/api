@@ -170,13 +170,26 @@ class LeaveController extends Controller
      */
     private function isNeedSubstitute(BusinessMember $business_member)
     {
-        return false;
-
         $leave_approvers = [];
         ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
             $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
         });
         if (in_array($business_member->id, $leave_approvers)) return true;
         return false;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLeaveSettings(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
+        $settings = ['is_substitute_required' => $is_substitute_required];
+
+        return api_response($request, null, 200, ['settings' => $settings]);
     }
 }

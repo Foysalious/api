@@ -252,11 +252,12 @@ class Creator
         $leave_applicant = $member->profile->name;
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
-
+        $start_date = $leave->start_date->format('d/m/Y');
+        $end_date = $leave->end_date->format('d/m/Y');
         $notification_data = [
-            "title" => 'Substitute Setup',
-            "message" => "$leave_applicant choose you a substitute.",
-            "event_type" => 'leave',
+            "title" => 'Leave substitute',
+            "message" => "You have been chosen as $leave_applicant's substitute from $start_date to $end_date",
+            "event_type" => 'substitute',
             "event_id" => $leave->id,
             "sound" => "notification_sound",
             "channel_id" => $channel,
