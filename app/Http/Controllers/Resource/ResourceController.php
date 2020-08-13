@@ -15,6 +15,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Review\RatingInfo;
+use Sheba\Resource\Review\ReviewList;
 use Sheba\Resource\Schedule\ResourceScheduleChecker;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 use Sheba\Resource\Service\ServiceList;
@@ -151,5 +153,17 @@ class ResourceController extends Controller
         $schedule = $resourceScheduleChecker->setSchedules($dates)->setDate($request->date)->setTime($request->time)->checkScheduleAvailability();
         if (empty($schedule)) return api_response($request, $schedule, 404, ["message" => 'Schedule not found.']);
         return api_response($request, $schedule, 200, ['schedule' => $schedule]);
+    }
+
+    public function getRatingInfo(Request $request, RatingInfo $ratingInfo)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+
+        $rating = $ratingInfo->setResource($resource)->getRatingInfo();
+
+
+        return $rating ? api_response($request, $rating, 200, ['info' => $rating]) : api_response($request, null, 404);
     }
 }
