@@ -87,7 +87,8 @@ abstract class TopUpCommission
         $transaction = (new TopUpTransaction())
             ->setAmount($this->amount - $this->topUpOrder->agent_commission)
             ->setLog($this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile)
-            ->setTopUpOrder($this->topUpOrder);
+            ->setTopUpOrder($this->topUpOrder)
+            ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
         $this->agent->topUpTransaction($transaction);
     }
 
@@ -141,10 +142,10 @@ abstract class TopUpCommission
         $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
         $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
-        $this->refundUser($amount_after_commission, $log);
+        $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
 
-    private function refundUser($amount, $log)
+    private function refundUser($amount, $log,$isRobiTopUp=false)
     {
         if ($amount == 0) return;
         /*
@@ -155,5 +156,7 @@ abstract class TopUpCommission
         $model = $this->agent;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
             ->setAmount($amount)->setLog($log)->dispatch();
+        // Robi top up wallet transaction
+//           (new RobiTopupWalletTransactionHandler())->setAmount($amount)->setLog($log)->setType(Types::credit())->store();
     }
 }
