@@ -16,8 +16,8 @@ Class BankUserNotificationRepository extends NotificationRepository
                 array_add($notification, 'icon', $icon);
                 return $notification;
             });
-
-        return $notifications;
+        $count = $model->notifications()->where('is_seen', '0')->count();
+        return ["notifications" => $notifications, 'unseen_notifications_count' => $count];
     }
 
     public function setNotificationSeen($id)
