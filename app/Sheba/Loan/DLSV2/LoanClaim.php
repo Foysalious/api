@@ -54,7 +54,7 @@ class LoanClaim
      * @return bool
      * @throws \Exception
      */
-    public function updateStatus($from, $to)
+    public function updateStatus($from, $to , $user)
     {
         $claim = (new LoanClaimRepo(new LoanClaimModel()))->find($this->claimId);
         if($claim && $claim->status == $from){
@@ -72,7 +72,7 @@ class LoanClaim
                 $this->checkAndDeductAnnualFee($claim);
 
             }
-            $this->sendSms($to,$this->loanId,$claim->amount);
+            $this->sendSms($to,$this->loanId,$claim->amount, $user);
         }
 
         return true;
@@ -82,8 +82,9 @@ class LoanClaim
      * @param $to
      * @param $loan_id
      * @param $claim_amount
+     * @param $user
      */
-    private function sendSms($to, $loan_id, $claim_amount)
+    private function sendSms($to, $loan_id, $claim_amount , $user)
     {
         $message = null;
         $type = null;
@@ -98,7 +99,7 @@ class LoanClaim
             $type = 'Claim Declined';
         }
 
-        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->shoot();
+        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->setUser($user)->shoot();
 
     }
 
