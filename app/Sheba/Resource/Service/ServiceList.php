@@ -149,7 +149,7 @@ class ServiceList
                 $service['fixed_price'] = null;
             } else {
                 $service['questions'] = $service['option_prices'] = [];
-                $service['fixed_price'] = $variables->price ? (double)$variables->price : null;
+                $service['fixed_price'] = is_object($variables->price) ? $variables->price : (double)$variables->price;
             }
             array_forget($service, 'variables');
             removeRelationsAndFields($service);
