@@ -67,8 +67,9 @@ class Notifications
      * @param $partner_bank_loan
      * @param $new_status
      * @param $reason
+     * @param $user
      */
-    public static function sendStatusChangeSms($partner_bank_loan, $new_status, $reason)
+    public static function sendStatusChangeSms($partner_bank_loan, $new_status, $reason,$user)
     {
         $message = null;
         $type = null;
@@ -87,7 +88,7 @@ class Notifications
             $message = 'প্রিয় '.$partner_bank_loan->partner->getContactPerson().', আপনার রবি রিচার্জ লোন আবেদনটি '. $reason .' কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Loan Declined';
         }
-        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->shoot();
+        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->setUser($user)->shoot();
     }
 
     /**

@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Loan\DLSV2\Notification\SMS;
 
+use Carbon\Carbon;
 use Sheba\Dal\IPDCSmsLog\Model as IPDCSmsLogModel;
 use Sheba\ModificationFields;
 use Sheba\Sms\Sms;
@@ -15,6 +16,7 @@ class SMSHandler
     private $ipdcSmsLogData;
     private $msgType;
     private $loanId;
+    private $user;
 
 
     /**
@@ -58,7 +60,17 @@ class SMSHandler
     }
 
     /**
-     * @return bool
+     * @param $user
+     */
+    public function setUser($user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * @param $user
+     * @return IPDCSmsLogModel
      */
     public function shoot()
     {
@@ -68,13 +80,14 @@ class SMSHandler
     }
 
     /**
-     * @return bool
+     * @param $user
+     * @return IPDCSmsLogModel
      */
     private function shootLog()
     {
         $this->makeLogData();
-        $this->ipdcSmsLog = new IPDCSmsLogModel($this->withCreateModificationField($this->ipdcSmsLogData));
-        return $this->ipdcSmsLog->save();
+        $this->ipdcSmsLog = new IPDCSmsLogModel();
+        return $this->ipdcSmsLog->create($this->ipdcSmsLogData);
     }
 
     /**
@@ -88,8 +101,10 @@ class SMSHandler
             'content' => $this->message,
             'log' => $this->msgType,
             'used_on_type' => "App\\Models\\PartnerBankLoan",
-            'used_on_id' => $this->loanId
-
+            'used_on_id' => $this->loanId,
+            'created_at' => Carbon::now(),
+            'created_by' => $this->user->id,
+            'created_by_name' => $this->user->profile->name
         ];
     }
 
