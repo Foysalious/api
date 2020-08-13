@@ -4,6 +4,7 @@
 namespace Sheba\Loan;
 
 use App\Models\BankUser;
+use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
 use Exception;
 use Sheba\Dal\PartnerBankLoan\Statuses;
 use Sheba\Notification\NotificationHandler;
@@ -60,6 +61,33 @@ class Notifications
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
+    /**
+     * @param $partner_bank_loan
+     * @param $new_status
+     * @param $reason
+     */
+    public static function sendStatusChangeSms($partner_bank_loan, $new_status, $reason)
+    {
+        $message = null;
+        $type = null;
+        if($new_status == Statuses::APPROVED)
+        {
+            $message = 'প্রিয় '. $partner_bank_loan->partner->getContactPerson() .', আপনার রবি রিচার্জ লোন আবেদন অনুমোদন করা হয়েছে। লোন ক্রেডিট গ্রহণের জন্য অপেক্ষা করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $type = 'Loan Approved';
+        }
+        if($new_status == Statuses::DISBURSED)
+        {
+            $message = 'প্রিয় '. $partner_bank_loan->partner->getContactPerson(). ', আপনার রবি ক্রেডিট অ্যাকাউন্ট-এ '. convertNumbersToBangla($partner_bank_loan->loan_amount,true, 0) . ' টাকা জমা করা হয়েছে। ব্যালেন্স জানতে আপনার sManager অ্যাপ এর লোন সেকশন চেক করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $type = 'Loan Disbursed';
+        }
+        if($new_status == Statuses::DECLINED)
+        {
+            $message = 'প্রিয় '.$partner_bank_loan->partner->getContactPerson().', আপনার রবি রিচার্জ লোন আবেদনটি '. $reason .' কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $type = 'Loan Declined';
+        }
+        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->shoot();
     }
 
     /**

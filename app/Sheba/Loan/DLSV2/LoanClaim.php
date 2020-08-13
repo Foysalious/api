@@ -1,6 +1,8 @@
 <?php namespace App\Sheba\Loan\DLSV2;
 
 
+use App\Models\PartnerBankLoan;
+use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
 use Carbon\Carbon;
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
@@ -66,13 +68,38 @@ class LoanClaim
                 $affiliate = $claim->resource->profile->affiliate;
                 if (isset($affiliate) && $claim_amount > 0)
                     (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setAmount($claim_amount)->setType("credit")->process();
-                $this->deductClaimApprovalFee($claim);
+                $this->deductClaimApprovalFee();
                 $this->checkAndDeductAnnualFee($claim);
                 $this->sendNotificationToBankPortal();
             }
+            $this->sendSms($to,$this->loanId,$claim->amount);
         }
 
         return true;
+    }
+
+    /**
+     * @param $to
+     * @param $loan_id
+     * @param $claim_amount
+     */
+    private function sendSms($to, $loan_id, $claim_amount)
+    {
+        $message = null;
+        $type = null;
+        $partner_bank_loan = PartnerBankLoan::find($loan_id);
+        if ($to == Statuses::APPROVED) {
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', অভিনন্দন! আপনার ' . $claim_amount . ' টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $type = 'Claim Approved';
+        }
+
+        if ($to == Statuses::DECLINED) {
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $type = 'Claim Declined';
+        }
+
+        (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->shoot();
+
     }
 
     private function setDefaulterDate($claim)
