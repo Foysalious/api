@@ -24,11 +24,11 @@ class ResourceHomeTransformer extends TransformerAbstract
             'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
             'balance' => $resource->totalWalletAmount(),
             'partner_id' => $resource->firstPartner()->id,
-            'geo_informations' => [
-                'lat' => $geo ? (double)$geo->lat : null,
-                'lng' => $geo ? (double)$geo->lng : null,
-                'radius' => $geo ? (!empty($geo->radius) ? (double)$geo->radius : null) : null,
-            ]
+            'geo_informations' => $geo ? [
+                'lat' => (double)$geo->lat,
+                'lng' => (double)$geo->lng,
+                'radius' => !empty($geo->radius) ? (double)$geo->radius : null
+            ] : null
         ];
 
     }
