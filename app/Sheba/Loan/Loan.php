@@ -500,7 +500,7 @@ class Loan
      */
     public function claimStatusUpdate($request)
     {
-        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to);
+        return (new LoanClaim())->setLoan($request->loan_id)->setClaim($request->claim_id)->updateStatus($request->from, $request->to, $request->user);
     }
 
     public function personalInfo()
