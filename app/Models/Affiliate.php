@@ -2,6 +2,7 @@
 
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
+use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Carbon\Carbon;
 use Sheba\Dal\Affiliate\Events\AffiliateSaved;
 use Sheba\Dal\BaseModel;
@@ -218,19 +219,17 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-       if (!$transaction->getIsRobiTopUp()){
-           (new WalletTransactionHandler())
-               ->setModel($this)
-               ->setAmount($transaction->getAmount())
-               ->setSource(TransactionSources::TOP_UP)
-               ->setType(Types::debit())
-               ->setLog($transaction->getLog())
-               ->dispatch();
-       }else{
-           // Robi top up wallet transaction
-//           (new RobiTopupWalletTransactionHandler())->setAmount($amount)->setLog($log)->setType(Types::debit())->store();
-
-       }
+        if (!$transaction->getIsRobiTopUp()) {
+            (new WalletTransactionHandler())
+                ->setModel($this)
+                ->setAmount($transaction->getAmount())
+                ->setSource(TransactionSources::TOP_UP)
+                ->setType(Types::debit())
+                ->setLog($transaction->getLog())
+                ->dispatch();
+        } else {
+            (new RobiTopupWalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setLog($transaction->getLog())->setType(Types::debit())->store();
+        }
     }
 
     public function walletTransaction($data)
