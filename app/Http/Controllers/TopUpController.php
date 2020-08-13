@@ -5,7 +5,6 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
-use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -79,10 +78,11 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-        if($request->is_robi_topup == 1 && !$this->checkVendor($request->vendor_id))
-            return api_response($request, null, 403, ['message' => "Invalid Vendor"]);
+        if($request->is_robi_topup == 1)
+            $this->checkVendor($request->vendor_id);
 
         $agent = $this->getAgent($request);
+
         if ($this->hasLastTopupWithinIntervalTime($agent))
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
@@ -97,13 +97,16 @@ class TopUpController extends Controller
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
+            if($request->affiliate)
+                ((new NotificationRepository())->pushNotificationToAffiliate('topup_failed',$request->affiliate->id,$request->mobile));
+
             return api_response($request, null, 500);
         }
     }
 
     private function checkVendor($vendor_id)
     {
-        $eligible_vendors = TopUpVendor::whereIn('name',[Vendors::ROBI,Vendors::AIRTEL])->pluck('id');
+        $eligible_vendors = TopUpVendor::whereIn('name',['Robi','Airtel'])->pluck('id');
         return in_array($vendor_id,$eligible_vendors->toArray());
     }
 

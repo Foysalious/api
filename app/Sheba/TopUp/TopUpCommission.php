@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -154,9 +155,11 @@ abstract class TopUpCommission
          $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
+        if(!$isRobiTopUp)
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::credit())
             ->setAmount($amount)->setLog($log)->dispatch();
-        // Robi top up wallet transaction
-//           (new RobiTopupWalletTransactionHandler())->setAmount($amount)->setLog($log)->setType(Types::credit())->store();
+        if($isRobiTopUp)
+            (new RobiTopupWalletTransactionHandler())->setModel($model)->setAmount($amount)->setLog($log)->setType(Types::credit())->store();
+
     }
 }
