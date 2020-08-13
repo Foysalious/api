@@ -59,6 +59,10 @@ class PdfHandler extends Handler
                     ],
                 'default_font' => 'kalpurush'
             ]);
+            $mPDF->simpleTables=true;
+            $mPDF->packTableData=true;
+            $mPDF->shrink_tables_to_fit=1;
+            $keep_table_proportions = TRUE;
             $data=view($this->viewFileName,$this->data)->render();
             $mPDF->SetTitle($this->filename);
             $mPDF->WriteHTML(file_get_contents(resource_path('assets/css/pdf.css')),HTMLParserMode::HEADER_CSS);

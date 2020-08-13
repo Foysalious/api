@@ -1,111 +1,111 @@
 <table>
     <tr>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
                         <td>
-                            <div class="form-control">Jan</div>
+                            <span class="form-control">Jan</span>
                         </td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Feb</div></td>
+                        <td><span class="form-control">Feb</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Mar</div></td>
+                        <td><span class="form-control">Mar</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Apr</div></td>
+                        <td><span class="form-control">Apr</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">May</div></td>
+                        <td><span class="form-control">May</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Jun</div></td>
+                        <td><span class="form-control">Jun</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Jan</div></td>
+                        <td><span class="form-control">Jan</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Feb</div></td>
+                        <td><span class="form-control">Feb</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Mar</div></td>
+                        <td><span class="form-control">Mar</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Apr</div></td>
+                        <td><span class="form-control">Apr</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">May</div></td>
+                        <td><span class="form-control">May</span></td>
                     </tr>
                 </table>
             </div>
         </td>
-        <td width="16.66%">
+        <td>
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><div class="form-control">Jun</div></td>
+                        <td><span class="form-control">Jun</span></td>
                     </tr>
                 </table>
             </div>

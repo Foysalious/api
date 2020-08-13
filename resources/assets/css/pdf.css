@@ -48,20 +48,6 @@ div {
 
 
 
-.form-control {
-    background-color: rgba(243, 247, 250, 0.7) !important;
-    height: 20px!important;
-    display: block !important;
-    line-height: .8;
-    padding: 10px !important;
-    font-size: 12px !important;
-    font-weight: 400;
-    width: 100%;
-    color: #495057;
-    box-sizing: border-box!important;
-    border: 1px solid #ced4da;
-    border-radius: .25rem !important;
-}
 
 table {
     border-collapse: collapse;
@@ -80,6 +66,25 @@ td, th {
     vertical-align: baseline;
 }
 
+.form-control {
+    background-color: rgba(243, 247, 250, 0.7) !important;
+    height: 20px!important;
+    display: inline-block !important;
+    line-height: .8;
+    padding: 10px !important;
+    font-size: 12px !important;
+    font-weight: 400;
+    width: 100%;
+    color: #495057;
+    box-sizing: border-box!important;
+    border: 1px solid #ced4da;
+    border-radius: .25rem !important;
+}
+.form-control-l{
+    margin: 4px;
+    background-color: #0c99f7;
+    padding: 1rem;
+}
 .cover-letter {
     font-size: 12px;
 }
@@ -150,5 +155,6 @@ td, th {
     border-collapse: collapse;
 }
 .details-table tr th{
-    background-color: red;
+    position: relative;
+    display: block;
 }
