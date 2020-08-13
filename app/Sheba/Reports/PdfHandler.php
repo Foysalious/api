@@ -6,6 +6,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\File;
 use Mpdf\Config\ConfigVariables;
 use Mpdf\Config\FontVariables;
+use Mpdf\HTMLParserMode;
 use Mpdf\Mpdf;
 use Mpdf\MpdfException;
 use Sheba\FileManagers\CdnFileManager;
@@ -59,8 +60,10 @@ class PdfHandler extends Handler
                 'default_font' => 'kalpurush'
             ]);
             $data=view($this->viewFileName,$this->data)->render();
-            $mPDF->WriteHTML("$data");
-            return $mPDF->Output("$this->filename.$this->downloadFormat","d");
+            $mPDF->SetTitle($this->filename);
+            $mPDF->WriteHTML(file_get_contents(resource_path('assets/css/pdf.css')),HTMLParserMode::HEADER_CSS);
+            $mPDF->WriteHTML("$data",HTMLParserMode::HTML_BODY);
+            return $mPDF->Output();
         }
         return $this->pdf->download("$this->filename.$this->downloadFormat");
 

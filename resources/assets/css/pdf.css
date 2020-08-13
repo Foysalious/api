@@ -1,0 +1,154 @@
+
+/*# sourceMappingURL=bootstrap.min.css.map */
+body {
+    font-family: 'kalpurush', sans-serif!important;
+}
+
+.table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+}
+
+.heading {
+    width: 100%;
+    display: inline-block;
+    box-sizing: border-box;
+    font-size: 14px;
+    padding: 10px;
+}
+
+.loan-summery p {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.loan-summery span {
+    font-size: 14px;
+    font-weight: 600;
+    color: #121212;
+}
+
+.account-info p {
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.inner-div {
+    padding: 5px;
+}
+
+.inner-div p {
+    font-size: 14px;
+}
+
+div {
+    box-sizing: border-box
+}
+
+
+
+.form-control {
+    background-color: rgba(243, 247, 250, 0.7) !important;
+    height: 20px!important;
+    display: block !important;
+    line-height: .8;
+    padding: 10px !important;
+    font-size: 12px !important;
+    font-weight: 400;
+    width: 100%;
+    color: #495057;
+    box-sizing: border-box!important;
+    border: 1px solid #ced4da;
+    border-radius: .25rem !important;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+
+
+td, th {
+    text-align: left;
+    padding: 5px;
+    font-size: 12px;
+    font-weight: normal;
+    box-sizing: border-box;
+    position: relative;
+    vertical-align: baseline;
+}
+
+.cover-letter {
+    font-size: 12px;
+}
+
+.cover-letter span {
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.sheba-logo {
+    margin-right: 30px;
+    height: 25px;
+}
+
+.bank-logo {
+    height: 25px;
+}
+
+.horizontal {
+    border: none;
+    border-left: 2px solid hsla(200, 10%, 50%, 100);
+    height: 25px;
+    width: 5px;
+    color: #121212;
+}
+
+.empty_table {
+    border: 1px dashed black;
+    margin: 3px;
+    border-radius: 3px;
+}
+
+.bottom-letter {
+    font-size: 13px;
+}
+
+.static-node {
+    color: red;
+    font-size: 12px;
+    margin-top: 10px;
+}
+
+.title {
+    text-align: center;
+    font-size: 18px;
+    color: #FB0973;
+    font-weight: 600;
+}
+
+.month-div {
+    padding: 5px;
+    text-align: center;
+}
+
+.rules table {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+
+.rules td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 4px;
+}
+
+.rules tr {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+.details-table tr th{
+    background-color: red;
+}
