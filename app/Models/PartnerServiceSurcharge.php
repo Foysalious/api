@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\PartnerService\PartnerService;
 
 class PartnerServiceSurcharge extends Model
 {
@@ -29,7 +30,7 @@ class PartnerServiceSurcharge extends Model
 
     public function scopeRunningBetween($query, Carbon $start_date, Carbon $end_date)
     {
-        $query->where(function($q) use ($start_date, $end_date) {
+        $query->where(function ($q) use ($start_date, $end_date) {
             $q->runningAt($start_date)
                 ->orWhere(function ($q1) use ($end_date) {
                     $q1->runningAt($end_date);

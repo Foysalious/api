@@ -30,7 +30,11 @@ class PartnerReferralController extends Controller
                     'total_income'  => $income,
                     'total_sms'     => $total_sms,
                     'total_success' => $total_success,
-                    'total_step'    => count(config('partner.referral_steps'))
+                    'total_step'    => count(config('partner.referral_steps')),
+                    'stepwise_income' => collect(config('partner.referral_steps'))
+                        ->map(function($item) {
+                            return $item['amount'];
+                        })
                 ]
             ]);
         } catch (InvalidFilter $e) {
@@ -55,9 +59,7 @@ class PartnerReferralController extends Controller
     {
         try {
             $refer_code = $request->partner->refer_code;
-            $url_to_shorten = config('partner')['referral_base_link'] . $refer_code;
-            $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
-            return api_response($request, $deep_link, 200, ['link' => $deep_link]);
+            return api_response($request, $refer_code, 200, ['link' => $refer_code]);
 
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
@@ -124,7 +126,7 @@ class PartnerReferralController extends Controller
                 ),
                 array(
                     'question' => 'রেফার এ সর্বোচ্চ কত টাকা আয় করতে পারবেন?',
-                    'answer' => 'প্রতিটা রেফার থেকে আপনি সর্বোচ্চ ৪০০ টাকা এবং যত খুশি তত রেফার করে আয় করতে পারবেন।'
+                    'answer' => 'প্রতিটা রেফার থেকে আপনি সর্বোচ্চ ৬০ টাকা এবং যত খুশি তত রেফার করে আয় করতে পারবেন।'
                 ),
                 array(
                     'question' => 'কিভাবে রেফার করবেন?',

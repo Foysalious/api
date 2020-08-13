@@ -1,9 +1,9 @@
 <?php namespace Sheba;
 
+use LaravelFCM\Facades\FCM;
 use LaravelFCM\Message\OptionsBuilder;
 use LaravelFCM\Message\PayloadDataBuilder;
 use LaravelFCM\Message\PayloadNotificationBuilder;
-use FCM;
 use LaravelFCM\Message\Topics;
 
 class PushNotificationHandler
@@ -22,6 +22,7 @@ class PushNotificationHandler
         $topic = (new Topics())->topic($topic);
 
         if (config('sheba.send_push_notifications')) {
+
             $topicResponse = FCM::sendToTopic($topic, null, $notification, $data);
             if (strpos($str_topic, config('sheba.push_notification_topic_name.manager')) == 0) {
                 $str_topic = str_replace(config('sheba.push_notification_topic_name.manager'), config('sheba.push_notification_topic_name.manager_new'), $str_topic);

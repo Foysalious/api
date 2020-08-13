@@ -14,7 +14,7 @@ use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Models\PartnerPosCustomer;
 use App\Models\PartnerResource;
-use App\Models\PartnerService;
+use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
 use App\Models\ReviewQuestionAnswer;
@@ -1429,6 +1429,20 @@ class PartnerController extends Controller
                 array_push($resource_types, $unit);
             }
             return api_response($request, null, 200, ['resource_types' => $resource_types]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBusinessTypes(Request $request)
+    {
+        try {
+            return api_response($request, null, 200, ['partner_business_types' => constants('PARTNER_BUSINESS_TYPE')]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

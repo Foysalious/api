@@ -117,6 +117,11 @@ class Category extends Model
         return $this->hasOne(CrosssaleServiceModel::class);
     }
 
+    /**
+     *
+     * Other Methods
+     */
+
     public function scopeParents($query)
     {
         $query->where([
@@ -322,6 +327,11 @@ class Category extends Model
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_IDS'))));
     }
 
+    public function isRentACarMasterCategory()
+    {
+        return $this->id == config('sheba.car_rental.master_category_id');
+    }
+
     public function isRentACarOutsideCity()
     {
         return in_array($this->id, array_map('intval', explode(',', env('RENT_CAR_OUTSIDE_ID'))));
@@ -348,5 +358,10 @@ class Category extends Model
     public function isMarketPlacePublished()
     {
         return $this->publication_status;
+    }
+
+    public function scopeHasChildren($query)
+    {
+
     }
 }

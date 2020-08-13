@@ -5,6 +5,7 @@ use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use Sheba\Dal\Affiliate\Events\AffiliateSaved;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\RobiTopupWalletTransaction\Model as RobiTopupWalletTransaction;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -12,6 +13,7 @@ use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Payment\PayableUser;
+use Sheba\Transactions\Types;
 use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -38,6 +40,13 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
     public function profile()
     {
         return $this->belongsTo(Profile::class);
+    }
+
+    public function retailers()
+    {
+        /** @var Profile $profile */
+        $profile = $this->profile;
+        return $profile->retailers();
     }
 
     public function affiliations()
@@ -172,6 +181,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
         return $this->hasMany(AffiliateTransaction::class);
     }
 
+    public function robi_topup_wallet_transactions()
+    {
+        return $this->hasMany(RobiTopupWalletTransaction::class);
+    }
+
     public function earningAmountDateBetween(TimeFrame $time_frame)
     {
         $earning = $this->transactions()->earning()
@@ -204,15 +218,11 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
         (new WalletTransactionHandler())
             ->setModel($this)
             ->setAmount($transaction->getAmount())
             ->setSource(TransactionSources::TOP_UP)
-            ->setType('debit')
+            ->setType(Types::debit())
             ->setLog($transaction->getLog())
             ->dispatch();
     }
@@ -268,7 +278,7 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType(Types::debit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
@@ -277,7 +287,7 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->creditWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType(Types::credit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -299,7 +309,7 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->creditWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType(Types::credit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function shebaCredit()

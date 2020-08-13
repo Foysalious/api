@@ -1,12 +1,14 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\City;
+use App\Models\District;
 use App\Models\Division;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Transformers\CustomSerializer;
 use App\Transformers\DivisionsWithDistrictsTransformer;
+use App\Transformers\DistrictsWithThanasTransformer;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
@@ -208,6 +210,21 @@ class LocationController extends Controller
             $formatted_data = $manager->createData($resource)->toArray()['data'];
             return api_response($request, $request, 200, $formatted_data);
         } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, $request, 500);
+        }
+    }
+
+    public function getDistrictsWithThanas(Request $request) {
+        try {
+            $districts = District::with('thanas')->get();
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($districts, new DistrictsWithThanasTransformer());
+            $data = $manager->createData($resource)->toArray()['data'];
+            return api_response($request, $request, 200, $data);
+        } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, $request, 500);
         }

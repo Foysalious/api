@@ -35,6 +35,9 @@ class CustomerDeliveryAddressController extends Controller
     public function index($customer, Request $request)
     {
         try {
+            if (isScriptedData($request["address"])) {
+                return api_response($request, null, 400, ['message' => "Scripted Address"]);
+            }
             $customer = $request->customer->load(['profile' => function ($q) {
                 $q->select('id', 'name', 'mobile');
             }]);

@@ -69,7 +69,7 @@ class BusinessesController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -157,7 +157,7 @@ class BusinessesController extends Controller
                 "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
             ];
             return api_response($request, $vendor, 200, ['vendor' => $vendor]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -177,7 +177,7 @@ class BusinessesController extends Controller
                 "nid_image_back" => $resource->profile->nid_image_back
             ];
             return api_response($request, $resource, 200, ['vendor' => $resource]);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -244,7 +244,7 @@ class BusinessesController extends Controller
             $business = $request->business;
             $this->setModifier($business);
             return api_response($request, null, 200);
-        } catch (Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -256,7 +256,7 @@ class BusinessesController extends Controller
      * @param ExcelHandler $excel
      * @param TransactionReportData $data
      * @throws NotAssociativeArray
-     * @throws Exception
+     * @throws \Exception
      */
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
     {

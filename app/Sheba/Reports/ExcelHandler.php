@@ -134,9 +134,10 @@ class ExcelHandler extends Handler
     /**
      * Generate and download the excel.
      *
+     * @param bool $mPdf
      * @throws Exception
      */
-    public function download()
+    public function download($mPdf=false)
     {
         $this->create()->download($this->downloadFormat);
     }

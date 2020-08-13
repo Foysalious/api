@@ -16,6 +16,10 @@ return [
     'partners_url' => env('SHEBA_PARTNER_END_URL'),
     'db_backup' => env('SHEBA_DB_BACKUP', false),
     'portal' => 'customer-portal',
+    "AWS_KEY" => env('AWS_KEY'),
+    "AWS_SECRET" => env('AWS_SECRET'),
+    "AWS_REGION" => env('AWS_REGION'),
+    "AWS_BUCKET" => env('AWS_BUCKET'),
     //'revision' => file_get_contents(base_path()."/revision"),
     'order_code_start' => 8000,
     'job_code_start' => 16000,
@@ -30,16 +34,20 @@ return [
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
         'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
+        'affiliate' => env('AFFILIATE_TOPIC_NAME', 'affiliate_')
     ],
     'push_notification_channel_name' => [
         'customer' => 'customer_channel',
         'manager' => 'manager_channel',
         'resource' => 'resource_channel',
-        'employee' => 'employee_channel'
+        'employee' => 'employee_channel',
+        'affiliate' => 'affiliate_channel'
     ],
     'push_notification_sound' => [
         'customer' => 'default',
-        'manager' => 'notification_sound'
+        'manager' => 'notification_sound',
+        'affiliate' => 'default',
+        'employee'  => 'notification_sound'
     ],
     'partner_packages' => [
         'ESP' => 4,
@@ -125,7 +133,7 @@ return [
     'online_payment_discount_threshold_minutes' => null,
     'online_payment_discount_percentage' => env('ONLINE_PAYMENT_DISCOUNT_PERCENTAGE', 0),
     'car_rental' => [
-        'master_category_id' => env('RENT_A_CAR_CATEGORY_ID'),
+        'master_category_id' => (int)env('RENT_A_CAR_CATEGORY_ID', 221),
         'secondary_category_ids' => explode(',', env('RENT_CAR_IDS')),
         'one_way_id' => env('ONE_WAY_SERVICE_ID'),
         'round_trip_id' => env('ROUND_TRIP_SERVICE_ID'),
@@ -150,6 +158,6 @@ return [
     'tp_proxy_url' => env('TP_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
-    'lpg_service_id' => env('LPG_SERVICE_ID'),
+    'lpg_service_id' => env('LPG_SERVICE_ID',676),
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID')
 ];

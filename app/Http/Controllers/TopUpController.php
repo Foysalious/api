@@ -4,6 +4,7 @@ use App\Models\Business;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -73,7 +74,8 @@ class TopUpController extends Controller
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
-            'amount' => 'required|min:10|max:1000|numeric'
+            'amount' => 'required|min:10|max:1000|numeric',
+            'from_robi_topup_wallet' => 'sometimes|in:0,1'
         ]);
         $agent = $this->getAgent($request);
 
@@ -81,6 +83,9 @@ class TopUpController extends Controller
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
+        if(isset($request->from_robi_topup_wallet) && $request->from_robi_topup_wallet)
+            $top_up_request->setRobiTopupWallet($request->from_robi_topup_wallet);
+
         if ($top_up_request->hasError())
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 

@@ -11,9 +11,9 @@ use Sheba\Utility\UtilityOrder;
 
 class Payable extends Model
 {
-    protected $guarded = ['id'];
-    protected $casts = ['amount' => 'double'];
-    public $timestamps = false;
+    protected $guarded    = ['id'];
+    protected $casts      = ['amount' => 'double'];
+    public    $timestamps = false;
 
     private $typeObject;
 
@@ -61,7 +61,9 @@ class Payable extends Model
     {
         return $this->type == Types::PROCUREMENT;
     }
-
+    public function isLoan(){
+        return $this->type==Types::PARTNER_BANK_LOAN;
+    }
     /**
      * @param $type
      */
@@ -92,6 +94,8 @@ class Payable extends Model
             return 'payment_link';
         } else if ($this->isProcurement()) {
             return 'procurement';
+        }else if ($this->isLoan()){
+            return 'loan';
         }
     }
 
@@ -118,6 +122,8 @@ class Payable extends Model
             $class_name .= 'PaymentLinkOrderComplete';
         } else if ($this->completion_type == 'procurement') {
             $class_name .= 'ProcurementComplete';
+        } else if ($this->completion_type == 'partner_bank_loan') {
+            $class_name .= 'LoanRepaymentComplete';
         }
 
         return app($class_name);
@@ -186,6 +192,8 @@ class Payable extends Model
             $model .= "Transport\\TransportTicketOrder";
         } elseif ($this->type == Types::PROCUREMENT) {
             $model .= "Procurement";
+        }elseif($this->type== Types::PARTNER_BANK_LOAN){
+            $model.="PartnerBankLoan";
         }
 
         return $model;

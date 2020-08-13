@@ -10,6 +10,7 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
+use Sheba\Transactions\Types;
 use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -20,7 +21,6 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
-use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -169,7 +169,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setLog($transaction->getLog())
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType(Types::debit())->setLog($transaction->getLog())
             ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
 
