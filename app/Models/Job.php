@@ -30,6 +30,8 @@ use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\JobMaterialLog\JobMaterialLog;
 use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
+use Sheba\Dal\JobPartnerChangeLog\JobPartnerChangeLog;
+use Sheba\Dal\JobStatusChangeLog\JobStatusChangeLog;
 
 class Job extends BaseModel implements MorphCommentable
 {
