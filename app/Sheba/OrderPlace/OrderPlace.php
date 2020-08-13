@@ -479,7 +479,7 @@ class OrderPlace
             $service = $selected_service->getService();
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            if (!$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location');
+            if (!$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location #' . $this->location->id);
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
