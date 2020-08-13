@@ -11,8 +11,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
-use Sheba\FileManagers\CdnFileManager;
-use Sheba\FileManagers\FileManager;
 use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
@@ -30,15 +28,9 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
 
 class TopUpController extends Controller
 {
-    use FileManager, CdnFileManager;
-    private $file;
-    /** @var LaravelExcelReader */
-    private $excel = null;
-
     public function getVendor(Request $request)
     {
         try {
