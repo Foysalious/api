@@ -144,7 +144,7 @@ class ServiceList
         $services->each(function (&$service) {
             $variables = json_decode($service->variables);
             if ($service->variable_type == 'Options') {
-                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                $service['questions'] = $this->formatServiceQuestionsAndAnswers($service);
                 $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
                 $service['fixed_price'] = null;
             } else {
