@@ -11,6 +11,7 @@ use Sheba\Loan\Notifications;
 use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 
 class LoanClaim
 {
@@ -72,6 +73,7 @@ class LoanClaim
                 $this->checkAndDeductAnnualFee($claim);
 
             }
+            $this->sendNotificationToBank($to,$claim->amount);
             $this->sendSms($to,$this->loanId,$claim->amount, $user);
         }
 
@@ -101,6 +103,37 @@ class LoanClaim
 
         (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->setUser($user)->shoot();
 
+    }
+
+    private function sendNotificationToBank($to, $claim_amount)
+    {
+        $partner_bank_loan = PartnerBankLoan::find($this->loanId);
+        $title             = null;
+        $body              = null;
+        $event_type        = null;
+        $topic             = config('sheba.push_notification_topic_name.manager') . $partner_bank_loan->partner_id;
+        $channel           = config('sheba.push_notification_channel_name.manager');
+        $sound             = config('sheba.push_notification_sound.manager');
+
+        if ($to == Statuses::APPROVED) {
+            $title      = "অভিনন্দন! আপনার $claim_amount টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।";
+            $body       = "প্রিয় " . $partner_bank_loan->partner->getContactPerson() . ", আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+            $event_type = "LoanClaimApproved";
+        }
+        if ($to == Statuses::DECLINED) {
+            $title      = "দুঃখিত! আপনার রবি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
+            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $event_type = "LoanClaimRejected";
+        }
+        $notification_data = [
+            "title"      => $title,
+            "message"    => $body,
+            "sound"      => "notification_sound",
+            "event_type" => $event_type,
+            "event_id"   => $partner_bank_loan->id
+        ];
+
+        return (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
     }
 
     private function setDefaulterDate($claim)
