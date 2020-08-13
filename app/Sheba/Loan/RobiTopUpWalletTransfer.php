@@ -8,7 +8,7 @@ use Sheba\Dal\RobiTopupWalletTransaction\Model as RobiTopupWalletTransaction;
 
 Class RobiTopUpWalletTransfer
 {
-    private $affiliate, $amount, $type;
+    private $affiliate, $amount, $type, $loan_id;
 
     public function setAffiliate(Affiliate $affiliate)
     {
@@ -25,6 +25,12 @@ Class RobiTopUpWalletTransfer
     public function setType($type)
     {
         $this->type = $type;
+        return $this;
+    }
+
+    public function setLoanId($loan_id)
+    {
+        $this->loan_id = $loan_id;
         return $this;
     }
 
@@ -49,11 +55,17 @@ Class RobiTopUpWalletTransfer
 
     }
 
+    /**
+     * @param array $data
+     * @return mixed
+     * @throws \Exception
+     */
     public function process($data = [])
     {
         DB::transaction(function () use ($data, &$transaction) {
             $this->transfer();
             $this->storeTransactionRecord();
+            $this->sendNotificationToBankPortal();
         });
     }
 
@@ -67,6 +79,16 @@ Class RobiTopUpWalletTransfer
         $last_inserted_transaction = $this->affiliate->robi_topup_wallet_transactions()->orderBy('id', 'desc')->first();
         $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
         return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
+    }
+
+    /**
+     * @return mixed
+     * @throws \Exception
+     */
+    private function sendNotificationToBankPortal()
+    {
+        $title = "Loan amount transferred to sManager";
+        Notifications::toBankUser(1, $title, null, $this->loan_id);
     }
 
 }
