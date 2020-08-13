@@ -787,7 +787,7 @@ class Loan
             throw new InvalidStatusTransaction();
         }
         $partner_bank_loan->status = $new_status;
-        DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description) {
+        DB::transaction(function () use ($partner_bank_loan, $request, $old_status, $new_status, $description, $user) {
             $partner_bank_loan->update();
             (new PartnerLoanRequest($partner_bank_loan))->storeChangeLog($request->user, 'status', $old_status, $new_status, $description);
             $title      = "Loan status has been updated from $old_status to $new_status";
@@ -800,7 +800,7 @@ class Loan
             if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
             {
                 $reason = $new_status == LoanStatuses::DECLINED ? $description : null;
-                Notifications::sendStatusChangeSms($partner_bank_loan,$new_status,$reason);
+                Notifications::sendStatusChangeSms($partner_bank_loan,$new_status,$reason,$user);
             }
 
 
