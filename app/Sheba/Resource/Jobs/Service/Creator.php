@@ -100,8 +100,8 @@ class Creator
     public function create()
     {
         foreach ($this->services as $selected_service) {
-            if ($selected_service->getCategory()->id != $this->job->category_id) throw new MultipleCategoryServiceRequestException('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 400);
-            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 400);
+            if ($selected_service->getCategory()->id != $this->job->category_id) throw new MultipleCategoryServiceRequestException();
+            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException();
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->order->deliveryAddress->location_id]])->first();
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());

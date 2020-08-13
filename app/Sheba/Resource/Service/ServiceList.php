@@ -3,9 +3,7 @@
 
 use App\Models\HyperLocal;
 use App\Models\Job;
-use App\Models\Partner;
 use Illuminate\Http\Request;
-use Sheba\Authentication\AuthUser;
 
 class ServiceList
 {
@@ -66,7 +64,8 @@ class ServiceList
             'services.min_quantity',
             'services.unit',
             'services.variables',
-            'app_thumb'
+            'app_thumb',
+            'category_id'
         ];
     }
 
