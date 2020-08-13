@@ -202,7 +202,7 @@ class Documents implements Arrayable
             ],
         ];
         if(LoanTypes::TERM === $loan_type) {
-            $otherDoc = array_except($otherDoc, ['nominee_document']);
+            $otherDoc = array_except($otherDoc, ['nominee_document', 'grantor_document']);
         }
         return array_merge($data,$otherDoc);
     }
