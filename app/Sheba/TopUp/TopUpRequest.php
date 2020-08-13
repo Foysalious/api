@@ -23,6 +23,7 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $from_robi_topup_wallet;
+    private $walletType;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -142,7 +143,12 @@ class TopUpRequest
 
     public function hasError()
     {
-        if ($this->agent->wallet < $this->amount) {
+
+        if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
+            $this->errorMessage = "You don't have sufficient balance to recharge.";
+            return 1;
+        }
+        if ($this->from_robi_topup_wallet != 1 && $this->agent->wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }

@@ -58,6 +58,6 @@ class TopUpOrder extends Model implements PayableType
         return getOriginalMobileNumber($this->payee_mobile);
     }
     public function isRobiWalletTopUp(){
-        return !!$this->from_robi_topup_wallet;
+        return !!$this->is_robi_topup_wallet;
     }
 }
