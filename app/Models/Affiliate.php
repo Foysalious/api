@@ -218,13 +218,19 @@ class Affiliate extends BaseModel implements TopUpAgent, MovieAgent, TransportAg
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        (new WalletTransactionHandler())
-            ->setModel($this)
-            ->setAmount($transaction->getAmount())
-            ->setSource(TransactionSources::TOP_UP)
-            ->setType(Types::debit())
-            ->setLog($transaction->getLog())
-            ->dispatch();
+       if (!$transaction->getIsRobiTopUp()){
+           (new WalletTransactionHandler())
+               ->setModel($this)
+               ->setAmount($transaction->getAmount())
+               ->setSource(TransactionSources::TOP_UP)
+               ->setType(Types::debit())
+               ->setLog($transaction->getLog())
+               ->dispatch();
+       }else{
+           // Robi top up wallet transaction
+//           (new RobiTopupWalletTransactionHandler())->setAmount($amount)->setLog($log)->setType(Types::debit())->store();
+
+       }
     }
 
     public function walletTransaction($data)
