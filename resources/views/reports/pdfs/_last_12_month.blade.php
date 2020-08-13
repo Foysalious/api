@@ -10,7 +10,10 @@
     <tr>
 
         @for($i=1;$i<7;$i++)
-            <td class="form-control-l">
+            <td >
+                <table class="form-control-l">
+                    <tr><td></td></tr>
+                </table>
             </td>
         @endfor
     </tr>
@@ -25,7 +28,10 @@
     <tr>
 
         @for($i=1;$i<7;$i++)
-            <td class="form-control-l">
+            <td >
+                <table class="form-control-l">
+                    <tr><td></td></tr>
+                </table>
             </td>
         @endfor
     </tr>

@@ -81,9 +81,10 @@ td, th {
     border-radius: .25rem !important;
 }
 .form-control-l{
-    margin: 4px;
-    background-color: #0c99f7;
-    padding: 1rem;
+    background-color: rgba(243, 247, 250, 0.7) ;
+    padding: 2rem;
+    min-height: 20px;
+    height: 20px;
 }
 .cover-letter {
     font-size: 12px;
