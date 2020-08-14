@@ -50,9 +50,9 @@ class TopUpExcelDataFormatError
     public function updateExcel($message = null)
     {
         if ($message) {
-            $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::MESSAGE_COLUMN . $this->row, $message);
+            $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $message);
+            $this->excel->save();
         }
-        $this->excel->save();
     }
 
     public function takeCompletedAction()

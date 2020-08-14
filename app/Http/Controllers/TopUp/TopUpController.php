@@ -131,8 +131,11 @@ class TopUpController extends Controller
                 }
                 $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
-            $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-            if ($halt_top_up) return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
+
+            if ($halt_top_up) {
+                $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
+                return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
+            }
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
