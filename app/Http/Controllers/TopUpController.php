@@ -82,10 +82,7 @@ class TopUpController extends Controller
         if($request->is_robi_topup == 1 && !$this->checkVendor($request->vendor_id))
             return api_response($request, null, 403, ['message' => "Invalid Vendor"]);
 
-
-
         $agent = $this->getAgent($request);
-
         if ($this->hasLastTopupWithinIntervalTime($agent))
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
