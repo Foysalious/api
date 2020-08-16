@@ -80,12 +80,12 @@ class Loan
         $this->downloadDir    = storage_path('downloads');
         $this->zipDir         = public_path('temp/documents.zip');
         $this->user           = request()->user;
-        $this->finalFields = [
-            'personal' => 'personalInfo',
-            'business' => 'businessInfo',
-            'finance' => 'financeInfo',
+        $this->finalFields    = [
+            'personal'        => 'personalInfo',
+            'business'        => 'businessInfo',
+            'finance'         => 'financeInfo',
             'nominee_granter' => 'nomineeGranter',
-            'document' => 'documents'
+            'document'        => 'documents'
         ];
         $this->fileRepository = $file_repository;
         $this->type           = LoanTypes::TERM;
@@ -356,19 +356,19 @@ class Loan
     {
         if ($this->version == 2) {
             $this->finalFields = [
-                'personal' => 'personalInfo',
-                'business' => 'businessInfo',
-                'finance' => 'financeInfo',
+                'personal'        => 'personalInfo',
+                'business'        => 'businessInfo',
+                'finance'         => 'financeInfo',
                 'nominee_granter' => 'granterDetails',
-                'document' => 'documents'
+                'document'        => 'documents'
             ];
         } else {
             $this->finalFields = [
-                'personal' => 'personalInfo',
-                'business' => 'businessInfo',
-                'finance' => 'financeInfo',
+                'personal'        => 'personalInfo',
+                'business'        => 'businessInfo',
+                'finance'         => 'financeInfo',
                 'nominee_granter' => 'nomineeGranter',
-                'document' => 'documents'
+                'document'        => 'documents'
             ];
         }
     }
@@ -576,8 +576,8 @@ class Loan
      */
     public function microLoanData(Request $request)
     {
-        $from_date = $request->from_date ? : date("Y-m-01");
-        $to_date = $request->to_date ? : date("Y-m-d");
+        $from_date      = $request->from_date ?: date("Y-m-01");
+        $to_date        = $request->to_date ?: date("Y-m-d");
         $data           = $this->getMicroLoans($request->user, $from_date, $to_date);
         $statuses       = constants('LOAN_STATUS');
         $formatted_data = (object)[
@@ -586,7 +586,7 @@ class Loan
             'loan_disburse'      => 0,
             'loan_approved'      => 0,
             'loan_closed'        => 0,
-            'total_registration' => $this->getRegisteredRetailerCount($from_date,$to_date)
+            'total_registration' => $this->getRegisteredRetailerCount($from_date, $to_date)
         ];
         foreach ($data as $loan) {
             if ($loan["status"] === $statuses["declined"]) {
@@ -641,14 +641,14 @@ class Loan
     {
 
         $bank_id = null;
-        $query = $this->repo;
+        $query   = $this->repo;
 
-        if ($user instanceof BankUser){
+        if ($user instanceof BankUser) {
             $bank_id = $user->bank->id;
             if ($bank_id) {
                 $query = $query->whereBetween('created_at', [$from_date . " 00:00:00", $to_date . " 23:59:59"])
-                    ->where('partner_bank_loans.bank_id', $bank_id)
-                    ->where('type', LoanTypes::MICRO);
+                               ->where('partner_bank_loans.bank_id', $bank_id)
+                               ->where('type', LoanTypes::MICRO);
             }
         }
 
@@ -796,12 +796,11 @@ class Loan
             $event_type = "App\\Models\\$class";
             $event_id   = $partner_bank_loan->id;
             Notifications::sendLoanNotification($title, $event_type, $event_id);
-            if($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED)
-            {
-                if($partner_bank_loan->type == LoanTypes::MICRO)
+            if ($new_status == LoanStatuses::APPROVED || $new_status == LoanStatuses::DISBURSED || $new_status == LoanStatuses::DECLINED) {
+                if ($partner_bank_loan->type == LoanTypes::MICRO)
                     Notifications::sendStatusChangeNotification($old_status, $new_status, $partner_bank_loan);
                 $reason = $new_status == LoanStatuses::DECLINED ? $description : null;
-                Notifications::sendStatusChangeSms($partner_bank_loan,$new_status,$reason,$user);
+                Notifications::sendStatusChangeSms($partner_bank_loan, $new_status, $reason, $user);
             }
 
         });
@@ -1050,6 +1049,7 @@ class Loan
             (new WalletTransactionHandler())->setModel($this->partner)->setAmount($fee)->setSource(TransactionSources::LOAN_FEE)->setType(Types::debit())->setLog("$fee BDT has been collected from {$this->resource->profile->name} as Loan Application fee for $this->type loan")->store();
             return true;
         }
-        throw  new InsufficientWalletCredit();
+        if ($fee > 0) throw  new InsufficientWalletCredit();
+        return false;
     }
 }
