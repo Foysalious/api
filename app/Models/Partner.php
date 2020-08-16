@@ -285,7 +285,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function retailers()
     {
-        return $this->getFirstAdminResource()->retailers();
+        return $this->getContactResource()->retailers();
     }
 
     public function hasLeave($date)

@@ -87,8 +87,10 @@ class RetailerRegistrationReport
      * @param $partner
      * @return bool
      */
-    private function is_retailer($partner)
+    private function is_retailer(Partner $partner)
     {
+        if(!$partner->getContactResource())
+            return false;
         return $partner->retailers()->where('strategic_partner_id', 2)->first() ?: false;
     }
 
