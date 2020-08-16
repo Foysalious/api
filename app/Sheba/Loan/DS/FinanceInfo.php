@@ -116,8 +116,7 @@ class FinanceInfo implements Arrayable
             'en',
             'bn',
             $loan_type && $loan_type == LoanTypes::MICRO ? 'bkash_account_type' : null,
-            $loan_type && $loan_type == LoanTypes::MICRO ? 'bkash_no' : null,
-            $loan_type && $loan_type == LoanTypes::MICRO ? 'acc_type' : null,
+            $loan_type && $loan_type == LoanTypes::MICRO ? 'acc_type' : null
         ]))->get();
     }
 
