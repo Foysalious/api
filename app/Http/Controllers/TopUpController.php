@@ -5,6 +5,7 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
+use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -78,8 +79,10 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-        if($request->is_robi_topup == 1)
-            $this->checkVendor($request->vendor_id);
+        if($request->is_robi_topup == 1 && !$this->checkVendor($request->vendor_id))
+            return api_response($request, null, 403, ['message' => "Invalid Vendor"]);
+
+
 
         $agent = $this->getAgent($request);
 
@@ -103,7 +106,7 @@ class TopUpController extends Controller
 
     private function checkVendor($vendor_id)
     {
-        $eligible_vendors = TopUpVendor::whereIn('name',['Robi','Airtel'])->pluck('id');
+        $eligible_vendors = TopUpVendor::whereIn('name',[Vendors::ROBI,Vendors::AIRTEL])->pluck('id');
         return in_array($vendor_id,$eligible_vendors->toArray());
     }
 
