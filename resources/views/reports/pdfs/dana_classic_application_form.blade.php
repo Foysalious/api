@@ -46,8 +46,8 @@
     <div class="title">Dana Classic</div>
     <div class="cover-letter">
         Dear Sir/Madam<br>
-        I request you to grant me/us the term loan facility of BDT <span>{{ $loan_amount }}</span> for a tenure
-        of <span>{{ $total_installment }}</span> months for <span>{{ $purpose }}</span> purpose.To enable you to
+        I request you to grant me/us the term loan facility of BDT <span>{{ $loan_amount }}</span> {{--for a tenure
+        of <span>{{ $total_installment }}</span> months --}} <span>{{ $purpose }}</span> purpose.To enable you to
         consider the proposal, my following information are given for your kind consideration.
     </div>
     <div class="static-node">Note : This applicant has already agreed for the terms and condition (Including providing
