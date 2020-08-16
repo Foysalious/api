@@ -259,7 +259,7 @@ class Loan
                     $this->data['duration'] = ((int)$this->data['duration'] * 12);
                 }
             } else {
-                $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 7);
+                $this->data['duration'] = (int)config('loan.repayment_defaulter_default_duration', 5);
             }
             unset($this->data['month']);
             $created = $this->create();
