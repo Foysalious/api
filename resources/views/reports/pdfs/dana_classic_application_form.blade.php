@@ -33,7 +33,10 @@
                         </tr>
                     </table>
                 </td>
-                <td style="width: 50%;text-align: right;">
+                <td style="width: 30%;font-size: 46px;font-weight: 600;text-align: right;">
+                    <p>{{ $groups }}</p>
+                </td>
+                <td style="width: 20%;text-align: right;">
                     <img width="100px" height="100px" src="{{ $final_information_for_loan['document']['picture'] }}"
                          alt="">
                 </td>
