@@ -38,7 +38,6 @@ class PdfHandler extends Handler
      */
     public function download($mPdf=false)
     {
-        $this->create();
 
         if ($mPdf){
             $defaultConfig = (new ConfigVariables())->getDefaults();
@@ -67,6 +66,7 @@ class PdfHandler extends Handler
             $mPDF->WriteHTML("$data",HTMLParserMode::DEFAULT_MODE);
             return $mPDF->Output("$this->filename.$this->downloadFormat","d");
         }
+        $this->create();
         return $this->pdf->download("$this->filename.$this->downloadFormat");
 
     }
