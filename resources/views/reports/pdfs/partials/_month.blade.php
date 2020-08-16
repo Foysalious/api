@@ -4,8 +4,8 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td>
-                            <span class="form-control">Jan</span>
+                        <td class="form-control-l2">
+                             <span>Jan</span>
                         </td>
                     </tr>
                 </table>
@@ -15,7 +15,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Feb</span></td>
+                        <td class="form-control-l2"><span>Feb</span></td>
                     </tr>
                 </table>
             </div>
@@ -24,7 +24,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Mar</span></td>
+                        <td class="form-control-l2"><span>Mar</span></td>
                     </tr>
                 </table>
             </div>
@@ -33,7 +33,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Apr</span></td>
+                        <td class="form-control-l2"><span>Apr</span></td>
                     </tr>
                 </table>
             </div>
@@ -42,7 +42,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">May</span></td>
+                        <td class="form-control-l2"><span>May</span></td>
                     </tr>
                 </table>
             </div>
@@ -51,7 +51,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Jun</span></td>
+                        <td class="form-control-l2"><span>Jun</span></td>
                     </tr>
                 </table>
             </div>
@@ -60,7 +60,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Jan</span></td>
+                        <td class="form-control-l2"><span>July</span></td>
                     </tr>
                 </table>
             </div>
@@ -69,7 +69,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Feb</span></td>
+                        <td class="form-control-l2"><span>August</span></td>
                     </tr>
                 </table>
             </div>
@@ -78,7 +78,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Mar</span></td>
+                        <td class="form-control-l2"><span>September</span></td>
                     </tr>
                 </table>
             </div>
@@ -87,7 +87,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Apr</span></td>
+                        <td class="form-control-l2"><span>October</span></td>
                     </tr>
                 </table>
             </div>
@@ -96,7 +96,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">May</span></td>
+                        <td class="form-control-l2"><span>November</span></td>
                     </tr>
                 </table>
             </div>
@@ -105,7 +105,7 @@
             <div class="inner-div">
                 <table>
                     <tr style="text-align: center">
-                        <td><span class="form-control">Jun</span></td>
+                        <td class="form-control-l2"><span>December</span></td>
                     </tr>
                 </table>
             </div>

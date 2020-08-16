@@ -83,8 +83,15 @@ td, th {
 .form-control-l{
     background-color: rgba(243, 247, 250, 0.7) ;
     padding: 2rem;
-    min-height: 20px;
-    height: 20px;
+    min-height: 12px;
+    height: 12px;
+}
+.form-control-l2{
+    background-color: rgba(243, 247, 250, 0.7) ;
+    min-height: 12px;
+    height: 12px;
+    border: 1px solid #ced4da;
+    padding: 10px;
 }
 .cover-letter {
     font-size: 12px;

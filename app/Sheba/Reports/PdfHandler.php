@@ -64,10 +64,9 @@ class PdfHandler extends Handler
             $mPDF->shrink_tables_to_fit=1;
             $keep_table_proportions = TRUE;
             $data=view($this->viewFileName,$this->data)->render();
-            $mPDF->SetTitle($this->filename);
-            $mPDF->WriteHTML(file_get_contents(resource_path('assets/css/pdf.css')),HTMLParserMode::HEADER_CSS);
-            $mPDF->WriteHTML("$data",HTMLParserMode::HTML_BODY);
+            $mPDF->WriteHTML("$data",HTMLParserMode::DEFAULT_MODE);
             return $mPDF->Output();
+//            return $mPDF->Output("$this->filename.$this->downloadFormat","d");
         }
         return $this->pdf->download("$this->filename.$this->downloadFormat");
 
