@@ -66,6 +66,7 @@ class Nagad extends PaymentMethod
 
     public function validate(Payment $payment): Payment
     {
+        $res=[];
         try {
             if (empty($this->refId)) throw new InvalidPaymentRef();
             $res = $this->client->validate($this->refId);
