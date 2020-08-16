@@ -65,8 +65,7 @@ class PdfHandler extends Handler
             $keep_table_proportions = TRUE;
             $data=view($this->viewFileName,$this->data)->render();
             $mPDF->WriteHTML("$data",HTMLParserMode::DEFAULT_MODE);
-            return $mPDF->Output();
-//            return $mPDF->Output("$this->filename.$this->downloadFormat","d");
+            return $mPDF->Output("$this->filename.$this->downloadFormat","d");
         }
         return $this->pdf->download("$this->filename.$this->downloadFormat");
 
