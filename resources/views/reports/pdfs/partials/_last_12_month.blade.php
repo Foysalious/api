@@ -11,8 +11,8 @@
 
         @for($i=1;$i<7;$i++)
             <td >
-                <table class="form-control-l">
-                    <tr><td></td></tr>
+                <table >
+                    <tr><td class="form-control-l2"></td></tr>
                 </table>
             </td>
         @endfor
@@ -29,8 +29,8 @@
 
         @for($i=1;$i<7;$i++)
             <td >
-                <table class="form-control-l">
-                    <tr><td></td></tr>
+                <table>
+                    <tr><td class="form-control-l2"></td></tr>
                 </table>
             </td>
         @endfor
