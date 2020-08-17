@@ -13,20 +13,32 @@ use App\Models\Profile;
 use App\Models\Resource;
 use DB;
 use Auth;
-use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\Voucher\Creator\Referral;
 
 class ProfileRepository
 {
     use ModificationFields;
 
-    public function getIfExist($data, $queryColumn) {
+    /** @var AccountServer */
+    private $accountServer;
+
+    public function __construct()
+    {
+        $this->accountServer = app(AccountServer::class);
+    }
+
+    public function getIfExist($data, $queryColumn)
+    {
         $profile = Profile::where($queryColumn, $data)->where('is_blacklisted', 0)->first();
         return $profile != null ? $profile : null;
     }
 
-    public function store(array $data) {
+    public function store(array $data)
+    {
         $profile                 = new Profile();
         $profile->remember_token = str_random(255);
         foreach ($data as $key => $value) {
@@ -65,7 +77,16 @@ class ProfileRepository
         return Profile::find($profile->id);
     }
 
-    public function getProfileInfo($from, Profile $profile, $request = null) {
+    /**
+     * @param $from
+     * @param Profile $profile
+     * @param null $request
+     * @return array|null
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function getProfileInfo($from, Profile $profile, $request = null)
+    {
         $avatar = $profile->$from;
         if ($avatar != null) {
             $info = array(
@@ -119,7 +140,7 @@ class ProfileRepository
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = (new Accounts())->getJWTToken($from, $avatar->id, $avatar->remember_token)['token'];
+                $info['token'] = $this->accountServer->getTokenByAvatar($avatar, $from);
 
             }
             return $info;
@@ -127,20 +148,33 @@ class ProfileRepository
         return null;
     }
 
-    public function getJwtToken($avatar,$from) {
-
-        $res = (new Accounts())->getToken($avatar,$from);
-        return $res["token"];
+    /**
+     * @param $avatar
+     * @param $from
+     * @return mixed
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function getJwtToken($avatar, $from)
+    {
+        return $this->accountServer->getTokenByAvatar($avatar, $from);
     }
 
-    public function fetchJWTToken($type, $type_id, $remember_token) {
-
-        $res = (new Accounts())->getJWTToken($type, $type_id, $remember_token);
-        return $res["token"];
-
+    /**
+     * @param $type
+     * @param $type_id
+     * @param $remember_token
+     * @return mixed
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function fetchJWTToken($type, $type_id, $remember_token)
+    {
+        return $this->accountServer->getTokenByIdAndRememberToken($type_id, $remember_token, $type);
     }
 
-    public function registerFacebook($info) {
+    public function registerFacebook($info)
+    {
         $profile        = new Profile();
         $profile->fb_id = $info['fb_id'];
         $profile->name  = $info['fb_name'];
@@ -216,7 +250,8 @@ class ProfileRepository
         $customer->update();
     }
 
-    public function addToPromoList($customer, $voucher) {
+    public function addToPromoList($customer, $voucher)
+    {
         $promo              = new Promotion();
         $promo->customer_id = $customer->id;
         $promo->voucher_id  = $voucher->id;

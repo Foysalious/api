@@ -31,7 +31,7 @@ use Throwable;
 
 class TopUpController extends Controller
 {
-    CONST MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+    const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
 
     public function getVendor(Request $request)
     {
@@ -91,14 +91,27 @@ class TopUpController extends Controller
         if ($top_up_request->hasError())
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
-        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+            if ($this->hasLastTopupWithinIntervalTime($agent))
+                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-        if ($topup_order) {
-            dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-        } else {
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+
+            if ($top_up_request->hasError())
+                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+            if ($topup_order) {
+                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+
     }
 
     private function checkVendor($vendor_id)

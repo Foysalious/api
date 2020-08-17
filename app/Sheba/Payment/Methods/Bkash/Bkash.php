@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
@@ -43,7 +44,7 @@ class Bkash extends PaymentMethod
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     public function init(Payable $payable): Payment
     {
