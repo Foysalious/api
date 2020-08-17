@@ -1043,4 +1043,14 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
         return $url . 'co_worker_invite_error/';
     }
+
+}
+if (!function_exists('getPartnerProofOfBusinessFolder')) {
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+        return $url . "partner/$partner_id/proof-of-business";
+    }
 }

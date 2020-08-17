@@ -141,4 +141,8 @@ trait FileManager
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
     }
+    protected function makePartnerProofOfBusiness($file, $name)
+    {
+        return [$file, $this->uniqueFileName($file, $name)];
+    }
 }
