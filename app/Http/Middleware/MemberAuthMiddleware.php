@@ -3,6 +3,8 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use Sheba\OAuth2\AuthUser;
+use Sheba\OAuth2\SomethingWrongWithToken;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
@@ -15,17 +17,12 @@ class MemberAuthMiddleware
      * @param \Illuminate\Http\Request $request
      * @param \Closure $next
      * @return mixed
+     * @throws SomethingWrongWithToken
      */
     public function handle($request, Closure $next)
     {
-        try {
-            $payload = [];
-            $token = JWTAuth::getToken();
-            $payload = JWTAuth::getPayload($token)->toArray();
-        } catch (JWTException $e) {
-            return api_response($request, null, 401);
-        }
-        $member = Member::find($payload['member_id']);
+        $auth_user = AuthUser::create();
+        $member = Member::find($auth_user->getMemberId());
         if (!$member) return response()->json(['message' => 'Member not found.', 'code' => 404]);
 
         if ($member->id == (int)$request->member) {
