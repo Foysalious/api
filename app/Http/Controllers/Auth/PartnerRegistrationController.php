@@ -322,6 +322,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
+        ini_set('max_execution_time',120);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
@@ -367,6 +368,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByResource(Request $request)
     {
+        ini_set('max_execution_time',120);
         try {
             $this->validate($request, [
                 'resource_id'    => 'required|int',
@@ -414,6 +416,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerReferAffiliate($affiliate, Request $request)
     {
+        ini_set('max_execution_time',120);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
