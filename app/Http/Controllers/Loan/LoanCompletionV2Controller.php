@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\Loan;
+
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Repositories\AffiliateRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerBankLoan\LoanTypes;
@@ -8,18 +10,25 @@ use Sheba\Loan\Loan;
 
 class LoanCompletionV2Controller extends Controller
 {
+    const VERSION = 2;
     public function getLoanInformationCompletion($partner, Request $request,Loan $loan)
     {
         try {
             $this->validate($request, ['loan_type' => 'required|in:'. implode(',', LoanTypes::get())]);
             $partner = $request->partner;
             $resource = $request->manager_resource;
-            $completion = $loan->setPartner($partner)->setVersion(2)->setResource($resource)->setType($request->loan_type)->getCompletion();
+            if($request->loan_type === LoanTypes::MICRO){
+                $retailer = $partner->retailers->where('strategic_partner_id', 2)->first();
+                $affiliate = $resource->affiliate;
+                if(isset($retailer) && !isset($affiliate))
+                    (new AffiliateRepository())->createAffiliate($resource);
+            }
+            $completion = $loan->setPartner($partner)->setVersion(self::VERSION)->setResource($resource)->setType($request->loan_type)->getCompletion();
             return api_response($request, $completion, 200, ['completion' => $completion]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

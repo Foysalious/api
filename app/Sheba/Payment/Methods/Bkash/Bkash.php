@@ -5,6 +5,7 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
@@ -43,7 +44,7 @@ class Bkash extends PaymentMethod
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     public function init(Payable $payable): Payment
     {
@@ -75,7 +76,7 @@ class Bkash extends PaymentMethod
         } else {
             $data = $this->create($payment);
             $payment->gateway_transaction_id = $data->paymentID;
-            $payment->redirect_url = config('bkash.client_url') . '?paymentID=' . $data->paymentID;
+            $payment->redirect_url = config('sheba.front_url') . '/bkash?paymentID=' . $data->paymentID;
         }
         $payment->transaction_details = json_encode($data);
         $payment->update();
