@@ -89,6 +89,7 @@ class PartnerRegistrationController extends Controller
      */
     public function register(Request $request)
     {
+        ini_set('max_execution_time', 120);
         try {
             $this->validate($request, [
                 'code'         => "required|string",
