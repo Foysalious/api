@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use Sheba\Loan\DS\PartnerLoanRequest;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\ModificationFields;
 
 class Updater
