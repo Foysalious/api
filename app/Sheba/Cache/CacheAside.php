@@ -3,6 +3,7 @@
 use Illuminate\Contracts\Cache\Repository;
 use Cache;
 use Illuminate\Support\Facades\Redis;
+use Throwable;
 
 class CacheAside
 {
@@ -61,7 +62,11 @@ class CacheAside
         $cache = $this->store->get($this->cacheObject->getCacheName());
         if ($cache && $data = json_decode($cache, true)) return $data;
         $data = $this->dataStoreObject->generate();
-        $this->setOnCache($data);
+        try {
+            $this->setOnCache($data);
+        } catch (Throwable $exception) {
+            return $data;
+        }
         return $data;
     }
 
