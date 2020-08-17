@@ -14,7 +14,7 @@ class Repayment
     private $claimId;
     private $amount;
     private $repaymentRepo;
-    private $defaulterDuration;
+    private $type;
 
     public function __construct()
     {
@@ -68,14 +68,14 @@ class Repayment
 
     }
 
-    public function storeDebit($data)
+    public function storeDebit($type)
     {
         $data = [
             'loan_id' => $this->loanId,
             'loan_claim_request_id' => $this->claimId,
             'credit' => 0,
             'debit' => $this->amount,
-            'type' => 'By Sheba',
+            'type' => $type,
             'log' => 'লোন এর টাকা জমা দেয়া হয়েছে।',
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
