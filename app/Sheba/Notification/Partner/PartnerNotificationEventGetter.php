@@ -11,9 +11,8 @@ class PartnerNotificationEventGetter
 {
     private $notification;
     private $eventType;
-
-    const EXTERNAL_TYPE   = 'ExternalProject';
     const EXTERNAL_BUTTON_TEXT = 'View details';
+    const EXTERNAL_TYPE   = 'EXTERNAL_PROJECT';
     const NEW_PROCUREMENT = 'NEW_PROCUREMENT';
 
     public function __construct(Notification $notification)
@@ -98,6 +97,7 @@ class PartnerNotificationEventGetter
 
     private function getDetailsFromOffer(OfferShowcase $offer)
     {
+        ;
         return [
             'banner'      => $offer->app_banner ?: config('constants.NOTIFICATION_DEFAULTS.banner'),
             'title'       => $offer->title ? $offer->title : $this->notification->title ?: config('constants.NOTIFICATION_DEFAULTS.title'),
