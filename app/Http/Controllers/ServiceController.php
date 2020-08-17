@@ -83,7 +83,7 @@ class ServiceController extends Controller
     {
 
         $lpg_service_id = config('sheba.lpg_service_id');
-        return $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
+        return $this->get($lpg_service_id, $request, $approximatePriceCalculator, $price_calculation, $delivery_charge,
             $job_discount_handler);
     }
 
@@ -148,86 +148,86 @@ class ServiceController extends Controller
             $service = $request->has('is_business') ? $service->publishedForBusiness() : ($request->has('is_ddn') ? $service->publishedForDdn() : $service->publishedForAll());
             $service = $service->first();
 
-        if ($service == null) return api_response($request, null, 404);
-        if ($service->variable_type == 'Options') {
-            $service['first_option'] = $this->serviceRepository->getFirstOption($service);
-        }
+            if ($service == null) return api_response($request, null, 404);
+            if ($service->variable_type == 'Options') {
+                $service['first_option'] = $this->serviceRepository->getFirstOption($service);
+            }
 
-        $scope = [];
-        if ($request->has('scope')) {
-            $scope = $this->serviceRepository->getServiceScope($request->scope);
-        }
-        if (in_array('discount', $scope) || in_array('start_price', $scope)) {
-            $service = $this->serviceRepository->getpartnerServicePartnerDiscount($service);
-        }
-        if (in_array('reviews', $scope)) {
-            $service->load('reviews');
-        }
-        $variables = json_decode($service->variables);
-        unset($variables->max_prices);
-        unset($variables->min_prices);
-        unset($variables->prices);
-        $services = [];
-        array_push($services, $service);
-        $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
-        $service['variables'] = $variables;
-        $service['faqs'] = json_decode($service->faqs);
-        $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
+            $scope = [];
+            if ($request->has('scope')) {
+                $scope = $this->serviceRepository->getServiceScope($request->scope);
+            }
+            if (in_array('discount', $scope) || in_array('start_price', $scope)) {
+                $service = $this->serviceRepository->getpartnerServicePartnerDiscount($service);
+            }
+            if (in_array('reviews', $scope)) {
+                $service->load('reviews');
+            }
+            $variables = json_decode($service->variables);
+            unset($variables->max_prices);
+            unset($variables->min_prices);
+            unset($variables->prices);
+            $services = [];
+            array_push($services, $service);
+            $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
+            $service['variables'] = $variables;
+            $service['faqs'] = json_decode($service->faqs);
+            $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
 
-        $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
-        $category = Category::with(['parent' => function ($query) {
-            $query->select('id', 'name');
-        }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug', 'is_auto_sp_enabled')->first();
+            $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
+            $category = Category::with(['parent' => function ($query) {
+                $query->select('id', 'name');
+            }])->where('id', $service->category_id)->select('id', 'name', 'parent_id', 'video_link', 'slug', 'is_auto_sp_enabled')->first();
 
-        array_add($service, 'category_name', $category->name);
-        array_add($service, 'video_link', $category->video_link);
-        array_add($service, 'category_slug', $category->slug);
-        array_add($service, 'is_auto_sp_enabled', $category->is_auto_sp_enabled);
-        array_add($service, 'master_category_id', $category->parent->id);
-        array_add($service, 'master_category_name', $category->parent->name);
-        array_add($service, 'service_breakdown', $service_breakdown);
-        array_add($service, 'options', $options);
+            array_add($service, 'category_name', $category->name);
+            array_add($service, 'video_link', $category->video_link);
+            array_add($service, 'category_slug', $category->slug);
+            array_add($service, 'is_auto_sp_enabled', $category->is_auto_sp_enabled);
+            array_add($service, 'master_category_id', $category->parent->id);
+            array_add($service, 'master_category_name', $category->parent->name);
+            array_add($service, 'service_breakdown', $service_breakdown);
+            array_add($service, 'options', $options);
 
-        /** @var ServiceDiscount $discount */
-        $discount = $location_service->discounts()->running()->first();
-        $service_discount = $discount ? [
-            'value' => (double)$discount->amount,
-            'is_percentage' => $discount->isPercentage(),
-            'cap' => (double)$discount->cap
-        ] : null;
-        array_add($service, 'discount', $service_discount);
+            /** @var ServiceDiscount $discount */
+            $discount = $location_service->discounts()->running()->first();
+            $service_discount = $discount ? [
+                'value' => (double)$discount->amount,
+                'is_percentage' => $discount->isPercentage(),
+                'cap' => (double)$discount->cap
+            ] : null;
+            array_add($service, 'discount', $service_discount);
 
-        $category_delivery_charge = $delivery_charge->setCategory($service->category)
-            ->setLocation(Location::find($location))->get();
-        array_add($service, 'delivery_charge', $category_delivery_charge);
+            $category_delivery_charge = $delivery_charge->setCategory($service->category)
+                ->setLocation(Location::find($location))->get();
+            array_add($service, 'delivery_charge', $category_delivery_charge);
 
-        $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category_delivery_charge);
-        $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
-        /** @var Discount $delivery_discount */
-        $delivery_discount = $job_discount_handler->getDiscount();
-        $category_delivery_discount = $delivery_discount ? [
-            'value' => (double)$delivery_discount->amount,
-            'is_percentage' => $delivery_discount->is_percentage,
-            'cap' => (double)$delivery_discount->cap,
-            'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
-        ] : null;
-        array_add($service, 'delivery_discount', $category_delivery_discount);
+            $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category_delivery_charge);
+            $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($service->category)->setCheckingParams($discount_checking_params)->calculate();
+            /** @var Discount $delivery_discount */
+            $delivery_discount = $job_discount_handler->getDiscount();
+            $category_delivery_discount = $delivery_discount ? [
+                'value' => (double)$delivery_discount->amount,
+                'is_percentage' => $delivery_discount->is_percentage,
+                'cap' => (double)$delivery_discount->cap,
+                'min_order_amount' => (double)$delivery_discount->rules->getMinOrderAmount()
+            ] : null;
+            array_add($service, 'delivery_discount', $category_delivery_discount);
 
-        removeRelationsAndFields($service);
-        if (config('sheba.online_payment_discount_percentage') > 0) {
-            $discount_percentage = config('sheba.online_payment_discount_percentage');
-            $payment_discount_percentage = "Save $discount_percentage% more by paying online after checkout!";
-            array_add($service, 'payment_discount_percentage', $payment_discount_percentage);
-        }
-        if ($offer) {
-            array_add($service, 'is_flash', $offer->is_flash);
-            array_add($service, 'start_time', $offer->start_date->toDateTimeString());
-            array_add($service, 'end_time', $offer->end_date->toDateTimeString());
-        } else {
-            array_add($service, 'is_flash', 0);
-            array_add($service, 'start_time', null);
-            array_add($service, 'end_time', null);
-        }
+            removeRelationsAndFields($service);
+            if (config('sheba.online_payment_discount_percentage') > 0) {
+                $discount_percentage = config('sheba.online_payment_discount_percentage');
+                $payment_discount_percentage = "Save $discount_percentage% more by paying online after checkout!";
+                array_add($service, 'payment_discount_percentage', $payment_discount_percentage);
+            }
+            if ($offer) {
+                array_add($service, 'is_flash', $offer->is_flash);
+                array_add($service, 'start_time', $offer->start_date->toDateTimeString());
+                array_add($service, 'end_time', $offer->end_date->toDateTimeString());
+            } else {
+                array_add($service, 'is_flash', 0);
+                array_add($service, 'start_time', null);
+                array_add($service, 'end_time', null);
+            }
             if ($request->has('is_business') || $request->has('is_ddn')) {
                 $questions = null;
                 $service['type'] = 'normal';
@@ -244,9 +244,10 @@ class ServiceController extends Controller
                         $questions[0]->put('input_type', 'selectbox');
                     }
                 }
+                array_add($service, 'questions', $questions);
+                array_add($service, 'faqs', $service->faqs);
             }
-            array_add($service, 'questions', $questions);
-            array_add($service, 'faqs', $service->faqs);
+
         }
 
         return api_response($request, $service, 200, ['service' => $service]);
