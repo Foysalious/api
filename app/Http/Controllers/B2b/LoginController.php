@@ -8,6 +8,11 @@ use App\Repositories\ProfileRepository;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\CoWorker\Statuses;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\AuthUser;
+use Sheba\OAuth2\SomethingWrongWithToken;
 use Sheba\Repositories\Business\MemberRepository;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Controller;
@@ -20,81 +25,55 @@ use Hash;
 
 class LoginController extends Controller
 {
-    /** @var ProfileRepository $profileRepository */
-    private $profileRepository;
-    /** @var MemberRepository $memberRepository */
-    private $memberRepository;
+    /** @var AccountServer */
+    private $accounts;
 
     /**
      * LoginController constructor.
-     * @param ProfileRepository $profile_repository
-     * @param MemberRepository $member_repository
+     * @param AccountServer $accounts
      */
-    public function __construct(ProfileRepository $profile_repository, MemberRepository $member_repository)
+    public function __construct(AccountServer $accounts)
     {
-        $this->profileRepository = $profile_repository;
-        $this->memberRepository = $member_repository;
+        $this->accounts = $accounts;
     }
 
     /**
      * @param Request $request
      * @return JsonResponse
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     * @throws SomethingWrongWithToken
      */
     public function login(Request $request)
     {
         $this->validate($request, ['email' => 'required', 'password' => 'required']);
 
-        $profile = $this->profileRepository->ifExist($request->email, 'email');
-        if (!$profile) return api_response($request, null, 404);
-        if (!Hash::check($request->input('password'), $profile->password)) {
-            return api_response($request, null, 401, ["message" => 'Credential mismatch']);
-        }
-        /** @var Member $member */
-        $member = $profile->member;
-        $businesses = ($member && $member->businessMember) ? $member->businessMember->business : null;
+        $token = $this->accounts->createAvatarAndGetTokenByEmailAndPassword('member', $request->email, $request->password);
 
-        if (!$member) {
-            $member = $this->memberRepository->create(['profile_id' => $profile->id, 'remember_token' => str_random(255)]);
-        }
+        $auth_user = AuthUser::createFromToken($token);
 
         $info = [
-            'token' => $this->generateToken($member),
-            'member_id' => $member->id,
-            'business_id' => $businesses ? $businesses->id : null,
-            'is_super' => $member->businessMember ? $member->businessMember->is_super : null
+            'token' => $token,
+            'member_id' => $auth_user->getMemberId(),
+            'business_id' => $auth_user->getMemberAssociatedBusinessId(),
+            'is_super' => $auth_user->isMemberSuper()
         ];
 
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
     /**
-     * @param Member $member
-     * @return mixed
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
      */
-    private function generateToken(Member $member)
-    {
-        /** @var Profile $profile */
-        $profile = $member->profile;
-        $businesses = $member->businessMember ? $member->businessMember->business : null;
-
-        return JWTAuth::fromUser($profile, [
-            'member_id'     => $member->id,
-            'member_type'   => $member->businessMember ? $member->businessMember->type : null,
-            'business_id'   => $businesses ? $businesses->id : null
-        ]);
-    }
-
     public function generateDummyToken()
     {
         $business_member = BusinessMember::where([
             ['business_id', 11],
             ['member_id', 17]
         ])->first();
-        $member = $business_member->member;
-        return JWTAuth::fromUser($business_member->member->profile, [
-            'member_id' => $member->id,
-            'member_type' => count($member->businessMember) > 0 ? $member->businessMember->first()->type : null,
-            'business_id' => $business_member->business_id,
-        ]);
+
+        return $this->accounts->getTokenByAvatar('member', $business_member->member);
     }
 }
