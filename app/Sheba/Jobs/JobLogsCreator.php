@@ -3,8 +3,8 @@
 use App\Models\Job;
 use App\Models\JobCrmChangeLog;
 use App\Models\JobDeclineLog;
-use App\Models\JobNoResponseLog;
-use App\Models\JobScheduleDueLog;
+use Sheba\Dal\JobNoResponseLog\JobNoResponseLog;
+use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
 use Sheba\Dal\JobStatusChangeLog\JobStatusChangeLog;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Voucher;

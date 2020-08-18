@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reports;
 
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 
 class ReportForCancelJobs
 {
