@@ -1,6 +1,7 @@
 <?php namespace Sheba\Notification;
 
 
+use App\Models\Notification;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -26,11 +27,14 @@ class SeenBy
     public function seen()
     {
         $this->notifications=array_map('intval',  $this->notifications);
-        $notifications = $this->user->notifications->whereIn('id', $this->notifications);
+        $notifications = $this->user->notifications->where('is_seen',0)->whereIn('id', $this->notifications);
         foreach ($notifications as $notification) {
-            $notification->timestamps = false;
-            $notification->is_seen = 1;
-            $notification->update();
+            $this->setSeen($notification);
         }
+    }
+    public function setSeen(Notification $notification){
+        $notification->timestamps = false;
+        $notification->is_seen = 1;
+        $notification->save();
     }
 }

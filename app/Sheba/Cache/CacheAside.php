@@ -3,6 +3,9 @@
 use Illuminate\Contracts\Cache\Repository;
 use Cache;
 use Illuminate\Support\Facades\Redis;
+use Sheba\Cache\Exceptions\CacheGenerationException;
+use Sheba\Cache\Exceptions\CacheStoreException;
+use Throwable;
 
 class CacheAside
 {
@@ -58,16 +61,31 @@ class CacheAside
      */
     public function getMyEntity()
     {
-        $cache = $this->store->get($this->cacheObject->getCacheName());
-        if ($cache && $data = json_decode($cache, true)) return $data;
-        $data = $this->dataStoreObject->generate();
-        $this->setOnCache($data);
-        return $data;
+        $data = null;
+        try {
+            $cache = $this->store->get($this->cacheObject->getCacheName());
+            if ($cache && $data = json_decode($cache, true)) return $data;
+            $data = $this->dataStoreObject->generate();
+            $this->setOnCache($data);
+            return $data;
+        } catch (CacheGenerationException $exception) {
+            return null;
+        } catch (CacheStoreException $exception) {
+            return $data;
+        }
     }
 
+    /**
+     * @param array|null $data
+     * @throws CacheStoreException
+     */
     private function setOnCache(array $data = null)
     {
-        $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds() / 60);
+        try {
+            $this->store->put($this->cacheObject->getCacheName(), json_encode($data), $this->cacheObject->getExpirationTimeInSeconds() / 60);
+        } catch (Throwable $e) {
+            throw new CacheStoreException();
+        }
     }
 
     public function setEntity()

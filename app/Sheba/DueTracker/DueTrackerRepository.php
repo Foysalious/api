@@ -24,6 +24,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class DueTrackerRepository extends BaseRepository
@@ -421,7 +422,7 @@ class DueTrackerRepository extends BaseRepository
             throw new InsufficientBalance();
         }
         $sms->shoot();
-        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType('debit')->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }
 

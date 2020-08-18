@@ -7,6 +7,7 @@ use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
 use Sheba\Payment\Methods\Cbl\Cbl;
+use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
@@ -19,15 +20,16 @@ class PaymentStrategy
 {
     use ConstGetter;
 
-    const BKASH = "bkash";
-    const ONLINE = "online";
-    const SSL = "ssl";
-    const WALLET = "wallet";
-    const CBL = "cbl";
+    const BKASH          = "bkash";
+    const ONLINE         = "online";
+    const SSL            = "ssl";
+    const WALLET         = "wallet";
+    const CBL            = "cbl";
     const PARTNER_WALLET = "partner_wallet";
-    const OK_WALLET = 'ok_wallet';
-    const SSL_DONATION = "ssl_donation";
-    const PORT_WALLET = "port_wallet";
+    const OK_WALLET      = 'ok_wallet';
+    const SSL_DONATION   = "ssl_donation";
+    const PORT_WALLET    = "port_wallet";
+    const NAGAD          = 'nagad';
 
     public static function getDefaultOnlineMethod()
     {
@@ -35,7 +37,7 @@ class PaymentStrategy
     }
 
     /**
-     * @param $method
+     * @param         $method
      * @param Payable $payable
      * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet
      * @throws InvalidPaymentMethod
@@ -47,14 +49,24 @@ class PaymentStrategy
         if ($method == self::ONLINE) $method = self::getRealOnlineMethod($payable);
 
         switch ($method) {
-            case self::SSL: return SslBuilder::get($payable);
-            case self::SSL_DONATION: return SslBuilder::getForDonation();
-            case self::BKASH: return app(Bkash::class);
-            case self::WALLET: return app(Wallet::class);
-            case self::CBL: return app(Cbl::class);
-            case self::PARTNER_WALLET: return app(PartnerWallet::class);
-            case self::OK_WALLET: return app(OkWallet::class);
-            case self::PORT_WALLET: return app(PortWallet::class);
+            case self::SSL:
+                return SslBuilder::get($payable);
+            case self::SSL_DONATION:
+                return SslBuilder::getForDonation();
+            case self::BKASH:
+                return app(Bkash::class);
+            case self::WALLET:
+                return app(Wallet::class);
+            case self::CBL:
+                return app(Cbl::class);
+            case self::PARTNER_WALLET:
+                return app(PartnerWallet::class);
+            case self::OK_WALLET:
+                return app(OkWallet::class);
+            case self::PORT_WALLET:
+                return app(PortWallet::class);
+            case self::NAGAD:
+                return app(Nagad::class);
         }
     }
 
