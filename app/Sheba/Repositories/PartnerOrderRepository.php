@@ -1,6 +1,6 @@
 <?php namespace Sheba\Repositories;
 
-use App\Models\JobStatusChangeLog;
+use Sheba\Dal\JobStatusChangeLog\JobStatusChangeLog;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 

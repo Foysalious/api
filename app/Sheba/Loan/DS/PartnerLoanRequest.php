@@ -7,6 +7,7 @@ use App\Models\PartnerBankLoan;
 use App\Models\PartnerSubscriptionPackage;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\ModificationFields;
 
 class PartnerLoanRequest implements Arrayable
@@ -21,6 +22,7 @@ class PartnerLoanRequest implements Arrayable
     public $duration;
     public $monthly_installment;
     public $interest_rate;
+    public $groups;
     /** @var LoanRequestDetails $final_details */
     public $final_details;
     public $created_by;
@@ -72,6 +74,8 @@ class PartnerLoanRequest implements Arrayable
 
     public function create($data)
     {
+        if(!isset($data['type']) || !$data['type'])
+            $data['type'] = LoanTypes::TERM;
         $data['partner_id'] = $this->partner->id;
         $data['status'] = constants('LOAN_STATUS')['applied'];
         $data['interest_rate'] = (int)constants('LOAN_CONFIG')['interest'];
@@ -109,6 +113,15 @@ class PartnerLoanRequest implements Arrayable
     public function details()
     {
         return $this->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function detailsForAgent()
+    {
+        return $this->toArrayForAgent();
     }
 
     /**
@@ -155,10 +168,50 @@ class PartnerLoanRequest implements Arrayable
             ],
             'monthly_installment' => $this->partnerBankLoan->monthly_installment,
             'loan_amount' => $this->partnerBankLoan->loan_amount,
+            'loan_type'   => $this->partnerBankLoan->type,
+            'reject_reason' => $this->getLoanRejectReason(),
             'total_installment' => (int)$this->partnerBankLoan->duration,
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'final_information_for_loan' => $this->final_details->toArray(),
-            'next_status' => $output
+            'next_status' => $output,
+            'loan_groups'    => constants('LOAN_GROUP'),
+            'groups' => $this->partnerBankLoan->groups
+        ];
+    }
+
+    /**
+     * Get the instance as an array.
+     *
+     * @return array
+     * @throws \ReflectionException
+     */
+    public function toArrayForAgent()
+    {
+        $bank = $this->partnerBankLoan->bank()->select('name', 'id', 'logo')->first();
+        $generated_id = ($bank ? $bank->id : '000') . '-' . str_pad($this->partnerBankLoan->id, 8 - strlen($this->partnerBankLoan->id), '0', STR_PAD_LEFT);
+        return [
+            'id' => $this->partnerBankLoan->id,
+            'generated_id' => $generated_id,
+            'partner' => [
+                'id' => $this->partner->id,
+                'name' => $this->partner->name,
+                'logo' => $this->partner->logo,
+                'updated_at' => (Carbon::parse($this->partner->updated_at))->format('j F, Y h:i A'),
+                'profile' => [
+                    'name' => $this->partner->getContactPerson(),
+                    'mobile' => $this->partner->getContactNumber(),
+                    'updated_at' => (Carbon::parse($this->partner->updatedAt()))->format('j F, Y h:i A'),
+                ]
+            ],
+
+            'purpose' => $this->partnerBankLoan->purpose,
+            'status' => [
+                'name' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
+                'status' => $this->partnerBankLoan->status
+            ],
+            'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
+            'document'             => $this->getDocumentsForAgents(),
+
         ];
     }
 
@@ -222,6 +275,7 @@ class PartnerLoanRequest implements Arrayable
             'status' => ucfirst(preg_replace('/_/', ' ', $this->partnerBankLoan->status)),
             'status_' => constants('LOAN_STATUS_BN')[$this->partnerBankLoan->status],
             'created_by' => $this->partnerBankLoan->created_by,
+            'type' => ucfirst($this->partnerBankLoan->type) . " Loan",
             'updated_by' => $this->partnerBankLoan->updated_by,
             'created_by_name' => $this->partnerBankLoan->created_by_name,
             'updated_by_name' => $this->partnerBankLoan->updated_by_name,
@@ -245,4 +299,20 @@ class PartnerLoanRequest implements Arrayable
     {
         return $this->final_details->getDocuments();
     }
+
+    public function getDocumentsForAgents()
+    {
+        return $this->final_details->getDocumentsForAgents();
+    }
+
+    public function getLoanRejectReason()
+    {
+        $statuses     = constants('LOAN_STATUS');
+        $last_status  = $this->partnerBankLoan->changeLogs()->where('to', $statuses['declined'])->orWhere('to', $statuses['rejected'])->get()->last();
+        if(isset($last_status))
+            return $last_status->description;
+
+        return null;
+    }
+
 }

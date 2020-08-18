@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Models\Partner;
-use App\Models\PartnerService;
+use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Service;
 use Illuminate\Http\Request;

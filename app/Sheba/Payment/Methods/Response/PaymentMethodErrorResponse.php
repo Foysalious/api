@@ -16,4 +16,17 @@ class PaymentMethodErrorResponse
     {
         $this->$name = $value;
     }
+
+    /**
+     * @return array
+     */
+    public function getGatewayResponse()
+    {
+        return [
+            'id' => $this->id,
+            'code' => $this->code,
+            'message' => $this->message,
+            'details' => $this->details
+        ];
+    }
 }

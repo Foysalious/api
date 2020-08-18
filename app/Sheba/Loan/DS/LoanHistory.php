@@ -4,6 +4,7 @@ namespace Sheba\Loan\DS;
 
 use App\Models\PartnerBankLoan;
 use Carbon\Carbon;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 
 class LoanHistory
 {
@@ -19,15 +20,19 @@ class LoanHistory
 
     public function toArray()
     {
-        $data = [
+        $isMicro = $this->isMicro();
+        $data    = [
             $this->id(),
             $this->status(),
-            $this->loanAmount(),
-            $this->duration()
+            $this->loanAmount()
         ];
-        if ($this->partnerBankLoan->status == constants('LOAN_STATUS')['approved']) {
+        if (!$isMicro) {
+            $data[] = $this->duration();
+        }
+        if (!empty($this->partnerBankLoan->bank_id)) {
             $data[] = $this->bankName();
-        } else {
+        }
+        if ($this->partnerBankLoan->status !== constants('LOAN_STATUS')['approved'] && !$isMicro) {
             $data[] = $this->installment_count();
         }
         $data[] = $this->created_at();
@@ -35,6 +40,11 @@ class LoanHistory
             $data[] = $this->rejectReason();
         }
         return $data;
+    }
+
+    private function isMicro()
+    {
+        return $this->partnerBankLoan->type == LoanTypes::MICRO;
     }
 
     private function id()
@@ -108,6 +118,7 @@ class LoanHistory
 
     private function bankName()
     {
+        $name = $this->partnerBankLoan->bank ? $this->partnerBankLoan->bank->name : $this->partnerBankLoan->bank_name;
         return [
             'field' => 'bank_name',
             'key'   => [
@@ -115,8 +126,8 @@ class LoanHistory
                 'bn' => 'ব্যাংকের নাম',
             ],
             'value' => [
-                'en' => $this->partnerBankLoan->bank_name,
-                'bn' => $this->partnerBankLoan->bank_name
+                'en' => $name,
+                'bn' => $name
             ]
         ];
     }

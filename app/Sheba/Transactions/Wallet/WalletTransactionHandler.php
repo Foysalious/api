@@ -9,6 +9,7 @@ use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;
 use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\Jobs\FraudTransactionJob;
 use Sheba\Transactions\Wallet\Jobs\WalletTransactionJob;
 use Sheba\Wallet\WalletUpdateEvent;
@@ -163,7 +164,7 @@ class WalletTransactionHandler extends WalletTransaction
             if (empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
             }
-            $transaction = $this->setType('credit')->storeTransaction($data);
+            $transaction = $this->setType(Types::credit())->storeTransaction($data);
             $this->storeFraudDetectionTransaction(!$isJob);
             return $transaction;
         } catch (Exception $e) {
