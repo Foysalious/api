@@ -127,6 +127,7 @@ class MemberController extends Controller
                     "tagline" => $business->tagline,
                     "company_type" => $business->type,
                     "address" => $business->address,
+                    "area" => 'Mirpur',
                     "geo_informations" => json_decode($business->geo_informations),
                     "wallet" => (double)$business->wallet,
                     "employee_size" => $business->employee_size,
