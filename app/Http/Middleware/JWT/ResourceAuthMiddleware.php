@@ -1,11 +1,10 @@
 <?php namespace App\Http\Middleware\JWT;
 
-
 use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
 use Sheba\Auth\JWTAuth;
 use Closure;
-use Sheba\Authentication\AuthenticationFailedException;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 
 class ResourceAuthMiddleware
 {
@@ -26,6 +25,7 @@ class ResourceAuthMiddleware
      * @param Request $request
      * @param Closure $next
      * @return mixed
+     * @throws AuthenticationFailedException
      */
     public function handle($request, Closure $next)
     {

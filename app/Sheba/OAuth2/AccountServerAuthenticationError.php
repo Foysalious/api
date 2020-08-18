@@ -1,9 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
-use Exception;
+use Sheba\Exceptions\Exceptions\ExceptionForClient;
 use Throwable;
 
-class AccountServerAuthenticationError extends Exception
+class AccountServerAuthenticationError extends ExceptionForClient
 {
     public function __construct($message = "", $code = 401, Throwable $previous = null)
     {

@@ -1,9 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
-use Exception;
+use Sheba\Exceptions\Exceptions\ExceptionForClient;
 use Throwable;
 
-class SomethingWrongWithToken extends Exception
+class SomethingWrongWithToken extends ExceptionForClient
 {
     public function __construct($message = "", $code = 400, Throwable $previous = null)
     {
