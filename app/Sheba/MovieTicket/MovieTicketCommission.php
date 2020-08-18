@@ -5,6 +5,7 @@ use App\Models\MovieTicketOrder;
 use App\Models\MovieTicketVendor;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
@@ -168,6 +169,6 @@ abstract class MovieTicketCommission
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
         (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::MOVIE)->setAmount($amount)
-            ->setType('credit')->setLog($log)->dispatch();
+            ->setType(Types::credit())->setLog($log)->dispatch();
     }
 }

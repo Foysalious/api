@@ -16,7 +16,7 @@ trait ModificationFields
     private function isOfValidClass($obj)
     {
         $this->modifierModelName = substr(strrchr(get_class($obj), '\\'), 1);
-        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Vendor', 'Business','BankUser']);
+        return in_array($this->modifierModelName, ['Customer', 'Resource', 'Partner', 'User', 'Member', 'Affiliate', 'Vendor', 'Business','BankUser','RetailerMember']);
     }
 
     public function setModifier($entity)

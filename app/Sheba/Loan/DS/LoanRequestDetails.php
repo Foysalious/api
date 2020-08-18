@@ -2,6 +2,7 @@
 
 namespace Sheba\Loan\DS;
 
+use App\Sheba\Loan\DS\DocumentsForAgents;
 use Illuminate\Contracts\Support\Arrayable;
 use ReflectionException;
 use Sheba\ModificationFields;
@@ -98,6 +99,14 @@ class LoanRequestDetails implements Arrayable
     public function getDocuments()
     {
         return (new Documents($this->partner, $this->resource, $this))->toArray();
+    }
+
+    /**
+     * @return array
+     */
+    public function getDocumentsForAgents()
+    {
+        return (new DocumentsForAgents($this->partner, $this->resource, $this))->toArray();
     }
 
     /**

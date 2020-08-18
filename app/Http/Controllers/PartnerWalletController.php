@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\PaymentManager;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class PartnerWalletController extends Controller
@@ -74,7 +75,7 @@ class PartnerWalletController extends Controller
                 DB::transaction(function () use ($payment, $user, $partner_credit, &$transaction) {
                     $partner_order = PartnerOrder::find($payment->payable->type_id);
                     if ($payment->payable->amount > 0) {
-                        $transaction = (new WalletTransactionHandler())->setModel($user)->setLog("Service Purchase (ORDER ID: {$partner_order->code()})")->setSource(TransactionSources::SERVICE_PURCHASE)->setType('debit')->setAmount($payment->payable->amount)->store(['partner_order_id' => $partner_order->id]);
+                        $transaction = (new WalletTransactionHandler())->setModel($user)->setLog("Service Purchase (ORDER ID: {$partner_order->code()})")->setSource(TransactionSources::SERVICE_PURCHASE)->setType(Types::debit())->setAmount($payment->payable->amount)->store(['partner_order_id' => $partner_order->id]);
                     }
                 });
                 $paymentRepository->create([
