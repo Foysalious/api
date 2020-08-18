@@ -263,28 +263,23 @@ class ServiceController extends Controller
      */
     public function show($service, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
-        try {
-            if ($request->has('lat') && $request->has('lng')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-                else return api_response($request, null, 404);
-            } else {
-                $location = $request->has('location') ? $request->location : 4;
-            }
-
-            $service = Service::find($service);
-            $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
-            if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location.']);
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
-            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
-            $service = $manager->createData($resource)->toArray();
-
-            return api_response($request, null, 200, ['service' => $service]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+            else return api_response($request, null, 404);
+        } else {
+            $location = $request->has('location') ? $request->location : 4;
         }
+
+        $service = Service::find($service);
+        $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+        if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location.']);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
+        $service = $manager->createData($resource)->toArray();
+
+        return api_response($request, null, 200, ['service' => $service]);
     }
 
     private function serviceQuestionSet($service)
