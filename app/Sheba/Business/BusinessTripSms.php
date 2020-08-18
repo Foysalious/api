@@ -6,6 +6,7 @@ use App\Repositories\SmsHandler;
 use Carbon\Carbon;
 use Sheba\Business\BusinessSmsHandler;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class BusinessTripSms
@@ -43,7 +44,7 @@ class BusinessTripSms
             ]);
             (new WalletTransactionHandler())
                 ->setModel($this->business)
-                ->setType('debit')
+                ->setType(Types::debit())
                 ->setLog('Sms send')
                 ->setAmount($this->cost)
                 ->setSource(TransactionSources::SMS)

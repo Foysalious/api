@@ -27,7 +27,11 @@ use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
+use Sheba\Dal\JobMaterialLog\JobMaterialLog;
+use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\JobPartnerChangeLog\JobPartnerChangeLog;
+use Sheba\Dal\JobStatusChangeLog\JobStatusChangeLog;
 
 class Job extends BaseModel implements MorphCommentable
 {
@@ -857,7 +861,6 @@ class Job extends BaseModel implements MorphCommentable
     {
         return $this->partnerOrder->isNewOrderStructure();
     }
-
 
     /**
      * @return CategoryPartner

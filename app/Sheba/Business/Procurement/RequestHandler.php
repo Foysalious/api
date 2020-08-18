@@ -8,6 +8,7 @@ class RequestHandler
     private $numberOfParticipants;
     private $lastDateOfSubmission;
     private $paymentOptions;
+    private $workOrder;
 
     /**
      * @param $long_description
@@ -115,5 +116,23 @@ class RequestHandler
     public function getPaymentOptions()
     {
         return $this->paymentOptions;
+    }
+
+    /**
+     * @param $work_order
+     * @return $this
+     */
+    public function setWorkOrder($work_order)
+    {
+        $this->workOrder = $work_order;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWorkOrder()
+    {
+        return $this->workOrder;
     }
 }

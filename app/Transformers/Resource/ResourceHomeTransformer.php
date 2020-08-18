@@ -14,6 +14,7 @@ class ResourceHomeTransformer extends TransformerAbstract
 
     public function transform($resource)
     {
+        $geo = $resource->firstPartner()->geo_informations ? json_decode($resource->firstPartner()->geo_informations) : null;
         return [
             'id' => $resource->id,
             'name' => $resource->profile->name,
@@ -21,7 +22,13 @@ class ResourceHomeTransformer extends TransformerAbstract
             'is_verified' => $resource->is_verified,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),
             'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
-            'balance' => $resource->totalWalletAmount()
+            'balance' => $resource->totalWalletAmount(),
+            'partner_id' => $resource->firstPartner()->id,
+            'geo_informations' => $geo ? [
+                'lat' => (double)$geo->lat,
+                'lng' => (double)$geo->lng,
+                'radius' => !empty($geo->radius) ? (double)$geo->radius : null
+            ] : null
         ];
 
     }

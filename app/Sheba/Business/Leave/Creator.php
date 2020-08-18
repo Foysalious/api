@@ -1,18 +1,25 @@
 <?php namespace App\Sheba\Business\Leave;
 
+use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
+use App\Models\Member;
+use App\Models\Profile;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
+use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
@@ -42,9 +49,16 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $substitute;
     private $createdBy;
     /** @var UploadedFile[] */
     private $attachments = [];
+    /** @var PushNotificationHandler $pushNotificationHandler */
+    private $pushNotificationHandler;
+    /** @var Business $business */
+    private $business;
+    private $businessHoliday;
+    private $businessWeekend;
 
     /**
      * Creator constructor.
@@ -53,16 +67,24 @@ class Creator
      * @param ApprovalRequestCreator $approval_request_creator
      * @param TimeFrame $time_frame
      * @param Attachments $attachment_manager
+     * @param PushNotificationHandler $push_notification_handler
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
-                                ApprovalRequestCreator $approval_request_creator,
-                                TimeFrame $time_frame, Attachments $attachment_manager)
+                                ApprovalRequestCreator $approval_request_creator, TimeFrame $time_frame,
+                                Attachments $attachment_manager, PushNotificationHandler $push_notification_handler,
+                                BusinessHolidayRepoInterface $business_holiday_repo,
+                                BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
         $this->approval_request_creator = $approval_request_creator;
         $this->timeFrame = $time_frame;
         $this->attachmentManager = $attachment_manager;
+        $this->pushNotificationHandler = $push_notification_handler;
+        $this->businessHoliday = $business_holiday_repo;
+        $this->businessWeekend = $business_weekend_repo;
     }
 
     public function setTitle($title)
@@ -77,8 +99,14 @@ class Creator
      */
     public function setBusinessMember(BusinessMember $business_member)
     {
-        $this->businessMember = $business_member;
+        $this->businessMember = $business_member->load('member', 'business');
+        $this->business = $this->businessMember->business;
         $this->getManager($this->businessMember);
+
+        if ($this->substitute == $this->businessMember->id) {
+            $this->setError(422, 'You can\'t be your own substitute!');
+            return $this;
+        }
 
         if (empty($this->managers)) {
             $this->setError(422, 'Manager not set yet!');
@@ -149,7 +177,26 @@ class Creator
 
     private function setTotalDays()
     {
-        return $this->endDate->diffInDays($this->startDate) + 1;
+        $leave_day_into_holiday_or_weekend = 0;
+        if (!$this->business->is_sandwich_leave_enable) {
+            $business_holiday = $this->businessHoliday->getAllDateArrayByBusiness($this->business);
+            $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+
+            $period = CarbonPeriod::create($this->startDate, $this->endDate);
+            foreach ($period as $date) {
+                $day_name_in_lower_case = strtolower($date->format('l'));
+                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
+                if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+            }
+        }
+
+        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
+    }
+
+    public function setSubstitute($substitute_id)
+    {
+        $this->substitute = $substitute_id;
+        return $this;
     }
 
     /**
@@ -162,6 +209,7 @@ class Creator
             'title' => $this->title,
             'note' => $this->note,
             'business_member_id' => $this->businessMember->id,
+            'substitute_id' => $this->substitute,
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
@@ -178,6 +226,7 @@ class Creator
                 ->create();
             $this->createAttachments($leave);
         });
+        if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
         return $leave;
     }
 
@@ -189,6 +238,33 @@ class Creator
                 ->setFile($attachment)
                 ->store();
         }
+    }
+
+    public function sendPushToSubstitute(Leave $leave)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $leave->businessMember;
+        /** @var BusinessMember $substitute_business_member */
+        $substitute_business_member = BusinessMember::findOrFail($leave->substitute_id);
+        /** @var Member $member */
+        $member = $business_member->member;
+        /** @var Profile $profile */
+        $leave_applicant = $member->profile->name;
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
+        $channel = config('sheba.push_notification_channel_name.employee');
+        $start_date = $leave->start_date->format('d/m/Y');
+        $end_date = $leave->end_date->format('d/m/Y');
+        $notification_data = [
+            "title" => 'Leave substitute',
+            "message" => "You have been chosen as $leave_applicant's substitute from $start_date to $end_date",
+            "event_type" => 'substitute',
+            "event_id" => $leave->id,
+            "sound" => "notification_sound",
+            "channel_id" => $channel,
+            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+        ];
+
+        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
     }
 
     private function getManager($business_member)
