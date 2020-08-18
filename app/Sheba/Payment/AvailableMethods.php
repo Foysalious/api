@@ -1,11 +1,8 @@
 <?php namespace Sheba\Payment;
 
-use App\Models\Payable;
 use Exception;
-use Sheba\Dal\Payable\Types;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
-use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class AvailableMethods
 {
@@ -28,7 +25,7 @@ class AvailableMethods
             if ($method == PaymentStrategy::CBL) {
                 $detail->setIsPublished(self::getCblStatus($version_code, $platform_name));
             }
-            $details[] =  $detail;
+            $details[] = $detail;
         }
 
         return $details;
@@ -70,6 +67,9 @@ class AvailableMethods
                 break;
             case 'wallet_recharge':
                 $methods = self::getWalletRechargePayments();
+                break;
+            case 'loan_repayment':
+                $methods = self::getLoanRepaymentPayments();
                 break;
             default:
                 throw new Exception('Invalid Payable Type');
@@ -172,6 +172,14 @@ class AvailableMethods
         ];
     }
 
+
+    public static function getLoanRepaymentPayments()
+    {
+        return [
+            PaymentStrategy::NAGAD,
+        ];
+    }
+
     /**
      * @param $version_code
      * @param $platform_name
@@ -183,5 +191,4 @@ class AvailableMethods
 
         return $platform_name && $platform_name == 'ios' ? true : ($version_code > 30112);
     }
-
 }

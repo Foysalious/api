@@ -5,6 +5,7 @@ use App\Models\PartnerAffiliation;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\PartnerAffiliation\PartnerAffiliationEarning;
 use Sheba\Repositories\AffiliateRepository;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class AffiliateEarning implements PartnerAffiliationEarning
@@ -51,7 +52,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
         (new WalletTransactionHandler())
             ->setModel($affiliate)
             ->setSource(TransactionSources::SHEBA_WALLET)
-            ->setType('credit')
+            ->setType(Types::credit())
             ->setAmount($reward)
             ->setLog($log)
             ->dispatch([
@@ -77,7 +78,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
         (new WalletTransactionHandler())
             ->setModel($affiliate)
             ->setSource(TransactionSources::SHEBA_WALLET)
-            ->setType('credit')
+            ->setType(Types::credit())
             ->setAmount($amount)
             ->setLog($log)
             ->dispatch([
@@ -106,7 +107,7 @@ class AffiliateEarning implements PartnerAffiliationEarning
         (new WalletTransactionHandler())
             ->setModel($affiliate)
             ->setSource(TransactionSources::SHEBA_WALLET)
-            ->setType('credit')
+            ->setType(Types::credit())
             ->setAmount($amount)
             ->setLog($log)
             ->dispatch([
@@ -127,6 +128,6 @@ class AffiliateEarning implements PartnerAffiliationEarning
          * ];
          * $this->affiliateRepo->creditWallet($ambassador, $amount, $data);*/
         $log = "Earned $amount point for order: $order_code";
-        (new WalletTransactionHandler())->setModel($ambassador)->setSource(TransactionSources::SHEBA_WALLET)->setType('credit')->setAmount($amount)->setLog($log)->dispatch();
+        (new WalletTransactionHandler())->setModel($ambassador)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($amount)->setLog($log)->dispatch();
     }
 }
