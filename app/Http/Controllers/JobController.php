@@ -2,7 +2,7 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 use App\Models\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
@@ -255,106 +255,101 @@ class JobController extends Controller
 
     public function getBills($customer, $job, Request $request, OrderRepository $logistics_orderRepo, FormatServices $formatServices, FromGeo $from_geo)
     {
-        try {
-            $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
-                $q->with('service');
-            }]);
-            $job->calculate(true);
+        $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
+            $q->with('service');
+        }]);
+        $job->calculate(true);
 
-            if (count($job->jobServices) == 0) {
-                $services = array();
-                $service_list = array();
-                array_push($services, [
-                    'name' => $job->service != null ? $job->service->name : null,
-                    'price' => (double)$job->servicePrice,
-                    'min_price' => 0,
-                    'is_min_price_applied' => 0
-                ]);
-                array_push($service_list, [
-                    'name' => $job->service != null ? $job->service->name : null,
-                    'service_group' => [],
-                    'unit' => $job->service->unit,
-                    'quantity' => $job->service_quantity,
-                    'price' => (double)$job->servicePrice
-                ]);
-            } else {
-                $service_list = $formatServices->setJob($job)->formatServices();
-                $services = array();
-                foreach ($job->jobServices->sortByDesc('id') as $jobService) {
-                    $total = (double)$jobService->unit_price * (double)$jobService->quantity;
-                    $min_price = (double)$jobService->min_price;
-                    array_push($services, array(
-                        'name' => $jobService->service != null ? $jobService->service->name : null,
-                        'quantity' => $jobService->quantity,
-                        'job_service_id' => $jobService->id,
-                        'service_id' => $jobService->service->id,
-                        'price' => $total,
-                        'min_price' => $min_price,
-                        'is_min_price_applied' => $min_price > $total ? 1 : 0
-                    ));
-                }
+        if (count($job->jobServices) == 0) {
+            $services = array();
+            $service_list = array();
+            array_push($services, [
+                'name' => $job->service != null ? $job->service->name : null,
+                'price' => (double)$job->servicePrice,
+                'min_price' => 0,
+                'is_min_price_applied' => 0
+            ]);
+            array_push($service_list, [
+                'name' => $job->service != null ? $job->service->name : null,
+                'service_group' => [],
+                'unit' => $job->service->unit,
+                'quantity' => $job->service_quantity,
+                'price' => (double)$job->servicePrice
+            ]);
+        } else {
+            $service_list = $formatServices->setJob($job)->formatServices();
+            $services = array();
+            foreach ($job->jobServices->sortByDesc('id') as $jobService) {
+                $total = (double)$jobService->unit_price * (double)$jobService->quantity;
+                $min_price = (double)$jobService->min_price;
+                array_push($services, array(
+                    'name' => $jobService->service != null ? $jobService->service->name : null,
+                    'quantity' => $jobService->quantity,
+                    'job_service_id' => $jobService->id,
+                    'service_id' => $jobService->service->id,
+                    'price' => $total,
+                    'min_price' => $min_price,
+                    'is_min_price_applied' => $min_price > $total ? 1 : 0
+                ));
             }
-            $partnerOrder = $job->partnerOrder;
-            $partnerOrder->calculate(true);
-
-            $original_delivery_charge = $job->deliveryPrice;
-            $delivery_discount = $job->deliveryDiscount;
-
-            $voucher = $partnerOrder->order->voucher ? [
-                'code' => $partnerOrder->order->voucher->code,
-                'amount' => $partnerOrder->order->voucher->amount
-            ] : null;
-
-            $from_geo = $from_geo->setThanas();
-
-            $pickup_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo, true) : null;
-            $pickup_thana = $pickup_geo ?  $from_geo->getThana($pickup_geo['lat'], $pickup_geo['lng']) :null;
-            $destination_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo, true) : null;
-            $destination_thana = $destination_geo ?  $from_geo->getThana($destination_geo['lat'], $destination_geo['lng']) :null;
-
-            $bill = collect();
-            $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
-            $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
-            $bill['original_price'] = (double)$partnerOrder->jobPrices;
-            $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
-            $bill['due'] = (double)$partnerOrder->dueWithLogistic;
-            $bill['material_price'] = (double)$job->materialPrice;
-            $bill['total_service_price'] = (double)$job->servicePrice;
-            $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
-            $bill['services'] = $services;
-            $bill['service_list'] = $service_list;
-            $bill['category_name'] = $job->category->name;
-            $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
-            $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
-            $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
-            $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
-            $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
-            $bill['status'] = $job->status;
-            $bill['isRentCar'] = $job->isRentCar();
-            $bill['is_on_premise'] = (int)$job->isOnPremise();
-            $bill['delivery_charge'] = $original_delivery_charge;
-            $bill['delivery_discount'] = $delivery_discount;
-            $bill['invoice'] = $job->partnerOrder->invoice;
-            $bill['version'] = $job->partnerOrder->getVersion();
-            $bill['voucher'] = $voucher;
-            $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
-            $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
-            $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
-            $bill['pick_up'] = $pickup_thana ? [
-                'thana' => $pickup_thana->name
-            ] : null;
-            $bill['destination'] = $destination_thana ? [
-                'thana' => $destination_thana->name
-            ] : null;
-            $bill['is_surcharge_applied'] = $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
-            $bill['surcharge_percentage'] = $job->jobServices[0] ? (double) $job->jobServices[0]->surcharge_percentage : 0;
-            $bill['surcharge_amount'] = (double) $job->totalServiceSurcharge;
-
-            return api_response($request, $bill, 200, ['bill' => $bill]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
         }
+        $partnerOrder = $job->partnerOrder;
+        $partnerOrder->calculate(true);
+
+        $original_delivery_charge = $job->deliveryPrice;
+        $delivery_discount = $job->deliveryDiscount;
+
+        $voucher = $partnerOrder->order->voucher ? [
+            'code' => $partnerOrder->order->voucher->code,
+            'amount' => $partnerOrder->order->voucher->amount
+        ] : null;
+
+        $from_geo = $from_geo->setThanas();
+
+        $pickup_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->pick_up_address_geo, true) : null;
+        $pickup_thana = $pickup_geo ? $from_geo->getThana($pickup_geo['lat'], $pickup_geo['lng']) : null;
+        $destination_geo = $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo, true) : null;
+        $destination_thana = $destination_geo ? $from_geo->getThana($destination_geo['lat'], $destination_geo['lng']) : null;
+
+        $bill = collect();
+        $bill['total'] = (double)($partnerOrder->totalPrice + $partnerOrder->totalLogisticCharge);
+        $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
+        $bill['original_price'] = (double)$partnerOrder->jobPrices;
+        $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
+        $bill['due'] = (double)$partnerOrder->dueWithLogistic;
+        $bill['material_price'] = (double)$job->materialPrice;
+        $bill['total_service_price'] = (double)$job->servicePrice;
+        $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
+        $bill['services'] = $services;
+        $bill['service_list'] = $service_list;
+        $bill['category_name'] = $job->category->name;
+        $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
+        $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
+        $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
+        $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
+        $bill['payment_method'] = $this->formatPaymentMethod($partnerOrder->payment_method);
+        $bill['status'] = $job->status;
+        $bill['isRentCar'] = $job->isRentCar();
+        $bill['is_on_premise'] = (int)$job->isOnPremise();
+        $bill['delivery_charge'] = $original_delivery_charge;
+        $bill['delivery_discount'] = $delivery_discount;
+        $bill['invoice'] = $job->partnerOrder->invoice;
+        $bill['version'] = $job->partnerOrder->getVersion();
+        $bill['voucher'] = $voucher;
+        $bill['is_vat_applicable'] = $job->category ? $job->category['is_vat_applicable'] : null;
+        $bill['is_closed'] = $partnerOrder['closed_at'] ? 1 : 0;
+        $bill['max_order_amount'] = $job->category ? (double)$job->category['max_order_amount'] : null;
+        $bill['pick_up'] = $pickup_thana ? [
+            'thana' => $pickup_thana->name
+        ] : null;
+        $bill['destination'] = $destination_thana ? [
+            'thana' => $destination_thana->name
+        ] : null;
+        $bill['is_surcharge_applied'] = count($job->jobServices) > 0 && $job->jobServices[0] ? !!($job->jobServices[0]->surcharge_percentage) ? 1 : 0 : 0;
+        $bill['surcharge_percentage'] = count($job->jobServices) > 0 && $job->jobServices[0] ? (double)$job->jobServices[0]->surcharge_percentage : 0;
+        $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
+
+        return api_response($request, $bill, 200, ['bill' => $bill]);
     }
 
     private function formatPaymentMethod($payment_method)

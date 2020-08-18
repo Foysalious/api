@@ -79,7 +79,7 @@ class PartnerNotificationHandler extends Handler
             $offer = OfferShowcase::query()->where('id', $notification->event_id)->first();
             if ($offer && $offer->thumb != '') $notification->icon = $offer->thumb;
         }
-        
+
         return (new PartnerNotificationEventGetter($notification))->setEventData()->get();
     }
 

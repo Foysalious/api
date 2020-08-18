@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
