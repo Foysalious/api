@@ -48,7 +48,8 @@ class ProfileRepository
         return $profile;
     }
 
-    public function updateIfNull($profile, array $data) {
+    public function updateIfNull($profile, array $data)
+    {
         foreach ($data as $key => $value) {
             if (empty($profile->$key) || $profile->$key == null || !$profile->$key) {
                 $profile->$key = $value;
@@ -58,17 +59,20 @@ class ProfileRepository
         return $profile;
     }
 
-    public function update(Profile $profile, array $data) {
+    public function update(Profile $profile, array $data)
+    {
         $profile->update($this->withUpdateModificationField($data));
         return $profile;
     }
 
-    public function ifExist($data, $queryColumn) {
+    public function ifExist($data, $queryColumn)
+    {
         $user = Profile::where($queryColumn, $data)->where('is_blacklisted', 0)->first();
         return $user != null ? $user : false;
     }
 
-    public function registerEmail($request) {
+    public function registerEmail($request)
+    {
         $profile = Profile::create([
             'email'          => $request->email,
             'password'       => bcrypt($request->password),
@@ -189,14 +193,16 @@ class ProfileRepository
         return $profile;
     }
 
-    public function uploadImage($profile, $photo, $folder, $extension = ".jpg") {
+    public function uploadImage($profile, $photo, $folder, $extension = ".jpg")
+    {
         $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . $extension;
         $s3       = Storage::disk('s3');
         $s3->put($folder . $filename, file_get_contents($photo), 'public');
         return config('s3.url') . $folder . $filename;
     }
 
-    public function registerAvatarByFacebook($avatar, $request, $user) {
+    public function registerAvatarByFacebook($avatar, $request, $user)
+    {
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
@@ -218,7 +224,8 @@ class ProfileRepository
         }
     }
 
-    public function integrateFacebook($profile, $request) {
+    public function integrateFacebook($profile, $request)
+    {
         $profile->fb_id = $request->fb_id;
         if (empty($profile->name)) {
             $profile->name = $request->fb_name;
@@ -236,7 +243,8 @@ class ProfileRepository
         return $profile;
     }
 
-    private function updateCustomerOwnVoucherNReferral($customer, $referrer) {
+    private function updateCustomerOwnVoucherNReferral($customer, $referrer)
+    {
         $voucher = Voucher::where('code', $referrer)->first();
         if ($voucher == null) {
             return;
@@ -245,7 +253,8 @@ class ProfileRepository
         $this->addToPromoList($customer, $voucher);
     }
 
-    private function addReferrerIdInCustomer($customer, $voucher) {
+    private function addReferrerIdInCustomer($customer, $voucher)
+    {
         $customer->referrer_id = $voucher->owner_id;
         $customer->update();
     }
@@ -261,7 +270,8 @@ class ProfileRepository
         return $promo->save();
     }
 
-    public function registerMobile($info) {
+    public function registerMobile($info)
+    {
         $data = [
             'mobile'          => $info['mobile'],
             'mobile_verified' => 1,
@@ -272,7 +282,8 @@ class ProfileRepository
         return Profile::find($profile->id);
     }
 
-    public function registerAvatar($avatar, $request, Profile $profile) {
+    public function registerAvatar($avatar, $request, Profile $profile)
+    {
         if ($avatar == 'customer') {
             $customer                 = new Customer();
             $customer->profile_id     = $profile->id;
@@ -300,7 +311,8 @@ class ProfileRepository
         }
     }
 
-    public function registerAvatarByKit($avatar, $user) {
+    public function registerAvatarByKit($avatar, $user)
+    {
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
@@ -327,7 +339,8 @@ class ProfileRepository
         }
     }
 
-    private function addAffiliateBonus(Affiliate $affiliate) {
+    private function addAffiliateBonus(Affiliate $affiliate)
+    {
         $affiliate_bonus_amount = constants('AFFILIATION_REGISTRATION_BONUS');
 
         DB::transaction(function () use ($affiliate, $affiliate_bonus_amount) {
@@ -349,7 +362,8 @@ class ProfileRepository
         ]);
     }
 
-    public function registerAvatarByEmail($avatar, $request, $user) {
+    public function registerAvatarByEmail($avatar, $request, $user)
+    {
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
@@ -375,11 +389,13 @@ class ProfileRepository
         }
     }
 
-    public function getAvatar($from) {
+    public function getAvatar($from)
+    {
         return constants('AVATAR')[$from];
     }
 
-    public function getByEmail($email) {
+    public function getByEmail($email)
+    {
         return Profile::where('email', $email)->first();
     }
 }
