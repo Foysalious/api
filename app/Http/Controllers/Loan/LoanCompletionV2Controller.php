@@ -1,58 +1,34 @@
-<?php
+<?php namespace App\Http\Controllers\Loan;
 
-namespace App\Http\Controllers;
+use App\Http\Controllers\Controller;
 use App\Models\Profile;
+use App\Repositories\AffiliateRepository;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Loan;
 
-class LoanCompletionController extends Controller
+class LoanCompletionV2Controller extends Controller
 {
+    const VERSION = 2;
     public function getLoanInformationCompletion($partner, Request $request,Loan $loan)
     {
         try {
-            $complete_count = 0;
-
+            $this->validate($request, ['loan_type' => 'required|in:'. implode(',', LoanTypes::get())]);
             $partner = $request->partner;
             $resource = $request->manager_resource;
-            $completion=$loan->setPartner($partner)->setResource($resource)->getCompletion();
-            /*$profile = $manager_resource->profile;
-            $basic_informations = $partner->basicInformations;
-            $bank_informations = $partner->bankInformations;
-
-            $personal = $this->personalInformationCompletion($profile, $manager_resource, $complete_count);
-            $business = $this->businessInformationCompletion($partner, $basic_informations, $complete_count);
-            $finance = $this->financeInformationCompletion($partner, $bank_informations, $complete_count);
-            $nominee = $this->nomineeInformationCompletion($profile, $complete_count);
-            $documents = $this->documentCompletion($profile, $manager_resource, $partner, $complete_count);
-
-            $is_all_completed = (($personal['personal_information'] >= 50) && ($business['business_information'] >= 20) && ($finance['finance_information'] >= 70) && ($nominee['nominee_information'] == 100) && ($documents['documents'] >= 50)) ? 1 : 0;
-
-            $completion = [
-                'personal' => [
-                    'completion_percentage' => $personal['personal_information'],
-                    'last_update' => $personal['last_update']
-                ],
-                'business' => [
-                    'completion_percentage' => $business['business_information'],
-                    'last_update' => $business['last_update']
-                ],
-                'finance' => [
-                    'completion_percentage' => $finance['finance_information'],
-                    'last_update' => $finance['last_update']
-                ],
-                'nominee' => [
-                    'completion_percentage' => $nominee['nominee_information'],
-                    'last_update' => $nominee['last_update']
-                ],
-                'documents' => [
-                    'completion_percentage' => $documents['documents'],
-                    'last_update' => $documents['last_update']
-                ],
-                'is_applicable_for_loan' => $is_all_completed
-            ];*/
-
+            if($request->loan_type === LoanTypes::MICRO){
+                $retailer = $partner->retailers->where('strategic_partner_id', 2)->first();
+                $affiliate = $resource->affiliate;
+                if(isset($retailer) && !isset($affiliate))
+                    (new AffiliateRepository())->createAffiliate($resource);
+            }
+            $completion = $loan->setPartner($partner)->setVersion(self::VERSION)->setResource($resource)->setType($request->loan_type)->getCompletion();
             return api_response($request, $completion, 200, ['completion' => $completion]);
-        } catch (\Throwable $e) {
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Exception $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

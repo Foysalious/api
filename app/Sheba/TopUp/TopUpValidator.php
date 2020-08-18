@@ -68,7 +68,9 @@ class TopUpValidator
             $this->error = new TopUpErrorResponse();
             $this->error->errorCode = 421;
             $this->error->errorMessage = "Invalid number.";
-        } elseif ($this->agent->wallet < $this->topUpOrder->amount) {
+        } elseif ($this->topUpOrder->isRobiWalletTopUp() && $this->agent->robi_topup_wallet < $this->topUpOrder->amount) {
+            $this->error = new TopUpWalletErrorResponse();
+        } elseif (!$this->topUpOrder->isRobiWalletTopUp() && $this->agent->wallet < $this->topUpOrder->amount) {
             $this->error = new TopUpWalletErrorResponse();
         }
 

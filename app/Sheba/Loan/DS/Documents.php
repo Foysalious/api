@@ -5,6 +5,7 @@ namespace Sheba\Loan\DS;
 use App\Models\Partner;
 use App\Models\Resource;
 use Illuminate\Contracts\Support\Arrayable;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Loan\Completion;
 use Sheba\ModificationFields;
 
@@ -29,7 +30,28 @@ class Documents implements Arrayable
     private $loanDetails;
     private $granter;
     private $bank_information;
+    private $type;
+    private $version;
 
+    /**
+     * @param mixed $type
+     * @return Documents
+     */
+    public function setType($type)
+    {
+        $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param mixed $version
+     * @return Documents
+     */
+    public function setVersion($version)
+    {
+        $this->version = $version;
+        return $this;
+    }
     public function __construct(Partner $partner = null, Resource $resource = null, LoanRequestDetails $request = null)
     {
         $this->loanDetails = $request;
@@ -68,9 +90,9 @@ class Documents implements Arrayable
     /**
      * @return array
      */
-    public function completion()
+    public function completion($loan_type = null)
     {
-        $data = $this->toArray();
+        $data = $this->toArray($loan_type);
         return (new Completion($data, [
             $this->profile->updated_at,
             $this->partner->updated_at,
@@ -82,9 +104,9 @@ class Documents implements Arrayable
     /**
      * @inheritDoc
      */
-    public function toArray()
+    public function toArray($loan_type = null)
     {
-        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile();
+        return $this->loanDetails ? $this->getDataFromLoanRequest() : $this->getDataFromProfile($loan_type);
     }
 
     private function getDataFromLoanRequest()
@@ -145,32 +167,43 @@ class Documents implements Arrayable
             'nominee_document',
             'grantor_document',
             'business_document',
-            'extras'
+            'extras',
+            'retailer_document'
         ];
     }
 
-    private function getDataFromProfile()
+    private function getDataFromProfile($loan_type = null)
     {
-        return [
+        $data = [
             'picture'           => $this->profile->pro_pic,
-            'is_verified'       => $this->resource->is_verified,
             'nid_image_front'   => $this->profile->nid_image_front,
             'nid_image_back'    => $this->profile->nid_image_back,
-            'nominee_document'  => [
-                'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
-                'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
-                'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
+            'is_verified'       => $this->resource->is_verified,
+            'business_document' => [
+                'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
+                'tin_certificate'          => $this->profile->tin_certificate,
+                'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
             ],
+        ];
+        if(LoanTypes::MICRO === $loan_type) {
+            $data['business_document'] = array_except($data['business_document'], ['tin_certificate', 'statement']);
+            return $data;
+        }
+        $otherDoc = [
             'grantor_document'  => [
                 'picture'         => !empty($this->granter) ? $this->granter->pro_pic : null,
                 'nid_front_image' => !empty($this->granter) ? $this->granter->nid_image_front : null,
                 'nid_back_image'  => !empty($this->granter) ? $this->granter->nid_image_back : null,
             ],
-            'business_document' => [
-                'tin_certificate'          => $this->profile->tin_certificate,
-                'trade_license_attachment' => !empty($this->basic_information) ? $this->basic_information->trade_license_attachment : null,
-                'statement'                => !empty($this->bank_information) ? $this->bank_information->statement : null
+            'nominee_document'  => [
+                'picture'         => !empty($this->nominee) ? $this->nominee->pro_pic : null,
+                'nid_front_image' => !empty($this->nominee) ? $this->nominee->nid_image_front : null,
+                'nid_back_image'  => !empty($this->nominee) ? $this->nominee->nid_image_back : null,
             ],
         ];
+        if(LoanTypes::TERM === $loan_type) {
+            $otherDoc = array_except($otherDoc, ['nominee_document', 'grantor_document']);
+        }
+        return array_merge($data,$otherDoc);
     }
 }
