@@ -122,9 +122,10 @@ class TopUp
     }
 
     /**
-     * @param TopUpOrder $topup_order
+     * @param TopUpOrder           $topup_order
      * @param TopUpSuccessResponse $response
      * @return TopUpOrder
+     * @throws Throwable
      */
     private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
@@ -135,7 +136,7 @@ class TopUp
             return $this->updateTopUpOrder($topup_order);
         }catch (Throwable $e){
             $sentry = app('sentry');
-            $sentry->user_context(['topup' => $topup_order->toArray()]);
+            $sentry->user_context(['topup' => $topup_order->getDirty()]);
             $sentry->captureException($e);
             throw $e;
         }
