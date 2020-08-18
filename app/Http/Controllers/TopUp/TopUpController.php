@@ -11,6 +11,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\TopUp\TopUpFailedReason;
 use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
@@ -106,10 +107,13 @@ class TopUpController extends Controller
 
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+
             $data = $data->filter(function ($row) {
                 return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
             });
+
             $total = $data->count();
 
             $excel_error = null; $halt_top_up = false;
@@ -264,9 +268,10 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param TopUpFailedReason $topUp_failed_reason
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request)
+    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 180);
@@ -300,17 +305,18 @@ class TopUpController extends Controller
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
-
+        
         $topup_data = [];
         foreach ($topups as $topup) {
             $topup = [
-                'payee_mobile' => $topup->payee_mobile,
-                'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount' => $topup->amount,
-                'operator' => $topup->vendor->name,
-                'status' => $topup->status,
-                'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
+                'payee_mobile'  => $topup->payee_mobile,
+                'payee_name'    => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount'        => $topup->amount,
+                'operator'      => $topup->vendor->name,
+                'status'        => $topup->status,
+                'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
+                'created_at'    => $topup->created_at->format('jS M, Y h:i A'),
+                'created_at_raw'=> $topup->created_at->format('Y-m-d h:i:s')
             ];
             array_push($topup_data, $topup);
         }
