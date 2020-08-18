@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Attachment;
+use App\Models\HyperLocal;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
@@ -121,14 +122,18 @@ class MemberController extends Controller
             $profile = $member->profile;
 
             if ($business = $member->businesses->first()) {
+                $location = null;
+                $geo_information = json_decode($business->geo_informations, 1);
+                $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
                 $info = [
                     "name" => $business->name,
                     "sub_domain" => $business->sub_domain,
                     "tagline" => $business->tagline,
                     "company_type" => $business->type,
                     "address" => $business->address,
-                    "area" => 'Mirpur',
-                    "geo_informations" => json_decode($business->geo_informations),
+                    "area" => $location->name,
+                    "geo_informations" => $geo_information,
                     "wallet" => (double)$business->wallet,
                     "employee_size" => $business->employee_size,
                 ];
