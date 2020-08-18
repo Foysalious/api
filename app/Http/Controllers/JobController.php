@@ -2,7 +2,7 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 use App\Models\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;

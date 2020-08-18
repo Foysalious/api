@@ -1,10 +1,5 @@
 <?php namespace Sheba\Notification\Partner;
 
-use App\Models\Job;
-use App\Models\Notification;
-use App\Models\OfferShowcase;
-use App\Models\Order;
-use App\Models\PartnerOrder;
 use Illuminate\Database\Eloquent\Model;
 
 abstract class Handler
@@ -73,8 +68,6 @@ abstract class Handler
     {
         $this->model = $model;
     }
-
-    abstract public function getList($offset, $limit);
-
-    abstract public function getDetails($notification);
+    abstract function getList($offset,$limit);
+    abstract function getDetails($notification);
 }
