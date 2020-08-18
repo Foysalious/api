@@ -66,7 +66,8 @@ class ServiceList
             'services.min_quantity',
             'services.unit',
             'services.variables',
-            'app_thumb'
+            'app_thumb',
+            'services.category_id'
         ];
     }
 
@@ -152,6 +153,7 @@ class ServiceList
                 $service['questions'] = $service['option_prices'] = [];
                 $service['fixed_price'] = (double)$variables->price;
             }
+            $service['is_rent_a_car'] = $service->category->isRentCar();
             array_forget($service, 'variables');
             removeRelationsAndFields($service);
         });
