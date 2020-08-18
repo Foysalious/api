@@ -8,6 +8,8 @@ abstract class Handler
 {
     protected $name;
     protected $filename;
+    protected $folder;
+    protected $viewPath;
     protected $viewFileName;
 
     protected $data;
@@ -79,6 +81,26 @@ abstract class Handler
         return $this;
     }
 
+    /**
+     * @param $folder
+     * @return $this
+     */
+    public function setFolder($folder)
+    {
+        $this->folder = $folder;
+        return $this;
+    }
+
+    /**
+     * @param $view_path
+     * @return $this
+     */
+    public function setViewPath($view_path)
+    {
+        $this->viewPath = $view_path;
+        return $this;
+    }
+
     abstract protected function getViewPath();
 
     /**
@@ -96,8 +118,8 @@ abstract class Handler
     /**
      * Push some data to the view.
      *
-     * @param string $key   Variable name for the view.
-     * @param mixed  $value Value against the variable.
+     * @param string $key Variable name for the view.
+     * @param mixed $value Value against the variable.
      * @return $this
      */
     public function pushData($key, $value)
@@ -115,7 +137,7 @@ abstract class Handler
      */
     public function setData(array $data)
     {
-        if(!isAssoc($data)) throw new NotAssociativeArray();
+        if (!isAssoc($data)) throw new NotAssociativeArray();
         $this->data = $data;
         return $this;
     }

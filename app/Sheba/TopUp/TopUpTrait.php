@@ -4,6 +4,7 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
@@ -37,7 +38,7 @@ trait TopUpTrait
             ->setModel($model)
             ->setAmount($amount)
             ->setSource(TransactionSources::TOP_UP)
-            ->setType('credit')
+            ->setType(Types::credit())
             ->setLog($log)
             ->dispatch();
     }
@@ -50,7 +51,7 @@ trait TopUpTrait
         $this->walletTransaction(['amount' => $amount, 'type' => 'Debit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model=$this;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('debit')
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::debit())
             ->setAmount($amount)->setLog($log)->dispatch();
     }
 

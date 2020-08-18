@@ -5,8 +5,10 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
+use InvalidArgumentException;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
@@ -42,7 +44,7 @@ class Bkash extends PaymentMethod
     /**
      * @param Payable $payable
      * @return Payment
-     * @throws \Exception
+     * @throws Exception
      */
     public function init(Payable $payable): Payment
     {
@@ -117,7 +119,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash create API error.');
+            throw new InvalidArgumentException('Bkash create API error.');
         curl_close($url);
         return json_decode($result_data);
     }
@@ -142,7 +144,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash grant token API error.');
+            throw new InvalidArgumentException('Bkash grant token API error.');
         curl_close($url);
         $data = json_decode($result_data, true);
         $token = $data['id_token'];
@@ -216,10 +218,10 @@ class Bkash extends PaymentMethod
         $result_data = curl_exec($url);
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
-            $error = new \InvalidArgumentException('Bkash execute API error.');
+            $error = new InvalidArgumentException('Bkash execute API error.');
             $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
-        };
+        }
         curl_close($url);
         return $result_data;
     }

@@ -28,7 +28,7 @@ abstract class PaymentMethod
         $this->paymentLogRepo = new PaymentStatusChangeLogRepository();
 
         /** @var StatusChanger $s */
-        $s = app(StatusChanger::class);
+        $s                   = app(StatusChanger::class);
         $this->statusChanger = $s;
     }
 
@@ -61,18 +61,17 @@ abstract class PaymentMethod
 
     /**
      * @param Payable $payable
-     * @param string $gateway_account_name
+     * @param string  $gateway_account_name
      * @return Payment
      * @throws \Exception
      */
-    protected function createPayment(Payable $payable, $gateway_account_name = 'default') : Payment
+    protected function createPayment(Payable $payable, $gateway_account_name = 'default'): Payment
     {
         $payment = new Payment();
-        $user = $payable->user;
+        $user    = $payable->user;
 
         $invoice = "SHEBA_" . strtoupper($this->getMethodName()) . "_" .
-            strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' .
-            randomString(10, 1, 1);
+                   strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' .randomString(10, 1, 1);
 
         DB::transaction(function () use (&$payment, $payable, $invoice, $user, $gateway_account_name) {
             $payment->payable_id             = $payable->id;
