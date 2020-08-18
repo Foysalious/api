@@ -35,8 +35,7 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            $payload = JWTAuth::getPayload($token)->toJson();
-            return new static(json_decode($payload, true));
+            return new static(JWTAuth::getPayload($token)->toArray());
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
         }
