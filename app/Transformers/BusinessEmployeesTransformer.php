@@ -23,6 +23,7 @@ class BusinessEmployeesTransformer extends TransformerAbstract
             $employee_based_on_departments[$department_name][] = [
                 'id' => $member->businessMember->id,
                 'name' => $profile->name,
+                'pro_pic' => $profile->pro_pic,
                 'designation' => $this->isMemberRolePresent($member) ? $member->businessMember->role->name : 'N/S',
                 'mobile' => $profile->mobile
             ];

@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
+use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
@@ -14,6 +15,7 @@ use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Throwable;
 
 class TopUp
 {
@@ -80,15 +82,19 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
-        DB::transaction(function () use ($response, $topup_order) {
-            $this->setModifier($this->agent);
-            $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-            /** @var TopUpCommission $top_up_commission */
-            $top_up_commission = $this->agent->getCommission();
-            $top_up_commission->setTopUpOrder($topup_order)->disburse();
-            $this->vendor->deductAmount($topup_order->amount);
-            $this->isSuccessful = true;
-        });
+        try {
+            DB::transaction(function () use ($response, $topup_order) {
+                $this->setModifier($this->agent);
+                $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                $top_up_commission = $this->agent->getCommission();
+                $top_up_commission->setTopUpOrder($topup_order)->disburse();
+                $this->vendor->deductAmount($topup_order->amount);
+                $this->isSuccessful = true;
+            });
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+        }
+
     }
 
     /**
@@ -116,16 +122,24 @@ class TopUp
     }
 
     /**
-     * @param TopUpOrder $topup_order
+     * @param TopUpOrder           $topup_order
      * @param TopUpSuccessResponse $response
      * @return TopUpOrder
+     * @throws Throwable
      */
     private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
-        $topup_order->status = $this->vendor->getTopUpInitialStatus();
-        $topup_order->transaction_id = $response->transactionId;
-        $topup_order->transaction_details = json_encode($response->transactionDetails);
-        return $this->updateTopUpOrder($topup_order);
+        try {
+            $topup_order->status = $this->vendor->getTopUpInitialStatus();
+            $topup_order->transaction_id = $response->transactionId;
+            $topup_order->transaction_details = json_encode($response->transactionDetails);
+            return $this->updateTopUpOrder($topup_order);
+        }catch (Throwable $e){
+            $sentry = app('sentry');
+            $sentry->user_context(['topup' => $topup_order->getDirty()]);
+            $sentry->captureException($e);
+            throw $e;
+        }
 
     }
 

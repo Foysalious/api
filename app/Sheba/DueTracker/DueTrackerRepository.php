@@ -24,6 +24,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class DueTrackerRepository extends BaseRepository
@@ -169,7 +170,6 @@ class DueTrackerRepository extends BaseRepository
      * @param Partner $partner
      * @param Request $request
      * @return array
-     * @throws InvalidPartnerPosCustomer
      * @throws ExpenseTrackingServerError
      */
     public function store(Partner $partner, Request $request)
@@ -177,7 +177,7 @@ class DueTrackerRepository extends BaseRepository
 
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $this->setModifier($partner);
@@ -198,7 +198,7 @@ class DueTrackerRepository extends BaseRepository
     {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         $this->setModifier($partner);
         if ($request->has('amount'))
             $data['amount'] = $request->amount;
@@ -422,7 +422,7 @@ class DueTrackerRepository extends BaseRepository
             throw new InsufficientBalance();
         }
         $sms->shoot();
-        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType('debit')->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }
 

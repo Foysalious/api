@@ -1,12 +1,15 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\LocationService\LocationServiceNotFoundException;
+use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
@@ -32,6 +35,7 @@ use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\PriceCalculation\PriceCalculationFactory;
@@ -344,9 +348,13 @@ class OrderPlace
         return $this;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function setDeliveryAddressFromId()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
+        if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
@@ -355,6 +363,7 @@ class OrderPlace
             $this->setCustomerDeliveryAddress($new_address);
         }
         $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->setLocation($hyper_local->location);
     }
 
@@ -458,6 +467,11 @@ class OrderPlace
         if ($this->selectedPartnerId) $this->selectedPartner = $this->partnersFromList->first();
     }
 
+    /**
+     * @return Collection
+     * @throws LocationServiceNotFoundException
+     * @throws CorruptedPriceStructureException
+     */
     private function createJobService()
     {
         $job_services = collect();
@@ -465,11 +479,12 @@ class OrderPlace
             $service = $selected_service->getService();
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
+            if (!$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location #' . $this->location->id);
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
-            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
+            if ($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();

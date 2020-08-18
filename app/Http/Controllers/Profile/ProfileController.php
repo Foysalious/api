@@ -83,4 +83,18 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function getDetail(Request $request)
+    {
+        $this->validate($request, [
+            'mobile' => 'required|mobile:bd'
+        ]);
+
+        $profile = Profile::where('mobile', formatMobile($request->mobile))->first();
+
+        if (!$profile) return api_response($request, null, 404, ['message' => 'Profile Not Found']);
+        return api_response($request, null, 200, ['profile' => [
+            'name' => $profile->name
+        ]]);
+    }
 }
