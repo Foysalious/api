@@ -3,6 +3,7 @@
 
 use Exception;
 use GuzzleHttp\Client;
+use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
 use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\TPProxy\TPProxyClient;
@@ -18,7 +19,7 @@ class NagadClient
     private $privateKey;
     private $contextPath;
 
-    public function __construct(TPProxyClient $client)
+    public function __construct(Client $client)
     {
         $this->client      = $client;
         $this->baseUrl     = config('nagad.base_url');
@@ -31,50 +32,48 @@ class NagadClient
     /**
      * @param $transactionId
      * @return Initialize
-     * @throws TPProxyServerError|Exception\EncryptionFailed
+     * @throws EncryptionFailed
      */
     public function init($transactionId)
     {
         $url  = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
         $data = Inputs::init($transactionId);
         $resp = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
-        $sentry=app('sentry');
-        $sentry->user_context(['request' =>$url, 'message' => $data,'resp'=>$resp]);
-        $sentry->captureException(new Exception($resp));
+       dd($resp);
         return new Initialize($resp);
     }
 
-    /**
-     * @param            $transactionId
-     * @param Initialize $resp
-     * @param            $amount
-     * @param            $callbackUrl
-     * @return CheckoutComplete
-     * @throws Exception\EncryptionFailed
-     * @throws TPProxyServerError
-     */
-    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
-    {
-        $paymentRefId = $resp->getPaymentReferenceId();
-        $url          = "$this->baseUrl/$this->contextPath/api/dfs/check-out/complete/$paymentRefId";
-        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl);
-        $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
-        $resp         = $this->client->call($request);
-        return new CheckoutComplete($resp);
-    }
-
-    /**
-     * @param $refId
-     * @return Validator
-     * @throws Exception\InvalidOrderId
-     * @throws TPProxyServerError
-     */
-    public function validate($refId)
-    {
-        $url     = "$this->baseUrl/$this->contextPath/api/dfs/verify/payment/$refId";
-        $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers());
-        $resp    = $this->client->call($request);
-        return new Validator($resp, true);
-
-    }
+//    /**
+//     * @param            $transactionId
+//     * @param Initialize $resp
+//     * @param            $amount
+//     * @param            $callbackUrl
+//     * @return CheckoutComplete
+//     * @throws Exception\EncryptionFailed
+//     * @throws TPProxyServerError
+//     */
+//    public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
+//    {
+//        $paymentRefId = $resp->getPaymentReferenceId();
+//        $url          = "$this->baseUrl/$this->contextPath/api/dfs/check-out/complete/$paymentRefId";
+//        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl);
+//        $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
+//        $resp         = $this->client->call($request);
+//        return new CheckoutComplete($resp);
+//    }
+//
+//    /**
+//     * @param $refId
+//     * @return Validator
+//     * @throws Exception\InvalidOrderId
+//     * @throws TPProxyServerError
+//     */
+//    public function validate($refId)
+//    {
+//        $url     = "$this->baseUrl/$this->contextPath/api/dfs/verify/payment/$refId";
+//        $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers());
+//        $resp    = $this->client->call($request);
+//        return new Validator($resp, true);
+//
+//    }
 }
