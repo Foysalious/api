@@ -20,6 +20,7 @@ class AuthRoute
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
+                $api->get('home', 'Resource\ResourceJobController@getJobToShowInHome');
                 $api->get('history', 'Resource\ResourceJobController@getAllHistoryJobs');
                 $api->get('next', 'Resource\ResourceJobController@getNextJob');
                 $api->get('search', 'Resource\ResourceJobController@jobSearch');
