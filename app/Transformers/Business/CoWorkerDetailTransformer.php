@@ -66,7 +66,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     private function getOfficialInfo($business_member)
     {
         $count = 0;
-        if ($business_member->join_date ||
+        if ($business_member->employee_id ||
+            $business_member->join_date ||
             $business_member->grade ||
             $business_member->employee_type ||
             $business_member->previous_institution) $count++;
