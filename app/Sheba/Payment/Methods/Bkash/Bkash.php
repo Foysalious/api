@@ -15,6 +15,8 @@ use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
+use Sheba\Payment\Methods\Response\PaymentMethodResponse;
+use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\InvalidTransaction;
@@ -184,7 +186,7 @@ class Bkash extends PaymentMethod
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
                 $status = Statuses::VALIDATION_FAILED;
-                $transaction_details = json_encode(['errorMessage' => $e->getMessage()]);
+                $transaction_details = json_encode(['errorMessage' => $e->getMessage(), 'gateway_response' => $success->getGatewayResponse()]);
             }
         } else {
             $error = $execute_response->getError();
