@@ -205,7 +205,7 @@ class CoWorkerController extends Controller
      */
     public function officialInfoEdit($business, $member_id, Request $request)
     {
-        $validation_data = ['employee_id' => 'sometimes|required', 'grade' => 'sometimes|required', 'previous_institution' => 'sometimes|required'];
+        $validation_data = ['employee_id' => 'sometimes|required|string', 'grade' => 'sometimes|required', 'previous_institution' => 'sometimes|required'];
         if (!$this->isNull($request->employee_type)) $validation_data += ['employee_type' => 'sometimes|required|in:permanent,on_probation,contractual,intern'];
         if (!$this->isNull($request->join_date)) $validation_data += ['join_date' => 'sometimes|required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d')];
         $this->validate($request, $validation_data);
