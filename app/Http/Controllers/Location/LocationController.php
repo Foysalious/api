@@ -7,6 +7,7 @@ use Sheba\Cache\CacheAside;
 use Sheba\Cache\Location\LocationCache;
 use Sheba\Cache\Location\LocationCacheRequest;
 use Sheba\Location\FromGeo;
+use Sheba\Location\ThanaList;
 
 class LocationController extends Controller
 {
@@ -41,5 +42,14 @@ class LocationController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         }
     }
+
+    public function getAllThana(Request $request, ThanaList $thanaList)
+    {
+        list($offset, $limit) = calculatePagination($request);
+        $thanas = $thanaList->setOffset($offset)->setLimit($limit)->getAllThana();
+        return api_response($request, null, 200, ['thanas' => $thanas]);
+    }
+
+
 
 }
