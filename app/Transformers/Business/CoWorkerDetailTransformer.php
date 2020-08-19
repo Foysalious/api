@@ -73,6 +73,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $official_info_completion = round((($count / 1) * 20), 0);
 
         return [
+            'employee_id' => $business_member->employee_id,
             'join_date' => $business_member->join_date,
             'grade' => $business_member->grade,
             'employee_type' => $business_member->employee_type,
