@@ -309,14 +309,14 @@ class CustomerSubscriptionController extends Controller
                 $service_group->push($service_data);
             }
 
-            $services = [
+            $services = [[
                 'id' => $service->id,
                 'name' => $service->name,
                 'service_group' => $service->variable_type == Type::OPTIONS ? $service_group : [],
                 'unit' => $service->unit,
                 'quantity' => 8,
                 'price' => 1000
-            ];
+            ]];
 
             $time = new PreferredTime($schedules->first()->time);
 
