@@ -38,7 +38,8 @@ class NagadClient
         $data    = Inputs::init($transactionId);
 //        $request = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
 //        $resp    = $this->client->call($request);
-        $resp=(new Client())->post($url,['json'=>$data,'headers'=>Inputs::headers(),'http_errors'=>false]);
+        $resp=(new Client())->post($url,['json'=>$data,'headers'=>Inputs::headers(),'http_errors'=>false])->getBody()->getContents();
+        dd($resp);
         return new Initialize($resp);
     }
 
