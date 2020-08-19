@@ -25,7 +25,7 @@ class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
         $tender_detail = config('sheba.business_url') . "/dashboard/rfq/list/" . $this->procurement->id."/details";
         $portal_link = config('sheba.business_url');
         Mail::send('emails.tender-publication', ['business_name' => $business_name, 'tender_detail' => $tender_detail, 'portal_link' => $portal_link], function ($m) {
-            $m->to('miajee@sheba.xyz')->subject('Your tender has been published successfully');
+            $m->to('ffaahhiimm15@gmail.com')->subject('Your tender has been published successfully');
         });
     }
 }
