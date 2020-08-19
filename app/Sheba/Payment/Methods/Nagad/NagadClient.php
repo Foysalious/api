@@ -38,7 +38,7 @@ class NagadClient
     {
         $url  = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
         $data = Inputs::init($transactionId);
-        $resp = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
+        $resp = decodeGuzzleResponse((new Client())->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
        dd($resp);
         return new Initialize($resp);
     }
