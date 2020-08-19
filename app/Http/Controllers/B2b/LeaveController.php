@@ -71,6 +71,7 @@ class LeaveController extends Controller
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
             /** @var Leave $requestable */
@@ -384,6 +385,15 @@ class LeaveController extends Controller
         return collect($leaves)->$sort_by(function ($leave, $key) {
             return strtoupper($leave['leave']['name']);
         });
+    }
+
+    private function sortByStatus($leaves)
+    {
+       $pending = $leaves->where('status', 'pending')->sortByDesc('created_at');
+       $accepted = $leaves->where('status', 'accepted')->sortByDesc('created_at');
+       $rejected = $leaves->where('status', 'rejected')->sortByDesc('created_at');
+
+       return $pending->merge($accepted)->merge($rejected);
     }
 
     /**
