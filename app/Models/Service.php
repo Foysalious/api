@@ -16,6 +16,7 @@ use stdClass;
 use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\PartnerService\PartnerService;
+use Sheba\Dal\ServiceSurcharge\Model as ServiceSurcharge;
 
 class Service extends Model
 {
