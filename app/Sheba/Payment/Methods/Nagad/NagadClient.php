@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Methods\Nagad;
 
 
+use Exception;
 use GuzzleHttp\Client;
 use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
@@ -34,12 +35,12 @@ class NagadClient
      */
     public function init($transactionId)
     {
-        $url     = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
-        $data    = Inputs::init($transactionId);
-//        $request = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
-//        $resp    = $this->client->call($request);
-        $resp=(new Client())->post($url,['json'=>$data,'headers'=>Inputs::headers(),'http_errors'=>false])->getBody()->getContents();
-        dd($resp);
+        $url  = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
+        $data = Inputs::init($transactionId);
+        $resp = decodeGuzzleResponse($this->client->post($url, ['headers' => Inputs::headers(), 'json' => $data, 'http_errors' => false]));
+        $sentry=app('sentry');
+        $sentry->user_context(['request' =>$url, 'message' => $data,'resp'=>$resp]);
+        $sentry->captureException(new Exception($resp));
         return new Initialize($resp);
     }
 
