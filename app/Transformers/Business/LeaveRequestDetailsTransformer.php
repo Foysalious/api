@@ -48,7 +48,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
-                'id' => $requestable->id,
+                'id' => $requestable->businessMember->employee_id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
                 'mobile' => $this->profile->mobile ?: null,
