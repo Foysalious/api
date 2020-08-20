@@ -13,6 +13,11 @@ use JWTAuth;
 use JWTFactory;
 use Session;
 use DB;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\AuthUser;
+use Sheba\OAuth2\SomethingWrongWithToken;
 use Throwable;
 
 class RegistrationController extends Controller
@@ -20,15 +25,48 @@ class RegistrationController extends Controller
     use ModificationFields;
     /** @var ProfileRepository $profileRepository */
     private $profileRepository;
+    /** @var AccountServer $accounts */
+    private $accounts;
 
     /**
      * RegistrationController constructor.
      * @param ProfileRepository $profile_repository
+     * @param AccountServer $accounts
      */
-    public function __construct(ProfileRepository $profile_repository)
+    public function __construct(ProfileRepository $profile_repository, AccountServer $accounts)
     {
         $this->profileRepository = $profile_repository;
+        $this->accounts = $accounts;
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws SomethingWrongWithToken
+     */
+    public function registerV3(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|min:6',
+        ]);
+        $token = $this->accounts->createProfileAndAvatarAndGetTokenByEmailAndPassword('member', $request->name, $request->email, $request->password);
+        $auth_user = AuthUser::createFromToken($token);
+
+        $info = [
+            'token' => $token,
+            'email_verified' => $auth_user->isEmailVerified(),
+            'member_id' => $auth_user->getMemberId(),
+            'business_id' => $auth_user->getMemberAssociatedBusinessId(),
+            'is_super' => $auth_user->isMemberSuper()
+        ];
+
+        return api_response($request, $info, 200, ['info' => $info]);
+    }
+
 
     /**
      * @param Request $request
@@ -70,112 +108,6 @@ class RegistrationController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             DB::rollback();
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function register(Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'name' => 'required|string',
-                'email' => 'required|email',
-                'password' => 'required|min:6',
-                'mobile' => 'required|string|mobile:bd',
-            ]);
-            $mobile = formatMobile($request->mobile);
-            $email = $request->email;
-            $m_profile = $this->profileRepository->ifExist($mobile, 'mobile');
-            $e_profile = $this->profileRepository->ifExist($email, 'email');
-            $profile = collect();
-            if ($m_profile && $e_profile) {
-                if ($m_profile->id == $e_profile->id) {
-                    if (!$m_profile->password) {
-                        $data = [
-                            'password' => bcrypt($request->password)
-                        ];
-                        $m_profile = $this->profileRepository->updateIfNull($m_profile, $data);
-                    }
-                    $member = $m_profile->member;
-                    if (!$member) $member = $this->makeMember($m_profile);
-                    $businesses = $member->businesses->first();
-                    $info = [
-                        'token' => $this->generateToken($m_profile, $member),
-                        'member_id' => $member->id,
-                        'business_id' => $businesses ? $businesses->id : null,
-                    ];
-                    return api_response($request, $info, 200, ['info' => $info]);
-                } else {
-                    return api_response($request, null, 400, ['message' => 'The email / Phone number is already in use']);
-                }
-            } elseif ($m_profile && !$e_profile) {
-                if (!$m_profile->email) {
-                    $m_profile->email = $email;
-                    $m_profile->update();
-                }
-                if (!$m_profile->password) {
-                    $data = [
-                        'password' => bcrypt($request->password)
-                    ];
-                    $m_profile = $this->profileRepository->updateIfNull($m_profile, $data);
-                }
-                $member = $m_profile->member;
-                if (!$member) $member = $this->makeMember($m_profile);
-                $businesses = $member->businesses->first();
-                $info = [
-                    'token' => $this->generateToken($m_profile, $member),
-                    'member_id' => $member->id,
-                    'business_id' => $businesses ? $businesses->id : null,
-                ];
-                return api_response($request, $info, 200, ['info' => $info]);
-            } elseif ($e_profile && !$m_profile) {
-                if (!$m_profile->mobile) {
-                    $e_profile->mobile = formatMobile($mobile);
-                    $e_profile->mobile_verified = 1;
-                    $e_profile->update();
-                }
-                if (!$e_profile->password) {
-                    $data = [
-                        'password' => bcrypt($request->password)
-                    ];
-                    $e_profile = $this->profileRepository->updateIfNull($e_profile, $data);
-                }
-                $member = $e_profile->member;
-                if (!$member) $member = $this->makeMember($e_profile);
-                $businesses = $member->businesses->first();
-                $info = [
-                    'token' => $this->generateToken($e_profile, $member),
-                    'member_id' => $member->id,
-                    'business_id' => $businesses ? $businesses->id : null,
-                ];
-                return api_response($request, $info, 200, ['info' => $info]);
-            } else {
-                $data = [
-                    'mobile' => $mobile,
-                    'name' => $request->name,
-                    'email' => $request->email,
-                    'password' => bcrypt($request->password)
-                ];
-                $profile = $this->profileRepository->store($data);
-                $profile->push($m_profile);
-
-                $member = $this->makeMember($profile);
-                $businesses = $member->businesses->first();
-                $info = [
-                    'token' => $this->generateToken($profile, $member),
-                    'member_id' => $member->id,
-                    'business_id' => $businesses ? $businesses->id : null,
-                ];
-                return api_response($request, $info, 200, ['info' => $info]);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

@@ -121,4 +121,39 @@ class AccountServer
         ]);
         return $data['token'];
     }
+
+    /**
+     * @param $avatar_type
+     * @param $name
+     * @param $email
+     * @param $password
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function createProfileAndAvatarAndGetTokenByEmailAndPassword($avatar_type, $name, $email, $password)
+    {
+        return $this->createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $email, $password);
+    }
+
+    /**
+     * @param $avatar_type
+     * @param $name
+     * @param $identity
+     * @param $password
+     * @return mixed
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $identity, $password)
+    {
+        $data = $this->client->post("api/v3/register", [
+            'name' => $name,
+            'email' => $identity,
+            'password' => $password,
+            'create_avatar' => true,
+            'avatar_type' => $avatar_type
+        ]);
+        return $data['token'];
+    }
 }

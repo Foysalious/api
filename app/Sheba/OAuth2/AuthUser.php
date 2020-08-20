@@ -20,7 +20,7 @@ class AuthUser
     {
         try {
             $token = JWTAuth::getToken();
-            if(!$token) throw new SomethingWrongWithToken("Token is missing.");
+            if (!$token) throw new SomethingWrongWithToken("Token is missing.");
             return self::createFromToken($token);
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
@@ -46,6 +46,11 @@ class AuthUser
         return $this->attributes['name'];
     }
 
+    public function isEmailVerified()
+    {
+        return $this->attributes['profile']['email_verified'];
+    }
+
     public function isLogisticUser()
     {
         return array_key_exists('logistic_user', $this->attributes);
@@ -66,21 +71,18 @@ class AuthUser
     public function getMemberId()
     {
         if (!$this->isMember()) return null;
-
         return $this->attributes['business_member']['member_id'];
     }
 
     public function getMemberAssociatedBusinessId()
     {
         if (!$this->doesMemberHasBusiness()) return null;
-
         return $this->attributes['business_member']['business_id'];
     }
 
     public function isMemberSuper()
     {
         if (!$this->doesMemberHasBusiness()) return null;
-
         return $this->attributes['business_member']['is_super'];
     }
 
