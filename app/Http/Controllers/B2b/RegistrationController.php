@@ -1,10 +1,18 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Member;
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Repositories\ProfileRepository;
 use App\Http\Controllers\Controller;
+use Sheba\Business\BusinessCommonInformationCreator;
+use Sheba\Business\BusinessCreator;
+use Sheba\Business\BusinessCreatorRequest;
+use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
+use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\BusinessUpdater;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -27,46 +35,93 @@ class RegistrationController extends Controller
     private $profileRepository;
     /** @var AccountServer $accounts */
     private $accounts;
+    /** BusinessMemberRequester $businessMemberRequester */
+    private $businessMemberRequester;
+    /** BusinessMemberCreator $businessMemberCreator */
+    private $businessMemberCreator;
 
     /**
      * RegistrationController constructor.
      * @param ProfileRepository $profile_repository
      * @param AccountServer $accounts
+     * @param BusinessMemberRequester $business_member_requester
+     * @param BusinessMemberCreator $business_member_creator
      */
-    public function __construct(ProfileRepository $profile_repository, AccountServer $accounts)
+    public function __construct(ProfileRepository $profile_repository,
+                                AccountServer $accounts,
+                                BusinessMemberRequester $business_member_requester,
+                                BusinessMemberCreator $business_member_creator)
     {
         $this->profileRepository = $profile_repository;
         $this->accounts = $accounts;
+        $this->businessMemberRequester = $business_member_requester;
+        $this->businessMemberCreator = $business_member_creator;
     }
 
     /**
      * @param Request $request
+     * @param BusinessCreatorRequest $business_creator_request
+     * @param BusinessCreator $business_creator
+     * @param BusinessUpdater $business_updater
+     * @param BusinessCommonInformationCreator $common_info_creator
      * @return JsonResponse
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
      * @throws SomethingWrongWithToken
      */
-    public function registerV3(Request $request)
+    public function registerV3(Request $request, BusinessCreatorRequest $business_creator_request,
+                               BusinessCreator $business_creator,
+                               BusinessUpdater $business_updater,
+                               BusinessCommonInformationCreator $common_info_creator)
     {
         $this->validate($request, [
             'name' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|min:6',
+
+            'company_name' => 'required|string',
+            'lat' => 'sometimes|required|numeric',
+            'lng' => 'sometimes|required|numeric'
         ]);
         $token = $this->accounts->createProfileAndAvatarAndGetTokenByEmailAndPassword('member', $request->name, $request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
-
+        $member = Member::find($auth_user->getMemberId());
+        $this->setModifier($member);
+        $business_creator_request = $business_creator_request->setName($request->company_name)
+            ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
+        if (count($member->businesses) > 0) {
+            $business = $member->businesses->first();
+            $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
+            $business_member = $member->businessMember;
+        } else {
+            $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
+            $common_info_creator->setBusiness($business)->setMember($member)->create();
+            $business_member = $this->createBusinessMember($business, $member);
+        }
         $info = [
             'token' => $token,
             'email_verified' => $auth_user->isEmailVerified(),
             'member_id' => $auth_user->getMemberId(),
-            'business_id' => $auth_user->getMemberAssociatedBusinessId(),
-            'is_super' => $auth_user->isMemberSuper()
+            'business_id' => $business->id,
+            'is_super' => $business_member->is_super
         ];
 
         return api_response($request, $info, 200, ['info' => $info]);
     }
-
+    /**
+     * @param $business
+     * @param $member
+     * @return Model
+     */
+    private function createBusinessMember($business, $member)
+    {
+        $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
+            ->setMemberId($member->id)
+            ->setStatus('active')
+            ->setIsSuper(1)
+            ->setJoinDate(Carbon::now());
+        return $this->businessMemberCreator->setRequester($business_member_requester)->create();
+    }
 
     /**
      * @param Request $request
