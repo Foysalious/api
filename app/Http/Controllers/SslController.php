@@ -14,7 +14,6 @@ class SslController extends Controller
 {
     public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
-        Redis::set('ssl_' . Carbon::now()->timestamp, json_encode($request->all()));
         $redirect_url = config('sheba.front_url');
         try {
             /** @var Payment $payment */
