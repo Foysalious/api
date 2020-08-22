@@ -1,14 +1,14 @@
-<?php
+<?php namespace Tests\Feature\Order\OrderPlace;
 
-use Illuminate\Foundation\Testing\WithoutMiddleware;
-use Illuminate\Foundation\Testing\DatabaseMigrations;
-use Illuminate\Foundation\Testing\DatabaseTransactions;
+use App\Models\Profile;
+use GuzzleHttp\Client;
+use Tests\Feature\FeatureTestCase;
 
-class RentACarOrderPlaceTest extends TestCase
+class RentACarOrderPlaceTest extends FeatureTestCase
 {
     public function testHalfDay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -43,7 +43,7 @@ class RentACarOrderPlaceTest extends TestCase
 
     public function testFullDay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -78,7 +78,7 @@ class RentACarOrderPlaceTest extends TestCase
 
     public function testOneWay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -120,7 +120,7 @@ class RentACarOrderPlaceTest extends TestCase
 
     public function testRoundTrip()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -163,7 +163,7 @@ class RentACarOrderPlaceTest extends TestCase
 
     public function testBodyRent()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -223,7 +223,7 @@ class RentACarOrderPlaceTest extends TestCase
 
     private function orderPlace($services, $partner, $valid_times)
     {
-        $profile = \App\Models\Profile::find(11);
+        $profile = Profile::find(11);
         $this->json('POST', '/v2/customers/11/orders', [
             'services' => $services,
             'date' => date('Y-m-d'),
