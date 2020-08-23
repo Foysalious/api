@@ -425,4 +425,9 @@ class LeaveController extends Controller
             if ($request->has('department') || $request->has('search')) return $is_dept_matched || $is_name_matched;
         });
     }
+
+    public function statusUpdateBySuperAdmin(Request $request)
+    {
+        
+    }
 }

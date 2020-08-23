@@ -47,6 +47,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
+            'super_admin_override_status' => $this->checkLeaveStatus($requestable),
             'leave' => [
                 'id' => $requestable->businessMember->employee_id,
                 'name' => $this->profile->name,
@@ -81,5 +82,11 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
+    }
+
+    private function checkLeaveStatus($requestable)
+    {
+        /** @var Leave $requestable */
+        $requestable->isAllRequestAccepted();
     }
 }
