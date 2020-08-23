@@ -18,14 +18,14 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     /** @var Profile Profile */
     private $profile;
     private $role;
-    private $leave_log_repo;
+    private $leaveLogRepo;
     protected $defaultIncludes = ['attachments'];
 
-    public function __construct(LeaveLogRepo $leave_log_repo, Profile $profile, BusinessRole $role)
+    public function __construct(Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo)
     {
         $this->profile = $profile;
         $this->role = $role;
-        $this->leave_log_repo = $leave_log_repo;
+        $this->leaveLogRepo = $leave_log_repo;
     }
 
     /**
@@ -69,6 +69,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'substitute' => $substitute_business_member ? [
+                    'id' => $substitute_business_member->id,
                     'name' => $leave_substitute->name,
                     'pro_pic' => $leave_substitute->pro_pic,
                     'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
@@ -93,14 +94,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function checkLeaveStatus($requestable)
     {
         /** @var Leave $requestable */
-       if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) {
-          return 0;
-       } else {
-           if (($this->leave_log_repo->statusUpdatedBySuperAdmin($requestable->id))) {
-              return 0;
-           } else {
-               return 1;
-           }
-       }
+        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
+        if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
+        return 1;
     }
 }
