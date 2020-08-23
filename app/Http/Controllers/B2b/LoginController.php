@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\Business\SendMailVerificationCodeEmail;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
@@ -51,7 +52,6 @@ class LoginController extends Controller
         $token = $this->accounts->createAvatarAndGetTokenByEmailAndPassword('member', $request->email, $request->password);
 
         $auth_user = AuthUser::createFromToken($token);
-
         $info = [
             'token' => $token,
             'email_verified' => $auth_user->isEmailVerified(),
@@ -59,10 +59,16 @@ class LoginController extends Controller
             'business_id' => $auth_user->getMemberAssociatedBusinessId(),
             'is_super' => $auth_user->isMemberSuper()
         ];
-
+        if (!$auth_user->isEmailVerified()) {
+           $this->sendVerificationCode($auth_user->getProfileId());
+        }
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
+    private function sendVerificationCode($profile_id)
+    {
+        $this->dispatch((new SendMailVerificationCodeEmail($profile_id)));
+    }
     /**
      * @return string
      * @throws AccountServerAuthenticationError

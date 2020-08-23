@@ -51,6 +51,11 @@ class AuthUser
         return $this->attributes['profile']['email_verified'];
     }
 
+    public function getProfileId()
+    {
+        return $this->attributes['profile']['id'];
+    }
+
     public function isLogisticUser()
     {
         return array_key_exists('logistic_user', $this->attributes);

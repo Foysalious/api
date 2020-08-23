@@ -4,7 +4,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
 class ProfileController extends Controller
 {
@@ -28,6 +30,32 @@ class ProfileController extends Controller
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function validateEmailVerificationCode(Request $request, ProfileRepositoryInterface $profileRepository)
+    {
+        try {
+            $this->validate($request, [
+                'code' => 'required'
+            ]);
+            $code = Redis::get('email_verification_code_' . $request->token);
+            if ($code) {
+                $code = json_decode($code,1);
+                $profile = $profileRepository->find($code['profile_id']);
+                $profileRepository->update($profile, ['email_verified' => 1]);
+                return api_response($request, null,200);
+            }
+            return api_response($request, null,404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        }catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
