@@ -25,6 +25,7 @@ use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Helpers\TimeFrame;
@@ -105,9 +106,10 @@ class LeaveController extends Controller
      * @param $business
      * @param $approval_request
      * @param Request $request
+     * @param LeaveLogRepo $leave_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo)
     {
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
@@ -126,7 +128,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($profile, $role));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($leave_log_repo, $profile, $role));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -424,5 +426,10 @@ class LeaveController extends Controller
             if ($request->has('department') && $request->has('search')) return $is_dept_matched && $is_name_matched;
             if ($request->has('department') || $request->has('search')) return $is_dept_matched || $is_name_matched;
         });
+    }
+
+    public function statusUpdateBySuperAdmin(Request $request)
+    {
+        
     }
 }
