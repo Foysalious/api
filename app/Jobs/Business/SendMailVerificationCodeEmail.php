@@ -27,10 +27,11 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
      * Execute the job.
      *
      * @return void
+     * @throws \Exception
      */
     public function handle()
     {
-        $verification_code = str_random(6);
+        $verification_code = randomString(6, 1);
         $key_name = 'email_verification_code_' . $verification_code;
         Redis::set($key_name, json_encode([
             "profile_id" => $this->profile->id,

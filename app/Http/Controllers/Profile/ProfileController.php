@@ -35,7 +35,7 @@ class ProfileController extends Controller
         }
     }
 
-    public function validateEmailVerificationCode(Request $request, ProfileRepositoryInterface $profileRepository)
+    public function verifyEmailWithVerificationCode(Request $request, ProfileRepositoryInterface $profileRepository)
     {
         try {
             $this->validate($request, [
