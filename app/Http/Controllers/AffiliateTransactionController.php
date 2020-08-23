@@ -13,7 +13,7 @@ class AffiliateTransactionController extends Controller
      * @param AffiliateTransactionRepository $transactionRepository
      * @return \Illuminate\Http\JsonResponse|string
      */
-    public function getEarningByCategory(Request $request, AffiliateTransactionRepository $transactionRepository)
+    public function getTransactionByCategory(Request $request, AffiliateTransactionRepository $transactionRepository)
     {
         try {
             $this->validate($request, [
