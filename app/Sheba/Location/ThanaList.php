@@ -16,6 +16,8 @@ class ThanaList
 
     public function getAllThana()
     {
-        return $this->thana->select('id', 'name', 'bn_name', 'lat', 'lng')->get();
+        return $this->thana->with(['district'=>function ($q) {
+            $q->select('id','name', 'bn_name');
+        }])->get();
     }
 }
