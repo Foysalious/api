@@ -1,10 +1,8 @@
 <?php namespace Sheba\TopUp;
 
-use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
-use Illuminate\Database\QueryException;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
@@ -28,12 +26,10 @@ class TopUp
     private $model;
     /** @var TopUpAgent */
     private $agent;
-
+    /** @var boolean */
     private $isSuccessful;
-
     /** @var TopUpResponse */
     private $response;
-
     /** @var TopUpValidator */
     private $validator;
 
@@ -83,7 +79,6 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
-
        // dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->transactionDetails->message)));
         DB::transaction(function () use ($response, $topup_order) {
             $this->setModifier($this->agent);
@@ -133,10 +128,8 @@ class TopUp
             $topup_order->transaction_id = $response->transactionId;
             $topup_order->transaction_details = json_encode($response->transactionDetails);
             return $this->updateTopUpOrder($topup_order);
-        }catch (Throwable $e){
-            $sentry = app('sentry');
-            $sentry->user_context(['topup' => $topup_order->getDirty()]);
-            $sentry->captureException($e);
+        } catch (Throwable $e) {
+            logErrorWithExtra($e, ['topup' => $topup_order->getDirty()]);
             throw $e;
         }
 
@@ -145,7 +138,7 @@ class TopUp
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
     {
         $topup_order->status = config('topup.status.failed.sheba');
-        $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
+        $topup_order->transaction_details = $response->toJson();
         return $this->updateTopUpOrder($topup_order);
     }
 

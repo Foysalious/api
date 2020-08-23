@@ -33,7 +33,7 @@ class NagadClient
      */
     public function init($transactionId)
     {
-        $url     = "$this->baseUrl/$this->contextPath/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
+        $url     = "$this->baseUrl/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
         $data    = Inputs::init($transactionId);
         $request = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
         $resp    = $this->client->call($request);
@@ -52,7 +52,7 @@ class NagadClient
     public function placeOrder($transactionId, Initialize $resp, $amount, $callbackUrl)
     {
         $paymentRefId = $resp->getPaymentReferenceId();
-        $url          = "$this->baseUrl/$this->contextPath/api/dfs/check-out/complete/$paymentRefId";
+        $url          = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
         $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl);
         $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
         $resp         = $this->client->call($request);
@@ -67,7 +67,7 @@ class NagadClient
      */
     public function validate($refId)
     {
-        $url     = "$this->baseUrl/$this->contextPath/api/dfs/verify/payment/$refId";
+        $url     = "$this->baseUrl/api/dfs/verify/payment/$refId";
         $request = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_GET)->setHeaders(Inputs::headers());
         $resp    = $this->client->call($request);
         return new Validator($resp, true);
