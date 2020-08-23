@@ -11,18 +11,21 @@ use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
     /** @var Profile Profile */
     private $profile;
     private $role;
+    private $leave_log_repo;
     protected $defaultIncludes = ['attachments'];
 
-    public function __construct(Profile $profile, BusinessRole $role)
+    public function __construct(LeaveLogRepo $leave_log_repo, Profile $profile, BusinessRole $role)
     {
         $this->profile = $profile;
         $this->role = $role;
+        $this->leave_log_repo = $leave_log_repo;
     }
 
     /**
@@ -60,6 +63,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
+                'start_date' => $requestable->start_date->format('d/m/Y'),
+                'end_date' => $requestable->end_date->format('d/m/Y'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'substitute' => $substitute_business_member ? [
@@ -87,6 +92,14 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function checkLeaveStatus($requestable)
     {
         /** @var Leave $requestable */
-        $requestable->isAllRequestAccepted();
+       if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) {
+          return 0;
+       } else {
+           if (($this->leave_log_repo->statusUpdatedBySuperAdmin($requestable->id))) {
+              return 0;
+           } else {
+               return 1;
+           }
+       }
     }
 }
