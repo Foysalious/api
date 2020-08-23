@@ -54,6 +54,7 @@ class LoginController extends Controller
 
         $info = [
             'token' => $token,
+            'email_verified' => $auth_user->isEmailVerified(),
             'member_id' => $auth_user->getMemberId(),
             'business_id' => $auth_user->getMemberAssociatedBusinessId(),
             'is_super' => $auth_user->isMemberSuper()
