@@ -15,10 +15,10 @@ class Inputs
     public static function headers()
     {
         return [
-            'Content-Type'     => 'application/json',
-            'X-KM-Api-Version' => 'v-0.2.0',
-            'X-KM-IP-V4'       => request()->ip(),
-            'X-KM-Client-Type' => 'MOBILE_WEB'
+            'Content-Type:application/json',
+            'X-KM-Api-Version:v-0.2.0',
+            'X-KM-IP-V4:'.request()->ip(),
+            'X-KM-Client-Type:MOBILE_WEB'
         ];
     }
 
