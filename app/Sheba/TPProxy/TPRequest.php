@@ -3,12 +3,12 @@
 
 class TPRequest
 {
-    const METHOD_GET = "get";
+    const METHOD_GET  = "get";
     const METHOD_POST = "post";
 
     private $url;
     private $method;
-    private $input = [];
+    private $input   = [];
     private $headers = [];
 
     /**
@@ -51,10 +51,11 @@ class TPRequest
     }
 
     /**
-     * @return array
+     * @return array|false|string
      */
     public function getInput()
     {
+        if (!empty($this->headers)&&isset($this->headers['Content-Type:application/json'])) return json_encode($this->input);
         return $this->input;
     }
 
