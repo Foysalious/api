@@ -1,12 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-
 use App\Jobs\Job;
 use App\Models\Profile;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Mail;
 
 class SendMailVerificationCodeEmail extends Job implements ShouldQueue
 {
