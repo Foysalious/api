@@ -55,7 +55,7 @@ class TPRequest
      */
     public function getInput()
     {
-        if (!empty($this->headers)&&isset($this->headers['Content-Type:application/json'])) return json_encode($this->input);
+        if (!empty($this->headers) && in_array('Content-Type:application/json', $this->headers)) return json_encode($this->input);
         return $this->input;
     }
 
