@@ -11,8 +11,7 @@ class NagadHttpClient
     public function call(TPRequest $request)
     {
         $url    = curl_init($request->getUrl());
-        $inputs = $request->getInput();
-        if (is_array($inputs)) $inputs = json_encode($inputs);
+        $inputs = json_encode($request->getInput());
         curl_setopt($url, CURLOPT_HTTPHEADER, $request->getHeaders());
         curl_setopt($url, CURLOPT_CUSTOMREQUEST, "POST");
         curl_setopt($url, CURLOPT_RETURNTRANSFER, true);
