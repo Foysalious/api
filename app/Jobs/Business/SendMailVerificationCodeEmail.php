@@ -20,7 +20,7 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
      */
     public function __construct($profile)
     {
-        $this->profile = Profile::find($profile);
+        $this->profile = $profile instanceof Profile ? $profile : Profile::find($profile);
     }
 
     /**

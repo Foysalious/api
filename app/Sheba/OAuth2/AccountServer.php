@@ -38,6 +38,18 @@ class AccountServer
     }
 
     /**
+     * @param $old_token
+     * @return mixed
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getRefreshToken($old_token)
+    {
+        $data = $this->client->get("api/v3/token/refresh?token=$old_token");
+        return $data['token'];
+    }
+
+    /**
      * @param $mobile
      * @param $password
      * @return string

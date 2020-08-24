@@ -78,10 +78,9 @@ class RegistrationController extends Controller
             'name' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|min:6',
-
             'company_name' => 'required|string',
-            'lat' => 'sometimes|required|numeric',
-            'lng' => 'sometimes|required|numeric'
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric'
         ]);
         $token = $this->accounts->createProfileAndAvatarAndGetTokenByEmailAndPassword('member', $request->name, $request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
@@ -108,6 +107,7 @@ class RegistrationController extends Controller
 
         return api_response($request, $info, 200, ['info' => $info]);
     }
+
     /**
      * @param $business
      * @param $member
