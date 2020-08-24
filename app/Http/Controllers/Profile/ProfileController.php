@@ -46,7 +46,7 @@ class ProfileController extends Controller
                 'code' => 'required',
                 'token' => 'required',
             ]);
-            $code = Redis::get('email_verification_code_' . $request->token);
+            $code = Redis::get('email_verification_code_' . $request->code);
             if ($code) {
                 $code = json_decode($code, 1);
                 $profile = $profileRepository->find($code['profile_id']);
@@ -60,7 +60,7 @@ class ProfileController extends Controller
                     'business_id' => $auth_user->getMemberAssociatedBusinessId(),
                     'is_super' => $auth_user->isMemberSuper()
                 ];
-                return api_response($request, null, 200,['info' => $info ]);
+                return api_response($request, null, 200, ['info' => $info]);
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -85,15 +85,17 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
     }
-    public function sendEmailVerificationlink(Request $request,AccountServer $accounts)
+
+    public function sendEmailVerificationLink(Request $request, AccountServer $accounts)
     {
         try {
-            $accounts->sendEmailVerificationlink($request->token);
+            $accounts->sendEmailVerificationLink($request->token);
             return api_response($request, null, 200);
         } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }
+
     public function getInfo(Request $request)
     {
         try {
