@@ -81,7 +81,7 @@ class LoginController extends Controller
 
     private function sendVerificationCode($profile_id)
     {
-        $this->dispatch((new SendMailVerificationCodeEmail($profile_id)));
+        $this->dispatch(new SendMailVerificationCodeEmail($profile_id));
     }
 
     /**
