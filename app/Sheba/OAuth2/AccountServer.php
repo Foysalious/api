@@ -168,4 +168,16 @@ class AccountServer
         ]);
         return $data['token'];
     }
+
+    /**
+     * @param $token
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function sendEmailVerificationlink($token)
+    {
+        $data = $this->client->get("api/v3/send-verification-link?token=$token");
+        return $data;
+    }
 }
