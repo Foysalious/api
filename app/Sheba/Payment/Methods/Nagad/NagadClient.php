@@ -16,7 +16,7 @@ class NagadClient
     private $privateKey;
     private $contextPath;
 
-    public function __construct(TPProxyClient $client)
+    public function __construct(NagadHttpClient $client)
     {
         $this->client      = $client;
         $this->baseUrl     = config('nagad.base_url');
