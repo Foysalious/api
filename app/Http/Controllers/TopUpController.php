@@ -71,7 +71,8 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        $this->validate($request, [
+        try{
+            $this->validate($request, [
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',

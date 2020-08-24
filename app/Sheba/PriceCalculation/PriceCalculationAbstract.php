@@ -2,7 +2,7 @@
 
 
 use App\Models\Service;
-use App\Models\ServiceSurcharge;
+use Sheba\Dal\ServiceSurcharge\Model as ServiceSurcharge;
 
 abstract class PriceCalculationAbstract
 {

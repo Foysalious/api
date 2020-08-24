@@ -11,18 +11,21 @@ use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
     /** @var Profile Profile */
     private $profile;
     private $role;
+    private $leaveLogRepo;
     protected $defaultIncludes = ['attachments'];
 
-    public function __construct(Profile $profile, BusinessRole $role)
+    public function __construct(Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo)
     {
         $this->profile = $profile;
         $this->role = $role;
+        $this->leaveLogRepo = $leave_log_repo;
     }
 
     /**
@@ -47,21 +50,26 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
+            'super_admin_override_status' => $this->checkLeaveStatus($requestable),
             'leave' => [
                 'id' => $requestable->id,
+                'employee_id' => $requestable->businessMember->employee_id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
                 'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
-                'type' => $leave_type->title,
+                'type' => ['id' => $leave_type->id, 'title' => $leave_type->title],
                 'total_days' => (int)$requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
+                'start_date' => $requestable->start_date->format('d/m/Y'),
+                'end_date' => $requestable->end_date->format('d/m/Y'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'substitute' => $substitute_business_member ? [
+                    'id' => $substitute_business_member->id,
                     'name' => $leave_substitute->name,
                     'pro_pic' => $leave_substitute->pro_pic,
                     'mobile' => $leave_substitute->mobile ? $leave_substitute->mobile : null,
@@ -81,5 +89,13 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
+    }
+
+    private function checkLeaveStatus($requestable)
+    {
+        /** @var Leave $requestable */
+        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
+        if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
+        return 1;
     }
 }

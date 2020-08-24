@@ -8,7 +8,6 @@ use App\Models\CarRentalPrice;
 use App\Models\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
-use App\Models\ServiceSurcharge;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;

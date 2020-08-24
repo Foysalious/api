@@ -110,10 +110,13 @@ class TopUpController extends Controller
 
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+
             $data = $data->filter(function ($row) {
                 return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
             });
+
             $total = $data->count();
 
             $excel_error = null; $halt_top_up = false;
@@ -305,7 +308,7 @@ class TopUpController extends Controller
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
-
+        
         $topup_data = [];
         foreach ($topups as $topup) {
             $topup = [

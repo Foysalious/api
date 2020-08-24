@@ -1,7 +1,8 @@
-<?php
+<?php namespace Tests\Feature\Locations;
 
+use Tests\Feature\FeatureTestCase;
 
-class LocationTest extends TestCase
+class LocationTest extends FeatureTestCase
 {
     public function testGetLocations()
     {

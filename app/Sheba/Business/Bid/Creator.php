@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Bid;
 
+use App\Jobs\Business\SendEmailForBiddingTenderToBusiness;
 use App\Models\Bid;
 use App\Models\Procurement;
 use App\Sheba\Attachments\Attachments;
@@ -7,6 +8,7 @@ use App\Sheba\Repositories\Business\BidRepository;
 use Exception;
 use Illuminate\Database\QueryException;
 use DB;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
@@ -14,7 +16,7 @@ use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 class Creator
 {
     use ModificationFields;
-
+    use DispatchesJobs;
     private $bidRepository;
     private $procurement;
     private $data;
@@ -125,6 +127,7 @@ class Creator
                 }
                 $this->updatePrice($bid);
                 $this->createAttachments($bid);
+                $this->sendToBusinessVendorParticipatedEmail($bid);
                 $this->sendVendorParticipatedNotification($bid);
             });
         } catch (QueryException $e) {
@@ -163,6 +166,14 @@ class Creator
 
     /**
      * @param Bid $bid
+     */
+    private function sendToBusinessVendorParticipatedEmail(Bid $bid)
+    {
+        $this->dispatch(new SendEmailForBiddingTenderToBusiness($bid));
+    }
+
+    /**
+     * @param Bid $bid
      * @throws Exception
      */
     private function sendVendorParticipatedNotification(Bid $bid)
@@ -182,13 +193,13 @@ class Creator
              * THIS NOTIFICATION NO NEEDED THIS TIMES
              *
              * event(new NotificationCreated([
-                'notifiable_id' => $member->id,
-                'notifiable_type' => "member",
-                'event_id' => $bid->id,
-                'event_type' => "bid",
-                "title" => $message,
-                'message' => $message,
-            ], $bid->bidder->id, get_class($bid->bidder)));*/
+             * 'notifiable_id' => $member->id,
+             * 'notifiable_type' => "member",
+             * 'event_id' => $bid->id,
+             * 'event_type' => "bid",
+             * "title" => $message,
+             * 'message' => $message,
+             * ], $bid->bidder->id, get_class($bid->bidder)));*/
         }
     }
 

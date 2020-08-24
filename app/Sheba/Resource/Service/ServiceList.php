@@ -151,6 +151,7 @@ class ServiceList
                 $service['questions'] = $service['option_prices'] = [];
                 $service['fixed_price'] = is_object($variables->price) ? $variables->price : (double)$variables->price;
             }
+            $service['is_rent_a_car'] = $service->category->isRentCar();
             array_forget($service, 'variables');
             removeRelationsAndFields($service);
         });

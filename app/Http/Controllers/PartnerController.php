@@ -811,7 +811,9 @@ class PartnerController extends Controller
             HyperLocal::insideCircle($geo_info)->with('location')->get()->pluck('location')->filter()->each(function ($location) use (&$locations) {
                 $locations->push([
                     'id'   => $location->id,
-                    'name' => $location->name
+                    'name' => $location->name,
+                    'lat' => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
+                    'lng' => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
                 ]);
             });
             if ($locations->count() == 0)
