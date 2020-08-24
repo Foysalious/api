@@ -34,6 +34,8 @@ use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
+use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
+use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 
 class LeaveController extends Controller
 {
@@ -444,6 +446,33 @@ class LeaveController extends Controller
         $business_member = $request->business_member;
 
         $updater->setLeave($leave)->setStatus($request->status)->setBusinessMember($business_member)->updateStatus();
+
+        return api_response($request, null, 200);
+    }
+
+    public function infoUpdateBySuperAdmin (Request $request, LeaveRepository $leave_repo, LeaveUpdater $updater)
+    {
+        $this->validate($request, [
+            'leave_id' => 'required',
+            'data' => 'required|string',
+        ]);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+        $leave = $leave_repo->find($request->leave_id);
+
+        $edit_values = json_decode($request->data);
+
+        foreach ($edit_values as $value) {
+            if ($value->type === EditType::LEAVE_TYPE) {
+               $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
+            }
+            if ($value->type === EditType::LEAVE_DATE) {
+               $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
+            }
+            if ($value->type === EditType::SUBSTITUTE) {
+                $updater->setLeave($leave)->setUpdateType($value->type)->setSubstituteId($value->substitute_id)->updateSubstitute();
+            }
+        }
 
         return api_response($request, null, 200);
     }
