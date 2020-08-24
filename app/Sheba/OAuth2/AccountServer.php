@@ -175,9 +175,8 @@ class AccountServer
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
      */
-    public function sendEmailVerificationlink($token)
+    public function sendEmailVerificationLink($token)
     {
-        $data = $this->client->get("api/v3/send-verification-link?token=$token");
-        return $data;
+         return $this->client->get("api/v3/send-verification-link?token=$token");
     }
 }

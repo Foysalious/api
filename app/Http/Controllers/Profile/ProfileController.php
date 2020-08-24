@@ -85,10 +85,10 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
     }
-    public function sendEmailVerificationlink(Request $request,AccountServer $accounts)
+    public function sendEmailVerificationLink(Request $request,AccountServer $accounts)
     {
         try {
-            $accounts->sendEmailVerificationlink($request->token);
+            $accounts->sendEmailVerificationLink($request->token);
             return api_response($request, null, 200);
         } catch (Throwable $e) {
             return api_response($request, null, 500);
