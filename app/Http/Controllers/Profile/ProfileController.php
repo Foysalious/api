@@ -85,7 +85,15 @@ class ProfileController extends Controller
             return api_response($request, null, 500);
         }
     }
-
+    public function sendEmailVerificationlink(Request $request,AccountServer $accounts)
+    {
+        try {
+            $accounts->sendEmailVerificationlink($request->token);
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
     public function getInfo(Request $request)
     {
         try {
