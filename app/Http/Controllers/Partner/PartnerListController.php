@@ -69,6 +69,7 @@ class PartnerListController extends Controller
         $final = [];
         foreach ($eligible_partners as $eligible_partner) {
             $partner = $partners->where('id', $eligible_partner->getId())->first();
+            $partner['score'] = $eligible_partner->getScore();
             array_push($final, removeRelationsAndFields($partner));
         }
         return api_response($request, $partners, 200, ['partners' => $final, 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
