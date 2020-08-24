@@ -8,11 +8,13 @@ use App\Models\ProcurementItem;
 use App\Models\Tag;
 use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
 use phpDocumentor\Reflection\DocBlock\Description;
 use Sheba\Notification\NotificationCreated;
+use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementQuestionRepositoryInterface;
@@ -57,6 +59,8 @@ class Creator
     private $bid;
     private $createdBy;
     private $sharedTo;
+    /** @var PartnerNotificationHandler $partnerNotificationHandler */
+    private $partnerNotificationHandler;
 
     /**
      * Creator constructor.
@@ -65,18 +69,21 @@ class Creator
      * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
      * @param ProcurementQuestionRepositoryInterface $procurement_question_repository
      * @param Attachments $attachment_manager
+     * @param PartnerNotificationHandler $partner_notification_handler
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProcurementItemRepositoryInterface $procurement_item_repository,
                                 ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
                                 ProcurementQuestionRepositoryInterface $procurement_question_repository,
-                                Attachments $attachment_manager)
+                                Attachments $attachment_manager,
+                                PartnerNotificationHandler $partner_notification_handler)
     {
         $this->procurementRepository = $procurement_repository;
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementQuestionRepository = $procurement_question_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
         $this->attachmentManager = $attachment_manager;
+        $this->partnerNotificationHandler = $partner_notification_handler;
     }
 
     public function getProcurement($procurement)
@@ -265,11 +272,7 @@ class Creator
                 }
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
-                /**
-                 * THIS NOTIFICATION TURNED OFF NOW (TURNED ON IN FUTURE)
-                 *
-                 * if ($procurement->is_published) $this->sendNotification($procurement);
-                 */
+                if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -280,7 +283,7 @@ class Creator
     /**
      * @param $procurement
      * @param $item_type
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Model
      */
     public function createProcurementItem($procurement, $item_type)
     {
@@ -392,11 +395,8 @@ class Creator
             'shared_to' => $this->sharedTo
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
-        /**
-         * THIS NOTIFICATION TURNED OFF NOW (TURNED ON IN FUTURE)
-         *
-         * if ($this->isPublished) $this->sendNotification($procurement);
-         */
+        $procurement = $procurement->fresh();
+        if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
     }
 
     /**
@@ -404,6 +404,16 @@ class Creator
      */
     private function sendNotification(Procurement $procurement)
     {
-        dispatch(new SendRFQCreateNotificationToPartners($procurement));
+        dispatch(new SendRFQCreateNotificationToPartners($procurement, $this->partnerNotificationHandler));
+    }
+
+    /**
+     * @param $procurement
+     * @return bool
+     */
+    private function isEligibleForNotification($procurement)
+    {
+        if ($procurement->shared_to == 'public' || $procurement->shared_to == 'verified') return true;
+        return false;
     }
 }

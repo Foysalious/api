@@ -21,6 +21,7 @@ use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Logs\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
+use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
 use Throwable;
@@ -335,45 +336,23 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function addService($partner, Request $request, PartnerListRequest $partnerListRequest)
+    public function addService($partner, Request $request, ServiceUpdateRequest $updateRequest, UserAgentInformation $user_agent_information)
     {
-        try {
-            $this->validate($request, [
-                'services' => 'required|string',
-                'remember_token' => 'required|string',
-                'partner' => 'required'
-            ]);
-            $partner = $request->partner;
-            $partner_order = $request->partner_order;
-            $manager_resource = $request->manager_resource;
-            $job = $partner_order->jobs->whereIn('status', array(constants('JOB_STATUSES')['Accepted'], constants('JOB_STATUSES')['Serve_Due'], constants('JOB_STATUSES')['Schedule_Due'], constants('JOB_STATUSES')['Process']))->first();
-            if ($job == null) return api_response($request, null, 403, ['message' => "No valid job exists"]);
-            $partnerListRequest->setRequest($request)->setLocation($partner_order->order->location_id)->setScheduleDate($job->schedule_date)->setScheduleTime($job->preferred_time_start . '-' . $job->preferred_time_end)->prepareObject();
-            $partner_list = new PartnerList();
-            $partner_list->setPartnerListRequest($partnerListRequest);
-            $partner_list->find($partner->id);
-            $partner_list->addPricing();
-            $partner = $partner_list->partners->first();
-            $jobService_repo = new JobServiceRepository();
-            $job_services = $jobService_repo->setJob($job)->createJobService($partner->services, $partnerListRequest->selectedServices, ['created_by' => $manager_resource->id, 'created_by_name' => $manager_resource->profile->name]);
-            if (!$jobService_repo->existInJob($job, $job_services)) {
-                $job->jobServices()->saveMany($job_services);
-                $discount = (new Discount())->get($job);
-                $job->update($this->withUpdateModificationField(['discount' => $discount]));
-                return api_response($request, null, 200);
-            } else {
-                return api_response($request, null, 403, ['message' => 'You can not add service that is already added!']);
-            }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'services' => 'required|string',
+            'remember_token' => 'required|string',
+            'partner' => 'required'
+        ]);
+        $partner_order = $request->partner_order;
+        $this->setModifier($request->manager_resource);
+        if ($partner_order->partner_id !== (int)$partner) return api_response($request, null, 403, ["message" => "You're not authorized to access this job."]);
+        $user_agent_information->setRequest($request);
+        $services = json_decode($request->services, 1);
+        if (count($services) > 0) $updateRequest->setServices($services);
+        $job = $partner_order->getActiveJob();
+        if (!$job) return api_response($request, null, 404);
+        $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
+        return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
     public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)

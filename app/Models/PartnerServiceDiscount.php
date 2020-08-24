@@ -1,5 +1,7 @@
 <?php namespace App\Models;
 
+use Exception;
+use Sheba\Dal\PartnerService\PartnerService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -28,7 +30,7 @@ class PartnerServiceDiscount extends Model
     public function getAmountForOptions($options = null)
     {
         if (!$options) {
-            throw new \Exception("Options are required for 'Options' type services.");
+            throw new Exception("Options are required for 'Options' type services.");
         }
 
         if (is_array($options)) $options = implode(',', $options);

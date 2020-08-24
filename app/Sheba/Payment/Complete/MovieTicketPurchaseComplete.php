@@ -1,10 +1,13 @@
 <?php namespace Sheba\Payment\Complete;
 
+use App\Jobs\SendEmailToNotifyVendorBalance;
 use App\Models\MovieTicketOrder;
+use App\Repositories\NotificationRepository;
 use Illuminate\Database\QueryException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\MovieTicket\MovieTicket;
+use Sheba\MovieTicket\MovieTicketManager;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterFailResponse;
 use Sheba\MovieTicket\Vendor\VendorFactory;
@@ -49,8 +52,11 @@ class MovieTicketPurchaseComplete extends PaymentComplete
                 } else {
                     $response = (new BlockBusterFailResponse())->setResponse($response);
                     $movie_ticket->processFailedMovieTicket($movie_ticket_order, $response);
+                    if($movie_ticket_order->agent_type == 'App\\Models\\Affiliate') ((new NotificationRepository())->pushNotificationToAffiliate('purchase_movie_ticket_failed',$movie_ticket_order->agent_id,$movie_ticket_order->reserver_number));
                 }
                 $this->completePayment();
+                $this->dispatchJob($movie_ticket_order->vendor_id);
+
             });
         } catch (QueryException $e) {
             $movie_ticket_order = MovieTicketOrder::find($this->payment->payable->type_id);
@@ -65,5 +71,15 @@ class MovieTicketPurchaseComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
+    }
+
+    private function dispatchJob($vendor_id)
+    {
+        try {
+            dispatch(new SendEmailToNotifyVendorBalance('movie_ticket',$vendor_id));
+        } catch(\Exception $e)
+        {
+
+        }
     }
 }

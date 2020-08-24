@@ -32,9 +32,9 @@ class ExpensePdf
             'month_name' =>  getMonthName($month, "M") . ", $year"
         ];
 
+        // return view('pdfs.employee_expense', compact('data'));
         return App::make('dompdf.wrapper')
             ->loadView('pdfs.employee_expense', compact('data'))
             ->download("employee_expense.pdf");
-//         return view('pdfs.employee_expense', compact('data'));
     }
 }

@@ -28,6 +28,11 @@ class Member extends Model
         return $this->businessMembers()->whereIn('status', Statuses::getAccessible());
     }
 
+    public function businessMemberWithoutStatusCheck()
+    {
+        return $this->businessMembers()->first();
+    }
+
     public function getBusinessMemberAttribute()
     {
         return $this->businessMembers()->whereIn('status', Statuses::getAccessible())->first();

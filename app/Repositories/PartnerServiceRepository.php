@@ -1,6 +1,6 @@
 <?php namespace App\Repositories;
 
-use App\Models\PartnerService;
+use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServiceSurcharge;
 use App\Models\Service;
 use Carbon\Carbon;
