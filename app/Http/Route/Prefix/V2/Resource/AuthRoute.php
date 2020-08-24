@@ -17,6 +17,8 @@ class AuthRoute
             $api->get('rating', 'Resource\ResourceController@getRatingInfo');
             $api->get('reviews', 'Resource\ResourceReviewController@index');
             $api->get('services', 'Resource\ResourceController@getService');
+            $api->get('partner/categories', 'Resource\ResourcePartnerController@getCategories');
+            $api->get('partner/categories/{category}/services', 'Resource\ResourcePartnerController@getCategoryServices');
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
