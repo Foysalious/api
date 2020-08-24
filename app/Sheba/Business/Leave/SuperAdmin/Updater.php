@@ -85,6 +85,7 @@ class Updater
     public function updateLeaveType()
     {
         $this->previousLeaveTypeId = $this->leave->leave_type_id;
+        if ($this->previousLeaveTypeId === $this->leaveTypeId) return;
         $log_data = [
             'leave_id' => $this->leave->id,
             'type' => Type::LEAVE_TYPE,
@@ -103,6 +104,7 @@ class Updater
         $this->previousEndDate = $this->leave->end_date->format('d/m/Y');
         $new_start_date = $this->formatDate($this->startDate);
         $new_end_date = $this->formatDate($this->endDate);
+        if($this->previousStartDate === $new_start_date) return;
         $data = [
             'start_date' => $this->startDate . ' ' . '00:00:00',
             'end_date' => $this->endDate . ' ' . '23:59:59'
@@ -123,6 +125,7 @@ class Updater
     public function updateSubstitute()
     {
         $this->previousSubstituteId = $this->leave->substitute_id;
+        if($this->previousSubstituteId === $this->substituteId) return;
         $previous_substitute_name = $this->getSubstituteName($this->previousSubstituteId);
         $new_substitute_name = $this->getSubstituteName($this->substituteId);
         $log_data = [
