@@ -28,11 +28,11 @@ class NagadHttpClient
 
     private function makeHeaders(array $getHeaders)
     {
-        $header = [];
+        $headers = [];
         foreach ($getHeaders as $key => $header) {
-            array_push($header, "$key:$header");
+            array_push($headers, "$key:$header");
         }
-        return $header;
+        return $headers;
     }
 
 }
