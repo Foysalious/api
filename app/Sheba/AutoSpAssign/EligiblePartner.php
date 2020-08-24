@@ -16,6 +16,11 @@ class EligiblePartner
     private $lifetimeServedJobCount;
     public $score;
 
+    public function getScore()
+    {
+        return $this->score;
+    }
+
     public function getPackageId()
     {
         return $this->packageId;
