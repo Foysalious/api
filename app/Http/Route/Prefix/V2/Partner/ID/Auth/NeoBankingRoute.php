@@ -8,6 +8,7 @@ class NeoBankingRoute {
                     $api->get('/organization-information', 'NeoBanking\\NeoBankingController@getOrganizationInformation');
                     $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
                     $api->get('/homepage', 'NeoBanking\\NeoBankingController@getHomePage');
+                    $api->get('/account-details', 'NeoBanking\\NeoBankingController@getAccountDetails');
 
                 });
             });
