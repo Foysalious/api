@@ -79,7 +79,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'department_id' => $this->role ? $this->role->businessDepartment->id : null,
                 'department' => $this->role ? $this->role->businessDepartment->name : null,
                 'designation' => $this->role ? $this->role->name : null
-            ]
+            ],
+            'leave_log_details' => $this->getLeaveLogDetails($requestable),
         ];
     }
 
@@ -97,5 +98,13 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
+    }
+
+    private function getLeaveLogDetails($requestable)
+    {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->get()->map(function ($log) {
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:m A - d M,Y')];
+        })->toArray();
+        return $logs ? $logs : null;
     }
 }
