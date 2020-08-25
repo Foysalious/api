@@ -80,7 +80,7 @@
                                                             <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/ShebaXyz.png" alt style="display:block" width="180"></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="heading-style" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:24px;font-weight:600">Reset your password</p></td>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="heading-style" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:24px;font-weight:600">Confirm your email address</p></td>
                                                         </tr>
                                                         <tr>
                                                             <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:0.8;font-family:Lato;font-size:14px">Use the code below to unlock your Sheba.xyz account. If you didn’t request a reset, you can safely ignore this email.</p></td>
@@ -94,7 +94,7 @@
                                                             <td align="left" class="padding-side" style="padding:0 60px"><p class="code" style="font-family:'open sans', 'helvetica neue', helvetica, arial, sans-serif;font-size:20px;font-weight:600;color:#437FF5">Code - {{$code}}</p></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="padding-side" align="left" style="padding:0 60px"><span class="faq-que" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">Why do I need a new password?</span></td>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><span class="faq-que" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">Why do I need to confirm my email address?</span></td>
                                                         </tr>
                                                         <tr>
                                                             <td class="padding-side" align="left" style="padding:0 60px"><p class="faq-ans pb-30" style="padding-bottom:30px;opacity:0.8;font-size:14px;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif">To keep every account secure, Sheba.xyz doesn’t store passwords. Since we can’t look up your current password, we generate a unique code to reset it instead.</p></td>
