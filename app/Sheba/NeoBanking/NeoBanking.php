@@ -346,4 +346,53 @@ class NeoBanking
         ];
     }
 
+    public function accountDetails()
+    {
+        return [
+          'account_info' => [
+              'account_name' => 'AL Amin Rahman',
+              'account_no' => '2441139',
+              'balance' => '4000'
+          ],
+          'transactions' => [
+              [
+                  'date' => '2020-12-01 20:10:33',
+                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+                  'mobile' => '01748712884',
+                  'amount' => '60000',
+                  'type'  => 'credit'
+              ],
+              [
+                  'date' => '2020-12-01 20:10:33',
+                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+                  'mobile' => '01748712884',
+                  'amount' => '30000',
+                  'type'  => 'debit'
+              ],
+              [
+                  'date' => '2020-12-01 20:10:33',
+                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+                  'mobile' => '01748712884',
+                  'amount' => '60000',
+                  'type'  => 'debit'
+              ],
+              [
+                  'date' => '2020-12-01 20:10:33',
+                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+                  'mobile' => '01748712884',
+                  'amount' => '20000',
+                  'type'  => 'credit'
+              ],
+              [
+                  'date' => '2020-12-01 20:10:33',
+                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+                  'mobile' => '01748712884',
+                  'amount' => '10000',
+                  'type'  => 'credit'
+              ],
+          ]
+        ];
+
+    }
+
 }
