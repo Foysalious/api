@@ -126,8 +126,8 @@ class Updater
     {
         $this->previousSubstituteId = $this->leave->substitute_id;
         if($this->previousSubstituteId === $this->substituteId) return;
-        $previous_substitute_name = $this->getSubstituteName($this->previousSubstituteId);
-        $new_substitute_name = $this->getSubstituteName($this->substituteId);
+        $previous_substitute_name = $this->previousSubstituteId ? $this->getSubstituteName($this->previousSubstituteId) : 'None';
+        $new_substitute_name = $this->substituteId ? $this->getSubstituteName($this->substituteId) : 'None';
         $log_data = [
             'leave_id' => $this->leave->id,
             'type' => Type::SUBSTITUTE,
@@ -138,7 +138,7 @@ class Updater
         ];
         $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['substitute_id' => $this->substituteId]));
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
-//        $this->sendPushToSubstitute($this->leave);
+//        if ($this->substituteId) $this->sendPushToSubstitute($this->leave);
     }
 
     private function getLeaveTypeName($leave_type_id)

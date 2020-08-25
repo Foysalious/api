@@ -6,6 +6,7 @@ use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
+use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 
 class StatusUpdater
 {
@@ -62,7 +63,7 @@ class StatusUpdater
     {
         $data = $this->withCreateModificationField([
             'leave_id' => $this->leave->id,
-            'type' => 'status',
+            'type' => EditType::STATUS,
             'from' => $this->previousStatus,
             'to' => $this->status,
             'log' => 'Super Admin changed this leave status from ' . $this->formatText($this->previousStatus) . ' to ' . $this->formatText($this->status),
