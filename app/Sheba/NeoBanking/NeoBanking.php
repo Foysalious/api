@@ -207,15 +207,15 @@ class NeoBanking
                             "is_editable"   => true,
                             "list"          => [
                                 [
-                                    "name_en" => "Gaibandha",
-                                    "name_bn" => "গাইবান্ধা",
-                                    "value"=> "gaibandha"
+                                    "key"=> "gaibandha",
+                                    "en" => "Gaibandha",
+                                    "bn" => "গাইবান্ধা"
                                 ],
                                 [
-                                    "name_en" => "Dhaka",
-                                    "name_bn" => "ঢাকা",
-                                    "value"=> "dhaka"
-                                ],
+                                    "key" => "dhaka",
+                                    "en"  => "Dhaka",
+                                    "bn"  => "ঢাকা"
+                                ]
                             ]
                         ],
                         "subdistrict" => [
@@ -231,15 +231,15 @@ class NeoBanking
                             "is_editable"   => true,
                             "list"          => [
                                 [
-                                    "name_en" => "Gaibandha",
-                                    "name_bn" => "গাইবান্ধা",
-                                    "value"=> "gaibandha"
+                                    "key"=> "gaibandha",
+                                    "en" => "Gaibandha",
+                                    "bn" => "গাইবান্ধা"
                                 ],
                                 [
-                                    "name_en" => "Dhaka",
-                                    "name_bn" => "ঢাকা",
-                                    "value"=> "dhaka"
-                                ],
+                                    "key" => "dhaka",
+                                    "en"  => "Dhaka",
+                                    "bn"  => "ঢাকা"
+                                ]
                             ]
                         ]
                     ]
@@ -304,14 +304,14 @@ class NeoBanking
                     "is_editable"   => true,
                     "list"          => [
                         [
-                            "name_en" => "Good",
-                            "name_bn" => "ভালো",
-                            "value"=> "god"
+                            "key" => "good",
+                            "en"  => "Good",
+                            "bn"  => "ভালো"
                         ],
                         [
-                            "name_en" => "Bad",
-                            "name_bn" => "খারাপ",
-                            "value"=> "bad"
+                            "key" => "bad",
+                            "en"  => "Bad",
+                            "bn"  => "খারাপ"
                         ],
                     ]
                 ],
@@ -326,18 +326,7 @@ class NeoBanking
                     "error_message" => "",
                     "mandatory"     => false,
                     "is_editable"   => true,
-                    "list"          => [
-                        [
-                            "name_en" => "Good",
-                            "name_bn" => "ভালো",
-                            "value"=> "god"
-                        ],
-                        [
-                            "name_en" => "Bad",
-                            "name_bn" => "খারাপ",
-                            "value"=> "bad"
-                        ],
-                    ]
+                    "list"          => constants('PARTNER_BUSINESS_TYPES')
                 ],
                 "yearly_earning" => [
                     "field_type"    => "editText",
