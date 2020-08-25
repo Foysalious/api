@@ -284,6 +284,8 @@ class CustomerSubscriptionController extends Controller
 
             $variables = collect();
             $service_group = collect();
+            $total_quantity = 0;
+            $total_price = 0;
             foreach ($service_details->breakdown as $breakdown) {
                 $selected_service = [
                     "option" => $breakdown->option,
@@ -306,6 +308,8 @@ class CustomerSubscriptionController extends Controller
                     'quantity' => $breakdown->quantity,
                     'price' => (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity
                 ];
+                $total_quantity += $breakdown->quantity;
+                $total_price += (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity;
                 $service_group->push($service_data);
             }
 
@@ -314,8 +318,8 @@ class CustomerSubscriptionController extends Controller
                 'name' => $service->name,
                 'service_group' => $service->variable_type == Type::OPTIONS ? $service_group : [],
                 'unit' => $service->unit,
-                'quantity' => 8,
-                'price' => 1000
+                'quantity' => $total_quantity,
+                'price' => $total_price
             ]];
 
             $time = new PreferredTime($schedules->first()->time);
