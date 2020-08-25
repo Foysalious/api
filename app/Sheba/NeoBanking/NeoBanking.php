@@ -30,10 +30,10 @@ class NeoBanking
         return $this;
     }
 
-    public function businessInformation()
+    public function organizationInformation()
     {
         return [
-            "business_information" => [
+            "organization_information" => [
                 "communication_info" =>[
                     "field_type" => "header",
                     "title"      => "যোগাযোগ এর তথ্য",
