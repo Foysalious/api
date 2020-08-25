@@ -6,6 +6,9 @@ class NeoBankingRoute {
             'prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
                 $api->group(['prefix' => 'neo-banking'], function ($api) {
                     $api->get('/organization-information', 'NeoBanking\\NeoBankingController@getOrganizationInformation');
+                    $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
+                    $api->get('/homepage', 'NeoBanking\\NeoBankingController@getHomePage');
+
                 });
         });
     }
