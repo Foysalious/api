@@ -63,7 +63,7 @@ class PasswordController extends Controller
     private function sendPasswordResetEmail($email, $reset_token)
     {
         try {
-            Mail::send('emails.reset-password', ['code' => $reset_token], function ($m) use ($email) {
+            Mail::send('emails.reset-password-V2', ['code' => $reset_token], function ($m) use ($email) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
                 $m->to($email)->subject('Reset Password');
             });
