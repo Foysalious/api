@@ -63,6 +63,24 @@ class NeoBankingController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function createTransaction($partner,Request $request)
+    {
+        try {
+            $this->validate($request,[
+                'amount' => 'required|numeric'
+            ]);
+            $bank             = $request->bank;
+            $partner          = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $transaction_response           = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->createTransaction();
+            return api_response($request, $transaction_response, 200, ['data' => $transaction_response]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
 
     }
+
 }

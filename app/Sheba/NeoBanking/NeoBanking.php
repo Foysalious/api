@@ -395,4 +395,14 @@ class NeoBanking
 
     }
 
+    public function createTransaction()
+    {
+        return [
+            'status' => 'success',
+            'heading' => 'ট্রান্সেকশন সফল হয়েছে',
+            'message' => 'ট্রান্সেকশন সফল হয়েছে'
+        ];
+
+    }
+
 }
