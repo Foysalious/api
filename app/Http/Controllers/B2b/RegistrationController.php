@@ -77,7 +77,7 @@ class RegistrationController extends Controller
         $this->validate($request, [
             'name' => 'required|string',
             'email' => 'required|email',
-            'password' => 'required|min:6',
+            'password' => 'required|min:8',
             'company_name' => 'required|string',
             'lat' => 'required|numeric',
             'lng' => 'required|numeric'

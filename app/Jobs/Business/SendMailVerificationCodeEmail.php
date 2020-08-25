@@ -34,13 +34,13 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
         #$verification_code = randomString(6, 1);
         $verification_code = 1111;
         $key_name = 'email_verification_code_' . $verification_code;
-        Redis::set($key_name, json_encode([
-            "profile_id" => $this->profile->id,
-            'code' => $verification_code
-        ]));
+        Redis::set($key_name, json_encode(["profile_id" => $this->profile->id, 'code' => $verification_code]));
         Redis::expire($key_name, 600);
-        Mail::send('emails.email_verification_V3', ['code' => $verification_code], function ($m) {
-            $m->to('miajee@sheba.xyz')->subject('Email Verification');
+        #$email = $this->profile->eamil;
+        $email = 'ffaahhiimm15@gmail.com';
+        $subject = "Verify your sBusiness account";
+        Mail::send('emails.email_verification_V3', ['code' => $verification_code], function ($m) use ($email, $subject) {
+            $m->to($email)->subject($subject);
         });
     }
 }
