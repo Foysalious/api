@@ -24,8 +24,8 @@ class PartnerRoute
             (new PosRoute())->set($api);
             (new ReferralRoute())->globals($api);
             (new EmiRoute())->set($api);
-            (new NeoBankingRoute())->set($api);
         });
         (new LoanRoute())->set($api);
+        (new NeoBankingRoute())->set($api);
     }
 }
