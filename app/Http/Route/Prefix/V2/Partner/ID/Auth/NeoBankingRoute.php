@@ -9,6 +9,7 @@ class NeoBankingRoute {
                     $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
                     $api->get('/homepage', 'NeoBanking\\NeoBankingController@getHomePage');
                     $api->get('/account-details', 'NeoBanking\\NeoBankingController@getAccountDetails');
+                    $api->post('/create-transaction', 'NeoBanking\\NeoBankingController@createTransaction');
 
                 });
             });
