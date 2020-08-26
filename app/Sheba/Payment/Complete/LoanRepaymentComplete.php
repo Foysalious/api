@@ -35,5 +35,6 @@ class LoanRepaymentComplete extends PaymentComplete
             $this->payment->transaction_details = $e->getMessage();
             $this->failPayment();
         }
+        return $this->payment;
     }
 }
