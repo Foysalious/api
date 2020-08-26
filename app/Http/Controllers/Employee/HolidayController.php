@@ -30,6 +30,8 @@ class HolidayController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $business = $business_member->business;
 
+        if(!$business) return api_response($request, null, 404);
+
         $firstDayOfPreviousMonth = Carbon::now()->startOfMonth()->subMonth();
         $lastDayOfNextMonth = Carbon::now()->startOfMonth()->addMonths(1)->endOfMonth();
 
