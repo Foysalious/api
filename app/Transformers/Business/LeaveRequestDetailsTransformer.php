@@ -64,8 +64,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
-                'start_date' => $requestable->start_date->format('d/m/Y'),
-                'end_date' => $requestable->end_date->format('d/m/Y'),
+                'start_date' => $requestable->start_date->format('Y-m-d'),
+                'end_date' => $requestable->end_date->format('Y-m-d'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'substitute' => $substitute_business_member ? [
