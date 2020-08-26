@@ -30,7 +30,7 @@ class NeoBankingController extends Controller
     public function getHomepage($partner, Request $request)
     {
         try {
-            $homepage = [
+            $homepage['banks'] = [
                 [
                     'bank_name' => [
                         'en' => 'Prime Bank',
@@ -42,9 +42,9 @@ class NeoBankingController extends Controller
                     'account_status' =>  'ঠিকানা ভেরিফিকেশন প্রক্রিয়াধিন',
                     'status_message' => 'এই মুহূর্তে আপনার অ্যাকাউন্ট এ শুধু মাত্র টাকা জমা দেয়া যাবে। সম্পুর্ণরুপে অ্যাকাউন্ট সচল করতে আপনার নির্ধারিত শাখায় গিয়ে স্বাক্ষর করুন এবং আপনার ঠিকানা ভেরিফিকেশন এর জন্য অপেক্ষা করুন।',
                     'status_message_type' => 'warning',
-                    'account_details' => env('SHEBA_PARTNER_END_URL') . '/' .'neo-banking-account-details',
                 ]
             ];
+            $homepage['account_details_view_link'] = env('SHEBA_PARTNER_END_URL') . '/' .'neo-banking-account-details';
             return api_response($request, $homepage, 200, ['data' => $homepage]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
