@@ -58,7 +58,7 @@
     <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0">
         <tr>
             <td valign="top">
-                <table class="es-content table-body" cellspacing="0" cellpadding="0" align="center" style="border:solid 1px #D3D8E6">
+                <table class="es-content table-body" cellspacing="0" cellpadding="0" align="center" style="border:solid 1px #D3D8E6;border-top: none">
                     <tr>
                         <td align="center">
                             <table class="es-content-body" style="background-color:transparent;width:600px" cellspacing="0" cellpadding="0" bgcolor="transparent" align="center">
