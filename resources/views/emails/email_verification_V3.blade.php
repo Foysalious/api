@@ -77,7 +77,7 @@
                                                                 </table></td>
                                                         </tr>
                                                         <tr>
-                                                            <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/ShebaXyz.png" alt style="display:block" width="180"></td>
+                                                            <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt style="display:block" width="180"></td>
                                                         </tr>
                                                         <tr>
                                                             <td class="padding-side" align="left" style="padding:0 60px"><p class="heading-style" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:24px;font-weight:600">Confirm your email address</p></td>
