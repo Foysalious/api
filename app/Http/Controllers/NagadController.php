@@ -18,7 +18,7 @@ class NagadController extends Controller
             $method    = $payment->paymentDetails->last()->method;
             if ($method !== 'nagad') throw new \Exception('Invalid Method completion');
             /** @var Nagad $method */
-            $method = $paymentManager->setPayment($payment)->setMethodName('nagad')->getMethod();
+            $method = $paymentManager->setPayment($payment)->setMethodName($method)->getMethod();
             $method->setRefId($validator->getPaymentRefId());
             $paymentManager->complete();
             $redirect_url = $payment->payable->success_url;
