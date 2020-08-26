@@ -48,7 +48,8 @@ class AffiliateTransactionRepository
      */
     private function balanceIn()
     {
-        return $this->affiliate->transactions()->credit()->between($this->start_date, $this->end_date)->sum('amount') != null ? : 0;
+        $amount = $this->affiliate->transactions()->credit()->between($this->start_date, $this->end_date)->sum('amount');
+        return $amount == null ? 0 : $amount;
     }
 
     /**
@@ -56,7 +57,8 @@ class AffiliateTransactionRepository
      */
     private function balanceOut()
     {
-        return $this->affiliate->transactions()->debit()->between($this->start_date, $this->end_date)->sum('amount') != null ? : 0;
+        $amount = $this->affiliate->transactions()->debit()->between($this->start_date, $this->end_date)->sum('amount');
+        return $amount == null ? 0 : $amount;
     }
 
     /**
@@ -64,7 +66,8 @@ class AffiliateTransactionRepository
      */
     private function earning()
     {
-        return $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') != null ? : 0;
+        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount');
+        return $amount == null ? 0 : $amount;
     }
 
     /**
