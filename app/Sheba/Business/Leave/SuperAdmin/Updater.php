@@ -131,8 +131,8 @@ class Updater
         $log_data = [
             'leave_id' => $this->leave->id,
             'type' => Type::SUBSTITUTE,
-            'from' => $this->previousSubstituteId,
-            'to' => $this->substituteId,
+            'from' => $this->previousSubstituteId ? $this->previousSubstituteId : 'None',
+            'to' => $this->substituteId ? $this->substituteId : 'None',
             'log' => 'Super Admin changed substitute from ' . $previous_substitute_name . ' to ' . $new_substitute_name,
             'is_changed_by_super' => 1,
         ];
