@@ -1,7 +1,7 @@
 <?php namespace Sheba\Partner\Category;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 
 class CategoryList
