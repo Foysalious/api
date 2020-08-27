@@ -1,10 +1,10 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Transformers\ServiceV2Transformer;

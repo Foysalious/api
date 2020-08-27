@@ -1,6 +1,6 @@
 <?php namespace Sheba\Logs\Customer;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Job;
 use App\Models\Resource;

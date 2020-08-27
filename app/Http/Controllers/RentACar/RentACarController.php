@@ -5,7 +5,7 @@ use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CarRentalPrice;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use App\Models\ServiceSurcharge;

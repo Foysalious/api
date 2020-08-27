@@ -6,7 +6,7 @@ use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
 use App\Models\Review;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;

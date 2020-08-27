@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
+use Sheba\Dal\Service\Service;
 
 class NavService extends Eloquent
 {

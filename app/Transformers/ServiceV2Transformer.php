@@ -1,7 +1,7 @@
 <?php namespace App\Transformers;
 
 use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;
 use Sheba\Checkout\DeliveryCharge;

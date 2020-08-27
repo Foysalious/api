@@ -5,7 +5,7 @@ use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
 use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Transformers\ServiceV2DeliveryChargeTransformer;
 use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;

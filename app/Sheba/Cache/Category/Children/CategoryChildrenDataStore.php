@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Category\Children;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
 use App\Models\HyperLocal;
 use App\Models\Location;

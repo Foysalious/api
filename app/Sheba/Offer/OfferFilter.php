@@ -1,6 +1,6 @@
 <?php namespace Sheba\Offer;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\Location;
 use App\Models\OfferShowcase;
