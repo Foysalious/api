@@ -3272,7 +3272,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "3a90ed4e769db73e8436e8580115622813475a28"
+                "reference": "c7813a8a405dbbeb301f005619b0fae2909111fb"
             },
             "require": {
                 "php": ">=5.4"
@@ -3299,8 +3299,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-08-23T05:53:19+00:00"
-
+            "time": "2020-08-27T06:23:38+00:00"
         },
         {
             "name": "sheba/notification",
@@ -3398,7 +3397,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "be9e3fe0a50ec44d3bc4cdbf9e70dc7c1f1483d4"
+                "reference": "e5c82736dd5260e179ab54103486c22bb390b3cd"
             },
             "require": {
                 "php": ">=5.4"
@@ -3422,7 +3421,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-08-10T14:48:33+00:00"
+            "time": "2020-08-27T06:49:52+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -4993,16 +4992,6 @@
                 "JWS",
                 "jwt"
             ],
-            "funding": [
-                {
-                    "url": "https://github.com/lcobucci",
-                    "type": "github"
-                },
-                {
-                    "url": "https://www.patreon.com/lcobucci",
-                    "type": "patreon"
-                }
-            ],
             "time": "2020-05-22T08:21:12+00:00"
         },
         {
@@ -5137,12 +5126,6 @@
                 "php",
                 "utf-8"
             ],
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2020-07-15T09:48:00+00:00"
         },
         {
@@ -5190,12 +5173,6 @@
                 "duplicate",
                 "object",
                 "object graph"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-06-29T13:22:24+00:00"
         },
@@ -6070,12 +6047,6 @@
                 "fpdf",
                 "fpdi",
                 "pdf"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-04-28T12:40:35+00:00"
         },

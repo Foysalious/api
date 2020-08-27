@@ -2,7 +2,7 @@
 
 
 use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use stdClass;
 use Sheba\LocationService\CorruptedPriceStructureException;
 

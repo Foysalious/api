@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\Service\Service;
 
 class LocationService extends Model
 {

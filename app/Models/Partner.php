@@ -41,6 +41,8 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
@@ -379,7 +381,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return null;
     }
 
-
     public function operationResources()
     {
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Operation'])->withPivot($this->resourcePivotColumns);
@@ -465,7 +466,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function resourcesInCategory($category)
     {
-        $category             = $category instanceof Category ? $category->id : $category;
+        $category = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
         $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
@@ -544,8 +545,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function subscribe($package, $billing_type)
     {
-        $package     = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $discount    = $package->runningDiscount($billing_type);
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $discount = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
@@ -569,6 +570,21 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
+    }
+
+    public function runUpfrontSubscriptionBilling()
+    {
+        $this->subscriber()->getBilling()->runUpfrontBilling();
+    }
+
+    public function retailers()
+    {
+        return $this->getFirstAdminResource()->retailers();
+    }
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 
     public function getCommissionAttribute()
@@ -707,9 +723,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasCoverageOn(Coords $coords)
     {
-        $geo           = json_decode($this->geo_informations);
+        $geo = json_decode($this->geo_informations);
         $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
-        $distance      = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 
@@ -855,7 +871,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
-        $this->totalCreditForSubscription        = $this->getTotalCreditExistsForSubscription();
+        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
@@ -873,15 +889,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getCreditBreakdown()
     {
-        $remaining             = (double)$this->subscriber()->periodicBillingHandler()->remainingCredit();
-        $wallet                = (double)$this->wallet;
-        $bonus_wallet          = (double)$this->bonusWallet();
-        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
+        $wallet = (double)$this->wallet;
+        $bonus_wallet = (double)$this->bonusWallet();
+        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
-            'wallet'                        => $wallet,
-            'threshold'                     => $threshold,
-            'bonus_wallet'                  => $bonus_wallet
+            'wallet' => $wallet,
+            'threshold' => $threshold,
+            'bonus_wallet' => $bonus_wallet
         ];
         return [
             $remaining,
@@ -969,6 +985,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->id . str_random(8 - (strlen($this->id)));
     }
+
     public function isMissionSaveBangladesh()
     {
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');

@@ -1,7 +1,7 @@
 <?php namespace Sheba\Services;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
 use Illuminate\Support\Collection;

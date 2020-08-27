@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Schema;
 
-use App\Models\Category;
-use App\Models\Service;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 use Sheba\Cache\Schema\DataBuilder\CategorySchema;

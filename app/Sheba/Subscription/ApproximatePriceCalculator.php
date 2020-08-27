@@ -1,7 +1,7 @@
 <?php namespace Sheba\Subscription;
 
 use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Sheba\Checkout\Discount;

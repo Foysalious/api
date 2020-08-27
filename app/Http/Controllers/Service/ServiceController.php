@@ -3,7 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Transformers\Service\ServiceTransformer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

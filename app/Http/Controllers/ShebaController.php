@@ -3,7 +3,7 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
@@ -12,7 +12,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
 use Illuminate\Http\JsonResponse;

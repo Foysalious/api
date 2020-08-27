@@ -1,6 +1,6 @@
 <?php namespace Sheba\PartnerList;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Sheba\Partner\PartnerAvailable;
 use Carbon\Carbon;
