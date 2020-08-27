@@ -352,7 +352,9 @@ class NeoBanking
           'account_info' => [
               'account_name' => 'AL Amin Rahman',
               'account_no' => '2441139',
-              'balance' => '4000'
+              'balance' => '4000',
+              'minimum_transaction_amount' => 1000,
+              'transaction_error_msg' => 'ট্রান্সেকশন সফল হয়েছে'
           ],
           'transactions' => [
               [
