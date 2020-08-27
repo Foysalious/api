@@ -21,7 +21,7 @@ class Getter extends ReportData
      */
     public function get(Request $request)
     {
-        $target_types = ["App\\Models\\Voucher", "App\\Models\\Category", "App\\Models\\Service",
+        $target_types = ["App\\Models\\Voucher", "Sheba\\Dal\\Category\\Category", "Sheba\\Dal\\Service\\Service",
             "App\\Models\\CategoryGroup", "App\\Models\\ServiceGroup"];
         $all_orders = collect();
         $offers = OfferShowcase::whereIn('target_type', $target_types)

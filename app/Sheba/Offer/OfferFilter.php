@@ -89,8 +89,8 @@ class OfferFilter
                     }
                 } elseif ($offer->isReward()) {
                     $reward = $offer->target;
-                    if ($reward->noConstraints()->where('constraint_type', "App\\Models\\Category")->first()) continue;
-                    $ids = $reward->constraints()->where('constraint_type', "App\\Models\\Category")->pluck('constraint_id')->toArray();
+                    if ($reward->noConstraints()->where('constraint_type', "Sheba\\Dal\\Category\\Category")->first()) continue;
+                    $ids = $reward->constraints()->where('constraint_type', "Sheba\\Dal\\Category\\Category")->pluck('constraint_id')->toArray();
                     if (count($ids) == 0) continue;
                     $is_applicable = 0;
                     foreach ($category_ids as $id) {
