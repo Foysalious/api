@@ -166,7 +166,11 @@ class LocationController extends Controller
         $ids = json_decode($input_ids);
         if ($ids) {
             $ids = array_map('intval', $ids);
-            $model = "App\\Models\\" . ucwords($model_name);
+            if (ucwords($model_name) == ('category' || 'service')) {
+                $model = "Sheba\\Dal\\" . ucwords($model_name).'\\'.ucwords($model_name);
+            } else {
+                $model = "App\\Models\\" . ucwords($model_name);
+            }
             $models = $model::whereIn('id', $ids)->whereHas('locations', function ($q) use ($location) {
                 $q->where('locations.id', $location->id);
             });
