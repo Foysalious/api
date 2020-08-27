@@ -19,7 +19,7 @@ class AuthUser
     public static function create()
     {
         try {
-            $token = JWTAuth::getToken();
+            $token = JWTAuth::getToken();;
             if (!$token) throw new SomethingWrongWithToken("Token is missing.");
             return self::createFromToken($token);
         } catch (JWTException $e) {
@@ -37,7 +37,7 @@ class AuthUser
         try {
             return new static(JWTAuth::getPayload($token)->toArray());
         } catch (JWTException $e) {
-            throw new SomethingWrongWithToken($e->getMessage());
+            throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
         }
     }
 
