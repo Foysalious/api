@@ -63,12 +63,15 @@ class Best implements Strategy
      */
     public function sort($partners)
     {
-        $max_rating = $max_revenue = $min_revenue = $min_rating = null;
-        foreach ($partners as $partner) {
-            $max_revenue = $partner->getMaxRevenue() > $max_revenue ? $partner->getMaxRevenue() : $max_revenue;
-            $max_rating = $partner->getAvgRating() > $max_rating ? $partner->getAvgRating() : $max_rating;
-            $min_revenue = $partner->getMaxRevenue() < $min_revenue || !$min_revenue ? $partner->getMaxRevenue() : $min_revenue;
-            $min_rating = $partner->getAvgRating() < $min_rating || !$min_rating ? $partner->getAvgRating() : $min_rating;
+        $max_rating = (double)$partners[0]->getAvgRating();
+        $min_rating = (double)$partners[0]->getAvgRating();
+        $max_revenue = (double)$partners[0]->getMaxRevenue();
+        $min_revenue = (double)$partners[0]->getMaxRevenue();
+        foreach ($partners as $key => $partner) {
+            $max_revenue = ((double)$partner->getMaxRevenue() > $max_revenue) ? $partner->getMaxRevenue() : $max_revenue;
+            $max_rating = ((double)$partner->getAvgRating() > $max_rating) ? $partner->getAvgRating() : $max_rating;
+            $min_revenue = (double)$partner->getMaxRevenue() < $min_revenue ? $partner->getMaxRevenue() : $min_revenue;
+            $min_rating = (double)$partner->getAvgRating() < $min_rating ? $partner->getAvgRating() : $min_rating;
         }
         $this->setMaxRevenue($max_revenue)->setMinRevenue($min_revenue)->setMaxRating($max_rating)->setMinRating($min_rating);
         foreach ($partners as $partner) {

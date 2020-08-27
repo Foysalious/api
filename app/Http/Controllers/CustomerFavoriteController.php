@@ -64,7 +64,6 @@ class CustomerFavoriteController extends Controller
         /** @var Manager $manager */
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-
         $favorites = $customer->favorites->each(function (&$favorite, $key) use ($manager, $favoriteService, $price_calculation, $delivery_charge, $job_discount_handler, $upsell_calculation, $service_transformer) {
             $services = [];
             $favorite['category_name'] = $favorite->category->name;
@@ -115,6 +114,7 @@ class CustomerFavoriteController extends Controller
             $favorite['partner_name'] = $partner ? $partner->name : null;
             $favorite['partner_logo'] = $partner ? $partner->logo : null;
             $favorite['is_same_service'] = $favoriteService->setFavoriteServices($favorite->services)->canOrder();
+            $favorite['is_inspection_service'] = $favorite->services[0]->is_inspection_service;
 
             $resource = new Item($favorite->category,
                 new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, Location::find($this->location))

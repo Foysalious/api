@@ -20,7 +20,7 @@ class AccountServer
      */
     public function getTokenByAvatar($avatar, $type)
     {
-        return $this->getTokenByIdAndRememberToken($avatar->remember_token, $avatar->id, $type);
+        return $this->getTokenByIdAndRememberToken($avatar->id, $avatar->remember_token, $type);
     }
 
     /**
@@ -34,6 +34,18 @@ class AccountServer
     public function getTokenByIdAndRememberToken($id, $remember_token, $type)
     {
         $data = $this->client->get("api/v3/token/generate?type=$type&token=$remember_token&type_id=$id");
+        return $data['token'];
+    }
+
+    /**
+     * @param $old_token
+     * @return mixed
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getRefreshToken($old_token)
+    {
+        $data = $this->client->get("api/v3/token/refresh?token=$old_token");
         return $data['token'];
     }
 
@@ -120,5 +132,51 @@ class AccountServer
             'avatar_type' => $avatar_type
         ]);
         return $data['token'];
+    }
+
+    /**
+     * @param $avatar_type
+     * @param $name
+     * @param $email
+     * @param $password
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function createProfileAndAvatarAndGetTokenByEmailAndPassword($avatar_type, $name, $email, $password)
+    {
+        return $this->createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $email, $password);
+    }
+
+    /**
+     * @param $avatar_type
+     * @param $name
+     * @param $identity
+     * @param $password
+     * @return mixed
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $identity, $password)
+    {
+        $data = $this->client->post("api/v3/register", [
+            'name' => $name,
+            'email' => $identity,
+            'password' => $password,
+            'create_avatar' => true,
+            'avatar_type' => $avatar_type
+        ]);
+        return $data['token'];
+    }
+
+    /**
+     * @param $token
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function sendEmailVerificationLink($token)
+    {
+         return $this->client->get("api/v3/send-verification-link?token=$token");
     }
 }

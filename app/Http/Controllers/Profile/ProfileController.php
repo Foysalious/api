@@ -2,9 +2,15 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendMailVerificationCodeEmail;
 use App\Models\Profile;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AuthUser;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Throwable;
 
 class ProfileController extends Controller
 {
@@ -29,6 +35,63 @@ class ProfileController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function verifyEmailWithVerificationCode(Request $request, ProfileRepositoryInterface $profileRepository, AccountServer $accounts)
+    {
+        try {
+            $this->validate($request, [
+                'code' => 'required',
+                'token' => 'required',
+            ]);
+            $code = Redis::get('email_verification_code_' . $request->code);
+            if ($code) {
+                $code = json_decode($code, 1);
+                $profile = $profileRepository->find($code['profile_id']);
+                $profileRepository->update($profile, ['email_verified' => 1]);
+                $token = $accounts->getRefreshToken($request->token);
+                $auth_user = AuthUser::createFromToken($token);
+                $info = [
+                    'token' => $token,
+                    'email_verified' => $auth_user->isEmailVerified(),
+                    'member_id' => $auth_user->getMemberId(),
+                    'business_id' => $auth_user->getMemberAssociatedBusinessId(),
+                    'is_super' => $auth_user->isMemberSuper()
+                ];
+                return api_response($request, null, 200, ['info' => $info]);
+            }
+            return api_response($request, null, 404);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $sentry = app('sentry');
+            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
+            $sentry->captureException($e);
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sendEmailVerificationCode(Request $request)
+    {
+        try {
+            $profile = $request->profile;
+            $this->dispatch(new SendMailVerificationCodeEmail($profile));
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function sendEmailVerificationLink(Request $request, AccountServer $accounts)
+    {
+        try {
+            $accounts->sendEmailVerificationLink($request->token);
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
             return api_response($request, null, 500);
         }
     }

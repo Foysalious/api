@@ -64,8 +64,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
-                'start_date' => $requestable->start_date->format('d/m/Y'),
-                'end_date' => $requestable->end_date->format('d/m/Y'),
+                'start_date' => $requestable->start_date->format('Y-m-d'),
+                'end_date' => $requestable->end_date->format('Y-m-d'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'substitute' => $substitute_business_member ? [
@@ -79,7 +79,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'department_id' => $this->role ? $this->role->businessDepartment->id : null,
                 'department' => $this->role ? $this->role->businessDepartment->name : null,
                 'designation' => $this->role ? $this->role->name : null
-            ]
+            ],
+            'leave_log_details' => $this->getLeaveLogDetails($requestable),
         ];
     }
 
@@ -97,5 +98,13 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
+    }
+
+    private function getLeaveLogDetails($requestable)
+    {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->get()->map(function ($log) {
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
+        })->toArray();
+        return $logs ? $logs : null;
     }
 }
