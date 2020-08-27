@@ -3272,7 +3272,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "6ec585b3882bf8c42b2e31568d2547612cc41be2"
+                "reference": "c7813a8a405dbbeb301f005619b0fae2909111fb"
             },
             "require": {
                 "php": ">=5.4"
@@ -3299,7 +3299,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-08-23T09:48:35+00:00"
+            "time": "2020-08-27T06:23:38+00:00"
         },
         {
             "name": "sheba/notification",
@@ -3397,7 +3397,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "be9e3fe0a50ec44d3bc4cdbf9e70dc7c1f1483d4"
+                "reference": "e5c82736dd5260e179ab54103486c22bb390b3cd"
             },
             "require": {
                 "php": ">=5.4"
@@ -3421,7 +3421,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-08-10T14:48:33+00:00"
+            "time": "2020-08-27T06:49:52+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
