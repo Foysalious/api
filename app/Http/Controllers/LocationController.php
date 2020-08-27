@@ -166,7 +166,7 @@ class LocationController extends Controller
         $ids = json_decode($input_ids);
         if ($ids) {
             $ids = array_map('intval', $ids);
-            if (ucwords($model_name) == ('category' || 'service')) {
+            if (strtolower($model_name) == ('category' || 'service')) {
                 $model = "Sheba\\Dal\\" . ucwords($model_name).'\\'.ucwords($model_name);
             } else {
                 $model = "App\\Models\\" . ucwords($model_name);
