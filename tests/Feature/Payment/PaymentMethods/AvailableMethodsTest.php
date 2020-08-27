@@ -7,13 +7,14 @@ class AvailableMethodsTest extends FeatureTestCase
     /** @test */
     public function isPaymentMethodsAvailable()
     {
-        $response = $this->json('GET', '/v2/payments');
+        $response = $this->get('/v2/payments');
         $response->assertResponseOk();
         $response->seeJsonStructure([
             'code',
-            'payments',
-            'message'
+            'message',
+            'payments' => [
+                '*' => [ 'name', 'is_published', 'asset', 'method_name']
+            ]
         ]);
     }
-
 }
