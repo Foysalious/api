@@ -1,6 +1,6 @@
 <?php namespace App\Transformers;
 
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Illuminate\Support\Collection;
 use League\Fractal\TransformerAbstract;

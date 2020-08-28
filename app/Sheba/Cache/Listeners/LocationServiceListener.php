@@ -1,6 +1,6 @@
 <?php namespace Sheba\Cache\Listeners;
 
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;

@@ -3,7 +3,7 @@
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;

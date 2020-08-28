@@ -16,7 +16,7 @@ use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;

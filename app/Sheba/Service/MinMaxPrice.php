@@ -1,6 +1,6 @@
 <?php namespace Sheba\Service;
 
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 
 class MinMaxPrice

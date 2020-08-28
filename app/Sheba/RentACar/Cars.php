@@ -5,7 +5,7 @@ namespace Sheba\RentACar;
 
 
 use Sheba\Dal\Category\Category;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\PriceCalculation\PriceCalculationFactory;
 
