@@ -2,7 +2,7 @@
 
 
 use Sheba\Dal\Category\Category;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Illuminate\Support\Collection;
 use Sheba\Dal\JobService\JobService;
 

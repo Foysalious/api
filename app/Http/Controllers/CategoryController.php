@@ -5,7 +5,7 @@ use App\Models\CategoryGroupCategory;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;

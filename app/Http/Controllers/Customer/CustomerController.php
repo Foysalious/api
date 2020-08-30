@@ -4,7 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Review;
 use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
