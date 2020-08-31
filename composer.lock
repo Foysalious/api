@@ -3568,7 +3568,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
-                "reference": "be9e3fe0a50ec44d3bc4cdbf9e70dc7c1f1483d4"
+                "reference": "e5c82736dd5260e179ab54103486c22bb390b3cd"
             },
             "require": {
                 "php": ">=5.4"
@@ -3592,7 +3592,7 @@
                 }
             ],
             "description": "Voucher for Sheba.",
-            "time": "2020-08-10T14:48:33+00:00"
+            "time": "2020-08-27T06:49:52+00:00"
         },
         {
             "name": "sunra/php-simple-html-dom-parser",
@@ -5539,6 +5539,7 @@
             "keywords": [
                 "tokenizer"
             ],
+            "abandoned": true,
             "time": "2017-02-27T10:12:30+00:00"
         },
         {
