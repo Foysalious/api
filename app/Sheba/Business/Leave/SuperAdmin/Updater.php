@@ -138,7 +138,7 @@ class Updater
         ];
         $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['substitute_id' => $this->substituteId]));
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
-//        if ($this->substituteId) $this->sendPushToSubstitute($this->leave);
+        if ($this->substituteId) $this->sendPushToSubstitute($this->leave);
     }
 
     private function getLeaveTypeName($leave_type_id)
