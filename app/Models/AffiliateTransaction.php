@@ -24,7 +24,8 @@ class AffiliateTransaction extends Model
             ['type', '=', Types::CREDIT],
             ['log', 'NOT LIKE', '%Moneybag Refilled%'],
             ['log', 'NOT LIKE', '%Manually Received%'],
-            ['log', 'NOT LIKE', '%Credit Purchase%']
+            ['log', 'NOT LIKE', '%Credit Purchase%'],
+            ['log', 'NOT LIKE', '%is refunded%']
         ]);
     }
 
