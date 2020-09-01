@@ -23,4 +23,9 @@ class PartnerResource extends Model
     {
         return $this->belongsToMany(Category::class);
     }
+
+    public function scopeHandyman($query)
+    {
+        return $query->where('resource_type', 'Handyman');
+    }
 }

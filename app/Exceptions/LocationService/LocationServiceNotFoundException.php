@@ -1,8 +1,8 @@
 <?php namespace App\Exceptions\LocationService;
 
-use App\Exceptions\ApiValidationException;
+use Exception;
 
-class LocationServiceNotFoundException extends ApiValidationException
+class LocationServiceNotFoundException extends Exception
 {
 
 }

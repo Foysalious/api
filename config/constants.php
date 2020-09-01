@@ -1,6 +1,6 @@
 <?php
 return [
-    "BLOG_URL" => env('BLOG_URL'),
+    "BLOG_URL"                                    => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',
@@ -483,9 +483,12 @@ return [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
         'title'             => 'Notification',
         'short_description' => "Its a simple notification",
+        'description'       => "Its a simple notification",
         'button_text'       => 'OK',
         'type'              => 'Info',
-        'target_link'       => "HOME"
+        'target_link'       => "HOME",
+        'target_type'       => '',
+        'target_id'         => ''
     ],
     'SALES_CHANNELS'                              => [
         'Call-Center' => [
@@ -578,11 +581,11 @@ return [
             'prefix'     => 'T',
             'department' => 'TEL'
         ],
-        'DDN'        => [
-            'name'      => 'DDN',
-            'short_name'=> 'DDN',
-            'prefix'    =>  'D',
-            'department'=>  'AC'
+        'DDN'         => [
+            'name'       => 'DDN',
+            'short_name' => 'DDN',
+            'prefix'     => 'D',
+            'department' => 'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [
@@ -650,10 +653,11 @@ return [
         env('SHEBA_CUSTOMER_APP')    => 'customer',
         'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'resource',
-        env('SHEBA_MANGER_APP')      => 'resource',
-        'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser',
+        'retailer-portal' => 'strategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -673,7 +677,8 @@ return [
         'bank-loan-portal',
         'customer-portal',
         'bank-loan-portal',
-        'employee-app'
+        'employee-app',
+        'retailer-portal'
     ],
     'PARTNER_ACQUISITION_CHANNEL'                 => [
         'PM'  => 'PM',
@@ -691,6 +696,10 @@ return [
         202 => [
             'message' => 'Successful',
             'code'    => 202
+        ],
+        303 => [
+            'message' => 'Partial Updates Successful',
+            'code' => 303
         ],
         400 => [
             'message' => 'Bad request',
@@ -828,7 +837,7 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 200,
             'max' => 15000
         ],
         'bank'  => [
@@ -1070,10 +1079,12 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'Resource',
-        env('SHEBA_MANGER_APP')      => 'Partner',
-        'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser'
+
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser',
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',
@@ -1203,8 +1214,8 @@ return [
                 'cap'        => 200
             ],
             'AMBASSADOR' => [
-                'percentage' => 2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TOP_UP'        => [
@@ -1213,8 +1224,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.02,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'MOVIE'         => [
@@ -1223,8 +1234,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TRANSPORT'     => [
@@ -1237,6 +1248,16 @@ return [
                 'cap'        => 0
             ]
         ],
+        'DDN'           => [
+            'AGENT'      => [
+                'percentage' => 5,
+                'cap'        => 200,
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0,
+                'cap'        => 0
+            ]
+        ]
     ],
     'PARTNER_BUSINESS_TYPES'                      => [
         [
@@ -1289,9 +1310,9 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
-    'ownership_type_en' => [
-        'লিমিটেড' => 'Limited',
-        'পার্টনারশিপ' => 'Partnership',
+    'ownership_type_en'                           => [
+        'লিমিটেড'        => 'Limited',
+        'পার্টনারশিপ'    => 'Partnership',
         'প্রোপ্রাইটরশিপ' => 'Proprietorship'
     ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
@@ -1302,5 +1323,10 @@ return [
     'PARTNER_BUSINESS_SECTORS'                    => [
         'Service',
         'Non Service'
+    ],
+    'LOAN_GROUP'                                       => [
+        'G1',
+        'G2',
+        'G3'
     ]
 ];

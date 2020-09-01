@@ -7,4 +7,6 @@ class RunningApplication
     protected $loan_amount;
     protected $status;
     protected $duration;
+    protected $type;
+    protected $id;
 }

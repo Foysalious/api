@@ -7,7 +7,25 @@ class TopUpTransaction
     private $log;
     private $amount;
     private $topUpOrder;
+    private $isRobiTopUp;
 
+    /**
+     * @return mixed
+     */
+    public function getIsRobiTopUp()
+    {
+        return $this->isRobiTopUp;
+    }
+
+    /**
+     * @param mixed $isRobiTopUp
+     * @return TopUpTransaction
+     */
+    public function setIsRobiTopUp($isRobiTopUp)
+    {
+        $this->isRobiTopUp = $isRobiTopUp;
+        return $this;
+    }
     /**
      * @param TopUpOrder $top_up_order
      * @return TopUpTransaction

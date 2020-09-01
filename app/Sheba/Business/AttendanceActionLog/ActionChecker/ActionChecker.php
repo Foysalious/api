@@ -157,10 +157,18 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->isIpBasedAttendanceEnable()) {
-            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) $this->remoteAttendance();
-            $this->setSuccessfulResponseMessage();
+            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) {
+                if ($this->business->isRemoteAttendanceEnable()) {
+                    $this->remoteAttendance();
+                } else {
+                    $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+                }
+            } else {
+                $this->setSuccessfulResponseMessage();
+            }
+        } else {
+            $this->remoteAttendance();
         }
-        $this->remoteAttendance();
     }
 
     private function remoteAttendance()

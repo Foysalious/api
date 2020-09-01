@@ -1,12 +1,20 @@
 <?php namespace Sheba\Resource\Service;
 
 
+use App\Models\HyperLocal;
 use App\Models\Job;
+use App\Models\Partner;
+use Illuminate\Http\Request;
+use Sheba\Authentication\AuthUser;
 
 class ServiceList
 {
     /** @var Job */
     private $job;
+    /** @var Request */
+    private $request;
+    private $resource;
+    private $geo;
 
     public function setJob(Job $job)
     {
@@ -14,13 +22,24 @@ class ServiceList
         return $this;
     }
 
+    /**
+     * @param Request $request
+     * @return $this
+     */
+    public function setRequest(Request $request)
+    {
+        $this->request = $request;
+        return $this;
+    }
+
     public function getServicesList()
     {
+        $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
         $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function($q) use ($location) {
             $q->where('location_id', $location);
-        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) {
-            $q->where('publication_status', 1);
+        })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) use ($is_published_for_backend) {
+            if (!$is_published_for_backend) $q->where('publication_status', 1);
             $q->orWhere('is_published_for_backend', 1);
         })->get();
         if (count($services) > 0) {
@@ -96,5 +115,73 @@ class ServiceList
             }
         })->values();
         return $services;
+    }
+
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
+        return $this;
+    }
+
+    public function setGeo($geo)
+    {
+        $this->geo = $geo;
+        return $this;
+    }
+
+    public function getAllServices() {
+        $hyperLocation = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->with('location')->first();
+
+        if (is_null($hyperLocation)) return null;
+
+        $location = $hyperLocation->location->id;
+
+        $services = $this->resource->firstPartner()->services()->select($this->getSelectColumnsOfService())->where(function ($q) {
+            $q->where('publication_status', 1);
+        })->whereHas('locations', function ($q) use ($location) {
+            $q->where('locations.id', $location);
+        })->get();
+
+        $services->each(function (&$service) {
+            $variables = json_decode($service->variables);
+            if ($service->variable_type == 'Options') {
+                $service['questions'] = $this->formatServiceQuestions($variables->options);
+                $service['option_prices'] = $this->formatOptionWithPrice(json_decode($service->pivot->prices));
+                $service['fixed_price'] = null;
+            } else {
+                $service['questions'] = $service['option_prices'] = [];
+                $service['fixed_price'] = (double)$variables->price;
+            }
+            array_forget($service, 'variables');
+            removeRelationsAndFields($service);
+        });
+
+        return $services;
+    }
+
+    private function formatServiceQuestions($options)
+    {
+        $questions = collect();
+        foreach ($options as $option) {
+            $questions->push(array(
+                'question' => $option->question,
+                'answers' => explode(',', $option->answers)
+            ));
+        }
+        return $questions;
+    }
+
+    private function formatOptionWithPrice($prices)
+    {
+        $options = collect();
+        foreach ($prices as $key => $price) {
+            $options->push(array(
+                'option' => collect(explode(',', $key))->map(function ($key) {
+                    return (int)$key;
+                }),
+                'price' => (double)$price
+            ));
+        }
+        return $options;
     }
 }

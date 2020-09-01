@@ -1,13 +1,11 @@
 <?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+
 use App\Http\Route\Prefix\V2\Partner\ReferralRoute;
-
-
 
 class IndexRoute
 {
     public function set($api)
     {
-
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
@@ -60,45 +58,6 @@ class IndexRoute
                         });
                     });
                 });
-            });
-            $api->group(['prefix' => 'loans'], function ($api) {
-                $api->group(['prefix' => 'v2'], function ($api) {
-                    $api->post('/', 'LoanController@store');
-                    $api->get('/personal-info', 'LoanController@getPersonalInformation');
-                    $api->post('/personal-info', 'LoanController@updatePersonalInformation');
-                    $api->get('/business-info', 'LoanController@getBusinessInformation');
-                    $api->post('/business-info', 'LoanController@updateBusinessInformation');
-                    $api->get('/finance-info', 'LoanController@getFinanceInformation');
-                    $api->post('/finance-info', 'LoanController@updateFinanceInformation');
-                    $api->get('/nominee-info', 'LoanController@getNomineeInformation');
-                    $api->post('/nominee-grantor-info', 'LoanController@updateNomineeGranterInformation');
-                    $api->get('/documents', 'LoanController@getDocuments');
-                    $api->post('/documents', 'LoanController@updateDocuments');
-                    $api->post('pictures', 'LoanController@updateProfilePictures');
-                    $api->post('bank-statement', 'LoanController@updateBankStatement');
-                    $api->post('trade-license', 'LoanController@updateTradeLicense');
-                    $api->get('/information-completion', 'LoanCompletionController@getLoanInformationCompletion');
-                    $api->get('/homepage', 'LoanController@getHomepage');
-                    $api->get('/bank-interest', 'LoanController@getBankInterest');
-                    $api->get('/history', 'LoanController@history');
-                });
-                $api->post('/', 'SpLoanController@store');
-                $api->get('/personal-info', 'SpLoanController@getPersonalInformation');
-                $api->post('/personal-info', 'SpLoanController@updatePersonalInformation');
-                $api->get('/business-info', 'SpLoanController@getBusinessInformation');
-                $api->post('/business-info', 'SpLoanController@updateBusinessInformation');
-                $api->get('/finance-info', 'SpLoanController@getFinanceInformation');
-                $api->post('/finance-info', 'SpLoanController@updateFinanceInformation');
-                $api->get('/nominee-info', 'SpLoanController@getNomineeInformation');
-                $api->post('/nominee-grantor-info', 'SpLoanController@updateNomineeGrantorInformation');
-                $api->get('/documents', 'SpLoanController@getDocuments');
-                $api->post('/documents', 'SpLoanController@updateDocuments');
-                $api->post('pictures', 'SpLoanController@updateProfilePictures');
-                $api->post('bank-statement', 'SpLoanController@updateBankStatement');
-                $api->post('trade-license', 'SpLoanController@updateTradeLicense');
-                $api->get('/information-completion', 'SpLoanInformationCompletion@getLoanInformationCompletion');
-                $api->get('/homepage', 'SpLoanController@getHomepage');
-                $api->get('/bank-interest', 'SpLoanController@getBankInterest');
             });
             $api->group(['prefix' => 'pos'], function ($api) {
                 $api->group(['prefix' => 'categories'], function ($api) {
@@ -290,6 +249,14 @@ class IndexRoute
                 });
             });
             $api->post('nid-validate', 'ShebaController@nidValidate');
+            $api->group(['prefix' => 'kyc'], function ($api) {
+                $api->get('check-verification', 'Partner\ProfileController@checkVerification');
+                $api->post('submit-data-for-verification', 'Partner\ProfileController@submitDataForVerification');
+                $api->post('verification-message-seen-status', 'Partner\ProfileController@updateSeenStatus');
+                $api->get('check-first-time-user', 'Partner\ProfileController@checkFirstTimeUser');
+
+            });
+            (new LoanRoute())->indexed($api);
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);

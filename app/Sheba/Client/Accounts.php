@@ -19,10 +19,10 @@ class Accounts
      * @param $bank_user
      * @return array|mixed
      */
-    public function getToken($bank_user)
+    public function getToken($bank_user,$from)
     {
         try {
-            $uri = $this->baseUrl . '/api/v3/token/generate?type=bankUser&token=' . $bank_user->remember_token . '&type_id=' . $bank_user->id;
+            $uri = $this->baseUrl . '/api/v3/token/generate?type='.$from.'&token=' . $bank_user->remember_token . '&type_id=' . $bank_user->id;
             $response = $this->client->get($uri)->getBody()->getContents();
             return json_decode($response, true);
         } catch (GuzzleException $e) {

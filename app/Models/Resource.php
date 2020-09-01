@@ -1,7 +1,10 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
+use Sheba\Dal\Retailer\Retailer;
 use Sheba\Wallet\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
@@ -12,7 +15,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     use Wallet;
 
     protected $guarded = ['id'];
-    protected $casts = ['wallet' => 'double'];
+    protected $casts   = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -22,6 +25,16 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function statusChangeLog()
+    {
+        return $this->hasMany(Model::class);
+    }
+
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class,'profile_id','profile_id');
     }
 
     public function profile()
@@ -59,6 +72,16 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         return $this->morphMany(Notification::class, 'notifiable');
     }
 
+    /**
+     * @return HasMany
+     */
+    public function retailers()
+    {
+        /** @var Profile $profile */
+        $profile = $this->profile;
+        return $profile->retailers();
+    }
+
     public function withdrawalRequests()
     {
         Relation::morphMap(['resource' => 'App\Models\Resource']);
@@ -68,7 +91,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $types = [];
+        $types   = [];
         foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
             $types[] = $unique_partner->pivot->resource_type;
         }
@@ -92,8 +115,8 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function categoriesIn($partner)
     {
-        $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $categories = collect();
+        $partner           = $partner instanceof Partner ? $partner->id : $partner;
+        $categories        = collect();
         $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
         foreach ($partner_resources as $partner_resource) {
             foreach ($partner_resource->categories as $item) {
@@ -130,6 +153,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         })->count();
     }
 
+    public function totalJobs()
+    {
+        return $this->jobs->count();
+    }
+
     public function totalWalletAmount()
     {
         return $this->wallet;
@@ -138,5 +166,10 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
+    }
+
+    public function isAllowedForMicroLoan()
+    {
+        return $this->retailers->count() > 0;
     }
 }

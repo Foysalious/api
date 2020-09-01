@@ -37,6 +37,11 @@ class Payment extends Model
         return $query->where('status', Statuses::INITIATED);
     }
 
+    public function scopeInitiationFailed($query)
+    {
+        return $query->where('status', Statuses::INITIATION_FAILED);
+    }
+
     public function scopeStillValidityLeft($query)
     {
         return $query->where('valid_till', '>', Carbon::now());
@@ -90,10 +95,11 @@ class Payment extends Model
     {
         return [
             'transaction_id' => $this->transaction_id,
-            'id' => (int)$this->payable->type_id,
-            'type' => $this->payable->readable_type,
-            'link' => $this->redirect_url,
-            'success_url' => $this->payable->success_url
+            'id'             => (int)$this->payable->type_id,
+            'type'           => $this->payable->readable_type,
+            'link'           => $this->redirect_url,
+            'success_url'    => $this->payable->success_url,
+            'fail_url'       => $this->payable->fail_url
         ];
     }
 
@@ -102,11 +108,11 @@ class Payment extends Model
      */
     public function getShebaTransaction()
     {
-        $detail = $this->paymentDetails->first();
+        $detail      = $this->paymentDetails->first();
         $transaction = new ShebaTransaction();
         $transaction->setTransactionId($this->transaction_id)
-            ->setGateway($detail ? $detail->method : null)
-            ->setDetails(json_decode($this->transaction_details));
+                    ->setGateway($detail ? $detail->method : null)
+                    ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
     }

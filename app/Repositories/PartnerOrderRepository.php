@@ -3,6 +3,7 @@
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 use Sheba\Jobs\JobStatuses;
 
 class PartnerOrderRepository
@@ -207,6 +208,14 @@ class PartnerOrderRepository
                     'schedule_date' => $jobs[0]->schedule_date,
                     'preferred_time' => $jobs[0]->readable_preferred_time,
                     'services' => $services,
+                    'is_rent_a_car' => $jobs[0]->isRentCar(),
+                    'rent_a_car_service_info' => $jobs[0]->isRentCar() ? $this->formatServices($jobs[0]->jobServices) : null,
+                    'pick_up_location' => $jobs[0]->carRentalJobDetail && $jobs[0]->carRentalJobDetail->pickUpLocation ? $jobs[0]->carRentalJobDetail->pickUpLocation->name : null,
+                    'pick_up_address' => $jobs[0]->carRentalJobDetail ? $jobs[0]->carRentalJobDetail->pick_up_address : null,
+                    'pick_up_address_geo' => $jobs[0]->carRentalJobDetail ? json_decode($jobs[0]->carRentalJobDetail->pick_up_address_geo) : null,
+                    'destination_location' => $jobs[0]->carRentalJobDetail && $jobs[0]->carRentalJobDetail->destinationLocation ? $jobs[0]->carRentalJobDetail->destinationLocation->name : null,
+                    'destination_address' => $jobs[0]->carRentalJobDetail ? $jobs[0]->carRentalJobDetail->destination_address : null,
+                    'destination_address_geo' => $jobs[0]->carRentalJobDetail ? json_decode($jobs[0]->carRentalJobDetail->destination_address_geo) : null,
                     'status' => $jobs[0]->status,
                     'is_order_request' => false,
                     'is_subscription_order' => $jobs[0]->partner_order->order->subscription ? true : false,
@@ -423,5 +432,26 @@ class PartnerOrderRepository
             $all_partner_orders = $final->unique('id');
         }
         return $all_partner_orders;
+    }
+
+    /**
+     * @param $job_services
+     * @return Collection
+     */
+    private function formatServices($job_services)
+    {
+        $services = collect();
+        foreach ($job_services as $job_service) {
+            $services->push([
+                'id' => $job_service->id,
+                'service_id' => $job_service->service_id,
+                'name' => $job_service->service->name,
+                'image' => $job_service->service->app_thumb,
+                'variables' => json_decode($job_service->variables),
+                'unit' => $job_service->service->unit,
+                'quantity' => $job_service->quantity
+            ]);
+        }
+        return $services;
     }
 }

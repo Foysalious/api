@@ -1,5 +1,6 @@
 <?php namespace Sheba\PaymentLink;
 
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use stdClass;
@@ -58,15 +59,23 @@ class PaymentLinkTransformer
         return $this->response->isDefault;
     }
 
-    public function getEmiMonth() {
+    public function getEmiMonth()
+    {
         return isset($this->response->emiMonth) ? $this->response->emiMonth : null;
     }
 
-    public function getInterest() {
+    public function isEmi()
+    {
+        return !is_null($this->getEmiMonth());
+    }
+
+    public function getInterest()
+    {
         return isset($this->response->interest) ? $this->response->interest : null;
     }
 
-    public function getBankTransactionCharge() {
+    public function getBankTransactionCharge()
+    {
         return isset($this->response->bankTransactionCharge) ? $this->response->bankTransactionCharge : null;
     }
 
@@ -116,5 +125,13 @@ class PaymentLinkTransformer
             $customer = $model_name::find($this->response->payerId);
             return $customer ? $customer->profile : null;
         }
+    }
+
+    public function isForMissionSaveBangladesh()
+    {
+        $receiver = $this->getPaymentReceiver();
+        if ($receiver instanceof Partner) return false;
+        /** @var Partner $receiver */
+        return $receiver->isMissionSaveBangladesh();
     }
 }

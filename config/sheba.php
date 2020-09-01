@@ -21,13 +21,14 @@ return [
     'job_code_start' => 16000,
     'last_partner_order_id_v1' => env('LAST_PARTNER_ORDER_ID_V1'),
     'material_commission_rate' => 5.0,
-    'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal'],
+    'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal', 'digigo-portal'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
     'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'partner-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
         'manager' => env('MANAGER_TOPIC_NAME', 'manager_'),
+        'manager_new' => env('MANAGER_TOPIC_NAME_NEW', 'manager_new_'),
         'employee' => env('EMPLOYEE_TOPIC_NAME', 'employee_'),
     ],
     'push_notification_channel_name' => [
@@ -143,10 +144,12 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'tp_proxy_url' => env('TP_PROXY_URL'),
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
     'resource_max_withdraw_limit' => 1000,
+    'tp_proxy_url' => env('TP_PROXY_URL'),
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
-    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
-    'lpg_service_id' => env('LPG_SERVICE_ID')
+    'lpg_service_id' => env('LPG_SERVICE_ID'),
+    'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID')
 ];

@@ -5,14 +5,17 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
 use Sheba\Dal\Gallery\Gallery;
 use Sheba\Dal\Partnership\Partnership;
+use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use stdClass;
+use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\PartnerService\PartnerService;
 
 class Service extends Model
 {
@@ -103,6 +106,11 @@ class Service extends Model
     public function partnerServices()
     {
         return $this->hasMany(PartnerService::class);
+    }
+
+    public function serviceDiscounts()
+    {
+        return $this->belongsToMany(ServiceDiscount::class, 'service_service_discount', 'service_id', 'service_discount_id');
     }
 
     public function runningDiscounts()
@@ -306,6 +314,11 @@ class Service extends Model
         return $this->hasMany(LocationService::class);
     }
 
+    public function carRentalPrices()
+    {
+        return $this->hasMany(CarRentalPrice::class);
+    }
+
     public function getVariableAndOption(array $options)
     {
         if ($this->isOptions()) {
@@ -352,5 +365,10 @@ class Service extends Model
     public function isMarketPlacePublished()
     {
         return $this->publication_status;
+    }
+
+    public function surcharges()
+    {
+        return $this->hasMany(ServiceSurcharge::class);
     }
 }

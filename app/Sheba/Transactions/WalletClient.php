@@ -30,7 +30,8 @@ class WalletClient
             $response = $this->httpClient->request('POST', $uri, $params)->getBody()->getContents();
             return json_decode($response);
         } catch (Throwable $exception) {
-            $exception = (string) $exception->getResponse()->getBody();
+            app('sentry')->captureException($exception);
+            $exception = (string)$exception->getResponse()->getBody();
             $exception = json_decode($exception);
             return $exception;
         }

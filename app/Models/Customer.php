@@ -4,6 +4,7 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Sheba\Dal\Customer\Events\CustomerSaved;
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Types;
 use Sheba\Wallet\HasWallet;
 use Sheba\MovieTicket\MovieAgent;
 use Sheba\MovieTicket\MovieTicketTrait;
@@ -87,6 +88,11 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     public function vouchers()
     {
         return $this->morphMany(Voucher::class, 'owner');
+    }
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 
     public function topups()
@@ -203,7 +209,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
             ->setModel($this)
             ->setAmount($transaction->getAmount())
             ->setLog($transaction->getLog())
-            ->setType('debit')
+            ->setType(Types::debit())
             ->setSource(TransactionSources::TOP_UP)
             ->dispatch(['event_id' => $transaction->getTopUpOrder()->id, 'event_type' => get_class($transaction->getTopUpOrder())]);
     }
@@ -234,7 +240,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType(Types::debit())->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
@@ -243,7 +249,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->creditWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Credit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('credit')->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType(Types::credit())->setSource(TransactionSources::MOVIE)->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -268,7 +274,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
         (new WalletTransactionHandler())
             ->setModel($this)
             ->setAmount($transaction->getAmount())
-            ->setType('debit')
+            ->setType(Types::debit())
             ->setSource(TransactionSources::TRANSPORT)
             ->setLog($transaction->getLog())
             ->dispatch(['event_type' => $transaction->getEventType(), 'event_id' => $transaction->getEventId()]);
