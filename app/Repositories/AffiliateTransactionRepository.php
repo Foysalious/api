@@ -57,7 +57,7 @@ class AffiliateTransactionRepository
      */
     private function balanceOut()
     {
-        $amount = $this->affiliate->transactions()->debit()->between($this->start_date, $this->end_date)->sum('amount');
+        $amount = $this->affiliate->transactions()->debit()->where('log', 'NOT LIKE', '%has been topped up%')->between($this->start_date, $this->end_date)->sum('amount');
         return $amount == null ? 0 : $amount;
     }
 
@@ -66,7 +66,7 @@ class AffiliateTransactionRepository
      */
     private function earning()
     {
-        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount');
+        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') + $this->topUps()->sum('agent_commission');
         return $amount == null ? 0 : $amount;
     }
 
@@ -97,7 +97,7 @@ class AffiliateTransactionRepository
     {
         $category_wise_transaction = [];
         $balance_recharge          = $this->affiliate->transactions()->credit()->balanceRecharge()->between($this->start_date, $this->end_date);
-        $topUp                     = $this->affiliate->topups()->between($this->start_date, $this->end_date)->where('status','Successful');
+        $topUp                     = $this->topUps();
         $service_commission        = $this->affiliate->transactions()->credit()->serviceCommission()->between($this->start_date, $this->end_date);
         $bus_ticket                = $this->affiliate->transactions()->debit()->transportTicket()->between($this->start_date, $this->end_date);
         $movie_ticket              = $this->affiliate->transactions()->debit()->movieTicket()->between($this->start_date, $this->end_date);
@@ -112,6 +112,11 @@ class AffiliateTransactionRepository
         if($count = $movie_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($movie_ticket_commission->sum('amount'), $count, "Movie Ticket Commission", "সিনেমা টিকেট কমিশন", "movie_ticket_commission");
 
         return $category_wise_transaction;
+    }
+
+    private function topUps()
+    {
+        return $this->affiliate->topups()->between($this->start_date, $this->end_date)->where('status','Successful');
     }
 
 }
