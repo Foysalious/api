@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "c6e0a67a756d1e9d7d46c690f40ec008",
+    "content-hash": "84dac13cc19e7f3f645f20598080a305",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -1473,16 +1473,16 @@
         },
         {
             "name": "jenssegers/mongodb",
-            "version": "v3.2.3",
+            "version": "v3.2.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jenssegers/laravel-mongodb.git",
-                "reference": "c0cae3e187999ea80f92cc5ab169de4baa784f2e"
+                "reference": "1358e50428bc0aeea6d3e13717104d6d9b313887"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jenssegers/laravel-mongodb/zipball/c0cae3e187999ea80f92cc5ab169de4baa784f2e",
-                "reference": "c0cae3e187999ea80f92cc5ab169de4baa784f2e",
+                "url": "https://api.github.com/repos/jenssegers/laravel-mongodb/zipball/1358e50428bc0aeea6d3e13717104d6d9b313887",
+                "reference": "1358e50428bc0aeea6d3e13717104d6d9b313887",
                 "shasum": ""
             },
             "require": {
@@ -1503,17 +1503,10 @@
                 "jenssegers/mongodb-session": "Add MongoDB session support to Laravel-MongoDB"
             },
             "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Jenssegers\\Mongodb\\MongodbServiceProvider",
-                        "Jenssegers\\Mongodb\\MongodbQueueServiceProvider"
-                    ]
-                }
-            },
             "autoload": {
                 "psr-0": {
-                    "Jenssegers\\Mongodb": "src/"
+                    "Jenssegers\\Mongodb": "src/",
+                    "Jenssegers\\Eloquent": "src/"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -1537,7 +1530,7 @@
                 "mongo",
                 "mongodb"
             ],
-            "time": "2017-09-05T11:17:05+00:00"
+            "time": "2017-03-12T09:23:10+00:00"
         },
         {
             "name": "jeremeamia/superclosure",
