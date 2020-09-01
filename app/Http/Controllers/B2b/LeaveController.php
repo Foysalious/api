@@ -58,13 +58,13 @@ class LeaveController extends Controller
      */
     public function index(Request $request)
     {
-        $this->validate($request, [
-            'sort' => 'sometimes|required|string|in:asc,desc'
-        ]);
+        $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
-        list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
+
+        list($offset, $limit) = calculatePagination($request);
+
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
 
@@ -76,8 +76,9 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
-        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
+        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
             /** @var Leave $requestable */
