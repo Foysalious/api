@@ -68,6 +68,7 @@ class Initiator
     {
         $eligible_partners = $this->sorter->setStrategy($this->getStrategy())->setPartnerIds($this->partnerIds)
             ->setCategoryId($this->partnerOrder->jobs->first()->category_id)->getSortedPartners();
+        $this->saveEligiblePartners($eligible_partners);
         $this->orderRequestStore->setPartnerOrderId($this->partnerOrder->id)->setPartners($eligible_partners)->set();
         $first_partner_id = [$eligible_partners[0]->getId()];
         $this->partnerOrderRequestCreator->setPartnerOrder($this->partnerOrder)->setPartners($first_partner_id)->create();
@@ -86,6 +87,16 @@ class Initiator
     private function getCustomerOrderCount()
     {
         return Order::where('customer_id', $this->partnerOrder->order->customer_id)->select('id')->count();
+    }
+
+    private function saveEligiblePartners($eligible_partners)
+    {
+        if (count($eligible_partners) == 0) return;
+        $data = [];
+        foreach ($eligible_partners as $eligible_partner) {
+            array_push($data, $eligible_partner->toArray());
+        }
+        $this->partnerOrder->update(['partners_for_sp_assign' => json_encode($data)]);
     }
 
 
