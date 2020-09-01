@@ -37,7 +37,7 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
         Redis::set($key_name, json_encode(["profile_id" => $this->profile->id, 'code' => $verification_code]));
         Redis::expire($key_name, 600);
         #$email = $this->profile->eamil;
-        $email = 'vaojao15@gmail.com';
+        $email = 'nabilajoaki@gmail.com';
         $subject = $verification_code." is sBusiness login code";
         Mail::send('emails.email_verification_V3', ['code' => $verification_code], function ($m) use ($email, $subject) {
             $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
