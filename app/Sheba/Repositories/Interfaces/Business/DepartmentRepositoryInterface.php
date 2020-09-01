@@ -4,5 +4,5 @@ use Sheba\Repositories\Interfaces\BaseRepositoryInterface;
 
 interface DepartmentRepositoryInterface extends BaseRepositoryInterface
 {
-
+    public function findByNameOrAbbreviation($identity);
 }

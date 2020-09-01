@@ -42,8 +42,14 @@ class BusinessRoute
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
 
-                $api->post('/departments', 'B2b\DepartmentController@store');
-                $api->get('/departments', 'B2b\DepartmentController@index');
+                $api->group(['prefix' => 'departments'], function ($api) {
+                    $api->post('/', 'B2b\DepartmentController@store');
+                    $api->get('/', 'B2b\DepartmentController@index');
+                    $api->group(['prefix' => '{department}'], function ($api) {
+                        $api->post('/', 'B2b\DepartmentController@update');
+                        $api->delete('/', 'B2b\DepartmentController@destroy');
+                    });
+                });
 
                 $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');

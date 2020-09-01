@@ -1,18 +1,28 @@
 <?php namespace Sheba\Business\Department;
 
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
+use Illuminate\Support\Facades\DB;
+use App\Models\Department;
 
 class Updater
 {
-    /** @var UpdateRequest $departmentUpdateRequest */
-    private $departmentUpdateRequest;
+    use ModificationFields;
 
     /** @var DepartmentRepositoryInterface $departmentRepository */
     private $departmentRepository;
+    /** @var UpdateRequest $departmentUpdateRequest */
+    private $departmentUpdateRequest;
+    private $department;
+    private $formatDepartmentData;
 
+    /**
+     * Updater constructor.
+     * @param DepartmentRepositoryInterface $department_repository
+     */
     public function __construct(DepartmentRepositoryInterface $department_repository)
     {
-        $this->departmentRepository =$department_repository;
+        $this->departmentRepository = $department_repository;
     }
 
     /**
@@ -24,19 +34,28 @@ class Updater
         $this->departmentUpdateRequest = $update_request;
         return $this;
     }
+
+    /**
+     * @param Department $department
+     * @return $this
+     */
+    public function setDepartment(Department $department)
+    {
+        $this->department = $department;
+        return $this;
+    }
+
     public function update()
     {
+        $this->formatDepartmentSpecificData();
         DB::transaction(function () {
-
+            $this->departmentRepository->update($this->department, $this->withCreateModificationField($this->formatDepartmentData));
         });
     }
+
     private function formatDepartmentSpecificData()
     {
-        return [
-            'business_id' => $business->id,
-            'name' => $request->name,
-            'abbreviation' => $request->abbreviation,
-            'is_published' => 1
-        ];
+        if ($this->departmentUpdateRequest->getDepartmentName()) $this->formatDepartmentData['name'] = strtoupper($this->departmentUpdateRequest->getDepartmentName());
+        if ($this->departmentUpdateRequest->getAbbreviation()()) $this->formatDepartmentData['abbreviation'] = strtoupper($this->departmentUpdateRequest->getAbbreviation());
     }
 }

@@ -1,19 +1,25 @@
 <?php namespace Sheba\Business\Department;
 
-use App\Models\Business;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
+use Illuminate\Support\Facades\DB;
+use Sheba\ModificationFields;
 
 class Creator
 {
-    /** @var CreateRequest $departmentCreateRequest */
-    private $departmentCreateRequest;
-    private $member;
+    use ModificationFields;
+
     /** @var DepartmentRepositoryInterface $departmentRepository */
     private $departmentRepository;
+    /** @var CreateRequest $departmentCreateRequest */
+    private $departmentCreateRequest;
 
+    /**
+     * Creator constructor.
+     * @param DepartmentRepositoryInterface $department_repository
+     */
     public function __construct(DepartmentRepositoryInterface $department_repository)
     {
-        $this->departmentRepository =$department_repository;
+        $this->departmentRepository = $department_repository;
     }
 
     /**
@@ -26,24 +32,19 @@ class Creator
         return $this;
     }
 
-    public function hasError()
-    {
-
-    }
-
     public function create()
     {
         DB::transaction(function () {
-
+            $this->departmentRepository->create($this->withCreateModificationField($this->formatDepartmentSpecificData()));
         });
     }
 
     private function formatDepartmentSpecificData()
     {
         return [
-            'business_id' => $business->id,
-            'name' => $request->name,
-            'abbreviation' => $request->abbreviation,
+            'business_id' => $this->departmentCreateRequest->getBusiness()->id,
+            'name' => strtoupper($this->departmentCreateRequest->getDepartmentName()),
+            'abbreviation' => strtoupper($this->departmentCreateRequest->getAbbreviation()),
             'is_published' => 1
         ];
     }

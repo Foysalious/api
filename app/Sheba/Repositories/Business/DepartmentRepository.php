@@ -11,4 +11,9 @@ class DepartmentRepository extends BaseRepository implements DepartmentRepositor
         parent::__construct();
         $this->setModel($business_department);
     }
+
+    public function findByNameOrAbbreviation($identity)
+    {
+        return $this->model->where('name', $identity)->orWhere('abbreviation', $identity)->first();
+    }
 }
