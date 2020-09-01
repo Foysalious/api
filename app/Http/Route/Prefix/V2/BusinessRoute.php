@@ -41,8 +41,10 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
-                $api->post('/departments', 'B2b\CoWorkerController@addBusinessDepartment');
-                $api->get('/departments', 'B2b\CoWorkerController@getBusinessDepartments');
+
+                $api->post('/departments', 'B2b\DepartmentController@store');
+                $api->get('/departments', 'B2b\DepartmentController@index');
+
                 $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
                 $api->get('/test-sms', 'B2b\BusinessSmsTemplateController@sendSms');
