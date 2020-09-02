@@ -1,16 +1,19 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Illuminate\Http\JsonResponse;
+use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
+use App\Transformers\Business\BusinessDepartmentListTransformer;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\Department\CreateRequest;
 use Sheba\Business\Department\UpdateRequest;
-use Sheba\Business\Department\Creator;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\Department\Updater;
+use Sheba\Business\Department\Creator;
 use App\Http\Controllers\Controller;
-use App\Models\BusinessDepartment;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
+use League\Fractal\Manager;
 use Throwable;
-use Tinify\Exception;
 
 class DepartmentController extends Controller
 {
@@ -38,21 +41,30 @@ class DepartmentController extends Controller
     public function index($business, Request $request)
     {
         $business = $request->business;
-        $business_departments = BusinessDepartment::published()->where('business_id', $business->id)->select('id', 'business_id', 'name', 'created_at')->orderBy('id', 'DESC')->get();
-        $departments = [];
-        foreach ($business_departments as $business_department) {
-            $department = [
-                'id' => $business_department->id, 'name' => $business_department->name, 'created_at' => $business_department->created_at->format('d/m/y')
-            ];
-            array_push($departments, $department);
-        }
+        list($offset, $limit) = calculatePagination($request);
+        $business_departments = $this->departmentRepository->getBusinessDepartmentByBusiness($business);
+        if ($request->has('search')) $business_departments = $this->searchByDepartmentName($business_departments, $request);
 
-        if (count($departments) > 0)
-            return api_response($request, $departments, 200, ['departments' => $departments]);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $business_departments = new Collection($business_departments, new BusinessDepartmentListTransformer());
+        $business_departments = $manager->createData($business_departments)->toArray()['data'];
 
+        $total_business_departments = count($business_departments);
+        $business_departments = collect($business_departments)->splice($offset, $limit);
+
+        if (count($business_departments) > 0) return api_response($request, $business_departments, 200, [
+            'departments' => $business_departments,
+            'total_business_departments' => $total_business_departments
+        ]);
         return api_response($request, null, 404);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function store($business, Request $request)
     {
         $this->validate($request, [
@@ -73,6 +85,12 @@ class DepartmentController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $department
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function update($business, $department, Request $request)
     {
         $this->validate($request, [
@@ -95,6 +113,12 @@ class DepartmentController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $department
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function destroy($business, $department, Request $request)
     {
         try {
@@ -106,5 +130,17 @@ class DepartmentController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $business_departments
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchByDepartmentName($business_departments, Request $request)
+    {
+        return $business_departments->filter(function ($department) use ($request) {
+            return str_contains(strtoupper($department->name), strtoupper($request->search));
+        });
     }
 }
