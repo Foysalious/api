@@ -93,7 +93,12 @@ class ScheduleSlot
     public function getSlots($day)
     {
         $last_day = $this->today->copy()->addDays($this->limit);
-        if($this->category) $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
+        if($this->category) {
+            $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
+            $slots = $slots->map(function ($slot, $key) {
+                return $slot->slot  ;
+            });
+        }
         else $slots = $this->getShebaSlots();
         $this->shebaSlots = $slots;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
@@ -230,16 +235,16 @@ class ScheduleSlot
         $slots = $this->getSlots($day);
         if ($this->partner) $this->addAvailabilityToShebaSlots($day);
         foreach ($slots as &$slot) {
-            $slot['key'] = $slot->slot['start'] . '-' . $slot->slot['end'];
-            $start = Carbon::parse($day->toDateString() . ' ' .  $slot->slot['start']);
-            $end = Carbon::parse($day->toDateString() . ' ' . $slot->slot['end']);
+            $slot['key'] = $slot['start'] . '-' . $slot['end'];
+            $start = Carbon::parse($day->toDateString() . ' ' .  $slot['start']);
+            $end = Carbon::parse($day->toDateString() . ' ' . $slot['end']);
             $slot['value'] = $start->format('g') . ' - ' . $end->format('g A');
             $slot_start = humanReadableShebaTime($slot->slot['start'], true);
             $slot_end = humanReadableShebaTime($slot->slot['end'], true);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
-            $slot['is_available'] = isset($slot->slot['is_available']) ? $slot->slot['is_available'] : $slot->slot['is_valid'];
+            $slot['is_available'] = !!($slot['is_available']) ? $slot['is_available'] : $slot['is_valid'];
             removeRelationsAndFields($slot);
         }
 
