@@ -95,7 +95,7 @@ class ScheduleSlot
         $last_day = $this->today->copy()->addDays($this->limit);
         if($this->category) {
             $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
-            $slots = $slots->map(function ($slot, $key) {
+            $slots = $slots->map(function ($slot) {
                 return $slot->slot  ;
             });
         }
