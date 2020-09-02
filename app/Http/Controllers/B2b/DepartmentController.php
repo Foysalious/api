@@ -65,6 +65,7 @@ class DepartmentController extends Controller
         $this->departmentCreateRequest->setBusiness($business)
             ->setDepartmentName($request->name)
             ->setAbbreviation($request->abbreviation);
+
         if ($this->departmentCreateRequest->hasError()) {
             return response()->json(['code' => $this->departmentCreateRequest->getErrorCode(), 'message' => $this->departmentCreateRequest->getErrorMessage()]);
         }
@@ -80,7 +81,7 @@ class DepartmentController extends Controller
         ]);
 
         $department = $this->departmentRepository->find($department);
-        if (!$department) return api_response($request, null, 401);
+        if (!$department) return api_response($request, null, 403);
         $business = $request->business;
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
@@ -98,7 +99,7 @@ class DepartmentController extends Controller
     {
         try {
             $department = $this->departmentRepository->find($department);
-            if (!$department) return api_response($request, null, 401);
+            if (!$department) return api_response($request, null, 403);
             $department->delete();
             return api_response($request, null, 200);
         } catch (Throwable $e) {

@@ -44,7 +44,7 @@ class Creator
         return [
             'business_id' => $this->departmentCreateRequest->getBusiness()->id,
             'name' => strtoupper($this->departmentCreateRequest->getDepartmentName()),
-            'abbreviation' => strtoupper($this->departmentCreateRequest->getAbbreviation()),
+            #'abbreviation' => strtoupper($this->departmentCreateRequest->getAbbreviation()),
             'is_published' => 1
         ];
     }

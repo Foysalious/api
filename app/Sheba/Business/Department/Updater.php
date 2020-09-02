@@ -1,9 +1,9 @@
 <?php namespace Sheba\Business\Department;
 
-use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Illuminate\Support\Facades\DB;
-use App\Models\Department;
+use App\Models\BusinessDepartment;
+use Sheba\ModificationFields;
 
 class Updater
 {
@@ -36,10 +36,10 @@ class Updater
     }
 
     /**
-     * @param Department $department
+     * @param BusinessDepartment $department
      * @return $this
      */
-    public function setDepartment(Department $department)
+    public function setDepartment(BusinessDepartment $department)
     {
         $this->department = $department;
         return $this;
