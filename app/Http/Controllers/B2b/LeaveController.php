@@ -353,7 +353,7 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMemberById($business_member_id);
         /** @var Business $business */
         $business = $business_member->business;
-        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
+        $leave_types = $business->leaveTypes()->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
