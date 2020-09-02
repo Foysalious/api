@@ -25,7 +25,8 @@ class AffiliateTransaction extends Model
             ['log', 'NOT LIKE', '%Moneybag Refilled%'],
             ['log', 'NOT LIKE', '%Manually Received%'],
             ['log', 'NOT LIKE', '%Credit Purchase%'],
-            ['log', 'NOT LIKE', '%is refunded%']
+            ['log', 'NOT LIKE', '%is refunded%'],
+            ['log', 'NOT LIKE', '%manually refunded in your account%']
         ]);
     }
 
