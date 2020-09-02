@@ -291,7 +291,7 @@ class OrderCreateRequest
      */
     private function getDeliveryAddress()
     {
-        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->getCustomer()->profile->name)->create();
+        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->name)->create();
     }
 
     /**
