@@ -20,8 +20,7 @@ class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
 
     public function handle()
     {
-        #$business_email = $this->procurement->owner->getContactEmail();
-        $business_email = 'ffaahhiimm15@gmail.com';
+        $business_email = $this->procurement->owner->getContactEmail();
         $business_contract_person = $this->procurement->owner->getContactPerson();
         $tender_detail = config('sheba.business_url') . "/dashboard/rfq/list/" . $this->procurement->id."/details";
         $portal_link = config('sheba.business_url');

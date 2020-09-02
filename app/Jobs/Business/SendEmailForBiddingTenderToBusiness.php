@@ -22,8 +22,7 @@ class SendEmailForBiddingTenderToBusiness extends Job implements ShouldQueue
 
     public function handle()
     {
-        #$business_email = $this->procurement->owner->getContactEmail();
-        $business_email = 'ffaahhiimm15@gmail.com';
+        $business_email = $this->procurement->owner->getContactEmail();
         $business_contract_person = $this->procurement->owner->getContactPerson();
         $tender_id = $this->procurement->id;
         $vendor_name = $this->bid->bidder->name;
