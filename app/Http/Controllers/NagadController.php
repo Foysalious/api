@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\Nagad\Validator;
 use Sheba\Payment\PaymentManager;
+use Sheba\Payment\Statuses;
 
 class NagadController extends Controller
 {
@@ -16,13 +17,12 @@ class NagadController extends Controller
             $validator = new Validator($data);
             $payment   = $validator->getPayment();
             $method    = $payment->paymentDetails->last()->method;
-            dd($method);
             if ($method !== 'nagad') throw new \Exception('Invalid Method completion');
             /** @var Nagad $method */
-            $method = $paymentManager->setPayment($payment)->setMethodName('nagad')->getMethod();
+            $method = $paymentManager->setPayment($payment)->setMethodName($method)->getMethod();
             $method->setRefId($validator->getPaymentRefId());
-            $paymentManager->complete();
-            $redirect_url = $payment->payable->success_url;
+            $payment      = $paymentManager->complete() ?: $payment;
+            $redirect_url = $payment->status === Statuses::COMPLETED ? $payment->payable->success_url : $payment->payable->fail_url;
             return redirect()->to($redirect_url);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
