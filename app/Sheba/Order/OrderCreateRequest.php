@@ -252,7 +252,7 @@ class OrderCreateRequest
             $this->response->setCode(403)->setMessage('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন');
             return $this->response;
         }
-        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setMobile($this->mobile)
+        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setDeliveryName($this->name)->setMobile($this->mobile)
             ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
             ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
         $this->response->setResponse($response);
@@ -282,7 +282,7 @@ class OrderCreateRequest
 
     private function getCustomer()
     {
-        return $this->customerCreator->setMobile($this->mobile)->setName($this->name)->create();
+        return $this->customerCreator->setMobile($this->mobile)->setName('Shahadattt')->create();
     }
 
     /**
@@ -291,7 +291,7 @@ class OrderCreateRequest
      */
     private function getDeliveryAddress()
     {
-        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->getCustomer()->profile->name)->create();
+        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->name)->create();
     }
 
     /**

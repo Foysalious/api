@@ -572,11 +572,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
-    public function runUpfrontSubscriptionBilling()
-    {
-        $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
-
 
     public function movieTicketOrders()
     {
@@ -885,15 +880,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
      */
     public function getCreditBreakdown()
     {
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining             = (double)$this->subscriber()->periodicBillingHandler()->remainingCredit();
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
-            'wallet' => $wallet,
-            'threshold' => $threshold,
-            'bonus_wallet' => $bonus_wallet
+            'wallet'                        => $wallet,
+            'threshold'                     => $threshold,
+            'bonus_wallet'                  => $bonus_wallet
         ];
         return [
             $remaining,
