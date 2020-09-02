@@ -430,7 +430,7 @@ class CategoryController extends Controller
                         'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                         'app_thumb', 'app_banner', 'short_description', 'description',
                         'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features'
+                        'terms_and_conditions', 'features','is_inspection_service'
                     )->orderBy('order')->skip($offset)->take($limit);
 
                     if ((int)\request()->is_business) $q->publishedForBusiness();
