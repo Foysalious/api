@@ -128,7 +128,7 @@ class ServiceSubscriptionInfo
             'is_percentage' => $monthly_discount->isPercentage(),
             'cap' => (double)$monthly_discount->cap
         ] : null;
-        $cross_sale_service = $this->serviceSubscription->service->category->crossSaleService;
+        $cross_sale_service = $this->serviceSubscription->service->crossSaleService;
         $serviceSubscription['cross_sale'] = $cross_sale_service ? [
             'title' => $cross_sale_service->title,
             'description' => $cross_sale_service->description,

@@ -116,7 +116,11 @@ class BdTickets extends Vendor
     public function confirmTicket($ticket_id)
     {
         $data = ['ticketId' => $ticket_id, 'accountType' => self::ACCOUNT_TYPE, 'applicationChannel' => self::APPLICATION_CHANNEL];
-        return $this->bdTicketClient->post('tickets/confirm', $data);
+        $response = $this->bdTicketClient->post('tickets/confirm', $data);
+        $bd_ticket_response = new BdTicketsResponse();
+        $bd_ticket_response->setResponse($response);
+
+        return $bd_ticket_response;
     }
 
     /**
@@ -152,5 +156,11 @@ class BdTickets extends Vendor
         $transport_ticket_order->status = 'cancelled';
         $transport_ticket_order->save();
         return $this->bdTicketClient->post('tickets/cancel',["ticketId" => $transaction_id, "applicationChannel" => "REMOTE"]);
+    }
+
+    public function balance()
+    {
+        $response =  $this->bdTicketClient->setBookingPort(config('bus_transport.bdticket.balance_check_port'))->post('accounts/checkBalance', ['accountType' => 'AGENT']);
+        return $response['data']['balance'];
     }
 }

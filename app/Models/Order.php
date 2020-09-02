@@ -24,6 +24,7 @@ class Order extends BaseModel implements ShebaOrderInterface, CanHaveVoucher
     private $salesChannelShortNames;
     /** @var CodeBuilder */
     private $codeBuilder;
+    protected $searchable = ['delivery_name'];
 
     public function __construct($attributes = [])
     {

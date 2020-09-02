@@ -185,36 +185,36 @@ class CategoryController extends Controller
             $location_id = $hyper_location->location_id;
             $best_deal_category_group_id = explode(',', config('sheba.best_deal_ids'));
             $best_deal_category_ids = CategoryGroupCategory::select('category_group_id', 'category_id')
-                ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
+                                                           ->whereIn('category_group_id', $best_deal_category_group_id)->pluck('category_id')->toArray();
 
             $categories = Category::published()
-                ->whereHas('locations', function ($q) use ($location_id) {
-                    $q->select('locations.id')->where('locations.id', $location_id);
-                })
-                ->whereHas('children', function ($q) use ($location_id, $best_deal_category_ids) {
-                    $q->select('id', 'parent_id')->where('publication_status', 1)
-                        ->whereHas('locations', function ($q) use ($location_id) {
-                            $q->select('locations.id')->where('locations.id', $location_id);
-                        })->whereHas('services', function ($q) use ($location_id) {
-                            $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
-                                $q->select('locations.id')->where('locations.id', $location_id);
-                            });
-                        })->whereNotIn('id', $best_deal_category_ids);
-                })
-                ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
-                ->parent()->orderBy('order');
+                                  ->whereHas('locations', function ($q) use ($location_id) {
+                                      $q->select('locations.id')->where('locations.id', $location_id);
+                                  })
+                                  ->whereHas('children', function ($q) use ($location_id, $best_deal_category_ids) {
+                                      $q->select('id', 'parent_id')->where('publication_status', 1)
+                                        ->whereHas('locations', function ($q) use ($location_id) {
+                                            $q->select('locations.id')->where('locations.id', $location_id);
+                                        })->whereHas('services', function ($q) use ($location_id) {
+                                              $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
+                                                  $q->select('locations.id')->where('locations.id', $location_id);
+                                              });
+                                          })->whereNotIn('id', $best_deal_category_ids);
+                                  })
+                                  ->select('id', 'name', 'parent_id', 'icon_png', 'icon_png_hover', 'icon_png_active', 'app_thumb', 'app_banner', 'slug', 'is_auto_sp_enabled')
+                                  ->parent()->orderBy('order');
 
             if ($with) {
                 $categories->with(['children' => function ($q) use ($location_id, $best_deal_category_ids) {
                     $q->select('id', 'name', 'thumb', 'parent_id', 'app_thumb', 'icon_png', 'icon_png_hover', 'icon_png_active', 'icon', 'icon_hover', 'slug', 'is_auto_sp_enabled')
-                        ->whereHas('locations', function ($q) use ($location_id) {
-                            $q->select('locations.id')->where('locations.id', $location_id);
-                        })->whereHas('services', function ($q) use ($location_id) {
+                      ->whereHas('locations', function ($q) use ($location_id) {
+                          $q->select('locations.id')->where('locations.id', $location_id);
+                      })->whereHas('services', function ($q) use ($location_id) {
                             $q->select('services.id')->published()->whereHas('locations', function ($q) use ($location_id) {
                                 $q->select('locations.id')->where('locations.id', $location_id);
                             });
                         })->whereNotIn('id', $best_deal_category_ids)
-                        ->published()->orderBy('order');
+                      ->published()->orderBy('order');
                 }]);
             }
 
@@ -398,6 +398,7 @@ class CategoryController extends Controller
         }
 
 
+
         if ($category != null) {
             $category_slug = $category->getSlug();
             $cross_sale_service = $category->crossSaleService;
@@ -410,10 +411,10 @@ class CategoryController extends Controller
                     $services = $this->categoryRepository->getServicesOfCategory((Category::where('parent_id', $category->id)->publishedForBusiness()->orderBy('order')->get())->pluck('id')->toArray(), $location, $offset, $limit);
                 } elseif ($request->is_b2b) {
                     $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForB2B()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                                                                                         ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                 } elseif ($request->is_ddn) {
                     $services = $this->categoryRepository->getServicesOfCategory(Category::where('parent_id', $category->id)->publishedForDdn()
-                        ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
+                                                                                         ->orderBy('order')->get()->pluck('id')->toArray(), $location, $offset, $limit);
                 } else {
                     $services = $this->categoryRepository->getServicesOfCategory($category->children->sortBy('order')->pluck('id'), $location, $offset, $limit);
                 }
@@ -432,7 +433,6 @@ class CategoryController extends Controller
                         'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
                         'terms_and_conditions', 'features','is_inspection_service'
                     )->orderBy('order')->skip($offset)->take($limit);
-
                     if ((int)\request()->is_business) $q->publishedForBusiness();
                     elseif ((int)\request()->is_for_backend) $q->publishedForAll();
                     elseif ((int)\request()->is_b2b) $q->publishedForB2B();
@@ -463,9 +463,9 @@ class CategoryController extends Controller
                 array_push($location_service_ids, $location_service->first() ? $location_service->first()->id : null);
             }
             $location_service_with_discounts = LocationService::whereIn('id', $location_service_ids)->select('id', 'location_id', 'service_id')
-                ->whereHas('discounts', function ($q) {
-                    $q->running();
-                })->with(['discounts' => function ($q) {
+                                                              ->whereHas('discounts', function ($q) {
+                                                                  $q->running();
+                                                              })->with(['discounts' => function ($q) {
                     $q->running();
                 }])->get();
             foreach ($services as $key => $service) {
@@ -496,6 +496,14 @@ class CategoryController extends Controller
                 $min_max_price->setService($service)->setLocationService($location_service);
                 $service['max_price'] = $min_max_price->getMax();
                 $service['min_price'] = $min_max_price->getMin();
+                $service['addon'] = [
+                    'title' => "This is a dummy addon",
+                    'description' => "This is a dummy addon description",
+                    'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/marketplace/default_images/png/cross_sell.png",
+                    'category_id' => 14,
+                    'service_id' => 676
+                ];
+                $service['is_addon'] = $service['id'] === 676 ? 1 : 0;
                 $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                 $service['features'] = $service->features ? json_decode($service->features) : null;
                 $slug = $slugs->where('sluggable_id', $service->id)->first();
@@ -561,7 +569,7 @@ class CategoryController extends Controller
                 ] : null;
                 $category_model = Category::find($category['id']);
                 $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
-                    ->setLocation(Location::find($location))->get();
+                                                               ->setLocation(Location::find($location))->get();
                 $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($category['delivery_charge']);
                 $job_discount_handler->setType(DiscountTypes::DELIVERY)->setCategory($category_model)->setCheckingParams($discount_checking_params)->calculate();
                 /** @var Discount $delivery_discount */

@@ -21,7 +21,6 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
-use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -188,6 +187,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function getContactNumber()
     {
         if ($super_admin = $this->getAdmin()) return $super_admin->profile->mobile;
+        return null;
+    }
+
+    public function getContactEmail()
+    {
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->email;
         return null;
     }
 

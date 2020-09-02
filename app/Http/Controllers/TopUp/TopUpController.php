@@ -96,10 +96,13 @@ class TopUpController extends Controller
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
+
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
+            if (!in_array($extension, $valid_extensions)) {
+                return api_response($request, null, 400, ['message' => 'File type not support']);
+            }
 
             $agent = $request->user;
             if (get_class($agent) == "App\Models\Partner")

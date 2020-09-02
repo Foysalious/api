@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\Bid;
 use App\Models\Partner;
@@ -273,6 +274,7 @@ class Creator
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
                 if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
+                if ($procurement->is_published) $this->sendMailToBusiness($procurement);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -397,6 +399,7 @@ class Creator
         $this->procurementRepository->update($procurement, $this->procurementData);
         $procurement = $procurement->fresh();
         if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
+        if ($procurement->is_published) $this->sendMailToBusiness($procurement);
     }
 
     /**
@@ -405,6 +408,14 @@ class Creator
     private function sendNotification(Procurement $procurement)
     {
         dispatch(new SendRFQCreateNotificationToPartners($procurement, $this->partnerNotificationHandler));
+    }
+
+    /**
+     * @param Procurement $procurement
+     */
+    private function sendMailToBusiness(Procurement $procurement)
+    {
+        $this->dispatch(new SendEmailForPublishTenderToBusiness($procurement));
     }
 
     /**
