@@ -496,6 +496,14 @@ class CategoryController extends Controller
                 $min_max_price->setService($service)->setLocationService($location_service);
                 $service['max_price'] = $min_max_price->getMax();
                 $service['min_price'] = $min_max_price->getMin();
+                $service['addon'] = [
+                    'title' => "This is a dummy addon",
+                    'description' => "This is a dummy addon description",
+                    'icon' => "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/marketplace/default_images/png/cross_sell.png",
+                    'category_id' => 14,
+                    'service_id' => 676
+                ];
+                $service['is_addon'] = $service['id'] === 676 ? 1 : 0;
                 $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                 $service['features'] = $service->features ? json_decode($service->features) : null;
                 $slug = $slugs->where('sluggable_id', $service->id)->first();
