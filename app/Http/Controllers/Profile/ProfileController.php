@@ -1,20 +1,22 @@
 <?php namespace App\Http\Controllers\Profile;
 
-
 use App\Http\Controllers\Controller;
 use App\Jobs\Business\SendMailVerificationCodeEmail;
 use App\Models\Profile;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\OAuth2\AuthUser;
+use Sheba\OAuth2\SomethingWrongWithToken;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Throwable;
 
 class ProfileController extends Controller
 {
-
     public function checkProfile(Request $request)
     {
         try {
@@ -33,46 +35,40 @@ class ProfileController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profileRepository
+     * @param AccountServer $accounts
+     * @return JsonResponse
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws SomethingWrongWithToken
+     */
     public function verifyEmailWithVerificationCode(Request $request, ProfileRepositoryInterface $profileRepository, AccountServer $accounts)
     {
-        try {
-            $this->validate($request, [
-                'code' => 'required',
-                'token' => 'required',
-            ]);
-            $code = Redis::get('email_verification_code_' . $request->code);
-            if ($code) {
-                $code = json_decode($code, 1);
-                $profile = $profileRepository->find($code['profile_id']);
-                $profileRepository->update($profile, ['email_verified' => 1]);
-                $token = $accounts->getRefreshToken($request->token);
-                $auth_user = AuthUser::createFromToken($token);
-                $info = [
-                    'token' => $token,
-                    'email_verified' => $auth_user->isEmailVerified(),
-                    'member_id' => $auth_user->getMemberId(),
-                    'business_id' => $auth_user->getMemberAssociatedBusinessId(),
-                    'is_super' => $auth_user->isMemberSuper()
-                ];
-                return api_response($request, null, 200, ['info' => $info]);
-            }
-            return api_response($request, null, 404);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['code' => 'required', 'token' => 'required']);
+        $code = Redis::get('email_verification_code_' . $request->code);
+        if (!$code) return api_response($request, null, 404, ['message' => 'Code did not match']);
+
+        $code = json_decode($code, 1);
+        $profile = $profileRepository->find($code['profile_id']);
+        $profileRepository->update($profile, ['email_verified' => 1]);
+        $token = $accounts->getRefreshToken($request->token);
+        $auth_user = AuthUser::createFromToken($token);
+        $info = [
+            'token' => $token,
+            'email_verified' => $auth_user->isEmailVerified(),
+            'member_id' => $auth_user->getMemberId(),
+            'business_id' => $auth_user->getMemberAssociatedBusinessId(),
+            'is_super' => $auth_user->isMemberSuper()
+        ];
+        return api_response($request, null, 200, ['info' => $info]);
     }
 
     public function sendEmailVerificationCode(Request $request)
@@ -107,7 +103,7 @@ class ProfileController extends Controller
             ]]);
         } catch (ValidationException $e) {
             return api_response($request, null, 401, ['message' => 'Invalid mobile number']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -141,7 +137,7 @@ class ProfileController extends Controller
                     ]
                 ]
             ]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
