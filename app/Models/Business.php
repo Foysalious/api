@@ -191,6 +191,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return null;
     }
 
+    public function getContactEmail()
+    {
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->email;
+        return null;
+    }
+
     public function getAdmin()
     {
         if ($super_admin = $this->superAdmins()->first()) return $super_admin;

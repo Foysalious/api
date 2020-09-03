@@ -3,40 +3,36 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
+use Sheba\OAuth2\AuthUser;
 use Closure;
+use Sheba\OAuth2\SomethingWrongWithToken;
 
 class BusinessManagerAuthMiddleware
 {
-    private $member;
-
+    /**
+     * @param $request
+     * @param Closure $next
+     * @return \Illuminate\Http\JsonResponse|mixed
+     * @throws SomethingWrongWithToken
+     */
     public function handle($request, Closure $next)
     {
-        try {
-            $payload = [];
-            $token = JWTAuth::getToken();
-            $payload = JWTAuth::getPayload($token)->toArray();
-        } catch (JWTException $e) {
-            return api_response($request, null, 401);
-        }
-
-        $member_id = array_key_exists('member_id', $payload) ? $payload['member_id'] : $payload['member']['id'];
+        $auth_user = AuthUser::create();
+        $member_id = $auth_user->getMemberId();
         $member = Member::find($member_id);
         if (!$member) return response()->json(['message' => 'Member not found.', 'code' => 404]);
         $business = Business::find((int)$request->business);
 
-        if ($member && $business) {
-            $business_member = BusinessMember::where([['member_id', $member->id], ['business_id', $business->id]])
-                ->with(['actions', 'role.businessDepartment'])
-                ->first();
+        if (!$business) return api_response($request, null, 404, ["message" => 'Business not found.']);
 
-            $request->merge(['manager_member' => $member, 'business' => $business, 'business_member' => $business_member]);
+        $business_member = BusinessMember::where('member_id', $member->id)
+            ->where('business_id', $business->id)
+            ->with(['actions', 'role.businessDepartment'])
+            ->first();
 
-            return $next($request);
-        } else {
-            return api_response($request, null, 404, ["message" => 'Business not found.']);
-        }
+        $request->merge(['manager_member' => $member, 'business' => $business, 'business_member' => $business_member]);
+
+        return $next($request);
     }
 
 }
