@@ -40,7 +40,7 @@
             font-family: Siyamrupali,sans-serif!important;
             height: 20px;
             display: block;
-            line-height: 1;
+            line-height: .8;
          }
 
         table {

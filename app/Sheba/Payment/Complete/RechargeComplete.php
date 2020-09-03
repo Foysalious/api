@@ -5,6 +5,7 @@ use Illuminate\Database\QueryException;
 use DB;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
@@ -34,7 +35,7 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType('credit')->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 
     protected function saveInvoice()

@@ -1,7 +1,7 @@
 <?php namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Excel;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;

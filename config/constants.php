@@ -653,10 +653,11 @@ return [
         env('SHEBA_CUSTOMER_APP')    => 'customer',
         'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'resource',
-        env('SHEBA_MANGER_APP')      => 'resource',
-        'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser',
+        'retailer-portal' => 'strategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -676,7 +677,8 @@ return [
         'bank-loan-portal',
         'customer-portal',
         'bank-loan-portal',
-        'employee-app'
+        'employee-app',
+        'retailer-portal'
     ],
     'PARTNER_ACQUISITION_CHANNEL'                 => [
         'PM'  => 'PM',
@@ -816,7 +818,7 @@ return [
         'Recurring' => 'Recurring'
     ],
     'REWARD_CONSTRAINTS'                          => [
-        'category'        => 'App\Models\Category',
+        'category'        => 'Sheba\Dal\Category\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
     ],
     'PARTNER_PACKAGE_UPDATE_STATUSES'             => [
@@ -1077,10 +1079,12 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'Resource',
-        env('SHEBA_MANGER_APP')      => 'Partner',
-        'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser'
+
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser',
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',
@@ -1319,5 +1323,10 @@ return [
     'PARTNER_BUSINESS_SECTORS'                    => [
         'Service',
         'Non Service'
+    ],
+    'LOAN_GROUP'                                       => [
+        'G1',
+        'G2',
+        'G3'
     ]
 ];

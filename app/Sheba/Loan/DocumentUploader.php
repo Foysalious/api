@@ -2,6 +2,7 @@
 
 use App\Models\PartnerBankLoan;
 use App\Repositories\FileRepository;
+use App\Sheba\Loan\LoanDocumentTypes;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use ReflectionException;
@@ -18,14 +19,12 @@ class DocumentUploader
     private $for;
     private $loanRequest;
     private $user;
-    private $fileRepository;
     private $uploadFolder;
 
     public function __construct(PartnerBankLoan $loan)
     {
         $this->loanRequest    = (new PartnerLoanRequest($loan));
         $this->repo           = new LoanRepository();
-        $this->fileRepository = app(FileRepository::class);
         $this->uploadFolder   = getLoanFolder(). $this->loanRequest->partnerBankLoan->id . '/';
     }
 
@@ -63,6 +62,9 @@ class DocumentUploader
         $detail = $this->loanRequest->details();
         if (isset($detail['final_information_for_loan']['document'][$this->for][$formatted_name])) {
             $this->deleteOld($detail['final_information_for_loan']['document'][$this->for][$formatted_name]);
+        }
+        if (isset($detail['final_information_for_loan']['business']['business_additional_information'][$this->for])) {
+            $this->deleteOld($detail['final_information_for_loan']['business']['business_additional_information'][$this->for]);
         }
         $this->setData($detail, $url, $formatted_name);
         $user = $this->user;
@@ -103,13 +105,16 @@ class DocumentUploader
         $base_name        = basename($filename);
         $old_image_folder = preg_replace("/$base_name/", '', $filename);
         if ($old_image_folder == $this->uploadFolder) {
-            $this->fileRepository->deleteFileFromCDN($filename);
+            DocumentDeleter::deleteOldImage($filename);
         }
     }
 
     private function setData(&$detail, $url, $formatted_name)
     {
-        if ($this->for != 'profile') {
+
+        if ($this->for == LoanDocumentTypes::PROVE_OF_PHOTOGRAPH) {
+            $detail['final_information_for_loan']['business']['business_additional_information'][$this->for] = $url;
+        } else if ($this->for != LoanDocumentTypes::PROFILE) {
             $detail['final_information_for_loan']['document'][$this->for][$formatted_name] = $url;
         } else {
             $detail['final_information_for_loan']['document'][$formatted_name] = $url;
@@ -124,6 +129,16 @@ class DocumentUploader
      */
     private function uploadExtras($name, $file)
     {
+        $formatted_name = $this->formatName($name);
+        return $this->uploadDocument($file, $formatted_name);
+    }
+
+    /**
+     * @param $name
+     * @param $file
+     * @return array
+     */
+    private function uploadRetailerDocument($name, $file) {
         $formatted_name = $this->formatName($name);
         return $this->uploadDocument($file, $formatted_name);
     }
@@ -220,5 +235,32 @@ class DocumentUploader
             throw new InvalidFileName();
         }
         return $this->uploadDocument($file, $formatted_name);
+    }
+
+    private function uploadProofOfPhotographImage($file, $formatted_name) {
+        list($file, $filename) = $this->makeLoanFile($file, $formatted_name);
+        $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
+        return [
+            $formatted_name,
+            $url
+        ];
+    }
+
+    /**
+     * @param $name
+     * @param $file
+     * @return mixed
+     * @throws InvalidFileName
+     */
+    private function uploadProofOfPhotograph($name, $file)
+    {
+        $formatted_name = $this->formatName($name);
+        $url            = null;
+        if (!in_array($formatted_name, [
+            'proof_of_photograph'
+        ])) {
+            throw new InvalidFileName();
+        }
+        return $this->uploadProofOfPhotographImage($file, $formatted_name);
     }
 }

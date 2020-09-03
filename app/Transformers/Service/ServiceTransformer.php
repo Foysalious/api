@@ -1,8 +1,8 @@
 <?php namespace App\Transformers\Service;
 
-use App\Models\Category;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use Sheba\Service\ServiceQuestion;
 use League\Fractal\TransformerAbstract;
 use DB;
@@ -85,6 +85,7 @@ class ServiceTransformer extends TransformerAbstract
             'banner' => $service->banner,
             'variable_type' => $service->variable_type,
             'min_quantity' => $service->min_quantity,
+            'is_inspection_service' => $service->is_inspection_service,
             'unit' => $service->unit,
             'questions' => $this->serviceQuestion->get(),
             'category' => [

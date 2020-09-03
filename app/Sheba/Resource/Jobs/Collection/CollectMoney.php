@@ -67,7 +67,11 @@ class CollectMoney
             ]);
         $collect_money_response = new CollectMoneyResponse();
         $response = json_decode($res->getBody(), 1);
-        if ($response) $collect_money_response->setCode($response['code'])->setMessage($response['msg']);
+        if ($response) {
+            $collect_money_response->setCode($response['code']);
+            if (isset($response['msg'])) $collect_money_response->setMessage($response['msg']);
+            if (isset($response['message'])) $collect_money_response->setMessage($response['message']);
+        }
         return $collect_money_response;
     }
 

@@ -4,8 +4,8 @@
 namespace Sheba\RentACar;
 
 
-use App\Models\Category;
-use App\Models\LocationService;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\PriceCalculation\PriceCalculationFactory;
 

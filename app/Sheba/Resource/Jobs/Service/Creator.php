@@ -1,9 +1,10 @@
 <?php namespace Sheba\Resource\Jobs\Service;
 
 
-use App\Models\Category;
+use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use Sheba\Dal\JobService\JobServiceRepositoryInterface;
@@ -98,9 +99,9 @@ class Creator
 
     public function create()
     {
-        /** @var ServiceRequestObject $selected_service */
         foreach ($this->services as $selected_service) {
-            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 400);
+            if ($selected_service->getCategory()->id != $this->job->category_id) throw new MultipleCategoryServiceRequestException();
+            if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException();
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->order->deliveryAddress->location_id]])->first();
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
@@ -108,7 +109,7 @@ class Creator
             $selected_service->getCategory()->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
-            if($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
+            if ($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $service_data = [

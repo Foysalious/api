@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\PartnerService\PartnerService;
 
 class PartnerServicePricesUpdate extends Model
 {

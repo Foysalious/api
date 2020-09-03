@@ -1,6 +1,6 @@
 <?php namespace App\Transformers\Partner;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
