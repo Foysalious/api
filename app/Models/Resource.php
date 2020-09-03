@@ -9,13 +9,14 @@ use Sheba\Wallet\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\Category\Category;
 
 class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
     use Wallet;
 
     protected $guarded = ['id'];
-    protected $casts   = ['wallet' => 'double'];
+    protected $casts = ['wallet' => 'double'];
 
     public function partners()
     {
@@ -34,7 +35,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function affiliate()
     {
-        return $this->belongsTo(Affiliate::class,'profile_id','profile_id');
+        return $this->belongsTo(Affiliate::class, 'profile_id', 'profile_id');
     }
 
     public function profile()
@@ -91,7 +92,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function typeIn($partner)
     {
         $partner = $partner instanceof Partner ? $partner->id : $partner;
-        $types   = [];
+        $types = [];
         foreach ($this->partners()->withPivot('resource_type')->where('partner_id', $partner)->get() as $unique_partner) {
             $types[] = $unique_partner->pivot->resource_type;
         }
@@ -115,8 +116,8 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function categoriesIn($partner)
     {
-        $partner           = $partner instanceof Partner ? $partner->id : $partner;
-        $categories        = collect();
+        $partner = $partner instanceof Partner ? $partner->id : $partner;
+        $categories = collect();
         $partner_resources = ($this->partnerResources()->where('partner_id', $partner)->get())->load('categories');
         foreach ($partner_resources as $partner_resource) {
             foreach ($partner_resource->categories as $item) {

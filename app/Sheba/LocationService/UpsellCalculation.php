@@ -1,7 +1,7 @@
 <?php namespace Sheba\LocationService;
 
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 
 class UpsellCalculation
 {

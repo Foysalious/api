@@ -16,8 +16,6 @@ class TopUpValidator
     private $request;
     /** @var TopUpOrder */
     private $topUpOrder;
-    /** @var boolean */
-    private $hasError;
     /** @var TopUpErrorResponse */
     private $error;
 

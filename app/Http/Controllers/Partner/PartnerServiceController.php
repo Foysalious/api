@@ -3,7 +3,7 @@
 use App\Models\Partner;
 use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;

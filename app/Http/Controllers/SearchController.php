@@ -3,10 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Business;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Member;
 use App\Models\Profile;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Repositories\InvitationRepository;
 use App\Repositories\ServiceRepository;
 use Illuminate\Http\Request;

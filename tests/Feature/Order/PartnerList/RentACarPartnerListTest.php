@@ -1,11 +1,15 @@
-<?php
+<?php namespace Tests\Feature\Order\OrderPlace;
 
-class RentACarPartnerListTest extends TestCase
+use GuzzleHttp\Client;
+use Tests\Feature\FeatureTestCase;
+
+class RentACarPartnerListTest extends FeatureTestCase
 {
     private $list;
 
     public function __construct()
     {
+        parent::__construct();
         $this->list = [
             'code',
             'message',
@@ -26,7 +30,7 @@ class RentACarPartnerListTest extends TestCase
 
     public function testHalfDay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -64,7 +68,7 @@ class RentACarPartnerListTest extends TestCase
 
     public function testFullDay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -101,7 +105,7 @@ class RentACarPartnerListTest extends TestCase
 
     public function testOneWay()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -146,7 +150,7 @@ class RentACarPartnerListTest extends TestCase
 
     public function testRoundTrip()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');
@@ -192,7 +196,7 @@ class RentACarPartnerListTest extends TestCase
 
     public function testBodyRent()
     {
-        $client = new GuzzleHttp\Client([
+        $client = new Client([
             'base_uri' => $this->baseUrl
         ]);
         $response = $client->get('/v2/settings/car');

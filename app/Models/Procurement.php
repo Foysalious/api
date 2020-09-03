@@ -10,6 +10,7 @@ use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 use Sheba\Business\Procurement\Code\Builder as CodeBuilder;
+use Sheba\Dal\Category\Category;
 
 class Procurement extends Model implements PayableType
 {
