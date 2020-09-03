@@ -48,7 +48,7 @@ class SubscriptionOrderComplete extends PaymentComplete
             $payment_detail = $this->payment->paymentDetails->last();
             DB::transaction(function () use ($subscription_order, $payment_detail) {
                 $this->clearSubscriptionPayment($subscription_order);
-                $this->convertToOrder($subscription_order);
+                if ($subscription_order->hasPartner()) $this->convertToOrder($subscription_order);
                 $this->createSubscriptionOrderPaymentLog();
                 $this->completePayment();
                 $subscription_order->payment_method = strtolower($payment_detail->readable_method);
