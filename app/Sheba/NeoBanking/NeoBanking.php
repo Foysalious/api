@@ -407,4 +407,84 @@ class NeoBanking
 
     }
 
+
+    public function getCompletion()
+    {
+        $data['completion'] = [
+            [
+                'title' => [
+                    'en' => 'NID and Selfie',
+                    'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 'today'
+            ],
+            [
+                'title' => [
+                    'en' => 'Institution',
+                    'bn' => 'প্রতিষ্ঠান সম্পর্কিত তথ্য'
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 'yesterday'
+            ],
+            [
+                'title' => [
+                    'en' => 'Personal',
+                    'bn' => 'ব্যক্তিগত তথ্য '
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 'yesterday'
+            ],
+            [
+                'title' => [
+                    'en' => 'Nominee',
+                    'bn' => 'বনমিনি তথ্য '
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 4
+            ],
+            [
+                'title' => [
+                    'en' => 'Documents',
+                    'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড '
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 4
+            ],
+            [
+                'title' => [
+                    'en' => 'Account',
+                    'bn' => 'অ্যাকাউন্ট সম্পর্কিত তথ্য '
+                ],
+                'completion_percentage' => [
+                    'en' => 75,
+                    'bn' => '৭৫'
+                ],
+                'last_updated' => 4
+            ]
+        ];
+        $data['can_apply_account'] = 1;
+        $data['bank_details_link'] = env('SHEBA_PARTNER_END_URL') . '/' .'neo-banking-account-details';
+        $data['message'] = 'প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।';
+        $data['message_type'] = 'info';
+
+        return $data;
+
+    }
+
 }

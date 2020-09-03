@@ -5,6 +5,7 @@ namespace App\Http\Controllers\NeoBanking;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use Sheba\NeoBanking\NeoBanking;
 
 class NeoBankingController extends Controller
@@ -32,6 +33,7 @@ class NeoBankingController extends Controller
         try {
             $homepage['banks'] = [
                 [
+                    'bank_id' => 4,
                     'bank_name' => [
                         'en' => 'Prime Bank',
                         'bn' => 'প্রাইম ব্যাংক'
@@ -83,5 +85,25 @@ class NeoBankingController extends Controller
         }
 
     }
+
+    public function getAccountInformationCompletion($partner, Request $request, NeoBanking $neoBanking)
+    {
+        try {
+            $this->validate($request, [
+                'bank_id' => 'required|numeric'
+            ]);
+            $partner = $request->partner;
+            $resource = $request->manager_resource;
+            $completion = $neoBanking->setPartner($partner)->setResource($resource)->getCompletion();
+            return api_response($request, $completion, 200, ['data' => $completion]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 
 }
