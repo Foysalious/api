@@ -10,6 +10,7 @@ use Mail;
 class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+
     /** @var Procurement $procurement */
     private $procurement;
 
@@ -24,7 +25,12 @@ class SendEmailForPublishTenderToBusiness extends Job implements ShouldQueue
         $business_contract_person = $this->procurement->owner->getContactPerson();
         $tender_detail = config('sheba.business_url') . "/dashboard/rfq/list/" . $this->procurement->id . "/details";
         $public_tender_detail = config('sheba.business_url') . "/tender/list/" . $this->procurement->id;
-        Mail::send('emails.tender-publication', ['business_contract_person' => $business_contract_person, 'tender_detail' => $tender_detail, 'public_tender_detail' => $public_tender_detail], function ($m) use ($business_email) {
+
+        Mail::send('emails.tender-publication', [
+            'business_contract_person' => $business_contract_person,
+            'tender_detail' => $tender_detail,
+            'public_tender_detail' => $public_tender_detail
+        ], function ($m) use ($business_email) {
             $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
             $m->to($business_email)->subject('Your tender has been published successfully');
         });
