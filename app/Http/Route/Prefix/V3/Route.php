@@ -12,6 +12,7 @@ class Route
 
             $api->get('locations', 'Location\LocationController@index');
             $api->get('thana/reverse', 'Location\LocationController@getThanaFromLatLng');
+            $api->get('thanas', 'Thana\ThanaController@index');
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');

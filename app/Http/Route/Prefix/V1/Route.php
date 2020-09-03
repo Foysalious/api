@@ -54,6 +54,7 @@ class Route
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
             $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
+            $api->get('districts-with-thanas', 'LocationController@getDistrictsWithThanas');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
@@ -302,6 +303,13 @@ class Route
             });
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
+            });
+            $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('/notifications', 'BankUser\NotificationController@index');
+                $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
+            });
+            $api->group(['prefix'=>'nagad'],function($api){
+                $api->get('validate','NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
         });

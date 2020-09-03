@@ -37,6 +37,17 @@ class ErrorLog
         return $this;
     }
 
+    public function setExtra(array $extra)
+    {
+        if (!isAssoc($extra)) throw new \InvalidArgumentException("Extra must be an associative array.");
+
+        foreach ($extra as $key => $value) {
+            $this->context[$key] = $value;
+        }
+
+        return $this;
+    }
+
     public function send()
     {
         if (!app()->bound('sentry')) return;

@@ -17,7 +17,7 @@ abstract class Response
 
     public function __construct($data)
     {
-        $this->data = $data;
+        $this->data = (array)$data;
         if ($this->shouldDecode) {
             if (!isset($this->data[$this->decode])) {
                 $this->error = $this->data[$this->msg];

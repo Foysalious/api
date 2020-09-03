@@ -2,8 +2,8 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
-use App\Models\JobCancelReason;
-use App\Models\LocationService;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Sheba\UserRequestInformation;
@@ -163,6 +163,7 @@ class JobController extends Controller
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
         $job_collection->put('is_closed', $job->partnerOrder->closed_at != null ? 1 : 0);
+        $job_collection->put('is_inspection_service', $job->jobServices[0] ? $job->jobServices[0]->service->is_inspection_service :  0);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {

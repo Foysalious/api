@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use App\Models\Resource;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,16 @@ class ResourceJobController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @return Resource
+     */
+    private function getResource(Request $request)
+    {
+        $auth_user = $request->auth_user;
+        return $auth_user->getResource();
+    }
+
     public function index(Request $request, JobList $job_list)
     {
         $this->validate($request, ['offset' => 'numeric|min:0', 'limit' => 'numeric|min:1']);
@@ -45,6 +56,16 @@ class ResourceJobController extends Controller
         $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
         $rest_jobs = $job_list->setResource($resource)->getRestJobs();
         return api_response($request, $job_list, 200, ['jobs' => [['title' => 'আজকে', 'jobs' => $upto_todays_jobs], ['title' => 'আগামীকালকে', 'jobs' => $tomorrows_jobs], ['title' => 'পরবর্তী', 'jobs' => $rest_jobs]]]);
+    }
+
+    public function getJobToShowInHome(Request $request, JobList $job_list)
+    {
+        $resource = $this->getResource($request);
+        $upto_todays_jobs = $job_list->setResource($resource)->getOngoingJobs();
+        if (count($upto_todays_jobs) > 0) return api_response($request, $upto_todays_jobs, 200, ['orders' => $upto_todays_jobs->splice(0, 1)]);
+        $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
+        if (count($tomorrows_jobs) > 0) return api_response($request, $tomorrows_jobs, 200, ['orders' => $tomorrows_jobs->splice(0, 1)]);
+        return api_response($request, null, 404);
     }
 
     public function jobDetails(Job $job, Request $request, JobInfo $jobInfo)
@@ -226,7 +247,7 @@ class ResourceJobController extends Controller
                 return $job['order_code'] == $order_code;
             });
         } else {
-            $jobs = $job_list->setResource($resource)->setQuery('"'.$request->q.'"');
+            $jobs = $job_list->setResource($resource)->setQuery('"' . $request->q . '"');
             if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
             $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
         }

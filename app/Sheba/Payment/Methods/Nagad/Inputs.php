@@ -10,16 +10,23 @@ use Sheba\Payment\Methods\Nagad\Response\Initialize;
 
 class Inputs
 {
-    private $merchantId;
 
     public static function headers()
     {
-        return [
-            'Content-Type'     => 'Application/json',
+        return self::makeHeaders([
+            'Content-Type'     => 'application/json',
             'X-KM-Api-Version' => 'v-0.2.0',
             'X-KM-IP-V4'       => request()->ip(),
             'X-KM-Client-Type' => 'MOBILE_WEB'
-        ];
+        ]);
+    }
+    static function makeHeaders(array $getHeaders)
+    {
+        $headers = [];
+        foreach ($getHeaders as $key => $header) {
+            array_push($headers, "$key:$header");
+        }
+        return $headers;
     }
 
     static function get_client_ip()
