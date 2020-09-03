@@ -1,6 +1,7 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
+use App\Models\Payment;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\JobService\JobService;
@@ -98,13 +99,16 @@ class SubscriptionOrderAdapter
         $this->totalSchedules = $this->subscriptionOrder->schedules();
     }
 
+    /**
+     * @TODO for partial payment needs to change that
+     */
     private function setPaymentDetails()
     {
-        $payable = Payable::whereHas('payment', function ($q) {
+        $payable = Payable::whereHas('payments', function ($q) {
             $q->where('status', PaymentStatuses::COMPLETED);
         })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
-        $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
+        $this->paymentDetails = $payable->payments()->where('status', PaymentStatuses::COMPLETED)->first()->paymentDetails;
         $this->setBonus();
         $this->setOtherPaymentDetail();
     }
