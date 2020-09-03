@@ -377,4 +377,9 @@ class Service extends Model
     {
         return $this->hasOne(CrosssaleServiceModel::class);
     }
+
+    public function scopeIsCrossSaleService($query)
+    {
+        return $query->where('is_add_on', 1);
+    }
 }
