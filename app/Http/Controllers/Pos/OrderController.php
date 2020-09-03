@@ -51,6 +51,9 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         try {
+            $this->validate($request,[
+                'status' => 'sometimes|in:paid,due'
+            ]);
             $status  = $request->status;
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
@@ -74,10 +77,12 @@ class OrderController extends Controller
                     ]
                 ]);
             }
-            $orders       = (empty($status) && $status === 'null') ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+
+            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->where('payment_status' , $status)->orderBy('created_at', 'desc')->get();
             $final_orders = collect();
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
+                /** @var PosOrder $order */
                 $order_data = $order->calculate();
                 $manager    = new Manager();
                 $manager->setSerializer(new CustomSerializer());
