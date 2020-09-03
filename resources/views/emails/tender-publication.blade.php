@@ -70,9 +70,13 @@
                                                             <td class="padding-side" align="left" style="padding:0 60px"><p class="heading-style" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:24px;font-weight:600"></p></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:1;font-family:Lato;font-size:14px;line-height: 1.57;">Dear {{$business_contract_person}},<br>
+                                                            <td class="padding-side" align="left" style="padding:0 60px">
+                                                                <p class="message" style="opacity:1;font-family:Lato;font-size:14px;line-height: 1.57;">Dear {{$business_contract_person}},<br>
                                                                     Your tender has been published successfully. To get more bid you can share the
-                                                                    tender in various social platforms e.g. Facebook, LinkedIn and WhatsApp from the <a target="_blank" href="{{$public_tender_detail}}" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#2CB543">sBusiness portal</a>. </p></td>
+                                                                    tender in various social platforms e.g. Facebook, LinkedIn and WhatsApp from the
+                                                                    <a target="_blank" href="{{ $tender_detail }}" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#2CB543">sBusiness portal</a>.
+                                                                </p>
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <td align="left"></td>
@@ -82,7 +86,7 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="padding-side pt-30 pb-30" align="left" style="padding:0 60px;padding-bottom:30px;padding-top:30px">
-                                                                <a href="{{$tender_detail}}" target="_blank" style="width:200px;height:50px;border-radius:3px;background-color:#437FF5;text-align:center;border:0;padding: 18px 50px;text-decoration: none !important;"class="btn btn-info" role="button"><span class="button-link" style="color:white;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">View Details</span></a>
+                                                                <a href="{{ $public_tender_detail }}" target="_blank" style="width:200px;height:50px;border-radius:3px;background-color:#437FF5;text-align:center;border:0;padding: 18px 50px;text-decoration: none !important;"class="btn btn-info" role="button"><span class="button-link" style="color:white;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">View Details</span></a>
                                                             </td>
                                                         </tr>
                                                         <tr>
