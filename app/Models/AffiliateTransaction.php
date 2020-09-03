@@ -69,4 +69,10 @@ class AffiliateTransaction extends Model
     {
         return $query->where('log', 'LIKE', '%movie ticket sales commission%');
     }
+
+    public function scopeRefunds($query)
+    {
+        return $query->where('log', 'LIKE', '%is refunded%')
+            ->orWhere('log', 'LIKE', '%manually refunded in your account%');
+    }
 }
