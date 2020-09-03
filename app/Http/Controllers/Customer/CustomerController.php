@@ -4,9 +4,9 @@ use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Review;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use DB;
@@ -38,7 +38,7 @@ class CustomerController extends Controller
             }, 'job' => function ($q) {
                 $q->select('id', 'category_id', 'partner_order_id')->with('category')->with(['jobServices' => function ($q) {
                     $q->select('id', 'job_id', 'service_id', 'quantity', 'option', 'variable_type', 'created_at')->with(['service' => function ($q) {
-                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type', 'publication_status');
+                        $q->select('id', 'name', 'min_quantity', 'thumb', 'app_thumb', 'banner', 'app_banner', 'variables', 'variable_type', 'publication_status', 'is_inspection_service');
                     }]);
                 }, 'partnerOrder' => function ($q) {
                     $q->select('id', 'order_id', 'partner_id')->with(['partner' => function ($q) {
@@ -122,10 +122,12 @@ class CustomerController extends Controller
                     $service['question'] = count($option) > 0 ? $service_question->setService($job_service->service)->getQuestionForThisOption(json_decode($job_service->option)) : null;
                     $service['quantity'] = $job_service->quantity < $job_service->service->min_quantity ? $job_service->service->min_quantity : $job_service->quantity;
                     $service['type'] = $service->variable_type;
+                    $service['is_inspection_service'] = $service->is_inspection_service;
                     array_forget($service, ['variables', 'variable_type']);
                     array_push($all_services, $service);
                 }
                 if (empty($all_services)) continue;
+                $data['category']['is_inspection_service'] = $all_services[0]->is_inspection_service;
                 $data['category']['services'] = $all_services;
                 $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
                 $data['rating'] = $review->rating;

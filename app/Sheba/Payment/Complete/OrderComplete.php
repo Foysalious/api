@@ -18,8 +18,8 @@ use Throwable;
 class OrderComplete extends BaseOrderComplete
 {
 
-    CONST ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
-    CONST ONLINE_PAYMENT_DISCOUNT = 10;
+    const ONLINE_PAYMENT_THRESHOLD_MINUTES = 9;
+    const ONLINE_PAYMENT_DISCOUNT = 10;
 
     /**
      * @return Payment
@@ -49,8 +49,8 @@ class OrderComplete extends BaseOrderComplete
                     $has_error = $this->clearSubscriptionPayment($payable_model, $payment_detail, $has_error);
                 }
             }
-            $this->payment->transaction_details = null;
             $this->completePayment();
+            $this->payment->transaction_details = null;
             $payable_model->payment_method = strtolower($payment_detail->readable_method);
             $payable_model->update();
             if ($payable_model instanceof PartnerOrder) {

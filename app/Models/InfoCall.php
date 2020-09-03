@@ -4,6 +4,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class InfoCall extends Model implements MorphCommentable
 {

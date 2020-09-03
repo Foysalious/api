@@ -2,7 +2,7 @@
 
 use App\Models\Job;
 use Sheba\Dal\JobService\JobService;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Sheba\Checkout\Discount;
 use Carbon\Carbon;
 

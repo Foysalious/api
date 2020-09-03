@@ -1,6 +1,6 @@
 <?php namespace App\Transformers;
 
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
 use Sheba\LocationService\CorruptedPriceStructureException;
