@@ -1,6 +1,6 @@
 <?php namespace App\Transformers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\OfferShowcase;
 use League\Fractal\TransformerAbstract;
 use Sheba\AppSettings\HomePageSetting\DS\Builders\ItemBuilder;

@@ -8,9 +8,9 @@
 
 namespace App\Transformers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Promotion;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use League\Fractal\TransformerAbstract;
 use Throwable;
 

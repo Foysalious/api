@@ -169,7 +169,7 @@ class Creator
     {
         if ($this->status != 'sent') return;
         $message = $bid->bidder->name . ' participated on your procurement #' . $bid->procurement->id;
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $bid->procurement_id . '/quotation?id=' . $bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/list/' . $bid->procurement_id . '/biddings/' . $bid->id;
         foreach ($bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
