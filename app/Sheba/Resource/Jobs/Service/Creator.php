@@ -2,9 +2,9 @@
 
 
 use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use Sheba\Dal\JobService\JobServiceRepositoryInterface;

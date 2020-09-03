@@ -1,7 +1,7 @@
 <?php namespace Sheba\ServiceSubscription;
 
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Illuminate\Support\Collection;

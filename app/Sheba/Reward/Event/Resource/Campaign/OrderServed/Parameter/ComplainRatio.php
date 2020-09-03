@@ -16,13 +16,13 @@ class ComplainRatio extends CampaignEventParameter
 
     public function check(Builder $query)
     {
-        if (!$this->value) return;
+        if ($this->value == null) return;
         $query->with('complains');
     }
 
     public function isCompleted(Collection $jobs, $target_value)
     {
-        if (!$this->value) return true;
+        if ($this->value == null) return true;
         $total_complains = 0;
         foreach ($jobs as $job) {
             $total_complains += count($job->complains);
@@ -33,7 +33,7 @@ class ComplainRatio extends CampaignEventParameter
 
     public function isAchieved(Collection $jobs, $target_value)
     {
-        if (!$this->value) return true;
+        if ($this->value == null) return true;
         $total_complains = $this->getTotalComplains($jobs);
         if ($total_complains == 0) return true;
         return $total_complains <= $this->getValueCount($target_value);

@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Affiliate;
 use App\Models\Affiliation;
 use App\Models\Profile;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Sheba\Checkout\Checkout;
 
 class EkshebaAuthenticate

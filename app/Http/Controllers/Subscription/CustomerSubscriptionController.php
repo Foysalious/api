@@ -4,8 +4,8 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
@@ -30,6 +30,7 @@ use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Sheba\Services\Type;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
@@ -282,6 +283,9 @@ class CustomerSubscriptionController extends Controller
             $location_service = LocationService::where('location_id', $subscription_order->location_id)->where('service_id', $service->id)->first();
 
             $variables = collect();
+            $service_group = collect();
+            $total_quantity = 0;
+            $total_price = 0;
             foreach ($service_details->breakdown as $breakdown) {
                 $selected_service = [
                     "option" => $breakdown->option,
@@ -298,7 +302,25 @@ class CustomerSubscriptionController extends Controller
                     'unit_price' => $price_discount_data['unit_price']
                 ];
                 $variables->push($data);
+                $service_data = [
+                    'variables' => empty($breakdown->questions) ? null : $breakdown->questions,
+                    'unit' => $breakdown->unit,
+                    'quantity' => $breakdown->quantity,
+                    'price' => (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity
+                ];
+                $total_quantity += $breakdown->quantity;
+                $total_price += (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity;
+                $service_group->push($service_data);
             }
+
+            $services = [[
+                'id' => $service->id,
+                'name' => $service->name,
+                'service_group' => $service->variable_type == Type::OPTIONS ? $service_group : [],
+                'unit' => $service->unit,
+                'quantity' => $total_quantity,
+                'price' => $total_price
+            ]];
 
             $time = new PreferredTime($schedules->first()->time);
 
@@ -311,6 +333,7 @@ class CustomerSubscriptionController extends Controller
                 "app_thumb" => $service->app_thumb,
                 'description' => $service->description,
                 "variables" => $variables,
+                "service_list" => $services,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
                 'is_weekly' => $service_subscription->is_weekly,
@@ -352,6 +375,8 @@ class CustomerSubscriptionController extends Controller
                 "subscription_additional_info" => $subscription_order->additional_info,
                 "subscription_status" => $subscription_order->status,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "subscription_start" => Carbon::parse($subscription_order->billing_cycle_start)->format('l, j F Y'),
+                "subscription_end" =>  Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
             ];
 
             /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
