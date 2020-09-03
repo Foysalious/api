@@ -173,4 +173,19 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     {
         return $this->billing_cycle == Cycles::MONTHLY;
     }
+
+    public function hasPartner()
+    {
+        return $this->partner != null;
+    }
+
+    public function canCreateOrderRequest()
+    {
+        return !$this->hasPartner() && !$this->hasOrderRequests();
+    }
+
+    public function hasOrderRequests()
+    {
+        return $this->subscriptionOrderRequests()->count() > 0;
+    }
 }
