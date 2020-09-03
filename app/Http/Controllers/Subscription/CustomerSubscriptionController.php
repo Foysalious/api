@@ -98,7 +98,6 @@ class CustomerSubscriptionController extends Controller
                 'subscription_type' => 'required|string',
                 'sales_channel' => 'required|string',
             ]);
-
             $subscription_order = $factory->get($request)->place();
             return api_response($request, $subscription_order, 200, ['order' => [
                 'id' => $subscription_order->id
