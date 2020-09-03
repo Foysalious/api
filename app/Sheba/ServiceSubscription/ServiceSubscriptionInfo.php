@@ -117,6 +117,8 @@ class ServiceSubscriptionInfo
         $weekly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
         /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
         $monthly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+        /** @var $discount ServiceSubscriptionDiscount $yearly_discount */
+        $yearly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'yearly')->valid()->first();
 
         $serviceSubscription['weekly_discount'] = $weekly_discount ? [
             'value' => (double)$weekly_discount->discount_amount,
@@ -127,6 +129,11 @@ class ServiceSubscriptionInfo
             'value' => (double)$monthly_discount->discount_amount,
             'is_percentage' => $monthly_discount->isPercentage(),
             'cap' => (double)$monthly_discount->cap
+        ] : null;
+        $serviceSubscription['yearly_discount'] = $yearly_discount ? [
+            'value' => (double)$yearly_discount->discount_amount,
+            'is_percentage' => $yearly_discount->isPercentage(),
+            'cap' => (double)$yearly_discount->cap
         ] : null;
         $cross_sale_service = $this->serviceSubscription->service->crossSaleService;
         $serviceSubscription['cross_sale'] = $cross_sale_service ? [

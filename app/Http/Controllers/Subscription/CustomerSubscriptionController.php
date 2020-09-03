@@ -338,8 +338,10 @@ class CustomerSubscriptionController extends Controller
                 'quantity' => (double)$service_details_breakdown->quantity,
                 'is_weekly' => $service_subscription->is_weekly,
                 'is_monthly' => $service_subscription->is_monthly,
+                'is_yearly' => $service_subscription->is_yearly,
                 'min_weekly_qty' => $service_subscription->min_weekly_qty,
                 'min_monthly_qty' => $service_subscription->min_monthly_qty,
+                'min_yearly_qty' => $service_subscription->min_yearly_qty,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $partner ? $partner->name : null,
                 "logo" => $partner ? $partner->logo : null,
@@ -383,6 +385,8 @@ class CustomerSubscriptionController extends Controller
             $weekly_discount = $service_subscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
             /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
             $monthly_discount = $service_subscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+            /** @var $discount ServiceSubscriptionDiscount $yearly_discount */
+            $yearly_discount = $service_subscription->discounts()->where('subscription_type', 'yearly')->valid()->first();
 
             $subscription_order_details['weekly_discount'] = $weekly_discount ? [
                 'value' => (double)$weekly_discount->discount_amount,
@@ -395,6 +399,13 @@ class CustomerSubscriptionController extends Controller
                 'is_percentage' => $monthly_discount->isPercentage(),
                 'cap' => (double)$monthly_discount->cap,
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
+            ] : null;
+
+            $subscription_order_details['yearly_discount'] = $yearly_discount ? [
+                'value' => (double)$yearly_discount->discount_amount,
+                'is_percentage' => $yearly_discount->isPercentage(),
+                'cap' => (double)$yearly_discount->cap,
+                'min_discount_quantity' => $yearly_discount->min_discount_qty
             ] : null;
 
             $resource = new Item($service->category,
