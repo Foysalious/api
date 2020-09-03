@@ -51,9 +51,6 @@ class OrderController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         try {
-            $this->validate($request,[
-                'status' => 'sometimes|in:paid,due'
-            ]);
             $status  = $request->status;
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
