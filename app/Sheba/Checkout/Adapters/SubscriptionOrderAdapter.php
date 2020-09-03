@@ -53,6 +53,7 @@ class SubscriptionOrderAdapter
             $this->createOrders();
             return $this->subscriptionOrder;
         } else {
+            $this->updateOrders();
             return false;
         }
     }
@@ -167,12 +168,11 @@ class SubscriptionOrderAdapter
         $job->preferred_time_end = $preferred_time->getEndString();
         $job->job_additional_info = $this->subscriptionOrder->additional_info;
         $job->category_answers = $this->subscriptionOrder->additional_info;
-
-        $commissions = (new CommissionCalculator())->setCategory($this->subscriptionOrder->category)
-            ->setPartner($this->subscriptionOrder->partner);
-        $job->commission_rate = $commissions->getServiceCommission();
-        $job->material_commission_rate = $commissions->getMaterialCommission();
-
+        if ($this->subscriptionOrder->partner) {
+            $commissions = $this->getCommission();
+            $job->commission_rate = $commissions->getServiceCommission();
+            $job->material_commission_rate = $commissions->getMaterialCommission();
+        }
         $job->status = JobStatuses::PENDING;
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
@@ -285,5 +285,30 @@ class SubscriptionOrderAdapter
         $resources = (scheduler($this->subscriptionOrder->partner))
             ->isAvailable($dates, $time, $this->subscriptionOrder->category)->get('available_resources');
         return Resource::whereIn('id', $resources)->get();
+    }
+
+    /**
+     * @return CommissionCalculator
+     */
+    private function getCommission()
+    {
+        return (new CommissionCalculator())->setCategory($this->subscriptionOrder->category)->setPartner($this->subscriptionOrder->partner);
+    }
+
+    private function updateOrders()
+    {
+        PartnerOrder::whereHas('order', function ($q) {
+            $q->whereHas('subscription', function ($q) {
+                $q->where('subscription_orders.id', $this->subscriptionOrder->id);
+            });
+        })->update(['partner_id' => $this->subscriptionOrder->partner_id]);
+        $commissions = $this->getCommission();
+        Job::whereHas('partnerOrder', function ($q) {
+            $q->whereHas('order', function ($q) {
+                $q->whereHas('subscription', function ($q) {
+                    $q->where('subscription_orders.id', $this->subscriptionOrder->id);
+                });
+            });
+        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
     }
 }
