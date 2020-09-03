@@ -96,10 +96,13 @@ class FacebookController extends Controller
                 } else {
                     return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
                 }
+                $is_new = 0;
                 if ($profile->$from == null) {
+                    $is_new = 1;
                     $this->profileRepository->registerAvatar($from, $request, $profile);
                 }
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                $info['is_new'] = $is_new;
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403);
@@ -173,13 +176,16 @@ class FacebookController extends Controller
             $profile = $this->profileRepository->registerMobile($request->all());
             $this->profileRepository->registerAvatarByKit($from, $profile);
         }
+        $is_new = 0;
         if ($profile->$from == null) {
+            $is_new = 1;
             $this->profileRepository->registerAvatarByKit($from, $profile);
             $profile = Profile::find($profile->id);
         }
         $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
         if (!$info) return api_response($request, null, 404);
         $info['jwt']['token'] = $authUser->setProfile($profile)->generateToken();
+        $info['is_new'] = $is_new;
         return api_response($request, $info, 200, ['info' => $info]);
     }
 

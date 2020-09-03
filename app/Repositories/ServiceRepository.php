@@ -1,7 +1,7 @@
 <?php namespace App\Repositories;
 
-use App\Models\PartnerService;
-use App\Models\Service;
+use Sheba\Dal\PartnerService\PartnerService;
+use Sheba\Dal\Service\Service;
 use App\Sheba\Partner\v1\PartnerAvailable;
 use Carbon\Carbon;
 

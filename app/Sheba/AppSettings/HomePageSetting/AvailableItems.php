@@ -37,7 +37,7 @@ class AvailableItems
             ],
             'master_categories' => [
                 "name" => "Master Categories",
-                "model" => "App\\Models\\Category"
+                "model" => "Sheba\\Dal\\Category\\Category"
             ],
             'subscription_list' => [
                 "name" => "Subscription List",

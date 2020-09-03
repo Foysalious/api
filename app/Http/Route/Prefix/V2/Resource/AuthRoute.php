@@ -13,12 +13,16 @@ class AuthRoute
             $api->get('notifications', 'Resource\ResourceNotificationController@index');
             $api->post('notifications/seen', 'Resource\ResourceNotificationController@seen');
             $api->get('help', 'Resource\ResourceController@help');
+            $api->get('rating', 'Resource\ResourceController@getRatingInfo');
             $api->get('schedules/check', 'Resource\ResourceController@checkSchedule');
             $api->get('reviews', 'Resource\ResourceReviewController@index');
             $api->get('services', 'Resource\ResourceController@getService');
+            $api->get('partner/categories', 'Resource\ResourcePartnerController@getCategories');
+            $api->get('partner/categories/{category}/services', 'Resource\ResourcePartnerController@getCategoryServices');
             $api->group(['prefix' => 'jobs'], function ($api) {
                 $api->get('/', 'Resource\ResourceJobController@index');
                 $api->get('all', 'Resource\ResourceJobController@getAllJobs');
+                $api->get('home', 'Resource\ResourceJobController@getJobToShowInHome');
                 $api->get('history', 'Resource\ResourceJobController@getAllHistoryJobs');
                 $api->get('next', 'Resource\ResourceJobController@getNextJob');
                 $api->get('search', 'Resource\ResourceJobController@jobSearch');

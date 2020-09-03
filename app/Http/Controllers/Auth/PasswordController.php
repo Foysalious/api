@@ -42,10 +42,10 @@ class PasswordController extends Controller
     private function sendResetCode(Profile $profile, $column, $email)
     {
         $reset_token = randomString(4, 1);
-        $key_name    = 'password_reset_code_' . $reset_token;
+        $key_name = 'password_reset_code_' . $reset_token;
         Redis::set($key_name, json_encode([
             "profile_id" => $profile->id,
-            'code'       => $reset_token
+            'code' => $reset_token
         ]));
         if ($column == 'email') {
             $this->sendPasswordResetEmail($email, $reset_token);
@@ -63,9 +63,10 @@ class PasswordController extends Controller
     private function sendPasswordResetEmail($email, $reset_token)
     {
         try {
-            Mail::send('emails.reset-password', ['code' => $reset_token], function ($m) use ($email) {
+            $subject = $reset_token . " is login reset code";
+            Mail::send('emails.reset-password-V2', ['code' => $reset_token], function ($m) use ($email, $subject) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
-                $m->to($email)->subject('Reset Password');
+                $m->to($email)->subject($subject);
             });
         } catch (\Exception $exception) {
             throw new MailgunClientException();
@@ -104,13 +105,13 @@ class PasswordController extends Controller
         try {
             $this->validate($request, [
                 'password' => 'required|min:4',
-                'from'     => 'required|string|in:' . implode(',', constants('FROM')),
-                'code'     => 'required'
+                'from' => 'required|string|in:' . implode(',', constants('FROM')),
+                'code' => 'required'
             ]);
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
-                $data              = json_decode($key);
-                $profile           = Profile::find((int)$data->profile_id);
+                $data = json_decode($key);
+                $profile = Profile::find((int)$data->profile_id);
                 $profile->password = bcrypt($request->password);
                 $profile->update();
                 Redis::del('password_reset_code_' . (int)$request->code);

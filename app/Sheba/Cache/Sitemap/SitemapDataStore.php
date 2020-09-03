@@ -4,7 +4,7 @@
 namespace Sheba\Cache\Sitemap;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;

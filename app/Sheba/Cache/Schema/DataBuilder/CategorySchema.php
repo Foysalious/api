@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Schema\DataBuilder;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\City;
 use App\Models\ReviewQuestionAnswer;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;

@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers\Resource;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\Resource;
@@ -15,6 +15,8 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Authentication\AuthUser;
 use Sheba\Resource\Jobs\JobList;
+use Sheba\Resource\Review\RatingInfo;
+use Sheba\Resource\Review\ReviewList;
 use Sheba\Resource\Schedule\ResourceScheduleChecker;
 use Sheba\Resource\Schedule\ResourceScheduleSlot;
 use Sheba\Resource\Service\ServiceList;
@@ -128,6 +130,18 @@ class ResourceController extends Controller
         return $services
             ? api_response($request, $services, 200, ['services' => $services])
             : api_response($request, null, 404);
+    }
+
+    public function getRatingInfo(Request $request, RatingInfo $ratingInfo)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+
+        $rating = $ratingInfo->setResource($resource)->getRatingInfo();
+
+
+        return $rating ? api_response($request, $rating, 200, ['info' => $rating]) : api_response($request, null, 404);
     }
 
     public function checkSchedule(Request $request, ResourceScheduleSlot $slot, ResourceScheduleChecker $resourceScheduleChecker)

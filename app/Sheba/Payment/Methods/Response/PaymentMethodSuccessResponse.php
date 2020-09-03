@@ -17,4 +17,15 @@ class PaymentMethodSuccessResponse
     {
         $this->$name = $value;
     }
+
+    /**
+     * @return array
+     */
+    public function getGatewayResponse()
+    {
+        return [
+            'id' => $this->id,
+            'details' => $this->details,
+        ];
+    }
 }

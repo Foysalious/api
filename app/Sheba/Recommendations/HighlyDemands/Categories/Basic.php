@@ -1,6 +1,6 @@
 <?php namespace Sheba\Recommendations\HighlyDemands\Categories;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
