@@ -100,7 +100,7 @@ class SubscriptionOrderAdapter
 
     private function setPaymentDetails()
     {
-        $payable = Payable::whereHas('payment', function ($q) {
+        $payable = Payable::whereHas('payments', function ($q) {
             $q->where('status', PaymentStatuses::COMPLETED);
         })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
