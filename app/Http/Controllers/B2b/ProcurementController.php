@@ -42,6 +42,7 @@ use Sheba\Business\Procurement\StatusCalculator;
 use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -821,7 +822,7 @@ class ProcurementController extends Controller
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
-            'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
+            'published_at' => ($procurement->publication_status == PublicationStatuses::PUBLISHED) ? $procurement->published_at->format('d/m/y') : null,
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
             'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),
