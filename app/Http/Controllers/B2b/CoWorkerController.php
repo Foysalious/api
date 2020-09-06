@@ -437,7 +437,7 @@ class CoWorkerController extends Controller
                 ->where('member_id', $member->id)
                 ->where('status', Statuses::INACTIVE)
                 ->first();
-
+            if (!$business_member) return api_response($request, null, 404);
             $member->setRelation('businessMemberGenerated', $business_member->load([
                 'role' => function ($q) {
                     $q->select('business_roles.id', 'business_department_id', 'name')->with([
