@@ -3,22 +3,28 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
-use App\Models\BusinessMember;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use App\Transformers\Business\BusinessDepartmentListTransformer;
+use App\Transformers\Business\VendorDetailsTransformer;
+use App\Transformers\Business\VendorListTransformer;
+use App\Transformers\CustomSerializer;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\TransactionReportData;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
-use Carbon\Carbon;
 use DB;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
@@ -105,28 +111,14 @@ class BusinessesController extends Controller
                 ]);
             }, 'resources.profile'
         ]);
-        $vendors = collect();
-        if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
-        foreach ($partners->get() as $partner) {
-            $master_categories = collect();
-            /** @var Partner $partner */
-            $partner->categories->map(function ($category) use ($master_categories) {
-                if (!$category->parent) return;
-                $master_categories->push($category->parent);
-            });
-            $master_categories = $master_categories->unique()->pluck('name');
-            $vendor = [
-                "id" => $partner->id,
-                "name" => $partner->name,
-                "logo" => $partner->logo,
-                "address" => $partner->address,
-                "status" => $partner->is_active_for_b2b,
-                "mobile" => $partner->getContactNumber(),
-                'type' => $master_categories
-            ];
 
-            $vendors->push($vendor);
-        }
+        if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $vendors = new Collection($partners->get(), new VendorListTransformer());
+        $vendors = $manager->createData($vendors)->toArray()['data'];
+
         $vendors = collect($vendors);
         if ($request->has('search')) $vendors = $this->searchWithName($vendors, $request);
         $total_vendors = $vendors->count();
@@ -149,42 +141,24 @@ class BusinessesController extends Controller
         });
     }
 
+    /**
+     * @param $business
+     * @param $vendor
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorInfo($business, $vendor, Request $request)
     {
-        try {
-            $business = $request->business;
-            /** @var Partner $partner */
-            $partner = Partner::find((int)$vendor);
-            $basic_informations = $partner->basicInformations;
-            $resources = $partner->resources->count();
-            $type = $partner->businesses->pluck('type')->unique();
+        $business = $request->business;
+        /** @var Partner $partner */
+        $partner = Partner::find((int)$vendor);
 
-            $master_categories = collect();
-            $partner->categories->map(function ($category) use ($master_categories) {
-                $parent_category = $category->parent()->select('id', 'name')->first();
-                $master_categories->push($parent_category);
-            });
-            $master_categories = $master_categories->unique()->pluck('name');
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $vendor = new Item($partner, new VendorDetailsTransformer());
+        $vendor = $manager->createData($vendor)->toArray()['data'];
 
-            $vendor = [
-                "id" => $partner->id,
-                "name" => $partner->name,
-                "logo" => $partner->logo,
-                "mobile" => $partner->getContactNumber(),
-                "company_type" => $type,
-                "service_type" => $master_categories,
-                "no_of_resource" => $resources,
-                "trade_license" => $basic_informations->trade_license,
-                "trade_license_attachment" => $basic_informations->trade_license_attachment,
-                "vat_registration_number" => $basic_informations->vat_registration_number,
-                "vat_registration_attachment" => $basic_informations->vat_registration_attachment,
-                "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
-            ];
-            return api_response($request, $vendor, 200, ['vendor' => $vendor]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $vendor, 200, ['vendor' => $vendor]);
     }
 
     public function getVendorAdminInfo($business, $vendor, Request $request)
