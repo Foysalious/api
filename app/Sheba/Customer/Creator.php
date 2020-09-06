@@ -19,7 +19,7 @@ class Creator
         $this->profileRepository = $profileRepository;
         $this->customerRepository = $customerRepository;
         $this->profileCreator = $profileCreator;
-//        $this->name = '';
+        $this->name = '';
     }
 
     public function setMobile($mobile)
