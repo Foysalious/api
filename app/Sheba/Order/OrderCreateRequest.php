@@ -282,7 +282,7 @@ class OrderCreateRequest
 
     private function getCustomer()
     {
-        return $this->customerCreator->setMobile($this->mobile)->setName('Shahadattt')->create();
+        return $this->customerCreator->setMobile($this->mobile)->setName(dd($this->name))->create();
     }
 
     /**
