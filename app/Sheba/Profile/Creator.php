@@ -38,7 +38,7 @@ class Creator
 
     private function makeData()
     {
-        $this->crateData['name'] = $this->name;
+        $this->crateData['name'] = 'Shahdat313';
         $this->crateData['mobile'] = $this->mobile;
         $this->crateData['mobile_verified'] = $this->mobileVerified;
     }
