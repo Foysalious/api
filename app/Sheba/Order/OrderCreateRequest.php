@@ -6,7 +6,6 @@ use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
-use App\Models\Customer;
 use App\Models\Job;
 use App\Models\Location;
 use App\Models\Partner;
@@ -253,12 +252,9 @@ class OrderCreateRequest
             $this->response->setCode(403)->setMessage('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন');
             return $this->response;
         }
-        /** @var Customer $customer */
-        $customer = $this->getCustomer();
-        $response = $this->orderCreator->setServices($this->services)->setCustomer($customer)->setDeliveryName($this->name)->setMobile($this->mobile)
+        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setDeliveryName($this->name)->setMobile($this->mobile)
             ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
             ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
-        dd($customer->profile->fresh()->toArray());
         $this->response->setResponse($response);
         if ($this->assignResource && $this->response->hasSuccess()) {
             $this->job = Job::find($this->response->getResponse()->job_id);
