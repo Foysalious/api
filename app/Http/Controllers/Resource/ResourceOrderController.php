@@ -26,7 +26,6 @@ class ResourceOrderController extends Controller
             'address' => 'required|string',
             'partner' => 'required|numeric',
         ], ['mobile' => 'Invalid mobile number!']);
-        return api_response($request, null, 200, ['message' => json_encode(array_merge($request->header(), $request->except('auth_user')))]);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
