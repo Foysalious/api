@@ -14,6 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
 use phpDocumentor\Reflection\DocBlock\Description;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
@@ -273,8 +274,7 @@ class Creator
                 }
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
-                if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
-                if ($procurement->is_published) $this->sendMailToBusiness($procurement);
+                if ($this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -398,8 +398,7 @@ class Creator
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
         $procurement = $procurement->fresh();
-        if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
-        if ($procurement->is_published) $this->sendMailToBusiness($procurement);
+        if ($this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
     }
 
     /**
@@ -424,7 +423,11 @@ class Creator
      */
     private function isEligibleForNotification($procurement)
     {
-        if ($procurement->shared_to == 'public' || $procurement->shared_to == 'verified') return true;
+        if (
+            ($procurement->shared_to == 'public' || $procurement->shared_to == 'verified') &&
+            ($procurement->publication_status == PublicationStatuses::PUBLISHED)
+        ) return true;
+
         return false;
     }
 }
