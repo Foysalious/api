@@ -61,6 +61,7 @@ use Sheba\Repositories\ProfileRepository;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
+use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
 
 class ProcurementController extends Controller
 {
@@ -505,6 +506,35 @@ class ProcurementController extends Controller
             ->setProcurementEndDate($request->procurement_end_date)
             ->setPaymentOptions($request->payment_options);
         $updater->setRequestHandler($this->procurementRequestHandler)->setProcurement($procurement)->update();
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    public function updateBasic($procurement, Request $request, BasicInfoUpdater $updater)
+    {
+        $this->validate($request, [
+            'status' => 'string',
+            'title' => 'string',
+            'estimated_price' => 'string',
+            'last_date_of_submission' => 'date_format:Y-m-d'
+        ]);
+
+        $this->setModifier($request->manager_member);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if ($request->status === 'Draft') {
+            $updater->setProcurement($procurement)
+                ->setTitle($request->title)
+                ->setBudget($request->estimated_price)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForDraft();
+        }
+        if ($request->status === 'Open') {
+            $updater->setProcurement($procurement)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForOpen();
+        }
 
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
