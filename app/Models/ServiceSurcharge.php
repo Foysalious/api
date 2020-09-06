@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Service\Service;
 
 class ServiceSurcharge extends Model
 {

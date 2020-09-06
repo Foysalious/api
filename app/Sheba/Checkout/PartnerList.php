@@ -2,7 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Affiliate;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\HyperLocal;

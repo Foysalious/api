@@ -1,12 +1,12 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;

@@ -1,10 +1,10 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Transformers\ServiceV2Transformer;
@@ -91,8 +91,6 @@ class ServiceController extends Controller
                         PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
                         JobDiscountHandler $job_discount_handler)
     {
-
-
         ini_set('memory_limit', '2048M');
         $service = Service::where('id', (int)$service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
         $service_groups = $service->first()->groups;
@@ -184,7 +182,6 @@ class ServiceController extends Controller
         $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
         $service['variables'] = $variables;
         $service['faqs'] = json_decode($service->faqs);
-        $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
 
         $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
         $category = Category::with(['parent' => function ($query) {

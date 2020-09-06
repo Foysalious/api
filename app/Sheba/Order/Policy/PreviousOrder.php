@@ -1,8 +1,8 @@
 <?php namespace Sheba\Order\Policy;
 
 
-use App\Models\Category;
-use App\Models\LocationService;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\LocationService\LocationService;
 use Illuminate\Support\Collection;
 use Sheba\Dal\JobService\JobService;
 

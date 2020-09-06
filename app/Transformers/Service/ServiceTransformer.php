@@ -1,8 +1,8 @@
 <?php namespace App\Transformers\Service;
 
-use App\Models\Category;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use Sheba\Service\ServiceQuestion;
 use League\Fractal\TransformerAbstract;
 use DB;

@@ -2,8 +2,8 @@
 
 namespace Sheba\Checkout\Services;
 
-use App\Models\Category;
-use App\Models\Service;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use stdClass;
 
