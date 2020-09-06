@@ -54,6 +54,7 @@ class LoginController extends Controller
     {
         $this->validate($request, ['email' => 'required', 'password' => 'required']);
         $profile = $this->profileRepository->checkExistingEmail($request->email);
+        if (!$profile) return api_response($request, null, 403, ['message' => "The email address that you've entered doesn't match any account. Please register first."]);
         $member = $profile->member;
         $business_members = BusinessMember::where('member_id', $member->id)->get();
         if ($business_members->isEmpty()) return api_response($request, null, 403, ['message' => 'Please register first']);
