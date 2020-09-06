@@ -34,6 +34,10 @@ class CategoryList
     {
         $categories = Category::published()->whereHas('partners', function ($q) {
             $q->where([['category_partner.is_verified', 1], ['partner_id', $this->partner->id]]);
+        })->whereHas('services', function ($q) {
+            $q->published()->whereHas('locations', function ($q) {
+                $q->published()->where('location_service.location_id', $this->locationId);
+            });
         })->whereHas('locations', function ($q) {
             $q->published()->where('category_location.location_id', $this->locationId);
         })->select('id', 'name', 'bn_name')->get();
