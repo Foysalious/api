@@ -500,7 +500,7 @@ class CategoryController extends Controller
                     'description' => $service->crossSaleService->description,
                     'icon' => $service->crossSaleService->icon,
                     'category_id' => $category->id,
-                    'service_id' => $service->crossSaleService->id
+                    'service_id' => $service->crossSaleService->add_on_service_id
                 ]: null;
                 $service['is_add_on'] = $service->is_add_on;
                 $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
