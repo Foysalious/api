@@ -105,7 +105,9 @@ class BusinessRoute
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });
+                        $api->post('/change-status-by-super-admin', 'B2b\LeaveController@statusUpdateBySuperAdmin');
                         $api->post('/status', 'B2b\LeaveController@updateStatus');
+                        $api->post('/leave-info-edit', 'B2b\LeaveController@infoUpdateBySuperAdmin');
                     });
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');

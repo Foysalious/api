@@ -2,6 +2,8 @@
 
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Review\Events\ReviewSaved;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class Review extends BaseModel
 {

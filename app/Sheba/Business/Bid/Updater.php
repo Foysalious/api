@@ -155,15 +155,15 @@ class Updater
 
     private function sendVendorParticipatedNotification()
     {
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/list/' . $this->bid->procurement_id . '/biddings/' . $this->bid->id;
         $message = $this->bid->bidder->name . ' participated on your procurement #' . $this->bid->procurement->id;
+
         $this->notify($message, $link);
     }
 
     private function sendBidRejectedNotification()
     {
-        /** @todo $link CHANGE ON NEW DESIGN */
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $this->bid->procurement_id . '/quotation?id=' . $this->bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/list/' . $this->bid->procurement_id . '/biddings/' . $this->bid->id;
         $message = $this->bid->bidder->name . ' rejected your hiring request #' . $this->bid->id;
 
         $this->notify($message, $link);
@@ -171,8 +171,7 @@ class Updater
 
     private function sendBidAcceptedNotification()
     {
-        /** @todo $link CHANGE ON NEW DESIGN */
-        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '?bid=' . $this->bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->bid->procurement_id . '/details?bidId=' . $this->bid->id;
         $message = $this->bid->bidder->name . ' accepted your hiring request #' . $this->bid->id;
 
         $this->notify($message, $link);

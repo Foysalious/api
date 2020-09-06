@@ -143,11 +143,9 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveTypesRepoInterface $leave_types_repo
-     * @param LeaveRepoInterface $leave_repo
-     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
+    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);

@@ -9,7 +9,7 @@ use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\Profile;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\User;
 use App\Sheba\Checkout\Checkout;
 use Illuminate\Validation\ValidationException;

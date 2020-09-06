@@ -2,7 +2,7 @@
 
 use App\Exceptions\NotFoundException;
 use App\Http\Controllers\Controller;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use Illuminate\Http\Request;
 use Sheba\Schedule\ScheduleSlot;

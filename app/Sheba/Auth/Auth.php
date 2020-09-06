@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 
 class Auth
 {
@@ -24,7 +25,7 @@ class Auth
 
     /**
      * @return AuthUser
-     * @throws \Sheba\Authentication\AuthenticationFailedException
+     * @throws AuthenticationFailedException
      */
     public function authenticate()
     {

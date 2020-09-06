@@ -36,12 +36,6 @@ class CustomHandler extends DingoHandler
          * Done in the render section.
          * As, request is needed sometimes.
          */
-
-        // if (app()->bound('sentry') && $this->parentHandler->shouldReport($e)) {
-        //     app('sentry')->captureException($e);
-        // }
-
-        // parent::report($e);
     }
 
     /**
@@ -56,14 +50,8 @@ class CustomHandler extends DingoHandler
     {
         $handler = HandlerFactory::get($request, $e);
 
-        if ($handler) {
-            if ($this->parentHandler->shouldReport($e)) {
-                $handler->report();
-            }
+        if ($this->parentHandler->shouldReport($e)) $handler ? $handler->report() : logError($e);
 
-            return $handler->render();
-        }
-
-        return parent::render($request, $e);
+        return $handler ? $handler->render() : parent::render($request, $e);
     }
 }

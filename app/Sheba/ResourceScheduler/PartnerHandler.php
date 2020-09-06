@@ -1,6 +1,6 @@
 <?php namespace Sheba\ResourceScheduler;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;
 use Carbon\Carbon;

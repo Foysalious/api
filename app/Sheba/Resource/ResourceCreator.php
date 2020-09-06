@@ -63,7 +63,7 @@ class ResourceCreator
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
-        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids']);
+        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image']);
         return $this->resources->save($this->data);
     }
 
@@ -107,7 +107,7 @@ class ResourceCreator
     {
         $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
         $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
-        $this->data['nid_image'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
+        $this->data['nid_image_front'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
         $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 
