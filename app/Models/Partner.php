@@ -372,6 +372,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $resource->profile->pro_pic;
     }
 
+    public function getContactEmail()
+    {
+        $resource = $this->getContactResource();
+        if (!$resource) return null;
+        return $resource->profile->email;
+    }
+
     public function isNIDVerified()
     {
         if ($operation_resource = $this->operationResources()->first())
