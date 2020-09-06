@@ -86,12 +86,17 @@ class BusinessesController extends Controller
         return $partner ? $partner : false;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorsList($business, Request $request)
     {
         $business = $request->business;
-        if(!$business) return api_response($request, 1, 404);
-
-        $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address')->with([
+        if (!$business) return api_response($request, 1, 404);
+        list($offset, $limit) = calculatePagination($request);
+        $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address', 'is_active_for_b2b')->with([
             'categories' => function ($q) {
                 $q->select('categories.id', 'parent_id', 'name')->with([
                     'parent' => function ($q) {
@@ -99,10 +104,10 @@ class BusinessesController extends Controller
                     }
                 ]);
             }, 'resources.profile'
-        ])->get();
+        ]);
         $vendors = collect();
-
-        foreach ($partners as $partner) {
+        if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
+        foreach ($partners->get() as $partner) {
             $master_categories = collect();
             /** @var Partner $partner */
             $partner->categories->map(function ($category) use ($master_categories) {
@@ -115,14 +120,33 @@ class BusinessesController extends Controller
                 "name" => $partner->name,
                 "logo" => $partner->logo,
                 "address" => $partner->address,
+                "status" => $partner->is_active_for_b2b,
                 "mobile" => $partner->getContactNumber(),
                 'type' => $master_categories
             ];
 
             $vendors->push($vendor);
         }
+        $vendors = collect($vendors);
+        if ($request->has('search')) $vendors = $this->searchWithName($vendors, $request);
+        $total_vendors = $vendors->count();
+        if ($request->has('limit')) $vendors = $vendors->splice($offset, $limit);
+        return api_response($request, $vendors, 200, [
+            'vendors' => $vendors,
+            'total_vendors' => $total_vendors
+        ]);
+    }
 
-        return api_response($request, $vendors, 200, ['vendors' => $vendors]);
+    /**
+     * @param $vendors
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithName($vendors, Request $request)
+    {
+        return $vendors->filter(function ($vendor) use ($request) {
+            return str_contains(strtoupper($vendor['name']), strtoupper($request->search));
+        });
     }
 
     public function getVendorInfo($business, $vendor, Request $request)
@@ -293,7 +317,7 @@ class BusinessesController extends Controller
         foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
             array_push($banks, [
                 'key' => $bank,
-                'value' => ucwords(str_replace('_',' ',$bank)),
+                'value' => ucwords(str_replace('_', ' ', $bank)),
             ]);
         }
         return api_response($request, null, 200, ['banks' => $banks]);
@@ -328,10 +352,10 @@ class BusinessesController extends Controller
             ->get()
             ->each(function ($partner) use ($vendors) {
                 $vendor = [
-                    "id"    => $partner->id,
-                    "name"  => $partner->name,
-                    "logo"  => $partner->logo,
-                    "mobile"=> $partner->getContactNumber()
+                    "id" => $partner->id,
+                    "name" => $partner->name,
+                    "logo" => $partner->logo,
+                    "mobile" => $partner->getContactNumber()
                 ];
 
                 $vendors->push($vendor);
