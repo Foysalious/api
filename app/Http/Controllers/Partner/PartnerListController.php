@@ -64,13 +64,15 @@ class PartnerListController extends Controller
             $partnerListDirector->buildPartnerListForAdmin();
         }
         $partners = $partnerListBuilder->get();
-        $eligible_partners = $sorter->setStrategy(new Best())->setPartnerIds($partners->pluck('id')->toArray())
-            ->setCategoryId($service_requestObject[0]->getCategory()->id)->getSortedPartners();
         $final = [];
-        foreach ($eligible_partners as $eligible_partner) {
-            $partner = $partners->where('id', $eligible_partner->getId())->first();
-            $partner['score'] = $eligible_partner->getScore();
-            array_push($final, removeRelationsAndFields($partner));
+        if ($partners->count() > 0) {
+            $eligible_partners = $sorter->setStrategy(new Best())->setPartnerIds($partners->pluck('id')->toArray())
+                ->setCategoryId($service_requestObject[0]->getCategory()->id)->getSortedPartners();
+            foreach ($eligible_partners as $eligible_partner) {
+                $partner = $partners->where('id', $eligible_partner->getId())->first();
+                $partner['score'] = $eligible_partner->getScore();
+                array_push($final, removeRelationsAndFields($partner));
+            }
         }
         return api_response($request, $partners, 200, ['partners' => $final, 'partners_after_conditions' => $partnerListDirector->getPartnerIdsAfterEachCondition()]);
     }
