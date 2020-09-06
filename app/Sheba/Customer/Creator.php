@@ -30,7 +30,7 @@ class Creator
 
     public function setName($name)
     {
-        $this->name = ucfirst(trim($name));
+        $this->name = $name;
         return $this;
     }
 
