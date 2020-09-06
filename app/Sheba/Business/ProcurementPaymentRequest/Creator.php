@@ -138,7 +138,8 @@ class Creator
     private function sendPaymentRequestCreateNotification(Model $payment_request)
     {
         $message = $this->bid->bidder->name . ' created payment request #' . $this->bid->procurement->id;
-        $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->bid->procurement_id . '/bill?bid=' . $this->bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->bid->procurement_id . '/bill?bidId=' . $this->bid->id;
+
         foreach ($payment_request->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
