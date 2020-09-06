@@ -1,7 +1,7 @@
 <?php namespace Sheba\Partner\Service;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use Sheba\Dal\Service\Service;
 
