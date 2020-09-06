@@ -42,6 +42,7 @@ use Sheba\Business\Procurement\StatusCalculator;
 use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -61,6 +62,7 @@ use Sheba\Repositories\ProfileRepository;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
+use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
 
 class ProcurementController extends Controller
 {
@@ -509,6 +511,35 @@ class ProcurementController extends Controller
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
+    public function updateBasic($procurement, Request $request, BasicInfoUpdater $updater)
+    {
+        $this->validate($request, [
+            'status' => 'string',
+            'title' => 'string',
+            'estimated_price' => 'string',
+            'last_date_of_submission' => 'date_format:Y-m-d'
+        ]);
+
+        $this->setModifier($request->manager_member);
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if ($request->status === 'Draft') {
+            $updater->setProcurement($procurement)
+                ->setTitle($request->title)
+                ->setBudget($request->estimated_price)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForDraft();
+        }
+        if ($request->status === 'Open') {
+            $updater->setProcurement($procurement)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForOpen();
+        }
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
     /**
      * @param $business
      * @param $procurement
@@ -791,7 +822,7 @@ class ProcurementController extends Controller
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
-            'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
+            'published_at' => ($procurement->publication_status == PublicationStatuses::PUBLISHED) ? $procurement->published_at->format('d/m/y') : null,
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
             'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),
