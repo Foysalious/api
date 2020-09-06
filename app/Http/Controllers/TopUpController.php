@@ -141,9 +141,6 @@ class TopUpController extends Controller
             }
 
             $agent = $this->getAgent($request);
-            if (get_class($agent) == "App\Models\Partner")
-                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
