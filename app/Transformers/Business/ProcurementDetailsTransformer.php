@@ -31,7 +31,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
             'start_date' => $procurement->procurement_start_date->format('d/m/Y'),
             'end_date' => $procurement->procurement_end_date->format('d/m/Y'),
             'last_date_of_submission' => $procurement->last_date_of_submission->format('d/m/Y'),
-            'estimated_price' => $procurement->estimated_price,
+            'estimated_price' => (int) $procurement->estimated_price,
             'published_at' => ($procurement->publication_status == PublicationStatuses::PUBLISHED) ? $procurement->published_at->format('d/m/y') : null,
             'number_of_participants' => $procurement->number_of_participants,
             'payment_options' => $procurement->payment_options,
