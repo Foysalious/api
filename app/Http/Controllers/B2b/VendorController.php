@@ -9,7 +9,10 @@ use Excel;
 use Sheba\Business\Vendor\BulkUploadExcel;
 use Sheba\Business\Vendor\CreateRequest;
 use Sheba\Business\Vendor\Creator;
+use Sheba\Business\Vendor\Updater;
+use Sheba\Business\Vendor\UpdateRequest;
 use Sheba\ModificationFields;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Throwable;
 
 class VendorController extends Controller
@@ -137,8 +140,33 @@ class VendorController extends Controller
                 }
             });
 
-            $response_message = ($total_count - $error_count) ." Vendor's Created Successfully, Failed {$error_count} vendor's";
+            $response_message = ($total_count - $error_count) . " Vendor's Created Successfully, Failed {$error_count} vendor's";
             return api_response($request, null, 200, ['message' => $response_message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function activeInactive($business, $vendor, Request $request, UpdateRequest $update_request, Updater $updater, PartnerRepositoryInterface $partner_repository)
+    {
+        try {
+            $this->validate($request, [
+                'active' => 'required'
+            ]);
+            $vendor = $partner_repository->find($vendor);
+            $business = $request->business;
+            $manager_member = $request->manager_member;
+            $this->setModifier($manager_member);
+
+            /** @var UpdateRequest $request */
+            $update_request->setVendor($vendor)->setIsActiveForB2B($request->active);
+            $updater->setVendorUpdateRequest($update_request)->activeInactiveForB2b();
+
+            return api_response($request, null, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
