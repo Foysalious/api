@@ -18,6 +18,7 @@ use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
 use Sheba\Jobs\AcceptJobAndAssignResource;
 use Sheba\Location\Geo;
 use Sheba\Order\Creator as OrderCreator;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
@@ -62,10 +63,14 @@ class OrderCreateRequest
      * @var Request
      */
     protected $request;
+    /**
+     * @var ProfileRepositoryInterface
+     */
+    protected $profileRepository;
 
     public function __construct(OrderCreateRequestPolicy $policy, Response $response, CustomerCreator $customerCreator,
                                 CustomerDeliveryAddressCreator $deliveryAddressCreator, OrderCreator $orderCreator, ServiceRequest $serviceRequest,
-                                AcceptJobAndAssignResource $acceptJobAndAssignResource)
+                                AcceptJobAndAssignResource $acceptJobAndAssignResource, ProfileRepositoryInterface $profileRepository)
     {
         $this->policy = $policy;
         $this->response = $response;
@@ -74,6 +79,7 @@ class OrderCreateRequest
         $this->orderCreator = $orderCreator;
         $this->serviceRequest = $serviceRequest;
         $this->acceptJobAndAssignResource = $acceptJobAndAssignResource;
+        $this->profileRepository = $profileRepository;
     }
 
     /**
@@ -252,7 +258,7 @@ class OrderCreateRequest
             $this->response->setCode(403)->setMessage('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন');
             return $this->response;
         }
-        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setMobile($this->mobile)
+        $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setDeliveryName($this->name)->setMobile($this->mobile)
             ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
             ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
         $this->response->setResponse($response);
@@ -282,7 +288,9 @@ class OrderCreateRequest
 
     private function getCustomer()
     {
-        return $this->customerCreator->setMobile($this->mobile)->setName($this->name)->create();
+        $customer =  $this->customerCreator->setMobile($this->mobile)->setName($this->name)->create();
+        if(!$customer->profile->name) $this->profileRepository->update($customer->profile, ['name' => $this->name]);
+        return $customer;
     }
 
     /**
@@ -291,7 +299,7 @@ class OrderCreateRequest
      */
     private function getDeliveryAddress()
     {
-        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->getCustomer()->profile->name)->create();
+        return $this->deliveryAddressCreator->setCustomer($this->getCustomer())->setAddressText($this->address)->setGeo($this->geo)->setName($this->name)->create();
     }
 
     /**
