@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
@@ -179,5 +180,15 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     {
         Relation::morphMap(['partner' => 'App\Models\Resource']);
         return $this->morphMany(ArtisanLeave::class, 'artisan');
+    }
+
+    public function runningLeave($date = null)
+    {
+        $date = ($date) ? (($date instanceof Carbon) ? $date : new Carbon($date)) : Carbon::now();
+        foreach ($this->leaves()->whereDate('start', '<=', $date)->get() as $leave) {
+            if ($leave->isRunning($date))
+                return $leave;
+        }
+        return null;
     }
 }
