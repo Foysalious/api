@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
@@ -172,5 +173,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function isAllowedForMicroLoan()
     {
         return $this->retailers->count() > 0;
+    }
+
+    public function leaves()
+    {
+        Relation::morphMap(['partner' => 'App\Models\Resource']);
+        return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 }
