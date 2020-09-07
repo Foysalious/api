@@ -3,11 +3,15 @@
 
 use App\Models\Job;
 use App\Models\Resource;
+use App\Models\ScheduleSlot;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Job\JobRepositoryInterface;
 
 class JobInfo
 {
+    const SCHEDULE_START = '02:00:00';
     private $jobRepository;
     private $rearrange;
     private $resource;
@@ -59,6 +63,19 @@ class JobInfo
         if (count($jobs) > 0) return $jobs->first();
     }
 
+    public function checkIfJobIsInCurrentSlot(Job $job)
+    {
+        $start_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
+        $end_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end);
+
+        return Carbon::now()->between($start_time, $end_time);
+    }
+
+    public function checkIfDueFromOldSlot()
+    {
+
+    }
+
     /**
      * @param Job $job
      * @return Collection
@@ -95,7 +112,8 @@ class JobInfo
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', 0);
-        if ($this->getFirstJob() && $this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+        if ($this->checkIfJobIsInCurrentSlot($job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+//        if ($this->getFirstJob() && $this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
     }
 }
