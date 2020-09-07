@@ -244,7 +244,7 @@ class Checkout
 
             $service_data = array('service_id' => $selected_service->id, 'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price,
+                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price ? $discount->min_price : 0,
                 'sheba_contribution' => $discount->__get('sheba_contribution'), 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'), 'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'), 'name' => $service->name,
