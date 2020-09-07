@@ -7,13 +7,17 @@ use Carbon\Carbon;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\ArtisanLeave\Types;
 use Sheba\ModificationFields;
+use Sheba\UserAgentInformation;
 
 class LeaveStatus
 {
+    use ModificationFields;
 
     /** @var Partner|Resource */
     private $artisan;
-    use ModificationFields;
+
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
 
     /**
      * @param Partner|Resource $artisan
@@ -22,6 +26,12 @@ class LeaveStatus
     public function setArtisan($artisan)
     {
         $this->artisan = $artisan;
+        return $this;
+    }
+
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
+    {
+        $this->userAgentInformation = $userAgentInformation;
         return $this;
     }
 
@@ -49,6 +59,9 @@ class LeaveStatus
         $data['start'] = (empty($data['start'])) ? Carbon::now() : Carbon::parse($data['start']);
         $data['end'] = (empty($data['end'])) ? null : Carbon::parse($data['end'])->addDay()->subSecond();
         $data['artisan_type'] = $this->artisan instanceof Partner ? Types::PARTNER : Types::RESOURCE;
+        $data['portal_name'] = $this->userAgentInformation->getPortalName();
+        $data['user_agent'] = $this->userAgentInformation->getUserAgent();
+        $data['ip'] = $this->userAgentInformation->getIp();
         $upcoming_leaves = $this->artisan->leaves()->upcoming()->get();
         foreach ($upcoming_leaves as $leave) {
             if (!$leave->end) {
@@ -95,7 +108,7 @@ class LeaveStatus
             "title" => $title,
             "link" => config('sheba.admin_url') . $artisan_leave->artisan_type . 's/' . $this->artisan->id,
             "type" => notificationType('Info'),
-            "event_type" => get_class(ArtisanLeave::class),
+            "event_type" => get_class($artisan_leave),
             "event_id" => $artisan_leave->id
         ]);
     }
