@@ -20,7 +20,7 @@ class AccountServer
      */
     public function getTokenByAvatar($avatar, $type)
     {
-        return $this->getTokenByIdAndRememberToken($avatar->id, $avatar->remember_token, $type);
+        return $this->getTokenByIdAndRememberToken($avatar->id,$avatar->remember_token, $type);
     }
 
     /**
