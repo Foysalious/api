@@ -32,8 +32,9 @@ class JobList
     private $month;
     private $orderId;
     private $query;
+    private $jobChecker;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator, JobChecker $jobChecker)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
@@ -43,6 +44,7 @@ class JobList
         $this->limit = 10;
         $this->offset = 0;
         $this->year = Carbon::now()->format('Y');
+        $this->jobChecker = $jobChecker;
     }
 
     public function setResource(Resource $resource)
@@ -230,7 +232,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->firstJobFromList && $this->firstJobFromList->id == $job->id) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->jobChecker->setResource($this->resource)->checkIfReadyForAction($job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;

@@ -11,19 +11,26 @@ use Sheba\Dal\Job\JobRepositoryInterface;
 
 class JobInfo
 {
-    const SCHEDULE_START = '02:00:00';
     private $jobRepository;
     private $rearrange;
     private $resource;
     private $actionCalculator;
     private $statusTagCalculator;
+    private $jobChecker;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
+    public function __construct(
+        JobRepositoryInterface $job_repository,
+        RearrangeJobList $rearrange,
+        ActionCalculator $actionCalculator,
+        StatusTagCalculator $statusTagCalculator,
+        JobChecker $jobChecker
+    )
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
         $this->actionCalculator = $actionCalculator;
         $this->statusTagCalculator = $statusTagCalculator;
+        $this->jobChecker = $jobChecker;
     }
 
     /**
@@ -63,19 +70,6 @@ class JobInfo
         if (count($jobs) > 0) return $jobs->first();
     }
 
-    public function checkIfJobIsInCurrentSlot(Job $job)
-    {
-        $start_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);
-        $end_time = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_end);
-
-        return Carbon::now()->between($start_time, $end_time);
-    }
-
-    public function checkIfDueFromOldSlot()
-    {
-
-    }
-
     /**
      * @param Job $job
      * @return Collection
@@ -112,7 +106,7 @@ class JobInfo
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', 0);
-        if ($this->checkIfJobIsInCurrentSlot($job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+        if ($this->jobChecker->setResource($this->resource)->checkIfReadyForAction($job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
 //        if ($this->getFirstJob() && $this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
     }
