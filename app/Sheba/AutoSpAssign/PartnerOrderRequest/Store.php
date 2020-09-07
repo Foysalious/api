@@ -9,7 +9,7 @@ class Store
 {
     private $partnerOrderId;
     /** @var array */
-    private $partners;
+    private $partnerIds;
 
     /**
      * @param mixed $partnerOrderId
@@ -22,12 +22,12 @@ class Store
     }
 
     /**
-     * @param EligiblePartner[] $partners
-     * @return Store
+     * @param array $partners
+     * @return $this
      */
-    public function setPartners($partners)
+    public function setPartnersIds(array $partners)
     {
-        $this->partners = $partners;
+        $this->partnerIds = $partners;
         return $this;
     }
 
@@ -35,7 +35,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode(serialize($this->partners)), $this->getExpirationTimeInMinutes());
+        $store->put($this->getCacheName(), json_encode($this->partnerIds), $this->getExpirationTimeInMinutes());
     }
 
     /**
