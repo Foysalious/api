@@ -3,6 +3,7 @@
 use App\Http\Requests\ApiRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Helpers\Http\ShebaRequestHeader;
 use Sheba\Portals\Portals;
 
 if (!function_exists('api_response')) {
@@ -102,5 +103,27 @@ if (!function_exists('getUserTypeFromRequestHeader')) {
     function getUserTypeFromRequestHeader(Request $request)
     {
         return Portals::getUserTypeFromPortal($request->header('portal-name'));
+    }
+}
+
+if (!function_exists('getShebaRequestHeader')) {
+    /**
+     * @return ShebaRequestHeader
+     */
+    function getShebaRequestHeader()
+    {
+        $request = \request();
+        $header = new ShebaRequestHeader();
+
+        if ($request->hasHeader(ShebaRequestHeader::VERSION_CODE_KEY))
+            $header->setVersionCode($request->header(ShebaRequestHeader::VERSION_CODE_KEY));
+
+        if ($request->hasHeader(ShebaRequestHeader::PORTAL_NAME_KEY))
+            $header->setPortalName($request->header(ShebaRequestHeader::PORTAL_NAME_KEY));
+
+        if ($request->hasHeader(ShebaRequestHeader::PLATFORM_NAME_KEY))
+            $header->setPlatformName($request->header(ShebaRequestHeader::PLATFORM_NAME_KEY));
+
+        return $header;
     }
 }

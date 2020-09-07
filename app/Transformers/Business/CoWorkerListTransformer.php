@@ -23,6 +23,7 @@ class CoWorkerListTransformer extends TransformerAbstract
         $role = $business_member->role;
         return [
             'id' => $member->id,
+            'employee_id' => $business_member->employee_id,
             'business_member_id' => $business_member->id,
             'profile' => [
                 'id' => $profile->id,
