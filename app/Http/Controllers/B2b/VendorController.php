@@ -30,7 +30,7 @@ class VendorController extends Controller
         try {
             $this->validate($request, [
                 'vendor_name' => 'required',
-                'vendor_mobile' => 'required|string|mobile:bd',
+                #'vendor_mobile' => 'required|string|mobile:bd',
                 'vendor_image' => 'sometimes|required|image|mimes:jpeg,png',
                 'resource_name' => 'required',
                 'resource_mobile' => 'required|string|mobile:bd'
@@ -54,7 +54,9 @@ class VendorController extends Controller
                 ->setResourceName($request->resource_name)
                 ->setResourceMobile($request->resource_mobile)
                 ->setResourceNidNumber($request->resource_nid_number)
-                ->setResourceNidDocument($request->resource_nid_document);
+                ->setResourceNidFront($request->resource_nid_front)
+                ->setResourceNidback($request->resource_nid_back)
+                ->setIsActiveForB2b($request->is_active_for_b2b);
 
             $creator->setVendorCreateRequest($create_request);
             if ($error = $creator->hasError()) {

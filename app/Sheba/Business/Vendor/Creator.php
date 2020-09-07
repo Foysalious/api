@@ -86,6 +86,7 @@ class Creator
                 ->setMobile($this->vendorCreateRequest->getVendorMobile())
                 ->setEmail($this->vendorCreateRequest->getVendorEmail())
                 ->setAddress($this->vendorCreateRequest->getVendorAddress())
+                ->setIsActiveForB2b($this->vendorCreateRequest->getIsActiveForB2b())
                 ->setTradeLicense($this->vendorCreateRequest->getTradeLicenseNumber())
                 ->setTradeLicenseAttachment($this->vendorCreateRequest->getTradeLicenseDocument())
                 ->setVatRegistrationNumber($this->vendorCreateRequest->getVatRegistrationNumber())
@@ -118,7 +119,9 @@ class Creator
             'mobile' => $this->vendorCreateRequest->getResourceMobile(),
             'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ?: null,
             'alternate_contact' => null,
-            'nid_image' => $this->vendorCreateRequest->getResourceNidDocument()
+            #'nid_image' => $this->vendorCreateRequest->getResourceNidFront()
+            'nid_image_front' => $this->vendorCreateRequest->getResourceNidFront(),
+            'nid_image_back' => $this->vendorCreateRequest->getResourceNidBack()
         ];
     }
 
