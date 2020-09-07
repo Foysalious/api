@@ -25,6 +25,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
             'id' => $procurement->id,
             'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
             'status' => StatusCalculator::resolveStatus($procurement),
+            'category' => $procurement->category_id ? [ 'id' => $procurement->category_id, 'name' => $procurement->category->name ] : null,
             'type' => $procurement->type,
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
