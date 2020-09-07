@@ -25,7 +25,7 @@ class Store
      * @param array $partners
      * @return $this
      */
-    public function setPartnersIds(array $partners)
+    public function setAscendingSortedPartnerIds(array $partners)
     {
         $this->partnerIds = $partners;
         return $this;
