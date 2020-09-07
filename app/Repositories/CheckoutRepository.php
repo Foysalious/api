@@ -11,7 +11,7 @@ use App\Models\Order;
 use App\Models\PartnerOrder;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\PartnerServiceDiscount;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Cache;
 use Carbon\Carbon;
 use GuzzleHttp\Client;

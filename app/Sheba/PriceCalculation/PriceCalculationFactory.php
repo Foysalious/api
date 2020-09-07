@@ -1,6 +1,6 @@
 <?php namespace Sheba\PriceCalculation;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\LocationService\PriceCalculation;
 
 class PriceCalculationFactory

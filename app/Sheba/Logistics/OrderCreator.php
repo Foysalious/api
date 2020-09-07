@@ -1,6 +1,6 @@
 <?php namespace Sheba\Logistics;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use Exception;
 use Sheba\Logistics\Repository\OrderRepository;

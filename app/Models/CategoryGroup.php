@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use  Sheba\Dal\Category\Category;
 
 class CategoryGroup extends Model
 {
@@ -21,7 +22,8 @@ class CategoryGroup extends Model
         return $q->where('is_published_for_web', 1);
     }
 
-    public function locations() {
+    public function locations()
+    {
         return $this->belongsToMany(Location::class);
     }
 }
