@@ -128,11 +128,12 @@ class OrderPlace
     /** @var JobUpdateLogCreator */
     private $jobUpdateLogCreator;
 
-    public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
-                                DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
+    public function __construct(Creator $creator, DiscountCalculation $discountCalculation,
+                                OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
-                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
+                                UpsellCalculation $upsell_calculation, Store $order_request_store,
+                                JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
     {
         $this->jobUpdateLogCreator = $jobUpdateLogCreator;
         $this->discountCalculation = $discountCalculation;
