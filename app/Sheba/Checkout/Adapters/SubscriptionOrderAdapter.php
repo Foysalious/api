@@ -168,11 +168,9 @@ class SubscriptionOrderAdapter
         $job->preferred_time_end = $preferred_time->getEndString();
         $job->job_additional_info = $this->subscriptionOrder->additional_info;
         $job->category_answers = $this->subscriptionOrder->additional_info;
-        if ($this->subscriptionOrder->partner) {
-            $commissions = $this->getCommission();
-            $job->commission_rate = $commissions->getServiceCommission();
-            $job->material_commission_rate = $commissions->getMaterialCommission();
-        }
+        $commissions = $this->getCommission();
+        $job->commission_rate = $commissions->getServiceCommission();
+        $job->material_commission_rate = $commissions->getMaterialCommission();
         $job->status = JobStatuses::PENDING;
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
