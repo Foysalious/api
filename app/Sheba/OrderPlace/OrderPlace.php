@@ -386,7 +386,7 @@ class OrderPlace
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
                 if ($this->action->canSendPartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
-                if ($this->selectedPartner && !$this->action->canAssignPartner())
+                if (!$this->action->canAssignPartner())
                     $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())
                         ->setUserAgentInformation($this->userAgentInformation)->setCreatedBy($this->customer)->create();
             });

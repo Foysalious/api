@@ -31,6 +31,9 @@ class Action
         return $this;
     }
 
+    /**
+     * @return bool
+     */
     public function canAssignPartner()
     {
         if ($this->isLateNightOrder()) return false;
@@ -38,8 +41,12 @@ class Action
         return false;
     }
 
+    /**
+     * @return bool
+     */
     public function canSendPartnerOrderRequest()
     {
+        if ($this->selectedPartner) return false;
         if ($this->isLateNightOrder()) return false;
         if (count($this->partners) > 0) return true;
         return false;
