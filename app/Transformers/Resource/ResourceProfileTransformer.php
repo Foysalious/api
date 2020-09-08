@@ -27,7 +27,7 @@ class ResourceProfileTransformer extends TransformerAbstract
             'picture' => $resource->profile->pro_pic,
             'partner_name' => $resource->firstPartner()->name,
             'is_verified' => $resource->is_verified,
-            'on_leave' => $leave_status['status'] ? 1 : 0,
+            'is_online' => $leave_status['status'] ? 0 : 1,
             'nid_no' => $resource->nid_no,
             'phone' => $resource->profile->mobile,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),

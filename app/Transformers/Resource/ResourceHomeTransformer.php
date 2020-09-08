@@ -28,7 +28,7 @@ class ResourceHomeTransformer extends TransformerAbstract
             'name' => $resource->profile->name,
             'picture' => $resource->profile->pro_pic,
             'is_verified' => $resource->is_verified,
-            'on_leave' => $leave_status['status'] ? 1 : 0,
+            'is_online' => $leave_status['status'] ? 0 : 1,
             'rating' => $this->reviewRepository->getAvgRating($resource->reviews),
             'notification_count' => $resource->notifications()->where('is_seen', 0)->count(),
             'balance' => $resource->totalWalletAmount(),
