@@ -366,7 +366,7 @@ class CustomerSubscriptionController extends Controller
                 "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
-                'total_price' => $subscription_order->totalPrice,
+                'total_price' => $subscription_order->orders->count() > 0 ? $subscription_order->totalPrice : $service_details->discounted_price,
                 "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
@@ -377,7 +377,7 @@ class CustomerSubscriptionController extends Controller
                 "subscription_status" => $subscription_order->status,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "subscription_start" => Carbon::parse($subscription_order->billing_cycle_start)->format('l, j F Y'),
-                "subscription_end" =>  Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
+                "subscription_end" => Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
             ];
 
             /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
