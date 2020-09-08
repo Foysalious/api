@@ -177,7 +177,7 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     public function leaves()
     {
-        Relation::morphMap(['partner' => 'App\Models\Resource']);
+        Relation::morphMap(['resource' => 'App\Models\Resource']);
         return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 }
