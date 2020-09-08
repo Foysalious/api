@@ -82,12 +82,24 @@ class ResourceController extends Controller
                 return $item->review != '' || $item->review != null;
             })->sortByDesc('created_at');
             $resource['total_reviews'] = $reviews->count();
+            $compliment_counts = $resource->reviews->pluck('rates')->filter(function ($rate) {
+                return $rate->count();
+            })->flatten()->groupBy('rate_answer_id')->map(function ($answer, $index) {
+                $first_answer = $answer->first();
+                return [
+                    'id' => $index,
+                    'name' => $first_answer->answer->answer,
+                    'badge' => $first_answer->answer->badge,
+                    'asset' => $first_answer->answer->asset,
+                    'count' => $answer->count(),
+                ];
+            });
             foreach ($reviews as $review) {
                 $review['order_id'] = $review->job->partner_order->id;
                 $review['order_code'] = $review->job->partner_order->code();
                 removeRelationsAndFields($review);
             }
-            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'breakdown' => $breakdown);
+            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'compliments' => $compliment_counts->values(), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
