@@ -51,6 +51,14 @@ class ServiceTransformer extends TransformerAbstract
         $galleries = $service->galleries()->select('id', DB::Raw('thumb as image'))->get();
         $blog_posts = $service->blogPosts()->select('id', 'title', 'short_description', DB::Raw('thumb as image'), 'target_link')->get();
         $this->serviceQuestion->setService($service);
+        $cross_sale_service = $category->crossSaleService;
+        $cross_sale = $cross_sale_service ? [
+            'title' => $cross_sale_service->title,
+            'description' => $cross_sale_service->description,
+            'icon' => $cross_sale_service->icon,
+            'category_id' => $cross_sale_service->category_id,
+            'service_id' => $cross_sale_service->service_id
+        ] : null;
         if($this->locationService) {
             $delivery_charge = $this->deliveryCharge->setCategory($category)->setLocation($this->locationService->location)->get();
             $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($delivery_charge);
@@ -88,6 +96,7 @@ class ServiceTransformer extends TransformerAbstract
                 'id' => $category->id,
                 'name' => $category->name,
                 'slug' => $category->getSlug(),
+                'cross_sale' => $cross_sale,
                 'delivery_discount' => isset($delivery_discount) ? $delivery_discount : null,
                 'delivery_charge' => isset($delivery_charge) ? $delivery_charge : null,
                 'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
