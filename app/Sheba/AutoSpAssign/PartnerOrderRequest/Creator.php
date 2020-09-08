@@ -1,23 +1,19 @@
-<?php namespace Sheba\PartnerOrderRequest;
+<?php namespace Sheba\AutoSpAssign\PartnerOrderRequest;
 
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use Illuminate\Support\Collection;
+use Sheba\AutoSpAssign\ImpressionManager;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
-use Sheba\Partner\ImpressionManager;
-use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
-use Throwable;
 
 class Creator
 {
     /** @var PartnerOrderRequestRepositoryInterface $partnerOrderRequest */
     private $partnerOrderRequestRepo;
-    /** @var CreateValidator $createValidator */
-    private $createValidator;
     /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
     /** @var array $partnersId */
@@ -32,21 +28,11 @@ class Creator
     private $impressionManager;
 
     public function __construct(PartnerOrderRequestRepositoryInterface $partner_order_request_repo,
-                                CreateValidator $create_validator,
                                 PushNotificationHandler $push_notification_handler, ImpressionManager $impressionManager)
     {
         $this->partnerOrderRequestRepo = $partner_order_request_repo;
-        $this->createValidator = $create_validator;
         $this->pushNotificationHandler = $push_notification_handler;
         $this->impressionManager = $impressionManager;
-    }
-
-    /**
-     * @return array
-     */
-    public function hasError()
-    {
-        return $this->createValidator->hasError();
     }
 
     /**
@@ -91,36 +77,28 @@ class Creator
      */
     private function sendOrderRequestPushNotificationToPartner($partner_id)
     {
-        try {
-            /** @var Partner $partner */
-            $partner = $this->partners->keyBy('id')->get($partner_id);
-            $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
-            $channel = config('sheba.push_notification_channel_name.manager');
-            $sound = config('sheba.push_notification_sound.manager');
-            $this->pushNotificationHandler->send([
-                "title" => 'New Order',
-                "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
-                "sound" => "notification_sound",
-                "event_type" => 'PartnerOrder',
-                "event_id" => $this->partnerOrderRequestId,
-                "link" => "new_order"
-            ], $topic, $channel, $sound);
-        } catch (Throwable $e) {
-            logError($e);
-        }
+        /** @var Partner $partner */
+        $partner = $this->partners->keyBy('id')->get($partner_id);
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $this->pushNotificationHandler->send([
+            "title" => 'New Order',
+            "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
+            "sound" => "notification_sound",
+            "event_type" => 'PartnerOrder',
+            "event_id" => $this->partnerOrderRequestId,
+            "link" => "new_order"
+        ], $topic, $channel, $sound);
     }
 
     private function sendOrderRequestSmsToPartner($partner_id)
     {
-        try {
-            /** @var Partner $partner */
-            $partner = $this->partners->keyBy('id')->get($partner_id);
-            (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
-                'partner_name' => $partner->name
-            ]);
-        } catch (Throwable $e) {
-            logError($e);
-        }
+        /** @var Partner $partner */
+        $partner = $this->partners->keyBy('id')->get($partner_id);
+        (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
+            'partner_name' => $partner->name
+        ]);
     }
 
     private function getServices(Job $job)

@@ -15,6 +15,7 @@ class Creator
     protected $partnerId;
     protected $salesChannel;
     protected $paymentMethod;
+    protected $deliveryName;
 
     public function setCustomer(Customer $customer)
     {
@@ -25,6 +26,12 @@ class Creator
     public function setServices($services)
     {
         $this->services = $services;
+        return $this;
+    }
+
+    public function setDeliveryName($deliveryName)
+    {
+        $this->deliveryName = trim($deliveryName);
         return $this;
     }
 
@@ -82,7 +89,7 @@ class Creator
         $url = config('sheba.api_url') . "/v3/customers/".$this->customer->id."/orders";
         $res = $client->request('POST', $url, ['form_params' => [
             'services' => $this->services,
-            'name' => $this->customer->profile->name,
+            'name' => $this->deliveryName,
             'mobile' => $this->mobile,
             'remember_token' => $this->customer->remember_token,
             'sales_channel' => $this->salesChannel,
