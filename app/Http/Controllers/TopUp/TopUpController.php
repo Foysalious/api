@@ -298,14 +298,14 @@ class TopUpController extends Controller
             $model = "App\\Models\\Partner";
         }
         $topups = $model::find($user->id)->topups();
-
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
         if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-        if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-
+        if (isset($request->q) && $request->q !== "null"&&!empty($request->q)) $topups = $topups->where(function($qry)use($request){
+            $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
+        });
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;

@@ -17,6 +17,7 @@ class ResourcePartnerController extends Controller
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
         $resource = $this->getResource($request);
         $hyper_local = $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        if (!$hyper_local) return api_response($request, null, 404, ['message' => "You're outside our service area."]);
         $categories = $categoryList->setPartner($resource->firstPartner())->setLocationId($hyper_local->location_id)->get();
         return api_response($request, $request, 200, ['categories' => $categories]);
     }
@@ -24,6 +25,8 @@ class ResourcePartnerController extends Controller
     public function getCategoryServices(Request $request, $category, ServiceList $serviceList, Geo $geo)
     {
         $this->validate($request, ['lat' => 'required|numeric', 'lng' => 'required|numeric']);
+        $hyper_local = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+        if (!$hyper_local) return api_response($request, null, 404, ['message' => "You're outside our service area."]);
         $resource = $this->getResource($request);
         $geo->setLat($request->lat)->setLng($request->lng);
         $services = $serviceList->setResource($resource)->setCategoryId($category)->setGeo($geo)->getAllServices();
