@@ -209,7 +209,7 @@ class JobList
             $formatted_job->put('category_name', $job->category->name);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
-            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile :  $job->partnerOrder->order->delivery_mobile);
+            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile : $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
             $formatted_job->put('is_rent_a_car', $job->isRentCar());
@@ -230,7 +230,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->firstJobFromList && $this->firstJobFromList->id == $job->id) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -268,16 +268,46 @@ class JobList
     private function groupJobsByYearAndMonth($jobs)
     {
         $ungrouped_jobs = new Collection($jobs);
-        return $ungrouped_jobs->groupBy('year')->transform(function($item, $value) {
+        return $ungrouped_jobs->groupBy('year')->transform(function ($item, $value) {
             return $item->groupBy('month');
         });
     }
 
     private function historyJobsFilterQuery($query)
     {
-        $query = $query->join('partner_orders', 'partner_orders.id','=','jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
+        $query = $query->join('partner_orders', 'partner_orders.id', '=', 'jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
         $query = $query->where('closed_at', '>=', Carbon::now()->subMonth(12));
         if ($this->month) $query = $query->whereYear('closed_at', '=', $this->year)->whereMonth('closed_at', '=', $this->month);
         return $query;
+    }
+
+
+    /**
+     * @param Job|null $first_job
+     * @param Job $job
+     * @return bool
+     */
+    private function shouldICheckActions(Job $first_job, Job $job)
+    {
+        return $first_job && $first_job->schedule_date == $job->schedule_date &&
+            $first_job->preferred_time == $job->preferred_time;
+    }
+
+    /**
+     * @return array|null
+     */
+    public function getNextJobsInfo()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->rearrange->rearrange($jobs);
+        if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
+        if ($this->firstJobFromList) {
+            $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
+                ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
+            $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
+        }
+        if ($next_jobs_count > 1) return ['preferred_time' => $preferred_time, 'jobs_count' => $next_jobs_count];
+        return null;
     }
 }

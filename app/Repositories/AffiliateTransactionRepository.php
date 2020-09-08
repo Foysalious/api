@@ -104,7 +104,7 @@ class AffiliateTransactionRepository
         $movie_ticket_commission   = $this->affiliate->transactions()->credit()->movieTicketCommission()->between($this->start_date, $this->end_date);
         $refunds                   = $this->affiliate->transactions()->credit()->refunds()->between($this->start_date, $this->end_date);
 
-        if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচারজ", "balance_recharge");
+        if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচার্জ", "balance_recharge");
         if($count = $topUp->count()) $category_wise_transaction[] = $this->makeData($topUp->sum('amount'), $count, "Top Up", "টপ আপ", "topup", "-");
         if($count) $category_wise_transaction[] = $this->makeData($topUp->sum('agent_commission'), $count, "Top Up Commission", "টপ আপ কমিশন", "topup_commission");
         if($count = $service_commission->count()) $category_wise_transaction[] = $this->makeData($service_commission->sum('amount'), $count, "Service Refer Commission", "সার্ভিস রেফার কমিশন", "service_refer_commission");
