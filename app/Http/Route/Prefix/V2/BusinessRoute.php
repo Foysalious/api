@@ -373,6 +373,7 @@ class BusinessRoute
                         $api->post('comments', 'B2b\TripRequestController@commentOnTrip');
                     });
                 });
+
                 $api->group(['prefix' => 'trip-requests'], function ($api) {
                     $api->get('/', 'B2b\TripRequestController@getTripRequests');
                     $api->post('/', 'B2b\TripRequestController@createTripRequests');
@@ -381,6 +382,8 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
+                $api->post('/fleet-mail', 'B2b\TripRequestController@fleetMail');
+
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
                     $api->get('/', 'B2b\TripRequestApprovalController@index');
                     $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
