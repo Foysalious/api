@@ -8,6 +8,12 @@ use Sheba\NeoBanking\DTO\BankFormCategory;
 
 class PrimeBank extends Bank
 {
+    public function __construct()
+    {
+        $this->id      = 1;
+        $this->name    = "Prime Bank";
+        $this->name_bn = "প্রাইম ব্যাংক";
+    }
 
     public function categories()
     {
