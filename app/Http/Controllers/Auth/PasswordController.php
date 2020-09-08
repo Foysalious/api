@@ -103,9 +103,10 @@ class PasswordController extends Controller
     {
         try {
             $this->validate($request, [
-                'password' => 'required|min:4',
+                'password' => 'required|min:5|max:20',
                 'from'     => 'required|string|in:' . implode(',', constants('FROM')),
                 'code'     => 'required'
+                #|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{5,20}$/
             ]);
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
