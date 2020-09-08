@@ -211,7 +211,7 @@ class JobList
             $formatted_job->put('category_name', $job->category->name);
             $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
             $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
-            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile :  $job->partnerOrder->order->delivery_mobile);
+            $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile : $job->partnerOrder->order->delivery_mobile);
             $formatted_job->put('start_time', Carbon::parse($job->preferred_time_start)->format('h:i A'));
             $formatted_job->put('services', $this->jobInfo->formatServices($job->jobServices));
             $formatted_job->put('is_rent_a_car', $job->isRentCar());
@@ -232,7 +232,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->jobChecker->setResource($this->resource)->checkIfReadyForAction($job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->shouldICheckActions($job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -270,16 +270,26 @@ class JobList
     private function groupJobsByYearAndMonth($jobs)
     {
         $ungrouped_jobs = new Collection($jobs);
-        return $ungrouped_jobs->groupBy('year')->transform(function($item, $value) {
+        return $ungrouped_jobs->groupBy('year')->transform(function ($item, $value) {
             return $item->groupBy('month');
         });
     }
 
     private function historyJobsFilterQuery($query)
     {
-        $query = $query->join('partner_orders', 'partner_orders.id','=','jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
+        $query = $query->join('partner_orders', 'partner_orders.id', '=', 'jobs.partner_order_id')->select('jobs.*', 'partner_orders.closed_at as closed_at', DB::raw('YEAR(closed_at) as year'), DB::raw('MONTH(closed_at) as month'));
         $query = $query->where('closed_at', '>=', Carbon::now()->subMonth(12));
         if ($this->month) $query = $query->whereYear('closed_at', '=', $this->year)->whereMonth('closed_at', '=', $this->month);
         return $query;
+    }
+
+    /**
+     * @param $job
+     * @return bool
+     */
+    private function shouldICheckActions($job)
+    {
+        return $this->firstJobFromList && $this->firstJobFromList->schedule_date == $job->schedule_date &&
+            $this->firstJobFromList->preferred_time == $job->preferred_time;
     }
 }
