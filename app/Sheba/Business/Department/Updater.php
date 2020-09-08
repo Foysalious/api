@@ -56,6 +56,6 @@ class Updater
     private function formatDepartmentSpecificData()
     {
         if ($this->departmentUpdateRequest->getDepartmentName()) $this->formatDepartmentData['name'] = strtoupper($this->departmentUpdateRequest->getDepartmentName());
-        if ($this->departmentUpdateRequest->getAbbreviation()()) $this->formatDepartmentData['abbreviation'] = strtoupper($this->departmentUpdateRequest->getAbbreviation());
+        if ($this->departmentUpdateRequest->getAbbreviation()) $this->formatDepartmentData['abbreviation'] = strtoupper($this->departmentUpdateRequest->getAbbreviation());
     }
 }
