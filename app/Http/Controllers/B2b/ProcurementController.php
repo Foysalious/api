@@ -492,7 +492,6 @@ class ProcurementController extends Controller
         $this->validate($request, [
             'description' => 'sometimes|required|string',
             'number_of_participants' => 'sometimes|required|numeric',
-            'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
         ]);
@@ -502,10 +501,11 @@ class ProcurementController extends Controller
 
         $this->procurementRequestHandler->setLongDescription($request->description)
             ->setNumberOfParticipants($request->number_of_participants)
-            ->setLastDateOfSubmission($request->last_date_of_submission)
             ->setProcurementStartDate($request->procurement_start_date)
             ->setProcurementEndDate($request->procurement_end_date)
-            ->setPaymentOptions($request->payment_options);
+            ->setPaymentOptions($request->payment_options)
+            ->setCategory($request->category)
+            ->setTags($request->tags);
         $updater->setRequestHandler($this->procurementRequestHandler)->setProcurement($procurement)->update();
 
         return api_response($request, null, 200, ["message" => "Successful"]);
@@ -520,7 +520,9 @@ class ProcurementController extends Controller
             'last_date_of_submission' => 'date_format:Y-m-d'
         ]);
 
-        $this->setModifier($request->manager_member);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
@@ -538,6 +540,12 @@ class ProcurementController extends Controller
         }
 
         return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    public function updateAttachments($procurement, Request $request)
+    {
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
     }
 
     /**
