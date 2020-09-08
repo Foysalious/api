@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Illuminate\Support\Facades\Redis;
+use Sheba\Partner\LeaveStatus;
 use Throwable;
 
 class ResourceController extends Controller
@@ -20,11 +21,14 @@ class ResourceController extends Controller
 
     const REPTO_IP = '52.89.162.43';
     #const REPTO_IP = '103.4.146.66';
+    /** @var LeaveStatus */
+    private $leaveStatus;
 
     public function __construct()
     {
         $this->reviewRepository = new ReviewRepository();
         $this->profileRepo = new ProfileRepository();
+        $this->leaveStatus = new LeaveStatus();
     }
 
     /**
@@ -37,6 +41,7 @@ class ResourceController extends Controller
     {
         try {
             $resource = $request->resource;
+            $leave_status = $this->leaveStatus->setArtisan($resource)->getCurrentStatus();
             $specialized_categories = $resource->categoriesIn($request->partner->id)->pluck('name');
             $resource['specialized_categories'] = $specialized_categories;
             $resource['total_specialized_categories'] = $specialized_categories->count();
@@ -54,6 +59,7 @@ class ResourceController extends Controller
             })->count();
             $resource['joined_at'] = (PartnerResource::where([['resource_id', $resource->id], ['partner_id', (int)$partner]])->first())->created_at->timestamp;
             $resource['types'] = $resource->typeIn($partner);
+            $resource['is_online'] = $leave_status['status'] ? 0 : 1;
             removeRelationsAndFields($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
         } catch (Throwable $e) {
