@@ -262,6 +262,6 @@ class ResourceJobController extends Controller
         $resource = $auth_user->getResource();
         $next_jobs_info = $jobList->setResource($resource)->getNextJobsInfo();
         if(!$next_jobs_info) return api_response($request, $next_jobs_info, 404, ['message' => 'No multiple jobs found']);
-        return api_response($request, $next_jobs_info, 200, ['next_jobs' => $next_jobs_info]);
+        return api_response($request, $next_jobs_info, 200, ['next_jobs_info' => $next_jobs_info]);
     }
 }
