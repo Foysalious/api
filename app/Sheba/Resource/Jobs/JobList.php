@@ -294,4 +294,21 @@ class JobList
         return $first_job && $first_job->schedule_date == $job->schedule_date &&
             $first_job->preferred_time == $job->preferred_time;
     }
+
+    /**
+     * @return array|null
+     */
+    public function getNextJobsInfo()
+    {
+        $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $this->loadNecessaryRelations($jobs);
+        $jobs = $this->rearrange->rearrange($jobs);
+        if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
+        if ($this->firstJobFromList) {
+            $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
+                ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
+        }
+        if ($next_jobs_count > 1) return ['preferred_time' => $this->firstJobFromList->preferred_time, 'jobs_count' => $next_jobs_count];
+        return null;
+    }
 }
