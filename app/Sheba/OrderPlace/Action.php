@@ -31,14 +31,13 @@ class Action
         return $this;
     }
 
+
     /**
      * @return bool
      */
     public function canAssignPartner()
     {
-        if ($this->isLateNightOrder()) return false;
-        if ($this->selectedPartner) return true;
-        return false;
+        return $this->selectedPartner && !$this->isLateNightOrder();
     }
 
     /**
@@ -52,7 +51,7 @@ class Action
         return false;
     }
 
-    private function isLateNightOrder()
+    public function isLateNightOrder()
     {
         $start = Carbon::parse('2:00 AM');
         $end = Carbon::parse('6:00 AM');
