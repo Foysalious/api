@@ -32,9 +32,8 @@ class JobList
     private $month;
     private $orderId;
     private $query;
-    private $jobChecker;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator, JobChecker $jobChecker)
+    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, JobInfo $jobInfo, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
@@ -44,7 +43,6 @@ class JobList
         $this->limit = 10;
         $this->offset = 0;
         $this->year = Carbon::now()->format('Y');
-        $this->jobChecker = $jobChecker;
     }
 
     public function setResource(Resource $resource)

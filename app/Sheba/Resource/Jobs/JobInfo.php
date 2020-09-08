@@ -16,21 +16,18 @@ class JobInfo
     private $resource;
     private $actionCalculator;
     private $statusTagCalculator;
-    private $jobChecker;
 
     public function __construct(
         JobRepositoryInterface $job_repository,
         RearrangeJobList $rearrange,
         ActionCalculator $actionCalculator,
-        StatusTagCalculator $statusTagCalculator,
-        JobChecker $jobChecker
+        StatusTagCalculator $statusTagCalculator
     )
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
         $this->actionCalculator = $actionCalculator;
         $this->statusTagCalculator = $statusTagCalculator;
-        $this->jobChecker = $jobChecker;
     }
 
     /**
