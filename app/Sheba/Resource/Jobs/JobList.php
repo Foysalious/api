@@ -232,7 +232,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->shouldICheckActions($job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
@@ -283,13 +283,15 @@ class JobList
         return $query;
     }
 
+
     /**
-     * @param $job
+     * @param Job|null $first_job
+     * @param Job $job
      * @return bool
      */
-    private function shouldICheckActions($job)
+    private function shouldICheckActions(Job $first_job, Job $job)
     {
-        return $this->firstJobFromList && $this->firstJobFromList->schedule_date == $job->schedule_date &&
-            $this->firstJobFromList->preferred_time == $job->preferred_time;
+        return $first_job && $first_job->schedule_date == $job->schedule_date &&
+            $first_job->preferred_time == $job->preferred_time;
     }
 }
