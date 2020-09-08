@@ -401,6 +401,7 @@ class CategoryController extends Controller
 
         if ($category != null) {
             $category_slug = $category->getSlug();
+            $cross_sale_service = $category->crossSaleService;
             list($offset, $limit) = calculatePagination($request);
             $scope = [];
             if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
@@ -560,6 +561,13 @@ class CategoryController extends Controller
                 $category['terms_and_conditions'] = $category['terms_and_conditions'] ? json_decode($category['terms_and_conditions']) : null;
                 $category['services'] = $services;
                 $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['cross_sale'] = $cross_sale_service ? [
+                    'title' => $cross_sale_service->title,
+                    'description' => $cross_sale_service->description,
+                    'icon' => $cross_sale_service->icon,
+                    'category_id' => $cross_sale_service->category_id,
+                    'service_id' => $cross_sale_service->service_id
+                ] : null;
                 $category_model = Category::find($category['id']);
                 $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
                                                                ->setLocation(Location::find($location))->get();
