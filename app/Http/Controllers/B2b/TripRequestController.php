@@ -26,9 +26,7 @@ class TripRequestController extends Controller
 {
     use ModificationFields;
     private $b2b_management_emails = [
-        'one' => 'miajee@sheba.xyz',
-        'two' => 'saiful.sheba@gmail.com',
-        'three' => 'b2b@sheba.xyz'
+        'one' => 'b2b@sheba.xyz'
     ];
 
     public function getTripRequests(Request $request)
@@ -499,12 +497,4 @@ class TripRequestController extends Controller
         $this->dispatch(new SendEmailForFleetToB2bTeam($business, $to_email));
     }
 
-    /*private function sendMail($message, $email, $name, $to = 'b2b@sheba.xyz')
-    {
-        Mail::raw($message, function ($m) use ($email, $name, $to) {
-            $m->from($email, $name);
-            $m->to($to);
-            $m->subject('Contact Us');
-        });
-    }*/
 }
