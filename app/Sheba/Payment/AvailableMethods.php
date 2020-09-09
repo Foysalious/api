@@ -71,6 +71,9 @@ class AvailableMethods
             case 'loan_repayment':
                 $methods = self::getLoanRepaymentPayments();
                 break;
+            case 'bondhu_point':
+                $methods = self::getBondhuPointPayments();
+                break;
             default:
                 throw new Exception('Invalid Payable Type');
         }
@@ -176,6 +179,14 @@ class AvailableMethods
     public static function getLoanRepaymentPayments()
     {
         return [
+            PaymentStrategy::NAGAD,
+        ];
+    }
+
+    public static function getBondhuPointPayments()
+    {
+        return [
+            PaymentStrategy::BKASH,
             PaymentStrategy::NAGAD,
         ];
     }
