@@ -27,6 +27,7 @@ use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class OrderController extends Controller
@@ -34,7 +35,7 @@ class OrderController extends Controller
     use DispatchesJobs;
     use ModificationFields;
 
-    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter)
+    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation)
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
@@ -65,6 +66,7 @@ class OrderController extends Controller
             ], ['mobile' => 'Invalid mobile number!']);
             if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
             else $this->setModifier($request->customer);
+            $userAgentInformation->setRequest($request);
             $order = $order_place
                 ->setCustomer($request->customer)
                 ->setDeliveryName($request->name)
@@ -85,6 +87,7 @@ class OrderController extends Controller
                 ->setScheduleDate($request->date)
                 ->setScheduleTime($request->time)
                 ->setVendorId($request->vendor_id)
+                ->setUserAgentInformation($userAgentInformation)
                 ->create();
             if (!$order) return api_response($request, null, 500);
             $order = Order::find($order->id);
