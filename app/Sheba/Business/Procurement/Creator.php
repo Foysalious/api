@@ -303,17 +303,14 @@ class Creator
             'last_date_of_submission' => $this->lastDateOfSubmission,
             'number_of_participants' => $this->numberOfParticipants,
             'shared_to' => $this->sharedTo,
-
             'owner_type' => get_class($this->owner),
             'owner_id' => $this->owner->id,
-
             'payment_options' => $this->paymentOptions,
-
             'title' => $this->title,
             'category_id' => $this->category,
             'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'publication_status' => $this->isPublished ? PublicationStatuses::PUBLISHED : PublicationStatuses::DRAFT,
             'published_at' => $this->isPublished ? Carbon::now() : '',
-
             'purchase_request_id' => $this->purchaseRequestId,
             'type' => count($this->items) > 0 ? Type::ADVANCED : Type::BASIC,
             'estimated_price' => $this->estimatedPrice,
@@ -392,6 +389,7 @@ class Creator
     {
         $this->procurementData = [
             'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'publication_status' => $this->isPublished ? PublicationStatuses::PUBLISHED : PublicationStatuses::DRAFT,
             'published_at' => $this->isPublished ? Carbon::now() : '',
             'shared_to' => $this->sharedTo
         ];

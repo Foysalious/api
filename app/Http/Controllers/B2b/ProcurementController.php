@@ -226,7 +226,7 @@ class ProcurementController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->ofBusiness($business->id)
-            ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published'])
+            ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published', 'publication_status'])
             ->orderBy('id', 'desc');
         $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
@@ -247,9 +247,11 @@ class ProcurementController extends Controller
         if ($request->has('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
         $total_procurement = count($procurements);
         if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
+
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement, 'is_procurement_available' => $is_procurement_available
-        ]); else return api_response($request, null, 404);
+        ]);
+        else return api_response($request, null, 404);
     }
 
     /**
@@ -260,6 +262,9 @@ class ProcurementController extends Controller
     public function filterWithStatus($procurements, $status)
     {
         if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use ($status) {
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'unpublished') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
         if ($status === 'open') return collect($procurements)->filter(function ($procurement) use ($status) {
