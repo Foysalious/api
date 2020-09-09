@@ -182,6 +182,8 @@ class PartnerRegistrationController extends Controller
         }
         if ($request->has('refer_code'))
             $data['refer_code'] = $request->refer_code;
+        if ($request->has('business_type'))
+            $data['business_type'] = $request->business_type;
         return $data;
     }
 
@@ -330,7 +332,8 @@ class PartnerRegistrationController extends Controller
                 'geo' => 'string',
                 'name' => 'string',
                 'number' => 'string',
-                'address' => 'string'
+                'address' => 'string',
+                'business_type' => 'string'
             ]);
             $profile = $request->profile;
             if (!$profile->resource)

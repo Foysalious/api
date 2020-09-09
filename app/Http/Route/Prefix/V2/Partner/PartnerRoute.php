@@ -3,6 +3,7 @@
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\EmiRoute as EmiRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\IndexRoute as IDAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\Auth\LoanRoute;
+use App\Http\Route\Prefix\V2\Partner\ID\Auth\NeoBankingRoute;
 use App\Http\Route\Prefix\V2\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 use App\Http\Route\Prefix\V2\Partner\PosRoute as PosRoute;
 use App\Http\Route\Prefix\V2\Partner\ReferralRoute as ReferralRoute;
@@ -16,6 +17,7 @@ class PartnerRoute
             $api->get('welcome', 'Auth\PartnerRegistrationController@getWelcomeMessage');
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
             $api->get('resource-types', 'PartnerController@getResourceTypes');
+            $api->get('business-types', 'PartnerController@getBusinessTypes');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
@@ -24,5 +26,6 @@ class PartnerRoute
             (new EmiRoute())->set($api);
         });
         (new LoanRoute())->set($api);
+        (new NeoBankingRoute())->set($api);
     }
 }

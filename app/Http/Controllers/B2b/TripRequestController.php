@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendEmailForFleetToB2bTeam;
 use App\Models\Business;
 use App\Models\BusinessTrip;
 use App\Models\BusinessTripRequest;
@@ -24,6 +25,9 @@ use Throwable;
 class TripRequestController extends Controller
 {
     use ModificationFields;
+    private $b2b_management_emails = [
+        'one' => 'b2b@sheba.xyz'
+    ];
 
     public function getTripRequests(Request $request)
     {
@@ -473,4 +477,24 @@ class TripRequestController extends Controller
 
         return $business_trip;
     }
+
+    public function fleetMail($member, Request $request)
+    {
+        try {
+            $business = $request->business;
+            foreach ($this->b2b_management_emails as $management_email) {
+                $this->sendMailToB2bTeam($business, $management_email);
+            }
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function sendMailToB2bTeam($business, $to_email)
+    {
+        $this->dispatch(new SendEmailForFleetToB2bTeam($business, $to_email));
+    }
+
 }

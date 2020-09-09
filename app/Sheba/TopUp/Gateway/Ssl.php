@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -33,4 +34,5 @@ class Ssl implements Gateway
     {
         return self::SHEBA_COMMISSION;
     }
+
 }

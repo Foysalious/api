@@ -30,8 +30,17 @@ class MovieTicketManager
 
     public function getAvailableTickets()
     {
-        $availableMovies = $this->vendorManager->post(Actions::GET_MOVIE_LIST);
-        return $availableMovies;
+//        $availableMovies = $this->vendorManager->post(Actions::GET_MOVIE_LIST);
+        return [];
+    }
+
+    /**
+     * @return mixed
+     * @throws GuzzleException
+     */
+    public function getVendorBalance(){
+
+        return  $this->vendorManager->post(Actions::GET_VENDOR_BALANCE);
     }
 
     /**

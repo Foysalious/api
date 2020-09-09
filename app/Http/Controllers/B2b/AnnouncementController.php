@@ -80,10 +80,11 @@ class AnnouncementController extends Controller
         if (!$access_control->setBusinessMember($request->business_member)->hasAccess('announcement.rw'))
             return api_response($request, null, 403);
 
+        $end_date = Carbon::parse($request->end_date . ' 23:59:59')->toDateTimeString();
         $announcement = $creator->setBusiness($request->business)
             ->setBusinessMember($request->business_member)
             ->setTitle($request->title)
-            ->setEndDate(Carbon::parse($request->end_date . ' 23:59:59')->toDateTimeString())
+            ->setEndDate($end_date)
             ->setShortDescription($request->short_description)
             ->setLongDescription($request->description)
             ->setType($request->type)

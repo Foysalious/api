@@ -5,6 +5,7 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
+use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -70,19 +71,26 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        try {
+        try{
             $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric',
-                'is_robi_topup' => 'sometimes|in:0,1'
-            ]);
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric',
+            'is_robi_topup' => 'sometimes|in:0,1'
+        ]);
 
-            if ($request->is_robi_topup == 1)
-                $this->checkVendor($request->vendor_id);
+        if($request->is_robi_topup == 1 && !$this->checkVendor($request->vendor_id))
+            return api_response($request, null, 403, ['message' => "Invalid Vendor"]);
 
-            $agent = $this->getAgent($request);
+        $agent = $this->getAgent($request);
+        if ($this->hasLastTopupWithinIntervalTime($agent))
+            return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+
+        if ($top_up_request->hasError())
+            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
@@ -109,8 +117,8 @@ class TopUpController extends Controller
 
     private function checkVendor($vendor_id)
     {
-        $eligible_vendors = TopUpVendor::whereIn('name', ['Robi', 'Airtel'])->pluck('id');
-        return in_array($vendor_id, $eligible_vendors->toArray());
+        $eligible_vendors = TopUpVendor::whereIn('name',[Vendors::ROBI,Vendors::AIRTEL])->pluck('id');
+        return in_array($vendor_id,$eligible_vendors->toArray());
     }
 
     /**
@@ -133,9 +141,6 @@ class TopUpController extends Controller
             }
 
             $agent = $this->getAgent($request);
-            if (get_class($agent) == "App\Models\Partner")
-                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 

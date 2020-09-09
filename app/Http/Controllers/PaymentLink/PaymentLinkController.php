@@ -76,7 +76,7 @@ class PaymentLinkController extends Controller
                         'payment_receiver' => [
                             'name'  => $user->name,
                             'image' => $user->logo,
-                            'id'    => $user->id,
+                            'id'    => $user->id
                         ],
                         'payer'            => $payer ? [
                             'name'   => $payer->name,
@@ -149,7 +149,6 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -198,7 +197,6 @@ class PaymentLinkController extends Controller
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-
                 $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [

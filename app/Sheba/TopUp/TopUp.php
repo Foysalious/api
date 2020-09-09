@@ -5,6 +5,7 @@ use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -78,19 +79,16 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
-        try {
-            DB::transaction(function () use ($response, $topup_order) {
-                $this->setModifier($this->agent);
-                $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                $top_up_commission = $this->agent->getCommission();
-                $top_up_commission->setTopUpOrder($topup_order)->disburse();
-                $this->vendor->deductAmount($topup_order->amount);
-                $this->isSuccessful = true;
-            });
-        } catch (Throwable $e) {
-            logError($e);
-        }
-
+       // dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->transactionDetails->message)));
+        DB::transaction(function () use ($response, $topup_order) {
+            $this->setModifier($this->agent);
+            $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+            /** @var TopUpCommission $top_up_commission */
+            $top_up_commission = $this->agent->getCommission();
+            $top_up_commission->setTopUpOrder($topup_order)->disburse();
+            $this->vendor->deductAmount($topup_order->amount);
+            $this->isSuccessful = true;
+        });
     }
 
     /**

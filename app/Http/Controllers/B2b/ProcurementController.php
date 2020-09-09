@@ -42,6 +42,7 @@ use Sheba\Business\Procurement\StatusCalculator;
 use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -61,6 +62,8 @@ use Sheba\Repositories\ProfileRepository;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
+use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
+use Sheba\Business\Procurement\AttachmentUpdater;
 
 class ProcurementController extends Controller
 {
@@ -490,7 +493,6 @@ class ProcurementController extends Controller
         $this->validate($request, [
             'description' => 'sometimes|required|string',
             'number_of_participants' => 'sometimes|required|numeric',
-            'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
         ]);
@@ -500,11 +502,75 @@ class ProcurementController extends Controller
 
         $this->procurementRequestHandler->setLongDescription($request->description)
             ->setNumberOfParticipants($request->number_of_participants)
-            ->setLastDateOfSubmission($request->last_date_of_submission)
             ->setProcurementStartDate($request->procurement_start_date)
             ->setProcurementEndDate($request->procurement_end_date)
-            ->setPaymentOptions($request->payment_options);
+            ->setPaymentOptions($request->payment_options)
+            ->setCategory($request->category)
+            ->setTags($request->tags);
         $updater->setRequestHandler($this->procurementRequestHandler)->setProcurement($procurement)->update();
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param BasicInfoUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateBasic($business, $procurement, Request $request, BasicInfoUpdater $updater)
+    {
+        $this->validate($request, [
+            'status' => 'string',
+            'title' => 'string',
+            'estimated_price' => 'string',
+            'last_date_of_submission' => 'date_format:Y-m-d'
+        ]);
+
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if ($request->status === 'Draft') {
+            $updater->setProcurement($procurement)
+                ->setTitle($request->title)
+                ->setBudget($request->estimated_price)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForDraft();
+        }
+        if ($request->status === 'Open') {
+            $updater->setProcurement($procurement)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForOpen();
+        }
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    /**
+     * @param $procurement
+     * @param Request $request
+     * @param AttachmentUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateAttachments($procurement, Request $request, AttachmentUpdater $updater)
+    {
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if (!empty($request->added_documents)) {
+            $updater->setAttachmentsForAdd($request->added_documents)->setProcurement($procurement)
+                     ->setCreatedBy($request->manager_member)->addAttachments();
+        }
+        if (!empty($request->deleted_documents)) {
+            $updater->setAttachmentsForDelete($request->deleted_documents)->deleteAttachments();
+        }
 
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
@@ -791,7 +857,7 @@ class ProcurementController extends Controller
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
-            'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
+            'published_at' => ($procurement->publication_status == PublicationStatuses::PUBLISHED) ? $procurement->published_at->format('d/m/y') : null,
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
             'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),

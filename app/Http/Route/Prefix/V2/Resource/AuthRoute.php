@@ -13,8 +13,8 @@ class AuthRoute
             $api->get('notifications', 'Resource\ResourceNotificationController@index');
             $api->post('notifications/seen', 'Resource\ResourceNotificationController@seen');
             $api->get('help', 'Resource\ResourceController@help');
-            $api->get('rating', 'Resource\ResourceController@getRatingInfo');
             $api->get('schedules/check', 'Resource\ResourceController@checkSchedule');
+            $api->get('rating', 'Resource\ResourceController@getRatingInfo');
             $api->get('reviews', 'Resource\ResourceReviewController@index');
             $api->get('services', 'Resource\ResourceController@getService');
             $api->get('partner/categories', 'Resource\ResourcePartnerController@getCategories');
@@ -26,6 +26,7 @@ class AuthRoute
                 $api->get('history', 'Resource\ResourceJobController@getAllHistoryJobs');
                 $api->get('next', 'Resource\ResourceJobController@getNextJob');
                 $api->get('search', 'Resource\ResourceJobController@jobSearch');
+                $api->get('multiple-in-next', 'Resource\ResourceJobController@getNextJobsInfo');
                 $api->group(['prefix' => '{job}'], function ($api) {
                     $api->get('schedules', 'Resource\ResourceController@getSchedules');
                     $api->get('/', 'Resource\ResourceJobController@jobDetails');

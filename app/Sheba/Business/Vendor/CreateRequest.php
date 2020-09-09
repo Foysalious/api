@@ -18,7 +18,9 @@ class CreateRequest
     private $vatRegistrationNumber;
     private $vatRegistrationDocument;
     private $resourceNidNumber;
-    private $resourceNidDocument;
+    private $resourceNidFront;
+    private $resourceNidBack;
+    private $isActiveForB2b;
 
     /**
      * @return mixed
@@ -70,25 +72,43 @@ class CreateRequest
      */
     public function setVendorMobile($vendorMobile)
     {
-        $this->vendorMobile = BDMobileFormatter::format($vendorMobile);
+        $this->vendorMobile = $vendorMobile ? BDMobileFormatter::format($vendorMobile) : null;
         return $this;
     }
 
     /**
      * @return mixed
      */
-    public function getResourceNidDocument()
+    public function getResourceNidFront()
     {
-        return $this->resourceNidDocument;
+        return $this->resourceNidFront;
     }
 
     /**
-     * @param mixed $resourceNidDocument
+     * @param $resourceNidFront
      * @return CreateRequest
      */
-    public function setResourceNidDocument($resourceNidDocument)
+    public function setResourceNidFront($resourceNidFront)
     {
-        $this->resourceNidDocument = $resourceNidDocument;
+        $this->resourceNidFront = $resourceNidFront;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getResourceNidBack()
+    {
+        return $this->resourceNidBack;
+    }
+
+    /**
+     * @param $resourceNidBack
+     * @return CreateRequest
+     */
+    public function setResourceNidBack($resourceNidBack)
+    {
+        $this->resourceNidBack = $resourceNidBack;
         return $this;
     }
 
@@ -287,6 +307,24 @@ class CreateRequest
     public function setVendorEmail($vendorEmail)
     {
         $this->vendorEmail = $vendorEmail;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIsActiveForB2b()
+    {
+        return $this->isActiveForB2b;
+    }
+
+    /**
+     * @param $is_active_for_b2b
+     * @return $this
+     */
+    public function setIsActiveForB2b($is_active_for_b2b)
+    {
+        $this->isActiveForB2b = $is_active_for_b2b;
         return $this;
     }
 }
