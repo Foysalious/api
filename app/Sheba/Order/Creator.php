@@ -2,9 +2,12 @@
 
 use App\Models\Customer;
 use GuzzleHttp\Client;
+use Sheba\ModificationFields;
 
 class Creator
 {
+    use ModificationFields;
+
     protected $customer;
     protected $services;
     protected $mobile;
@@ -85,6 +88,7 @@ class Creator
 
     public function create()
     {
+        $created_by_type = $this->getModifierType();
         $client = new Client();
         $url = config('sheba.api_url') . "/v3/customers/".$this->customer->id."/orders";
         $res = $client->request('POST', $url, ['form_params' => [
@@ -98,7 +102,11 @@ class Creator
             'time' => $this->time,
             'additional_information' => $this->additionalInformation,
             'address_id' => $this->addressId,
-            'partner' => $this->partnerId
+            'partner' => $this->partnerId,
+            'portal_name' => request()->hasHeader('Portal-Name') ? request()->header('Portal-Name') : (!is_null(request('portal_name')) ? request('portal_name') : config('sheba.portal')),
+            'ip' => !is_null(request('ip')) ? request('ip') : request()->ip(),
+            'user_agent' => !is_null(request('user_agent')) ? request('user_agent') : request()->header('User-Agent'),
+            'created_by_type' => $created_by_type ? $created_by_type : 'automatic'
         ]]);
         return json_decode($res->getBody());
     }
