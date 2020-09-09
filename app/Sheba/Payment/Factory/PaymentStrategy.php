@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\Partner;
 use App\Models\Payable;
+use App\Sheba\Payment\Methods\Nagad\NagadBuilder;
 use Sheba\Helpers\ConstGetter;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Methods\Bkash\Bkash;
@@ -65,8 +66,10 @@ class PaymentStrategy
                 return app(OkWallet::class);
             case self::PORT_WALLET:
                 return app(PortWallet::class);
+            /*case self::NAGAD:
+                return app(Nagad::class);*/
             case self::NAGAD:
-                return app(Nagad::class);
+                return NagadBuilder::get($payable);
         }
     }
 
