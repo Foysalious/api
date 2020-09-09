@@ -306,7 +306,7 @@ class JobList
         $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
             ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
         $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
-        if ($next_jobs_count <= 1) return null;
+        if ($next_jobs_count == 0) return null;
         return ['preferred_time' => $preferred_time, 'jobs_count' => $next_jobs_count];
     }
 }
