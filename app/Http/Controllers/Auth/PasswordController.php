@@ -42,10 +42,10 @@ class PasswordController extends Controller
     private function sendResetCode(Profile $profile, $column, $email)
     {
         $reset_token = randomString(4, 1);
-        $key_name    = 'password_reset_code_' . $reset_token;
+        $key_name = 'password_reset_code_' . $reset_token;
         Redis::set($key_name, json_encode([
             "profile_id" => $profile->id,
-            'code'       => $reset_token
+            'code' => $reset_token
         ]));
         if ($column == 'email') {
             $this->sendPasswordResetEmail($email, $reset_token);
@@ -102,16 +102,20 @@ class PasswordController extends Controller
     public function reset(Request $request)
     {
         try {
-            $this->validate($request, [
+            $validation_data = [
                 'password' => 'required|min:5|max:20',
-                'from'     => 'required|string|in:' . implode(',', constants('FROM')),
-                'code'     => 'required'
-                #|regex:/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{5,20}$/
-            ]);
+                'from' => 'required|string|in:' . implode(',', constants('FROM')),
+                'code' => 'required'
+            ];
+            if (!$this->isNull($request->password)) $validation_data += ['password' => 'regex:/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/'];
+            if (!$this->isNull($request->password)) $validation_data += ['password' => 'regex:/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/'];
+
+            $this->validate($request, $validation_data);
+            dd($request->all());
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
-                $data              = json_decode($key);
-                $profile           = Profile::find((int)$data->profile_id);
+                $data = json_decode($key);
+                $profile = Profile::find((int)$data->profile_id);
                 $profile->password = bcrypt($request->password);
                 $profile->update();
                 Redis::del('password_reset_code_' . (int)$request->code);
@@ -126,6 +130,7 @@ class PasswordController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
