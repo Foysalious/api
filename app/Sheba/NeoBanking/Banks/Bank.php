@@ -5,6 +5,7 @@ namespace Sheba\NeoBanking\Banks;
 
 
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 abstract class Bank
 {
@@ -12,6 +13,14 @@ abstract class Bank
     protected $name;
     protected $logo;
     protected $name_bn;
+    /** @var NeoBankRepository $bankRepo */
+    protected $bankRepo;
+
+    public function __construct()
+    {
+        /** @var NeoBankRepository  */
+        $this->bankRepo = app(NeoBankRepository::class);
+    }
 
     public function __get($name)
     {
