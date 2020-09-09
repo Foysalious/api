@@ -145,9 +145,12 @@ class Updater
 
     private function updateTags()
     {
-        $this->procurement->tags()->detach();
-        $tags = Tag::sync($this->requestHandler->getTags(), get_class($this->procurement));
-        $this->procurement->tags()->sync($tags);
+        if ($this->procurement->getTagNamesAttribute()->toArray() !==  $this->requestHandler->getTags())
+        {
+            $this->procurement->tags()->detach();
+            $tags = Tag::sync($this->requestHandler->getTags(), get_class($this->procurement));
+            $this->procurement->tags()->sync($tags);
+        }
     }
 
     public function itemFieldsUpdate(Request $request)

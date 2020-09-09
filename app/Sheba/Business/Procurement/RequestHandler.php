@@ -6,7 +6,6 @@ class RequestHandler
     private $procurementStartDate;
     private $procurementEndDate;
     private $numberOfParticipants;
-    private $lastDateOfSubmission;
     private $paymentOptions;
     private $workOrder;
     private $category;
@@ -134,7 +133,7 @@ class RequestHandler
     public function setTags($tags)
     {
         $this->tags = $tags;
-        $this->tags = $this->tags ? json_decode($tags,true) : [];
+        $this->tags = $this->tags ? json_decode($this->tags,true) : [];
         return $this;
     }
 
