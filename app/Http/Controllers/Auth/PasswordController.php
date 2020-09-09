@@ -107,11 +107,10 @@ class PasswordController extends Controller
                 'from' => 'required|string|in:' . implode(',', constants('FROM')),
                 'code' => 'required'
             ];
-            if (!$this->isNull($request->password)) $validation_data += ['password' => 'regex:/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/'];
-            if (!$this->isNull($request->password)) $validation_data += ['password' => 'regex:/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/'];
+            if (!preg_match('/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Password must contain one letter or one number";
+            if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Punctuations taht you have used are not supported";
 
             $this->validate($request, $validation_data);
-            dd($request->all());
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
                 $data = json_decode($key);
