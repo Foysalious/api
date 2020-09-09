@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use GuzzleHttp\Client;
+use Sheba\RequestIdentification;
 
 class Creator
 {
@@ -99,7 +100,9 @@ class Creator
             'additional_information' => $this->additionalInformation,
             'address_id' => $this->addressId,
             'partner' => $this->partnerId
-        ]]);
+        ],
+            'headers' => (new RequestIdentification())->get()
+        ]);
         return json_decode($res->getBody());
     }
 }
