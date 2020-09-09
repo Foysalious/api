@@ -301,13 +301,12 @@ class JobList
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
         $jobs = $this->loadNecessaryRelations($jobs);
         $jobs = $this->rearrange->rearrange($jobs);
-        if (count($jobs) > 0) $this->setFirstJobFromList($jobs->first());
-        if ($this->firstJobFromList) {
-            $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
-                ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
-            $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
-            if ($next_jobs_count > 1) return ['preferred_time' => $preferred_time, 'jobs_count' => $next_jobs_count];
-        }
-        return null;
+        if (count($jobs) == 0) return null;
+        $this->setFirstJobFromList($jobs->first());
+        $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
+            ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
+        $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
+        if ($next_jobs_count <= 1) return null;
+        return ['preferred_time' => $preferred_time, 'jobs_count' => $next_jobs_count];
     }
 }
