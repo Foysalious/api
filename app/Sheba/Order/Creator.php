@@ -87,21 +87,24 @@ class Creator
     public function create()
     {
         $client = new Client();
-        $url = config('sheba.api_url') . "/v3/customers/".$this->customer->id."/orders";
-        $res = $client->request('POST', $url, ['form_params' => [
-            'services' => $this->services,
-            'name' => $this->deliveryName,
-            'mobile' => $this->mobile,
-            'remember_token' => $this->customer->remember_token,
-            'sales_channel' => $this->salesChannel,
-            'payment_method' => $this->paymentMethod,
-            'date' => $this->date,
-            'time' => $this->time,
-            'additional_information' => $this->additionalInformation,
-            'address_id' => $this->addressId,
-            'partner' => $this->partnerId
-        ],
-            'headers' => (new RequestIdentification())->get()
+        $url = config('sheba.api_url') . "/v3/customers/" . $this->customer->id . "/orders";
+        $res = $client->request('POST', $url, [
+            'headers' => [
+                'Portal-Name' => 'resource-app'
+            ],
+            'form_params' => [
+                'services' => $this->services,
+                'name' => $this->deliveryName,
+                'mobile' => $this->mobile,
+                'remember_token' => $this->customer->remember_token,
+                'sales_channel' => $this->salesChannel,
+                'payment_method' => $this->paymentMethod,
+                'date' => $this->date,
+                'time' => $this->time,
+                'additional_information' => $this->additionalInformation,
+                'address_id' => $this->addressId,
+                'partner' => $this->partnerId
+            ]
         ]);
         return json_decode($res->getBody());
     }
