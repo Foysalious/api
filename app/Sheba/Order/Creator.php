@@ -88,7 +88,7 @@ class Creator
     {
         $client = new Client();
         $url = config('sheba.api_url') . "/v3/customers/".$this->customer->id."/orders";
-        $res = $client->request('POST', $url, ['form_params' => [
+        $res = $client->request('POST', $url, ['form_params' => array_merge([
             'services' => $this->services,
             'name' => $this->deliveryName,
             'mobile' => $this->mobile,
@@ -100,8 +100,7 @@ class Creator
             'additional_information' => $this->additionalInformation,
             'address_id' => $this->addressId,
             'partner' => $this->partnerId
-        ],
-            'headers' => (new RequestIdentification())->get()
+        ], (new RequestIdentification())->get())
         ]);
         return json_decode($res->getBody());
     }
