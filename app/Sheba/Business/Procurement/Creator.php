@@ -62,6 +62,7 @@ class Creator
     private $sharedTo;
     /** @var PartnerNotificationHandler $partnerNotificationHandler */
     private $partnerNotificationHandler;
+    private $publicationStatus;
 
     /**
      * Creator constructor.
@@ -418,5 +419,21 @@ class Creator
         ) return true;
 
         return false;
+    }
+
+    /**
+     * @param $publication_status
+     * @return $this
+     */
+    public function setPublicationStatus($publication_status)
+    {
+        $this->publicationStatus = $publication_status;
+        return $this;
+    }
+
+    public function changePublicationStatus($procurement)
+    {
+        $data = ['publication_status' => $this->publicationStatus];
+        $this->procurementRepository->update($procurement, $data);
     }
 }
