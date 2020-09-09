@@ -23,6 +23,7 @@ use App\Transformers\Business\TenderMinimalTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Dotenv\Exception\ValidationException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -556,6 +557,7 @@ class ProcurementController extends Controller
     }
 
     /**
+     * @param $business
      * @param $procurement
      * @param Request $request
      * @param AttachmentUpdater $updater
@@ -665,6 +667,27 @@ class ProcurementController extends Controller
 
         if ($request->has('sharing_to')) $creator->setSharingTo($request->sharing_to);
         $creator->setIsPublished($request->is_published)->changeStatus($procurement);
+
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function updatePublicationStatus($business, $procurement, Request $request, Creator $creator)
+    {
+        $publication_status = implode(',', PublicationStatuses::get());
+        $this->validate($request, ['publication_status' => 'required|string:in:' . $publication_status]);
+        $this->setModifier($request->manager_member);
+
+        $procurement = Procurement::find((int)$procurement);
+        if (!$procurement) return api_response($request, null, 404);
+
+        $creator->setPublicationStatus($request->publication_status)->changePublicationStatus($procurement);
 
         return api_response($request, null, 200);
     }
