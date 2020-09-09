@@ -513,12 +513,13 @@ class ProcurementController extends Controller
     }
 
     /**
+     * @param $business
      * @param $procurement
      * @param Request $request
      * @param BasicInfoUpdater $updater
      * @return JsonResponse
      */
-    public function updateBasic($procurement, Request $request, BasicInfoUpdater $updater)
+    public function updateBasic($business, $procurement, Request $request, BasicInfoUpdater $updater)
     {
         $this->validate($request, [
             'status' => 'string',

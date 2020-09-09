@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use Carbon\Carbon;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
@@ -13,6 +14,10 @@ class BasicInfoUpdater
     private $lastDateOfSubmission;
     private $procurement;
 
+    /**
+     * BasicInfoUpdater constructor.
+     * @param ProcurementRepositoryInterface $procurement_repository
+     */
     public function __construct(ProcurementRepositoryInterface $procurement_repository)
     {
         $this->procurementRepo = $procurement_repository;
@@ -38,7 +43,7 @@ class BasicInfoUpdater
 
     public function setLastDateOfSubmission($last_date_of_submission)
     {
-        $this->lastDateOfSubmission = $last_date_of_submission . ' 23:59:59';
+        $this->lastDateOfSubmission = Carbon::parse($last_date_of_submission)->endOfDay();
         return $this;
     }
 
