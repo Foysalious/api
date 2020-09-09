@@ -87,7 +87,7 @@ class CreateRequest
 
     private function existingAbbreviationCheck()
     {
-        $department_abbreviation = $this->departmentRepository->findByNameOrAbbreviation($this->name);
+        $department_abbreviation = $this->departmentRepository->findByNameOrAbbreviation($this->abbreviation);
         if ($department_abbreviation) $this->setError(409, "This abbreviation is already exist");
     }
 
