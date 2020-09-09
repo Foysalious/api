@@ -23,7 +23,7 @@ class ProcurementDetailsTransformer extends TransformerAbstract
 
         return [
             'id' => $procurement->id,
-            'title' => $procurement->title ? $procurement->title : substr($procurement->long_description, 0, 20),
+            'title' => $procurement->title ? $procurement->title : null,
             'status' => StatusCalculator::resolveStatus($procurement),
             'category' => $procurement->category_id ? [ 'id' => $procurement->category_id, 'name' => $procurement->category->name ] : null,
             'type' => $procurement->type,

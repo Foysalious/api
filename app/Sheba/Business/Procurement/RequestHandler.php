@@ -6,9 +6,10 @@ class RequestHandler
     private $procurementStartDate;
     private $procurementEndDate;
     private $numberOfParticipants;
-    private $lastDateOfSubmission;
     private $paymentOptions;
     private $workOrder;
+    private $category;
+    private $tags;
 
     /**
      * @param $long_description
@@ -83,24 +84,6 @@ class RequestHandler
     }
 
     /**
-     * @param $last_date_of_submission
-     * @return $this
-     */
-    public function setLastDateOfSubmission($last_date_of_submission)
-    {
-        $this->lastDateOfSubmission = $last_date_of_submission ? $last_date_of_submission . ' 23:59:59' : null;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getLastDateOfSubmission()
-    {
-        return $this->lastDateOfSubmission;
-    }
-
-    /**
      * @param $payment_options
      * @return $this
      */
@@ -134,5 +117,28 @@ class RequestHandler
     public function getWorkOrder()
     {
         return $this->workOrder;
+    }
+
+    public function setCategory($category)
+    {
+        $this->category = $category ? $category : null;
+        return $this;
+    }
+
+    public function getCategory()
+    {
+        return $this->category;
+    }
+
+    public function setTags($tags)
+    {
+        $this->tags = $tags;
+        $this->tags = $this->tags ? json_decode($this->tags,true) : [];
+        return $this;
+    }
+
+    public function getTags()
+    {
+        return $this->tags;
     }
 }
