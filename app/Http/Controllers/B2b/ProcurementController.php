@@ -571,7 +571,7 @@ class ProcurementController extends Controller
 //        if (!empty($request->deleted_documents)) {
 //            $updater->setAttachmentsForDelete($request->deleted_documents)->deleteAttachments();
 //        }
-        dd($request);
+        
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
