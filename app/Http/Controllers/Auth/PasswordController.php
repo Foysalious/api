@@ -102,15 +102,14 @@ class PasswordController extends Controller
     public function reset(Request $request)
     {
         try {
-            $validation_data = [
+            $this->validate($request, [
                 'password' => 'required|min:5|max:20',
                 'from' => 'required|string|in:' . implode(',', constants('FROM')),
                 'code' => 'required'
-            ];
+            ]);
             if (!preg_match('/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Password must contain one letter or one number";
             if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Punctuations taht you have used are not supported";
 
-            $this->validate($request, $validation_data);
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
                 $data = json_decode($key);
@@ -129,7 +128,6 @@ class PasswordController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
