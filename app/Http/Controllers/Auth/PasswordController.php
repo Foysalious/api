@@ -108,7 +108,7 @@ class PasswordController extends Controller
                 'code' => 'required'
             ]);
             if (!preg_match('/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Password must contain one letter or one number";
-            if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Punctuations taht you have used are not supported";
+            if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) return "Punctuations that you have used are not supported";
 
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
