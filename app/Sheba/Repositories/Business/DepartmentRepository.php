@@ -16,7 +16,7 @@ class DepartmentRepository extends BaseRepository implements DepartmentRepositor
     public function getBusinessDepartmentByBusiness(Business $business)
     {
         return $this->model->with('businessRoles')->published()->where('business_id', $business->id)
-            ->select('id', 'business_id', 'name', 'created_at')
+            ->select('id', 'business_id', 'name', 'abbreviation', 'created_at')
             /*->orderBy('id', 'DESC')*/
             ->get();
     }
