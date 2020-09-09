@@ -26,9 +26,7 @@ class TripRequestController extends Controller
 {
     use ModificationFields;
     private $b2b_management_emails = [
-        'one' => 'miajee@sheba.xyz',
-        'two' => 'saiful.sheba@gmail.com',
-        'three' => 'b2b@sheba.xyz'
+        'one' => 'b2b@sheba.xyz'
     ];
 
     public function getTripRequests(Request $request)
