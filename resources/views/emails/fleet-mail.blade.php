@@ -9,11 +9,11 @@
     <div class="content">
         <div class="title">
             <p>Hi, Below the contact information to reach out the client who is interested to learn more about fleet management -<br>
-                Client company name: <strong>[Company name]</strong><br>
-                Contact person name:  <strong>[Name]</strong><br>
-                Client email: <strong>[Email]</strong><br>
-                Phone number: <strong>[Phone number]</strong><br>
-                Address: <strong>[Address]</strong><br>
+                Client company name: <strong>{{$company_name}}</strong><br>
+                Contact person name:  <strong>{{$contact_person_name}}</strong><br>
+                Client email: <strong>{{$contact_person_email}}</strong><br>
+                Phone number: <strong>{{$contact_person_mobile}}</strong><br>
+                Address: <strong>{{$address}}</strong><br>
                 Thank you for taking care of the lead.
             </p>
         </div>
