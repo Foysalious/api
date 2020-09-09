@@ -17,6 +17,7 @@ class Creator
     protected $salesChannel;
     protected $paymentMethod;
     protected $deliveryName;
+    protected $portalName;
 
     public function setCustomer(Customer $customer)
     {
@@ -33,6 +34,12 @@ class Creator
     public function setDeliveryName($deliveryName)
     {
         $this->deliveryName = trim($deliveryName);
+        return $this;
+    }
+
+    public function setPortalName($portal)
+    {
+        $this->portalName = $portal;
         return $this;
     }
 
@@ -90,7 +97,7 @@ class Creator
         $url = config('sheba.api_url') . "/v3/customers/" . $this->customer->id . "/orders";
         $res = $client->request('POST', $url, [
             'headers' => [
-                'Portal-Name' => 'resource-app'
+                'Portal-Name' => $this->portalName
             ],
             'form_params' => [
                 'services' => $this->services,
