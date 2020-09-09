@@ -568,8 +568,9 @@ class ProcurementController extends Controller
             $updater->setAttachmentsForAdd($request->added_documents)->setProcurement($procurement)
                      ->setCreatedBy($request->manager_member)->addAttachments();
         }
-        if ($request->deleted_documents) {
-            $updater->setAttachmentsForDelete($request->deleted_documents)->deleteAttachments();
+        if (!is_null($request->deleted_documents)) {
+            $deleted_documents = json_decode($request->deleted_documents);
+            $updater->setAttachmentsForDelete($deleted_documents)->deleteAttachments();
         }
         
         return api_response($request, null, 200, ["message" => "Successful"]);
