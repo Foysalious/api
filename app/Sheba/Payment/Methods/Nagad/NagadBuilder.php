@@ -8,12 +8,15 @@ use App\Models\Payable;
 use Sheba\Payment\Methods\Nagad\Stores\AffiliateStore;
 use Sheba\Payment\Methods\Nagad\Stores\DefaultStore;
 use Sheba\Payment\Methods\Nagad\Nagad;
-use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\PayableUser;
 
 class NagadBuilder
 {
 
+    /**
+     * @param Payable $payable
+     * @return Nagad
+     */
     public static function get(Payable $payable)
     {
         /** @var Nagad $nagad */
@@ -22,23 +25,27 @@ class NagadBuilder
         return $nagad;
     }
 
+    /**
+     * @param Payable $payable
+     * @return AffiliateStore|DefaultStore
+     */
     public static function getStore(Payable $payable)
     {
         /** @var PayableUser $user */
         $user = $payable->user;
 
         if ($user instanceof Affiliate) return new AffiliateStore();
-
         return new DefaultStore();
     }
 
+
     /**
      * @param $store_name
-     * @return Ssl
+     * @return Nagad
      */
     public static function getByStoreName($store_name)
     {
-        /** @var Nagad $ssl */
+        /** @var Nagad $nagad */
         $nagad = app(Nagad::class);
         $nagad->setStore(self::getStoreByName($store_name));
         return $nagad;

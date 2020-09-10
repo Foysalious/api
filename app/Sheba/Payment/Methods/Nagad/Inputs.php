@@ -62,6 +62,7 @@ class Inputs
 
     /**
      * @param $transactionID
+     * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */

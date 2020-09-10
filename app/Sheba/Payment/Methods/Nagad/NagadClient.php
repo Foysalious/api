@@ -67,7 +67,7 @@ class NagadClient
     {
         $paymentRefId = $resp->getPaymentReferenceId();
         $url          = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
-        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl,$this->store);
+        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
         $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
         $resp         = $this->client->call($request);
         return new CheckoutComplete($resp);

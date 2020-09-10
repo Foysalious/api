@@ -40,7 +40,7 @@ class PaymentStrategy
     /**
      * @param         $method
      * @param Payable $payable
-     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet
+     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet|Nagad
      * @throws InvalidPaymentMethod
      */
     public static function getMethod($method, Payable $payable)
@@ -66,8 +66,6 @@ class PaymentStrategy
                 return app(OkWallet::class);
             case self::PORT_WALLET:
                 return app(PortWallet::class);
-            /*case self::NAGAD:
-                return app(Nagad::class);*/
             case self::NAGAD:
                 return NagadBuilder::get($payable);
         }

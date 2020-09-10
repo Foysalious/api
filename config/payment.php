@@ -67,17 +67,11 @@ return [
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
             'affiliate' => [
-                'merchant_id'      => env('NAGAD_MERCHANT_ID', '683002007104225'),
-                'private_key_path' => resource_path(env('NAGAD_MERCHANT_PRIVATE_KEY', 'assets/nagad/merchantPrivate.key')),
-                'public_key_path'  => resource_path(env('NAGAD_PUBLIC_KEY_PATH', 'assets/nagad/pgPublic.key')),
+                'merchant_id'      => env('NAGAD_AFILIATE_MERCHANT_ID', '683002007104225'),
+                'private_key_path' => resource_path(env('NAGAD_AFFILIATE_MERCHANT_PRIVATE_KEY', 'assets/nagad/merchantPrivate.key')),
+                'public_key_path'  => resource_path(env('NAGAD_AFFILIATE_PUBLIC_KEY_PATH', 'assets/nagad/pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
-        ],
-        'urls' => [
-            'refund' => env('SSL_REFUND_URL'),
-            'success' => env('SHEBA_API_URL') . '/v2/orders/payments/success',
-            'fail' => env('SHEBA_API_URL') . '/v2/orders/payments/fail',
-            'cancel' => env('SHEBA_API_URL') . '/v2/orders/payments/cancel'
         ]
     ]
 ];
