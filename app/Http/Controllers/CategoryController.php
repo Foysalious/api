@@ -559,6 +559,7 @@ class CategoryController extends Controller
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['services'] = $services;
                 $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['cross_sale'] = null;
                 $category_model = Category::find($category['id']);
                 $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
                     ->setLocation(Location::find($location))->get();
