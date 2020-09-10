@@ -17,17 +17,16 @@ class DepartmentRepository extends BaseRepository implements DepartmentRepositor
     {
         return $this->model->with('businessRoles')->published()->where('business_id', $business->id)
             ->select('id', 'business_id', 'name', 'abbreviation', 'created_at')
-            /*->orderBy('id', 'DESC')*/
             ->get();
     }
 
-    public function findByName($name)
+    public function findByName($name, Business $business)
     {
-        return $this->model->where('name', $name)->first();
+        return $this->model->where('business_id', $business->id)->where('name', $name)->first();
     }
 
-    public function findByAbbreviation($abbreviation)
+    public function findByAbbreviation($abbreviation, Business $business)
     {
-        return $this->model->where('abbreviation', $abbreviation)->first();
+        return $this->model->where('business_id', $business->id)->where('abbreviation', $abbreviation)->first();
     }
 }

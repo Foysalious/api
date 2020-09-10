@@ -81,14 +81,14 @@ class CreateRequest
 
     private function existingNameCheck()
     {
-        $department_name = $this->departmentRepository->findByName($this->name);
-        if ($department_name) $this->setError(409, "This department name is already exist");
+        $department_name = $this->departmentRepository->findByName($this->name, $this->business);
+        if ($department_name) $this->setError(409, "This department name is already exist in your company");
     }
 
     private function existingAbbreviationCheck()
     {
-        $department_abbreviation = $this->departmentRepository->findByAbbreviation($this->abbreviation);
-        if ($department_abbreviation) $this->setError(409, "This abbreviation is already exist");
+        $department_abbreviation = $this->departmentRepository->findByAbbreviation($this->abbreviation, $this->business);
+        if ($department_abbreviation) $this->setError(409, "This abbreviation is already exist in your company");
     }
 
 }
