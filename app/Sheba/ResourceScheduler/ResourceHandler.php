@@ -37,7 +37,8 @@ class ResourceHandler
         $date_time = Carbon::parse($date . ' ' . $time);
 
         return $this->resourceSchedules->filterByDateTime($this->resource, $date_time)->count() == 0 &&
-            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0;
+            $this->resourceSchedules->filterStartAt($this->resource, $date_time)->count() == 0 &&
+            !$this->resource->runningLeave($date_time);
     }
 
     /**
