@@ -1,6 +1,6 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\DS\Builders;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\Grid;
 use App\Models\HomeMenu;

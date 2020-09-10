@@ -5,7 +5,7 @@ namespace App\Sheba\Checkout;
 use App\Models\Location;
 use App\Models\Partner;
 use App\Models\ScheduleSlot;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 

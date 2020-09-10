@@ -3,6 +3,7 @@
 
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
+use Sheba\AutoSpAssign\EligiblePartner;
 
 class Store
 {
@@ -21,7 +22,7 @@ class Store
     }
 
     /**
-     * @param array $partners
+     * @param EligiblePartner[] $partners
      * @return Store
      */
     public function setPartners($partners)
@@ -34,7 +35,7 @@ class Store
     {
         /** @var Repository $store */
         $store = Cache::store('redis');
-        $store->put($this->getCacheName(), json_encode($this->partners), $this->getExpirationTimeInSeconds() / 60);
+        $store->put($this->getCacheName(), json_encode(serialize($this->partners)), $this->getExpirationTimeInSeconds() / 60);
     }
 
     /**

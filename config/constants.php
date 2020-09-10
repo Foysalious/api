@@ -818,7 +818,7 @@ return [
         'Recurring' => 'Recurring'
     ],
     'REWARD_CONSTRAINTS'                          => [
-        'category'        => 'App\Models\Category',
+        'category'        => 'Sheba\Dal\Category\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
     ],
     'PARTNER_PACKAGE_UPDATE_STATUSES'             => [

@@ -296,6 +296,11 @@ class Updater
         DB::beginTransaction();
         try {
             $business_member_data = [];
+            if ($this->officialRequest->getEmployeeId() == 'null') {
+                $business_member_data['employee_id'] = null;
+            } else {
+                $business_member_data['employee_id'] = $this->officialRequest->getEmployeeId();
+            }
             if ($this->officialRequest->getJoinDate() == 'null') {
                 $business_member_data['join_date'] = null;
             } else {

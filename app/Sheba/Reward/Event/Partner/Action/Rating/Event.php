@@ -36,7 +36,7 @@ class Event extends Action
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
-            if ($key == 'App\Models\Category') {
+            if ($key == 'Sheba\Dal\Category\Category') {
                 $is_constraints_passed = $is_constraints_passed && in_array($job->category_id, $ids);
             } elseif ($key == 'App\Models\PartnerSubscriptionPackage') {
                 $is_constraints_passed = $is_constraints_passed && in_array($partner->package_id, $ids);

@@ -8,7 +8,7 @@ use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpRequest
 {
-    CONST MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+    const MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
 
     private $mobile;
     private $amount;
@@ -67,7 +67,7 @@ class TopUpRequest
     public function setVendorId($vendor_id)
     {
         $this->vendorId = $vendor_id;
-        $this->vendor = $this->vendorFactory->getById($this->vendorId);
+        $this->vendor   = $this->vendorFactory->getById($this->vendorId);
         return $this;
     }
 
@@ -156,8 +156,8 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
-        if ($this->agent instanceof Partner) {
-            $this->errorMessage = "Temporary turned off.";
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
