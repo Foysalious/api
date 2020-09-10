@@ -154,6 +154,7 @@ class CustomerSubscriptionController extends Controller
             }
 
             foreach ($subscription_orders->get() as $subscription_order) {
+                if (!$subscription_order->isPaid()) continue;
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
                 });
