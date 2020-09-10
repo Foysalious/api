@@ -88,7 +88,7 @@ class ResourceHandler
                 return $schedule->job_id == $job->id;
             });
         }
-        return $this->bookedSchedules->count() == 0;
+        return $this->bookedSchedules->count() == 0 && !$this->resource->runningLeave($start_time) && !$this->resource->runningLeave($end_time);
     }
 
     public function getBookedJobs()
@@ -145,7 +145,7 @@ class ResourceHandler
     {
         $extended_time = $schedule->end->addMinutes($min);
         $conflicted_schedule = $this->resourceSchedules->filterByDateTime($this->resource, $extended_time);
-        $is_available_for_extend = $conflicted_schedule->count() == 0;
+        $is_available_for_extend = $conflicted_schedule->count() == 0 || !$this->resource->runningLeave($extended_time);
 
         if (!$is_available_for_extend) {
             $conflicted_schedule->first()->job->update(['resource_id' => null]);
