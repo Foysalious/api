@@ -551,7 +551,7 @@ class CategoryController extends Controller
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount')->values()->all();
                 $category['cross_sale'] = $cross_sale_service ? [
                     'title' => $cross_sale_service->title,
                     'description' => $cross_sale_service->description,
