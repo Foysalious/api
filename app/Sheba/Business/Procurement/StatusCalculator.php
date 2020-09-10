@@ -25,8 +25,7 @@ class StatusCalculator
 
     public static function resolveStatus(Procurement $procurement)
     {
-        if (Carbon::now() > $procurement->last_date_of_submission && $procurement->status == self::IS_PENDING) return self::EXPIRED;
-        // if ($procurement->is_published == self::IS_DRAFT) return self::DRAFT;
+        if (self::isProcurementExpired($procurement)) return self::EXPIRED;
         if ($procurement->publication_status == PublicationStatuses::DRAFT) return self::DRAFT;
         if ($procurement->publication_status == PublicationStatuses::UNPUBLISHED) return self::UNPUBLISHED;
         if ($procurement->status == self::IS_PENDING) return self::PENDING;
@@ -34,5 +33,16 @@ class StatusCalculator
         if ($procurement->status == self::IS_SERVED) return self::SERVED;
 
         return 'N/A';
+    }
+
+    /**
+     * @param Procurement $procurement
+     * @return bool
+     */
+    private static function isProcurementExpired(Procurement $procurement)
+    {
+        return Carbon::now() > $procurement->last_date_of_submission &&
+            $procurement->status == self::IS_PENDING &&
+            $procurement->publication_status <> PublicationStatuses::UNPUBLISHED;
     }
 }
