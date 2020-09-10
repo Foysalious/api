@@ -57,7 +57,7 @@ class AffiliateTransactionRepository
      */
     private function balanceOut()
     {
-        $amount = $this->affiliate->transactions()->debit()->where('log', 'NOT LIKE', '%has been topped up%')->between($this->start_date, $this->end_date)->sum('amount');
+        $amount = $this->affiliate->transactions()->debit()->between($this->start_date, $this->end_date)->sum('amount');
         return $amount == null ? 0 : $amount;
     }
 

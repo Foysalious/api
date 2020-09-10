@@ -221,7 +221,7 @@ class DueTrackerRepository extends BaseRepository
         return $response['data'];
     }
 
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method, $payment_type = null)
     {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
@@ -230,7 +230,8 @@ class DueTrackerRepository extends BaseRepository
             $payment_data['pos_order_id'] = $pos_order_id;
             $payment_data['amount']       = $amount_cleared;
             $payment_data['method']       = $payment_method;
-            $this->paymentCreator->credit($payment_data);
+            if ($payment_type == "debit") $this->paymentCreator->debit($payment_data);
+            else $this->paymentCreator->credit($payment_data);
         }
     }
 
