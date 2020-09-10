@@ -980,7 +980,8 @@ class Loan
             "loan_duration" => [
                 "duration_en" => $duration . $unit_en,
                 "duration_bn" => en2bnNumber($duration) . $unit_bn
-            ]
+            ],
+            "application_fee" => GeneralStatics::getFee($running_loan["type"])
         ];
     }
 
