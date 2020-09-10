@@ -560,7 +560,7 @@ class CategoryController extends Controller
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['terms_and_conditions'] = $category['terms_and_conditions'] ? json_decode($category['terms_and_conditions']) : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount')->values()->all();
                 $category['cross_sale'] = $cross_sale_service ? [
                     'title' => $cross_sale_service->title,
                     'description' => $cross_sale_service->description,
