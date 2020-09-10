@@ -18,6 +18,7 @@ use Sheba\CustomerDeliveryAddress\Creator as CustomerDeliveryAddressCreator;
 use Sheba\Jobs\AcceptJobAndAssignResource;
 use Sheba\Location\Geo;
 use Sheba\Order\Creator as OrderCreator;
+use Sheba\Portals\Portals;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
@@ -260,7 +261,8 @@ class OrderCreateRequest
         }
         $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setDeliveryName($this->name)->setMobile($this->mobile)
             ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
-            ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)->create();
+            ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)
+            ->setPortalName(Portals::RESOURCE_APP)->create();
         $this->response->setResponse($response);
         if ($this->assignResource && $this->response->hasSuccess()) {
             $this->job = Job::find($this->response->getResponse()->job_id);
@@ -288,8 +290,8 @@ class OrderCreateRequest
 
     private function getCustomer()
     {
-        $customer =  $this->customerCreator->setMobile($this->mobile)->setName($this->name)->create();
-        if(!$customer->profile->name) $this->profileRepository->update($customer->profile, ['name' => $this->name]);
+        $customer = $this->customerCreator->setMobile($this->mobile)->setName($this->name)->create();
+        if (!$customer->profile->name) $this->profileRepository->update($customer->profile, ['name' => $this->name]);
         return $customer;
     }
 
