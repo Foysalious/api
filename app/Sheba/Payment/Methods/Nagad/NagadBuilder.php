@@ -51,6 +51,10 @@ class NagadBuilder
         return $nagad;
     }
 
+    /**
+     * @param $name
+     * @return AffiliateStore|DefaultStore
+     */
     public static function getStoreByName($name)
     {
         if ($name == AffiliateStore::NAME) return new AffiliateStore();

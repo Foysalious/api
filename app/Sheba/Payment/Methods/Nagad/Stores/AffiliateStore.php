@@ -3,9 +3,6 @@
 
 namespace Sheba\Payment\Methods\Nagad\Stores;
 
-
-use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
-
 class AffiliateStore extends NagadStore
 {
     const NAME = "affiliate";
