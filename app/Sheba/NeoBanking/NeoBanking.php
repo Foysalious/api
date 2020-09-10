@@ -1,9 +1,15 @@
-<?php
+<?php namespace Sheba\NeoBanking;
 
-namespace Sheba\NeoBanking;
+use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use Sheba\Dal\NeoBank\Model as NeoBank;
+use Sheba\NeoBanking\Banks\BankFactory;
+use Sheba\NeoBanking\Banks\BankFormCategoryFactory;
+use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 class NeoBanking
 {
+    /** @var NeoBank $bank */
     private $bank;
     private $partner;
     private $resource;
@@ -14,6 +20,7 @@ class NeoBanking
 
     public function setBank($bank)
     {
+        if (!($bank instanceof NeoBank)) $bank = (new NeoBankRepository())->getByCode($bank);
         $this->bank = $bank;
         return $this;
     }
@@ -34,11 +41,11 @@ class NeoBanking
     {
         return [
             "organization_information" => [
-                "communication_info" =>[
+                "communication_info"             => [
                     "field_type" => "header",
                     "title"      => "যোগাযোগ এর তথ্য",
                 ],
-                "mobile" => [
+                "mobile"                         => [
                     "field_type"    => "viewText",
                     "input_type"    => "text",
                     "name"          => "mobile",
@@ -50,7 +57,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => false
                 ],
-                "email" => [
+                "email"                          => [
                     "field_type"    => "editText",
                     "input_type"    => "email",
                     "name"          => "email",
@@ -62,7 +69,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "company_name" => [
+                "company_name"                   => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "company_name",
@@ -74,11 +81,11 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "licence_info" => [
+                "licence_info"                   => [
                     "field_type" => "header",
                     "title"      => "যোগাযোগ এর তথ্য",
                 ],
-                "trade_licence_number" => [
+                "trade_licence_number"           => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "trade_licence_number",
@@ -90,7 +97,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "trade_licence_date" => [
+                "trade_licence_date"             => [
                     "field_type"    => "editText",
                     "input_type"    => "date",
                     "name"          => "trade_licence_date",
@@ -102,7 +109,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "grantor_organization" => [
+                "grantor_organization"           => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "grantor_organization",
@@ -114,11 +121,11 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "registration_info" => [
+                "registration_info"              => [
                     "field_type" => "header",
                     "title"      => "রেজিস্ট্রেশন সম্পর্কিত তথ্য",
                 ],
-                "registration_number" => [
+                "registration_number"            => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "registration_number",
@@ -130,7 +137,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "registration_date" => [
+                "registration_date"              => [
                     "field_type"    => "editText",
                     "input_type"    => "date",
                     "name"          => "registration_date",
@@ -142,7 +149,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "applier_organization_country" => [
+                "applier_organization_country"   => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "applier_organization_country",
@@ -154,15 +161,15 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "business_location" => [
+                "business_location"              => [
                     "field_type" => "header",
                     "title"      => "ব্যাবসা / অফিস - এর ঠিকানা",
                 ],
                 "street_or_village_and_postcode" => [
-                    "field_type"    => "doubleView",
-                    "name"          => "street_or_village_and_postcode",
-                    "id"            => "street_or_village_and_postcode",
-                    "views"         => [
+                    "field_type" => "doubleView",
+                    "name"       => "street_or_village_and_postcode",
+                    "id"         => "street_or_village_and_postcode",
+                    "views"      => [
                         "street_or_village" => [
                             "field_type"    => "editText",
                             "input_type"    => "text",
@@ -175,7 +182,7 @@ class NeoBanking
                             "mandatory"     => true,
                             "is_editable"   => true
                         ],
-                        "postcode" => [
+                        "postcode"          => [
                             "field_type"    => "editText",
                             "input_type"    => "text",
                             "name"          => "postcode",
@@ -189,12 +196,12 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "district_and_subdistrict" => [
-                    "field_type"    => "doubleView",
-                    "name"          => "street_or_village_and_postcode",
-                    "id"            => "street_or_village_and_postcode",
-                    "views"         => [
-                        "district" => [
+                "district_and_subdistrict"       => [
+                    "field_type" => "doubleView",
+                    "name"       => "street_or_village_and_postcode",
+                    "id"         => "street_or_village_and_postcode",
+                    "views"      => [
+                        "district"    => [
                             "field_type"    => "dropdown",
                             "list_type"     => "dialog",
                             "name"          => "district",
@@ -207,9 +214,9 @@ class NeoBanking
                             "is_editable"   => true,
                             "list"          => [
                                 [
-                                    "key"=> "gaibandha",
-                                    "en" => "Gaibandha",
-                                    "bn" => "গাইবান্ধা"
+                                    "key" => "gaibandha",
+                                    "en"  => "Gaibandha",
+                                    "bn"  => "গাইবান্ধা"
                                 ],
                                 [
                                     "key" => "dhaka",
@@ -231,9 +238,9 @@ class NeoBanking
                             "is_editable"   => true,
                             "list"          => [
                                 [
-                                    "key"=> "gaibandha",
-                                    "en" => "Gaibandha",
-                                    "bn" => "গাইবান্ধা"
+                                    "key" => "gaibandha",
+                                    "en"  => "Gaibandha",
+                                    "bn"  => "গাইবান্ধা"
                                 ],
                                 [
                                     "key" => "dhaka",
@@ -244,11 +251,11 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "business_country" => [
-                    "field_type"    => "doubleView",
-                    "name"          => "business_country",
-                    "id"            => "business_country",
-                    "views"         => [
+                "business_country"               => [
+                    "field_type" => "doubleView",
+                    "name"       => "business_country",
+                    "id"         => "business_country",
+                    "views"      => [
                         "business_country" => [
                             "field_type"    => "dropdown",
                             "list_type"     => "dialog",
@@ -263,11 +270,11 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "other_information" => [
+                "other_information"              => [
                     "field_type" => "header",
                     "title"      => "অন্যান্য তথ্য",
                 ],
-                "vat_registration_number" => [
+                "vat_registration_number"        => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "vat_registration_number",
@@ -279,7 +286,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "organization_etin_number" => [
+                "organization_etin_number"       => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "organization_etin_number",
@@ -291,7 +298,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "organization_type" => [
+                "organization_type"              => [
                     "field_type"    => "dropdown",
                     "list_type"     => "dialog",
                     "name"          => "organization_type",
@@ -315,7 +322,7 @@ class NeoBanking
                         ],
                     ]
                 ],
-                "business_type" => [
+                "business_type"                  => [
                     "field_type"    => "dropdown",
                     "list_type"     => "dialog",
                     "name"          => "business_type",
@@ -328,7 +335,7 @@ class NeoBanking
                     "is_editable"   => true,
                     "list"          => constants('PARTNER_BUSINESS_TYPES')
                 ],
-                "yearly_earning" => [
+                "yearly_earning"                 => [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "yearly_earning",
@@ -342,149 +349,103 @@ class NeoBanking
                 ],
 
             ],
-            "completion_percentage" => "15%"
+            "completion_percentage"    => "15%"
         ];
     }
 
-    public function accountDetails()
+    /**
+     * @return BankAccountInfoWithTransaction
+     * @throws Exceptions\InvalidBankCode
+     */
+    public function accountDetails(): BankAccountInfoWithTransaction
     {
-        return [
-          'account_info' => [
-              'account_name' => 'AL Amin Rahman',
-              'account_no' => '2441139',
-              'balance' => '4000',
-              'minimum_transaction_amount' => 1000,
-              'transaction_error_msg' => 'ট্রান্সেকশন সফল হয়েছে'
-          ],
-          'transactions' => [
-              [
-                  'date' => '2020-12-01 20:10:33',
-                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-                  'mobile' => '01748712884',
-                  'amount' => '60000',
-                  'type'  => 'credit'
-              ],
-              [
-                  'date' => '2020-12-01 20:10:33',
-                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-                  'mobile' => '01748712884',
-                  'amount' => '30000',
-                  'type'  => 'debit'
-              ],
-              [
-                  'date' => '2020-12-01 20:10:33',
-                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-                  'mobile' => '01748712884',
-                  'amount' => '60000',
-                  'type'  => 'debit'
-              ],
-              [
-                  'date' => '2020-12-01 20:10:33',
-                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-                  'mobile' => '01748712884',
-                  'amount' => '20000',
-                  'type'  => 'credit'
-              ],
-              [
-                  'date' => '2020-12-01 20:10:33',
-                  'name' => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-                  'mobile' => '01748712884',
-                  'amount' => '10000',
-                  'type'  => 'credit'
-              ],
-          ]
-        ];
-
+//        return [
+//            'account_info' => [
+//                'account_name'               => 'AL Amin Rahman',
+//                'account_no'                 => '2441139',
+//                'balance'                    => '4000',
+//                'minimum_transaction_amount' => 1000,
+//                'transaction_error_msg'      => 'ট্রান্সেকশন সফল হয়েছে'
+//            ],
+//            'transactions' => [
+//                [
+//                    'date'   => '2020-12-01 20:10:33',
+//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+//                    'mobile' => '01748712884',
+//                    'amount' => '60000',
+//                    'type'   => 'credit'
+//                ],
+//                [
+//                    'date'   => '2020-12-01 20:10:33',
+//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+//                    'mobile' => '01748712884',
+//                    'amount' => '30000',
+//                    'type'   => 'debit'
+//                ],
+//                [
+//                    'date'   => '2020-12-01 20:10:33',
+//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+//                    'mobile' => '01748712884',
+//                    'amount' => '60000',
+//                    'type'   => 'debit'
+//                ],
+//                [
+//                    'date'   => '2020-12-01 20:10:33',
+//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+//                    'mobile' => '01748712884',
+//                    'amount' => '20000',
+//                    'type'   => 'credit'
+//                ],
+//                [
+//                    'date'   => '2020-12-01 20:10:33',
+//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
+//                    'mobile' => '01748712884',
+//                    'amount' => '10000',
+//                    'type'   => 'credit'
+//                ],
+//            ]
+//        ];
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->accountDetailInfo();
     }
 
     public function createTransaction()
     {
         return [
-            'status' => 'success',
+            'status'  => 'success',
             'heading' => 'ট্রান্সেকশন সফল হয়েছে',
             'message' => 'ট্রান্সেকশন সফল হয়েছে'
         ];
 
     }
 
+    /**
+     * @return mixed
+     * @throws Exceptions\InvalidBankCode
+     */
+    public function homepage()
+    {
+        return (new Home())->setPartner($this->partner)->get();
+    }
 
+    /**
+     * @return Banks\BankCompletion
+     * @throws Exceptions\InvalidBankCode
+     */
     public function getCompletion()
     {
-        $data['completion'] = [
-            [
-                'title' => [
-                    'en' => 'NID and Selfie',
-                    'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 'today'
-            ],
-            [
-                'title' => [
-                    'en' => 'Institution',
-                    'bn' => 'প্রতিষ্ঠান সম্পর্কিত তথ্য'
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 'yesterday'
-            ],
-            [
-                'title' => [
-                    'en' => 'Personal',
-                    'bn' => 'ব্যক্তিগত তথ্য '
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 'yesterday'
-            ],
-            [
-                'title' => [
-                    'en' => 'Nominee',
-                    'bn' => 'বনমিনি তথ্য '
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 4
-            ],
-            [
-                'title' => [
-                    'en' => 'Documents',
-                    'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড '
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 4
-            ],
-            [
-                'title' => [
-                    'en' => 'Account',
-                    'bn' => 'অ্যাকাউন্ট সম্পর্কিত তথ্য '
-                ],
-                'completion_percentage' => [
-                    'en' => 75,
-                    'bn' => '৭৫'
-                ],
-                'last_updated' => 4
-            ]
-        ];
-        $data['can_apply_account'] = 1;
-        $data['bank_details_link'] = env('SHEBA_PARTNER_END_URL') . '/' .'neo-banking-account-details';
-        $data['message'] = 'প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।';
-        $data['message_type'] = 'info';
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->completion();
 
-        return $data;
+    }
 
+    /**
+     * @param $category_code
+     * @return array
+     * @throws Exceptions\InvalidBankCode
+     * @throws Exceptions\InvalidBankFormCategoryCode
+     */
+    public function getCategoryDetail($category_code)
+    {
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->categoryDetails((new BankFormCategoryFactory())->getCategoryByCode($category_code));
     }
 
 }

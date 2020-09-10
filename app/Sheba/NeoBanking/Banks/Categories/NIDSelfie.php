@@ -1,19 +1,15 @@
-<?php
-
-
-namespace Sheba\NeoBanking\Banks\PrimeBank\Categories;
+<?php namespace Sheba\NeoBanking\Banks\Categories;
 
 
 use Sheba\NeoBanking\DTO\BankFormCategory;
 
 class NIDSelfie extends BankFormCategory
 {
+    protected $code = 'nid_selfie';
+
     public function __construct()
     {
-        $this->title = [
-            'en' => 'NID and Selfie',
-            'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
-        ];
+        parent::__construct();
     }
 
     public function get()
@@ -23,11 +19,19 @@ class NIDSelfie extends BankFormCategory
 
     public function completion()
     {
-        // TODO: Implement completion() method.
+        return [
+            'en' => 75,
+            'bn' => '৭৫'
+        ];
     }
 
     public function post()
     {
         // TODO: Implement post() method.
+    }
+
+    public function getLastUpdated()
+    {
+        return $this->last_updated;
     }
 }

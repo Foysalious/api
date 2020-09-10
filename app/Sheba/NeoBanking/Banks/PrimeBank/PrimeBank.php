@@ -1,44 +1,65 @@
 <?php namespace Sheba\NeoBanking\Banks\PrimeBank;
 
+use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use ReflectionException;
 use Sheba\NeoBanking\Banks\Bank;
+use Sheba\NeoBanking\Banks\BankAccountInfo;
+use Sheba\NeoBanking\Banks\BankCompletion;
+use Sheba\NeoBanking\Banks\BankHomeInfo;
+use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\DTO\BankFormCategoryList;
+use Sheba\NeoBanking\Exceptions\InvalidBankCode;
+use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
 
 class PrimeBank extends Bank
 {
+
+    private $apiClient;
+
     public function __construct()
     {
         parent::__construct();
-        $this->setBank();
+        $this->apiClient = new ApiClient();
     }
 
-    private function setBank()
-    {
-        $bank = $this->bankRepo->getPrimeBank();
-        if (!empty($bank)) {
-            $this->mapBank($bank);
-        }
-    }
-
-    public function categories()
+    public function categories(): BankFormCategoryList
     {
         // TODO: Implement categories() method.
     }
 
-    public function accountInfo(): array
+    public function accountInfo(): BankAccountInfo
     {
-        // TODO: Implement accountInfo() method.
+        return $this->apiClient->setPartner($this->partner)->getAccountInfo();
     }
 
     public function categoryDetails(BankFormCategory $category): array
     {
-        // TODO: Implement categoryDetails() method.
+        return $category->get();
     }
 
-    private function mapBank($bank)
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function homeInfo(): array
     {
-        $this->id      = $bank->id;
-        $this->name    = $bank->name;
-        $this->name_bn = $bank->name_bn;
-        $this->logo    = $bank->logo;
+        return (new BankHomeInfo())->setBank($this)->setPartner($this->partner)->toArray();
+    }
+
+    /**
+     * @return BankCompletion
+     * @throws InvalidBankCode
+     * @throws InvalidListInsertion
+     */
+    public function completion(): BankCompletion
+    {
+        return (new Completion())->setBank($this)->setPartner($this->partner)->getAll();
+    }
+
+    public function accountDetailInfo(): BankAccountInfoWithTransaction
+    {
+        return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
     }
 }

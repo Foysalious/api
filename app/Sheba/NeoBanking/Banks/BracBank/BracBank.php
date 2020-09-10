@@ -19,13 +19,18 @@ class BracBank extends Bank
         // TODO: Implement categories() method.
     }
 
-    public function accountInfo(): array
+    public function accountInfo($id): BankAccountInfo
     {
-        // TODO: Implement accountInfo() method.
+        return new BankAccountInfo();
     }
 
     public function categoryDetails(BankFormCategory $category): array
     {
         // TODO: Implement categoryDetails() method.
+    }
+
+    public function homeInfo(): array
+    {
+        // TODO: Implement homeInfo() method.
     }
 }
