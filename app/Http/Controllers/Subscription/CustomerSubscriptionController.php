@@ -145,7 +145,8 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
             list($offset, $limit) = calculatePagination($request);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
+            $subscription_orders = SubscriptionOrder::with(['orders.partnerOrders.jobs.jobServices', 'customer.profile'])
+                ->where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
             $subscription_order_count = $subscription_orders->count();
             $subscription_orders->skip($offset)->limit($limit);
 
