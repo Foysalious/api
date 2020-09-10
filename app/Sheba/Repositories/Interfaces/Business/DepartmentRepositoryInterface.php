@@ -5,7 +5,9 @@ use App\Models\Business;
 
 interface DepartmentRepositoryInterface extends BaseRepositoryInterface
 {
-    public function findByNameOrAbbreviation($identity);
+    public function findByName($name);
+
+    public function findByAbbreviation($abbreviation);
 
     public function getBusinessDepartmentByBusiness(Business $business);
 }

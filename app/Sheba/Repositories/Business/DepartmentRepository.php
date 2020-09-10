@@ -21,8 +21,13 @@ class DepartmentRepository extends BaseRepository implements DepartmentRepositor
             ->get();
     }
 
-    public function findByNameOrAbbreviation($identity)
+    public function findByName($name)
     {
-        return $this->model->where('name', $identity)->orWhere('abbreviation', $identity)->first();
+        return $this->model->where('name', $name)->first();
+    }
+
+    public function findByAbbreviation($abbreviation)
+    {
+        return $this->model->where('abbreviation', $abbreviation)->first();
     }
 }
