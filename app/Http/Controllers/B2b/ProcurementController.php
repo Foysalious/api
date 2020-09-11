@@ -65,6 +65,7 @@ use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
 use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
 use Sheba\Business\Procurement\AttachmentUpdater;
+use Sheba\Business\Procurement\DescriptionUpdater;
 
 class ProcurementController extends Controller
 {
@@ -497,7 +498,6 @@ class ProcurementController extends Controller
     public function updateGeneral($business, $procurement, Request $request, Updater $updater)
     {
         $this->validate($request, [
-            'description' => 'sometimes|required|string',
             'number_of_participants' => 'sometimes|required|numeric',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
@@ -506,8 +506,7 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
-        $this->procurementRequestHandler->setLongDescription($request->description)
-            ->setNumberOfParticipants($request->number_of_participants)
+        $this->procurementRequestHandler->setNumberOfParticipants($request->number_of_participants)
             ->setProcurementStartDate($request->procurement_start_date)
             ->setProcurementEndDate($request->procurement_end_date)
             ->setPaymentOptions($request->payment_options)
@@ -580,6 +579,23 @@ class ProcurementController extends Controller
             $updater->setAttachmentsForDelete($deleted_documents)->deleteAttachments();
         }
         
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    public function updateDescription($business, $procurement, Request $request, DescriptionUpdater $updater)
+    {
+        $this->validate($request, [
+            'description' => 'required|string'
+        ]);
+
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        $updater->setProcurement($procurement)->setDescription($request->description)->update();
+
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 

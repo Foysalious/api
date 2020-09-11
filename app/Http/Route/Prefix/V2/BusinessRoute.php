@@ -169,6 +169,7 @@ class BusinessRoute
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
                         $api->post('publication-status', 'B2b\ProcurementController@updatePublicationStatus');
+                        $api->post('description', 'B2b\ProcurementController@updateDescription');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
                         $api->post('basic', 'B2b\ProcurementController@updateBasic');
                         $api->post('attachments', 'B2b\ProcurementController@updateAttachments');
