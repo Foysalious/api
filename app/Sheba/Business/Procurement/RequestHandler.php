@@ -2,7 +2,6 @@
 
 class RequestHandler
 {
-    private $longDescription;
     private $procurementStartDate;
     private $procurementEndDate;
     private $numberOfParticipants;
@@ -10,24 +9,6 @@ class RequestHandler
     private $workOrder;
     private $category;
     private $tags;
-
-    /**
-     * @param $long_description
-     * @return $this
-     */
-    public function setLongDescription($long_description)
-    {
-        $this->longDescription = $long_description ? $long_description : null;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getLongDescription()
-    {
-        return $this->longDescription;
-    }
 
     /**
      * @param $procurement_start_date
