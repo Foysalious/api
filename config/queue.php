@@ -50,13 +50,13 @@ return [
             'region' => 'us-east-1'
         ],
         'redis' => [
-            'driver' => 'redis',
+            'driver' => 'sync',
             'connection' => 'default',
             'queue' => 'api_queue',
             'expire' => 60
         ],
         'topup' => [
-            'driver' => 'redis',
+            'driver' => 'sync',
             'connection' => 'default',
             'queue' => 'topup',
             'expire' => 60
