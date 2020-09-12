@@ -39,7 +39,8 @@ class Event extends Campaign
     {
         $this->query = Job::where('jobs.status', 'Served')
             ->join('partner_orders', 'partner_orders.id', '=', 'jobs.partner_order_id')
-            ->whereBetween('delivered_date', $this->timeFrame->getArray());
+            ->whereBetween('delivered_date', $this->timeFrame->getArray())
+            ->select('jobs.*');
     }
 
     private function filterResource(array $resources)
@@ -52,7 +53,7 @@ class Event extends Campaign
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
-            if ($key == 'App\Models\Category') {
+            if ($key == 'Sheba\Dal\Category\Category') {
                 $this->query->whereIn('category_id', $ids);
             } elseif ($key == 'App\Models\PartnerSubscriptionPackage') {
                 $this->query->join('partners', 'partners.id', '=', 'partner_orders.partner_id')

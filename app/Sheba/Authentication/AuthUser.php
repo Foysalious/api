@@ -7,8 +7,13 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Authentication\Exceptions\NotEligibleForApplication;
+use Sheba\Authentication\Exceptions\ProfileBlacklisted;
+use Sheba\Dal\StrategicPartnerMember\StrategicPartnerMember;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\UserRepository;
+use Sheba\Portals\Portals;
+use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 /**
@@ -24,12 +29,14 @@ class AuthUser
     private $resource;
     /** @var User */
     private $user;
-    /** @var Model */
+    /** @var Model|null */
     private $avatar;
     /** @var UserRepository */
     private $logisticUsers;
     /** @var array */
     private $payload;
+    /** @var string */
+    private $portal;
 
     public function __construct()
     {
@@ -74,11 +81,30 @@ class AuthUser
         return $this;
     }
 
+    /**
+     * @param $portal_name
+     * @return $this
+     */
+    public function setPortal($portal_name)
+    {
+        $this->portal = $portal_name;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     * @throws ProfileBlacklisted
+     * @throws NotEligibleForApplication
+     */
     public function generateToken()
     {
-        return JWTAuth::fromUser($this->getAuthUser(), [
-            'name' => $this->getAuthUser()->name,
-            'image' => $this->getAuthUser()->pro_pic,
+        $user = $this->getAuthUser();
+
+        if ($user instanceof Profile && $user->isBlacklisted()) throw new ProfileBlacklisted();
+
+        $payload = [
+            'name' => $user->name,
+            'image' => $user->pro_pic,
             'profile' => $this->generateProfileInfo(),
             'customer' => $this->generateCustomerInfo(),
             'resource' => $this->generateResourceInfo(),
@@ -87,8 +113,13 @@ class AuthUser
             'affiliate' => $this->generateAffiliateInfo(),
             'logistic_user' => $this->generateLogisticUserInfo(),
             'bank_user' => $this->generateBankUserInfo(),
+            'strategic_partner_member' => $this->generateStrategicPartnerMemberInfo(),
             'avatar' => $this->generateAvatarInfo()
-        ]);
+        ];
+
+        if (!$this->hasAccessToApplication($payload)) throw new NotEligibleForApplication($this->portal);
+
+        return JWTAuth::fromUser($user, $payload);
     }
 
     public function getAuthUser()
@@ -102,19 +133,15 @@ class AuthUser
         $this->resolveAvatar();
     }
 
-    /**
-     * @return null
-     */
     public function resolveAvatar()
     {
-        if ($this->profile) return null;
-        $avatar = $this->getAvatar();
+        if (!$this->payload['avatar']) return;
+
+        $avatar = Avatars::getModelName($this->payload['avatar']['type']);
+        $avatar = $avatar::find($this->payload['avatar']['type_id']);
         if ($avatar) $this->setAvatar($avatar);
     }
 
-    /**
-     * @return null
-     */
     public function resolveProfile()
     {
         if (!isset($this->payload['profile'])) return null;
@@ -131,6 +158,14 @@ class AuthUser
     }
 
     /**
+     * @return Model|null
+     */
+    public function getAvatar()
+    {
+        return $this->avatar;
+    }
+
+    /**
      * @return Resource|null
      */
     public function getResource()
@@ -144,18 +179,8 @@ class AuthUser
      */
     public function getPartner()
     {
-        if (!$this->profile) return null;
-        if (!$this->profile->resource) return null;
+        if (!$this->profile || !$this->profile->resource) return null;
         return $this->profile->resource->partners->first();
-    }
-
-    /**
-     * @return Model|null
-     */
-    public function getAvatar()
-    {
-        $model = "App\\Models\\" . ucfirst(camel_case($this->payload['avatar']['type']));
-        return $model::find($this->payload['avatar']['type_id']);
     }
 
     private function generateProfileInfo()
@@ -166,8 +191,7 @@ class AuthUser
 
     private function generateCustomerInfo()
     {
-        if (!$this->profile) return null;
-        if (!$this->profile->customer) return null;
+        if (!$this->profile || !$this->profile->customer) return null;
         return ['id' => $this->profile->customer->id];
     }
 
@@ -191,21 +215,22 @@ class AuthUser
 
     private function generateBusinessMemberInfo()
     {
-        if (!$this->profile) return null;
-        if (!$this->profile->member || !$this->profile->member->businessMember) return null;
-        $business_member = $this->profile->member->businessMember;
+        if (!$this->profile || !$this->profile->member) return null;
+        $member = $this->profile->member;
+        $business_member = $member ? $member->businessMember : null;
 
         return [
-            'id' => $business_member->id,
-            'business_id' => $business_member->business_id,
-            'member_id' => $business_member->member_id,
+            'id' => $business_member ? $business_member->id : null,
+            'business_id' => $business_member ? $business_member->business_id : null,
+            'member_id' => $member->id,
+            'is_super' => $business_member ? $business_member->is_super : false
         ];
     }
 
     private function generateMemberInfo()
     {
-        if (!$this->profile) return null;
-        return $this->profile->member ? ['id' => $this->profile->member->id] : null;
+        if (!$this->profile || !$this->profile->member) return null;
+        return ['id' => $this->profile->member->id];
     }
 
     private function generateAffiliateInfo()
@@ -253,7 +278,27 @@ class AuthUser
         if ($user instanceof Resource) $user = $user->partners()->first();
         elseif ($user instanceof Member) $user = $user->businesses()->first();
         elseif ($user instanceof BankUser) return ['type' => class_basename($user), 'type_id' => $user->id];
+        elseif ($user instanceof StrategicPartnerMember) return ['type' => class_basename($user), 'type_id' => $user->id];
         if (!$user) return null;
         return ['type' => strtolower(class_basename($user)), 'type_id' => $user->id];
+    }
+
+    /**
+     * @param $payload
+     * @return boolean
+     */
+    private function hasAccessToApplication($payload)
+    {
+        if (is_null($this->portal)) return true;
+
+        if ($this->portal == Portals::EMPLOYEE_APP && is_null($payload['business_member'])) return false;
+
+        return true;
+    }
+
+    private function generateStrategicPartnerMemberInfo()
+    {
+        if (!$this->profile) return null;
+        return $this->profile->StrategicPartnerMember()->select('id','role','strategic_partner_id')->first();
     }
 }

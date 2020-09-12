@@ -1,9 +1,9 @@
 <?php namespace Sheba\Services;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Illuminate\Support\Collection;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;

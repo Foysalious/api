@@ -1,8 +1,8 @@
 <?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
 
-use App\Models\LocationService;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;

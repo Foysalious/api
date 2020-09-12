@@ -1,9 +1,11 @@
 <?php namespace Sheba\Business\Announcement;
 
 use App\Jobs\Business\SendAnnouncementNotificationToEmployee;
+use App\Jobs\Business\SendAnnouncementPushNotificationToEmployee;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\Announcement\Announcement;
 use Sheba\Dal\Announcement\AnnouncementRepositoryInterface;
 use Sheba\ModificationFields;
@@ -69,7 +71,7 @@ class Creator
     }
 
     /**
-     * @param Carbon $endDate
+     * @param string $endDate
      * @return Creator
      */
     public function setEndDate($endDate)
@@ -110,10 +112,13 @@ class Creator
         $this->makeData();
         /** @var Announcement $announcement */
         $announcement = $this->announcementRepository->create($this->data);
-        $this->business->load(['members' => function ($q) {
-            $q->select('members.id', 'profile_id');
-        }]);
-        dispatch((new SendAnnouncementNotificationToEmployee($this->business->members, $announcement)));
+
+        $members_id = BusinessMember::where('business_id', $this->business->id)->where('status', Statuses::ACTIVE)->pluck('member_id')->toArray();
+        dispatch(new SendAnnouncementNotificationToEmployee($members_id, $announcement));
+        foreach ($members_id as $member) {
+            dispatch(new SendAnnouncementPushNotificationToEmployee($member, $announcement));
+        }
+
         return $announcement;
     }
 

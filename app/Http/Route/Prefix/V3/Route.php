@@ -12,6 +12,7 @@ class Route
 
             $api->get('locations', 'Location\LocationController@index');
             $api->get('thana/reverse', 'Location\LocationController@getThanaFromLatLng');
+            $api->get('thanas', 'Thana\ThanaController@index');
             $api->get('times', 'Schedule\ScheduleTimeController@index');
             $api->get('sluggable-type/{slug}', 'ShebaController@getSluggableType');
             $api->post('redirect-url', 'ShebaController@redirectUrl');
@@ -52,6 +53,11 @@ class Route
             $api->get('training-videos', 'TrainingVideoController@index');
             $api->get('sitemap', 'SitemapController@index');
             $api->get('settings/car', 'HomePageSettingController@getCarV3');
+            $api->group(['prefix' => 'subscriptions'], function ($api) {
+                $api->get('/{id}', 'SubscriptionController@details');
+            });
         });
+
+
     }
 }

@@ -13,13 +13,23 @@ use App\Models\Profile;
 use App\Models\Resource;
 use DB;
 use Auth;
-use Sheba\Client\Accounts;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\Voucher\Creator\Referral;
 
 class ProfileRepository
 {
     use ModificationFields;
+
+    /** @var AccountServer */
+    private $accountServer;
+
+    public function __construct()
+    {
+        $this->accountServer = app(AccountServer::class);
+    }
 
     public function getIfExist($data, $queryColumn)
     {
@@ -29,7 +39,7 @@ class ProfileRepository
 
     public function store(array $data)
     {
-        $profile = new Profile();
+        $profile                 = new Profile();
         $profile->remember_token = str_random(255);
         foreach ($data as $key => $value) {
             $profile->$key = $value;
@@ -64,85 +74,120 @@ class ProfileRepository
     public function registerEmail($request)
     {
         $profile = Profile::create([
-            'email' => $request->email,
-            'password' => bcrypt($request->password),
+            'email'          => $request->email,
+            'password'       => bcrypt($request->password),
             'remember_token' => str_random(255)
         ]);
         return Profile::find($profile->id);
     }
 
+    /**
+     * @param $from
+     * @param Profile $profile
+     * @param null $request
+     * @return array|null
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
     public function getProfileInfo($from, Profile $profile, $request = null)
     {
         $avatar = $profile->$from;
         if ($avatar != null) {
             $info = array(
-                'id' => $avatar->id,
-                'name' => $profile->name,
-                'mobile' => $profile->mobile,
-                'email' => $profile->email,
+                'id'            => $avatar->id,
+                'name'          => $profile->name,
+                'mobile'        => $profile->mobile,
+                'email'         => $profile->email,
                 'profile_image' => $profile->pro_pic,
-                'token' => $avatar->remember_token,
+                'token'         => $avatar->remember_token,
             );
             if ($from == 'affiliate') {
-                $info['name'] = $profile->name;
-                $info['mobile'] = $profile->mobile;
-                $info['bKash'] = $avatar->banking_info->bKash;
+                $info['name']                = $profile->name;
+                $info['mobile']              = $profile->mobile;
+                $info['bKash']               = $avatar->banking_info->bKash;
                 $info['verification_status'] = $avatar->verification_status;
-                $info['is_suspended'] = $avatar->is_suspended;
-                $info['ambassador_code'] = $avatar->is_ambassador ? $avatar->referral->code : null;
-                $info['is_ambassador'] = $avatar->is_ambassador;
-            } elseif ($from == 'bankUser'){
+                $info['is_suspended']        = $avatar->is_suspended;
+                $info['ambassador_code']     = $avatar->is_ambassador ? $avatar->referral->code : null;
+                $info['is_ambassador']       = $avatar->is_ambassador;
+            } elseif ($from == 'bankUser') {
                 $info['bank_logo'] = $avatar->bank->logo;
                 $info['bank_name'] = $avatar->bank->name;
-                $defaultPass = 'ShebaAdmin#1';
-                if($request->password == $defaultPass)
+                $defaultPass       = 'ShebaAdmin#1';
+                if ($request->password == $defaultPass)
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar);
+                $info['token'] = $this->getJwtToken($avatar,$from);
             } elseif ($from == 'customer') {
-                $info['referral'] = $avatar->referral ? $avatar->referral->code : '';
-                $info['order_count'] = $avatar->orders->count();
+                $info['referral']     = $avatar->referral ? $avatar->referral->code : '';
+                $info['order_count']  = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
-                $info['referrer_id'] = $avatar->referrer_id;
+                $info['referrer_id']  = $avatar->referrer_id;
             } elseif ($from == 'resource') {
-                $resource_types = $avatar->partnerResources->pluck('resource_type')->toArray();
-                $info['is_handyman'] = count($resource_types) > 0 ? !isResourceAdmin($resource_types) : false;
+                $resource_types                    = $avatar->partnerResources->pluck('resource_type')->toArray();
+                $info['is_handyman']               = count($resource_types) > 0 ? !isResourceAdmin($resource_types) : false;
                 $info['is_profile_avatar_default'] = (getProfileDefaultAvatar() === $avatar->profile->pro_pic);
-                $info['is_verified'] = $avatar->is_verified;
-                $info['partners'] = $avatar->partners->unique('partner_id')->count();
-                $info['partner'] = (new ResourceRepository($avatar))->getPartner($avatar);
-                $info['email'] = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
+                $info['is_verified']               = $avatar->is_verified;
+                $info['partners']                  = $avatar->partners->unique('partner_id')->count();
+                $info['partner']                   = (new ResourceRepository($avatar))->getPartner($avatar);
+                $info['email']                     = $profile->email ? $profile->email : (strtolower(clean($profile->name, '_')) . "@ajaira.co");
+            } elseif ($from == 'strategicPartnerMember') {
+                $info['strategic_partner']       = $avatar->strategicPartner ? [
+                    'name'=>$avatar->strategicPartner->name,
+                    'logo'=>$avatar->strategicPartner->logo,
+                    'id'=>$avatar->strategicPartner->id
+                ] : null;
+                $info['remember_token'] = $avatar->remember_token;
+                $info['role']           = $avatar->role;
+                $defaultPass            = 'ShebaAdmin#1';
+                if ($request->password == $defaultPass)
+                    $info['has_changed_password'] = 0;
+                else
+                    $info['has_changed_password'] = 1;
+                $info['token'] = $this->accountServer->getTokenByAvatar($avatar, $from);
+
             }
             return $info;
         }
         return null;
     }
 
-    public function getJwtToken($avatar)
+    /**
+     * @param $avatar
+     * @param $from
+     * @return mixed
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function getJwtToken($avatar, $from)
     {
-        $res = (new Accounts())->getToken($avatar);
-        return $res["token"];
+        return $this->accountServer->getTokenByAvatar($avatar, $from);
     }
 
-    public function fetchJWTToken($type,$type_id,$remember_token){
-        
-        $res = (new Accounts())->getJWTToken($type,$type_id,$remember_token);
-        return $res["token"];
-
+    /**
+     * @param $type
+     * @param $type_id
+     * @param $remember_token
+     * @return mixed
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function fetchJWTToken($type, $type_id, $remember_token)
+    {
+        return $this->accountServer->getTokenByIdAndRememberToken($type_id, $remember_token, $type);
     }
 
     public function registerFacebook($info)
     {
-        $profile = new Profile();
+        $profile        = new Profile();
         $profile->fb_id = $info['fb_id'];
-        $profile->name = $info['fb_name'];
+        $profile->name  = $info['fb_name'];
         $profile->email = $info['fb_email'] != 'undefined' ? $info['fb_email'] : null;
         if ($profile->email != null) {
             $profile->email_verified = 1;
         }
-        $profile->gender = isset($info['fb_gender']) ? $info['fb_gender'] : '';
-        $profile->pro_pic = $info['fb_picture'];
+        $profile->gender         = isset($info['fb_gender']) ? $info['fb_gender'] : '';
+        $profile->pro_pic        = $info['fb_picture'];
         $profile->remember_token = str_random(255);
         $profile->save();
         return $profile;
@@ -151,7 +196,7 @@ class ProfileRepository
     public function uploadImage($profile, $photo, $folder, $extension = ".jpg")
     {
         $filename = Carbon::now()->timestamp . '_profile_image_' . $profile->id . $extension;
-        $s3 = Storage::disk('s3');
+        $s3       = Storage::disk('s3');
         $s3->put($folder . $filename, file_get_contents($photo), 'public');
         return config('s3.url') . $folder . $filename;
     }
@@ -161,7 +206,7 @@ class ProfileRepository
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
-                'profile_id' => $user->id
+                'profile_id'     => $user->id
             ]);
             $customer = Customer::find($customer->id);
             $this->setModifier($customer);
@@ -171,8 +216,8 @@ class ProfileRepository
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
         } elseif ($avatar == 'resource') {
-            $resource = new Resource();
-            $resource->profile_id = $user->id;
+            $resource                 = new Resource();
+            $resource->profile_id     = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();
             return $resource;
@@ -216,21 +261,21 @@ class ProfileRepository
 
     public function addToPromoList($customer, $voucher)
     {
-        $promo = new Promotion();
+        $promo              = new Promotion();
         $promo->customer_id = $customer->id;
-        $promo->voucher_id = $voucher->id;
-        $promo->is_valid = 1;
-        $date = Carbon::now()->addDays(constants('REFERRAL_VALID_DAYS'));
-        $promo->valid_till = $date->toDateString() . " 23:59:59";
+        $promo->voucher_id  = $voucher->id;
+        $promo->is_valid    = 1;
+        $date               = Carbon::now()->addDays(constants('REFERRAL_VALID_DAYS'));
+        $promo->valid_till  = $date->toDateString() . " 23:59:59";
         return $promo->save();
     }
 
     public function registerMobile($info)
     {
         $data = [
-            'mobile' => $info['mobile'],
+            'mobile'          => $info['mobile'],
             'mobile_verified' => 1,
-            "remember_token" => str_random(255)
+            "remember_token"  => str_random(255)
         ];
         if (isset($info['name'])) $data['name'] = $info['name'];
         $profile = Profile::create($data);
@@ -240,8 +285,8 @@ class ProfileRepository
     public function registerAvatar($avatar, $request, Profile $profile)
     {
         if ($avatar == 'customer') {
-            $customer = new Customer();
-            $customer->profile_id = $profile->id;
+            $customer                 = new Customer();
+            $customer->profile_id     = $profile->id;
             $customer->remember_token = str_random(255);
             $customer->save();
             $this->setModifier($customer);
@@ -251,16 +296,16 @@ class ProfileRepository
             }
             return $customer;
         } elseif ($avatar == 'resource') {
-            $resource = new Resource();
-            $resource->profile_id = $profile->id;
+            $resource                 = new Resource();
+            $resource->profile_id     = $profile->id;
             $resource->remember_token = str_random(255);
             $resource->save();
             return $resource;
         } elseif ($avatar == env('AFFILIATE_AVATAR_NAME')) {
-            $affiliate = new Affiliate();
-            $affiliate->profile_id = $profile->id;
+            $affiliate                 = new Affiliate();
+            $affiliate->profile_id     = $profile->id;
             $affiliate->remember_token = str_random(255);
-            $affiliate->banking_info = json_encode(array('bKash' => ''));
+            $affiliate->banking_info   = json_encode(array('bKash' => ''));
             $affiliate->save();
             (new NotificationRepository())->forAffiliateRegistration($affiliate);
         }
@@ -271,23 +316,23 @@ class ProfileRepository
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
-                'profile_id' => $user->id
+                'profile_id'     => $user->id
             ]);
             $customer = Customer::find($customer->id);
             $this->setModifier($customer);
             new Referral($customer);
         } elseif ($avatar == 'resource') {
-            $resource = new Resource();
-            $resource->profile_id = $user->id;
+            $resource                 = new Resource();
+            $resource->profile_id     = $user->id;
             $resource->remember_token = str_random(255);
             $resource->status = $user->affiliate ? $user->affiliate->verification_status : 'unverified';
             $resource->save();
             return $resource;
         } elseif ($avatar == env('AFFILIATE_AVATAR_NAME')) {
-            $affiliate = new Affiliate();
-            $affiliate->profile_id = $user->id;
+            $affiliate                 = new Affiliate();
+            $affiliate->profile_id     = $user->id;
             $affiliate->remember_token = str_random(255);
-            $affiliate->banking_info = json_encode(array('bKash' => ''));
+            $affiliate->banking_info   = json_encode(array('bKash' => ''));
             $affiliate->save();
             if ((new MobileNumberValidator())->validateBangladeshi($user->mobile)) $this->addAffiliateBonus($affiliate);
             (new NotificationRepository())->forAffiliateRegistration($affiliate);
@@ -300,15 +345,15 @@ class ProfileRepository
 
         DB::transaction(function () use ($affiliate, $affiliate_bonus_amount) {
             $affiliate->update([
-                'wallet' => $affiliate_bonus_amount,
+                'wallet'           => $affiliate_bonus_amount,
                 'acquisition_cost' => $affiliate_bonus_amount
             ]);
 
             AffiliateTransaction::create([
                 'affiliate_id' => $affiliate->id,
-                'type' => 'Credit',
-                'log' => "Affiliate earned $affiliate_bonus_amount point for registration",
-                'amount' => $affiliate_bonus_amount
+                'type'         => 'Credit',
+                'log'          => "Affiliate earned $affiliate_bonus_amount point for registration",
+                'amount'       => $affiliate_bonus_amount
             ]);
         });
 
@@ -322,7 +367,7 @@ class ProfileRepository
         if ($avatar == 'customer') {
             $customer = Customer::create([
                 'remember_token' => str_random(255),
-                'profile_id' => $user->id
+                'profile_id'     => $user->id
             ]);
             $customer = Customer::find($customer->id);
             $this->setModifier($customer);
@@ -331,14 +376,14 @@ class ProfileRepository
                 $this->updateCustomerOwnVoucherNReferral($customer, $request->referral_code);
             }
         } elseif ($avatar == 'resource') {
-            $resource = new Resource();
-            $resource->profile_id = $user->id;
+            $resource                 = new Resource();
+            $resource->profile_id     = $user->id;
             $resource->remember_token = str_random(255);
             $resource->save();
         } elseif ($avatar == 'member') {
-            $member = new Member();
+            $member                 = new Member();
             $member->remember_token = str_random(255);
-            $member->profile_id = $user->id;
+            $member->profile_id     = $user->id;
             $member->save();
             return $member;
         }

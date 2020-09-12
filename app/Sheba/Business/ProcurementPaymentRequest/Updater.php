@@ -11,6 +11,7 @@ use Sheba\Business\ProcurementPaymentRequestStatusChangeLog\Creator;
 use App\Models\Procurement;
 use App\Models\Bid;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use DB;
 
@@ -33,7 +34,15 @@ class Updater
     private $orderClosedHandler;
     private $errorMessage;
 
-
+    /**
+     * Updater constructor.
+     * @param ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository
+     * @param Creator $creator
+     * @param PaymentCreator $payment_creator
+     * @param ProcurementRepositoryInterface $procurement_repository
+     * @param WalletTransactionHandler $wallet_transaction_handler
+     * @param OrderClosedHandler $order_closed_handler
+     */
     public function __construct(ProcurementPaymentRequestRepositoryInterface $procurement_payment_request_repository,
                                 Creator $creator, PaymentCreator $payment_creator, ProcurementRepositoryInterface $procurement_repository,
                                 WalletTransactionHandler $wallet_transaction_handler, OrderClosedHandler $order_closed_handler)
@@ -104,13 +113,16 @@ class Updater
     {
         $this->makePaymentRequestData();
         $payment_request = null;
+
         $key_name = 'procurement_payment_request_' . $this->paymentRequest->id;
         if (Redis::get($key_name)) {
             $this->setErrorMessage("Already a request pending");
             return null;
         }
+
         Redis::set($key_name, 1);
         Redis::expire($key_name, 2 * 60);
+
         try {
             DB::transaction(function () use (&$payment_request, $key_name) {
                 $payment_request = $this->procurementPaymentRequestRepository->where('id', $this->paymentRequest->id)->first();
@@ -121,19 +133,23 @@ class Updater
                 $this->statusLogCreator->setPaymentRequest($this->paymentRequest)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 if ($this->status == config('b2b.PROCUREMENT_PAYMENT_STATUS')['approved']) {
                     $amount = $this->paymentRequest->amount;
-                    $this->paymentCreator->setPaymentType('Debit')->setPaymentMethod('cheque')->setProcurement($this->procurement)->setAmount($amount)
-                        ->setLog('Payment request #' . $this->paymentRequest->id . ' has been approved.')->create();
+                    $this->paymentCreator->setPaymentType('Debit')->setPaymentMethod('cheque')->setProcurement($this->procurement)->setAmount($amount)->setLog('Payment request #' . $this->paymentRequest->id . ' has been approved.')->create();
+
                     /** @var Partner $partner */
                     $partner = $this->procurement->getActiveBid()->bidder;
-                    $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
+                    $log = 'Received money for RFQ Order #' . $this->procurement->id;
+                    // $partner->minusWallet($amount, ['log' => 'Received money for RFQ Order #' . $this->procurement->id]);
+                    $this->walletTransactionHandler->setModel($partner)->setType(Types::debit())->setAmount($amount)->setLog($log)->store();
+
                     $this->procurementRepository->update($this->procurement, ['partner_collection' => $this->procurement->partner_collection + $amount]);
                     $this->orderClosedHandler->setProcurement($this->procurement)->run();
                 }
             });
             $this->sendStatusChangeNotification();
         } catch (QueryException $e) {
-            throw  $e;
+            throw $e;
         }
+
         Redis::del($key_name);
         return $payment_request;
     }

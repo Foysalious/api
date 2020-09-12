@@ -1,7 +1,7 @@
 <?php namespace Sheba\Service;
 
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 
 class ServiceQuestion
 {

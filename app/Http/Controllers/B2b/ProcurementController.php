@@ -3,7 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Business;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\Profile;
@@ -28,6 +28,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
@@ -80,6 +82,8 @@ class ProcurementController extends Controller
     private $procurementFilterRequest;
     /** @var ProcurementOrder $procurementOrder */
     private $procurementOrder;
+    /** @var RequestHandler $procurementRequestHandler */
+    private $procurementRequestHandler;
 
     /**
      * ProcurementController constructor.
@@ -91,6 +95,7 @@ class ProcurementController extends Controller
      * @param PartnerCreateRequest $partner_create_request
      * @param ProcurementFilterRequest $procurement_filter_request
      * @param ProcurementOrder $procurement_order
+     * @param RequestHandler $procurement_request_handler
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
@@ -98,7 +103,8 @@ class ProcurementController extends Controller
                                 PartnerCreator $partner_creator,
                                 PartnerCreateRequest $partner_create_request,
                                 ProcurementFilterRequest $procurement_filter_request,
-                                ProcurementOrder $procurement_order)
+                                ProcurementOrder $procurement_order,
+                                RequestHandler $procurement_request_handler)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
@@ -107,6 +113,7 @@ class ProcurementController extends Controller
         $this->partnerCreateRequest = $partner_create_request;
         $this->procurementFilterRequest = $procurement_filter_request;
         $this->procurementOrder = $procurement_order;
+        $this->procurementRequestHandler = $procurement_request_handler;
     }
 
     public function create(Request $request)
@@ -475,11 +482,10 @@ class ProcurementController extends Controller
      * @param $business
      * @param $procurement
      * @param Request $request
-     * @param RequestHandler $request_handler
      * @param Updater $updater
      * @return JsonResponse
      */
-    public function updateGeneral($business, $procurement, Request $request, RequestHandler $request_handler, Updater $updater)
+    public function updateGeneral($business, $procurement, Request $request, Updater $updater)
     {
         $this->validate($request, [
             'description' => 'sometimes|required|string',
@@ -492,13 +498,13 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
-        $request_handler->setLongDescription($request->description)
+        $this->procurementRequestHandler->setLongDescription($request->description)
             ->setNumberOfParticipants($request->number_of_participants)
             ->setLastDateOfSubmission($request->last_date_of_submission)
             ->setProcurementStartDate($request->procurement_start_date)
             ->setProcurementEndDate($request->procurement_end_date)
             ->setPaymentOptions($request->payment_options);
-        $updater->setRequestHandler($request_handler)->setProcurement($procurement)->update();
+        $updater->setRequestHandler($this->procurementRequestHandler)->setProcurement($procurement)->update();
 
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
@@ -720,9 +726,9 @@ class ProcurementController extends Controller
         $procurement_status = ProcurementStatusCalculator::resolveStatus($procurement);
 
         return api_response($request, null, 200, [
-            'invited_partners'          => $invited_partners,
-            'is_invitation_available'   => $is_invitation_available,
-            'procurement_status'        => $procurement_status
+            'invited_partners' => $invited_partners,
+            'is_invitation_available' => $is_invitation_available,
+            'procurement_status' => $procurement_status
         ]);
     }
 
@@ -829,7 +835,7 @@ class ProcurementController extends Controller
      * @param $bid
      * @param Request $request
      * @param WorkOrderDataGenerator $data_generator
-     * @return JsonResponse
+     * @return void
      */
     public function downloadWorkOrder($business, $procurement, $bid, Request $request, WorkOrderDataGenerator $data_generator)
     {

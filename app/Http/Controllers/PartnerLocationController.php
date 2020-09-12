@@ -1,8 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exceptions\HyperLocationNotFoundException;
-use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;

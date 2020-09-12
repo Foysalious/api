@@ -1,8 +1,8 @@
 <?php namespace Sheba\Auth;
 
 use Illuminate\Http\Request;
-use Sheba\Authentication\AuthenticationFailedException;
 use Sheba\Authentication\AuthUser;
+use Sheba\Authentication\Exceptions\AuthenticationFailedException;
 
 interface Authentication
 {

@@ -22,6 +22,7 @@ class BusinessRoute
                     $api->group(['prefix' => '{proposal}'], function ($api) {
                         $api->get('/', 'B2b\ProcurementController@proposalDetail');
                         $api->get('/send-pin', 'B2b\ProposalController@sendPin');
+                        $api->get('/work-order/download', 'B2b\ProcurementController@downloadWorkOrder');
                         $api->post('/', 'B2b\ProposalController@takeAction');
                     });
                 });
@@ -96,7 +97,9 @@ class BusinessRoute
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });
+                        $api->post('/change-status-by-super-admin', 'B2b\LeaveController@statusUpdateBySuperAdmin');
                         $api->post('/status', 'B2b\LeaveController@updateStatus');
+                        $api->post('/leave-info-edit', 'B2b\LeaveController@infoUpdateBySuperAdmin');
                     });
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
@@ -308,6 +311,10 @@ class BusinessRoute
                         $api->group(['prefix' => '{setting}'], function ($api) {
                             $api->post('update', 'B2b\LeaveSettingsController@update');
                             $api->delete('delete', 'B2b\LeaveSettingsController@delete');
+                        });
+                        $api->group(['prefix' => 'others'], function ($api) {
+                            $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
+                            $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
                         });
                     });
                 });

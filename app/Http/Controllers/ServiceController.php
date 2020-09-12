@@ -1,10 +1,10 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use App\Repositories\ReviewRepository;
 use App\Repositories\ServiceRepository;
 use App\Transformers\ServiceV2Transformer;
@@ -83,7 +83,7 @@ class ServiceController extends Controller
     {
 
         $lpg_service_id = config('sheba.lpg_service_id');
-        return $this->get($lpg_service_id, $request, $approximatePriceCalculator,$price_calculation, $delivery_charge,
+        return $this->get($lpg_service_id, $request, $approximatePriceCalculator, $price_calculation, $delivery_charge,
             $job_discount_handler);
     }
 
@@ -91,8 +91,6 @@ class ServiceController extends Controller
                         PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
                         JobDiscountHandler $job_discount_handler)
     {
-
-
         ini_set('memory_limit', '2048M');
         $service = Service::where('id', (int)$service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
         $service_groups = $service->first()->groups;
@@ -184,7 +182,6 @@ class ServiceController extends Controller
         $service = $this->serviceRepository->addServiceInfo($services, $scope)[0];
         $service['variables'] = $variables;
         $service['faqs'] = json_decode($service->faqs);
-        $service['structured_description'] = $service->structured_description ? json_decode($service->structured_description) : null;
 
         $service['bn_faqs'] = $service->bn_faqs ? json_decode($service->bn_faqs) : null;
         $category = Category::with(['parent' => function ($query) {
@@ -275,28 +272,23 @@ class ServiceController extends Controller
      */
     public function show($service, Request $request, PriceCalculation $price_calculation, DeliveryCharge $delivery_charge, JobDiscountHandler $job_discount_handler)
     {
-        try {
-            if ($request->has('lat') && $request->has('lng')) {
-                $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-                else return api_response($request, null, 404);
-            } else {
-                $location = $request->has('location') ? $request->location : 4;
-            }
-
-            $service = Service::find($service);
-            $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
-            if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location.']);
-            $manager = new Manager();
-            $manager->setSerializer(new ArraySerializer());
-            $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
-            $service = $manager->createData($resource)->toArray();
-
-            return api_response($request, null, 200, ['service' => $service]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->has('lat') && $request->has('lng')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location_id;
+            else return api_response($request, null, 404);
+        } else {
+            $location = $request->has('location') ? $request->location : 4;
         }
+        $service = Service::find($service);
+        if (!$service) return api_response($request, null, 404, ['message' => "We couldn't find service."]);
+        $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+        if (!$location_service) return api_response($request, null, 404, ['message' => 'Service is not available at this location . ']);
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $resource = new Item($service, new ServiceV2Transformer($location_service, $price_calculation, $delivery_charge, $job_discount_handler));
+        $service = $manager->createData($resource)->toArray();
+
+        return api_response($request, null, 200, ['service' => $service]);
     }
 
     private function serviceQuestionSet($service)

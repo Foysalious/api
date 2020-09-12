@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp;
 
-use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
@@ -15,6 +14,7 @@ use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Throwable;
 
 class TopUp
 {
@@ -26,12 +26,10 @@ class TopUp
     private $model;
     /** @var TopUpAgent */
     private $agent;
-
+    /** @var boolean */
     private $isSuccessful;
-
     /** @var TopUpResponse */
     private $response;
-
     /** @var TopUpValidator */
     private $validator;
 
@@ -81,17 +79,20 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
-
         dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->transactionDetails->message)));
-        DB::transaction(function () use ($response, $topup_order) {
-            $this->setModifier($this->agent);
-            $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-            /** @var TopUpCommission $top_up_commission */
-            $top_up_commission = $this->agent->getCommission();
-            $top_up_commission->setTopUpOrder($topup_order)->disburse();
-            $this->vendor->deductAmount($topup_order->amount);
-            $this->isSuccessful = true;
-        });
+        try {
+            DB::transaction(function () use ($response, $topup_order) {
+                $this->setModifier($this->agent);
+                $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
+                $top_up_commission = $this->agent->getCommission();
+                $top_up_commission->setTopUpOrder($topup_order)->disburse();
+                $this->vendor->deductAmount($topup_order->amount);
+                $this->isSuccessful = true;
+            });
+        } catch (Throwable $e) {
+            logError($e);
+        }
+
     }
 
     /**
@@ -119,23 +120,29 @@ class TopUp
     }
 
     /**
-     * @param TopUpOrder $topup_order
+     * @param TopUpOrder           $topup_order
      * @param TopUpSuccessResponse $response
      * @return TopUpOrder
+     * @throws Throwable
      */
     private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
-        $topup_order->status = $this->vendor->getTopUpInitialStatus();
-        $topup_order->transaction_id = $response->transactionId;
-        $topup_order->transaction_details = json_encode($response->transactionDetails);
-        return $this->updateTopUpOrder($topup_order);
+        try {
+            $topup_order->status = $this->vendor->getTopUpInitialStatus();
+            $topup_order->transaction_id = $response->transactionId;
+            $topup_order->transaction_details = json_encode($response->transactionDetails);
+            return $this->updateTopUpOrder($topup_order);
+        } catch (Throwable $e) {
+            logErrorWithExtra($e, ['topup' => $topup_order->getDirty()]);
+            throw $e;
+        }
 
     }
 
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
     {
         $topup_order->status = config('topup.status.failed.sheba');
-        $topup_order->transaction_details = json_encode(['code' => $response->errorCode, 'message' => $response->errorMessage, 'response' => $response->errorResponse]);
+        $topup_order->transaction_details = $response->toJson();
         return $this->updateTopUpOrder($topup_order);
     }
 

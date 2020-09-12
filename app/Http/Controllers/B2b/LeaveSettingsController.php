@@ -9,6 +9,8 @@ use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\Business\LeaveType\OtherSettings\BasicInfo as OthersInfo;
+use Sheba\Business\LeaveType\OtherSettings\Updater as OthersUpdater;
 
 class LeaveSettingsController extends Controller
 {
@@ -24,13 +26,10 @@ class LeaveSettingsController extends Controller
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
+
         $business_member = $business_member_repo->find($business_member['id']);
-        $leaves = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
-        $leave_types = $leaves->map(function ($leave) {
-            return collect($leave->toArray())
-                ->only(['id', 'title', 'total_days'])
-                ->all();
-        });
+        $leave_types = $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
+
         return api_response($request, null, 200, ['leave_types' => $leave_types]);
     }
 
@@ -94,5 +93,36 @@ class LeaveSettingsController extends Controller
         $leave_setting->delete();
 
         return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
+    }
+
+    /**
+     * @param Request $request
+     * @param OthersInfo $info
+     * @return JsonResponse
+     */
+    public function othersInfo(Request $request, OthersInfo $info)
+    {
+        $others_info = $info->setBusiness($request->business)->getInfo();
+        return api_response($request, null, 200, ['others_info' => $others_info]);
+    }
+
+    /**
+     * @param Request $request
+     * @param OthersUpdater $updater
+     * @return JsonResponse
+     */
+    public function othersUpdate(Request $request, OthersUpdater $updater)
+    {
+        $this->validate($request, ['sandwich_leave' => 'required', 'fiscal_year' => 'required']);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $updater->setBusiness($request->business)
+            ->setMember($business_member->member)
+            ->setSandwichLeave($request->sandwich_leave)
+            ->setFiscalYear($request->fiscal_year)
+            ->update();
+
+        return api_response($request, null, 200);
     }
 }

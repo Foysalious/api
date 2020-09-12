@@ -20,16 +20,22 @@ use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
+use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Dal\Leave\Contract as LeaveRepository;
+use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
+use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 
 class LeaveController extends Controller
 {
@@ -52,13 +58,13 @@ class LeaveController extends Controller
      */
     public function index(Request $request)
     {
-        $this->validate($request, [
-            'sort' => 'sometimes|required|string|in:asc,desc'
-        ]);
+        $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
-        list($offset, $limit) = calculatePagination($request);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
+
+        list($offset, $limit) = calculatePagination($request);
+
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
 
@@ -70,7 +76,9 @@ class LeaveController extends Controller
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
+        $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
             /** @var Leave $requestable */
@@ -104,9 +112,10 @@ class LeaveController extends Controller
      * @param $business
      * @param $approval_request
      * @param Request $request
+     * @param LeaveLogRepo $leave_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo)
     {
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
@@ -125,7 +134,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($profile, $role));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($profile, $role, $leave_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -261,13 +270,29 @@ class LeaveController extends Controller
             'sort' => 'sometimes|string|in:asc,desc',
             'file' => 'sometimes|string|in:excel'
         ]);
+
         list($offset, $limit) = calculatePagination($request);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 420);
         $time_frame = $business_member->getBusinessFiscalPeriod();
         /** @var Business $business */
         $business = $business_member->business;
-        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
+
+        $leave_types = [];
+        $business->leaveTypes()->with(['leaves' => function ($q) { return $q->accepted(); }])
+            ->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
+            ->get()
+            ->each(function ($leave_type) use (&$leave_types) {
+                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
+                $leave_type_data = [
+                    'id' => $leave_type->id,
+                    'title' => $leave_type->title,
+                    'total_days' => $leave_type->total_days
+                ];
+                array_push($leave_types, $leave_type_data);
+        });
+
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile');
@@ -287,7 +312,7 @@ class LeaveController extends Controller
                     }
                 ])->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id');
             }
-        ])->wherePivot('status', '<>', Statuses::INACTIVE)->get();
+        ])->get();
 
         if ($request->has('department') || $request->has('search'))
             $members = $this->membersFilterByDeptSearchByName($members, $request);
@@ -297,7 +322,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($members, new LeaveBalanceTransformer($leave_types));
+        $resource = new Item($members, new LeaveBalanceTransformer($leave_types, $business));
         $leave_balances = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
@@ -310,8 +335,8 @@ class LeaveController extends Controller
 
         return api_response($request, null, 200, [
             'leave_balances' => $leave_balances,
-            'total_records' => $total_records,
-            'leave_types' => $leave_types
+            'leave_types' => $leave_types,
+            'total_records' => $total_records
         ]);
     }
 
@@ -328,7 +353,7 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMemberById($business_member_id);
         /** @var Business $business */
         $business = $business_member->business;
-        $leave_types = $business->leaveTypes()->withTrashed()->take(5)->select('id', 'title', 'total_days')->get()->toArray();
+        $leave_types = $business->leaveTypes()->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
@@ -370,6 +395,15 @@ class LeaveController extends Controller
         });
     }
 
+    private function sortByStatus($leaves)
+    {
+       $pending = $leaves->where('status', Status::PENDING)->sortByDesc('created_at');
+       $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
+       $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
+
+       return $pending->merge($accepted)->merge($rejected);
+    }
+
     /**
      * @param $members
      * @param Request $request
@@ -383,7 +417,7 @@ class LeaveController extends Controller
 
             if ($request->has('department')) {
                 /** @var BusinessMember $business_member */
-                $business_member = $member->businessMember;
+                $business_member = $member->businessMemberWithoutStatusCheck();
                 /** @var BusinessRole $role */
                 $role = $business_member->role;
                 if ($role) $is_dept_matched = $role->businessDepartment->id == $request->department;
@@ -398,5 +432,49 @@ class LeaveController extends Controller
             if ($request->has('department') && $request->has('search')) return $is_dept_matched && $is_name_matched;
             if ($request->has('department') || $request->has('search')) return $is_dept_matched || $is_name_matched;
         });
+    }
+
+    public function statusUpdateBySuperAdmin(Request $request, LeaveRepository $leave_repo, StatusUpdater $updater)
+    {
+        $this->validate($request, [
+            'leave_id' => 'required|string',
+            'status' => 'required|string',
+        ]);
+
+        $leave = $leave_repo->find($request->leave_id);
+
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+
+        $updater->setLeave($leave)->setStatus($request->status)->setBusinessMember($business_member)->updateStatus();
+
+        return api_response($request, null, 200);
+    }
+
+    public function infoUpdateBySuperAdmin (Request $request, LeaveRepository $leave_repo, LeaveUpdater $updater)
+    {
+        $this->validate($request, [
+            'leave_id' => 'required',
+            'data' => 'required|string',
+        ]);
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+        $leave = $leave_repo->find($request->leave_id);
+
+        $edit_values = json_decode($request->data);
+
+        foreach ($edit_values as $value) {
+            if ($value->type === EditType::LEAVE_TYPE) {
+               $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
+            }
+            if ($value->type === EditType::LEAVE_DATE) {
+               $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
+            }
+            if ($value->type === EditType::SUBSTITUTE) {
+                $updater->setLeave($leave)->setUpdateType($value->type)->setSubstituteId($value->substitute_id)->updateSubstitute();
+            }
+        }
+
+        return api_response($request, null, 200);
     }
 }
