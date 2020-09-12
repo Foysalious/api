@@ -88,7 +88,7 @@ class ResourceHandler
                 return $schedule->job_id == $job->id;
             });
         }
-        return $this->bookedSchedules->count() == 0;
+        return $this->bookedSchedules->count() == 0 && !$this->resource->runningLeave($start_time) && !$this->resource->runningLeave($end_time);
     }
 
     public function getBookedJobs()
