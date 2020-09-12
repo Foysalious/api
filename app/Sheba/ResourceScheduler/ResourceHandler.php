@@ -145,7 +145,7 @@ class ResourceHandler
     {
         $extended_time = $schedule->end->addMinutes($min);
         $conflicted_schedule = $this->resourceSchedules->filterByDateTime($this->resource, $extended_time);
-        $is_available_for_extend = $conflicted_schedule->count() == 0 || !$this->resource->runningLeave($extended_time);
+        $is_available_for_extend = $conflicted_schedule->count() == 0;
 
         if (!$is_available_for_extend) {
             $conflicted_schedule->first()->job->update(['resource_id' => null]);
