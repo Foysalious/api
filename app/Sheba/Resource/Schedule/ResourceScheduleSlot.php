@@ -1,5 +1,6 @@
 <?php namespace Sheba\Resource\Schedule;
 
+use App\Models\CategoryScheduleSlot;
 use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Partner;
@@ -32,13 +33,13 @@ class ResourceScheduleSlot
     private $resources;
     private $preparationTime;
     private $portal;
+    private $resource;
 
     public function __construct()
     {
         $this->limit = 1;
         $this->scheduleStart = '09:00:00';
         $this->scheduleEnd = '21:00:00';
-        $this->shebaSlots = $this->getShebaSlots();
         $this->preparationTime = 0;
         $this->today = Carbon::now()->addMinutes(15);
     }
@@ -199,9 +200,38 @@ class ResourceScheduleSlot
         }
     }
 
-    private function formatSlots(Carbon $day, $slots)
+    public function getSlots($day)
+    {
+        $last_day = $this->today->copy()->addDays($this->limit);
+        if($this->category) {
+            $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
+            $slots = $slots->map(function ($slot) {
+                return $slot->slot  ;
+            });
+        }
+        else $slots = $this->getShebaSlots();
+        $this->shebaSlots = $slots;
+        $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
+        $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
+
+        if ($this->partner) {
+            $this->resources = collect([$this->resource]);
+            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
+            $this->runningLeaves = $this->getLeavesBetween($start, $end);
+            $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+            if ($this->category && $category_partner) $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
+        }
+
+        return $this->shebaSlots;
+    }
+
+    private function formatSlots(Carbon $day)
     {
         $current_time = $this->today->copy();
+        $slots = $this->getSlots($day);
+        if ($this->partner) {
+            $this->addAvailabilityToShebaSlots($day);
+        }
         if (!$this->partner && $this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
@@ -224,23 +254,13 @@ class ResourceScheduleSlot
     {
         $final = [];
         $last_day = $this->today->copy()->addDays($this->limit);
-        $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
-        $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-        if ($this->partner) {
-            $this->resources = collect([$resource]);
-            $this->bookedSchedules = $this->getBookedSchedules($start, $end);
-            $this->runningLeaves = $this->getLeavesBetween($start, $end);
-            $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
-            if ($this->category && $category_partner) $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
-        }
+        $this->resource = $resource;
+
         $day = $this->today->copy();
         while ($day < $last_day) {
-            if ($this->partner) {
-                $this->addAvailabilityToShebaSlots($day);
-            }
             array_push($final, [
                 'value' => $day->toDateString(),
-                'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())
+                'slots' => $this->formatSlots($day)
             ]);
             $day->addDay();
         }
