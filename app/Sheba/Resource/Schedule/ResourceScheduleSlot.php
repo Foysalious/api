@@ -1,7 +1,7 @@
 <?php namespace Sheba\Resource\Schedule;
 
 use App\Models\Category;
-use App\Models\CategoryScheduleSlot;
+use Sheba\Dal\CategoryScheduleSlot\CategoryScheduleSlot;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;
