@@ -1,6 +1,6 @@
 <?php namespace Sheba\ResourceScheduler;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Resource;
 use App\Models\ResourceSchedule as Schedule;

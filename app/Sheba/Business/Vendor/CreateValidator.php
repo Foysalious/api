@@ -4,7 +4,7 @@ use Sheba\Repositories\ProfileRepository;
 
 class CreateValidator
 {
-    /** @var CreateRequest $vehicleCreateRequest*/
+    /** @var CreateRequest $vehicleCreateRequest */
     private $vendorCreateRequest;
     private $profileRepository;
 
@@ -21,8 +21,8 @@ class CreateValidator
 
     public function hasError()
     {
-        if ($this->vendorAlreadyAddWithBusiness())
-            return ['code' => 421, 'msg' => 'Vendor Already Added!'];
+        if ($this->vendorAlreadyAddWithBusiness()) return ['code' => 421, 'msg' => 'Vendor Already Added!'];
+        if ($this->vendorNidAlreadyExist()) return ['code' => 420, 'msg' => 'Nid Already Exist!'];
 
         return false;
     }
@@ -31,10 +31,17 @@ class CreateValidator
     {
         $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
         $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
-        if ($profile && $profile->resource && $partner = $profile->resource->firstPartner()){
+        if ($profile && $profile->resource && $partner = $profile->resource->firstPartner()) {
             return in_array($this->vendorCreateRequest->getBusiness()->id, $partner->businesses->pluck('id')->toArray());
         }
 
+        return false;
+    }
+
+    private function vendorNidAlreadyExist()
+    {
+        $nid_profile = $this->profileRepository->checkExistingNid($this->vendorCreateRequest->getResourceNidNumber());
+        if ($nid_profile) return true;
         return false;
     }
 }

@@ -1,12 +1,12 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -429,7 +429,7 @@ class CategoryController extends Controller
                         'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                         'app_thumb', 'app_banner', 'short_description', 'description',
                         'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features', 'is_add_on'
+                        'terms_and_conditions', 'features','is_inspection_service', 'is_add_on'
                     )->orderBy('order')->skip($offset)->take($limit);
 
                     if ((int)\request()->is_business) $q->publishedForBusiness();

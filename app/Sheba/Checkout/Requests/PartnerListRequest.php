@@ -1,11 +1,11 @@
 <?php namespace Sheba\Checkout\Requests;
 
 use App\Exceptions\HyperLocationNotFoundException;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Location;
 use App\Models\Partner;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Dingo\Api\Routing\Helpers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;

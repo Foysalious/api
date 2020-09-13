@@ -6,6 +6,7 @@ class Thana extends Model
 {
     protected $guarded = ['id'];
     public $timestamps = false;
+    protected $casts = ['lat' => 'double', 'lng' => 'double'];
 
     public function district()
     {
