@@ -2,7 +2,7 @@
 
 use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServiceSurcharge;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 
 class PartnerServiceRepository

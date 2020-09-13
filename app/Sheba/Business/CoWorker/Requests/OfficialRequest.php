@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 class OfficialRequest
 {
     private $businessMember;
+    private $employeeId;
     private $joinDate;
     private $grade;
     private $employeeType;
@@ -26,6 +27,17 @@ class OfficialRequest
     public function getBusinessMember()
     {
         return $this->businessMember;
+    }
+
+    public function setEmployeeId($employee_id)
+    {
+        $this->employeeId = $employee_id;
+        return $this;
+    }
+
+    public function getEmployeeId()
+    {
+        return $this->employeeId;
     }
 
     /**

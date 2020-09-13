@@ -2,7 +2,7 @@
 
 namespace Sheba\Partner;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryScheduleSlot\CategoryScheduleSlot;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;

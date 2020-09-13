@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use Carbon\Carbon;
 use GuzzleHttp\Client;

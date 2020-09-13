@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reward\Event\Customer\Action\WalletCashback;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Reward\AmountCalculator;
 use Sheba\Reward\Event\Action;
 use Sheba\Reward\Exception\RulesTypeMismatchException;

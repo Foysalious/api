@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use GuzzleHttp\Client;
+use Sheba\RequestIdentification;
 
 class Creator
 {
@@ -15,6 +16,8 @@ class Creator
     protected $partnerId;
     protected $salesChannel;
     protected $paymentMethod;
+    protected $deliveryName;
+    protected $portalName;
 
     public function setCustomer(Customer $customer)
     {
@@ -25,6 +28,18 @@ class Creator
     public function setServices($services)
     {
         $this->services = $services;
+        return $this;
+    }
+
+    public function setDeliveryName($deliveryName)
+    {
+        $this->deliveryName = trim($deliveryName);
+        return $this;
+    }
+
+    public function setPortalName($portal)
+    {
+        $this->portalName = $portal;
         return $this;
     }
 
@@ -79,20 +94,25 @@ class Creator
     public function create()
     {
         $client = new Client();
-        $url = config('sheba.api_url') . "/v3/customers/".$this->customer->id."/orders";
-        $res = $client->request('POST', $url, ['form_params' => [
-            'services' => $this->services,
-            'name' => $this->customer->profile->name,
-            'mobile' => $this->mobile,
-            'remember_token' => $this->customer->remember_token,
-            'sales_channel' => $this->salesChannel,
-            'payment_method' => $this->paymentMethod,
-            'date' => $this->date,
-            'time' => $this->time,
-            'additional_information' => $this->additionalInformation,
-            'address_id' => $this->addressId,
-            'partner' => $this->partnerId
-        ]]);
+        $url = config('sheba.api_url') . "/v3/customers/" . $this->customer->id . "/orders";
+        $res = $client->request('POST', $url, [
+            'headers' => [
+                'Portal-Name' => $this->portalName
+            ],
+            'form_params' => [
+                'services' => $this->services,
+                'name' => $this->deliveryName,
+                'mobile' => $this->mobile,
+                'remember_token' => $this->customer->remember_token,
+                'sales_channel' => $this->salesChannel,
+                'payment_method' => $this->paymentMethod,
+                'date' => $this->date,
+                'time' => $this->time,
+                'additional_information' => $this->additionalInformation,
+                'address_id' => $this->addressId,
+                'partner' => $this->partnerId
+            ]
+        ]);
         return json_decode($res->getBody());
     }
 }

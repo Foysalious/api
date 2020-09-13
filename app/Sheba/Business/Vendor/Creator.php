@@ -1,6 +1,6 @@
 <?php namespace Sheba\Business\Vendor;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Profile;
 use Sheba\ModificationFields;
 use DB;

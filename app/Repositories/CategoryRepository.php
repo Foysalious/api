@@ -1,6 +1,6 @@
 <?php namespace App\Repositories;
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Sheba\CategoryServiceGroup;
 
 class CategoryRepository

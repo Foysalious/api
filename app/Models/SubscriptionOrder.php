@@ -10,6 +10,7 @@ use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
 use Sheba\ServiceRequest\ServiceRequestObject;
+use Sheba\Dal\Category\Category;
 
 class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {

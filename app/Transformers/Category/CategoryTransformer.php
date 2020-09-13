@@ -1,10 +1,10 @@
 <?php namespace App\Transformers\Category;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Resource;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use DB;

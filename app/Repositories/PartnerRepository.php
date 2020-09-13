@@ -1,6 +1,6 @@
 <?php namespace App\Repositories;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;

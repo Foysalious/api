@@ -41,5 +41,4 @@ class LocationController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         }
     }
-
 }
