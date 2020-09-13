@@ -237,7 +237,11 @@ class Loan
             'banner'            => GeneralStatics::banner(),
             'robi_retailer'     => $robi_retailer,
             'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
-            'is_bkash_agent'    => $this->isBkashAgent()
+            'is_bkash_agent'    => $this->isBkashAgent(),
+            'application_fee'   => [
+                'term_loan' => GeneralStatics::getFee(LoanTypes::TERM),
+                'micro_loan' => GeneralStatics::getFee(LoanTypes::MICRO)
+            ]
         ];
         $data          = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
