@@ -132,7 +132,10 @@ class IndexRoute
             $api->post('categories', 'Partner\OperationController@saveCategories');
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
-            $api->post('top-up', 'TopUpController@topUp');
+            $api->group(['prefix'=>'top-up'],function($api){
+                $api->post('/', 'TopUpController@topUp');
+                $api->get('/history', 'TopUp\\TopUpController@topUpHistory');
+            });
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
