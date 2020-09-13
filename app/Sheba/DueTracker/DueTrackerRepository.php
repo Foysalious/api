@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -221,7 +222,7 @@ class DueTrackerRepository extends BaseRepository
         return $response['data'];
     }
 
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method, $payment_type = null)
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
     {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
@@ -230,9 +231,12 @@ class DueTrackerRepository extends BaseRepository
             $payment_data['pos_order_id'] = $pos_order_id;
             $payment_data['amount']       = $amount_cleared;
             $payment_data['method']       = $payment_method;
-            if ($payment_type == "debit") $this->paymentCreator->debit($payment_data);
-            else $this->paymentCreator->credit($payment_data);
+            $this->paymentCreator->credit($payment_data);
         }
+    }
+
+    public function removePosOrderPayment($pos_order_id){
+       return PosOrderPayment::where('pos_order_id',$pos_order_id)->delete();
     }
 
     private function createStoreData(Request $request)
