@@ -34,7 +34,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
         $date_count = count($this->request->scheduleDate);
         foreach ($this->request->selectedServices as $selected_service) {
             $unit_price = $this->getUnitPrice($selected_service);
-            $original_price = $unit_price * $selected_service->quantity * $date_count;
+            $original_price = $unit_price * $selected_service->quantity;
             /** @var ServiceSubscriptionDiscount $discount */
             $discount = $selected_service->serviceModel->subscription->getDiscount($this->request->subscriptionType, $date_count);
             $discounted_amount = !$discount ? 0 : $discount->getApplicableAmount($original_price, $selected_service->quantity);
@@ -44,7 +44,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             $service->setOption($selected_service->option)->setQuantity($selected_service->quantity)
                 ->setDiscount($discounted_amount);
 
-            if($discount) {
+            if ($discount) {
                 $service->setCap($discount->cap)->setAmount($discount->discount_amount)
                     ->setIsPercentage($discount->isPercentage() ? 1 : 0)
                     ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution);
@@ -64,7 +64,6 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             ->setTotalQuantity(count($this->request->scheduleDate))
             ->setHasHomeDelivery((int)$this->request->selectedCategory->is_home_delivery_applied ? 1 : 0)
             ->setHasPremiseAvailable((int)$this->request->selectedCategory->is_partner_premise_applied ? 1 : 0);
-
         return $price;
     }
 
@@ -89,7 +88,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
         $discount_checking_params = (new JobDiscountCheckingParams())
             ->setDiscountableAmount($original_delivery_charge)->setOrderAmount($total_price);
         $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->request->selectedCategory)
-           ->setCheckingParams($discount_checking_params)->calculate();
+            ->setCheckingParams($discount_checking_params)->calculate();
 
         if ($this->jobDiscountHandler->hasDiscount()) {
             $discount_amount += $this->jobDiscountHandler->getApplicableAmount();
