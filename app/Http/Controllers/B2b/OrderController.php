@@ -18,6 +18,8 @@ use Sheba\Checkout\SubscriptionOrderPlace\B2bSubscriptionOrderPlaceFactory;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
+use Sheba\Map\Address;
+use Sheba\Map\GeoCode;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\AvailableMethods;
@@ -178,7 +180,7 @@ class OrderController extends Controller
         }
     }
 
-    public function placeOrder(Request $request)
+    public function placeOrder(Request $request, GeoCode $geo_code, Address $address)
     {
         try {
             $request->merge(['mobile' => trim(formatMobile($request->mobile))]);
@@ -187,6 +189,7 @@ class OrderController extends Controller
                 'partner' => 'required',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
+                'delivery_address' => 'required|string',
                 'issue_id' => 'sometimes|required|integer',
             ], ['mobile' => 'Invalid mobile number!']);
 
@@ -194,15 +197,16 @@ class OrderController extends Controller
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             $this->setModifier($customer);
+            $address->setAddress($request->delivery_address);
+            $geo = $geo_code->setAddress($address)->getGeo();
             if (!$customer) {
                 $customer = $this->memberManager->createCustomerFromMember($member);
                 $member = Member::find($member->id);
-                $address = $this->memberManager->createAddress($member, $business);
+                $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo);
             } else {
-                $geo = json_decode($business->geo_informations);
-                $coords = new Coords($geo->lat, $geo->lng);
+                $coords = new Coords($geo->getLat(), $geo->getLng());
                 $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->memberManager->createAddress($member, $business);
+                if (!$address) $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo);
             }
             $order = new Checkout($customer);
             $request->merge([

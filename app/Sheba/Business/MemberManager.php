@@ -5,6 +5,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Member;
+use Sheba\Location\Geo;
 
 class MemberManager
 {
@@ -16,15 +17,14 @@ class MemberManager
         $customer->save();
         return $customer;
     }
-
-    public function createAddress(Member $member, Business $business)
+    
+    public function createAddress(Member $member, $delivery_address, Geo $geo)
     {
         $address = new CustomerDeliveryAddress();
-        $address->address = $business->address;
-        $address->name = $business->name;
-        $geo = json_decode($business->geo_informations);
-        $address->geo_informations = $business->geo_informations;
-        $address->location_id = HyperLocal::insidePolygon($geo->lat, $geo->lng)->with('location')->first()->location->id;
+        $address->address = $delivery_address;
+        $address->name = $delivery_address;
+        $address->geo_informations = json_encode(['lat' => $geo->getLat(), 'lng' => $geo->getLng()]);
+        $address->location_id = HyperLocal::insidePolygon($geo->getLat(), $geo->getLng())->with('location')->first()->location->id;
         $address->customer_id = $member->profile->customer->id;
         $address->mobile = $member->profile->mobile;
         $address->save();
