@@ -6,6 +6,7 @@ use App\Models\ProcurementItemField;
 use App\Models\Tag;
 use Carbon\Carbon;
 use Clockwork\DataSource\DBALDataSource;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Sheba\Business\Procurement\OrderClosedHandler;
@@ -144,8 +145,8 @@ class Updater
 
     private function updateTags()
     {
-        if ($this->procurement->getTagNamesAttribute()->toArray() !==  $this->requestHandler->getTags())
-        {
+        if (!$this->requestHandler->getTags()) return;
+        if ($this->procurement->getTagNamesAttribute()->toArray() !== $this->requestHandler->getTags()) {
             $this->procurement->tags()->detach();
             $tags = Tag::sync($this->requestHandler->getTags(), get_class($this->procurement));
             $this->procurement->tags()->sync($tags);
@@ -177,7 +178,7 @@ class Updater
             }
             DB::commit();
             $this->updateType();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
         }
     }
