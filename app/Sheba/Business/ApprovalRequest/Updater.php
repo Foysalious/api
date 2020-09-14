@@ -81,7 +81,7 @@ class Updater
 
         if ($this->requestableType == ApprovalRequestType::LEAVE) {
             $leave = $this->requestable;
-            if ($leave->status != LeaveStatus::REJECTED) {
+            if ($leave->status != LeaveStatus::REJECTED && $leave->status != LeaveStatus::ACCEPTED ) {
                 if ($this->status == Status::REJECTED)
                     $this->leaveUpdater->setLeave($leave)->setStatus(LeaveStatus::REJECTED)->setBusinessMember($this->businessMember)->updateStatus();
 

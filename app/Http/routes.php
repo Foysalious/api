@@ -1,7 +1,6 @@
 <?php
 
 Route::get('/', function () {
-    dd(\Carbon\Carbon::parse("2020-08-30")->dayOfWeek);
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');
