@@ -382,7 +382,7 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
-                $api->post('/fleet-mail', 'B2b\TripRequestController@fleetMail');
+                $api->get('/fleet-mail', 'B2b\TripRequestController@fleetMail');
 
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
                     $api->get('/', 'B2b\TripRequestApprovalController@index');
