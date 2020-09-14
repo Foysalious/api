@@ -95,7 +95,7 @@ class CustomerSubscriptionController extends Controller
                     'job_id' => $last_job->id,
                     'partner_order_id' => $partner_order->id,
                     'schedule_date' => Carbon::parse($last_job->schedule_date),
-                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j').', '.Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
+                    'preferred_time' => Carbon::parse($last_job->schedule_date)->format('M-j') . ', ' . Carbon::parse($last_job->preferred_time_start)->format('h:ia'),
                     'is_completed' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                     'completed_at' => $partner_order->closed_and_paid_at ? $partner_order->closed_and_paid_at->format('M-j, h:ia') : null,
                     'cancelled_at' => $partner_order->cancelled_at ? Carbon::parse($partner_order->cancelled_at)->format('M-j, h:i a') : null
@@ -103,8 +103,8 @@ class CustomerSubscriptionController extends Controller
             });
 
             $next_order = [];
-            foreach ($format_partner_orders->toArray() as $partner_order){
-                if (empty($partner_order['is_completed'])){
+            foreach ($format_partner_orders->toArray() as $partner_order) {
+                if (empty($partner_order['is_completed'])) {
                     $next_order = getDayName($partner_order['schedule_date']);
                     break;
                 }
@@ -134,7 +134,6 @@ class CustomerSubscriptionController extends Controller
             $service_details_breakdown = $service_details->breakdown['0'];
             $service = Service::find((int)$service_details_breakdown->id);
             $schedules = collect(json_decode($subscription_order->schedules));
-
             $subscription_order_details = [
                 "subscription_code" => $subscription_order->code(),
                 'service_id' => $service->id,
@@ -145,11 +144,10 @@ class CustomerSubscriptionController extends Controller
                 'quantity' => (double)$service_details_breakdown->quantity,
 
                 "partner_id" => $subscription_order->partner_id,
-                "partner_name" => $service_details->name,
-                "partner_slug" => $subscription_order->partner->sub_domain,
-                "partner_mobile" => $subscription_order->partner->getContactNumber(),
-                "logo" => $service_details->logo,
-
+                "partner_name" => $subscription_order->partner ? $subscription_order->partner->name : null,
+                "partner_slug" => $subscription_order->partner ? $subscription_order->partner->sub_domain : null,
+                "partner_mobile" => $subscription_order->partner ? $subscription_order->partner->getContactNumber() : null,
+                "logo" => $subscription_order->partner ? $subscription_order->partner->logo : null,
                 'customer_name' => $subscription_order->customer->profile->name,
                 'customer_mobile' => $subscription_order->customer->profile->mobile,
                 'address' => $subscription_order->deliveryAddress->address,
