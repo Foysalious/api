@@ -26,6 +26,7 @@ class VendorDetailsTransformer extends TransformerAbstract
             "mobile" => $partner->getContactNumber(),
             "email" => $partner->getContactEmail(),
             "address" => $partner->address,
+            "status" => $partner->is_active_for_b2b,
             "company_type" => $type,
             "service_type" => $master_categories,
             "no_of_resource" => $resources,

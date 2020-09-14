@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Helper\BangladeshiMobileValidator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
@@ -7,17 +8,27 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Excel;
 use Sheba\Business\Vendor\BulkUploadExcel;
+use Sheba\Business\Vendor\BulkUploadExcelError;
 use Sheba\Business\Vendor\CreateRequest;
 use Sheba\Business\Vendor\Creator;
 use Sheba\Business\Vendor\Updater;
 use Sheba\Business\Vendor\UpdateRequest;
+use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
+use Sheba\Repositories\ProfileRepository;
 use Throwable;
 
 class VendorController extends Controller
 {
     use ModificationFields;
+
+    private $profileRepository;
+
+    public function __construct(ProfileRepository $profile_repo)
+    {
+        $this->profileRepository = $profile_repo;
+    }
 
     /**
      * @param Request $request
@@ -79,19 +90,16 @@ class VendorController extends Controller
      * @param Request $request
      * @param CreateRequest $create_request
      * @param Creator $creator
+     * @param BulkUploadExcelError $bulk_upload_excel_error
      * @return JsonResponse
      */
-    public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator)
+    public function bulkStore(Request $request, CreateRequest $create_request, Creator $creator, BulkUploadExcelError $bulk_upload_excel_error)
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
-
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
-
-            if (!in_array($extension, $valid_extensions)) {
-                return api_response($request, null, 400, ['message' => 'File type not support']);
-            }
+            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $admin_member = $request->manager_member;
             $business = $request->business;
@@ -102,6 +110,11 @@ class VendorController extends Controller
 
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
+            $data = $data->filter(function ($row) {
+                return ($row->vendor_name && $row->phone_number && $row->contact_person_name && $row->contact_person_mobile && $row->address && $row->email && $row->trade_license_number && $row->vat_registration_number);
+            });
+
+            $total = $data->count();
             $total_count = 0;
             $error_count = 0;
             $vendor_name = BulkUploadExcel::VENDOR_NAME_COLUMN_TITLE;
@@ -112,6 +125,22 @@ class VendorController extends Controller
             $email = BulkUploadExcel::EMAIL_COLUMN_TITLE;
             $trade_license = BulkUploadExcel::TRADE_LICENSE_NUMBER_COLUMN_TITLE;
             $vat_registration = BulkUploadExcel::VAT_REGISTRATION_NUMBER_COLUMN_TITLE;
+
+            $excel_error = null; $halt_top_up = false;
+            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $contact_person_mobile, $bulk_upload_excel_error) {
+                if (!$this->isMobileNumberValid($value->$contact_person_mobile)) {
+                    $halt_top_up = true; $excel_error = 'Mobile number Invalid';
+                } elseif (!$this->isMobileNumberAlreadyExist($value->$contact_person_mobile)) {
+                    $halt_top_up = true; $excel_error = 'This mobile number already exist';
+                } else {
+                    $excel_error = null;
+                }
+                $bulk_upload_excel_error->setAgent($business)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
+            });
+            if ($halt_top_up) {
+                $excel_data_format_errors = $bulk_upload_excel_error->takeCompletedAction();
+                return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
+            }
 
             $data->each(function ($value) use (
                 $create_request, $creator, $admin_member, &$error_count, &$total_count, $business,
@@ -152,6 +181,27 @@ class VendorController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param $mobile
+     * @return bool
+     */
+    private function isMobileNumberValid($mobile)
+    {
+        return BangladeshiMobileValidator::validate(BDMobileFormatter::format($mobile));
+    }
+
+    /**
+     * @param $mobile
+     * @return bool
+     */
+    private function isMobileNumberAlreadyExist($mobile)
+    {
+        $profile = $this->profileRepository->checkExistingMobile($mobile);
+        if ($profile) return true;
+        return false;
+    }
+
 
     public function activeInactive($business, $vendor, Request $request, UpdateRequest $update_request, Updater $updater, PartnerRepositoryInterface $partner_repository)
     {
