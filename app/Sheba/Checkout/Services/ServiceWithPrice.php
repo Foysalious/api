@@ -1,6 +1,6 @@
 <?php namespace Sheba\Checkout\Services;
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 
 class ServiceWithPrice
 {

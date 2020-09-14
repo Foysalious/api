@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\Procurement;
 
+use App\Jobs\Business\SendEmailForPublishTenderToBusiness;
 use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\Bid;
 use App\Models\Partner;
@@ -405,6 +406,14 @@ class Creator
     private function sendNotification(Procurement $procurement)
     {
         dispatch(new SendRFQCreateNotificationToPartners($procurement, $this->partnerNotificationHandler));
+    }
+
+    /**
+     * @param Procurement $procurement
+     */
+    private function sendMailToBusiness(Procurement $procurement)
+    {
+        $this->dispatch(new SendEmailForPublishTenderToBusiness($procurement));
     }
 
     /**

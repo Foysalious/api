@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Category\Review;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Review;
 use App\Models\ReviewQuestionAnswer;
 use Sheba\Cache\CacheRequest;

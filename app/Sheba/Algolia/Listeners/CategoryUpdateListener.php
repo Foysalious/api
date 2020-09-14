@@ -1,7 +1,7 @@
 <?php namespace Sheba\Algolia\Listeners;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Report\Listeners\BaseSavedListener;
 use Sheba\Dal\Category\Events\CategorySaved as CategorySavedEvent;
 

@@ -4,8 +4,8 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
@@ -98,7 +98,6 @@ class CustomerSubscriptionController extends Controller
                 'subscription_type' => 'required|string',
                 'sales_channel' => 'required|string',
             ]);
-
             $subscription_order = $factory->get($request)->place();
             return api_response($request, $subscription_order, 200, ['order' => [
                 'id' => $subscription_order->id
@@ -146,7 +145,8 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
             list($offset, $limit) = calculatePagination($request);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
+            $subscription_orders = SubscriptionOrder::with(['orders.partnerOrders.jobs.jobServices', 'customer.profile'])
+                ->where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
             $subscription_order_count = $subscription_orders->count();
             $subscription_orders->skip($offset)->limit($limit);
 
@@ -155,6 +155,7 @@ class CustomerSubscriptionController extends Controller
             }
 
             foreach ($subscription_orders->get() as $subscription_order) {
+                if (!$subscription_order->isPaid()) continue;
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
                 });
@@ -338,8 +339,10 @@ class CustomerSubscriptionController extends Controller
                 'quantity' => (double)$service_details_breakdown->quantity,
                 'is_weekly' => $service_subscription->is_weekly,
                 'is_monthly' => $service_subscription->is_monthly,
+                'is_yearly' => $service_subscription->is_yearly,
                 'min_weekly_qty' => $service_subscription->min_weekly_qty,
                 'min_monthly_qty' => $service_subscription->min_monthly_qty,
+                'min_yearly_qty' => $service_subscription->min_yearly_qty,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $partner ? $partner->name : null,
                 "logo" => $partner ? $partner->logo : null,
@@ -365,7 +368,7 @@ class CustomerSubscriptionController extends Controller
                 "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
-                'total_price' => $subscription_order->totalPrice,
+                'total_price' => $subscription_order->orders->count() > 0 ? $subscription_order->totalPrice : $service_details->discounted_price,
                 "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
@@ -376,13 +379,15 @@ class CustomerSubscriptionController extends Controller
                 "subscription_status" => $subscription_order->status,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "subscription_start" => Carbon::parse($subscription_order->billing_cycle_start)->format('l, j F Y'),
-                "subscription_end" =>  Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
+                "subscription_end" => Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
             ];
 
             /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
             $weekly_discount = $service_subscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
             /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
             $monthly_discount = $service_subscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+            /** @var $discount ServiceSubscriptionDiscount $yearly_discount */
+            $yearly_discount = $service_subscription->discounts()->where('subscription_type', 'yearly')->valid()->first();
 
             $subscription_order_details['weekly_discount'] = $weekly_discount ? [
                 'value' => (double)$weekly_discount->discount_amount,
@@ -395,6 +400,13 @@ class CustomerSubscriptionController extends Controller
                 'is_percentage' => $monthly_discount->isPercentage(),
                 'cap' => (double)$monthly_discount->cap,
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
+            ] : null;
+
+            $subscription_order_details['yearly_discount'] = $yearly_discount ? [
+                'value' => (double)$yearly_discount->discount_amount,
+                'is_percentage' => $yearly_discount->isPercentage(),
+                'cap' => (double)$yearly_discount->cap,
+                'min_discount_quantity' => $yearly_discount->min_discount_qty
             ] : null;
 
             $resource = new Item($service->category,

@@ -3,7 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Business;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
 use App\Models\Profile;

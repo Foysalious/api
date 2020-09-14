@@ -1,6 +1,6 @@
 <?php namespace Sheba\AppSettings\HomePageSetting\Getters;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\OfferShowcase;
 use App\Models\Voucher;

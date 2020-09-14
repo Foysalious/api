@@ -1,4 +1,4 @@
-<?php namespace Sheba\Authentication;
+<?php namespace Sheba\Authentication\Exceptions;
 
 use App\Exceptions\ApiValidationException;
 use Throwable;

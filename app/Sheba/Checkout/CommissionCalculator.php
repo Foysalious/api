@@ -1,6 +1,6 @@
 <?php namespace Sheba\Checkout;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 
 class CommissionCalculator

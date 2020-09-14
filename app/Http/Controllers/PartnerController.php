@@ -4,7 +4,7 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
 use App\Models\HyperLocal;
@@ -18,7 +18,7 @@ use Sheba\Dal\PartnerService\PartnerService;
 use App\Models\PartnerServicePricesUpdate;
 use App\Models\Resource;
 use App\Models\ReviewQuestionAnswer;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\SubscriptionOrder;
 use App\Repositories\DiscountRepository;
 use App\Repositories\FileRepository;
@@ -811,7 +811,9 @@ class PartnerController extends Controller
             HyperLocal::insideCircle($geo_info)->with('location')->get()->pluck('location')->filter()->each(function ($location) use (&$locations) {
                 $locations->push([
                     'id'   => $location->id,
-                    'name' => $location->name
+                    'name' => $location->name,
+                    'lat' => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
+                    'lng' => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
                 ]);
             });
             if ($locations->count() == 0)
