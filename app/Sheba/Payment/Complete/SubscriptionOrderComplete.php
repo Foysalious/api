@@ -8,21 +8,26 @@ use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
+use Sheba\Dal\SubscriptionOrder\Statuses;
 use Sheba\Dal\SubscriptionOrderPayment\SubscriptionOrderPaymentRepositoryInterface;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\SubscriptionOrderRequest\Generator;
 use Throwable;
 use DB;
 
 class SubscriptionOrderComplete extends PaymentComplete
 {
     use ModificationFields;
-    private $subscriptionOrderPaymentRepository;
 
-    public function __construct(SubscriptionOrderPaymentRepositoryInterface $subscription_order_payment_repository)
+    private $subscriptionOrderPaymentRepository;
+    private $requestGenerator;
+
+    public function __construct(SubscriptionOrderPaymentRepositoryInterface $subscription_order_payment_repository, Generator $generator)
     {
         parent::__construct();
         $this->subscriptionOrderPaymentRepository = $subscription_order_payment_repository;
+        $this->requestGenerator = $generator;
     }
 
     /**
@@ -43,7 +48,7 @@ class SubscriptionOrderComplete extends PaymentComplete
             $payment_detail = $this->payment->paymentDetails->last();
             DB::transaction(function () use ($subscription_order, $payment_detail) {
                 $this->clearSubscriptionPayment($subscription_order);
-                if($subscription_order->partner_id) $this->convertToOrder($subscription_order);
+                if ($subscription_order->hasPartner()) $this->convertToOrder($subscription_order);
                 $this->createSubscriptionOrderPaymentLog();
                 $this->completePayment();
                 $subscription_order->payment_method = strtolower($payment_detail->readable_method);
@@ -52,6 +57,14 @@ class SubscriptionOrderComplete extends PaymentComplete
             $subscription_order = $subscription_order->fresh();
             $subscription_order->calculate();
             $this->cleaOrderPayment($subscription_order, $payment_detail);
+            DB::transaction(function () use ($subscription_order) {
+                if ($subscription_order->canCreateOrderRequest()) {
+                    $this->requestGenerator->setSubscriptionOrder($subscription_order)->generate();
+                    $subscription_order = $subscription_order->fresh();
+                    if (!$subscription_order->hasOrderRequests()) $this->setSubscriptionOrderStatusToNotResponded($subscription_order);
+                }
+            });
+
         } catch (Exception $e) {
             $this->failPayment();
             throw $e;
@@ -141,4 +154,11 @@ class SubscriptionOrderComplete extends PaymentComplete
         }
 
     }
+
+    private function setSubscriptionOrderStatusToNotResponded(SubscriptionOrder $subscriptionOrder)
+    {
+        $subscriptionOrder->status = Statuses::NOT_RESPONDED;
+        $subscriptionOrder->update();
+    }
+
 }
