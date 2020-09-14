@@ -319,7 +319,7 @@ class DueTrackerController extends Controller
             ]);
             if($request->api_key != config('expense_tracker.api_key'))
                 throw new UnauthorizedRequestFromExpenseTrackerException();
-            $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id);
+            $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id, $request->amount);
             $message = null;
             if($result) $message = 'Pos Order Payment remove successfully';
             else $message = 'There is no Pos Order Payment';
