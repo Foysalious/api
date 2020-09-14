@@ -540,7 +540,7 @@ class CategoryController extends Controller
             if ($services->count() > 0) {
                 $parent_category = null;
                 if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable']);
+                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable', 'terms_and_conditions']);
                 $version_code = (int)$request->header('Version-Code');
                 $services = $this->serviceQuestionSet($services);
                 if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -550,6 +550,7 @@ class CategoryController extends Controller
                 }
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
+                $category['terms_and_conditions'] = $category['terms_and_conditions'] ? json_decode($category['terms_and_conditions']) : null;
                 $category['services'] = $services;
                 $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
                 $category['cross_sale'] = $cross_sale_service ? [
