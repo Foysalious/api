@@ -676,7 +676,7 @@ class PartnerController extends Controller
             $info->put('total_services', $partner->services->count());
             $info->put('total_resources', $partner->resources->count());
             $info->put('wallet', $partner->wallet);
-            $info->put('leave_status', (new LeaveStatus())->setArtisan($partner->id)->getCurrentStatus());
+            $info->put('leave_status', (new LeaveStatus())->setArtisan($partner)->getCurrentStatus());
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -812,7 +812,7 @@ class PartnerController extends Controller
             $locations = collect();
             HyperLocal::insideCircle($geo_info)->with('location')->get()->pluck('location')->filter()->each(function ($location) use (&$locations) {
                 $locations->push([
-                    'id'   => $location->id,
+                    'id' => $location->id,
                     'name' => $location->name,
                     'lat' => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
                     'lng' => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
