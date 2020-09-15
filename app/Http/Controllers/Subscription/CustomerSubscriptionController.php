@@ -327,6 +327,7 @@ class CustomerSubscriptionController extends Controller
 
             $subscription_order_details = [
                 "id" => $subscription_order->id,
+                "service_subscription_id" => $service_subscription->id,
                 "subscription_code" => $subscription_order->code(),
                 "category_id" => $service->category->id,
                 "category_name" => $service->category->name,
