@@ -138,7 +138,7 @@ class ServiceSubscriptionInfo
             'cap' => (double)$yearly_discount->cap,
             'min_discount_quantity' => $yearly_discount->min_discount_qty
         ] : null;
-        $cross_sale_service = $this->serviceSubscription->service->category->crossSaleService;
+        $cross_sale_service = $this->serviceSubscription->service->crossSaleService;
         $serviceSubscription['cross_sale'] = $cross_sale_service ? [
             'title' => $cross_sale_service->title,
             'description' => $cross_sale_service->description,
