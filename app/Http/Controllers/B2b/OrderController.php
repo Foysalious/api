@@ -202,11 +202,11 @@ class OrderController extends Controller
             if (!$customer) {
                 $customer = $this->memberManager->createCustomerFromMember($member);
                 $member = Member::find($member->id);
-                $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo);
+                $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo, $business);
             } else {
                 $coords = new Coords($geo->getLat(), $geo->getLng());
                 $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo);
+                if (!$address) $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo, $business);
             }
             $order = new Checkout($customer);
             $request->merge([
@@ -240,6 +240,7 @@ class OrderController extends Controller
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
