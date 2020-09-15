@@ -17,12 +17,16 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
     private $business;
     private $toMail;
 
+    /**
+     * SendEmailForFleetToB2bTeam constructor.
+     * @param Business $business
+     * @param $to_mail
+     */
     public function __construct(Business $business, $to_mail)
     {
         $this->business = $business;
         $this->toMail = $to_mail;
     }
-
 
     public function handle()
     {
@@ -37,6 +41,7 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
         $contact_person_mobile = $this->business->getContactNumber();
         $address = $location->name;
         $subject = $company_name . " has shown interest in Fleet management.";
+
         Mail::send('emails.fleet-mail', [
             'company_name' => $company_name,
             'contact_person_name' => $contact_person_name,
