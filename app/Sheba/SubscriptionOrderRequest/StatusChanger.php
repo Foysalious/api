@@ -1,6 +1,7 @@
 <?php namespace Sheba\SubscriptionOrderRequest;
 
 use Carbon\Carbon;
+use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -21,7 +22,7 @@ class StatusChanger
     private $subscriptionOrderRequest;
     /** @var OrderStatusChanger */
     private $subscriptionOrderStatusChanger;
-    /** @var  Store*/
+    /** @var  Store */
     private $subscriptionOrderRequestStore;
     /** @var Creator */
     private $creator;
@@ -65,6 +66,9 @@ class StatusChanger
                 'status' => Statuses::MISSED
             ]);
         });
+        $url = config('sheba.admin_url') . "/api/bulk-accept-subscription-orders/" . $this->subscriptionOrderRequest->subscriptionOrder->id;
+        $client = new Client();
+        $client->request('POST', $url, ['form_params' => ['remember_token' => $request->manager_resource->remember_token]]);
     }
 
     public function decline(Request $request)
