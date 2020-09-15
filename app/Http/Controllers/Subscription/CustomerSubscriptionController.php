@@ -369,6 +369,8 @@ class CustomerSubscriptionController extends Controller
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
                 'total_price' => $subscription_order->orders->count() > 0 ? $subscription_order->totalPrice : $service_details->discounted_price,
+                'subscription_delivery_charge' => $service_details->delivery_charge,
+                'subscription_discounted_delivery_charge' => $service_details->discounted_delivery_charge,
                 "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
