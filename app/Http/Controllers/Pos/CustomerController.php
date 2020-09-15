@@ -231,6 +231,7 @@ class CustomerController extends Controller
                 throw new InvalidPartnerPosCustomer();
             $customer = $partner_pos_customer->customer;
             $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+            $this->deletePosOrder($request->partner->id,$customer->id);
             $partner_pos_customer->delete();
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
@@ -239,6 +240,13 @@ class CustomerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function deletePosOrder($partner_id,$customer)
+    {
+        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
+        foreach ($pos_orders as $pos_order)
+            $pos_order->delete();
     }
 
     /**
