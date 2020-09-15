@@ -169,11 +169,11 @@ class EmployeeController extends Controller
 
         /** @var Business $business */
         $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->membersWithProfileAndAccessibleBusinessMember()->get();
+        $business_members = $business->getAccessibleBusinessMember()->get();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($members, new BusinessEmployeesTransformer());
+        $resource = new Item($business_members, new BusinessEmployeesTransformer());
         $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
