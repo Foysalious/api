@@ -230,7 +230,7 @@ class CustomerController extends Controller
             if (empty($partner_pos_customer) || empty($partner_pos_customer->customer))
                 throw new InvalidPartnerPosCustomer();
             $customer = $partner_pos_customer->customer;
-//            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
+            $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
             $partner_pos_customer->delete();
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
