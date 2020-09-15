@@ -111,7 +111,7 @@ class VendorController extends Controller
             $data = Excel::selectSheets(BulkUploadExcel::SHEET)->load($file_path)->get();
 
             $data = $data->filter(function ($row) {
-                return ($row->vendor_name && $row->phone_number && $row->contact_person_name && $row->contact_person_mobile && $row->address && $row->email && $row->trade_license_number && $row->vat_registration_number);
+                return ($row->vendor_name && $row->contact_person_name && $row->contact_person_mobile);
             });
 
             $total = $data->count();
