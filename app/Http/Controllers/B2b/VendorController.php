@@ -130,7 +130,7 @@ class VendorController extends Controller
             $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $contact_person_mobile, $bulk_upload_excel_error) {
                 if (!$this->isMobileNumberValid($value->$contact_person_mobile)) {
                     $halt_top_up = true; $excel_error = 'Mobile number Invalid';
-                } elseif (!$this->isMobileNumberAlreadyExist($value->$contact_person_mobile)) {
+                } elseif ($this->isMobileNumberAlreadyExist($value->$contact_person_mobile)) {
                     $halt_top_up = true; $excel_error = 'This mobile number already exist';
                 } else {
                     $excel_error = null;
