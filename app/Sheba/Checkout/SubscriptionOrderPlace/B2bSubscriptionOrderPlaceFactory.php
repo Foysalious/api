@@ -39,7 +39,8 @@ class B2bSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstractFac
         $member = $request->manager_member;
         $customer = $member->profile->customer;
 
-        $address = app(Address::class); $geo_code = app(GeoCode::class);
+        $address = app(Address::class);
+        $geo_code = app(GeoCode::class);
         $business_geo_info = json_decode($business->geo_informations);
         $delivery_address = HyperLocal::insidePolygon($business_geo_info->lat, $business_geo_info->lng)->with('location')->first()->location->name;
         $address->setAddress($delivery_address);
@@ -48,11 +49,11 @@ class B2bSubscriptionOrderPlaceFactory extends SubscriptionOrderPlaceAbstractFac
         if (!$customer) {
             $customer = $this->memberManager->createCustomerFromMember($member);
             $member = Member::find($member->id);
-            $address = $this->memberManager->createAddress($member, $delivery_address, $geo);
+            $address = $this->memberManager->createAddress($member, $delivery_address, $geo, $business);
         } else {
             $coords = new Coords($geo->getLat(), $geo->getLng());
             $address = $this->addressValidator->isAddressLocationExists($customer->delivery_addresses, $coords);
-            if (!$address) $address = $this->memberManager->createAddress($member, $delivery_address, $geo);
+            if (!$address) $address = $this->memberManager->createAddress($member, $delivery_address, $geo, $business);
             if (!$address->mobile) $address->update(['mobile' => formatMobile($member->profile->mobile)]);
         }
 
