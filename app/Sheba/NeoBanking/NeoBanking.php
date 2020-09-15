@@ -41,11 +41,11 @@ class NeoBanking
     {
         return [
             "organization_information" => [
-                "communication_info"             => [
+                [
                     "field_type" => "header",
                     "title"      => "যোগাযোগ এর তথ্য",
                 ],
-                "mobile"                         => [
+                [
                     "field_type"    => "viewText",
                     "input_type"    => "text",
                     "name"          => "mobile",
@@ -57,7 +57,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => false
                 ],
-                "email"                          => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "email",
                     "name"          => "email",
@@ -69,7 +69,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "company_name"                   => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "company_name",
@@ -81,11 +81,11 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "licence_info"                   => [
+                [
                     "field_type" => "header",
                     "title"      => "যোগাযোগ এর তথ্য",
                 ],
-                "trade_licence_number"           => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "trade_licence_number",
@@ -97,7 +97,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "trade_licence_date"             => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "date",
                     "name"          => "trade_licence_date",
@@ -109,7 +109,7 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "grantor_organization"           => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "grantor_organization",
@@ -121,11 +121,11 @@ class NeoBanking
                     "mandatory"     => true,
                     "is_editable"   => true
                 ],
-                "registration_info"              => [
+                [
                     "field_type" => "header",
                     "title"      => "রেজিস্ট্রেশন সম্পর্কিত তথ্য",
                 ],
-                "registration_number"            => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "registration_number",
@@ -137,7 +137,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "registration_date"              => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "date",
                     "name"          => "registration_date",
@@ -149,7 +149,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "applier_organization_country"   => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "applier_organization_country",
@@ -161,16 +161,16 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "business_location"              => [
+                [
                     "field_type" => "header",
                     "title"      => "ব্যাবসা / অফিস - এর ঠিকানা",
                 ],
-                "street_or_village_and_postcode" => [
+                [
                     "field_type" => "doubleView",
                     "name"       => "street_or_village_and_postcode",
                     "id"         => "street_or_village_and_postcode",
                     "views"      => [
-                        "street_or_village" => [
+                        [
                             "field_type"    => "editText",
                             "input_type"    => "text",
                             "name"          => "street_or_village",
@@ -182,7 +182,7 @@ class NeoBanking
                             "mandatory"     => true,
                             "is_editable"   => true
                         ],
-                        "postcode"          => [
+                        [
                             "field_type"    => "editText",
                             "input_type"    => "text",
                             "name"          => "postcode",
@@ -196,12 +196,12 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "district_and_subdistrict"       => [
+                [
                     "field_type" => "doubleView",
                     "name"       => "street_or_village_and_postcode",
                     "id"         => "street_or_village_and_postcode",
                     "views"      => [
-                        "district"    => [
+                        [
                             "field_type"    => "dropdown",
                             "list_type"     => "dialog",
                             "name"          => "district",
@@ -225,7 +225,7 @@ class NeoBanking
                                 ]
                             ]
                         ],
-                        "subdistrict" => [
+                        [
                             "field_type"    => "dropdown",
                             "list_type"     => "dialog",
                             "name"          => "subdistrict",
@@ -251,12 +251,12 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "business_country"               => [
+                [
                     "field_type" => "doubleView",
                     "name"       => "business_country",
                     "id"         => "business_country",
                     "views"      => [
-                        "business_country" => [
+                        [
                             "field_type"    => "dropdown",
                             "list_type"     => "dialog",
                             "name"          => "business_country",
@@ -270,11 +270,11 @@ class NeoBanking
                         ]
                     ]
                 ],
-                "other_information"              => [
+                [
                     "field_type" => "header",
                     "title"      => "অন্যান্য তথ্য",
                 ],
-                "vat_registration_number"        => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "vat_registration_number",
@@ -286,7 +286,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "organization_etin_number"       => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "organization_etin_number",
@@ -298,7 +298,7 @@ class NeoBanking
                     "mandatory"     => false,
                     "is_editable"   => true
                 ],
-                "organization_type"              => [
+                [
                     "field_type"    => "dropdown",
                     "list_type"     => "dialog",
                     "name"          => "organization_type",
@@ -322,7 +322,7 @@ class NeoBanking
                         ],
                     ]
                 ],
-                "business_type"                  => [
+                [
                     "field_type"    => "dropdown",
                     "list_type"     => "dialog",
                     "name"          => "business_type",
@@ -335,7 +335,7 @@ class NeoBanking
                     "is_editable"   => true,
                     "list"          => constants('PARTNER_BUSINESS_TYPES')
                 ],
-                "yearly_earning"                 => [
+                [
                     "field_type"    => "editText",
                     "input_type"    => "text",
                     "name"          => "yearly_earning",
