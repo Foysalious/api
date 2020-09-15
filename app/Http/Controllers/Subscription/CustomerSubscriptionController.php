@@ -326,6 +326,7 @@ class CustomerSubscriptionController extends Controller
             $time = new PreferredTime($schedules->first()->time);
 
             $subscription_order_details = [
+                "id" => $subscription_order->id,
                 "subscription_code" => $subscription_order->code(),
                 "category_id" => $service->category->id,
                 "category_name" => $service->category->name,
