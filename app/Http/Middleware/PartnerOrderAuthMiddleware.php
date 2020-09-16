@@ -9,7 +9,7 @@ class PartnerOrderAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  Request $request
+     * @param Request $request
      * @param Closure $next
      * @return mixed
      */
@@ -20,7 +20,7 @@ class PartnerOrderAuthMiddleware
         if (!$partner_order) {
             return api_response($request, null, 404, ["message" => "Order not found."]);
         }
-        if ($partner_order->partner->id != $partner->id) {
+        if ($partner_order->partner_id != $partner->id) {
             return api_response($request, null, 403, ["message" => "You're not authorized to access this order."]);
         }
         $request->merge(['partner_order' => $partner_order]);

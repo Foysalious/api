@@ -396,10 +396,14 @@ class OrderPlace
         return $order;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) $this->setDeliveryAddressFromId();
         if ($this->deliveryAddress) return;
+        if(!$this->category->isRentCar() && !$this->deliveryAddressId) throw new NotFoundException('Customer delivery address not found', 404);
         $address = new CustomerDeliveryAddress();
         $address->name = $this->address;
         $address->mobile = $this->deliveryMobile;
