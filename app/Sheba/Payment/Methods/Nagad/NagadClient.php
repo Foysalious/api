@@ -19,7 +19,7 @@ class NagadClient
 
     public function __construct(TPProxyClient $client)
     {
-
+        $this->client = $client;
 
     }
 
@@ -38,11 +38,11 @@ class NagadClient
     public function init($transactionId)
     {
         $merchantId = $this->store->getMerchantId();
-        $url     = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transactionId";
-        $data    = Inputs::init($transactionId,$this->store);
-        $request = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
-        $resp    = $this->client->call($request);
-        return new Initialize($resp,$this->store);
+        $url        = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transactionId";
+        $data       = Inputs::init($transactionId, $this->store);
+        $request    = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
+        $resp       = $this->client->call($request);
+        return new Initialize($resp, $this->store);
     }
 
     /**
@@ -61,7 +61,7 @@ class NagadClient
         $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
         $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
         $resp         = $this->client->call($request);
-        return new CheckoutComplete($resp,$this->store);
+        return new CheckoutComplete($resp, $this->store);
     }
 
     /**
