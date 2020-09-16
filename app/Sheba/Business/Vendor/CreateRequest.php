@@ -364,7 +364,7 @@ class CreateRequest
      */
     private function checkUsedNidNumber()
     {
-        if (is_null($this->resourceNidNumber)) return $this;
+        if ($this->isNull($this->resourceNidNumber)) return $this;
         $profile = $this->profileRepository->checkExistingNid($this->resourceNidNumber);
         if ($profile) $this->setError(409, "NID number is already exist, please try with another number");
         return $this;
@@ -375,7 +375,7 @@ class CreateRequest
      */
     private function checkUsedVatRegistrationNumber()
     {
-        if (is_null($this->vatRegistrationNumber)) return $this;
+        if ($this->isNull($this->vatRegistrationNumber)) return $this;
         $partner_basic_info = PartnerBasicInformation::where('vat_registration_number', $this->vatRegistrationNumber)->first();
         if ($partner_basic_info) $this->setError(409, "VAT registration number is already exist, please try with another number");
         return $this;
@@ -386,9 +386,21 @@ class CreateRequest
      */
     private function checkUsedTradeLicenseNumber()
     {
-        if (is_null($this->tradeLicenseNumber)) return $this;
+        if ($this->isNull($this->tradeLicenseNumber)) return $this;
         $partner_basic_info = PartnerBasicInformation::where('trade_license', $this->tradeLicenseNumber)->first();
         if ($partner_basic_info) $this->setError(409, "Trade license number is already exist, please try with another number");
         return $this;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        if ($data == "") return true;
+        return false;
     }
 }
