@@ -119,7 +119,6 @@ class Creator
             'mobile' => $this->vendorCreateRequest->getResourceMobile(),
             'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ?: null,
             'alternate_contact' => null,
-            #'nid_image' => $this->vendorCreateRequest->getResourceNidFront()
             'nid_image_front' => $this->vendorCreateRequest->getResourceNidFront(),
             'nid_image_back' => $this->vendorCreateRequest->getResourceNidBack()
         ];

@@ -8,7 +8,6 @@ use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
-use App\Transformers\Business\BusinessDepartmentListTransformer;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
@@ -36,51 +35,57 @@ use Throwable;
 class BusinessesController extends Controller
 {
     use ModificationFields;
+
     const DIGIGO_PORTAL = 'digigo-portal';
-    private $digigo_management_emails = [
-        'one' => 'khairun@sheba.xyz'
-    ];
+    private $digigo_management_emails = ['one' => 'b2b@sheba.xyz'];
     private $sms;
 
+    /**
+     * BusinessesController constructor.
+     * @param Sms $sms
+     */
     public function __construct(Sms $sms)
     {
         $this->sms = $sms;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function inviteVendors($business, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'numbers' => 'required|json'
-            ]);
+        $this->validate($request, ['numbers' => 'required|json']);
+        $business = $request->business;
+        $this->setModifier($business);
+        $invited_vendor = 0;
+        $added_vendor = 0;
 
-            $business = $request->business;
-            $this->setModifier($business);
-
-            foreach (json_decode($request->numbers) as $number) {
-
-                $mobile = formatMobile($number);
-                if ($partner = $this->hasPartner($mobile)) {
-                    $partner->businesses()->sync(['business_id' => $business->id]);
-                } else {
-                    $data = [
-                        'business_id' => $business->id,
-                        'mobile' => $mobile
-                    ];
-                    BusinessJoinRequest::create($data);
-                    $this->sms->shoot($number, "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp . sheba.xyz will help you to grow and manage your business. by $business->name");
-                }
+        foreach (json_decode($request->numbers) as $number) {
+            $mobile = formatMobile($number);
+            if ($partner = $this->hasPartner($mobile)) {
+                $partner->businesses()->sync(['business_id' => $business->id]);
+                $added_vendor++;
+            } else {
+                $data = ['business_id' => $business->id, 'mobile' => $mobile];
+                BusinessJoinRequest::create($data);
+                $invited_vendor++;
+                $this->sms->shoot(
+                    $number,
+                    "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
+                    sheba.xyz will help you to grow and manage your business. by $business->name"
+                );
             }
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+
+        return api_response($request, null, 200);
     }
 
+    /**
+     * @param $mobile
+     * @return false|mixed
+     */
     private function hasPartner($mobile)
     {
         $profile = Profile::where('mobile', $mobile)->first();
@@ -89,6 +94,7 @@ class BusinessesController extends Controller
         $resource = $profile->resource;
         if (!$resource) return false;
         $partner = $resource->firstPartner();
+
         return $partner ? $partner : false;
     }
 

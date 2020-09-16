@@ -355,7 +355,12 @@ class CreateRequest
     private function checkUsedNumber()
     {
         $profile = $this->profileRepository->checkExistingMobile($this->resourceMobile);
-        if ($profile) $this->setError(409, "SP phone number is already exist, please try with another number");
+        // if ($profile) $this->setError(409, "SP phone number is already exist, please try with another number");
+        if ($profile && $profile->resource && $partner = $profile->resource->firstPartner()) {
+            if (in_array($this->business->id, $partner->businesses->pluck('id')->toArray())) {
+                $this->setError(409, "Vendor already added to your company. Go to vendor list's to show detail");
+            }
+        }
         return $this;
     }
 
