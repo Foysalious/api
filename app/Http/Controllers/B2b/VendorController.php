@@ -42,10 +42,24 @@ class VendorController extends Controller
             $this->validate($request, [
                 'vendor_name' => 'required',
                 #'vendor_mobile' => 'required|string|mobile:bd',
-                'vendor_image' => 'sometimes|required|image|mimes:jpeg,png',
+                'vendor_image' => 'sometimes|required|image|max:800|mimes:jpeg,png',
+
+                'trade_license_document' => 'sometimes|required|image|max:800|mimes:jpeg,png',
+                'vat_registration_document' => 'sometimes|required|image|max:800|mimes:jpeg,png',
+
                 'resource_name' => 'required',
-                'resource_mobile' => 'required|string|mobile:bd'
-            ]);
+                'resource_mobile' => 'required|string|mobile:bd',
+
+                'resource_nid_front' => 'sometimes|required|image|max:800|mimes:jpeg,png',
+                'resource_nid_back' => 'sometimes|required|image|max:800|mimes:jpeg,png'
+            ],
+                [
+                    'vendor_name.required' => 'Company name can not be empty.',
+                    'resource_name.required' => 'SP name can not be empty.',
+                    'resource_mobile.required' => 'Vendor phone number can not be empty.',
+                ]
+            );
+
             $business = $request->business;
             $member = $request->manager_member;
             $this->setModifier($member);
@@ -69,13 +83,12 @@ class VendorController extends Controller
                 ->setResourceNidback($request->resource_nid_back)
                 ->setIsActiveForB2b($request->is_active_for_b2b);
 
+            if ($create_request->hasError()) return response()->json(['code' => $create_request->getErrorCode(), 'message' => $create_request->getErrorMessage()]);
+
             $creator->setVendorCreateRequest($create_request);
-            if ($error = $creator->hasError()) {
-                return api_response($request, null, 400, $error);
-            }
+            if ($error = $creator->hasError()) return api_response($request, null, 400, $error);
 
             $vendor = $creator->create();
-
             return api_response($request, null, 200, ['vendor_id' => $vendor->id, 'message' => 'Vendor Created Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -126,12 +139,15 @@ class VendorController extends Controller
             $trade_license = BulkUploadExcel::TRADE_LICENSE_NUMBER_COLUMN_TITLE;
             $vat_registration = BulkUploadExcel::VAT_REGISTRATION_NUMBER_COLUMN_TITLE;
 
-            $excel_error = null; $halt_top_up = false;
+            $excel_error = null;
+            $halt_top_up = false;
             $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $contact_person_mobile, $bulk_upload_excel_error) {
                 if (!$this->isMobileNumberValid($value->$contact_person_mobile)) {
-                    $halt_top_up = true; $excel_error = 'Mobile number Invalid';
+                    $halt_top_up = true;
+                    $excel_error = 'Mobile number Invalid';
                 } elseif ($this->isMobileNumberAlreadyExist($value->$contact_person_mobile)) {
-                    $halt_top_up = true; $excel_error = 'This mobile number already exist';
+                    $halt_top_up = true;
+                    $excel_error = 'This mobile number already exist';
                 } else {
                     $excel_error = null;
                 }
