@@ -27,6 +27,10 @@ class VendorController extends Controller
 
     private $profileRepository;
 
+    /**
+     * VendorController constructor.
+     * @param ProfileRepository $profile_repo
+     */
     public function __construct(ProfileRepository $profile_repo)
     {
         $this->profileRepository = $profile_repo;
@@ -40,67 +44,57 @@ class VendorController extends Controller
      */
     public function store(Request $request, CreateRequest $create_request, Creator $creator)
     {
-        try {
-            $validation_data = [
-                'vendor_name' => 'required',
-                #'vendor_mobile' => 'required|string|mobile:bd',
-                'vendor_image' => 'sometimes|required|image|max:800|mimes:jpeg,png',
-                'resource_name' => 'required',
-                'resource_mobile' => 'required|string|mobile:bd'
-            ];
-            if ($request->trade_license_document && $this->isFile($request->trade_license_document)) $validation_data['trade_license_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        $validation_data = [
+            'vendor_name' => 'required',
+            'vendor_image' => 'sometimes|required|image|max:800|mimes:jpeg,png',
+            'resource_name' => 'required',
+            'resource_mobile' => 'required|string|mobile:bd'
+        ];
 
-            if ($request->vat_registration_document && $this->isFile($request->vat_registration_document)) $validation_data['vat_registration_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        if ($request->trade_license_document && $this->isFile($request->trade_license_document)) $validation_data['trade_license_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        if ($request->vat_registration_document && $this->isFile($request->vat_registration_document)) $validation_data['vat_registration_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        if ($request->resource_nid_front && $this->isFile($request->resource_nid_front)) $validation_data['resource_nid_front'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        if ($request->resource_nid_back && $this->isFile($request->resource_nid_back)) $validation_data['resource_nid_back'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
 
-            if ($request->resource_nid_front && $this->isFile($request->resource_nid_front)) $validation_data['resource_nid_front'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        $this->validate($request, $validation_data, [
+                'vendor_name.required' => 'Company name can not be empty.',
+                'resource_name.required' => 'SP name can not be empty.',
+                'resource_mobile.required' => 'Vendor phone number can not be empty.',
+            ]
+        );
 
-            if ($request->resource_nid_back && $this->isFile($request->resource_nid_back)) $validation_data['resource_nid_back'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+        $business = $request->business;
+        $member = $request->manager_member;
+        $this->setModifier($member);
 
-            $this->validate($request, $validation_data,
-                [
-                    'vendor_name.required' => 'Company name can not be empty.',
-                    'resource_name.required' => 'SP name can not be empty.',
-                    'resource_mobile.required' => 'Vendor phone number can not be empty.',
-                ]
-            );
+        /** @var CreateRequest $request */
+        $create_request = $create_request->setBusiness($business)
+            ->setVendorName($request->vendor_name)
+            ->setVendorEmail($request->vendor_email)
+            ->setVendorImage($request->vendor_image)
+            ->setVendorAddress($request->vendor_address)
+            ->setVendorMasterCategories($request->vendor_master_categories)
+            ->setTradeLicenseNumber($request->trade_license_number)
+            ->setTradeLicenseDocument($request->trade_license_document)
+            ->setVatRegistrationNumber($request->vat_registration_number)
+            ->setVatRegistrationDocument($request->vat_registration_document)
+            ->setResourceName($request->resource_name)
+            ->setResourceMobile($request->resource_mobile)
+            ->setResourceNidNumber($request->resource_nid_number)
+            ->setResourceNidFront($request->resource_nid_front)
+            ->setResourceNidback($request->resource_nid_back)
+            ->setIsActiveForB2b($request->is_active_for_b2b);
 
-            $business = $request->business;
-            $member = $request->manager_member;
-            $this->setModifier($member);
+        if ($create_request->hasError())
+            return response()->json(['code' => $create_request->getErrorCode(), 'message' => $create_request->getErrorMessage()]);
 
-            /** @var CreateRequest $request */
-            $create_request = $create_request->setBusiness($business)
-                ->setVendorName($request->vendor_name)
-                ->setVendorMobile($request->vendor_mobile)
-                ->setVendorEmail($request->vendor_email)
-                ->setVendorImage($request->vendor_image)
-                ->setVendorAddress($request->vendor_address)
-                ->setVendorMasterCategories($request->vendor_master_categories)
-                ->setTradeLicenseNumber($request->trade_license_number)
-                ->setTradeLicenseDocument($request->trade_license_document)
-                ->setVatRegistrationNumber($request->vat_registration_number)
-                ->setVatRegistrationDocument($request->vat_registration_document)
-                ->setResourceName($request->resource_name)
-                ->setResourceMobile($request->resource_mobile)
-                ->setResourceNidNumber($request->resource_nid_number)
-                ->setResourceNidFront($request->resource_nid_front)
-                ->setResourceNidback($request->resource_nid_back)
-                ->setIsActiveForB2b($request->is_active_for_b2b);
+        $creator->setVendorCreateRequest($create_request);
+        if ($error = $creator->hasError())
+            return api_response($request, null, 400, $error);
 
-            if ($create_request->hasError()) return response()->json(['code' => $create_request->getErrorCode(), 'message' => $create_request->getErrorMessage()]);
+        $vendor = $creator->create();
 
-            $creator->setVendorCreateRequest($create_request);
-            if ($error = $creator->hasError()) return api_response($request, null, 400, $error);
-
-            $vendor = $creator->create();
-            return api_response($request, null, 200, ['vendor_id' => $vendor->id, 'message' => 'Vendor Created Successfully']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['vendor_id' => $vendor->id, 'message' => 'Vendor Created Successfully']);
     }
 
     /**

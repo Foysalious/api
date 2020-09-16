@@ -31,6 +31,7 @@ class CreateValidator
     {
         $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
         $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+
         if ($profile && $profile->resource && $partner = $profile->resource->firstPartner()) {
             return in_array($this->vendorCreateRequest->getBusiness()->id, $partner->businesses->pluck('id')->toArray());
         }
