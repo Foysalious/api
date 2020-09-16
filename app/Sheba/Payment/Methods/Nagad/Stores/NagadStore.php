@@ -10,7 +10,7 @@ abstract class NagadStore
     protected $publicKey;
     protected $privateKey;
     protected $contextPath;
-
+    protected $baseUrl;
 
     /**
      * @return string
@@ -47,6 +47,14 @@ abstract class NagadStore
     public function getContextPath()
     {
         return $this->contextPath;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBaseUrl()
+    {
+        return $this->baseUrl;
     }
 
 
