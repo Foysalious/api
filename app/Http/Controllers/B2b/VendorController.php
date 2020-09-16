@@ -2,11 +2,13 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 
 use Illuminate\Http\Request;
 use Excel;
+use Intervention\Image\Image;
 use Sheba\Business\Vendor\BulkUploadExcel;
 use Sheba\Business\Vendor\BulkUploadExcelError;
 use Sheba\Business\Vendor\CreateRequest;
@@ -39,20 +41,22 @@ class VendorController extends Controller
     public function store(Request $request, CreateRequest $create_request, Creator $creator)
     {
         try {
-            $this->validate($request, [
+            $validation_data = [
                 'vendor_name' => 'required',
                 #'vendor_mobile' => 'required|string|mobile:bd',
                 'vendor_image' => 'sometimes|required|image|max:800|mimes:jpeg,png',
-
-                'trade_license_document' => 'sometimes|required|image|max:800|mimes:jpeg,png',
-                'vat_registration_document' => 'sometimes|required|image|max:800|mimes:jpeg,png',
-
                 'resource_name' => 'required',
-                'resource_mobile' => 'required|string|mobile:bd',
+                'resource_mobile' => 'required|string|mobile:bd'
+            ];
+            if ($request->trade_license_document && $this->isFile($request->trade_license_document)) $validation_data['trade_license_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
 
-                'resource_nid_front' => 'sometimes|required|image|max:800|mimes:jpeg,png',
-                'resource_nid_back' => 'sometimes|required|image|max:800|mimes:jpeg,png'
-            ],
+            if ($request->vat_registration_document && $this->isFile($request->vat_registration_document)) $validation_data['vat_registration_document'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+
+            if ($request->resource_nid_front && $this->isFile($request->resource_nid_front)) $validation_data['resource_nid_front'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+
+            if ($request->resource_nid_back && $this->isFile($request->resource_nid_back)) $validation_data['resource_nid_back'] = 'sometimes|required|image|max:800|mimes:jpeg,png';
+
+            $this->validate($request, $validation_data,
                 [
                     'vendor_name.required' => 'Company name can not be empty.',
                     'resource_name.required' => 'SP name can not be empty.',
@@ -97,6 +101,16 @@ class VendorController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $file
+     * @return bool
+     */
+    private function isFile($file)
+    {
+        if ($file instanceof Image || $file instanceof UploadedFile) return true;
+        return false;
     }
 
     /**
