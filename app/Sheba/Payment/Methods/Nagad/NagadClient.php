@@ -25,7 +25,8 @@ class NagadClient
 
     public function setStore(NagadStore $store)
     {
-        $this->store = $store;
+        $this->store   = $store;
+        $this->baseUrl = $this->store->getBaseUrl();
         return $this;
     }
 

@@ -20,6 +20,7 @@ abstract class Response
     public function __construct($data, NagadStore $store)
     {
         $this->data = (array)$data;
+        $this->store = $store;
         if ($this->shouldDecode) {
             if (!isset($this->data[$this->decode])) {
                 $this->error = $this->data[$this->msg];
@@ -27,12 +28,11 @@ abstract class Response
                 $this->decodeOutput();
             }
         }
-        $this->store = $store;
     }
 
     private function decodeOutput()
     {
-        $this->output = Outputs::decode($this->data[$this->decode]);
+        $this->output = Outputs::decode($this->data[$this->decode], $this->store);
     }
 
     public function hasError()
