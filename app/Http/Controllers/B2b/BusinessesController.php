@@ -106,7 +106,8 @@ class BusinessesController extends Controller
     public function getVendorsList($business, Request $request)
     {
         $business = $request->business;
-        if (!$business) return api_response($request, 1, 404);
+        if (!$business) return api_response($request, null, 404);
+
         list($offset, $limit) = calculatePagination($request);
         $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address', 'is_active_for_b2b')->with([
             'categories' => function ($q) {
@@ -117,6 +118,7 @@ class BusinessesController extends Controller
                 ]);
             }, 'resources.profile'
         ]);
+        $is_business_has_vendors = $partners->count() ? 1 : 0;
 
         if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
 
@@ -129,9 +131,11 @@ class BusinessesController extends Controller
         if ($request->has('search')) $vendors = $this->searchWithName($vendors, $request);
         $total_vendors = $vendors->count();
         if ($request->has('limit')) $vendors = $vendors->splice($offset, $limit);
+
         return api_response($request, $vendors, 200, [
             'vendors' => $vendors,
-            'total_vendors' => $total_vendors
+            'total_vendors' => $total_vendors,
+            'is_business_has_vendors' => $is_business_has_vendors
         ]);
     }
 
