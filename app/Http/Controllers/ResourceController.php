@@ -50,6 +50,8 @@ class ResourceController extends Controller
             $profile = $resource->profile;
             $resource['name'] = $profile->name;
             $resource['mobile'] = $profile->mobile;
+            $resource['email'] = $profile->email;
+            $resource['dob'] = $profile->dob;
             $resource['address'] = $profile->address;
             $resource['profile_picture'] = $profile->pro_pic;
             $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
