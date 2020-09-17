@@ -197,16 +197,18 @@ class OrderController extends Controller
             $member = $request->manager_member;
             $customer = $member->profile->customer;
             $this->setModifier($customer);
+
             $address->setAddress($request->delivery_address);
             $geo = $geo_code->setAddress($address)->getGeo();
+
             if (!$customer) {
                 $customer = $this->memberManager->createCustomerFromMember($member);
                 $member = Member::find($member->id);
-                $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo, $business);
+                $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
             } else {
                 $coords = new Coords($geo->getLat(), $geo->getLng());
                 $address = (new AddressValidator())->isAddressLocationExists($customer->delivery_addresses, $coords);
-                if (!$address) $address = $this->memberManager->createAddress($member, $request->delivery_address, $geo, $business);
+                if (!$address) $address = $this->memberManager->createAddress($member, $business, $request->delivery_address, $geo);
             }
             $order = new Checkout($customer);
             $request->merge([
