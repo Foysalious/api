@@ -227,7 +227,7 @@ class PartnerScheduleSlot
         if($this->category) {
             $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
             $slots = $slots->map(function ($slot) {
-                return $slot->slot  ;
+                return $slot->scheduleSlot  ;
             });
         }
         else $slots = $this->getShebaSlots();
