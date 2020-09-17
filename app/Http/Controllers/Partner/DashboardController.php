@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
