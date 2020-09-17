@@ -13,7 +13,7 @@ class NeoBankingRoute
                     $api->get('/homepage', 'NeoBanking\\NeoBankingController@getHomePage');
                     $api->get('/account-details', 'NeoBanking\\NeoBankingController@getAccountDetails');
                     $api->post('/create-transaction', 'NeoBanking\\NeoBankingController@createTransaction');
-
+                    $api->get('/account-information', 'NeoBanking\\NeoBankingController@getAccountInformation');
                 });
             });
         });
