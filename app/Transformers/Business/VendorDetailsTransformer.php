@@ -24,7 +24,7 @@ class VendorDetailsTransformer extends TransformerAbstract
             "name" => $partner->name,
             "logo" => $partner->logo,
             "mobile" => $partner->getContactNumber(),
-            "email" => $partner->getContactEmail(),
+            "email" => $partner->email,
             "address" => $partner->address,
             "status" => $partner->is_active_for_b2b,
             "company_type" => $type,
@@ -34,7 +34,7 @@ class VendorDetailsTransformer extends TransformerAbstract
             "trade_license_attachment" => $basic_informations->trade_license_attachment,
             "vat_registration_number" => $basic_informations->vat_registration_number,
             "vat_registration_attachment" => $basic_informations->vat_registration_attachment,
-            "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
+            "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null
         ];
     }
 }
