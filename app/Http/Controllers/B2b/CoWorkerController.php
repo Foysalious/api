@@ -95,6 +95,11 @@ class CoWorkerController extends Controller
         $this->coWorkerRequester = $coWorker_requester;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function basicInfoStore($business, Request $request)
     {
         $this->validate($request, [
@@ -130,6 +135,21 @@ class CoWorkerController extends Controller
 
         if ($member) return api_response($request, null, 200, ['member_id' => $member->id, 'pro_pic' => $member->profile->pro_pic]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getRoles(Request $request)
+    {
+        $roles = BusinessRole::query()->select('id', 'name')->groupBy('name')->get();
+        if ($request->has('search')) {
+            $roles = $roles->filter(function ($role) use ($request) {
+                return str_contains(strtoupper($role->name), strtoupper($request->search));
+            });
+        }
+        return api_response($request, $roles, 200, ['roles' => $roles->values()]);
     }
 
     /**
@@ -374,7 +394,7 @@ class CoWorkerController extends Controller
                         }
                     ]));
                     $member->push();
-            });
+                });
 
             if ($request->has('department')) {
                 $members = $members->filter(function ($member) use ($request) {
