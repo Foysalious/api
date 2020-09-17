@@ -1,7 +1,7 @@
 <?php namespace Sheba\Resource\Schedule;
 
-use App\Models\CategoryScheduleSlot;
 use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryScheduleSlot\CategoryScheduleSlot;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;
@@ -206,7 +206,7 @@ class ResourceScheduleSlot
         if($this->category) {
             $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
             $slots = $slots->map(function ($slot) {
-                return $slot->slot  ;
+                return $slot->scheduleSlot;
             });
         }
         else $slots = $this->getShebaSlots();
