@@ -230,7 +230,7 @@ class JobList
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
             $formatted_job->put('due', 0);
-            if ($this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
