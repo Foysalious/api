@@ -75,4 +75,9 @@ class AffiliateTransaction extends Model
         return $query->where('log', 'LIKE', '%is refunded%')
             ->orWhere('log', 'LIKE', '%manually refunded in your account%');
     }
+
+    public function scopeManualDisbursement($query)
+    {
+        return $query->where('log', 'LIKE', "%received from manual disbursement%");
+    }
 }
