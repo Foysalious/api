@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\Type;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
@@ -179,6 +180,6 @@ class Procurement extends Model implements PayableType
 
     public function scopePublished($query)
     {
-        return $query->where('is_published', 1);
+        return $query->where('publication_status', PublicationStatuses::PUBLISHED);
     }
 }
