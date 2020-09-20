@@ -88,13 +88,12 @@ class Nagad extends PaymentMethod
         $res=(new Validator([],true));
         try {
             if (empty($this->refId)) throw new InvalidPaymentRef();
-            $res = $this->client->validate($this->refId);
+            $res = $this->client->setStore($this->store)->validate($this->refId);
             if ($res->getStatus()) {
                 $this->statusChanger->setPayment($payment)->changeToValidated($res->toString());
                 return $payment;
             }
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
         }
         $this->statusChanger->setPayment($payment)->changeToValidationFailed($res->toString());

@@ -17,7 +17,7 @@ class NagadClient
      */
     private $store;
 
-    public function __construct(TPProxyClient $client)
+    public function __construct(NagadHttpClient $client)
     {
         $this->client = $client;
 
