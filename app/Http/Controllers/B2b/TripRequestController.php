@@ -25,10 +25,7 @@ use Throwable;
 class TripRequestController extends Controller
 {
     use ModificationFields;
-    private $b2b_management_emails = [
-        'one' => 'ffaahhiimm15@gmail.com',
-        // 'two' => 'b2b@sheba.xyz',
-    ];
+    private $b2b_management_emails = ['one' => 'b2b@sheba.xyz'];
 
     public function getTripRequests(Request $request)
     {
