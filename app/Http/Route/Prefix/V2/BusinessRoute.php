@@ -267,6 +267,7 @@ class BusinessRoute
                     $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
                     $api->group(['prefix' => '{vendor}'], function ($api) {
                         $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
+                        $api->post('/active', 'B2b\VendorController@activeInactive');
                     });
                 });
                 $api->group(['prefix' => 'subscription-orders'], function ($api) {
