@@ -3,7 +3,10 @@
 
 use App\Models\Job;
 use App\Models\Resource;
+use App\Models\ScheduleSlot;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Job\JobRepositoryInterface;
 
 class JobInfo
@@ -14,7 +17,12 @@ class JobInfo
     private $actionCalculator;
     private $statusTagCalculator;
 
-    public function __construct(JobRepositoryInterface $job_repository, RearrangeJobList $rearrange, ActionCalculator $actionCalculator, StatusTagCalculator $statusTagCalculator)
+    public function __construct(
+        JobRepositoryInterface $job_repository,
+        RearrangeJobList $rearrange,
+        ActionCalculator $actionCalculator,
+        StatusTagCalculator $statusTagCalculator
+    )
     {
         $this->jobRepository = $job_repository;
         $this->rearrange = $rearrange;
@@ -25,7 +33,8 @@ class JobInfo
     /**
      * @param Resource $resource
      * @return $this
-     */public function setResource(Resource $resource)
+     */
+    public function setResource(Resource $resource)
     {
         $this->resource = $resource;
         return $this;
@@ -52,11 +61,15 @@ class JobInfo
         return $services;
     }
 
+    /**
+     * @return Job|null
+     */
     private function getFirstJob()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
         $jobs = $this->rearrange->rearrange($jobs);
-        if (count($jobs) > 0) return $jobs->first();
+        if (count($jobs) == 0) return null;
+        return $jobs->first();
     }
 
     /**
@@ -75,7 +88,7 @@ class JobInfo
         $formatted_job->put('delivery_name', $job->partnerOrder->order->delivery_name);
         $formatted_job->put('location', $job->partnerOrder->order->deliveryAddress && $job->partnerOrder->order->deliveryAddress->location ? $job->partnerOrder->order->deliveryAddress->location->name : null);
         $formatted_job->put('delivery_address', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->address : $job->partnerOrder->order->delivery_address);
-        $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile :  $job->partnerOrder->order->delivery_mobile);
+        $formatted_job->put('delivery_mobile', $job->partnerOrder->order->deliveryAddress ? $job->partnerOrder->order->deliveryAddress->mobile : $job->partnerOrder->order->delivery_mobile);
         $formatted_job->put('geo_informations', $job->partnerOrder->order->deliveryAddress ? json_decode($job->partnerOrder->order->deliveryAddress->geo_informations) : null);
         $formatted_job->put('start_time', humanReadableShebaTime($job->preferred_time_start, true));
         $formatted_job->put('schedule_date', $job->schedule_date);
@@ -96,7 +109,18 @@ class JobInfo
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', 0);
-        if ($this->getFirstJob() && $this->getFirstJob()->id == $job->id) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+        if ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
+    }
+
+    /**
+     * @param Job|null $first_job
+     * @param Job $job
+     * @return bool
+     */
+    private function shouldICheckActions(Job $first_job, Job $job)
+    {
+        return $first_job && $first_job->schedule_date == $job->schedule_date &&
+            $first_job->preferred_time == $job->preferred_time;
     }
 }
