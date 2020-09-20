@@ -5,7 +5,6 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Sheba\UserRequestInformation;
-use Sheba\Authentication\AuthUser;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -54,6 +53,7 @@ use Sheba\UserAgentInformation;
 use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
+use Sheba\OAuth2\AuthUser;
 
 class PartnerController extends Controller
 {
@@ -1374,13 +1374,15 @@ class PartnerController extends Controller
         }
     }
 
-    public function changeLeaveStatusOfResource($partner, $resource, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
+    public function changeLeaveStatusOfResource($resource, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
     {
         $userAgentInformation->setRequest($request);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $this->setModifier($auth_user->getResource());
-        $status = $leaveStatus->setArtisan(Resource::find($resource))->setUserAgentInformation($userAgentInformation)->changeStatus()->getCurrentStatus();
+        $partner_resource = $auth_user->getPartner()->resources()->where('partner_resource.resource_id', $resource)->first();
+        if (!$partner_resource) return api_response($request, null, 403);
+        $status = $leaveStatus->setArtisan($partner_resource)->setUserAgentInformation($userAgentInformation)->changeStatus()->getCurrentStatus();
         return api_response($request, $status, 200, ['status' => $status]);
     }
 
