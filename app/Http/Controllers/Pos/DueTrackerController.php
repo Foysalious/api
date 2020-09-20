@@ -311,4 +311,28 @@ class DueTrackerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function removePosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository, $pos_order_id) {
+        try {
+            $this->validate($request, [
+                'api_key' => 'required'
+            ]);
+            if($request->api_key != config('expense_tracker.api_key'))
+                throw new UnauthorizedRequestFromExpenseTrackerException();
+            $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id, $request->amount);
+            $message = null;
+            if($result) $message = 'Pos Order Payment remove successfully';
+            else $message = 'There is no Pos Order Payment';
+            return api_response($request, true, 200, ['message' => $message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (UnauthorizedRequestFromExpenseTrackerException $e) {
+            $message = "Unauthorized Request";
+            return api_response($request, $message, 401, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
