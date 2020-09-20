@@ -9,7 +9,7 @@ class AffiliateStore extends NagadStore
 
     public function __construct()
     {
-        $this->baseUrl=config('payment.nagad.stores.affiliate.base_url');
+        $this->baseUrl     = config('payment.nagad.stores.affiliate.base_url');
         $this->merchantId  = config('payment.nagad.stores.affiliate.merchant_id');
         $this->publicKey   = file_get_contents(config('payment.nagad.stores.affiliate.public_key_path'));
         $this->privateKey  = file_get_contents(config('payment.nagad.stores.affiliate.private_key_path'));
