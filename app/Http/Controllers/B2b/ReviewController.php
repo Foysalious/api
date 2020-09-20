@@ -31,7 +31,7 @@ class ReviewController extends Controller
                  $this->withCreateModificationField($review);
                  $review->save();
              }
-            $rate = Rate::where([['type', 'review'], ['value', $request->rating]])->with(['questions' => function ($q) {
+            $rate = Rate::where([['type', 'review_from_business'], ['value', $request->rating]])->with(['questions' => function ($q) {
                 $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
                     $q->select('id', 'answer', 'asset', 'badge');
                 }]);

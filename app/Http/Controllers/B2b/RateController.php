@@ -11,12 +11,10 @@ class RateController extends Controller
     public function store($business, $order, Request $request)
     {
         try {
-            $customer = $request->manager_member->customer;
             $job = $request->job;
             $review = $job->review;
             if ($review == null) return api_response($request, null, 403, ['message' => 'First you have to give a rating.']);
             if ($this->storeReviews($request, $review)) return api_response($request, 1, 200);
-            else return api_response($request, null, 500);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
