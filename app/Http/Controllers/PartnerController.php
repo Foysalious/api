@@ -53,6 +53,7 @@ use Sheba\UserAgentInformation;
 use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Validator;
+use Sheba\OAuth2\AuthUser;
 
 class PartnerController extends Controller
 {
@@ -1371,6 +1372,18 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function changeLeaveStatusOfResource($resource, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
+    {
+        $userAgentInformation->setRequest($request);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $this->setModifier($auth_user->getResource());
+        $partner_resource = $auth_user->getPartner()->resources()->where('partner_resource.resource_id', $resource)->first();
+        if (!$partner_resource) return api_response($request, null, 403);
+        $status = $leaveStatus->setArtisan($partner_resource)->setUserAgentInformation($userAgentInformation)->changeStatus()->getCurrentStatus();
+        return api_response($request, $status, 200, ['status' => $status]);
     }
 
     /**
