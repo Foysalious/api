@@ -22,6 +22,7 @@ $bkash          = [
 ];
 $cbl            = [
     'name'        => 'City Bank',
+    'name_bn'     =>  null,
     'asset'       => 'cbl',
     'method_name' => 'cbl'
 ];
