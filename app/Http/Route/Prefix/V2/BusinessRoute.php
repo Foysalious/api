@@ -110,6 +110,7 @@ class BusinessRoute
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
                         $api->get('/', 'B2b\OrderController@show');
+                        $api->post('jobs/{job}/reviews', 'B2b\ReviewController@store');
                         $api->get('bills/clear', 'B2b\OrderController@clearBills');
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });
