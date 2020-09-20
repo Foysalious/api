@@ -3,7 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
+use App\Models\Job;
 use App\Models\Member;
+use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
@@ -18,6 +20,7 @@ use Sheba\Checkout\SubscriptionOrderPlace\B2bSubscriptionOrderPlaceFactory;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
+use Sheba\Logs\Customer\JobLogs;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\AvailableMethods;
@@ -39,25 +42,135 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $customer = $request->manager_member->profile->customer;
+            $customer = $request->manager_member->customer;
+            list($offset, $limit) = calculatePagination($request);
+            $customer = $customer->load([
+                'orders' => function ($q) {
+                    $q->whereNotNull('business_id')->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id', 'sales_channel')->orderBy('id', 'desc');
+                    $q->with([
+                        'partnerOrders' => function ($q) {
+                            $q->select('id', 'order_id', 'partner_id','created_at')->with([
+                                'partner' => function ($q) {
+                                    $q->select('id', 'name', 'mobile')->with([
+                                        'resources' => function ($q) {
+                                            $q->select('resources.id', 'profile_id')->with([
+                                                'profile' => function ($q) {
+                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                                }]);
+                                        }]);
+                                },
+                                'order' => function ($q) {
+                                    $q->select('id', 'sales_channel', 'subscription_order_id');
+                                },
+                                'jobs' => function ($q) {
+                                    $q->select('id', 'partner_order_id', 'category_id', 'job_name', 'service_id', 'service_name', 'resource_id', 'schedule_date', 'preferred_time', 'preferred_time_start', 'preferred_time_end', 'status', 'delivered_date')->with([
+                                        'resource' => function ($q) {
+                                            $q->select('id', 'profile_id')->with([
+                                                'profile' => function ($q) {
+                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                                }]);
+                                        },
+                                        'category' => function ($q) {
+                                            $q->select('id', 'name', 'thumb', 'banner');
+                                        },
+                                        'review' => function ($q) {
+                                            $q->select('id', 'rating', 'job_id');
+                                        }]);
+                                }]);
+                        }]);
+                }]);
+            dd(count($customer->orders));
+            if (count($customer->orders) > 0) {
+                $all_jobs = $this->getInformation($customer->orders);
+                $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                    return $job['cancelled_date'] != null || $job['status'] == 'Served';
+                });
+                $others = $all_jobs->diff($cancelled_served_jobs);
+                $all_jobs = $others->merge($cancelled_served_jobs);
+
+            } else {
+                $all_jobs = collect();
+            }
+            $total_jobs = count($all_jobs);
+            if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
+
+            return api_response($request, $all_jobs, 200, [
+                'orders' => $all_jobs,
+                'total_orders' => $total_jobs,
+                ]);
+
             if ($customer) {
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business";
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response->orders]) : api_response($request, $response, $response->code);
+                    return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response]) : api_response($request, $response, $response->code);
                 }
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function getInformation($orders)
+    {
+        $all_jobs = collect();
+        foreach ($orders as $order) {
+            $partnerOrders = $order->partnerOrders;
+            $cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at == null;
+            });
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
+            if (!$partnerOrder->cancelled_at) {
+                $job = ($partnerOrder->jobs->filter(function ($job) {
+                    return $job->status !== 'Cancelled';
+                }))->first();
+            } else {
+                $job = $partnerOrder->jobs->first();
+            }
+            if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
+        }
+        return $all_jobs;
+    }
+
+    private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
+    {
+        $category = $job->category;
+        $show_expert = $job->canCallExpert();
+
+        return collect(array(
+            'id' => $partnerOrder->id,
+            'job_id' => $job->id,
+            'category_name' => $category ? $category->name : null,
+            'category_thumb' => $category ? $category->thumb : null,
+            'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
+
+            'cancelled_date' => $partnerOrder->cancelled_at,
+            'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('M j, Y'),
+            'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
+            'status' => $job->status,
+
+            'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
+            'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
+
+            'resource_name' => $job->resource ? $job->resource->profile->name : null,
+            'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
+            'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
+
+            'contact_person' => $show_expert ? 'expert' : 'partner',
+            'rating' => $job->review != null ? $job->review->rating : null,
+            'order_code' => $partnerOrder->order->code(),
+            'created_at' => $partnerOrder->created_at->format('Y-m-d'),
+            'created_at_timestamp' => $partnerOrder->created_at->timestamp,
+        ));
     }
 
     public function show($order, Request $request)
