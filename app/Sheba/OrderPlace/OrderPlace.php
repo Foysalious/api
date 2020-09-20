@@ -386,7 +386,7 @@ class OrderPlace
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
                 if ($this->action->canSendPartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
-                if ($this->selectedPartner && !$this->action->canAssignPartner())
+                if (!$partner_order->partner_id && $this->selectedPartner && $this->action->isLateNightOrder())
                     $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())
                         ->setUserAgentInformation($this->userAgentInformation)->setCreatedBy($this->customer)->create();
             });
@@ -396,10 +396,14 @@ class OrderPlace
         return $order;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) $this->setDeliveryAddressFromId();
         if ($this->deliveryAddress) return;
+        if(!$this->category->isRentCar() && !$this->deliveryAddressId) throw new NotFoundException('Customer delivery address not found', 404);
         $address = new CustomerDeliveryAddress();
         $address->name = $this->address;
         $address->mobile = $this->deliveryMobile;
