@@ -63,14 +63,15 @@ class ResourceCreator
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
-        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image']);
+        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image_back']);
         return $this->resources->save($this->data);
     }
 
     private function saveImages()
     {
         if ($this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
-        if ($this->hasFile('nid_image')) $this->data['nid_image'] = $this->saveNIdImage();
+        if ($this->hasFile('nid_image_front')) $this->data['nid_image_front'] = $this->saveNIdImageFront();
+        if ($this->hasFile('nid_image_back')) $this->data['nid_image_back'] = $this->saveNIdImageBack();
     }
 
     /**
@@ -89,9 +90,15 @@ class ResourceCreator
      *
      * @return string
      */
-    private function saveNIdImage()
+    private function saveNIdImageFront()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->data['nid_image'], $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->data['nid_image_front'], $this->data['name']);
+        return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
+    }
+
+    private function saveNIdImageBack()
+    {
+        list($nid, $nid_filename) = $this->makeBanner($this->data['nid_image_back'], $this->data['name']);
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 
@@ -107,7 +114,8 @@ class ResourceCreator
     {
         $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
         $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
-        $this->data['nid_image_front'] = isset($this->data['nid_image']) ? $this->data['nid_image'] : null;
+        $this->data['nid_image_front'] = isset($this->data['nid_image_front']) ? $this->data['nid_image_front'] : null;
+        $this->data['nid_image_back'] = isset($this->data['nid_image_back']) ? $this->data['nid_image_back'] : null;
         $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 

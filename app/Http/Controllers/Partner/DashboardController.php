@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Analysis\PartnerPerformance\PartnerPerformance;
 use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Location\LocationSetter;
 use Sheba\Manager\JobList;
@@ -69,7 +70,9 @@ class DashboardController extends Controller
             $performanceStats = $performance->getData();
             $rating             = (new ReviewRepository)->getAvgRating($partner->reviews);
             $rating             = (string)(is_null($rating) ? 0 : $rating);
-            $successful_jobs    = $partner->notCancelledJobs();
+            $successful_jobs    = $partner->jobs()->whereDoesntHave('cancelRequest', function ($q) {
+                $q->where('status', CancelRequestStatuses::PENDING)->orWhere('status', CancelRequestStatuses::APPROVED);
+            })->select('jobs.id', 'schedule_date', 'status')->get();
             $sales_stats        = (new PartnerSalesStatistics($partner))->calculate();
             $upgradable_package = null;
             $new_order          = $this->newOrdersCount($partner, $request);
