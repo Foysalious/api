@@ -25,6 +25,7 @@ class NagadController extends Controller
             $redirect_url = $payment->status === Statuses::COMPLETED ? $payment->payable->success_url : $payment->payable->fail_url;
             return redirect()->to($redirect_url);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
