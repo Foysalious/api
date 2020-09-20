@@ -103,10 +103,11 @@ class AffiliateTransactionRepository
         $movie_ticket              = $this->affiliate->transactions()->debit()->movieTicket()->between($this->start_date, $this->end_date);
         $movie_ticket_commission   = $this->affiliate->transactions()->credit()->movieTicketCommission()->between($this->start_date, $this->end_date);
         $refunds                   = $this->affiliate->transactions()->credit()->refunds()->between($this->start_date, $this->end_date);
+        $manual_disbursement       = $this->affiliate->transactions()->credit()->manualDisbursement()->between($this->start_date, $this->end_date);
 
         if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচার্জ", "balance_recharge");
         if($count = $topUp->count()) $category_wise_transaction[] = $this->makeData($topUp->sum('amount'), $count, "Top Up", "টপ আপ", "topup", "-");
-        if($count) $category_wise_transaction[] = $this->makeData($topUp->sum('agent_commission'), $count, "Top Up Commission", "টপ আপ কমিশন", "topup_commission");
+        if(($count + $manual_disbursement->count())) $category_wise_transaction[] = $this->makeData($topUp->sum('agent_commission')+$manual_disbursement->sum('amount'), $count + $manual_disbursement->count(), "Top Up Commission", "টপ আপ কমিশন", "topup_commission");
         if($count = $service_commission->count()) $category_wise_transaction[] = $this->makeData($service_commission->sum('amount'), $count, "Service Refer Commission", "সার্ভিস রেফার কমিশন", "service_refer_commission");
         if($count = $bus_ticket->count()) $category_wise_transaction[] = $this->makeData($bus_ticket->sum('amount'), $count, "Bus Ticket", "বাস টিকেট", "bus_ticket",'-');
         if($count = $movie_ticket->count()) $category_wise_transaction[] = $this->makeData($movie_ticket->sum('amount'), $count, "Movie Ticket", "সিনেমা টিকেট", "movie_ticket",'-');

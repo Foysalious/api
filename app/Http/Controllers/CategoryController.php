@@ -400,7 +400,6 @@ class CategoryController extends Controller
 
         if ($category != null) {
             $category_slug = $category->getSlug();
-            $cross_sale_service = $category->crossSaleService;
             list($offset, $limit) = calculatePagination($request);
             $scope = [];
             if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
@@ -430,7 +429,7 @@ class CategoryController extends Controller
                         'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                         'app_thumb', 'app_banner', 'short_description', 'description',
                         'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features','is_inspection_service'
+                        'terms_and_conditions', 'features','is_inspection_service', 'is_add_on'
                     )->orderBy('order')->skip($offset)->take($limit);
 
                     if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -496,6 +495,14 @@ class CategoryController extends Controller
                 $min_max_price->setService($service)->setLocationService($location_service);
                 $service['max_price'] = $min_max_price->getMax();
                 $service['min_price'] = $min_max_price->getMin();
+                $service['addon'] = $service->crossSaleService ? [
+                    'title' => $service->crossSaleService->title,
+                    'description' => $service->crossSaleService->description,
+                    'icon' => $service->crossSaleService->icon,
+                    'category_id' => $category->id,
+                    'service_id' => $service->crossSaleService->add_on_service_id
+                ]: null;
+                $service['is_add_on'] = $service->is_add_on;
                 $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                 $service['features'] = $service->features ? json_decode($service->features) : null;
                 $slug = $slugs->where('sluggable_id', $service->id)->first();
@@ -552,14 +559,8 @@ class CategoryController extends Controller
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
                 $category['terms_and_conditions'] = $category['terms_and_conditions'] ? json_decode($category['terms_and_conditions']) : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount')->values()->all();
-                $category['cross_sale'] = $cross_sale_service ? [
-                    'title' => $cross_sale_service->title,
-                    'description' => $cross_sale_service->description,
-                    'icon' => $cross_sale_service->icon,
-                    'category_id' => $cross_sale_service->category_id,
-                    'service_id' => $cross_sale_service->service_id
-                ] : null;
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['cross_sale'] = null;
                 $category_model = Category::find($category['id']);
                 $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
                     ->setLocation(Location::find($location))->get();
