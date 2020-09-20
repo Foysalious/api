@@ -170,7 +170,11 @@ class BusinessRoute
                         $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
+                        $api->post('publication-status', 'B2b\ProcurementController@updatePublicationStatus');
+                        $api->post('description', 'B2b\ProcurementController@updateDescription');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
+                        $api->post('basic', 'B2b\ProcurementController@updateBasic');
+                        $api->post('attachments', 'B2b\ProcurementController@updateAttachments');
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
                         $api->get('/hiring-history', 'B2b\BidController@getHiringHistory');
                         $api->get('bills/clear', 'B2b\ProcurementController@clearBills');

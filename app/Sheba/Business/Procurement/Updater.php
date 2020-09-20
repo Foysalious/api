@@ -3,8 +3,10 @@
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\ProcurementItemField;
+use App\Models\Tag;
 use Carbon\Carbon;
 use Clockwork\DataSource\DBALDataSource;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Sheba\Business\Procurement\OrderClosedHandler;
@@ -126,19 +128,29 @@ class Updater
     {
         $this->makeData();
         $this->procurementRepository->update($this->procurement, $this->data);
+        $this->updateTags();
     }
 
     private function makeData()
     {
-        $this->data['long_description'] = $this->requestHandler->getLongDescription() ? $this->requestHandler->getLongDescription() : $this->procurement->long_description;
         $this->data['number_of_participants'] = $this->requestHandler->getNumberOfParticipants() || $this->requestHandler->getNumberOfParticipants() == 0 ? $this->requestHandler->getNumberOfParticipants() : $this->procurement->number_of_participants;
-        $this->data['last_date_of_submission'] = $this->requestHandler->getLastDateOfSubmission() ? $this->requestHandler->getLastDateOfSubmission() : $this->procurement->last_date_of_submission;
         $this->data['procurement_start_date'] = $this->requestHandler->getProcurementStartDate() ? $this->requestHandler->getProcurementStartDate() : $this->procurement->procurement_start_date;
         $this->data['procurement_end_date'] = $this->requestHandler->getProcurementEndDate() ? $this->requestHandler->getProcurementEndDate() : $this->procurement->procurement_end_date;
         $this->data['payment_options'] = $this->requestHandler->getPaymentOptions() ? $this->requestHandler->getPaymentOptions() : null;
+        $this->data['category_id'] = $this->requestHandler->getCategory() ? $this->requestHandler->getCategory() : null;
         $this->data['status'] = $this->status ? $this->status : $this->procurement->status;
         $this->data['sheba_collection'] = $this->shebaCollection ? $this->shebaCollection : $this->procurement->sheba_collection;
         $this->data['closed_and_paid_at'] = $this->closedAndPaidAt ? $this->closedAndPaidAt : $this->procurement->closed_and_paid_at;
+    }
+
+    private function updateTags()
+    {
+        if (!$this->requestHandler->getTags()) return;
+        if ($this->procurement->getTagNamesAttribute()->toArray() !== $this->requestHandler->getTags()) {
+            $this->procurement->tags()->detach();
+            $tags = Tag::sync($this->requestHandler->getTags(), get_class($this->procurement));
+            $this->procurement->tags()->sync($tags);
+        }
     }
 
     public function itemFieldsUpdate(Request $request)
@@ -166,7 +178,7 @@ class Updater
             }
             DB::commit();
             $this->updateType();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
         }
     }
