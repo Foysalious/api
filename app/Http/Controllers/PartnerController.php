@@ -5,6 +5,7 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Sheba\UserRequestInformation;
+use Sheba\Authentication\AuthUser;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -1371,6 +1372,16 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function changeLeaveStatusOfResource($partner, $resource, Request $request, LeaveStatus $leaveStatus, UserAgentInformation $userAgentInformation)
+    {
+        $userAgentInformation->setRequest($request);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $this->setModifier($auth_user->getResource());
+        $status = $leaveStatus->setArtisan(Resource::find($resource))->setUserAgentInformation($userAgentInformation)->changeStatus()->getCurrentStatus();
+        return api_response($request, $status, 200, ['status' => $status]);
     }
 
     /**
