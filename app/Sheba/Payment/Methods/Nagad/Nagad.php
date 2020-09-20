@@ -4,6 +4,7 @@
 use App\Models\Payable;
 use App\Models\Payment;
 use Exception;
+use Sheba\Payment\Methods\Nagad\Exception\InvalidOrderId;
 use Sheba\Payment\Methods\Nagad\Exception\InvalidPaymentRef;
 use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -77,9 +78,14 @@ class Nagad extends PaymentMethod
         }
     }
 
+    /**
+     * @param Payment $payment
+     * @return Payment
+     * @throws InvalidOrderId
+     */
     public function validate(Payment $payment): Payment
     {
-        $res=[];
+        $res=(new Validator([],true));
         try {
             if (empty($this->refId)) throw new InvalidPaymentRef();
             $res = $this->client->validate($this->refId);
@@ -88,6 +94,7 @@ class Nagad extends PaymentMethod
                 return $payment;
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
         }
         $this->statusChanger->setPayment($payment)->changeToValidationFailed($res->toString());
