@@ -2,6 +2,8 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\PartnerOrder;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -34,6 +36,7 @@ use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
+use Sheba\PartnerOrder\InvoiceHandler;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -731,5 +734,35 @@ class JobController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function getInvoice($customer, $job, Request $request)
+    {
+        $job = $request->job;
+        $partner_order = $job->partnerOrder;
+        $this->generateInvoice($partner_order->id, 'invoice');
+    }
+
+    public function generateInvoice($id, $type)
+    {
+        $error_level = error_reporting();
+        error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
+        error_reporting($error_level);
+
+        if (!in_array($type, ['invoice', 'quotation']))
+            abort(404);
+
+        $partner_order = PartnerOrder::find($id)->calculate($price_only = true);
+        if ($type == 'invoice') {
+            $type = 'bill';
+            $invoice = (new InvoiceHandler($partner_order))->save();
+            dd($invoice);
+            unlink($invoice['file']);
+        }
+
+        $type = strtoupper($type);
+        $pdf = App::make('dompdf.wrapper');
+        $pdf->loadView('pdfs.invoice', compact('partner_order', 'type'));
+        return $pdf->stream(ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf');
     }
 }
