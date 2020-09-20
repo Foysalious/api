@@ -479,23 +479,26 @@ class TripRequestController extends Controller
         return $business_trip;
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function fleetMail($member, Request $request)
     {
-        try {
-            $business = $request->business;
-            foreach ($this->b2b_management_emails as $management_email) {
-                $this->sendMailToB2bTeam($business, $management_email);
-            }
-            return api_response($request, null, 200);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $business = $request->business;
+        foreach ($this->b2b_management_emails as $management_email) {
+            $this->sendMailToB2bTeam($business, $management_email);
         }
+        return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $to_email
+     */
     private function sendMailToB2bTeam($business, $to_email)
     {
         $this->dispatch(new SendEmailForFleetToB2bTeam($business, $to_email));
     }
-
 }
