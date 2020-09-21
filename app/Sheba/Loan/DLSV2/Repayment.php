@@ -141,7 +141,7 @@ class Repayment
             'credit' => $this->amount,
             'debit' => 0,
             'type' => '',
-            'log' => 'সেবা টপআপ ফেচিসিলিটি ফি বাবদ চার্জ করা হয়েছে',
+            'log' => 'সেবা টপ-আপ ফ্যাসিলিটি ফি বাবদ চার্জ করা হয়েছে',
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
         return $this->repayment->save();
