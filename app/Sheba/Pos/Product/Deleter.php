@@ -22,6 +22,6 @@ class Deleter
     public function delete($id)
     {
         $partner_pos_service = $this->serviceRepo->find($id);
-        return $this->serviceRepo->delete($partner_pos_service);
+        return !empty($partner_pos_service) ? $this->serviceRepo->delete($partner_pos_service) : false;
     }
 }
