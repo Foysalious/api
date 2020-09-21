@@ -42,6 +42,10 @@ class OrderController extends Controller
         $this->memberManager = $member_manager;
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -78,7 +82,9 @@ class OrderController extends Controller
                                         },
                                         'review' => function ($q) {
                                             $q->select('id', 'rating', 'job_id');
-                                        }]);
+                                        }, 'usedMaterials' => function ($q) {
+                                            $q->select('id', 'job_id', 'material_name', 'material_price');
+                                        }, 'jobServices']);
                                 }]);
                         }]);
                 }]);
@@ -89,7 +95,6 @@ class OrderController extends Controller
                 });
                 $others = $all_jobs->diff($cancelled_served_jobs);
                 $all_jobs = $others->merge($cancelled_served_jobs);
-
             } else {
                 $all_jobs = collect();
             }
@@ -111,7 +116,6 @@ class OrderController extends Controller
             if ($request->has('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
             if ($request->has('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
 
-            #dd($all_jobs);
             $total_jobs = count($all_jobs);
             if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
 
@@ -123,70 +127,6 @@ class OrderController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
-    }
-
-    /**
-     * @param $all_jobs
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortById($all_jobs, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $all_jobs->$sort_by(function ($job) {
-            return strtoupper($job['id']);
-        });
-    }
-
-    /**
-     * @param $all_jobs
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByTitle($all_jobs, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $all_jobs->$sort_by(function ($job) {
-            return strtoupper($job['category_name']);
-        });
-    }
-
-    /**
-     * @param $all_jobs
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByPartnerName($all_jobs, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $all_jobs->$sort_by(function ($job) {
-            return strtoupper($job['partner_name']);
-        });
-    }
-
-    /**
-     * @param $all_jobs
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByStatus($all_jobs, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return $all_jobs->$sort_by(function ($job) {
-            return strtoupper($job['status']);
-        });
-    }
-
-    /**
-     * @param $all_jobs
-     * @param Request $request
-     * @return Collection
-     */
-    private function searchByTitle($all_jobs, Request $request)
-    {
-        return $all_jobs->filter(function ($job) use ($request) {
-            return str_contains(strtoupper($job['category_name']), strtoupper($request->search));
-        });
     }
 
     /**
@@ -226,7 +166,7 @@ class OrderController extends Controller
     private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
     {
         $category = $job->category;
-        return collect(array(
+        return collect([
             'id' => $partnerOrder->id,
             'job_id' => $job->id,
             'order_code' => $partnerOrder->order->code(),
@@ -234,12 +174,29 @@ class OrderController extends Controller
             'cancelled_date' => $partnerOrder->cancelled_at,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'status' => $job->status,
+            'can_give_review' => $this->canGiveReview($job),
             'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => $partnerOrder->getCustomerPayable(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_date_time' => $partnerOrder->created_at->toDateTimeString(),
-        ));
+        ]);
+    }
+
+    /**
+     * @param $job
+     * @return bool
+     */
+    private function canGiveReview($job)
+    {
+        $review = $job->review;
+        if (!is_null($review) && $review->rating > 0) {
+            return false;
+        } else if (!!($job->partnerOrder->closed_at)) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -263,10 +220,6 @@ class OrderController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => $message]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -498,5 +451,69 @@ class OrderController extends Controller
             logError($e);
             return null;
         }
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortById($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['id']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByTitle($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['category_name']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByPartnerName($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['partner_name']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByStatus($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['status']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param Request $request
+     * @return Collection
+     */
+    private function searchByTitle($all_jobs, Request $request)
+    {
+        return $all_jobs->filter(function ($job) use ($request) {
+            return str_contains(strtoupper($job['category_name']), strtoupper($request->search));
+        });
     }
 }
