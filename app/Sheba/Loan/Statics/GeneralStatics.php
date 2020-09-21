@@ -49,7 +49,7 @@ class GeneralStatics
     public static function microLoanData()
     {
         return [
-            'title'     => 'Dana Classic Loan',
+            'title'     => 'Sheba TopUp Facility',
             'title_bn'  => self::MICRO_TITLE_BD,
             'loan_type' => LoanTypes::MICRO,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
