@@ -52,6 +52,7 @@ class LoanClaim
     /**
      * @param $from
      * @param $to
+     * @param $user
      * @return bool
      * @throws \Exception
      */
@@ -71,6 +72,7 @@ class LoanClaim
                     (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
                 $this->deductClaimApprovalFee();
                 $this->checkAndDeductAnnualFee($claim);
+                $this->calculateAndDeductShebaInterest($claim->amount);
 
             }
             $this->sendNotificationToBank($to,$claim->amount);
@@ -156,6 +158,15 @@ class LoanClaim
             $claim->loan->last_annual_fee_payment_at = Carbon::now()->addDays(365);
             return $claim->loan->update();
         }
+    }
+
+    /**
+     * @param $claim_amount
+     */
+    private function calculateAndDeductShebaInterest($claim_amount)
+    {
+        $amount = ($claim_amount * (GeneralStatics::getMicroLoanShebaInterest() / 100)) * GeneralStatics::getRepaymentDefaultDuration();
+        (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($amount)->storeCreditShebaInterestFee();
     }
 
     /**
