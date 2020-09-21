@@ -11,7 +11,7 @@ class ReviewController extends Controller
 {
     use ModificationFields;
 
-    public function store($business, $order, Request $request)
+    public function store($business, $partner_order, Request $request)
     {
         try {
             $this->validate($request, ['rating' => 'required']);

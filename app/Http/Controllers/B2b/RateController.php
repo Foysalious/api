@@ -9,7 +9,7 @@ use DB;
 
 class RateController extends Controller
 {
-    public function index($business, $order, Request $request)
+    public function index($business, $partner_order, Request $request)
     {
         try {
             $rates = Rate::where('type', 'review_from_business')->with(['questions' => function ($q) {
@@ -35,7 +35,7 @@ class RateController extends Controller
             return api_response($request, null, 500);
         }
     }
-    public function store($business, $order, Request $request)
+    public function store($business, $partner_order, Request $request)
     {
         try {
             $job = $request->job;
