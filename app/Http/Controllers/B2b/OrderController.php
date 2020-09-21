@@ -214,8 +214,27 @@ class OrderController extends Controller
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$partner_order->id?remember_token=$customer->remember_token";
                 $client = new Client();
                 $res = $client->request('GET', $url);
-                if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['order' => $response->orders]) : api_response($request, $response, $response->code);
+                $response = json_decode($res->getBody());
+                if ($response->code == 200) {
+                    $order = $response->orders;
+                    #$job = Job::find($order->jobs[0]->job_id);
+                    $job = Job::find(199630);
+                    $question = null; $answer = null; $answer_text = null; $review_question_answer = null;
+                    if ($job->review && !$job->review->rates->isEmpty()) {
+                        $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
+                            $question = $rate->rate_question_id;
+                            if (!is_null($rate->rate_answer_id)) $answer[] = $rate->rate_answer_id;
+                            if ($rate->rate_answer_text) $answer_text = $rate->rate_answer_text;
+                        });
+                        $review_question_answer = ['question' => $question, 'answer' => $answer];
+                    }
+                    return api_response($request, $response, 200, [
+                        'order' => $order,
+                        'review_question_answer' => $review_question_answer,
+                        'answer_text' => $answer_text
+                    ]);
+                } else {
+                    api_response($request, $response, $response->code);
                 }
             } else {
                 return api_response($request, null, 404);
