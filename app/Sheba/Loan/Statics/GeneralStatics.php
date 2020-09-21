@@ -117,6 +117,16 @@ class GeneralStatics
         return config('loan.micro_loan_claim_transaction_fee');
     }
 
+    public static function getMicroLoanShebaInterest()
+    {
+        return config('loan.micro_loan_sheba_interest');
+    }
+
+    public static function getRepaymentDefaultDuration()
+    {
+        return config('loan.repayment_defaulter_default_duration');
+    }
+
     public static function getMinimumDay($type)
     {
         $day = config('loan.minimum_day');

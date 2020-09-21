@@ -133,6 +133,20 @@ class Repayment
         return $this->repayment->save();
     }
 
+    public function storeCreditShebaInterestFee()
+    {
+        $data = [
+            'loan_id' => $this->loanId,
+            'loan_claim_request_id' => $this->claimId,
+            'credit' => $this->amount,
+            'debit' => 0,
+            'type' => '',
+            'log' => 'সেবা টপআপ ফেচিসিলিটি ফি বাবদ চার্জ করা হয়েছে',
+        ];
+        $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
+        return $this->repayment->save();
+    }
+
 
     public function getByYearAndMonth($loan_id, $year, $month)
     {
