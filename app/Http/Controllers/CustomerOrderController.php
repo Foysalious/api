@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Repositories\ReviewRepository;
 use App\Transformers\Customer\CustomerDueOrdersTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
@@ -191,6 +192,7 @@ class CustomerOrderController extends Controller
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'schedule_date_for_b2b' => $job->schedule_date ? (Carbon::parse($job->schedule_date))->format('d/m/y') : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
             'cancelled_date' => $partnerOrder->cancelled_at,
@@ -204,8 +206,14 @@ class CustomerOrderController extends Controller
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
             'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
+            'partner_mobile_number' => $partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null,
+            'partner_total_rating'=> $partnerOrder->partner ?  $partnerOrder->partner->reviews->count():null,
+            'partner_avg_rating' => $partnerOrder->partner ?  (new ReviewRepository)->getAvgRating($partnerOrder->partner->reviews):null,
             'resource_name' => $job->resource ? $job->resource->profile->name : null,
             'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
+            'resource_mobile_number' => $job->resource ? $job->resource->profile->mobile : null,
+            'resource_total_rating' => $job->resource ? $job->resource->reviews->count(): null,
+            'resource_avg_rating' => $job->resource ? (new ReviewRepository)->getAvgRating($job->resource->reviews): null,
             'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
             'contact_person' => $show_expert ? 'expert' : 'partner',
             'rating' => $job->review != null ? $job->review->rating : null,
