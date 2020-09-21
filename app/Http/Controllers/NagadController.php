@@ -23,7 +23,6 @@ class NagadController extends Controller
             $method->setRefId($validator->getPaymentRefId());
             $payment      = $paymentManager->complete() ?: $payment;
             $redirect_url = $payment->status === Statuses::COMPLETED ? $payment->payable->success_url : $payment->payable->fail_url;
-            dd($redirect_url);
             return redirect()->to($redirect_url);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
