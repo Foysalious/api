@@ -13,6 +13,7 @@ use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
 use Sheba\Business\MemberManager;
 use Sheba\Checkout\Adapters\SubscriptionOrderAdapter;
@@ -44,27 +45,209 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $customer = $request->manager_member->profile->customer;
-            if ($customer) {
-                $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders?remember_token=$customer->remember_token&for=business";
-                $client = new Client();
-                $res = $client->request('GET', $url);
-                if ($response = json_decode($res->getBody())) {
-                    return ($response->code == 200) ? api_response($request, $response, 200, ['orders' => $response->orders]) : api_response($request, $response, $response->code);
-                }
+            $customer = $request->manager_member->customer;
+            list($offset, $limit) = calculatePagination($request);
+            $customer = $customer->load([
+                'orders' => function ($q) {
+                    $q->whereNotNull('business_id')->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id', 'sales_channel')->orderBy('id', 'desc');
+                    $q->with([
+                        'partnerOrders' => function ($q) {
+                            $q->select('id', 'order_id', 'partner_id', 'created_at')->with([
+                                'partner' => function ($q) {
+                                    $q->select('id', 'name', 'mobile')->with([
+                                        'resources' => function ($q) {
+                                            $q->select('resources.id', 'profile_id')->with([
+                                                'profile' => function ($q) {
+                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                                }]);
+                                        }]);
+                                },
+                                'order' => function ($q) {
+                                    $q->select('id', 'sales_channel', 'subscription_order_id');
+                                },
+                                'jobs' => function ($q) {
+                                    $q->select('id', 'partner_order_id', 'category_id', 'job_name', 'service_id', 'service_name', 'resource_id', 'schedule_date', 'preferred_time', 'preferred_time_start', 'preferred_time_end', 'status', 'delivered_date')->with([
+                                        'resource' => function ($q) {
+                                            $q->select('id', 'profile_id')->with([
+                                                'profile' => function ($q) {
+                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                                }]);
+                                        },
+                                        'category' => function ($q) {
+                                            $q->select('id', 'name', 'thumb', 'banner');
+                                        },
+                                        'review' => function ($q) {
+                                            $q->select('id', 'rating', 'job_id');
+                                        }]);
+                                }]);
+                        }]);
+                }]);
+            if (count($customer->orders) > 0) {
+                $all_jobs = $this->getInformation($customer->orders);
+                $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                    return $job['cancelled_date'] != null || $job['status'] == 'Served';
+                });
+                $others = $all_jobs->diff($cancelled_served_jobs);
+                $all_jobs = $others->merge($cancelled_served_jobs);
+
             } else {
-                return api_response($request, null, 404);
+                $all_jobs = collect();
             }
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => $message]);
+
+            if ($request->has('status') && $request->status != 'all') {
+                $all_jobs = $all_jobs->where('status', $request->status)->values();
+            }
+            $start_date = $request->has('start_date') ? $request->start_date : null;
+            $end_date = $request->has('end_date') ? $request->end_date : null;
+            if ($start_date && $end_date) {
+                $all_jobs = $all_jobs->filter(function ($job) use ($start_date, $end_date) {
+                    return ($job['created_at_date_time'] <= $start_date . ' 00:00:00') && ($job['created_at_date_time'] <= $end_date . ' 23:59:59');
+                });
+            }
+
+            if ($request->has('search')) $all_jobs = $this->searchByTitle($all_jobs, $request)->values();
+            if ($request->has('sort_by_id')) $all_jobs = $this->sortById($all_jobs, $request->sort_by_id)->values();
+            if ($request->has('sort_by_title')) $all_jobs = $this->sortByTitle($all_jobs, $request->sort_by_title)->values();
+            if ($request->has('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
+            if ($request->has('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
+
+            #dd($all_jobs);
+            $total_jobs = count($all_jobs);
+            if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
+
+            return api_response($request, $all_jobs, 200, [
+                'orders' => $all_jobs,
+                'total_orders' => $total_jobs,
+            ]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
 
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortById($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['id']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByTitle($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['category_name']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByPartnerName($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['partner_name']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param string $sort
+     * @return mixed
+     */
+    private function sortByStatus($all_jobs, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return $all_jobs->$sort_by(function ($job) {
+            return strtoupper($job['status']);
+        });
+    }
+
+    /**
+     * @param $all_jobs
+     * @param Request $request
+     * @return Collection
+     */
+    private function searchByTitle($all_jobs, Request $request)
+    {
+        return $all_jobs->filter(function ($job) use ($request) {
+            return str_contains(strtoupper($job['category_name']), strtoupper($request->search));
+        });
+    }
+
+    /**
+     * @param $orders
+     * @return Collection
+     */
+    private function getInformation($orders)
+    {
+        $all_jobs = collect();
+        foreach ($orders as $order) {
+            $partnerOrders = $order->partnerOrders;
+            $cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at != null;
+            })->sortByDesc('cancelled_at');
+            $not_cancelled_partnerOrders = $partnerOrders->filter(function ($o) {
+                return $o->cancelled_at == null;
+            });
+            $partnerOrder = $not_cancelled_partnerOrders->count() == 0 ? $cancelled_partnerOrders->first() : $not_cancelled_partnerOrders->first();
+            $partnerOrder->calculate(true);
+            if (!$partnerOrder->cancelled_at) {
+                $job = ($partnerOrder->jobs->filter(function ($job) {
+                    return $job->status !== 'Cancelled';
+                }))->first();
+            } else {
+                $job = $partnerOrder->jobs->first();
+            }
+            if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
+        }
+        return $all_jobs;
+    }
+
+    /**
+     * @param Job $job
+     * @param PartnerOrder $partnerOrder
+     * @return Collection
+     */
+    private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
+    {
+        $category = $job->category;
+        return collect(array(
+            'id' => $partnerOrder->id,
+            'job_id' => $job->id,
+            'order_code' => $partnerOrder->order->code(),
+            'category_name' => $category ? $category->name : null,
+            'cancelled_date' => $partnerOrder->cancelled_at,
+            'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
+            'status' => $job->status,
+            'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
+            'rating' => $job->review != null ? $job->review->rating : null,
+            'price' => $partnerOrder->getCustomerPayable(),
+            'created_at' => $partnerOrder->created_at->format('Y-m-d'),
+            'created_at_date_time' => $partnerOrder->created_at->toDateTimeString(),
+        ));
+    }
+
+    /**
+     * @param $order
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function show($order, Request $request)
     {
         try {
@@ -90,6 +273,12 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param $order
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function getBills($order, Request $request)
     {
         try {
@@ -139,6 +328,10 @@ class OrderController extends Controller
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
+    /**
+     * @param $partner_order_id
+     * @return int
+     */
     private function hasPreviousBkashTransaction($partner_order_id)
     {
         $time = Carbon::now()->subMinutes(1);
@@ -148,6 +341,13 @@ class OrderController extends Controller
         return $payment ? 1 : 0;
     }
 
+    /**
+     * @param Request $request
+     * @param PartnerListRequest $partnerListRequest
+     * @param PromotionCalculation $promotionCalculation
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
     public function applyPromo(Request $request, PartnerListRequest $partnerListRequest, PromotionCalculation $promotionCalculation)
     {
         $this->validate($request, [
@@ -183,6 +383,13 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param GeoCode $geo_code
+     * @param Address $address
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function placeOrder(Request $request, GeoCode $geo_code, Address $address)
     {
         try {
@@ -250,6 +457,11 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param B2bSubscriptionOrderPlaceFactory $factory
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function placeSubscriptionOrder(Request $request, B2bSubscriptionOrderPlaceFactory $factory)
     {
         try {
@@ -274,6 +486,10 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param $order
+     * @return |null
+     */
     private function sendNotifications($order)
     {
         try {
