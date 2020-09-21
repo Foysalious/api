@@ -122,6 +122,7 @@ class BusinessRoute
                         $api->get('/', 'B2b\OrderController@show');
                         $api->post('/reviews', 'B2b\ReviewController@store');
                         $api->post('/rates', 'B2b\RateController@store');
+                        $api->get('/rates', 'B2b\RateController@index');
                         $api->get('bills/clear', 'B2b\OrderController@clearBills');
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });

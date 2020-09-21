@@ -3,7 +3,9 @@
 use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\InspectionItemIssue;
+use App\Models\Job;
 use App\Models\Member;
+use App\Models\PartnerOrder;
 use App\Models\Payment;
 use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
@@ -18,6 +20,7 @@ use Sheba\Checkout\SubscriptionOrderPlace\B2bSubscriptionOrderPlaceFactory;
 use Sheba\Checkout\PromotionCalculation;
 use Sheba\Checkout\Requests\PartnerListRequest;
 use Sheba\Location\Coords;
+use Sheba\Logs\Customer\JobLogs;
 use Sheba\Map\Address;
 use Sheba\Map\GeoCode;
 use Sheba\ModificationFields;

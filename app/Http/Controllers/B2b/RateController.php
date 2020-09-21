@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Models\Rate;
 use App\Models\ReviewQuestionAnswer;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -8,7 +9,33 @@ use DB;
 
 class RateController extends Controller
 {
-    public function store($business, $order, Request $request)
+    public function index($business, $partner_order, Request $request)
+    {
+        try {
+            $rates = Rate::where('type', 'review_from_business')->with(['questions' => function ($q) {
+                $q->select('id', 'question', 'type')->with(['answers' => function ($q) {
+                    $q->select('id', 'answer', 'asset', 'badge');
+                }]);
+            }])->select('id', 'name', 'icon', 'icon_off', 'value')->get();
+            foreach ($rates as $rate) {
+                $rate['asset'] = 'star';
+                $rate['height'] = 30;
+                foreach ($rate->questions as $question) {
+                    $question['is_compliment'] = ($rate->value == 5) ? 1 : 0;
+                    array_forget($question, 'pivot');
+                    foreach ($question->answers as $answer) {
+                        array_forget($answer, 'pivot');
+                    }
+                }
+            }
+            $rates = $rates->sortBy('value')->values()->all();
+            return api_response($request, $rates, 200, ['rates' => $rates, 'rate_message' => 'Rate this job']);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+    public function store($business, $partner_order, Request $request)
     {
         try {
             $job = $request->job;
