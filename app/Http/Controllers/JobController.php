@@ -740,6 +740,7 @@ class JobController extends Controller
     {
         $job = $request->job;
         $partner_order = $job->partnerOrder;
+        dd($job, $partner_order);
         $this->generateInvoice($partner_order->id, 'invoice');
     }
 
@@ -753,16 +754,14 @@ class JobController extends Controller
             abort(404);
 
         $partner_order = PartnerOrder::find($id)->calculate($price_only = true);
-        if ($type == 'invoice') {
-            $type = 'bill';
-            $invoice = (new InvoiceHandler($partner_order))->save();
-            dd($invoice);
-            unlink($invoice['file']);
-        }
 
-        $type = strtoupper($type);
-        $pdf = App::make('dompdf.wrapper');
-        $pdf->loadView('pdfs.invoice', compact('partner_order', 'type'));
-        return $pdf->stream(ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf');
+        if ($type == 'invoice') $type = 'bill';
+        $invoice = (new InvoiceHandler($partner_order))->save();
+        dd($invoice);
+
+//        $type = strtoupper($type);
+//        $pdf = App::make('dompdf.wrapper');
+//        $pdf->loadView('pdfs.invoice', compact('partner_order', 'type'));
+//        return $pdf->stream(ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf');
     }
 }

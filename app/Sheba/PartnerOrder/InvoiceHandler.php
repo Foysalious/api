@@ -29,7 +29,6 @@ class InvoiceHandler
 //        $this->updatePartnerOrder($s3_invoice_link);
 
         return [
-            'file'      => $file,
             'file_name' => $s3_invoice_link
         ];
     }
