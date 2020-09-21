@@ -121,12 +121,6 @@ class CustomerController extends Controller
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -156,12 +150,6 @@ class CustomerController extends Controller
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -243,7 +231,8 @@ class CustomerController extends Controller
                 throw new InvalidPartnerPosCustomer();
             $customer = $partner_pos_customer->customer;
             $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-            $customer->delete();
+            $this->deletePosOrder($request->partner->id,$customer->id);
+            $partner_pos_customer->delete();
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
@@ -251,6 +240,13 @@ class CustomerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function deletePosOrder($partner_id,$customer)
+    {
+        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
+        foreach ($pos_orders as $pos_order)
+            $pos_order->delete();
     }
 
     /**

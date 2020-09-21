@@ -2,7 +2,7 @@
 
 namespace App\Sheba\Partner;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use Carbon\Carbon;
 use Sheba\Checkout\Partners\PartnerUnavailabilityReasons;

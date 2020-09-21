@@ -5,9 +5,9 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\Thana;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Location\Coords;
@@ -379,6 +379,6 @@ class ServiceRequestObject
         $distance = $this->distanceMatrix->getDistanceMatrix($this->pickUpGeo, $this->destinationGeo);
         $this->setEstimatedTime($distance->getDurationInMinutes());
         $this->setEstimatedDistance($distance->getDistanceInKms());
-        $this->setQuantity($distance->getDistanceInKms());
+        $this->setQuantity(1);
     }
 }

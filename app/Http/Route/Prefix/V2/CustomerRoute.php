@@ -109,6 +109,9 @@ class CustomerRoute
                 $api->group(['prefix' => 'transactions'], function ($api) {
                     $api->get('/', 'Customer\CustomerTransactionController@index');
                 });
+                $api->group(['prefix' => 'due-orders'], function ($api) {
+                    $api->get('/', 'CustomerOrderController@dueOrders');
+                });
             });
         });
     }

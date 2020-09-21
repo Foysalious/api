@@ -18,4 +18,18 @@ class TopUpErrorResponse
     {
         $this->$name = $value;
     }
+
+    public function toArray()
+    {
+        return [
+            'code' => $this->errorCode,
+            'message' => $this->errorMessage,
+            'response' => $this->errorResponse
+        ];
+    }
+
+    public function toJson()
+    {
+        return json_encode($this->toArray());
+    }
 }

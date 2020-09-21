@@ -6,6 +6,7 @@ class AffiliateRoute
     {
         $api->group(['prefix' => 'affiliates/{affiliate}', 'middleware' => ['affiliate.auth']], function ($api) {
             $api->get('dashboard', 'AffiliateController@getDashboardInfo');
+            $api->get('transaction-history-categories', 'AffiliateTransactionController@getTransactionByCategory');
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
             $api->get('services', 'AffiliateController@getServicesInfo');
             $api->post('partner-affiliates', 'PartnerAffiliationController@store');
@@ -41,6 +42,8 @@ class AffiliateRoute
             $api->delete('bank-info/{profile_bank_information}', 'AffiliateController@deleteBankInformation');
             $api->delete('mobile-bank-info/{profile_bank_information}', 'AffiliateController@deleteMobileBankInformation');
             $api->post('mobile-bank-information/{profile_mobile_bank_info}', 'AffiliateController@updateMobileBankInformation');
+            $api->get('ddn-order-list', 'AffiliateController@getOrderList');
+            $api->get('ddn-order-details/{order}', 'AffiliateController@getOrderDetails');
             $api->group(['prefix' => 'movie-ticket'], function ($api) {
                 $api->get('movie-list', 'MovieTicketController@getAvailableTickets');
                 $api->get('theatre-list', 'MovieTicketController@getAvailableTheatres');

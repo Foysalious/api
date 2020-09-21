@@ -1,11 +1,15 @@
 <?php namespace App\Models;
 
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Sheba\Dal\BaseModel;
+use Sheba\Dal\ResourceStatusChangeLog\Model;
 use Sheba\Dal\ResourceTransaction\Model as ResourceTransaction;
-use Sheba\Payment\Wallet;
+use Sheba\Dal\Retailer\Retailer;
+use Sheba\Wallet\Wallet;
 use Sheba\Reward\Rewardable;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Sheba\Dal\Category\Category;
 
 class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 {
@@ -22,6 +26,16 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function reviews()
     {
         return $this->hasMany(Review::class);
+    }
+
+    public function statusChangeLog()
+    {
+        return $this->hasMany(Model::class);
+    }
+
+    public function affiliate()
+    {
+        return $this->belongsTo(Affiliate::class, 'profile_id', 'profile_id');
     }
 
     public function profile()
@@ -57,6 +71,16 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function notifications()
     {
         return $this->morphMany(Notification::class, 'notifiable');
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function retailers()
+    {
+        /** @var Profile $profile */
+        $profile = $this->profile;
+        return $profile->retailers();
     }
 
     public function withdrawalRequests()
@@ -130,6 +154,11 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
         })->count();
     }
 
+    public function totalJobs()
+    {
+        return $this->jobs->count();
+    }
+
     public function totalWalletAmount()
     {
         return $this->wallet;
@@ -138,5 +167,10 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
     public function isAllowedToSendWithdrawalRequest()
     {
         return !($this->withdrawalRequests()->active()->count() > 0);
+    }
+
+    public function isAllowedForMicroLoan()
+    {
+        return $this->retailers->count() > 0;
     }
 }

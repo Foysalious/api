@@ -19,6 +19,12 @@ return [
         'mid' => env('BL_TOPUP_MID'),
         'pin' => env('BL_TOPUP_PIN')
     ],
+    'ssl' => [
+        'proxy_url' => env('SSL_VR_PROXY_URL'),
+        'client_id' => env('SSL_TOPUP_CLIENT_ID'),
+        'client_password' => env('SSL_TOPUP_CLIENT_PASSWORD'),
+        'url' => env('SSL_TOPUP_URL'),
+    ],
     'status' => [
         'initiated' => ['sheba' => 'Initiated', 'partner' => 'Initiated', 'customer' => 'Initiated'],
         'pending' => ['sheba' => 'Pending', 'partner' => 'Active', 'customer' => 'Verified'],

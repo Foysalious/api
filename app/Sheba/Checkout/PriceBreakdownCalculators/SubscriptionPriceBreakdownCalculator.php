@@ -1,12 +1,14 @@
 <?php namespace Sheba\Checkout\PriceBreakdownCalculators;
 
 
-use App\Models\LocationService;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\Discount\DiscountTypes;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Sheba\Checkout\DeliveryCharge;
 use Sheba\Checkout\Services\ServiceWithPrice;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\LocationService\PriceCalculation;
 
@@ -24,6 +26,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
 
     /**
      * @return SubscriptionServicePricingAndBreakdown
+     * @throws InvalidDiscountType
      */
     public function calculate()
     {
@@ -31,7 +34,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
         $date_count = count($this->request->scheduleDate);
         foreach ($this->request->selectedServices as $selected_service) {
             $unit_price = $this->getUnitPrice($selected_service);
-            $original_price = $unit_price * $selected_service->quantity * $date_count;
+            $original_price = $unit_price * $selected_service->quantity;
             /** @var ServiceSubscriptionDiscount $discount */
             $discount = $selected_service->serviceModel->subscription->getDiscount($this->request->subscriptionType, $date_count);
             $discounted_amount = !$discount ? 0 : $discount->getApplicableAmount($original_price, $selected_service->quantity);
@@ -41,7 +44,7 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             $service->setOption($selected_service->option)->setQuantity($selected_service->quantity)
                 ->setDiscount($discounted_amount);
 
-            if($discount) {
+            if ($discount) {
                 $service->setCap($discount->cap)->setAmount($discount->discount_amount)
                     ->setIsPercentage($discount->isPercentage() ? 1 : 0)
                     ->setShebaContribution($discount->sheba_contribution)->setPartnerContribution($discount->partner_contribution);
@@ -56,10 +59,11 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
             $price->addService($service);
         }
 
-        $price->setTotalQuantity(count($this->request->scheduleDate))
+        list($original_delivery_charge, $discounted_delivery_charge) = $this->getDeliveryCharges($price->getDiscountedPrice());
+        $price->setDeliveryCharge($original_delivery_charge)->setDiscountedDeliveryCharge($discounted_delivery_charge)
+            ->setTotalQuantity(count($this->request->scheduleDate))
             ->setHasHomeDelivery((int)$this->request->selectedCategory->is_home_delivery_applied ? 1 : 0)
             ->setHasPremiseAvailable((int)$this->request->selectedCategory->is_partner_premise_applied ? 1 : 0);
-
         return $price;
     }
 
@@ -70,5 +74,28 @@ class SubscriptionPriceBreakdownCalculator extends PriceBreakdownCalculator
         ])->first();
         $this->priceCalculator->setLocationService($location_service)->setOption($selected_service->option);
         return $this->priceCalculator->getUnitPrice();
+    }
+
+    /**
+     * @param $total_price
+     * @return array
+     * @throws InvalidDiscountType
+     */
+    protected function getDeliveryCharges($total_price)
+    {
+        $original_delivery_charge = $this->deliveryCharge->get();
+        $discount_amount = 0;
+        $discount_checking_params = (new JobDiscountCheckingParams())
+            ->setDiscountableAmount($original_delivery_charge)->setOrderAmount($total_price);
+        $this->jobDiscountHandler->setType(DiscountTypes::DELIVERY)->setCategory($this->request->selectedCategory)
+            ->setCheckingParams($discount_checking_params)->calculate();
+
+        if ($this->jobDiscountHandler->hasDiscount()) {
+            $discount_amount += $this->jobDiscountHandler->getApplicableAmount();
+        }
+
+        $discounted_delivery_charge = $original_delivery_charge - $discount_amount;
+
+        return [$original_delivery_charge, $discounted_delivery_charge];
     }
 }

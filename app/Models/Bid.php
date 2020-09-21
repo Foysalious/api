@@ -34,6 +34,11 @@ class Bid extends Model
         return $this->morphTo();
     }
 
+    public function scopeHiringHistory($query)
+    {
+        return $query->whereIn('status', ['awarded', 'accepted', 'rejected']);
+    }
+
     public function isAdvanced()
     {
         return $this->procurement->type == Type::ADVANCED;

@@ -1,16 +1,22 @@
 <?php namespace Sheba\Business\Bid;
 
+use App\Jobs\Business\SendEmailForBiddingTenderToBusiness;
 use App\Models\Bid;
 use App\Models\Procurement;
+use App\Sheba\Attachments\Attachments;
 use App\Sheba\Repositories\Business\BidRepository;
+use Exception;
 use Illuminate\Database\QueryException;
 use DB;
-use Sheba\Notification\NotificationCreated;
+use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 
 class Creator
 {
+    use ModificationFields;
+    use DispatchesJobs;
     private $bidRepository;
     private $procurement;
     private $data;
@@ -23,14 +29,30 @@ class Creator
     private $fieldResults;
     private $bidItemRepository;
     private $bidItemFieldRepository;
+    /** @var array $attachments */
+    private $attachments;
+    /** @var Attachments $attachmentManager */
+    private $attachmentManager;
+    private $createdBy;
 
-
-    public function __construct(BidRepository $bid_repository, BidItemRepositoryInterface $bid_item_repository, BidItemFieldRepositoryInterface $bid_item_field_repository)
+    /**
+     * Creator constructor.
+     * @param BidRepository $bid_repository
+     * @param BidItemRepositoryInterface $bid_item_repository
+     * @param BidItemFieldRepositoryInterface $bid_item_field_repository
+     * @param Attachments $attachment_manager
+     */
+    public function __construct(BidRepository $bid_repository,
+                                BidItemRepositoryInterface $bid_item_repository,
+                                BidItemFieldRepositoryInterface $bid_item_field_repository,
+                                Attachments $attachment_manager)
     {
         $this->bidRepository = $bid_repository;
         $this->bidItemRepository = $bid_item_repository;
         $this->bidItemFieldRepository = $bid_item_field_repository;
         $this->data = [];
+        $this->attachments = [];
+        $this->attachmentManager = $attachment_manager;
     }
 
     public function setProcurement(Procurement $procurement)
@@ -81,7 +103,6 @@ class Creator
         return $this;
     }
 
-
     public function create()
     {
         $this->makeData();
@@ -89,7 +110,7 @@ class Creator
         try {
             DB::transaction(function () use (&$bid) {
                 /** @var Bid $bid */
-                $bid = $this->bidRepository->create($this->data);
+                $bid = $this->bidRepository->create($this->withCreateModificationField($this->data));
                 foreach ($this->procurement->items as $item) {
                     $bid_item = $this->bidItemRepository->create(['bid_id' => $bid->id, 'type' => $item->type]);
                     foreach ($item->fields as $field) {
@@ -105,11 +126,16 @@ class Creator
                     }
                 }
                 $this->updatePrice($bid);
+                $this->createAttachments($bid);
+                $this->sendToBusinessVendorParticipatedEmail($bid);
                 $this->sendVendorParticipatedNotification($bid);
             });
         } catch (QueryException $e) {
-            throw  $e;
+            throw $e;
+        } catch (Exception $e) {
+            throw $e;
         }
+
         return $bid;
     }
 
@@ -138,11 +164,23 @@ class Creator
         }
     }
 
+    /**
+     * @param Bid $bid
+     */
+    private function sendToBusinessVendorParticipatedEmail(Bid $bid)
+    {
+        $this->dispatch(new SendEmailForBiddingTenderToBusiness($bid));
+    }
+
+    /**
+     * @param Bid $bid
+     * @throws Exception
+     */
     private function sendVendorParticipatedNotification(Bid $bid)
     {
         if ($this->status != 'sent') return;
         $message = $bid->bidder->name . ' participated on your procurement #' . $bid->procurement->id;
-        $link = config('sheba.business_url') . '/dashboard/procurement/' . $bid->procurement_id . '/quotation?id=' . $bid->id;
+        $link = config('sheba.business_url') . '/dashboard/rfq/list/' . $bid->procurement_id . '/biddings/' . $bid->id;
         foreach ($bid->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
@@ -151,16 +189,42 @@ class Creator
                 'event_id' => $bid->id,
                 'link' => $link
             ]);
-//            event(new NotificationCreated([
-//                'notifiable_id' => $member->id,
-//                'notifiable_type' => "member",
-//                'event_id' => $bid->id,
-//                'event_type' => "bid",
-//                "title" => $message,
-//                'message' => $message,
-//            ], $bid->bidder->id, get_class($bid->bidder)));
+            /**
+             * THIS NOTIFICATION NO NEEDED THIS TIMES
+             *
+             * event(new NotificationCreated([
+             * 'notifiable_id' => $member->id,
+             * 'notifiable_type' => "member",
+             * 'event_id' => $bid->id,
+             * 'event_type' => "bid",
+             * "title" => $message,
+             * 'message' => $message,
+             * ], $bid->bidder->id, get_class($bid->bidder)));*/
         }
-
     }
 
+    public function setAttachments(array $attachments)
+    {
+        $this->attachments = $attachments;
+        return $this;
+    }
+
+    /**
+     * @param Bid $bid
+     */
+    private function createAttachments(Bid $bid)
+    {
+        foreach ($this->attachments as $attachment) {
+            $this->attachmentManager->setAttachableModel($bid)
+                ->setCreatedBy($this->createdBy)
+                ->setFile($attachment)
+                ->store();
+        }
+    }
+
+    public function setCreatedBy($created_by)
+    {
+        $this->createdBy = $created_by;
+        return $this;
+    }
 }

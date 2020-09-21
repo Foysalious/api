@@ -1,5 +1,6 @@
 <?php namespace Sheba\Transactions\Wallet;
 
+use App\Models\Resource;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -8,6 +9,7 @@ use Sheba\FraudDetection\Exceptions\FraudDetectionServerError;
 use Sheba\FraudDetection\Repository\TransactionRepository;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\Jobs\FraudTransactionJob;
 use Sheba\Transactions\Wallet\Jobs\WalletTransactionJob;
 use Sheba\Wallet\WalletUpdateEvent;
@@ -60,21 +62,25 @@ class WalletTransactionHandler extends WalletTransaction
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
             $this->$typeMethod();
-            $data             = array_merge($data, [
-                'type'                => ucfirst($this->type),
-                'log'                 => $this->log,
-                'created_at'          => Carbon::now(),
-                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null,
-                'amount'              => $this->amount
+            $data = array_merge($data, [
+                'type'      => ucfirst($this->type),
+                'amount'    => $this->amount,
+                'balance'   => $this->getCalculatedBalance(),
+                'log'       => $this->log,
+                'created_at'=> Carbon::now(),
+                'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
             ]);
+
             $transaction_data = $this->getTransactionClass()->fill($data);
             $transaction      = $this->model->transactions()->save($transaction_data);
+
             event(new WalletUpdateEvent([
                 'amount'    => $this->model->fresh()->wallet,
                 'user_type' => strtolower(class_basename($this->model)),
-                'user_id'   => $this->model->id,
+                'user_id'   => $this->model->id
             ]));
         });
+
         return $transaction;
     }
 
@@ -83,6 +89,7 @@ class WalletTransactionHandler extends WalletTransaction
      */
     private function getTransactionClass()
     {
+        if ($this->model instanceof Resource) return new \Sheba\Dal\ResourceTransaction\Model();
         $name = class_basename($this->model);
         return app('App\\Models\\' . $name . 'Transaction');
     }
@@ -153,12 +160,11 @@ class WalletTransactionHandler extends WalletTransaction
      */
     public function recharge($data = [], $isJob = false)
     {
-
         try {
             if (empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
             }
-            $transaction = $this->setType('credit')->storeTransaction($data);
+            $transaction = $this->setType(Types::credit())->storeTransaction($data);
             $this->storeFraudDetectionTransaction(!$isJob);
             return $transaction;
         } catch (Exception $e) {
@@ -216,5 +222,15 @@ class WalletTransactionHandler extends WalletTransaction
         /*$extras = $this->withCreateModificationField((new RequestIdentification())->set($extras));*/
         /*dispatch((new WalletTransactionJob($this))->setExtras($extras));*/
         $this->store($extras);
+    }
+
+    /**
+     * @return float
+     */
+    private function getCalculatedBalance()
+    {
+        $last_inserted_transaction = $this->model->transactions()->orderBy('id', 'desc')->first();
+        $last_inserted_balance = $last_inserted_transaction ? $last_inserted_transaction->balance : 0.00;
+        return strtolower($this->type) == 'credit' ? $last_inserted_balance + $this->amount : $last_inserted_balance - $this->amount;
     }
 }

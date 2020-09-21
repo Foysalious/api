@@ -1,8 +1,8 @@
 <?php namespace Sheba\Cache\Schema\DataBuilder;
 
 
-use App\Models\Category;
-use App\Models\Service;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class ServiceSchema
 {

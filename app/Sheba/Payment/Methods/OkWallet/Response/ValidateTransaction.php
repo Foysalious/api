@@ -1,11 +1,7 @@
-<?php
-
-
-namespace App\Sheba\Payment\Methods\OkWallet\Response;
-
+<?php namespace App\Sheba\Payment\Methods\OkWallet\Response;
 
 use App\Models\Payment;
-use App\Repositories\PaymentRepository;
+use App\Repositories\PaymentStatusChangeLogRepository;
 use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use Sheba\Payment\Methods\OkWallet\OkWalletClient;
 use Sheba\Payment\Methods\OkWallet\Response\ValidationResponse;
@@ -19,9 +15,9 @@ class ValidateTransaction
 
     /**
      * ValidateTransaction constructor.
-     * @param PaymentRepository $payment_repository
+     * @param PaymentStatusChangeLogRepository $payment_repository
      */
-    public function __construct(PaymentRepository $payment_repository)
+    public function __construct(PaymentStatusChangeLogRepository $payment_repository)
     {
         $this->paymentRepository = $payment_repository;
         $this->request = json_decode(request()->all()['data'],true);
@@ -41,6 +37,7 @@ class ValidateTransaction
 
     /**
      * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     public function initValidation()
     {
@@ -62,7 +59,7 @@ class ValidateTransaction
      */
     public function changeToFailed()
     {
-        $this->paymentRepository->changeStatus([
+        $this->paymentRepository->create([
             'to' => Statuses::VALIDATION_FAILED,
             'from' => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
@@ -79,7 +76,7 @@ class ValidateTransaction
     public function changeToValidated($success)
     {
 
-        $this->paymentRepository->changeStatus([
+        $this->paymentRepository->create([
             'to' => Statuses::VALIDATED,
             'from' => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
@@ -93,7 +90,7 @@ class ValidateTransaction
      */
     public function changeToValidationFailed($error)
     {
-        $this->paymentRepository->changeStatus([
+        $this->paymentRepository->create([
             'to' => Statuses::VALIDATION_FAILED,
             'from' => $this->payment->status,
             'transaction_details' => $this->payment->transaction_details
@@ -105,10 +102,13 @@ class ValidateTransaction
     /**
      * @param $transaction_id
      * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
      */
     private function validateOrder($transaction_id)
     {
-        return  (new OkWalletClient())->validationRequest($transaction_id);
+        /** @var OkWalletClient $ok_wallet */
+        $ok_wallet = app(OkWalletClient::class);
+        return  $ok_wallet->validationRequest($transaction_id);
     }
 
 

@@ -25,17 +25,21 @@ class Cors2MiddleWare
             "http://localhost:8083",
             "http://localhost:8084",
             "http://localhost:7891",
+            "http://localhost:7892",
             "http://localhost:3333",
             "http://localhost:3334",
             "http://localhost:3335",
+            "http://localhost:8099",
             "http://localhost:3000",
             "http://103.26.139.148",
             "http://144.76.92.216",
             "http://sheba.test",
+            "http://strategic-loan.sheba.test",
             "http://ticket.sheba.test",
             "https://developer.sslcommerz.com",
             "https://www.sslcommerz.com",
             "http://dev-sheba.xyz",
+            "http://strategic-loan.sheba.test",
             "http://business.dev-sheba.xyz",
             "http://www.dev-sheba.xyz",
             "https://www.dev-sheba.xyz",
@@ -101,8 +105,13 @@ class Cors2MiddleWare
             "http://payment-link-web.sheba.test:3031",
             "https://v3.sheba.xyz",
             "https://www.smanager.xyz",
+            "https://retailers.dev-sheba.xyz",
+            "https://bkash-client.dev-sheba.xyz",
             "https://v2.sheba.xyz",
-            "https://bkash-client.dev-sheba.xyz"
+            "https://retailers.dev-sheba.xyz",
+            "https://bkash-client.dev-sheba.xyz",
+            "https://business.stage.sheba.xyz",
+            "https://partners.smanager.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

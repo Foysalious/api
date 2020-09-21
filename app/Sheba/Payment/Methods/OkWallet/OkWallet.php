@@ -1,56 +1,33 @@
-<?php
-
-namespace Sheba\Payment\Methods\OkWallet;
+<?php namespace Sheba\Payment\Methods\OkWallet;
 
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PaymentDetail;
 use App\Sheba\Payment\Methods\OkWallet\Request\InitRequest;
 use App\Sheba\Payment\Methods\OkWallet\Response\ValidateTransaction;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Sheba\Payment\Methods\OkWallet\Exception\FailedToInitiateException;
-use Sheba\Payment\Methods\OkWallet\Response\ValidationResponse;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
+use Sheba\TPProxy\TPProxyServerError;
 
-class OkWallet extends PaymentMethod {
+class OkWallet extends PaymentMethod
+{
     const NAME = 'ok_wallet';
-
-    public function __construct() {
-        parent::__construct();
-        $this->successUrl = '';
-        $this->failUrl    = '';
-
-    }
 
     /**
      * @param Payable $payable
      * @return Payment
      * @throws \Throwable
      */
-    public function init(Payable $payable): Payment {
-        $invoice = "SHEBA_OK_WALLET_" . strtoupper($payable->readable_type) . '_' . $payable->type_id . '_' . randomString(10, 1, 1);
-        $user    = $payable->user;
-        $payment = new Payment();
-        DB::transaction(function () use (&$payment, $payable, $invoice, $user) {
-            $payment->payable_id     = $payable->id;
-            $payment->transaction_id = $invoice;
-            $payment->status         = Statuses::INITIATED;
-            $payment->valid_till     = $this->getValidTill();
-            $this->setModifier($user);
-            $payment->fill((new RequestIdentification())->get());
-            $this->withCreateModificationField($payment);
-            $payment->save();
-            $payment_details             = new PaymentDetail();
-            $payment_details->payment_id = $payment->id;
-            $payment_details->method     = self::NAME;
-            $payment_details->amount     = $payable->amount;
-            $payment_details->save();
-        });
+    public function init(Payable $payable): Payment
+    {
+        $payment = $this->createPayment($payable);
         try {
-            $session = (new OkWalletClient())->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
+            /** @var OkWalletClient $ok_wallet */
+            $ok_wallet = app(OkWalletClient::class);
+            $session = $ok_wallet->createSession($payment->payable->amount, $payment->getShebaTransaction()->getTransactionId());
         } catch (\Throwable $e) {
             $error = ['status' => "failed", "errorMessage" => $e->getMessage(), 'statusCode' => $e->getCode()];
             $this->onInitFailed($payment, json_encode($error));
@@ -68,9 +45,10 @@ class OkWallet extends PaymentMethod {
 
     }
 
-    private function onInitFailed(Payment $payment, $error) {
-        $this->paymentRepository->setPayment($payment);
-        $this->paymentRepository->changeStatus([
+    private function onInitFailed(Payment $payment, $error)
+    {
+        $this->paymentLogRepo->setPayment($payment);
+        $this->paymentLogRepo->create([
             'to'                  => Statuses::INITIATION_FAILED,
             'from'                => $payment->status,
             'transaction_details' => $error
@@ -83,17 +61,16 @@ class OkWallet extends PaymentMethod {
     /**
      * @param Payment $payment
      * @return Payment
+     * @throws TPProxyServerError
      */
-    public function validate(Payment $payment) {
+    public function validate(Payment $payment): Payment
+    {
         $request = request()->all();
-
         $request = (new InitRequest(json_decode($request['data'], true)));
-
-        $validate_transaction = (new ValidateTransaction($this->paymentRepository))->setPayment($payment);
+        $validate_transaction = (new ValidateTransaction($this->paymentLogRepo))->setPayment($payment);
 
         if ($request->getRescode() != 2000) {
             $payment = $validate_transaction->changeToFailed();
-
         } else {
             $payment = $validate_transaction->initValidation();
         }
@@ -101,5 +78,8 @@ class OkWallet extends PaymentMethod {
         return $payment;
     }
 
-
+    public function getMethodName()
+    {
+        return self::NAME;
+    }
 }

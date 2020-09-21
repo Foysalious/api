@@ -1,13 +1,12 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroupCategory;
-use App\Models\CategoryPartner;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
-use App\Models\ServiceSubscription;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
 use App\Repositories\CategoryRepository;
 use App\Repositories\ServiceRepository;
 use Dingo\Api\Routing\Helpers;
@@ -24,6 +23,7 @@ use Sheba\Checkout\DeliveryCharge;
 use Sheba\Dal\Discount\Discount;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 use Sheba\Dal\UniversalSlug\SluggableType;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
@@ -34,6 +34,7 @@ use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\Service\MinMaxPrice;
+use Sheba\Services\ServiceSubscriptionDiscount;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use stdClass;
 use Throwable;
@@ -57,8 +58,9 @@ class CategoryController extends Controller
         $is_partner = ($request->has('is_partner') && (int)$request->is_partner) || in_array($request->header('portal-name'), ['manager-app', 'bondhu-app']);
         $is_b2b = $request->has('is_b2b') && (int)$request->is_b2b;
         $is_partner_registration = $request->has('is_partner_registration') && (int)$request->is_partner_registration;
+        $is_ddn = $request->has('is_ddn') && (int)$request->is_ddn;
 
-        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration) {
+        $filter_publication = function ($q) use ($request, $is_business, $is_partner, $is_b2b, $is_partner_registration,$is_ddn) {
             if ($is_business) {
                 $q->publishedForBusiness();
             } elseif ($is_partner) {
@@ -67,7 +69,9 @@ class CategoryController extends Controller
                 $q->publishedForPartnerOnboarding();
             } elseif ($is_b2b) {
                 $q->publishedForB2b();
-            } else {
+            }elseif($is_ddn){
+                $q->publishedForDdn();
+            }else {
                 $q->published();
             }
         };
@@ -104,17 +108,19 @@ class CategoryController extends Controller
             if ($request->has('with')) {
                 $with = $request->with;
                 if ($with == 'children') {
-                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b) {
+                    $categories->with(['allChildren' => function ($q) use ($location, $filter_publication, $best_deal_category, $is_business, $is_b2b, $is_ddn) {
                         if (!is_null($location)) {
                             $q->whereHas('locations', function ($q) use ($location) {
                                 $q->where('locations.id', $location->id);
                             });
-                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b) {
+                            $q->whereHas('services', function ($q) use ($location, $is_business, $is_b2b, $is_ddn) {
                                 if ($is_business) {
                                     $q->publishedForBusiness();
                                 } elseif ($is_b2b) {
                                     $q->publishedForB2b();
-                                } else {
+                                } elseif ($is_ddn) {
+                                    $q->publishedForDdn();
+                                }else {
                                     $q->published();
                                 }
                                 $q->whereHas('locations', function ($q) use ($location) {
@@ -296,10 +302,10 @@ class CategoryController extends Controller
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location;
             }
 
-            $best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
-            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();
-            $category->load(['children' => function ($q) use ($best_deal_category, $location, $request) {
-                $q->published()->whereNotIn('id', $best_deal_category);
+            /*$best_deal_categories_id = explode(',', config('sheba.best_deal_ids'));
+            $best_deal_category = CategoryGroupCategory::whereIn('category_group_id', $best_deal_categories_id)->pluck('category_id')->toArray();*/
+            $category->load(['children' => function ($q) use ($location, $request) {
+                $q->published();/*->whereNotIn('id', $best_deal_category)*/
                 if ($location) {
                     $q->whereHas('locations', function ($q) use ($location) {
                         $q->where('locations.id', $location->id);
@@ -316,9 +322,10 @@ class CategoryController extends Controller
                     }
                 });
             }]);
-            $children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
+            $children = $category->children;
+            /*$children = $category->children->filter(function ($sub_category) use ($best_deal_category) {
                 return !in_array($sub_category->id, $best_deal_category);
-            });
+            });*/
 
             if (count($children) != 0) {
                 $children = $children->each(function (&$child) use ($location) {
@@ -363,7 +370,7 @@ class CategoryController extends Controller
 
     public function getServices($category, Request $request,
                                 PriceCalculation $price_calculation, DeliveryCharge $delivery_charge,
-                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator)
+                                JobDiscountHandler $job_discount_handler, UpsellCalculation $upsell_calculation, MinMaxPrice $min_max_price, ApproximatePriceCalculator $approximate_price_calculator, ServiceSubscriptionDiscount $subscriptionDiscount)
     {
         ini_set('memory_limit', '2048M');
         $subscription_faq = null;
@@ -390,9 +397,9 @@ class CategoryController extends Controller
             $category = $cat->published()->first();
         }
 
+
         if ($category != null) {
             $category_slug = $category->getSlug();
-            $cross_sale_service = $category->crossSaleService;
             list($offset, $limit) = calculatePagination($request);
             $scope = [];
             if ($request->has('scope')) $scope = $this->serviceRepository->getServiceScope($request->scope);
@@ -412,17 +419,17 @@ class CategoryController extends Controller
                 $services = $this->serviceRepository->addServiceInfo($services, $scope);
             } else {
                 $category->load(['services' => function ($q) use ($offset, $limit, $location) {
-                    if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
+                    /*if (!(int)\request()->is_business || !(int)\request()->is_ddn) {
                         $q->whereNotIn('id', $this->serviceGroupServiceIds());
 
-                    }
+                    }*/
                     $q->whereHas('locations', function ($query) use ($location) {
                         $query->where('locations.id', $location);
                     })->select(
                         'id', 'category_id', 'unit', 'name', 'bn_name', 'thumb',
                         'app_thumb', 'app_banner', 'short_description', 'description',
                         'banner', 'faqs', 'variables', 'variable_type', 'min_quantity', 'options_content',
-                        'terms_and_conditions', 'features'
+                        'terms_and_conditions', 'features','is_inspection_service', 'is_add_on'
                     )->orderBy('order')->skip($offset)->take($limit);
 
                     if ((int)\request()->is_business) $q->publishedForBusiness();
@@ -488,6 +495,14 @@ class CategoryController extends Controller
                 $min_max_price->setService($service)->setLocationService($location_service);
                 $service['max_price'] = $min_max_price->getMax();
                 $service['min_price'] = $min_max_price->getMin();
+                $service['addon'] = $service->crossSaleService ? [
+                    'title' => $service->crossSaleService->title,
+                    'description' => $service->crossSaleService->description,
+                    'icon' => $service->crossSaleService->icon,
+                    'category_id' => $category->id,
+                    'service_id' => $service->crossSaleService->add_on_service_id
+                ]: null;
+                $service['is_add_on'] = $service->is_add_on;
                 $service['terms_and_conditions'] = $service->terms_and_conditions ? json_decode($service->terms_and_conditions) : null;
                 $service['features'] = $service->features ? json_decode($service->features) : null;
                 $slug = $slugs->where('sluggable_id', $service->id)->first();
@@ -499,9 +514,19 @@ class CategoryController extends Controller
                     $subscription = removeRelationsAndFields($subscription);
                     $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
                     $subscription['min_price'] = $price_range['min_price'] > 0 ? $price_range['min_price'] : 0;
+                    $subscription['unit'] = $service['unit'];
                     $subscription['thumb'] = $service['thumb'];
                     $subscription['banner'] = $service['banner'];
                     $subscription['offers'] = $subscription->getDiscountOffers();
+                    $lowest_service_subscription_discount = $subscription->validDiscounts->sortBy('discount_amount')->first();
+                    $subscription['discount'] = $lowest_service_subscription_discount ? [
+                        'discount_amount' => $lowest_service_subscription_discount->discount_amount,
+                        'is_discount_amount_percentage' => $lowest_service_subscription_discount->is_discount_amount_percentage,
+                        'cap' => $lowest_service_subscription_discount->cap,
+                        'min_discount_qty' => $lowest_service_subscription_discount->min_discount_qty,
+                        'text' => $subscriptionDiscount->setServiceSubscriptionDiscount($lowest_service_subscription_discount)->getDiscountText()
+
+                    ] : null;
                     if ($subscription->faq) {
                         $faq = json_decode($subscription->faq);
                         if ($faq->title && $faq->description) {
@@ -512,6 +537,7 @@ class CategoryController extends Controller
                             ];
                         }
                     }
+                    removeRelationsAndFields($subscription);
                     $subscriptions->push($subscription);
                 }
                 removeRelationsAndFields($service);
@@ -521,7 +547,7 @@ class CategoryController extends Controller
             if ($services->count() > 0) {
                 $parent_category = null;
                 if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
-                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable']);
+                $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable', 'terms_and_conditions']);
                 $version_code = (int)$request->header('Version-Code');
                 $services = $this->serviceQuestionSet($services);
                 if ($version_code && $version_code <= 30122 && $version_code <= 107) {
@@ -531,15 +557,10 @@ class CategoryController extends Controller
                 }
                 $category['parent_name'] = $parent_category ? $parent_category->name : null;
                 $category['parent_slug'] = $parent_category ? $parent_category->slug : null;
+                $category['terms_and_conditions'] = $category['terms_and_conditions'] ? json_decode($category['terms_and_conditions']) : null;
                 $category['services'] = $services;
-                $category['subscriptions'] = $subscriptions;
-                $category['cross_sale'] = $cross_sale_service ? [
-                    'title' => $cross_sale_service->title,
-                    'description' => $cross_sale_service->description,
-                    'icon' => $cross_sale_service->icon,
-                    'category_id' => $cross_sale_service->category_id,
-                    'service_id' => $cross_sale_service->service_id
-                ] : null;
+                $category['subscriptions'] = $subscriptions->sortBy('discount.discount_amount');
+                $category['cross_sale'] = null;
                 $category_model = Category::find($category['id']);
                 $category['delivery_charge'] = $delivery_charge->setCategory($category_model)
                     ->setLocation(Location::find($location))->get();

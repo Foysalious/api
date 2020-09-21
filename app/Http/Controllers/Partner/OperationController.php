@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\Controller;
 
-use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\CategoryRequest;
 use App\Models\HyperLocal;
 use App\Models\Partner;

@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Category\Category;
 
 class PartnerResource extends Model
 {
@@ -22,5 +23,10 @@ class PartnerResource extends Model
     public function categories()
     {
         return $this->belongsToMany(Category::class);
+    }
+
+    public function scopeHandyman($query)
+    {
+        return $query->where('resource_type', 'Handyman');
     }
 }

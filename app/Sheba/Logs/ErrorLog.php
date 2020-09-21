@@ -1,7 +1,9 @@
 <?php namespace Sheba\Logs;
 
+use App\Sheba\Release\Release;
 use Exception;
 use Illuminate\Http\Request;
+use InvalidArgumentException;
 
 class ErrorLog
 {
@@ -18,7 +20,7 @@ class ErrorLog
         $this->context = [];
     }
 
-    public function setException(Exception $exception)
+    public function setException($exception)
     {
         $this->exception = $exception;
         return $this;
@@ -36,12 +38,28 @@ class ErrorLog
         return $this;
     }
 
+    public function setExtra(array $extra)
+    {
+        if (!isAssoc($extra)) throw new InvalidArgumentException("Extra must be an associative array.");
+
+        foreach ($extra as $key => $value) {
+            $this->context[$key] = $value;
+        }
+
+        return $this;
+    }
+
     public function send()
     {
+        if (!app()->bound('sentry')) return;
+
         $sentry = app('sentry');
         if ($this->request) $this->context['request'] = $this->request->all();
         if ($this->errorMessage) $this->context['message'] = $this->errorMessage;
         if (count($this->context) > 0) $sentry->user_context($this->context);
+
+        if ($version = (new Release())->get()) $sentry->setRelease($version);
+
         $sentry->captureException($this->exception);
     }
 

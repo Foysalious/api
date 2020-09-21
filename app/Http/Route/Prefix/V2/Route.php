@@ -96,6 +96,11 @@ class Route
                     $api->post('fail', 'CblController@validateCblPGR');
                     $api->post('cancel', 'CblController@validateCblPGR');
                 });
+                $api->group(['prefix' => 'port-wallet'], function ($api) {
+                    $api->post('ipn', 'PortWalletController@ipn');
+                    $api->get('redirect-without-validate', 'PortWalletController@redirectWithoutValidation');
+                    $api->get('validate-on-redirect', 'PortWalletController@validateOnRedirect');
+                });
             });
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('gmail', 'Auth\GoogleController@login');
@@ -196,6 +201,7 @@ class Route
             $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
+            $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
         });
         return $api;
     }

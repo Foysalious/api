@@ -5,6 +5,13 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 trait FileManager
 {
+    protected function makeBanner($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new Banner($file))->make();
+        return [$file, $filename];
+    }
+
     protected function uniqueFileName($file, $name, $ext = null)
     {
         if (empty($name)) {
@@ -19,13 +26,6 @@ trait FileManager
         if ($file instanceof UploadedFile) return $file->getClientOriginalExtension();
         if ($file instanceof Image) return explode('/', $file->mime())[1];
         return getBase64FileExtension($file);
-    }
-
-    protected function makeBanner($file, $name)
-    {
-        $filename = $this->uniqueFileName($file, $name);
-        $file = (new Banner($file))->make();
-        return [$file, $filename];
     }
 
     protected function makeAppBanner($file, $name)
@@ -77,9 +77,10 @@ trait FileManager
         return [$file, $filename];
     }
 
-    protected function makeLoanFile($file, $name){
+    protected function makeLoanFile($file, $name)
+    {
         $filename = $this->uniqueFileName($file, $name);
-        return [$file,$filename];
+        return [$file, $filename];
     }
 
     protected function makeVatRegistration($file, $name)
@@ -134,8 +135,14 @@ trait FileManager
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
     }
-    protected function makeAttachment($file,$name){
+
+    protected function makeAttachment($file, $name)
+    {
         $filename = $this->uniqueFileName($file, $name);
         return [$file, $filename];
+    }
+    protected function makePartnerProofOfBusiness($file, $name)
+    {
+        return [$file, $this->uniqueFileName($file, $name)];
     }
 }

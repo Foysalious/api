@@ -1,6 +1,6 @@
 <?php namespace Sheba\JobDiscount;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Partner;
 

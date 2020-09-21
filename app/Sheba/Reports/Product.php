@@ -1,6 +1,6 @@
 <?php namespace Sheba\Reports;
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Excel;
 use Illuminate\Support\Facades\Storage;
 use Sheba\Repositories\DiscountRepository;

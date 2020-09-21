@@ -18,6 +18,11 @@ class MovieTicketOrder extends Model implements CanHaveVoucher, PayableType
         return $this;
     }
 
+    public function agent()
+    {
+        return $this->morphTo();
+    }
+
     public function isFailed()
     {
         return $this->status == 'Failed';

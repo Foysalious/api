@@ -77,7 +77,13 @@ class PartnerTransactionController extends Controller
         ]);
     }
 
-    public function payToSheba(Request $request)
+    /**
+     * @param Request $request
+     * @param Registrar $registrar
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function payToSheba(Request $request, Registrar $registrar)
     {
         try {
             $this->validate($request, [
@@ -85,7 +91,7 @@ class PartnerTransactionController extends Controller
                 'type' => 'required|in:bkash,rocket,mock',
             ]);
 
-            $transaction = (new Registrar())->register($request->partner, $request->type, $request->transaction_id);
+            $transaction = $registrar->register($request->partner, $request->type, $request->transaction_id);
             $request->merge(['transaction_amount' => $transaction['amount'], 'transaction_account' => $transaction['from_account']]);
 
             if ($res = $this->reconcile($request)) {

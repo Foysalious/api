@@ -21,7 +21,6 @@ class Handler extends ExceptionHandler
     protected $dontReport = [
         AuthorizationException::class,
         HttpException::class,
-        ModelNotFoundException::class,
         ValidationException::class,
         ApiValidationException::class
     ];
@@ -36,12 +35,10 @@ class Handler extends ExceptionHandler
      */
     public function report(Exception $e)
     {
-        if (app()->bound('sentry') && $this->shouldReport($e)) {
-            $sentry = app('sentry');
-            if ($version = (new Release())->get()) $sentry->setRelease($version);
-            $sentry->captureException($e);
-        }
-        parent::report($e);
+        /**
+         * Done in the render section.
+         * As, request is needed sometimes.
+         */
     }
 
     /**
@@ -55,8 +52,8 @@ class Handler extends ExceptionHandler
     {
         $handler = HandlerFactory::get($request, $e);
 
-        if ($handler) return $handler->render();
+        if ($this->shouldReport($e)) $handler ? $handler->report() : logError($e);
 
-        return parent::render($request, $e);
+        return $handler ? $handler->render() : parent::render($request, $e);
     }
 }

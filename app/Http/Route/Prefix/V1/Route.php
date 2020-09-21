@@ -10,6 +10,8 @@ class Route
         $api->group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
             (new EmployeeRoute())->set($api);
             (new PartnerRoute())->set($api);
+            $api->post('login/apple', 'Auth\AppleController@login');
+            $api->post('register/apple', 'Auth\AppleController@register');
             $api->group(['prefix' => 'geo', 'middleware' => 'geo.auth'], function ($api) {
                 $api->get('geocode/reverse', 'GeocodeController@reverseGeocode');
             });
@@ -52,6 +54,7 @@ class Route
             $api->get('sliders', 'SliderController@index');
             $api->get('locations', 'LocationController@getAllLocations');
             $api->get('divisions-with-districts', 'LocationController@getDivisionsWithDistrictsAndThana');
+            $api->get('districts-with-thanas', 'LocationController@getDistrictsWithThanas');
             $api->get('lead-reward', 'ShebaController@getLeadRewardAmount');
             $api->get('search', 'SearchController@searchService');
             $api->get('career', 'CareerController@getVacantPosts');
@@ -65,9 +68,17 @@ class Route
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
             $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
+            $api->get('lpg-service', 'ServiceController@getLpg');
             $api->group(['prefix' => 'offers'], function ($api) {
                 $api->get('/', 'OfferController@index');
+                $api->get('/partner-offer', 'OfferController@getPartnerOffer');
                 $api->get('{offer}', 'OfferController@show');
+            });
+            $api->group(['prefix' => 'blogs'], function ($api) {
+                $api->get('/', 'BlogController@index');
+            });
+            $api->group(['prefix' => 'feedback', 'middleware' => ['manager.auth']], function ($api) {
+                $api->post('/', 'FeedbackController@create');
             });
             $api->get('offer/{offer}/similar', 'ShebaController@getSimilarOffer');
             $api->group(['prefix' => 'navigation'], function ($api) {
@@ -293,6 +304,14 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
+            $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('/notifications', 'BankUser\NotificationController@index');
+                $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
+            });
+            $api->group(['prefix'=>'nagad'],function($api){
+                $api->get('validate','NagadController@validatePayment');
+            });
+            $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
         });
         return $api;
     }

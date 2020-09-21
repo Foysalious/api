@@ -1,20 +1,30 @@
 <?php namespace App\Models;
 
+use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Carbon\Carbon;
+use Illuminate\Database\Query\Builder;
+use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\Type;
+use Sheba\Dal\Procurement\PublicationStatuses;
+use Sheba\Dal\ProcurementInvitation\Model as ProcurementInvitation;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 use Sheba\Business\Procurement\Code\Builder as CodeBuilder;
+use Sheba\Dal\Category\Category;
 
 class Procurement extends Model implements PayableType
 {
+    use AlgoliaEloquentTrait;
+
     protected $guarded = ['id'];
-    protected $dates = ['closed_and_paid_at'];
+    protected $dates = ['closed_and_paid_at', 'procurement_start_date', 'procurement_end_date', 'last_date_of_submission', 'published_at'];
     public $paid;
     public $due;
     public $totalPrice;
     /** @var CodeBuilder $codeBuilder */
     private $codeBuilder;
+    public $algoliaSettings = ['searchableAttributes' => ['title', 'name', '_tags', 'short_description', 'long_description']];
 
     public function __construct(array $attributes = [])
     {
@@ -55,6 +65,11 @@ class Procurement extends Model implements PayableType
     public function owner()
     {
         return $this->morphTo();
+    }
+
+    public function invitations()
+    {
+        return $this->hasMany(ProcurementInvitation::class);
     }
 
     public function scopeOrder($query)
@@ -106,6 +121,11 @@ class Procurement extends Model implements PayableType
         return $this->type == Type::ADVANCED;
     }
 
+    public function orderCode()
+    {
+        return $this->codeBuilder->order($this);
+    }
+
     public function workOrderCode()
     {
         return $this->codeBuilder->workOrder($this);
@@ -119,5 +139,47 @@ class Procurement extends Model implements PayableType
     public function billCode()
     {
         return $this->codeBuilder->bill($this);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function getRemainingDays()
+    {
+        $today = Carbon::now();
+        if (!$this->last_date_of_submission->greaterThanOrEqualTo($today)) return 0;
+        return $this->last_date_of_submission->diffInDays($today) + 1;
+    }
+
+    public function getAlgoliaRecord()
+    {
+        return [
+            'id' => $this->id,
+            'title' => $this->title,
+            'short_description' => $this->short_description,
+            'long_description' => $this->long_description,
+            'last_date_of_submission_timestamp' => $this->last_date_of_submission->timestamp,
+            '_tags' => $this->getTagNamesAttribute()->toArray()
+        ];
+    }
+
+    /**
+     * Scope a query to only include jobs of a given status.
+     *
+     * @param Builder $query
+     * @return Builder
+     */
+    public function scopeOpenForPublic($query)
+    {
+        return $query
+            ->whereIn('status', Statuses::getOpen())
+            ->where('last_date_of_submission', '>=', Carbon::now());
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('publication_status', PublicationStatuses::PUBLISHED);
     }
 }
