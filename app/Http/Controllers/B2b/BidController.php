@@ -124,7 +124,7 @@ class BidController extends Controller
                 'is_favourite' => $bid->is_favourite,
                 'created_at' => $bid->created_at->format('d/m/y'),
                 'item' => $item_type,
-                'price' => (float)$bid->bidder_price ?: (float)$bid->price
+                'price' => (float)$bid->price
             ]);
         }
 

@@ -41,8 +41,16 @@ class BusinessRoute
                 $api->post('promotions/add', 'B2b\OrderController@applyPromo');
                 $api->get('/transactions', 'B2b\BusinessTransactionController@index');
                 $api->get('/dept-role', 'B2b\CoWorkerController@departmentRole');
-                $api->post('/departments', 'B2b\CoWorkerController@addBusinessDepartment');
-                $api->get('/departments', 'B2b\CoWorkerController@getBusinessDepartments');
+
+                $api->group(['prefix' => 'departments'], function ($api) {
+                    $api->post('/', 'B2b\DepartmentController@store');
+                    $api->get('/', 'B2b\DepartmentController@index');
+                    $api->group(['prefix' => '{department}'], function ($api) {
+                        $api->post('/', 'B2b\DepartmentController@update');
+                        $api->delete('/', 'B2b\DepartmentController@destroy');
+                    });
+                });
+
                 $api->post('/roles', 'B2b\CoWorkerController@addBusinessRole');
                 $api->get('/sms-templates', 'B2b\BusinessSmsTemplateController@index');
                 $api->get('/test-sms', 'B2b\BusinessSmsTemplateController@sendSms');
@@ -173,7 +181,11 @@ class BusinessRoute
                         $api->get('/bill', 'B2b\ProcurementController@orderBill');
                         $api->post('invitations', 'B2b\ProcurementController@sendInvitation');
                         $api->post('publish', 'B2b\ProcurementController@updateStatus');
+                        $api->post('publication-status', 'B2b\ProcurementController@updatePublicationStatus');
+                        $api->post('description', 'B2b\ProcurementController@updateDescription');
                         $api->post('general', 'B2b\ProcurementController@updateGeneral');
+                        $api->post('basic', 'B2b\ProcurementController@updateBasic');
+                        $api->post('attachments', 'B2b\ProcurementController@updateAttachments');
                         $api->get('/bid-history', 'B2b\BidController@getBidHistory');
                         $api->get('/hiring-history', 'B2b\BidController@getHiringHistory');
                         $api->get('bills/clear', 'B2b\ProcurementController@clearBills');
@@ -270,6 +282,7 @@ class BusinessRoute
                     $api->post('/bulk-store', 'B2b\VendorController@bulkStore');
                     $api->group(['prefix' => '{vendor}'], function ($api) {
                         $api->get('/info', 'B2b\BusinessesController@getVendorInfo');
+                        $api->post('/active', 'B2b\VendorController@activeInactive');
                     });
                 });
                 $api->group(['prefix' => 'subscription-orders'], function ($api) {
@@ -376,6 +389,7 @@ class BusinessRoute
                         $api->post('comments', 'B2b\TripRequestController@commentOnTrip');
                     });
                 });
+
                 $api->group(['prefix' => 'trip-requests'], function ($api) {
                     $api->get('/', 'B2b\TripRequestController@getTripRequests');
                     $api->post('/', 'B2b\TripRequestController@createTripRequests');
@@ -384,6 +398,8 @@ class BusinessRoute
                         $api->post('/comments', 'B2b\TripRequestController@commentOnTripRequest');
                     });
                 });
+                $api->get('/fleet-mail', 'B2b\TripRequestController@fleetMail');
+
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
                     $api->get('/', 'B2b\TripRequestApprovalController@index');
                     $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');
