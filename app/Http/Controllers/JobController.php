@@ -736,7 +736,11 @@ class JobController extends Controller
         }
     }
 
-    public function getInvoice($customer, $job, Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInvoice(Request $request)
     {
         $job = $request->job;
         $invoice = null;
