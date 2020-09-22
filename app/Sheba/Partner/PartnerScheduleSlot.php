@@ -88,6 +88,11 @@ class PartnerScheduleSlot
     public function get($for_days = 14)
     {
         $final = [];
+        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+        if (!$category_partner) {
+            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
+            return null;
+        }
         $this->limit = $for_days;
         $last_day = $this->today->copy()->addDays($for_days);
         $day = $this->today->copy();
@@ -238,12 +243,6 @@ class PartnerScheduleSlot
         if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
-
-        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
-        if (!$category_partner) {
-            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
-            return null;
-        }
 
         if ($this->partner) {
             $this->resources = $this->getResources();
