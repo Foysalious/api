@@ -81,13 +81,17 @@ class ScheduleSlot
         $last_day = $this->today->copy()->addDays($this->limit);
         $day = $this->today->copy();
         while ($day < $last_day) {
+            $slots = $this->formatSlots($day);
+            if(!slots) continue;
             array_push($final, [
                 'value' => $day->toDateString(),
-                'slots' => $this->formatSlots($day)
+                'slots' => $slots
             ]);
             $day->addDay();
         }
-        return $final;
+        return array_filter($final, function ($day) {
+            return $day['slots'];
+        });
     }
 
     public function getSlots($day)
