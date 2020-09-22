@@ -92,8 +92,11 @@ class PartnerScheduleSlot
         $last_day = $this->today->copy()->addDays($for_days);
         $day = $this->today->copy();
         while ($day < $last_day) {
-            array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day)]);
-            $day->addDay();
+            $slot = $this->formatSlots($day);
+            if($slot) {
+                array_push($final, ['value' => $day->toDateString(), 'slots' => $slot]);
+                $day->addDay();
+            }
         }
         return $final;
     }
@@ -232,6 +235,7 @@ class PartnerScheduleSlot
         }
         else $slots = $this->getShebaSlots();
         $this->shebaSlots = $slots;
+        if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
 
@@ -257,6 +261,7 @@ class PartnerScheduleSlot
         $current_time = $this->today->copy();
         if (!$this->partner && $this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
         $slots = $this->getSlots($day);
+        if(!$slots) return null;
         $this->addAvailabilityToShebaSlots($day);
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];

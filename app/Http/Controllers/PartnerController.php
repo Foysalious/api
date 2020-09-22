@@ -1403,12 +1403,6 @@ class PartnerController extends Controller
             return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

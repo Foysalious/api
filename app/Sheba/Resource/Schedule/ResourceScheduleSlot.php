@@ -211,6 +211,7 @@ class ResourceScheduleSlot
         }
         else $slots = $this->getShebaSlots();
         $this->shebaSlots = $slots;
+        if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
 
@@ -229,6 +230,7 @@ class ResourceScheduleSlot
     {
         $current_time = $this->today->copy();
         $slots = $this->getSlots($day);
+        if(!$slots) return null;
         if ($this->partner) {
             $this->addAvailabilityToShebaSlots($day);
         }
@@ -258,11 +260,14 @@ class ResourceScheduleSlot
 
         $day = $this->today->copy();
         while ($day < $last_day) {
-            array_push($final, [
-                'value' => $day->toDateString(),
-                'slots' => $this->formatSlots($day)
-            ]);
-            $day->addDay();
+            $slot = $this->formatSlots($day);
+            if($slot) {
+                array_push($final, [
+                    'value' => $day->toDateString(),
+                    'slots' => $slot
+                ]);
+                $day->addDay();
+            }
         }
         return $final;
     }

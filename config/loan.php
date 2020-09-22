@@ -26,5 +26,6 @@ return [
     'micro_loan_assigned_bank_id'          => env('MICRO_LOAN_ASSIGNED_BANK', 1),
     'micro_loan_annual_fee'                 => 100,
     'minimum_repayment_amount'  => 10,
-    'defaulter_fine' => .75
+    'defaulter_fine' => .75,
+    'micro_loan_sheba_interest' => .08
 ];
