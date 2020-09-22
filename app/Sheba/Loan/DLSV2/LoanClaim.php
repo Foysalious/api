@@ -94,12 +94,12 @@ class LoanClaim
         $type = null;
         $partner_bank_loan = PartnerBankLoan::find($loan_id);
         if ($to == Statuses::APPROVED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', অভিনন্দন! আপনার ' . $claim_amount . ' টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', অভিনন্দন! আপনার ' . $claim_amount . ' টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে। আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Claim Approved';
         }
 
         if ($to == Statuses::DECLINED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Claim Declined';
         }
 
@@ -119,12 +119,12 @@ class LoanClaim
 
         if ($to == Statuses::APPROVED) {
             $title      = "অভিনন্দন! আপনার $claim_amount টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।";
-            $body       = "প্রিয় " . $partner_bank_loan->partner->getContactPerson() . ", আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+            $body       = "প্রিয় " . $partner_bank_loan->partner->getContactPerson() . ", আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
             $event_type = "LoanClaimApproved";
         }
         if ($to == Statuses::DECLINED) {
-            $title      = "দুঃখিত! আপনার রবি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
-            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $title      = "দুঃখিত! আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
+            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $event_type = "LoanClaimRejected";
         }
         $notification_data = [
