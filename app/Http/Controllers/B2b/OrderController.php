@@ -180,6 +180,10 @@ class OrderController extends Controller
             'price' => $partnerOrder->getCustomerPayable(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
             'created_at_date_time' => $partnerOrder->created_at->toDateTimeString(),
+            'version' => $partnerOrder->getVersion(),
+            'original_price' => (double)$partnerOrder->jobPrices + $job->logistic_charge,
+            'discount' => (double)$partnerOrder->totalDiscount,
+            'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
         ]);
     }
 
