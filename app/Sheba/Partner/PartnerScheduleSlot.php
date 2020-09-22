@@ -95,7 +95,9 @@ class PartnerScheduleSlot
             array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day)]);
             $day->addDay();
         }
-        return $final;
+        return array_filter($final, function ($day) {
+            return $day['slots'];
+        });
     }
 
     private function getResources()
