@@ -9,6 +9,7 @@ class PaymentMethodDetails extends PresentableDTO
     private $description = "";
     private $asset;
     private $methodName;
+    private $nameBn;
 
     public function __construct($method_name)
     {
@@ -16,6 +17,7 @@ class PaymentMethodDetails extends PresentableDTO
         $this->name = $details['name'];
         $this->asset = $details['asset'];
         $this->methodName = $details['method_name'];
+        $this->nameBn = $details['name_bn'];
     }
 
     /**
@@ -32,6 +34,7 @@ class PaymentMethodDetails extends PresentableDTO
     {
         return [
             'name' => $this->name,
+            'name_bn' => $this->nameBn,
             'is_published' => (int)$this->isPublished,
             'description' => $this->description,
             'asset' => $this->asset,
