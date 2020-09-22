@@ -266,6 +266,8 @@ class ResourceScheduleSlot
             ]);
             $day->addDay();
         }
-        return $final;
+        return array_filter($final, function ($day) {
+            return $day['slots'];
+        });
     }
 }
