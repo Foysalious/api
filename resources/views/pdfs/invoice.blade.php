@@ -295,7 +295,12 @@
         <div id="invoice">
             <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>
             <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
-            {{--<div class="date">Due Date: 30/06/2014</div>--}}
+            <?php
+                $job = $partner_order->getActiveJob();
+            ?>
+            @if($job->status === 'Served')
+            <div class="date">Served Date: {{ $partner_order->closed_at->format('d/m/Y')  }}</div>
+            @endif
         </div>
     </div>
     <div id="order">
