@@ -414,7 +414,6 @@ class CoWorkerController extends Controller
             }
             $members = $members->get()->unique();
         }
-        if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -425,6 +424,7 @@ class CoWorkerController extends Controller
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
         if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
 
         $total_employees = count($employees);
         $employees = collect($employees)->splice($offset, $limit);
@@ -735,16 +735,31 @@ class CoWorkerController extends Controller
     }
 
     /**
-     * @param $members
+     * @param $employees
      * @param Request $request
      * @return mixed
      */
-    private function searchWithEmployeeName($members, Request $request)
+    private function searchEmployee($employees, Request $request)
     {
-        return $members->filter(function ($member) use ($request) {
-            $profile = $member->profile;
-            return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        $employees = $employees->toArray();
+        $employee_ids = array_filter($employees, function ($employee) use ($request) {
+            return str_contains($employee['employee_id'], strtoupper($request->search));
         });
+        $employee_names = array_filter($employees, function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['profile']['name']), strtoupper($request->search));
+        });
+        $employee_emails = array_filter($employees, function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['profile']['email']), strtoupper($request->search));
+        });
+        $employee_mobiles = array_filter($employees, function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['profile']['mobile']), strtoupper($request->search));
+        });
+
+        $searched_employees = collect(array_merge($employee_ids, $employee_names, $employee_emails, $employee_mobiles));
+        $searched_employees = $searched_employees->unique(function ($employee) {
+            return $employee['id'];
+        });
+        return $searched_employees->values()->all();
     }
 
     private function findByStatus($employees, $status)
