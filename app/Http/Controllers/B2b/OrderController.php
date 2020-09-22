@@ -229,7 +229,8 @@ class OrderController extends Controller
                     return api_response($request, $response, 200, [
                         'order' => $order,
                         'review_question_answer' => $review_question_answer,
-                        'answer_text' => $answer_text
+                        'answer_text' => $answer_text,
+                        'can_give_review' => $this->canGiveReview($job)
                     ]);
                 } else {
                     api_response($request, $response, $response->code);
