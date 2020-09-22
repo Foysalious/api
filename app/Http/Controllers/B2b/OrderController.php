@@ -222,7 +222,7 @@ class OrderController extends Controller
                     $question = null; $answer = null; $answer_text = null; $review_question_answer = null;
                     if ($job->review && !$job->review->rates->isEmpty()) {
                         $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
-                            $question = $rate->rate_question_id;
+                            if (!is_null($rate->rate_answer_id)) $question = $rate->rate_question_id;
                             if (!is_null($rate->rate_answer_id)) $answer[] = $rate->rate_answer_id;
                             if ($rate->rate_answer_text) $answer_text = $rate->rate_answer_text;
                         });
