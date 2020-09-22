@@ -14,22 +14,19 @@ class InvoiceHandler
 
     function __construct(PartnerOrder $partner_order)
     {
-        $this->partnerOrder = PartnerOrder::find($partner_order->id)->calculate(true);
+        $this->partnerOrder = $partner_order->calculate(true);
     }
 
-    public function save()
+    public function save($type)
     {
-        $type = "bill";
-
         $filename = ucfirst(strtolower($type)) . '-' . $this->partnerOrder->code() . '.pdf';
         $file = $this->getTempFolder() . $filename;
         $partner_order = $this->partnerOrder;
         App::make('dompdf.wrapper')->loadView('pdfs.invoice', compact('partner_order', 'type'))->save($file);
         $s3_invoice_link = $this->saveToCDN($file, $filename);
-//        $this->updatePartnerOrder($s3_invoice_link);
 
         return [
-            'file_name' => $s3_invoice_link
+            'link' => $s3_invoice_link
         ];
     }
 
@@ -37,11 +34,6 @@ class InvoiceHandler
     {
         $s3_invoice_path = 'invoices/';
         return $this->saveFileToCDN($file, $s3_invoice_path, $filename);
-    }
-
-    private function updatePartnerOrder($s3_invoice_link)
-    {
-        (new PartnerOrderRepository())->update($this->partnerOrder, ['invoice' => $s3_invoice_link]);
     }
 
     private function getTempFolder()

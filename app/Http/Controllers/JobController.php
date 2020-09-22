@@ -739,29 +739,15 @@ class JobController extends Controller
     public function getInvoice($customer, $job, Request $request)
     {
         $job = $request->job;
-        $partner_order = $job->partnerOrder;
-        dd($job, $partner_order);
-        $this->generateInvoice($partner_order->id, 'invoice');
-    }
+        $invoice = null;
 
-    public function generateInvoice($id, $type)
-    {
-        $error_level = error_reporting();
-        error_reporting(E_ALL & ~E_NOTICE & ~E_WARNING);
-        error_reporting($error_level);
-
-        if (!in_array($type, ['invoice', 'quotation']))
-            abort(404);
-
-        $partner_order = PartnerOrder::find($id)->calculate($price_only = true);
-
-        if ($type == 'invoice') $type = 'bill';
-        $invoice = (new InvoiceHandler($partner_order))->save();
-        dd($invoice);
-
-//        $type = strtoupper($type);
-//        $pdf = App::make('dompdf.wrapper');
-//        $pdf->loadView('pdfs.invoice', compact('partner_order', 'type'));
-//        return $pdf->stream(ucfirst(strtolower($type)) . '-' . $partner_order->code() . '.pdf');
+        if($job->status === 'Served') {
+            $invoice = [
+                'link' => $job->partnerOrder->invoice
+            ];
+            return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+        }
+        $invoice = (new InvoiceHandler($job->partnerOrder))->save('quotation');
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
     }
 }

@@ -293,7 +293,7 @@
             <div class="email">{{ $partner_order->order->delivery_mobile }}</div>
         </div>
         <div id="invoice">
-            <h1>{{ $type }} {{ $partner_order->id }}</h1>
+            <h1 style="text-transform: uppercase">{{ $type }} {{ $partner_order->id }}</h1>
             <div class="date">Generated on: {{ \Carbon\Carbon::now()->format('d/m/Y') }}</div>
             {{--<div class="date">Due Date: 30/06/2014</div>--}}
         </div>
