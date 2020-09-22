@@ -56,7 +56,7 @@ class OrderController extends Controller
                         'partnerOrders' => function ($q) {
                             $q->select('id', 'order_id', 'partner_id', 'created_at')->with([
                                 'partner' => function ($q) {
-                                    $q->select('id', 'name', 'mobile')->with([
+                                    $q->select('id', 'name', 'mobile', 'logo')->with([
                                         'resources' => function ($q) {
                                             $q->select('resources.id', 'profile_id')->with([
                                                 'profile' => function ($q) {
@@ -169,11 +169,13 @@ class OrderController extends Controller
             'job_id' => $job->id,
             'order_code' => $partnerOrder->order->code(),
             'category_name' => $category ? $category->name : null,
+            'category_thumb' => $category ? $category->thumb : null,
             'cancelled_date' => $partnerOrder->cancelled_at,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'status' => $job->status,
             'can_give_review' => $this->canGiveReview($job),
             'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
+            'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
             'rating' => $job->review != null ? $job->review->rating : null,
             'price' => $partnerOrder->getCustomerPayable(),
             'created_at' => $partnerOrder->created_at->format('Y-m-d'),
