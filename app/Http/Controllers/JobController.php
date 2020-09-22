@@ -2,6 +2,8 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\PartnerOrder;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -34,6 +36,7 @@ use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
+use Sheba\PartnerOrder\InvoiceHandler;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -731,5 +734,24 @@ class JobController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInvoice(Request $request)
+    {
+        $job = $request->job;
+        $invoice = null;
+
+        if($job->status === 'Served') {
+            $invoice = [
+                'link' => $job->partnerOrder->invoice
+            ];
+            return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+        }
+        $invoice = (new InvoiceHandler($job->partnerOrder))->save('quotation');
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
     }
 }
