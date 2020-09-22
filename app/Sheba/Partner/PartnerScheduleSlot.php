@@ -272,7 +272,7 @@ class PartnerScheduleSlot
             $slot_end = humanReadableShebaTime($slot['end']);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
-            $slot['is_valid'] = $start > $this->today ? 1 : 0;
+            $slot['is_valid'] = $start > $current_time ? 1 : 0;
         }
         return $slots;
     }
