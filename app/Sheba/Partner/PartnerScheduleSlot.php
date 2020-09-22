@@ -92,12 +92,13 @@ class PartnerScheduleSlot
         $last_day = $this->today->copy()->addDays($for_days);
         $day = $this->today->copy();
         while ($day < $last_day) {
-            array_push($final, ['value' => $day->toDateString(), 'slots' => $this->formatSlots($day)]);
-            $day->addDay();
+            $slot = $this->formatSlots($day);
+            if($slot) {
+                array_push($final, ['value' => $day->toDateString(), 'slots' => $slot]);
+                $day->addDay();
+            }
         }
-        return array_filter($final, function ($day) {
-            return $day['slots'];
-        });
+        return $final;
     }
 
     private function getResources()
