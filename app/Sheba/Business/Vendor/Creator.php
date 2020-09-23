@@ -6,6 +6,7 @@ use Sheba\ModificationFields;
 use DB;
 use Sheba\Partner\CreateRequest as PartnerCreateRequest;
 use Sheba\Repositories\ProfileRepository;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Partner\Creator as PartnerCreator;
 
@@ -25,6 +26,8 @@ class Creator
     private $partnerCreator;
     /** @var PartnerCreateRequest $partnerCreateRequest */
     private $partnerCreateRequest;
+    /** @var ResourceCreateRequest */
+    private $resourceCreateRequest;
     /** @var $partner */
     private $partner;
 
@@ -38,14 +41,14 @@ class Creator
      */
     public function __construct(CreateValidator $validator, ProfileRepository $profile_repo,
                                 ResourceCreator $resource_creator, PartnerCreator $partner_creator,
-                                PartnerCreateRequest $partner_create_request)
+                                PartnerCreateRequest $partner_create_request, ResourceCreateRequest $resourceCreateRequest)
     {
         $this->validator = $validator;
         $this->profileRepository = $profile_repo;
         $this->resourceCreator = $resource_creator;
-        $this->resourceCreator = $resource_creator;
         $this->partnerCreator = $partner_creator;
         $this->partnerCreateRequest = $partner_create_request;
+        $this->resourceCreateRequest = $resourceCreateRequest;
     }
 
     /**
@@ -70,12 +73,15 @@ class Creator
             $resource_mobile = $this->vendorCreateRequest->getResourceMobile();
             /** @var Profile $profile */
             $profile = $this->profileRepository->checkExistingMobile($resource_mobile);
+            $this->resourceCreateRequest->setNidNo($this->vendorCreateRequest->getResourceNidNumber())
+                ->setNidFrontImage($this->vendorCreateRequest->getResourceNidFront())
+                ->setNidBackImage($this->vendorCreateRequest->getResourceNidBack());
             if (!$profile) {
                 $this->resourceCreator->setData($this->formatProfileSpecificData());
-                $resource = $this->resourceCreator->create();
+                $resource = $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->create();
             } elseif (!$profile->resource) {
                 $this->resourceCreator->setData($this->formatProfileSpecificData());
-                $resource = $this->resourceCreator->create();
+                $resource = $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->create();
             } else {
                 $resource = $profile->resource;
             }
@@ -117,10 +123,7 @@ class Creator
         return [
             'name' => $this->vendorCreateRequest->getResourceName(),
             'mobile' => $this->vendorCreateRequest->getResourceMobile(),
-            'nid_no' => $this->vendorCreateRequest->getResourceNidNumber() ?: null,
-            'alternate_contact' => null,
-            'nid_image_front' => $this->vendorCreateRequest->getResourceNidFront(),
-            'nid_image_back' => $this->vendorCreateRequest->getResourceNidBack()
+            'alternate_contact' => null
         ];
     }
 
