@@ -744,7 +744,6 @@ class JobController extends Controller
     {
         $job = $request->job;
         $invoice = null;
-
         if($job->status === 'Served') {
             $invoice = [
                 'link' => $job->partnerOrder->invoice
