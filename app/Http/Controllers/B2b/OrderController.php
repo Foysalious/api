@@ -223,8 +223,7 @@ class OrderController extends Controller
                 $response = json_decode($res->getBody());
                 if ($response->code == 200) {
                     $order = $response->orders;
-                    #$job = Job::find($order->jobs[0]->job_id);
-                    $job = Job::find(199630);
+                    $job = Job::find($order->jobs[0]->job_id);
                     $question = null; $answer = null; $answer_text = null; $review_question_answer = null;
                     if ($job->review && !$job->review->rates->isEmpty()) {
                         $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
