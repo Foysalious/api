@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Sheba\Business\Procurement\ProcurementFilterRequest;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\BaseRepository;
 use App\Models\Procurement;
@@ -136,7 +137,6 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
     public function filterWithCreatedAt($start_date, $end_date)
     {
         return $this->model->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
-
     }
 
     public function getProcurementWhereTitleBudgetNotNull(ProcurementFilterRequest $procurement_filter_request)
@@ -145,6 +145,7 @@ class ProcurementRepository extends BaseRepository implements ProcurementReposit
 
         $base_query = $this->model
             ->where('last_date_of_submission', '>=', Carbon::now())
+            ->where('publication_status', '<>', PublicationStatuses::UNPUBLISHED)
             ->whereNotNull('title')
             ->whereNotNull('estimated_price');
         if ($limit) $base_query->limit($limit);

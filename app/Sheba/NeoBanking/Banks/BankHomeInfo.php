@@ -31,7 +31,7 @@ class BankHomeInfo implements Arrayable
      */
     public function toArray()
     {
-        $accountInfo = $this->bank->accountInfo($this->partner)->toArray();
+        $accountInfo = $this->bank->accountInfo()->toArray();
         return array_merge([
             'bank_id'   => $this->bank->id,
             'bank_name' => ['en' => $this->bank->name, 'bn' => $this->bank->name_bn],
