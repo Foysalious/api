@@ -1,6 +1,7 @@
 <?php namespace Sheba\Services;
 
 
+use App\Exceptions\LocationService\LocationServiceNotFoundException;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use Sheba\Dal\LocationService\LocationService;
@@ -103,6 +104,7 @@ class ServicePriceCalculation
             $service = $selected_service->getService();
             $this->priceCalculation = $this->resolvePriceCalculation($service->category);
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
+            if (!$this->category->isRentACarOutsideCity() && !$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location', 403);
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
