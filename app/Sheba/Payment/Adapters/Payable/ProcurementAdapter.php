@@ -50,12 +50,12 @@ class ProcurementAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        return config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
+        return config('sheba.business_url') . '/dashboard/orders/rfq/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
     }
 
     private function getFailUrl()
     {
-        return config('sheba.business_url') . '/dashboard/rfq/orders/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
+        return config('sheba.business_url') . '/dashboard/orders/rfq/' . $this->procurement->id . '/bill?bidId=' . $this->bid->id;
     }
 
     public function canInit(): bool
