@@ -12,6 +12,7 @@ class ResourceCreateRequest
     private $nidBackImage;
     /** @var UploadedFile */
     private $profilePicture;
+    private $birthDate;
 
     /**
      * @return mixed
@@ -84,4 +85,23 @@ class ResourceCreateRequest
         $this->profilePicture = $profilePicture;
         return $this;
     }
+
+    /**
+     * @return mixed
+     */
+    public function getBirthDate()
+    {
+        return $this->birthDate;
+    }
+
+    /**
+     * @param mixed $birthDate
+     * @return ResourceCreateRequest
+     */
+    public function setBirthDate($birthDate)
+    {
+        $this->birthDate = $birthDate;
+        return $this;
+    }
+
 }

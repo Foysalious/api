@@ -74,6 +74,7 @@ class ResourceCreator
     {
         $this->data['mobile'] = formatMobile($this->data['mobile']);
         $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobile($this->data['alternate_contact']) : null;
+        $this->data['dob'] = $this->resourceCreateRequest->getBirthDate();
         $this->format();
         $profile = $this->attachProfile();
         return $this->resources->save([

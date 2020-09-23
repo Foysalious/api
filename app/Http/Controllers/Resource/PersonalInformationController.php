@@ -59,6 +59,7 @@ class PersonalInformationController extends Controller
                 'nid_no' => 'string|unique:resources,nid_no',
                 'nid_back' => 'file',
                 'nid_front' => 'file',
+                'birth_date' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->subYears(18)->format('Y-m-d'),
                 'name' => 'string',
                 'address' => 'string',
                 'picture' => 'file',
@@ -90,7 +91,7 @@ class PersonalInformationController extends Controller
             } else {
                 $partnerResourceCreator->setPartner($partner);
                 $resourceCreateRequest->setNidNo($request->nid_no)->setNidFrontImage($request->file('nid_front'))->setNidBackImage($request->file('nid_back'))
-                    ->setProfilePicture($request->file('picture'));
+                    ->setProfilePicture($request->file('picture'))->setBirthDate($request->birth_date);
                 $partnerResourceCreator->setResourceCreateRequest($resourceCreateRequest)->setData(array(
                     'mobile' => $request->mobile,
                     'name' => $request->name,
