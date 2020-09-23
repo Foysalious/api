@@ -4,6 +4,7 @@ use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\Resource;
 use Sheba\Repositories\PartnerResourceRepository;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 
 class PartnerResourceCreator
 {
@@ -16,6 +17,8 @@ class PartnerResourceCreator
     private $partnerResources;
 
     private $resourceTypes;
+    /** @var ResourceCreateRequest */
+    private $resourceCreateRequest;
 
     public function __construct(ResourceCreator $resource_creator, PartnerResourceRepository $partner_resources)
     {
@@ -32,13 +35,23 @@ class PartnerResourceCreator
     public function setData($data)
     {
         $this->data = $data;
-        $resource_data = array_except($this->data, ['resource_types','category_ids']);
+        $resource_data = array_except($this->data, ['resource_types', 'category_ids']);
         $this->resourceCreator->setData($resource_data);
     }
 
     public function setResource(Resource $resource)
     {
         $this->resource = $resource;
+    }
+
+    /**
+     * @param ResourceCreateRequest $resourceCreateRequest
+     * @return PartnerResourceCreator
+     */
+    public function setResourceCreateRequest($resourceCreateRequest)
+    {
+        $this->resourceCreateRequest = $resourceCreateRequest;
+        return $this;
     }
 
     public function hasError()
@@ -55,7 +68,7 @@ class PartnerResourceCreator
 
     public function create()
     {
-        if (empty($this->resource)) $this->resource = $this->resourceCreator->create();
+        if (empty($this->resource)) $this->resource = $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->create();
         $this->associatePartnerResource();
         $this->setResourceCategories();
         $this->notifyPMTeam($this->resource);

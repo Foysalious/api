@@ -421,7 +421,6 @@ class Updater
             DB::commit();
             return [$this->profile, $tin_certificate_name, $tin_certificate_link];
         } catch (Throwable $e) {
-            dd($e);
             DB::rollback();
             app('sentry')->captureException($e);
             return null;
