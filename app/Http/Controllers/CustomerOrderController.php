@@ -153,6 +153,7 @@ class CustomerOrderController extends Controller
             }
             if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
         }
+
         return $all_jobs;
     }
 
