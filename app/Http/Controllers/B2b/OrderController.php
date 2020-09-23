@@ -11,7 +11,10 @@ use App\Repositories\NotificationRepository;
 use App\Sheba\Address\AddressValidator;
 use App\Sheba\Checkout\Checkout;
 use Carbon\Carbon;
+use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -28,6 +31,7 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
+use Throwable;
 
 class OrderController extends Controller
 {
@@ -42,89 +46,84 @@ class OrderController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function index(Request $request)
     {
-        try {
-            $customer = $request->manager_member->customer;
-            list($offset, $limit) = calculatePagination($request);
-            $customer = $customer->load([
-                'orders' => function ($q) {
-                    $q->whereNotNull('business_id')->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id', 'sales_channel')->orderBy('id', 'desc');
-                    $q->with([
-                        'partnerOrders' => function ($q) {
-                            $q->select('id', 'order_id', 'partner_id', 'created_at')->with([
-                                'partner' => function ($q) {
-                                    $q->select('id', 'name', 'mobile', 'logo')->with([
-                                        'resources' => function ($q) {
-                                            $q->select('resources.id', 'profile_id')->with([
-                                                'profile' => function ($q) {
-                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
-                                                }]);
-                                        }]);
-                                },
-                                'order' => function ($q) {
-                                    $q->select('id', 'sales_channel', 'subscription_order_id');
-                                },
-                                'jobs' => function ($q) {
-                                    $q->select('id', 'partner_order_id', 'category_id', 'job_name', 'service_id', 'service_name', 'resource_id', 'schedule_date', 'preferred_time', 'preferred_time_start', 'preferred_time_end', 'status', 'delivered_date')->with([
-                                        'resource' => function ($q) {
-                                            $q->select('id', 'profile_id')->with([
-                                                'profile' => function ($q) {
-                                                    $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
-                                                }]);
-                                        },
-                                        'category' => function ($q) {
-                                            $q->select('id', 'name', 'thumb', 'banner');
-                                        },
-                                        'review' => function ($q) {
-                                            $q->select('id', 'rating', 'job_id');
-                                        }, 'usedMaterials' => function ($q) {
-                                            $q->select('id', 'job_id', 'material_name', 'material_price');
-                                        }, 'jobServices']);
-                                }]);
-                        }]);
-                }]);
-            if (count($customer->orders) > 0) {
-                $all_jobs = $this->getInformation($customer->orders);
-                $cancelled_served_jobs = $all_jobs->filter(function ($job) {
-                    return $job['cancelled_date'] != null || $job['status'] == 'Served';
-                });
-                $others = $all_jobs->diff($cancelled_served_jobs);
-                $all_jobs = $others->merge($cancelled_served_jobs);
-            } else {
-                $all_jobs = collect();
+        $customer = $request->manager_member->customer;
+        list($offset, $limit) = calculatePagination($request);
+        $customer = $customer->load([
+            'orders' => function ($q) {
+                $q->whereNotNull('business_id')->select('id', 'customer_id', 'partner_id', 'location_id', 'sales_channel', 'delivery_name', 'delivery_mobile', 'delivery_address', 'subscription_order_id', 'sales_channel')->orderBy('id', 'desc');
+                $q->with([
+                    'partnerOrders' => function ($q) {
+                        $q->with([
+                            'partner' => function ($q) {
+                                $q->select('id', 'name', 'mobile', 'logo')->with([
+                                    'resources' => function ($q) {
+                                        $q->select('resources.id', 'profile_id')->with([
+                                            'profile' => function ($q) {
+                                                $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                            }
+                                        ]);
+                                    }
+                                ]);
+                            }, 'order' => function ($q) {
+                                $q->select('id', 'sales_channel', 'subscription_order_id');
+                            }, 'jobs' => function ($q) {
+                                $q->with([
+                                    'resource' => function ($q) {
+                                        $q->select('id', 'profile_id')->with([
+                                            'profile' => function ($q) {
+                                                $q->select('id', 'name', 'pro_pic', 'mobile', 'email');
+                                            }
+                                        ]);
+                                    }, 'category' => function ($q) {
+                                        $q->select('id', 'name', 'thumb', 'banner');
+                                    }, 'review' => function ($q) {
+                                        $q->select('id', 'rating', 'job_id');
+                                    }, 'usedMaterials' => function ($q) {
+                                        $q->select('id', 'job_id', 'material_name', 'material_price');
+                                    }, 'jobServices'
+                                ]);
+                            }
+                        ]);
+                    }
+                ]);
             }
-
-            if ($request->has('status') && $request->status != 'all') {
-                $all_jobs = $all_jobs->where('status', $request->status)->values();
-            }
-            $start_date = $request->has('start_date') ? $request->start_date : null;
-            $end_date = $request->has('end_date') ? $request->end_date : null;
-            if ($start_date && $end_date) {
-                $all_jobs = $all_jobs->filter(function ($job) use ($start_date, $end_date) {
-                    return ($job['created_at_date_time'] <= $start_date . ' 00:00:00') && ($job['created_at_date_time'] <= $end_date . ' 23:59:59');
-                });
-            }
-
-            if ($request->has('search')) $all_jobs = $this->searchByTitle($all_jobs, $request)->values();
-            if ($request->has('sort_by_id')) $all_jobs = $this->sortById($all_jobs, $request->sort_by_id)->values();
-            if ($request->has('sort_by_title')) $all_jobs = $this->sortByTitle($all_jobs, $request->sort_by_title)->values();
-            if ($request->has('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
-            if ($request->has('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
-
-            $total_jobs = count($all_jobs);
-            if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
-
-            return api_response($request, $all_jobs, 200, [
-                'orders' => $all_jobs,
-                'total_orders' => $total_jobs,
-            ]);
-        } catch (\Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
+        ]);
+        if (count($customer->orders) > 0) {
+            $all_jobs = $this->getInformation($customer->orders);
+            $cancelled_served_jobs = $all_jobs->filter(function ($job) {
+                return $job['cancelled_date'] != null || $job['status'] == 'Served';
+            });
+            $others = $all_jobs->diff($cancelled_served_jobs);
+            $all_jobs = $others->merge($cancelled_served_jobs);
+        } else {
+            $all_jobs = collect();
         }
+
+        if ($request->has('status') && $request->status != 'all') {
+            $all_jobs = $all_jobs->where('status', $request->status)->values();
+        }
+        $start_date = $request->has('start_date') ? $request->start_date : null;
+        $end_date = $request->has('end_date') ? $request->end_date : null;
+        if ($start_date && $end_date) {
+            $all_jobs = $all_jobs->filter(function ($job) use ($start_date, $end_date) {
+                return ($job['created_at_date_time'] <= $start_date . ' 00:00:00') && ($job['created_at_date_time'] <= $end_date . ' 23:59:59');
+            });
+        }
+
+        if ($request->has('search')) $all_jobs = $this->searchByTitle($all_jobs, $request)->values();
+        if ($request->has('sort_by_id')) $all_jobs = $this->sortById($all_jobs, $request->sort_by_id)->values();
+        if ($request->has('sort_by_title')) $all_jobs = $this->sortByTitle($all_jobs, $request->sort_by_title)->values();
+        if ($request->has('sort_by_partner_name')) $all_jobs = $this->sortByPartnerName($all_jobs, $request->sort_by_partner_name)->values();
+        if ($request->has('sort_by_status')) $all_jobs = $this->sortByStatus($all_jobs, $request->sort_by_status)->values();
+
+        $total_jobs = count($all_jobs);
+        if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
+
+        return api_response($request, null, 200, ['orders' => $all_jobs, 'total_orders' => $total_jobs,]);
     }
 
     /**
@@ -153,6 +152,7 @@ class OrderController extends Controller
             }
             if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
         }
+
         return $all_jobs;
     }
 
@@ -183,7 +183,7 @@ class OrderController extends Controller
             'version' => $partnerOrder->getVersion(),
             'original_price' => (double)$partnerOrder->jobPrices + $job->logistic_charge,
             'discount' => (double)$partnerOrder->totalDiscount,
-            'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge,
+            'discounted_price' => (double)$partnerOrder->totalPrice + $job->logistic_charge
         ]);
     }
 
@@ -205,8 +205,8 @@ class OrderController extends Controller
     /**
      * @param $order
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return JsonResponse
+     * @throws GuzzleException
      */
     public function show($order, Request $request)
     {
@@ -215,6 +215,7 @@ class OrderController extends Controller
             $partner_order = $request->partner_order;
             if ($customer) {
                 $url = config('sheba.api_url') . "/v2/customers/$customer->id/orders/$partner_order->id?remember_token=$customer->remember_token";
+
                 $client = new Client();
                 $res = $client->request('GET', $url);
                 $response = json_decode($res->getBody());
@@ -245,7 +246,7 @@ class OrderController extends Controller
             } else {
                 return api_response($request, null, 404);
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
@@ -254,8 +255,8 @@ class OrderController extends Controller
     /**
      * @param $order
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @return JsonResponse
+     * @throws GuzzleException
      */
     public function getBills($order, Request $request)
     {
@@ -276,7 +277,7 @@ class OrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
@@ -288,7 +289,7 @@ class OrderController extends Controller
      * @param Request $request
      * @param PaymentManager $payment_manager
      * @param OrderAdapter $order_adapter
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      * @throws InitiateFailedException
      * @throws InvalidPaymentMethod
      */
@@ -323,8 +324,8 @@ class OrderController extends Controller
      * @param Request $request
      * @param PartnerListRequest $partnerListRequest
      * @param PromotionCalculation $promotionCalculation
-     * @return \Illuminate\Http\JsonResponse
-     * @throws \Exception
+     * @return JsonResponse
+     * @throws Exception
      */
     public function applyPromo(Request $request, PartnerListRequest $partnerListRequest, PromotionCalculation $promotionCalculation)
     {
@@ -363,7 +364,7 @@ class OrderController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function placeOrder(Request $request)
     {
@@ -422,7 +423,7 @@ class OrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
@@ -431,7 +432,7 @@ class OrderController extends Controller
     /**
      * @param Request $request
      * @param B2bSubscriptionOrderPlaceFactory $factory
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function placeSubscriptionOrder(Request $request, B2bSubscriptionOrderPlaceFactory $factory)
     {
@@ -451,7 +452,7 @@ class OrderController extends Controller
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
@@ -465,7 +466,7 @@ class OrderController extends Controller
     {
         try {
             (new NotificationRepository())->send($order);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return null;
         }
