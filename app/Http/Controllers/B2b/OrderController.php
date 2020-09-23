@@ -198,11 +198,10 @@ class OrderController extends Controller
         $review = $job->review;
         if (!is_null($review) && $review->rating > 0) {
             return false;
-        } else if (!!($job->partnerOrder->closed_at)) {
+        } else if (!!($job->partnerOrder->closed_and_paid_at)) {
             return true;
-        } else {
-            return false;
         }
+        return false;
     }
 
     /**
@@ -225,7 +224,10 @@ class OrderController extends Controller
                 if ($response->code == 200) {
                     $order = $response->orders;
                     $job = Job::find($order->jobs[0]->job_id);
-                    $question = null; $answer = null; $answer_text = null; $review_question_answer = null;
+                    $question = null;
+                    $answer = null;
+                    $answer_text = null;
+                    $review_question_answer = null;
                     if ($job->review && !$job->review->rates->isEmpty()) {
                         $job->review->rates->each(function ($rate) use (&$question, &$answer, &$answer_text) {
                             if (!is_null($rate->rate_answer_id)) $question = $rate->rate_question_id;
