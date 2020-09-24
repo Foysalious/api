@@ -9,7 +9,6 @@ use App\Exceptions\Service\OptionIsNotAvailableException;
 use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
-use Sheba\Dal\Service\Service;
 use Sheba\Location\Geo;
 use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\Map\MapClientNoResultException;
@@ -70,7 +69,7 @@ class ServiceRequest
             $serviceRequestObject->build();
             array_push($final, $serviceRequestObject);
         }
-        if (isset($this->services[0]['id']) && !Service::find($this->services[0]['id'])->category->isRentACar()) $this->checkForServiceValidation($final);
+        $this->checkForServiceValidation($final);
         return $final;
     }
 
