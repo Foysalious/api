@@ -76,7 +76,7 @@ class Repayment
             'credit' => 0,
             'debit' => $this->amount,
             'type' => $type,
-            'log' => 'লোন এর টাকা জমা দেয়া হয়েছে।',
+            'log' => 'টাকা জমা দেয়া হয়েছে।',
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
         return $this->repayment->save();
@@ -99,7 +99,7 @@ class Repayment
             'credit' => $this->amount,
             'debit' => 0,
             'type' => '',
-            'log' => 'লোন বাবদ ক্রেডিট লিমিট থেকে গ্রহন করা হয়েছে'
+            'log' => 'ক্রেডিট লিমিট থেকে গ্রহন করা হয়েছে'
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
         return $this->repayment->save();
@@ -174,7 +174,7 @@ class Repayment
             'credit' => 0,
             'debit' => $this->amount,
             'type' => 'By Sheba',
-            'log' => 'লোন এর টাকা জমা দেয়া হয়েছে।',
+            'log' => 'টাকা জমা দেয়া হয়েছে।',
         ];
         $this->repayment = new RepaymentModel($this->withCreateModificationField($data));
         return $this->repayment->save();
