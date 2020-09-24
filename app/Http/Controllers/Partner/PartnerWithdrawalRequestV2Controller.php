@@ -12,6 +12,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
@@ -20,7 +22,8 @@ use Throwable;
 
 class PartnerWithdrawalRequestV2Controller extends Controller
 {
-    use  ModificationFields;
+
+    use CdnFileManager, FileManager, ModificationFields;
     public function index($partner, Request $request)
     {
         try {
@@ -47,9 +50,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
             if (count($withdrawalRequests) > 0) {
                 return api_response($request, $withdrawalRequests, 200,
-                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money,'banks' => $banks]);
+                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money,'banks' => $banks, 'status_message' => 'আপনি গরিব']);
             } else {
-                return api_response($request, null, 404, ['wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit, 'security_money' => $security_money,'banks' => $banks]);
+                return api_response($request, null, 404, ['wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit, 'security_money' => $security_money,'banks' => $banks ,'status_message' => 'আপনি গরিব']);
             }
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -202,9 +205,15 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 'account_type' => 'required|in:savings,current',
                 'branch_name' => 'required',
                 'routing_no' => 'required_',
-                'cheque_book_receipt' => 'sometimes|required|mimes:jpg,jpeg,png',
+                'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
 
             ]);
+            $cheque_book_receipt = null;
+            if($request->hasFile('cheque_book_receipt')){
+                list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
+                $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
+            }
+
             $data = [
                 'profile_id' => $request->manager_resource->profile->id,
                 'bank_name' => $request->bank_name,
@@ -212,7 +221,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 'account_type' => $request->account_type,
                 'branch_name' => $request->branch_name,
                 'routing_no' => $request->routing_no,
-                'cheque_book_receipt' => $request->cheque_book_receipt,
+                'cheque_book_receipt' => $cheque_book_receipt,
                 'purpose' => 'partner_wallet_withdrawal'
             ];
             $profile_bank_repo->create($data);
