@@ -16,6 +16,7 @@ use Throwable;
 
 class ResourceController extends Controller
 {
+    const COMPLIMENT_QUESTION_ID = 2;
     private $reviewRepository;
     private $profileRepo;
 
@@ -76,6 +77,15 @@ class ResourceController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $resource = $request->resource->load(['reviews' => function ($q) {
                 $q->with('job.partner_order.order');
+                $q->with([
+                    'rates' => function ($q) {
+                        $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with([
+                            'answer' => function ($q) {
+                                $q->select('id', 'answer', 'badge', 'asset');
+                            }
+                        ]);
+                    }
+                ]);
             }]);
             $breakdown = $this->reviewRepository->getReviewBreakdown($resource->reviews);
             $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
