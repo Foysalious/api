@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Builder;
 
+use Illuminate\Database\Eloquent\Collection;
 use Sheba\Reward\Event\CampaignRule;
 use Sheba\Reward\Event\Partner\Campaign\OrderServed\Parameter\ExcludedStatus;
 use Sheba\Reward\Event\Partner\Campaign\OrderServed\Parameter\Portal;
@@ -41,12 +42,29 @@ class Rule extends CampaignRule
         $this->target->check($query);
     }
 
-    public function getProgress(Builder $query) : TargetProgress
+    public function checkParticipation(Builder $query)
+    {
+        $this->excludedStatus->check($query);
+        $this->portal->check($query);
+    }
+
+    public function getProgress(Builder $query): TargetProgress
     {
         $this->excludedStatus->check($query);
         $this->portal->check($query);
         $this->target->calculateProgress($query);
 
         return (new TargetProgress($this->target));
+    }
+
+    public function getAchievedValue(Collection $jobs)
+    {
+        $total_job_count = $jobs->count();
+        return $total_job_count > $this->target->value ? $this->target->value : $total_job_count;
+    }
+
+    public function isTargetAchieved($achieved_value)
+    {
+        return $achieved_value >= $this->target->value;
     }
 }

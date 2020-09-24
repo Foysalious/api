@@ -3,6 +3,9 @@
 use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Procurement;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Storage;
+use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 
 class WorkOrderDataGenerator
@@ -14,10 +17,13 @@ class WorkOrderDataGenerator
     private $procurementRepo;
     /** @var Business $business */
     private $business;
+    /** @var PdfHandler $pdfHandler */
+    private $pdfHandler;
 
-    public function __construct(ProcurementRepositoryInterface $procurement_repo)
+    public function __construct(ProcurementRepositoryInterface $procurement_repo, PdfHandler $pdf_handler)
     {
         $this->procurementRepo = $procurement_repo;
+        $this->pdfHandler = $pdf_handler;
     }
 
     /**
@@ -26,7 +32,7 @@ class WorkOrderDataGenerator
      */
     public function setProcurement($procurement)
     {
-        $this->procurement = $this->procurementRepo->find((int)$procurement);
+        $this->procurement = $procurement instanceof Procurement ? $procurement : $this->procurementRepo->find((int)$procurement);
         $this->procurement->calculate();
         return $this;
     }
@@ -52,18 +58,21 @@ class WorkOrderDataGenerator
             'from' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
+                'logo' => $this->business->logo,
                 'mobile' => $this->business->getContactNumber()
             ],
             'to' => [
                 'name' => $this->bid->bidder->name,
                 'address' => $this->bid->bidder->address,
+                'logo' => $this->bid->bidder->logo,
                 'mobile' => $this->bid->bidder->getContactNumber()
             ],
             'items' => $items,
             'terms' => $this->bid->terms,
             "sub_total" => $this->procurement->totalPrice,
             "due" => $this->procurement->due,
-            "grand_total" => $this->procurement->totalPrice
+            "grand_total" => $this->procurement->totalPrice,
+            "tk_sign" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png"
         ];
     }
 
@@ -90,5 +99,16 @@ class WorkOrderDataGenerator
         }
 
         return $item_fields;
+    }
+
+    public function storeInCloud()
+    {
+        $work_order = ['work_order' => $this->get()];
+        return $this->pdfHandler->setData($work_order)
+            ->setName($this->procurement->id)
+            ->setFolder('tender-work-order/file/')
+            ->setViewPath('pdfs.')
+            ->setViewFile('work_order')
+            ->save();
     }
 }

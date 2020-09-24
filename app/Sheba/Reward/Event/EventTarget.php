@@ -8,6 +8,8 @@ interface EventTarget
 
     public function getAchieved();
 
+    public function setAchieved($achieved);
+
     public function getTarget();
 
     public function hasAchieved();

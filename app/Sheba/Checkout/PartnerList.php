@@ -2,7 +2,7 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Affiliate;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\Event;
 use App\Models\HyperLocal;
@@ -373,7 +373,17 @@ class PartnerList
             $partner['total_five_star_ratings'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_compliments'] = $partner->reviews->first() ? (int)$partner->reviews->first()->total_five_star_ratings : 0;
             $partner['total_experts'] = $partner->handymanResources->first() ? (int)$partner->handymanResources->first()->total_experts : 0;
+            $partner['agent_commission'] = $this->getAgentCommission($partner->discounted_price);
+
         }
+    }
+
+    private function getAgentCommission($discounted_price)
+    {
+        $commission = $discounted_price ? $discounted_price * (constants('AFFILIATE_REWARD')['SERVICE_REFER']['AGENT']['percentage']/100) : 0;
+        if($commission > constants('AFFILIATE_REWARD')['SERVICE_REFER']['AGENT']['cap'])
+            return constants('AFFILIATE_REWARD')['SERVICE_REFER']['AGENT']['cap'];
+        return $commission;
     }
 
     private function calculateAvgRating(Partner $partner)

@@ -501,8 +501,18 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->closed_and_paid_at ? 1 : 0;
     }
 
+    public function isClosed()
+    {
+        return $this->closed_at ? 1 : 0;
+    }
+
+    public function isAlreadyCancelled()
+    {
+        return $this->cancelled_at ? 1 : 0;
+    }
+
     public function getCustomerPayable()
     {
-        return $this->dueWithLogistic;
+        return (double)$this->dueWithLogistic;
     }
 }

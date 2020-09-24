@@ -3,7 +3,8 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\BaseModel;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\Payment\Wallet;
+use Sheba\Transactions\Types;
+use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpCommission;
 use Sheba\TopUp\TopUpTrait;
@@ -28,7 +29,7 @@ class Vendor extends BaseModel implements TopUpAgent, HasWalletTransaction
             ->setModel($this)
             ->setAmount($transaction->getAmount())
             ->setSource(TransactionSources::TOP_UP)
-            ->setType('debit')
+            ->setType(Types::debit())
             ->setLog($transaction->getLog())
             ->dispatch(['initiator_type' => "App\\Models\\TopUpOrder", 'initiator_id' => $transaction->getTopUpOrder()->id]);
     }
@@ -36,6 +37,11 @@ class Vendor extends BaseModel implements TopUpAgent, HasWalletTransaction
     public function transactions()
     {
         return $this->hasMany(VendorTransaction::class);
+    }
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 
     /**

@@ -1,36 +1,62 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Attachment;
-use App\Models\BusinessDepartment;
-use App\Models\BusinessRole;
-use App\Models\BusinessSmsTemplate;
+use App\Models\HyperLocal;
 use App\Sheba\Business\ACL\AccessControl;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
 use App\Models\BusinessMember;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\LeaveType\DefaultType;
+use Sheba\Business\BusinessCommonInformationCreator;
+use Sheba\Business\BusinessCreator;
+use Sheba\Business\BusinessCreatorRequest;
+use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
+use Sheba\Business\BusinessMember\Creator as BusinessMemberCreator;
+use Sheba\Business\BusinessUpdater;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\Business;
 use App\Models\Member;
 use Carbon\Carbon;
-use Sheba\Business\LeaveType\Creator as LeaveTypeCreator;
-use DB;
 use Throwable;
+use DB;
 
 class MemberController extends Controller
 {
     use ModificationFields, FilesAttachment;
+    /** BusinessMemberRequester $businessMemberRequester */
+    private $businessMemberRequester;
+    /** BusinessMemberCreator $businessMemberCreator */
+    private $businessMemberCreator;
+
+    /**
+     * MemberController constructor.
+     * @param BusinessMemberRequester $business_member_requester
+     * @param BusinessMemberCreator $business_member_creator
+     */
+    public function __construct(BusinessMemberRequester $business_member_requester, BusinessMemberCreator $business_member_creator)
+    {
+        $this->businessMemberRequester = $business_member_requester;
+        $this->businessMemberCreator = $business_member_creator;
+    }
 
     /**
      * @param $member
      * @param Request $request
-     * @param LeaveTypeCreator $leave_type_creator
+     * @param BusinessCreatorRequest $business_creator_request
+     * @param BusinessCreator $business_creator
+     * @param BusinessUpdater $business_updater
+     * @param BusinessCommonInformationCreator $common_info_creator
      * @return JsonResponse
      */
-    public function updateBusinessInfo($member, Request $request, LeaveTypeCreator $leave_type_creator)
+    public function updateBusinessInfo($member, Request $request,
+                                       BusinessCreatorRequest $business_creator_request,
+                                       BusinessCreator $business_creator,
+                                       BusinessUpdater $business_updater,
+                                       BusinessCommonInformationCreator $common_info_creator)
     {
         try {
             $this->validate($request, [
@@ -41,62 +67,54 @@ class MemberController extends Controller
                 'address' => 'required|string',
                 'mobile' => 'sometimes|required|string|mobile:bd',
             ]);
-
             $member = Member::find($member);
             $this->setModifier($member);
-
-            $business_data = [
-                'name' => $request->name,
-                'employee_size' => $request->no_employee,
-                'geo_informations' => json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]),
-                'address' => $request->address,
-                'phone' => $request->mobile,
-            ];
-
+            $business_creator_request = $business_creator_request->setName($request->name)
+                ->setEmployeeSize($request->no_employee)
+                ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]))
+                ->setAddress($request->address)
+                ->setPhone($request->mobile);
+            DB::beginTransaction();
             if (count($member->businesses) > 0) {
                 $business = $member->businesses->first();
-                $business->update($this->withUpdateModificationField($business_data));
+                $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
             } else {
-                $business_data['sub_domain'] = $this->guessSubDomain($request->name);
-                $business = Business::create($this->withCreateModificationField($business_data));
-                $this->tagDepartment($business);
-                $this->tagRole($business);
-                $member_business_data = [
-                    'business_id' => $business->id,
-                    'member_id' => $member->id,
-                    'is_super' => 1,
-                    'join_date' => Carbon::now(),
-                ];
-                BusinessMember::create($this->withCreateModificationField($member_business_data));
-                $this->saveSmsTemplate($business);
-
-                foreach (DefaultType::getWithKeys() as $key => $value) {
-                    $leave_type_creator->setBusiness($business)->setMember($member)->setTitle($value)->setTotalDays(DefaultType::getDays()[$key])->create();
-                }
+                $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
+                $common_info_creator->setBusiness($business)->setMember($member)->create();
+                $this->createBusinessMember($business, $member);
             }
-
+            DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            DB::rollback();
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    private function saveSmsTemplate(Business $business)
+    /**
+     * @param $business
+     * @param $member
+     * @return Model
+     */
+    private function createBusinessMember($business, $member)
     {
-        $sms_template = new BusinessSmsTemplate();
-        $sms_template->business_id = $business->id;
-        $sms_template->event_name = "trip_request_accept";
-        $sms_template->event_title = "Vehicle Trip Request Accept";
-        $sms_template->template = "Your request for vehicle has been accepted. {{vehicle_name}} will be sent to you at {{arrival_time}}";
-        $sms_template->variables = "vehicle_name;arrival_time";
-        $sms_template->is_published = 1;
-        $sms_template->save();
+        $business_member_requester = $this->businessMemberRequester->setBusinessId($business->id)
+            ->setMemberId($member->id)
+            ->setStatus('active')
+            ->setIsSuper(1)
+            ->setJoinDate(Carbon::now());
+        return $this->businessMemberCreator->setRequester($business_member_requester)->create();
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getBusinessInfo($member, Request $request)
     {
         try {
@@ -104,13 +122,18 @@ class MemberController extends Controller
             $profile = $member->profile;
 
             if ($business = $member->businesses->first()) {
+                $location = null;
+                $geo_information = json_decode($business->geo_informations, 1);
+                $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
+                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
                 $info = [
                     "name" => $business->name,
                     "sub_domain" => $business->sub_domain,
                     "tagline" => $business->tagline,
                     "company_type" => $business->type,
                     "address" => $business->address,
-                    "geo_informations" => json_decode($business->geo_informations),
+                    "area" => $location->name,
+                    "geo_informations" => $geo_information,
                     "wallet" => (double)$business->wallet,
                     "employee_size" => $business->employee_size,
                 ];
@@ -125,53 +148,56 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @param AccessControl $access_control
+     * @return JsonResponse
+     */
     public function getMemberInfo($member, Request $request, AccessControl $access_control)
     {
-        try {
-            $member = Member::find((int)$member);
-            $business = $member->businesses->first();
-            $profile = $member->profile;
-            $access_control->setBusinessMember($member->businessMember);
-            $info = [
-                'profile_id' => $profile->id,
-                'name' => $profile->name,
-                'mobile' => $profile->mobile,
-                'email' => $profile->email,
-                'pro_pic' => $profile->pro_pic,
-                'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
-                'gender' => $profile->gender,
-                'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
-                'nid_no' => $profile->nid_no,
-                'address' => $profile->address,
-                'business_id' => $business ? $business->id : null,
-                'remember_token' => $member->remember_token,
-                'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
-                'access' => [
-                    'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
-                    'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
-                    'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
-                ]
-            ];
-            return api_response($request, $info, 200, ['info' => $info]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Member $member */
+        $member = Member::find((int)$member);
+        $business = $member->businessMember ? $member->businessMember->business : null;
+        $business_members = BusinessMember::where('member_id', $member->id)->get();
+
+        if (!$business_members->isEmpty()) {
+            $business_members = $business_members->reject(function ($business_member) {
+                return $business_member->status == Statuses::INACTIVE;
+            });
+            if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
+
+        $profile = $member->profile;
+        $access_control->setBusinessMember($member->businessMember);
+        $info = [
+            'profile_id' => $profile->id,
+            'name' => $profile->name,
+            'mobile' => $profile->mobile,
+            'email' => $profile->email,
+            'pro_pic' => $profile->pro_pic,
+            'designation' => ($member->businessMember && $member->businessMember->role) ? $member->businessMember->role->name : null,
+            'gender' => $profile->gender,
+            'date_of_birth' => $profile->dob ? Carbon::parse($profile->dob)->format('M-j, Y') : null,
+            'nid_no' => $profile->nid_no,
+            'address' => $profile->address,
+            'business_id' => $business ? $business->id : null,
+            'remember_token' => $member->remember_token,
+            'is_super' => $member->businessMember ? $member->businessMember->is_super : null,
+            'access' => [
+                'support' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('support.rw') ? 1 : 0) : 0,
+                'expense' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('expense.rw') ? 1 : 0) : 0,
+                'announcement' => $business ? (in_array($business->id, config('business.WHITELISTED_BUSINESS_IDS')) && $access_control->hasAccess('announcement.rw') ? 1 : 0) : 0
+            ]
+        ];
+
+        return api_response($request, $info, 200, ['info' => $info]);
     }
 
-    private function guessSubDomain($name)
-    {
-        $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
-        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
-        $already_used = Business::select('sub_domain')->lists('sub_domain')->toArray();
-        $counter = 0;
-        while (in_array($name, array_merge($blacklist, $already_used))) {
-            $name = $base_name . $counter;
-            $counter++;
-        }
-        return $name;
-    }
-
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         try {
@@ -193,6 +219,11 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse|RedirectResponse
+     */
     public function storeAttachment($member, Request $request)
     {
         try {
@@ -222,6 +253,11 @@ class MemberController extends Controller
         }
     }
 
+    /**
+     * @param $member
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getAttachments($member, Request $request)
     {
         try {
@@ -250,30 +286,4 @@ class MemberController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    private function tagDepartment(Business $business)
-    {
-        $departments = ['IT', 'FINANCE', 'HR', 'ADMIN', 'MARKETING', 'OPERATION', 'CXO'];
-        foreach ($departments as $department) {
-            $dept = new BusinessDepartment();
-            $dept->name = $department;
-            $dept->business_id = $business->id;
-            $dept->save();
-        }
-    }
-
-    private function tagRole(Business $business)
-    {
-        $roles = ['Manager', 'VP', 'Executive', 'Intern', 'Senior Executive', 'Driver'];
-        $depts = BusinessDepartment::where('business_id', $business->id)->pluck('id')->toArray();
-        foreach ($roles as $role) {
-            foreach ($depts as $dept) {
-                $b_role = new BusinessRole();
-                $b_role->name = $role;
-                $b_role->business_department_id = $dept;
-                $b_role->save();
-            }
-        }
-    }
-
 }

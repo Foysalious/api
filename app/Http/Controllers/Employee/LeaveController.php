@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
 use App\Sheba\Business\BusinessBasicInformation;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
@@ -22,6 +24,7 @@ use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
 use Sheba\ModificationFields;
 use Throwable;
 use DB;
@@ -70,10 +73,13 @@ class LeaveController extends Controller
         $leave = $leave_repo->find($leave);
         $business_member = $this->getBusinessMember($request);
         if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        $leave = $leave->load(['leaveType' => function ($q) {return $q->withTrashed();}]);
+
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
         $resource = new Item($leave, new LeaveTransformer());
         $leave = $fractal->createData($resource)->toArray()['data'];
+
         return api_response($request, $leave, 200, ['leave' => $leave]);
     }
 
@@ -85,22 +91,28 @@ class LeaveController extends Controller
      */
     public function store(Request $request, LeaveCreator $leave_creator)
     {
-        $this->validate($request, [
+        $validation_data = [
             'start_date' => 'required|before_or_equal:end_date',
             'end_date' => 'required',
             'attachments.*' => 'file'
-        ]);
+        ];
         $business_member = $this->getBusinessMember($request);
+        if ($this->isNeedSubstitute($business_member)) $validation_data['substitute'] = 'required|integer';
+        $this->validate($request, $validation_data);
+
         $member = $this->getMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
+        $substitute = $request->has('substitute') ? $request->substitute : null;
         $leave = $leave_creator->setTitle($request->title)
+            ->setSubstitute($substitute)
             ->setBusinessMember($business_member)
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
             ->setNote($request->note)
             ->setCreatedBy($member);
+
         if ($request->attachments && is_array($request->attachments)) $leave_creator->setAttachments($request->attachments);
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
@@ -131,11 +143,9 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveTypesRepoInterface $leave_types_repo
-     * @param LeaveRepoInterface $leave_repo
-     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
+    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
@@ -150,5 +160,34 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leave_types' => $leave_types]);
+    }
+
+    /**
+     * @param BusinessMember $business_member
+     * @return bool
+     */
+    private function isNeedSubstitute(BusinessMember $business_member)
+    {
+        $leave_approvers = [];
+        ApprovalFlow::with('approvers')->where('type', Type::LEAVE)->get()->each(function ($approval_flow) use (&$leave_approvers) {
+            $leave_approvers = array_unique(array_merge($leave_approvers, $approval_flow->approvers->pluck('id')->toArray()));
+        });
+        if (in_array($business_member->id, $leave_approvers)) return true;
+        return false;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getLeaveSettings(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        if (!$business_member) return api_response($request, null, 404);
+        $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
+        $settings = ['is_substitute_required' => $is_substitute_required];
+
+        return api_response($request, null, 200, ['settings' => $settings]);
     }
 }

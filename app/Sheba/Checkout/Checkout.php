@@ -3,17 +3,18 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\InfoCall;
 use App\Models\Job;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Location;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
@@ -243,7 +244,7 @@ class Checkout
 
             $service_data = array('service_id' => $selected_service->id, 'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price,
+                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price ? $discount->min_price : 0,
                 'sheba_contribution' => $discount->__get('sheba_contribution'), 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'), 'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'), 'name' => $service->name,
@@ -299,6 +300,7 @@ class Checkout
     private function createJob(PartnerOrder $partner_order, $data)
     {
         $preferred_time = new PreferredTime($data['time']);
+        $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner($this->partner);
         $job_data = [
             'category_id' => $data['category_id'],
             'partner_order_id' => $partner_order->id,
@@ -309,8 +311,8 @@ class Checkout
             'crm_id' => $data['crm_id'],
             'job_additional_info' => $data['additional_information'],
             'category_answers' => $data['category_answers'],
-            'commission_rate' => $this->category->commission($this->partner->id),
-            'material_commission_rate' => config('sheba.material_commission_rate'),
+            'commission_rate' => $commissions->getServiceCommission(),
+            'material_commission_rate' => $commissions->getMaterialCommission(),
             'discount' => isset($data['discount']) ? $data['discount'] : 0,
             'sheba_contribution' => isset($data['sheba_contribution']) ? $data['sheba_contribution'] : 0,
             'partner_contribution' => isset($data['partner_contribution']) ? $data['partner_contribution'] : 0,

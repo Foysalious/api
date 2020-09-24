@@ -1,6 +1,6 @@
 <?php namespace App\Transformers;
 
-use App\Models\Member;
+use App\Models\BusinessMember;
 use League\Fractal\TransformerAbstract;
 
 class BusinessEmployeesTransformer extends TransformerAbstract
@@ -8,23 +8,26 @@ class BusinessEmployeesTransformer extends TransformerAbstract
     CONST NO_DEPARTMENT_VALUE = 'OTHER';
 
     /**
-     * @param $members
+     * @param $business_members
      * @return array
      */
-    public function transform($members)
+    public function transform($business_members)
     {
         $employee_based_on_departments = [];
         $departments_name = [];
-        $members->each(function ($member) use (&$employee_based_on_departments, &$departments_name) {
+        $business_members->each(function ($business_member) use (&$employee_based_on_departments, &$departments_name) {
+            $member = $business_member->member;
             $profile = $member->profile;
-            $department_name = $this->isMemberRolePresent($member) ? $member->businessMember->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
+            $is_member_role_present = $this->isMemberRolePresent($business_member);
+            $department_name = $is_member_role_present ? $business_member->role->businessDepartment->name : self::NO_DEPARTMENT_VALUE;
 
             array_push($departments_name, $department_name);
             $employee_based_on_departments[$department_name][] = [
-                'id' => $member->businessMember->id,
+                'id' => $business_member->id,
                 'name' => $profile->name,
-                'designation' => $this->isMemberRolePresent($member) ? $member->businessMember->role->name : 'N/S',
-                'mobile' => $profile->mobile
+                'pro_pic' => $profile->pro_pic,
+                'mobile' => $profile->mobile,
+                'designation' => $is_member_role_present ? $business_member->role->name : 'N/S'
             ];
         });
 
@@ -43,11 +46,11 @@ class BusinessEmployeesTransformer extends TransformerAbstract
     }
 
     /**
-     * @param Member $member
+     * @param BusinessMember $business_member
      * @return bool
      */
-    private function isMemberRolePresent(Member $member)
+    private function isMemberRolePresent(BusinessMember $business_member)
     {
-        return $member->businessMember->role ? true : false;
+        return $business_member->role ? true : false;
     }
 }

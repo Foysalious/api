@@ -1,6 +1,5 @@
 <?php namespace Sheba\ShebaAccountKit\Requests;
 
-
 class OtpSendRequest
 {
     private $mobile;
@@ -60,6 +59,4 @@ class OtpSendRequest
         $this->apiToken = $apiToken;
         return $this;
     }
-
-
 }

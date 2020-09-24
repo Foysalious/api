@@ -3,10 +3,13 @@
 use App\Models\Job;
 use App\Models\Partner;
 
+use App\Models\Resource;
 use Illuminate\Support\Collection;
 
 use Sheba\Reward\Event\Campaign;
+use Sheba\Reward\Event\ParticipatedCampaignUser;
 use Sheba\Reward\Event\Rule as BaseRule;
+use Sheba\Reward\Event\TargetProgress;
 use Sheba\Reward\Exception\RulesTypeMismatchException;
 use Sheba\Reward\Rewardable;
 
@@ -40,7 +43,7 @@ class Event extends Campaign
     /**
      * Return count or percentage.
      * @param Rewardable $rewardable
-     * @return \Sheba\Reward\Event\TargetProgress
+     * @return TargetProgress
      */
     public function checkProgress(Rewardable $rewardable)
     {
@@ -68,12 +71,34 @@ class Event extends Campaign
         foreach ($this->reward->constraints->groupBy('constraint_type') as $key => $type) {
             $ids = $type->pluck('constraint_id')->toArray();
 
-            if ($key == 'App\Models\Category') {
+            if ($key == 'Sheba\Dal\Category\Category') {
                 $this->query->whereIn('category_id', $ids);
             } elseif ($key == 'App\Models\PartnerSubscriptionPackage') {
                 $this->query->join('partners', 'partners.id', '=', 'partner_orders.partner_id')
                     ->whereIn('partners.package_id', $ids);
             }
         }
+    }
+
+    function getParticipatedUsers()
+    {
+        $this->initiateQuery();
+
+        $this->filterConstraints();
+
+        $this->rule->checkParticipation($this->query);
+
+        $jobs = $this->query->select('partner_orders.partner_id')->get();
+        if ($jobs->count() == 0) return [];
+        $group_by_partners = $jobs->groupBy('partner_id');
+        $partners = Partner::whereIn('id', $group_by_partners->keys()->toArray())->get();
+        $participated_users = [];
+        foreach ($partners as $partner) {
+            $participated_user = new ParticipatedCampaignUser();
+            $achieved = $this->rule->getAchievedValue($group_by_partners->get($partner->id));
+            $participated_user->setAchievedValue($achieved)->setUser($partner)->setIsTargetAchieved($this->rule->isTargetAchieved($achieved));
+            array_push($participated_users, $participated_user);
+        }
+        return $participated_users;
     }
 }

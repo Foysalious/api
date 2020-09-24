@@ -3,6 +3,8 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Job;
+use App\Models\Resource;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Authentication\AuthUser;
@@ -18,10 +20,21 @@ use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
 use Sheba\UserAgentInformation;
+use Throwable;
 
 class ResourceJobController extends Controller
 {
     use ModificationFields;
+
+    /**
+     * @param Request $request
+     * @return Resource
+     */
+    private function getResource(Request $request)
+    {
+        $auth_user = $request->auth_user;
+        return $auth_user->getResource();
+    }
 
     public function index(Request $request, JobList $job_list)
     {
@@ -43,6 +56,16 @@ class ResourceJobController extends Controller
         $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
         $rest_jobs = $job_list->setResource($resource)->getRestJobs();
         return api_response($request, $job_list, 200, ['jobs' => [['title' => 'আজকে', 'jobs' => $upto_todays_jobs], ['title' => 'আগামীকালকে', 'jobs' => $tomorrows_jobs], ['title' => 'পরবর্তী', 'jobs' => $rest_jobs]]]);
+    }
+
+    public function getJobToShowInHome(Request $request, JobList $job_list)
+    {
+        $resource = $this->getResource($request);
+        $upto_todays_jobs = $job_list->setResource($resource)->getOngoingJobs();
+        if (count($upto_todays_jobs) > 0) return api_response($request, $upto_todays_jobs, 200, ['orders' => $upto_todays_jobs->splice(0, 1)]);
+        $tomorrows_jobs = $job_list->setResource($resource)->getTomorrowsJobs();
+        if (count($tomorrows_jobs) > 0) return api_response($request, $tomorrows_jobs, 200, ['orders' => $tomorrows_jobs->splice(0, 1)]);
+        return api_response($request, null, 404);
     }
 
     public function jobDetails(Job $job, Request $request, JobInfo $jobInfo)
@@ -102,9 +125,9 @@ class ResourceJobController extends Controller
             $response = $reschedule_job->reschedule();
             return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
         } catch (ValidationException $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            throw new Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
         }
 
     }
@@ -135,7 +158,7 @@ class ResourceJobController extends Controller
 
     public function getServices(Job $job, Request $request, ServiceList $serviceList)
     {
-        $services = $serviceList->setJob($job)->getServicesList();
+        $services = $serviceList->setJob($job)->setRequest($request)->getServicesList();
         return api_response($request, null, 200, ['services' => $services]);
 
     }
@@ -153,14 +176,17 @@ class ResourceJobController extends Controller
         if ($resource->id !== $job->resource_id) return api_response($request, $job, 403, ["message" => "You're not authorized to access this job."]);
 
         if ($request->has('services')) {
+            if (!is_array(json_decode($request->services))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForServiceAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
         if ($request->has('materials')) {
+            if (!is_array(json_decode($request->materials))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForMaterialAdd($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
         if ($request->has('quantity')) {
+            if (!is_array(json_decode($request->quantity))) return api_response($request, null, 400);
             $updatedBill = $billUpdate->getUpdatedBillForQuantityUpdate($job);
             return api_response($request, $updatedBill, 200, ['bill' => $updatedBill]);
         }
@@ -184,8 +210,58 @@ class ResourceJobController extends Controller
             if (count($quantity) > 0) $updateRequest->setQuantity($quantity);
             $response = $updateRequest->setJob($job)->setUserAgentInformation($user_agent_information)->update();
             return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
-        } catch (\Throwable $e) {
-            throw new \Exception('আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন', 500);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500, ['message' => 'আপনার এই প্রক্রিয়া টি সম্পন্ন করা সম্ভব নয়, অনুগ্রহ করে একটু পরে আবার চেষ্টা করুন']);
         }
+    }
+
+    public function getAllHistoryJobs(Request $request, JobList $job_list)
+    {
+        $this->validate($request, [
+            'offset' => 'numeric|min:0', 'limit' => 'numeric|min:1',
+            'month' => 'sometimes|required|integer|between:1,12', 'year' => 'sometimes|required|integer'
+        ]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $jobs = $job_list->setResource($resource);
+        if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+        if ($request->has('year')) $jobs = $jobs->setYear($request->year);
+        if ($request->has('month')) $jobs = $jobs->setMonth($request->month);
+        $jobs = $jobs->getHistoryJobs();
+        return api_response($request, $jobs, 200, ['jobs' => ['years' => $jobs]]);
+    }
+
+    public function jobSearch(Request $request, JobList $job_list)
+    {
+        $this->validate($request, ['q' => 'required']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        if (substr($request->q, 1, 1) == '-') {
+            $order_id = (int)substr($request->q, 2) - config('sheba.order_code_start');
+            $results = $job_list->setResource($resource)->setOrderId($order_id)->getJobsFilteredByOrderId();
+            $order_code = $request->q;
+            $jobs = $results->filter(function ($job) use ($order_code) {
+                return $job['order_code'] == $order_code;
+            });
+        } else {
+            $jobs = $job_list->setResource($resource)->setQuery('"' . $request->q . '"');
+            if ($request->has('limit')) $jobs = $jobs->setOffset($request->offset)->setLimit($request->limit);
+            $jobs = $jobs->getJobsFilteredByServiceOrCustomerName();
+        }
+        if ($jobs->isEmpty()) return api_response($request, $jobs, 404);
+        return api_response($request, $jobs, 200, ['results' => $jobs]);
+    }
+
+    public function getNextJobsInfo(Request $request, JobList $jobList)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+        $next_jobs_info = $jobList->setResource($resource)->getNextJobsInfo();
+        if(!$next_jobs_info) return api_response($request, $next_jobs_info, 404, ['message' => 'No multiple jobs found']);
+        return api_response($request, $next_jobs_info, 200, ['next_jobs_info' => $next_jobs_info]);
     }
 }

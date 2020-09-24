@@ -1,6 +1,8 @@
 <?php namespace Sheba\Checkout\Adapters;
 
 use App\Models\Job;
+use App\Models\Payment;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Checkout\Services\SubscriptionServicePricingAndBreakdown;
 use Sheba\Dal\JobService\JobService;
 use App\Models\Order;
@@ -9,7 +11,7 @@ use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Models\Payable;
 use App\Models\PaymentDetail;
 use App\Models\Resource;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
 use Sheba\Checkout\SubscriptionOrderInterface;
 use Sheba\Dal\SubscriptionOrder\Statuses as SubscriptionOrderStatuses;
@@ -51,6 +53,7 @@ class SubscriptionOrderAdapter
             $this->createOrders();
             return $this->subscriptionOrder;
         } else {
+            $this->updateOrders();
             return false;
         }
     }
@@ -97,13 +100,16 @@ class SubscriptionOrderAdapter
         $this->totalSchedules = $this->subscriptionOrder->schedules();
     }
 
+    /**
+     * @TODO for partial payment needs to change that
+     */
     private function setPaymentDetails()
     {
-        $payable = Payable::whereHas('payment', function ($q) {
+        $payable = Payable::whereHas('payments', function ($q) {
             $q->where('status', PaymentStatuses::COMPLETED);
         })->where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first();
         if (!$payable) return;
-        $this->paymentDetails = Payable::where('type_id', $this->subscriptionOrder->id)->where('type', 'subscription_order')->first()->payment->paymentDetails;
+        $this->paymentDetails = $payable->payments()->where('status', PaymentStatuses::COMPLETED)->first()->paymentDetails;
         $this->setBonus();
         $this->setOtherPaymentDetail();
     }
@@ -162,8 +168,9 @@ class SubscriptionOrderAdapter
         $job->preferred_time_end = $preferred_time->getEndString();
         $job->job_additional_info = $this->subscriptionOrder->additional_info;
         $job->category_answers = $this->subscriptionOrder->additional_info;
-        $job->commission_rate = $this->subscriptionOrder->category->commission($this->subscriptionOrder->partner_id);
-        $job->material_commission_rate = config('sheba.material_commission_rate');
+        $commissions = $this->getCommission();
+        $job->commission_rate = $commissions->getServiceCommission();
+        $job->material_commission_rate = $commissions->getMaterialCommission();
         $job->status = JobStatuses::PENDING;
         $job->delivery_charge = $this->deliveryCharge;
         $this->withCreateModificationField($job);
@@ -276,5 +283,30 @@ class SubscriptionOrderAdapter
         $resources = (scheduler($this->subscriptionOrder->partner))
             ->isAvailable($dates, $time, $this->subscriptionOrder->category)->get('available_resources');
         return Resource::whereIn('id', $resources)->get();
+    }
+
+    /**
+     * @return CommissionCalculator
+     */
+    private function getCommission()
+    {
+        return (new CommissionCalculator())->setCategory($this->subscriptionOrder->category)->setPartner($this->subscriptionOrder->partner);
+    }
+
+    private function updateOrders()
+    {
+        PartnerOrder::whereHas('order', function ($q) {
+            $q->whereHas('subscription', function ($q) {
+                $q->where('subscription_orders.id', $this->subscriptionOrder->id);
+            });
+        })->update(['partner_id' => $this->subscriptionOrder->partner_id]);
+        $commissions = $this->getCommission();
+        Job::whereHas('partnerOrder', function ($q) {
+            $q->whereHas('order', function ($q) {
+                $q->whereHas('subscription', function ($q) {
+                    $q->where('subscription_orders.id', $this->subscriptionOrder->id);
+                });
+            });
+        })->update(['commission_rate' => $commissions->getServiceCommission(), 'material_commission_rate' => $commissions->getMaterialCommission()]);
     }
 }

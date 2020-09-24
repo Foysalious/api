@@ -4,6 +4,7 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\PartnerOrderReport;
 use Carbon\Carbon;
+use InvalidArgumentException;
 use Sheba\Logs\OrderLogs;
 use Sheba\Reports\Presenter as BasePresenter;
 
@@ -22,6 +23,7 @@ class Presenter extends BasePresenter
         'order_unique_id' => 'Order Unique ID',
         'order_first_created' => 'Order First Created',
         'created_date' => 'Created Date',
+        'request_created_date' => 'Request Created Date',
         'customer_id' => 'Customer ID',
         'customer_name' => 'Customer Name',
         'customer_mobile' => 'Customer Mobile',
@@ -165,10 +167,10 @@ class Presenter extends BasePresenter
     {
         if ($this->partnerOrderReport) {
             $this->getFromPartnerOrderReport();
-        } else if ($this->partnerOrder) {
+        } elseif ($this->partnerOrder) {
             $this->getFromPartnerOrder();
         } else {
-            throw new \InvalidArgumentException('Instance of PartnerOrder or PartnerOrderReport must be defined.');
+            throw new InvalidArgumentException('Instance of PartnerOrder or PartnerOrderReport must be defined.');
         }
     }
 
@@ -194,7 +196,7 @@ class Presenter extends BasePresenter
         $data['Delivery Mobile'] = $data['Delivery Mobile'] ? '`' . $data['Delivery Mobile'] . '`' : "N/S";
         $data['Customer Registration Date'] = $data['Customer Registration Date'] ? $data['Customer Registration Date']->format('d M Y H:i') : "N/F";
         $data['Updated At'] = $data['Updated At'] ? $data['Updated At']->format('d M Y H:i') : "N/F";
-        $data['Is SP Changed'] = $data['Is SP Changed']  ? "Yes" : "No";
+        $data['Is SP Changed'] = $data['Is SP Changed'] ? "Yes" : "No";
         $data['Quantity'] = $data['Quantity'] ?: "N/S";
         $data['Schedule Date'] = $data['Schedule Date'] ? $data['Schedule Date']->format('d M Y') : "N/S";
         $data['CSAT Date'] = $data['CSAT Date'] ? $data['CSAT Date']->format('d M Y h:i A') : "N/S";
@@ -237,13 +239,14 @@ class Presenter extends BasePresenter
             'Location' => $partner_order->order->location->name,
             'Delivery Name' => $partner_order->order->delivery_name,
             'Delivery Mobile' => $partner_order->order->delivery_mobile,
-            'Delivery Address' => ($partner_order->order->deliveryAddress ?: $partner_order->order->getTempAddress())->address,
+            'Delivery Address' => $partner_order->order->deliveryAddress->address,
             'Is Vip' => $partner_order->order->customer->is_vip,
             'SP Id' => $partner_order->partner_id,
-            'SP Name' => $partner_order->partner->name,
-            'SP Mobile' => $partner_order->partner->mobile,
-            'SP Type' => $partner_order->partner->subscription->name,
-            'Info Call Id' => $partner_order->order->info_call_id
+            'SP Name' => $partner_order->partner ? $partner_order->partner->name : 'N/S',
+            'SP Mobile' => $partner_order->partner ? $partner_order->partner->mobile : 'N/S',
+            'SP Type' => $partner_order->partner ? $partner_order->partner->subscription->name : 'N/S',
+            'Info Call Id' => $partner_order->order->info_call_id,
+            'Request Created Date' => $this->getOrderRequestDate($partner_order)
         ];
         $this->viewData = array_merge($this->viewData, $partner_order_data);
 
@@ -296,7 +299,7 @@ class Presenter extends BasePresenter
             'Served From' => isset($status_change_info['Served']['portal_name']) ? $status_change_info['Served']['portal_name'] : null,
             'Cancel By' => isset($status_change_info['Cancelled']) ? $status_change_info['Cancelled']['created_by_name'] : null,
             'Cancel From' => isset($status_change_info['Cancelled']['portal_name']) ? $status_change_info['Cancelled']['portal_name'] : null,
-            'Cancel Requested By' => $partner_order->status=='Cancelled' ? $job->lastCancelRequestBy() : null,
+            'Cancel Requested By' => $partner_order->status == 'Cancelled' ? $job->lastCancelRequestBy() : null,
             'Cancel Reason Details' => $partner_order->cancelled_at ? ($job->cancelLog ? $job->cancelLog->cancel_reason_details : null) : null,
             'Complain ID' => $job->complains->pluck('id')->implode(','),
             'CSAT Remarks' => $job->review ? $job->review->review : null,
@@ -336,6 +339,14 @@ class Presenter extends BasePresenter
             'Service Charge %' => $partner_order->serviceChargePercent
         ];
         $this->viewData = array_merge($this->viewData, $job_data);
+    }
+
+    private function getOrderRequestDate(PartnerOrder $partner_order)
+    {
+        if (!$partner_order->partner) return null;
+        $order_request = $partner_order->partnerOrderRequests->where('partner_id', $partner_order->partner_id)->first();
+        if (!$order_request) return null;
+        return $order_request->created_date;
     }
 
     private function getFromPartnerOrderReport()

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Notification\SeenBy;
@@ -39,6 +40,26 @@ class NotificationController extends Controller
         return api_response($request, null, 200, ['notifications' => $final]);
     }
 
+    public function lastNotificationCount(Request $request, MemberRepositoryInterface $member_repository)
+    {
+        $this->validate($request, [
+            'time' => 'required',
+        ]);
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!$business_member) return api_response($request, null, 401);
+        $member = $member_repository->find($business_member['member_id']);
+
+        $notifications_count = $member->notifications()->whereIn('event_type', [
+            'Sheba\Dal\Announcement\Announcement',
+            'Sheba\Dal\ApprovalRequest\Model',
+            'Sheba\Dal\Leave\Model',
+            'Sheba\Dal\Support\Model'
+        ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
+
+        return api_response($request, null, 200, ['notifications' => $notifications_count]);
+    }
+
     public function seen(Request $request, SeenBy $seenBy, MemberRepositoryInterface $member_repository)
     {
         try {
@@ -61,7 +82,8 @@ class NotificationController extends Controller
             'support_id' => 'sometimes|required|numeric',
             'announcement_id' => 'sometimes|required|numeric',
             'attendance' => 'sometimes|required|numeric',
-            'leave_request_id' => 'sometimes|required|numeric'
+            'leave_request_id' => 'sometimes|required|numeric',
+            'leave_id' => 'sometimes|required|numeric',
         ]);
 
         $auth_info = $request->auth_info;
@@ -112,6 +134,17 @@ class NotificationController extends Controller
                 "message" => "Leave Request Arrived Message",
                 "event_type" => 'leave_request',
                 "event_id" => $request->leave_request,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel);
+        }
+        if ($request->has('leave_id')) {
+            $pushNotificationHandler->send([
+                "title" => 'Substitute Setup',
+                "message" => "AI choose you a substitute",
+                "event_type" => 'substitute',
+                "event_id" => $request->leave_id,
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"

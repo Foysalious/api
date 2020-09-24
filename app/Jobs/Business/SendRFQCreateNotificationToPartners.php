@@ -1,38 +1,44 @@
 <?php namespace App\Jobs\Business;
 
-
 use App\Jobs\Job;
 use App\Models\Partner;
 use App\Models\Procurement;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Sheba\Notification\Partner\PartnerNotificationHandler;
 
 class SendRFQCreateNotificationToPartners extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+    /** @var Procurement $procurement */
     private $procurement;
+    /** @var PartnerNotificationHandler $partnerNotificationHandler */
+    private $partnerNotificationHandler;
 
-    public function __construct(Procurement $procurement)
+    /**
+     * SendRFQCreateNotificationToPartners constructor.
+     * @param Procurement $procurement
+     * @param PartnerNotificationHandler $partner_notification_handler
+     */
+    public function __construct(Procurement $procurement, PartnerNotificationHandler $partner_notification_handler)
     {
         $this->procurement = $procurement;
+        $this->partnerNotificationHandler = $partner_notification_handler;
     }
 
     public function handle()
     {
         if ($this->attempts() <= 1) {
-            $message = $this->procurement->owner->name . " has created RFQ #" . $this->procurement->id;
-            $partners = Partner::verified()->select('id', 'sub_domain')->get();
-            foreach ($partners as $partner) {
-                notify()->partner($partner)->send([
-                    'title' => $message,
-                    'type' => 'warning',
-                    'event_type' => get_class($this->procurement),
-                    'event_id' => $this->procurement->id,
-                    'link' => config('sheba.partners_url') . "/" . $partner->sub_domain . "/procurements/" . $this->procurement->id
-                ]);
-            }
+            $title = $this->procurement->title ? $this->procurement->title : substr($this->procurement->long_description, 0, 20);
+            $long_description = substr($this->procurement->long_description, 0, 50);
+            $link = config('sheba.business_url') . "/tender/list/" . $this->procurement->id;
+            $partner_ids = Partner::verified()->pluck('id')->toArray();
+
+            $this->partnerNotificationHandler->setTitle($title)
+                ->setDescription($long_description)
+                ->setLink($link)
+                ->notifyForProcurement($partner_ids);
         }
     }
-
 }

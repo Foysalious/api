@@ -10,7 +10,7 @@
 <table>
     <tr>
         @foreach($headers = $report->getHeaders() as $header)
-            <th>{{ isNormalized($header) ? $header : normalizeCases($header) }}</th>
+            <th>{{ isNormalized($header) ? $header : normalizeStringCases($header) }}</th>
         @endforeach
     </tr>
 

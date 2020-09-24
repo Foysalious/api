@@ -4,10 +4,10 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\Location;
-use App\Models\LocationService;
-use App\Models\Service;
-use App\Models\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use App\Models\SubscriptionOrder;
 use App\Transformers\PreferredTimeTransformer;
 use App\Transformers\ServiceV2DeliveryChargeTransformer;
@@ -27,7 +27,10 @@ use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\PreferredTime;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\Payment\Adapters\Payable\SubscriptionOrderAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
+use Sheba\Services\Type;
 use Sheba\Subscription\ApproximatePriceCalculator;
 use Throwable;
 
@@ -72,13 +75,13 @@ class CustomerSubscriptionController extends Controller
             }
             return api_response($request, null, 404, ['message' => 'No partner found.']);
         } catch (HyperLocationNotFoundException $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 400, ['message' => 'Your are out of service area.']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -95,7 +98,6 @@ class CustomerSubscriptionController extends Controller
                 'subscription_type' => 'required|string',
                 'sales_channel' => 'required|string',
             ]);
-
             $subscription_order = $factory->get($request)->place();
             return api_response($request, $subscription_order, 200, ['order' => [
                 'id' => $subscription_order->id
@@ -104,12 +106,21 @@ class CustomerSubscriptionController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function clearPayment(Request $request, $customer, $subscription, ShebaPayment $sheba_payment)
+    /**
+     * @param Request $request
+     * @param $customer
+     * @param $subscription
+     * @param PaymentManager $payment_manager
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function clearPayment(Request $request, $customer, $subscription, PaymentManager $payment_manager)
     {
         $this->validate($request, [
             'payment_method' => 'required|string|in:bkash,wallet,cbl,online',
@@ -124,7 +135,7 @@ class CustomerSubscriptionController extends Controller
         }
         $order_adapter = new SubscriptionOrderAdapter();
         $payable = $order_adapter->setModelForPayable($subscription_order)->setUser($customer)->getPayable();
-        $payment = $sheba_payment->setMethod($payment_method)->init($payable);
+        $payment = $payment_manager->setMethodName($payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
     }
 
@@ -134,7 +145,8 @@ class CustomerSubscriptionController extends Controller
             $customer = $request->customer;
             $subscription_orders_list = collect([]);
             list($offset, $limit) = calculatePagination($request);
-            $subscription_orders = SubscriptionOrder::where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
+            $subscription_orders = SubscriptionOrder::with(['orders.partnerOrders.jobs.jobServices', 'customer.profile'])
+                ->where('customer_id', (int)$customer->id)->orderBy('created_at', 'desc');
             $subscription_order_count = $subscription_orders->count();
             $subscription_orders->skip($offset)->limit($limit);
 
@@ -143,6 +155,7 @@ class CustomerSubscriptionController extends Controller
             }
 
             foreach ($subscription_orders->get() as $subscription_order) {
+                if (!$subscription_order->isPaid()) continue;
                 $partner_orders = $subscription_order->orders->map(function ($order) {
                     return $order->lastPartnerOrder();
                 });
@@ -205,7 +218,7 @@ class CustomerSubscriptionController extends Controller
                 return api_response($request, null, 404);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -271,6 +284,9 @@ class CustomerSubscriptionController extends Controller
             $location_service = LocationService::where('location_id', $subscription_order->location_id)->where('service_id', $service->id)->first();
 
             $variables = collect();
+            $service_group = collect();
+            $total_quantity = 0;
+            $total_price = 0;
             foreach ($service_details->breakdown as $breakdown) {
                 $selected_service = [
                     "option" => $breakdown->option,
@@ -287,7 +303,25 @@ class CustomerSubscriptionController extends Controller
                     'unit_price' => $price_discount_data['unit_price']
                 ];
                 $variables->push($data);
+                $service_data = [
+                    'variables' => empty($breakdown->questions) ? null : $breakdown->questions,
+                    'unit' => $breakdown->unit,
+                    'quantity' => $breakdown->quantity,
+                    'price' => (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity
+                ];
+                $total_quantity += $breakdown->quantity;
+                $total_price += (double)$price_discount_data['unit_price'] * (double)$breakdown->quantity;
+                $service_group->push($service_data);
             }
+
+            $services = [[
+                'id' => $service->id,
+                'name' => $service->name,
+                'service_group' => $service->variable_type == Type::OPTIONS ? $service_group : [],
+                'unit' => $service->unit,
+                'quantity' => $total_quantity,
+                'price' => $total_price
+            ]];
 
             $time = new PreferredTime($schedules->first()->time);
 
@@ -300,12 +334,15 @@ class CustomerSubscriptionController extends Controller
                 "app_thumb" => $service->app_thumb,
                 'description' => $service->description,
                 "variables" => $variables,
+                "service_list" => $services,
                 "total_quantity" => $service_details->total_quantity,
                 'quantity' => (double)$service_details_breakdown->quantity,
                 'is_weekly' => $service_subscription->is_weekly,
                 'is_monthly' => $service_subscription->is_monthly,
+                'is_yearly' => $service_subscription->is_yearly,
                 'min_weekly_qty' => $service_subscription->min_weekly_qty,
                 'min_monthly_qty' => $service_subscription->min_monthly_qty,
+                'min_yearly_qty' => $service_subscription->min_yearly_qty,
                 "partner_id" => $subscription_order->partner_id,
                 "partner_name" => $partner ? $partner->name : null,
                 "logo" => $partner ? $partner->logo : null,
@@ -331,7 +368,7 @@ class CustomerSubscriptionController extends Controller
                 "days_left" => Carbon::today()->diffInDays(Carbon::parse($subscription_order->billing_cycle_end)),
                 'original_price' => $service_details->original_price,
                 'discount' => $service_details->discount,
-                'total_price' => $subscription_order->totalPrice,
+                'total_price' => $subscription_order->orders->count() > 0 ? $subscription_order->totalPrice : $service_details->discounted_price,
                 "paid_on" => $subscription_order->isPaid() ? $subscription_order->paid_at->format('M-j, Y') : null,
                 'is_paid' => $subscription_order->isPaid(),
                 "orders" => $format_partner_orders,
@@ -341,12 +378,16 @@ class CustomerSubscriptionController extends Controller
                 "subscription_additional_info" => $subscription_order->additional_info,
                 "subscription_status" => $subscription_order->status,
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
+                "subscription_start" => Carbon::parse($subscription_order->billing_cycle_start)->format('l, j F Y'),
+                "subscription_end" => Carbon::parse($subscription_order->billing_cycle_end)->format('l, j F Y'),
             ];
 
             /** @var $discount ServiceSubscriptionDiscount $weekly_discount */
             $weekly_discount = $service_subscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
             /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
             $monthly_discount = $service_subscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+            /** @var $discount ServiceSubscriptionDiscount $yearly_discount */
+            $yearly_discount = $service_subscription->discounts()->where('subscription_type', 'yearly')->valid()->first();
 
             $subscription_order_details['weekly_discount'] = $weekly_discount ? [
                 'value' => (double)$weekly_discount->discount_amount,
@@ -361,6 +402,13 @@ class CustomerSubscriptionController extends Controller
                 'min_discount_quantity' => $monthly_discount->min_discount_qty
             ] : null;
 
+            $subscription_order_details['yearly_discount'] = $yearly_discount ? [
+                'value' => (double)$yearly_discount->discount_amount,
+                'is_percentage' => $yearly_discount->isPercentage(),
+                'cap' => (double)$yearly_discount->cap,
+                'min_discount_quantity' => $yearly_discount->min_discount_qty
+            ] : null;
+
             $resource = new Item($service->category,
                 new ServiceV2DeliveryChargeTransformer($delivery_charge, $job_discount_handler, $subscription_order->location)
             );
@@ -369,7 +417,7 @@ class CustomerSubscriptionController extends Controller
 
             return api_response($request, $subscription_order_details, 200, ['subscription_order_details' => $subscription_order_details]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -437,7 +485,7 @@ class CustomerSubscriptionController extends Controller
                     return api_response($request, $partners, 200, ['status' => 'no_partners_available_on_time']);
             }
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

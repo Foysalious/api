@@ -1,54 +1,67 @@
 <?php namespace Sheba\OrderPlace;
 
+use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\LocationService\LocationServiceNotFoundException;
+use App\Exceptions\NotFoundException;
+use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
+use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
+use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
-use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use Exception;
 use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Collection;
-use Sheba\Checkout\DeliveryCharge;
-use Sheba\Dal\Discount\DiscountTypes;
+use Illuminate\Validation\ValidationException;
+use Sheba\Checkout\CommissionCalculator;
+use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Discount\InvalidDiscountType;
 use Sheba\Dal\JobService\JobService;
-use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
 use Sheba\Jobs\JobDeliveryChargeCalculator;
 use Sheba\Jobs\JobStatuses;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Location\Geo;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\LocationService\DiscountCalculation;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\PriceCalculation\PriceCalculationFactory;
 use Sheba\LocationService\UpsellCalculation;
 use Sheba\ModificationFields;
 use Sheba\OrderPlace\Exceptions\LocationIdNullException;
-use Sheba\Partner\ImpressionManager;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\PartnerOrderRequest\Creator;
 use Sheba\PartnerOrderRequest\Store;
 use Sheba\RequestIdentification;
 use DB;
+use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
+use Sheba\JobUpdateLog\Creator as JobUpdateLogCreator;
+use Sheba\UserAgentInformation;
 
 class OrderPlace
 {
-    use ModificationFields;
+    use ModificationFields, DispatchesJobs;
 
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
+    /** @var UserAgentInformation */
+    private $userAgentInformation;
     /** @var Collection */
     private $services;
     /** @var Category */
@@ -110,13 +123,19 @@ class OrderPlace
     private $orderAmountWithoutDeliveryCharge;
     /** @var JobDeliveryChargeCalculator */
     private $jobDeliveryChargeCalculator;
+    /** @var Action */
+    private $action;
+    /** @var JobUpdateLogCreator */
+    private $jobUpdateLogCreator;
 
-    public function __construct(Creator $creator, PriceCalculation $priceCalculation, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData,
+    public function __construct(Creator $creator, DiscountCalculation $discountCalculation,
+                                OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
-                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator)
+                                UpsellCalculation $upsell_calculation, Store $order_request_store,
+                                JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
     {
-        $this->priceCalculation = $priceCalculation;
+        $this->jobUpdateLogCreator = $jobUpdateLogCreator;
         $this->discountCalculation = $discountCalculation;
         $this->orderVoucherData = $orderVoucherData;
         $this->partnerListBuilder = $partnerListBuilder;
@@ -128,6 +147,13 @@ class OrderPlace
         $this->upsellCalculation = $upsell_calculation;
         $this->orderRequestStore = $order_request_store;
         $this->jobDeliveryChargeCalculator = $jobDeliveryChargeCalculator;
+        $this->action = $action;
+    }
+
+    public function setUserAgentInformation($userAgentInformation)
+    {
+        $this->userAgentInformation = $userAgentInformation;
+        return $this;
     }
 
 
@@ -154,6 +180,11 @@ class OrderPlace
     /**
      * @param $services
      * @return $this
+     * @throws DestinationCitySameAsPickupException
+     * @throws InsideCityPickUpAddressNotFoundException
+     * @throws OutsideCityPickUpAddressNotFoundException
+     * @throws ValidationException
+     * @throws ServiceIsUnpublishedException
      */
     public function setServices($services)
     {
@@ -162,120 +193,80 @@ class OrderPlace
         return $this;
     }
 
-    /**
-     * @param mixed $salesChannel
-     * @return OrderPlace
-     */
     public function setSalesChannel($salesChannel)
     {
         $this->salesChannel = $salesChannel;
         return $this;
     }
 
-    /**
-     * @param $deliveryMobile
-     * @return $this
-     */
     public function setDeliveryMobile($deliveryMobile)
     {
         $this->deliveryMobile = formatMobile(trim($deliveryMobile));
         return $this;
     }
 
-    /**
-     * @param $deliveryName
-     * @return $this
-     */
+
     public function setDeliveryName($deliveryName)
     {
         $this->deliveryName = trim($deliveryName);
         return $this;
     }
 
-    /**
-     * @param $paymentMethod
-     * @return $this
-     */
     public function setPaymentMethod($paymentMethod)
     {
         $this->paymentMethod = $paymentMethod;
         return $this;
     }
 
-    /**
-     * @param mixed $scheduleDate
-     * @return OrderPlace
-     */
+
     public function setScheduleDate($scheduleDate)
     {
         $this->scheduleDate = $scheduleDate;
         return $this;
     }
 
-    /**
-     * @param mixed $scheduleTime
-     * @return OrderPlace
-     */
+
     public function setScheduleTime($scheduleTime)
     {
         $this->scheduleTime = $scheduleTime;
         return $this;
     }
 
-    /**
-     * @param $customer
-     * @return $this
-     */
+
     public function setCustomer($customer)
     {
         $this->customer = $customer;
         return $this;
     }
 
-    /**
-     * @param mixed $crmId
-     * @return OrderPlace
-     */
+
     public function setCrmId($crmId)
     {
         $this->crmId = $crmId;
         return $this;
     }
 
-    /**
-     * @param mixed $additionalInformation
-     * @return OrderPlace
-     */
+
     public function setAdditionalInformation($additionalInformation)
     {
         $this->additionalInformation = $additionalInformation;
         return $this;
     }
 
-    /**
-     * @param mixed $infoCallId
-     * @return OrderPlace
-     */
+
     public function setInfoCallId($infoCallId)
     {
         $this->infoCallId = $infoCallId;
         return $this;
     }
 
-    /**
-     * @param $affiliationId
-     * @return $this
-     */
+
     public function setAffiliationId($affiliationId)
     {
         $this->affiliationId = $affiliationId;
         return $this;
     }
 
-    /**
-     * @param mixed $voucherId
-     * @return OrderPlace
-     */
     public function setVoucherId($voucherId)
     {
         $this->voucherId = $voucherId;
@@ -333,9 +324,13 @@ class OrderPlace
         return $this;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function setDeliveryAddressFromId()
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
+        if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
@@ -344,6 +339,7 @@ class OrderPlace
             $this->setCustomerDeliveryAddress($new_address);
         }
         $hyper_local = HyperLocal::insidePolygon($this->deliveryAddress->geo->lat, $this->deliveryAddress->geo->lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->setLocation($hyper_local->location);
     }
 
@@ -385,15 +381,14 @@ class OrderPlace
                 $job->jobServices()->saveMany($job_services);
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
-                if ($this->canCreatePartnerOrderRequest()) {
-                    $partners = $this->orderRequestAlgorithm->setCustomer($this->customer)->setPartners($this->partnersFromList)->getPartners();
-                    $this->orderRequestStore->setPartnerOrderId($partner_order->id)->setPartners($partners->pluck('id')->values()->all())->set();
-                    $first_partner_id = [$partners->first()->id];
-                    $this->partnerOrderRequestCreator->setPartnerOrder($partner_order)->setPartners($first_partner_id)->create();
-                }
                 $partner_order = $partner_order->fresh();
                 if ($partner_order->partner_id) $this->jobDeliveryChargeCalculator->setPartner($partner_order->partner);
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
+                if ($this->action->canSendPartnerOrderRequest())
+                    dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
+                if (!$partner_order->partner_id && $this->selectedPartner && $this->action->isLateNightOrder())
+                    $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())
+                        ->setUserAgentInformation($this->userAgentInformation)->setCreatedBy($this->customer)->create();
             });
         } catch (QueryException $e) {
             throw $e;
@@ -401,10 +396,14 @@ class OrderPlace
         return $order;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) $this->setDeliveryAddressFromId();
         if ($this->deliveryAddress) return;
+        if(!$this->category->isRentCar() && !$this->deliveryAddressId) throw new NotFoundException('Customer delivery address not found', 404);
         $address = new CustomerDeliveryAddress();
         $address->name = $this->address;
         $address->mobile = $this->deliveryMobile;
@@ -445,25 +444,36 @@ class OrderPlace
         $this->partnerListDirector->setBuilder($this->partnerListBuilder)->buildPartnerListForOrderPlacement();
         $this->partnersFromList = $this->partnerListBuilder->get();
         if ($this->selectedPartnerId) $this->selectedPartner = $this->partnersFromList->first();
+        $this->action->setSelectedPartner($this->selectedPartner)->setPartners($this->partnersFromList->toArray());
     }
 
+    /**
+     * @return Collection
+     * @throws LocationServiceNotFoundException
+     * @throws CorruptedPriceStructureException
+     */
     private function createJobService()
     {
         $job_services = collect();
         foreach ($this->serviceRequestObject as $selected_service) {
             $service = $selected_service->getService();
+            $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
-            $this->priceCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            if (!$location_service) throw new LocationServiceNotFoundException('Service #' . $service->id . ' is not available at this location #' . $this->location->id);
+            $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
+            $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())
                 ->setQuantity($selected_service->getQuantity())->getUpsellUnitPriceForSpecificQuantity();
+            if ($upsell_unit_price) $this->priceCalculation->setUpsellUnitPrice($upsell_unit_price);
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
-            $total_original_price = $this->category->isRentACar() ? $this->priceCalculation->getTotalOriginalPrice() : $unit_price * $selected_service->getQuantity();
-            $this->discountCalculation->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+            $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
+            $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
+
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
                 'unit_price' => $unit_price,
-                'min_price' => $this->priceCalculation->getMinPrice(),
+                'min_price' => $this->category->isRentACarOutsideCity() ? 0 : $this->priceCalculation->getMinPrice(),
                 'sheba_contribution' => $this->discountCalculation->getShebaContribution(),
                 'partner_contribution' => $this->discountCalculation->getPartnerContribution(),
                 'location_service_discount_id' => $this->discountCalculation->getDiscountId(),
@@ -471,7 +481,7 @@ class OrderPlace
                 'discount_percentage' => $this->discountCalculation->getIsDiscountPercentage() ? $this->discountCalculation->getDiscount() : 0,
                 'name' => $service->name,
                 'variable_type' => $service->variable_type,
-                'surcharge_percentage' => 0
+                'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
@@ -553,7 +563,7 @@ class OrderPlace
         $partner_order = new PartnerOrder();
         $partner_order->order_id = $order->id;
         $partner_order->payment_method = $this->paymentMethod;
-        $partner_order->partner_id = $this->selectedPartner ? $this->selectedPartner->id : null;
+        if ($this->action->canAssignPartner()) $partner_order->partner_id = $this->selectedPartner->id;
         $this->withCreateModificationField($partner_order);
         $partner_order->save();
         return $partner_order;
@@ -577,11 +587,14 @@ class OrderPlace
             'crm_id' => $this->crmId,
             'job_additional_info' => $this->additionalInformation,
             'category_answers' => $this->categoryAnswers,
-            'material_commission_rate' => config('sheba.material_commission_rate'),
             'status' => JobStatuses::PENDING,
         ];
 
-        if ($this->selectedPartner) $job_data['commission_rate'] = $this->category->commission($this->selectedPartner->id);
+        if ($this->selectedPartner) {
+            $commissions = (new CommissionCalculator())->setCategory($this->category)->setPartner($this->selectedPartner);
+            $job_data['commission_rate'] = $commissions->getServiceCommission();
+            $job_data['material_commission_rate'] = $commissions->getMaterialCommission();
+        }
 
         $job_data['discount'] = 0.00;
         if ($this->orderVoucherData->isValid()) {
@@ -594,19 +607,6 @@ class OrderPlace
         $job_data = $this->withCreateModificationField($job_data);
 
         return Job::create($job_data);
-    }
-
-
-    /**
-     * @return DeliveryCharge
-     */
-    private function buildDeliveryCharge()
-    {
-        $deliver_charge = new DeliveryCharge();
-        $deliver_charge->setCategory($this->category);
-        if ($this->selectedPartner) $deliver_charge->setCategoryPartnerPivot(CategoryPartner::where([['category_id', $this->category->id], ['partner_id', $this->selectedPartner->id]])
-            ->first());
-        return $deliver_charge;
     }
 
     /**
@@ -640,14 +640,6 @@ class OrderPlace
     }
 
     /**
-     * @return bool
-     */
-    private function canCreatePartnerOrderRequest()
-    {
-        return !$this->selectedPartner && count($this->partnersFromList) > 0;
-    }
-
-    /**
      * @param Order $order
      */
     private function updateVoucherInPromoList(Order $order)
@@ -669,5 +661,17 @@ class OrderPlace
             return $job_service->unit_price * $job_service->quantity;
         })->sum();
         $this->orderAmount = $this->orderAmountWithoutDeliveryCharge + (double)$this->category->delivery_charge;
+    }
+
+    private function getMessageForPreferredSp()
+    {
+        return 'Customer selected ' . $this->selectedPartner->name . "({$this->selectedPartner->id}) as preferred sp";
+    }
+
+    private function resolvePriceCalculation(Category $category)
+    {
+        $priceCalculationFactory = new PriceCalculationFactory();
+        $priceCalculationFactory->setCategory($category);
+        return $priceCalculationFactory->get();
     }
 }

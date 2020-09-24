@@ -8,13 +8,17 @@ class SubscriptionServicePricingAndBreakdown extends ServicePricingAndBreakdown
     public function setTotalQuantity($qty)
     {
         $this->totalQuantity = $qty;
+        $this->originalPrice = $this->originalPrice * $qty;
+        $this->discountedPrice = $this->discountedPrice * $qty;
+        $this->discount = $this->discount * $qty;
         return $this;
     }
+
 
     public function toArray()
     {
         return parent::toArray() + [
-            'total_quantity' => $this->totalQuantity
-        ];
+                'total_quantity' => $this->totalQuantity
+            ];
     }
 }

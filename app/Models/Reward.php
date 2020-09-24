@@ -51,6 +51,21 @@ class Reward extends Model
         return $query->where('target_type', 'App\Models\Partner');
     }
 
+    public function scopeForResource($query)
+    {
+        return $query->where('target_type', 'App\Models\Resource');
+    }
+
+    public function scopeTypeCampaign($query)
+    {
+        return $query->where('detail_type', 'App\Models\RewardCampaign');
+    }
+
+    public function scopeTypeAction($query)
+    {
+        return $query->where('detail_type', 'App\Models\RewardAction');
+    }
+
     public function getAmount()
     {
         if ($this->isPercentageble()) {
@@ -109,5 +124,10 @@ class Reward extends Model
     public function isCustomer()
     {
         return $this->target_type == "App\\Models\\Customer";
+    }
+
+    public function getTerms()
+    {
+        return $this->terms && json_decode($this->terms) > 0 ? json_decode($this->terms) : [];
     }
 }

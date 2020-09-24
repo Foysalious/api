@@ -41,4 +41,9 @@ class Target extends CampaignEventParameter implements EventTarget
     {
         return $this->achieved >= $this->value;
     }
+
+    public function setAchieved($achieved)
+    {
+        // TODO: Implement setAchieved() method.
+    }
 }

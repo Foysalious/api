@@ -1,6 +1,7 @@
 <?php namespace Sheba\Transport\Bus\Commission;
 
 use Sheba\FraudDetection\TransactionSources;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Transport\Bus\BusTicketCommission;
@@ -34,7 +35,7 @@ class Affiliate extends BusTicketCommission
         $this->agent->ambassador->walletTransaction(['amount' => $this->transportTicketOrder->ambassador_amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $ambassador */
         $ambassador = $this->agent->ambassador;
-        (new WalletTransactionHandler())->setModel($ambassador)->setType('credit')->setLog($log)
+        (new WalletTransactionHandler())->setModel($ambassador)->setType(Types::credit())->setLog($log)
             ->setSource(TransactionSources::TRANSPORT)->setAmount($this->transportTicketOrder->ambassador_amount)->dispatch();
     }
 

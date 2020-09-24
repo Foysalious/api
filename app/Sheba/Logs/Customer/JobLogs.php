@@ -1,7 +1,7 @@
 <?php namespace Sheba\Logs\Customer;
 
-use App\Models\Category;
-use App\Models\CategoryPartner;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Job;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -137,7 +137,7 @@ class JobLogs
         $job_review = $this->job->review;
         if (in_array($job_status, [constants('JOB_STATUSES')['Pending'], constants('JOB_STATUSES')['Not_Responded']])) {
             return [
-                'status' => 'message', 'log' => 'Your order is awaiting for confirmation. Please contact 16516.', 'type' => 'danger'
+                'status' => 'message', 'log' => 'Your order is awaiting for confirmation. Please contact 09678016516.', 'type' => 'danger'
             ];
         } elseif ($job_status == constants('JOB_STATUSES')['Accepted']) {
             $expert_type = $this->job->logistic_uses ? 'Delivery man' : ($this->job->resource ? 'expert' : 'service provider');

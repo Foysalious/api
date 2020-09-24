@@ -1,9 +1,15 @@
 <?php namespace Sheba\Business\Vendor;
 
+use App\Models\PartnerBasicInformation;
+use App\Models\Profile;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\Helpers\HasErrorCodeAndMessage;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 
 class CreateRequest
 {
+    use HasErrorCodeAndMessage;
+
     private $business;
     private $vendorName;
     private $vendorMobile;
@@ -18,7 +24,19 @@ class CreateRequest
     private $vatRegistrationNumber;
     private $vatRegistrationDocument;
     private $resourceNidNumber;
-    private $resourceNidDocument;
+    private $resourceNidFront;
+    private $resourceNidBack;
+    private $isActiveForB2b;
+    private $profileRepository;
+
+    /**
+     * ProfileCreateRequest constructor.
+     * @param ProfileRepositoryInterface $profileRepository
+     */
+    public function __construct(ProfileRepositoryInterface $profileRepository)
+    {
+        $this->profileRepository = $profileRepository;
+    }
 
     /**
      * @return mixed
@@ -70,25 +88,43 @@ class CreateRequest
      */
     public function setVendorMobile($vendorMobile)
     {
-        $this->vendorMobile = BDMobileFormatter::format($vendorMobile);
+        $this->vendorMobile = $vendorMobile ? BDMobileFormatter::format($vendorMobile) : null;
         return $this;
     }
 
     /**
      * @return mixed
      */
-    public function getResourceNidDocument()
+    public function getResourceNidFront()
     {
-        return $this->resourceNidDocument;
+        return $this->resourceNidFront;
     }
 
     /**
-     * @param mixed $resourceNidDocument
+     * @param $resourceNidFront
      * @return CreateRequest
      */
-    public function setResourceNidDocument($resourceNidDocument)
+    public function setResourceNidFront($resourceNidFront)
     {
-        $this->resourceNidDocument = $resourceNidDocument;
+        $this->resourceNidFront = $resourceNidFront;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getResourceNidBack()
+    {
+        return $this->resourceNidBack;
+    }
+
+    /**
+     * @param $resourceNidBack
+     * @return CreateRequest
+     */
+    public function setResourceNidBack($resourceNidBack)
+    {
+        $this->resourceNidBack = $resourceNidBack;
         return $this;
     }
 
@@ -107,6 +143,7 @@ class CreateRequest
     public function setResourceNidNumber($resourceNidNumber)
     {
         $this->resourceNidNumber = $resourceNidNumber;
+        $this->checkUsedNidNumber();
         return $this;
     }
 
@@ -143,6 +180,7 @@ class CreateRequest
     public function setVatRegistrationNumber($vatRegistrationNumber)
     {
         $this->vatRegistrationNumber = $vatRegistrationNumber;
+        $this->checkUsedVatRegistrationNumber();
         return $this;
     }
 
@@ -179,6 +217,8 @@ class CreateRequest
     public function setTradeLicenseNumber($tradeLicenseNumber)
     {
         $this->tradeLicenseNumber = $tradeLicenseNumber;
+
+        $this->checkUsedTradeLicenseNumber();
         return $this;
     }
 
@@ -197,6 +237,7 @@ class CreateRequest
     public function setResourceMobile($resourceMobile)
     {
         $this->resourceMobile = BDMobileFormatter::format($resourceMobile);
+        $this->checkUsedNumber();
         return $this;
     }
 
@@ -288,5 +329,83 @@ class CreateRequest
     {
         $this->vendorEmail = $vendorEmail;
         return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIsActiveForB2b()
+    {
+        return $this->isActiveForB2b;
+    }
+
+    /**
+     * @param $is_active_for_b2b
+     * @return $this
+     */
+    public function setIsActiveForB2b($is_active_for_b2b)
+    {
+        $this->isActiveForB2b = $is_active_for_b2b;
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkUsedNumber()
+    {
+        $profile = $this->profileRepository->checkExistingMobile($this->resourceMobile);
+        // if ($profile) $this->setError(409, "SP phone number is already exist, please try with another number");
+        if ($profile && $profile->resource && $partner = $profile->resource->firstPartner()) {
+            if (in_array($this->business->id, $partner->businesses->pluck('id')->toArray())) {
+                $this->setError(409, "Vendor already added to your company. Go to vendor list's to show detail");
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkUsedNidNumber()
+    {
+        if ($this->isNull($this->resourceNidNumber)) return $this;
+        $profile = $this->profileRepository->checkExistingNid($this->resourceNidNumber);
+        if ($profile) $this->setError(409, "NID number is already exist, please try with another number");
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkUsedVatRegistrationNumber()
+    {
+        if ($this->isNull($this->vatRegistrationNumber)) return $this;
+        $partner_basic_info = PartnerBasicInformation::where('vat_registration_number', $this->vatRegistrationNumber)->first();
+        if ($partner_basic_info) $this->setError(409, "VAT registration number is already exist, please try with another number");
+        return $this;
+    }
+
+    /**
+     * @return $this
+     */
+    private function checkUsedTradeLicenseNumber()
+    {
+        if ($this->isNull($this->tradeLicenseNumber)) return $this;
+        $partner_basic_info = PartnerBasicInformation::where('trade_license', $this->tradeLicenseNumber)->first();
+        if ($partner_basic_info) $this->setError(409, "Trade license number is already exist, please try with another number");
+        return $this;
+    }
+
+    /**
+     * @param $data
+     * @return bool
+     */
+    private function isNull($data)
+    {
+        if ($data == 'null') return true;
+        if ($data == null) return true;
+        if ($data == "") return true;
+        return false;
     }
 }

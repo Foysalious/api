@@ -2,8 +2,10 @@
 
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\Resource;
 use App\Models\Reward;
 
+use Exception;
 use Sheba\CustomerWallet\CustomerTransactionHandler;
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 use Sheba\Repositories\BonusRepository;
@@ -21,13 +23,19 @@ class DisburseHandler
     private $reward;
     /** @var BonusRepository */
     private $bonusRepo;
+    /** @var PointDisburse */
+    private $pointDisburse;
+    /** @var CashDisburse */
+    private $cashDisburse;
     /** @var Event $event */
     private $event;
 
-    public function __construct(RewardLogRepository $log_repository, BonusRepository $bonus_repository)
+    public function __construct(RewardLogRepository $log_repository, BonusRepository $bonus_repository, PointDisburse $point_disburse, CashDisburse $cashDisburse)
     {
         $this->rewardRepo = $log_repository;
-        $this->bonusRepo  = $bonus_repository;
+        $this->bonusRepo = $bonus_repository;
+        $this->pointDisburse = $point_disburse;
+        $this->cashDisburse = $cashDisburse;
     }
 
     public function setReward(Reward $reward)
@@ -44,7 +52,7 @@ class DisburseHandler
 
     /**
      * @param Rewardable $rewardable
-     * @throws \Exception
+     * @throws Exception
      */
     public function disburse(Rewardable $rewardable)
     {
@@ -54,24 +62,16 @@ class DisburseHandler
                 $this->bonusRepo->storeFromReward($rewardable, $this->reward, $amount);
             } else {
                 if ($this->reward->isCashType()) {
-                    $log = $amount . " BDT credited for " . $this->reward->name . " reward";
+                    $log = $amount . " BDT credited for " . $this->reward->name . " reward #" . $this->reward->id;
+                    $this->cashDisburse->setRewardable($rewardable)->credit($amount, $log);
 
-                    if ($rewardable instanceof Partner) {
-                        (new PartnerTransactionHandler($rewardable))->credit($amount, $log);
-                    } elseif ($rewardable instanceof Customer) {
-                        (new CustomerTransactionHandler($rewardable))->credit($amount, $log);
-                    }
                 } elseif ($this->reward->isPointType()) {
-                    if ($rewardable instanceof Partner) {
-                        (new PartnerRepository(new Partner()))->updateRewardPoint($rewardable, $amount);
-                    } elseif ($rewardable instanceof Customer) {
-                        (new CustomerRepository())->updateRewardPoint($rewardable, $amount);
-                    }
+                    $this->pointDisburse->setRewardable($rewardable)->updateRewardPoint($amount);
                 }
             }
         }
 
-        $reward_log = $this->event->getLogEvent();
+        $reward_log = $this->generateLog($rewardable);
         $this->storeRewardLog($rewardable, $reward_log);
     }
 
@@ -82,5 +82,13 @@ class DisburseHandler
     private function storeRewardLog($rewardable, $log)
     {
         $this->rewardRepo->storeLog($this->reward, $rewardable->id, $log);
+    }
+
+    private function generateLog($rewardable)
+    {
+        if ($this->event) $reward_log = $this->event->getLogEvent();
+        else $reward_log = $this->reward->amount . ' ' . $this->reward->type . ' credited for ' . $this->reward->name . '(' . $this->reward->id . ') on partner id: ' . $rewardable->id;
+
+        return $reward_log;
     }
 }

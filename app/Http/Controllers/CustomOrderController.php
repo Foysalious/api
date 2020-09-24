@@ -6,7 +6,7 @@ use App\Models\Comment;
 use App\Models\Customer;
 use App\Models\CustomOrder;
 use App\Models\CustomOrderDiscussion;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Repositories\CustomOrderRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;

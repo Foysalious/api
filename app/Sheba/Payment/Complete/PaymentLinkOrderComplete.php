@@ -20,8 +20,10 @@ use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Usage\Usage;
 
 class PaymentLinkOrderComplete extends PaymentComplete {
     use DispatchesJobs;
@@ -56,6 +58,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
                 $this->completePayment();
                 $this->processTransactions($payment_receiver);
                 $this->clearPosOrder();
+                $this->createUsage($payment_receiver,$payable->user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -101,7 +104,7 @@ class PaymentLinkOrderComplete extends PaymentComplete {
      */
     private function getPaymentLink() {
         try {
-            return $this->paymentLinkRepository->getPaymentLinkByLinkId($this->payment->payable->type_id);
+            return $this->paymentLinkRepository->find($this->payment->payable->type_id);
         } catch (RequestException $e) {
             throw $e;
         }
@@ -115,17 +118,17 @@ class PaymentLinkOrderComplete extends PaymentComplete {
         $recharge_wallet_amount    = $this->payment->payable->amount;
         $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
         $recharge_log              = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
-        $recharge_transaction      = $walletTransactionHandler->setType('credit')->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
+        $recharge_transaction      = $walletTransactionHandler->setType(Types::credit())->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
         $interest                  = (double)$this->paymentLink->getInterest();
         if ($interest > 0) {
             $formatted_interest = number_format($interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
-            $walletTransactionHandler->setLog($log)->setType('debit')->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+            $walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
         $minus_log                 = "(3TK + 2.5%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
-        $walletTransactionHandler->setLog($minus_log)->setType('debit')->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+        $walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
     }
@@ -148,6 +151,11 @@ class PaymentLinkOrderComplete extends PaymentComplete {
             $payment_creator->credit($payment_data);
             $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
+    }
+
+    private function createUsage($payment_receiver,$modifier)
+    {
+       (new Usage())->setUser($payment_receiver)->setType(Usage::Partner()::PAYMENT_LINK)->create($modifier);
     }
 
     protected function saveInvoice() {
