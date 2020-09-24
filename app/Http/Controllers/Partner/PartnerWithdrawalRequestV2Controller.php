@@ -108,7 +108,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
             return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK']);
         }
-        $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
+        $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
             $message = "You don't have sufficient balance";
             return api_response($request, null, 403, ['message' => $message]);
