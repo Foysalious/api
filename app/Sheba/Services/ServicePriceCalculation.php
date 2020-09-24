@@ -1,6 +1,7 @@
 <?php namespace Sheba\Services;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\NotFoundException;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
@@ -52,6 +53,7 @@ class ServicePriceCalculation
     public function setLocation($lat, $lng)
     {
         $hyper_local = HyperLocal::insidePolygon($lat, $lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->location = $hyper_local->location;
         return $this;
     }
