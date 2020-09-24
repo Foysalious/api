@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\ArtisanLeave\Types;
 use Sheba\ModificationFields;
+use Sheba\PushNotificationHandler;
 use Sheba\UserAgentInformation;
 
 class LeaveStatus
@@ -111,5 +112,20 @@ class LeaveStatus
             "event_type" => get_class($artisan_leave),
             "event_id" => $artisan_leave->id
         ]);
+        if (!$this->artisan instanceof Resource) return;
+        notify()->resource($this->artisan->id)->send([
+            'title' => $title,
+            'type' => 'info',
+            'description' => $title,
+        ]);
+        $channel = config('sheba.push_notification_channel_name.resource');
+        (new PushNotificationHandler())->send([
+            "title" => 'কাজ এসাইন',
+            "message" => $title,
+            "sound" => "notification_sound",
+            "channel_id" => $channel,
+            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+        ], config('sheba.push_notification_topic_name.resource') . $this->artisan->id, $channel);
     }
+
 }
