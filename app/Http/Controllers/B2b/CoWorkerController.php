@@ -743,7 +743,7 @@ class CoWorkerController extends Controller
     {
         $employees = $employees->toArray();
         $employee_ids = array_filter($employees, function ($employee) use ($request) {
-            return str_contains($employee['employee_id'], strtoupper($request->search));
+            return str_contains($employee['employee_id'], $request->search);
         });
         $employee_names = array_filter($employees, function ($employee) use ($request) {
             return str_contains(strtoupper($employee['profile']['name']), strtoupper($request->search));
@@ -752,7 +752,7 @@ class CoWorkerController extends Controller
             return str_contains(strtoupper($employee['profile']['email']), strtoupper($request->search));
         });
         $employee_mobiles = array_filter($employees, function ($employee) use ($request) {
-            return str_contains(strtoupper($employee['profile']['mobile']), strtoupper($request->search));
+            return str_contains($employee['profile']['mobile'], formatMobile($request->search));
         });
 
         $searched_employees = collect(array_merge($employee_ids, $employee_names, $employee_emails, $employee_mobiles));
