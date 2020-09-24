@@ -13,6 +13,7 @@ class EmployeeRoute
             $api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
+            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {

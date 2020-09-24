@@ -80,11 +80,11 @@ class Creator
             'mobile' => $this->partnerCreateRequest->getMobile(),
             'email' => $this->partnerCreateRequest->getEmail(),
             'address' => $this->partnerCreateRequest->getAddress(),
+            'is_active_for_b2b' => $this->partnerCreateRequest->getIsActiveForB2b() ? $this->partnerCreateRequest->getIsActiveForB2b() : 1,
             "billing_start_date" => Carbon::today(),
             "last_billed_date" => Carbon::today(),
             "last_billed_amount" => 0.00,
         ];
-
         if ($this->hasFile($this->partnerCreateRequest->getLogo())) {
             list($logo, $logo_original) = $this->saveLogoImage();
             $data += ['logo' => $logo, 'logo_original' => $logo_original];

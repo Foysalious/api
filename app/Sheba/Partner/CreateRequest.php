@@ -14,6 +14,7 @@ class CreateRequest
     private $tradeLicenseAttachment;
     private $vatRegistrationNumber;
     private $vatRegistrationDocument;
+    private $isActiveForB2b;
 
     /**
      * @return mixed
@@ -116,6 +117,24 @@ class CreateRequest
     public function setAddress($address)
     {
         $this->address = $address;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIsActiveForB2b()
+    {
+        return $this->isActiveForB2b;
+    }
+
+    /**
+     * @param $is_active_for_b2b
+     * @return $this
+     */
+    public function setIsActiveForB2b($is_active_for_b2b)
+    {
+        $this->isActiveForB2b = $is_active_for_b2b;
         return $this;
     }
 
