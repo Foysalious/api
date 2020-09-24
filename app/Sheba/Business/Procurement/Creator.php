@@ -14,6 +14,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\UploadedFile;
 use phpDocumentor\Reflection\DocBlock\Description;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Notification\NotificationCreated;
 use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Repositories\Interfaces\ProcurementItemFieldRepositoryInterface;
@@ -62,6 +63,7 @@ class Creator
     private $sharedTo;
     /** @var PartnerNotificationHandler $partnerNotificationHandler */
     private $partnerNotificationHandler;
+    private $publicationStatus;
 
     /**
      * Creator constructor.
@@ -273,8 +275,7 @@ class Creator
                 }
                 $this->makeQuestion($procurement);
                 $this->procurementQuestionRepository->createMany($this->procurementQuestionData);
-                if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
-                if ($procurement->is_published) $this->sendMailToBusiness($procurement);
+                if ($this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
             });
         } catch (QueryException $e) {
             throw $e;
@@ -304,17 +305,14 @@ class Creator
             'last_date_of_submission' => $this->lastDateOfSubmission,
             'number_of_participants' => $this->numberOfParticipants,
             'shared_to' => $this->sharedTo,
-
             'owner_type' => get_class($this->owner),
             'owner_id' => $this->owner->id,
-
             'payment_options' => $this->paymentOptions,
-
             'title' => $this->title,
             'category_id' => $this->category,
             'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'publication_status' => $this->isPublished ? PublicationStatuses::PUBLISHED : PublicationStatuses::DRAFT,
             'published_at' => $this->isPublished ? Carbon::now() : '',
-
             'purchase_request_id' => $this->purchaseRequestId,
             'type' => count($this->items) > 0 ? Type::ADVANCED : Type::BASIC,
             'estimated_price' => $this->estimatedPrice,
@@ -393,13 +391,13 @@ class Creator
     {
         $this->procurementData = [
             'is_published' => $this->isPublished ? (int)$this->isPublished : 0,
+            'publication_status' => $this->isPublished ? PublicationStatuses::PUBLISHED : PublicationStatuses::DRAFT,
             'published_at' => $this->isPublished ? Carbon::now() : '',
             'shared_to' => $this->sharedTo
         ];
         $this->procurementRepository->update($procurement, $this->procurementData);
         $procurement = $procurement->fresh();
-        if ($procurement->is_published && $this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
-        if ($procurement->is_published) $this->sendMailToBusiness($procurement);
+        if ($this->isEligibleForNotification($procurement)) $this->sendNotification($procurement);
     }
 
     /**
@@ -424,7 +422,27 @@ class Creator
      */
     private function isEligibleForNotification($procurement)
     {
-        if ($procurement->shared_to == 'public' || $procurement->shared_to == 'verified') return true;
+        if (
+            ($procurement->shared_to == 'public' || $procurement->shared_to == 'verified') &&
+            ($procurement->publication_status == PublicationStatuses::PUBLISHED)
+        ) return true;
+
         return false;
+    }
+
+    /**
+     * @param $publication_status
+     * @return $this
+     */
+    public function setPublicationStatus($publication_status)
+    {
+        $this->publicationStatus = $publication_status;
+        return $this;
+    }
+
+    public function changePublicationStatus($procurement)
+    {
+        $data = ['publication_status' => $this->publicationStatus];
+        $this->procurementRepository->update($procurement, $data);
     }
 }
