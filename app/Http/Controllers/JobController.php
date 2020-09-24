@@ -742,15 +742,18 @@ class JobController extends Controller
      */
     public function getInvoice(Request $request)
     {
-        $job = $request->job;
+        $invoice = $this->generateInvoiceOfJob($request->job);
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+    }
+
+    public function generateInvoiceOfJob(Job $job)
+    {
         $invoice = null;
-        if($job->status === 'Served') {
-            $invoice = [
+        if($job->isServed()) {
+            return [
                 'link' => $job->partnerOrder->invoice
             ];
-            return api_response($request, $invoice, 200, ['invoice' => $invoice]);
         }
-        $invoice = (new InvoiceHandler($job->partnerOrder))->save('quotation');
-        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
     }
 }
