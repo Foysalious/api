@@ -99,7 +99,7 @@ class LoanClaim
         }
 
         if ($to == Statuses::DECLINED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Claim Declined';
         }
 
@@ -123,8 +123,8 @@ class LoanClaim
             $event_type = "LoanClaimApproved";
         }
         if ($to == Statuses::DECLINED) {
-            $title      = "দুঃখিত! আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
-            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $title      = "দুঃখিত! আপনার সেবা টপ-আপ ফ্যাসিলিটি ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
+            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি  ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $event_type = "LoanClaimRejected";
         }
         $notification_data = [
@@ -187,9 +187,9 @@ class LoanClaim
     {
 
         $log = [
-            'approved' => '৳' . convertNumbersToBangla($amount,true,0) . ' লোন দাবি গৃহীত হয়েছে',
-            'declined' => '৳' . convertNumbersToBangla($amount,true, 0) . ' লোন দাবি বাতিল করা হয়েছে',
-            'pending' => '৳' . convertNumbersToBangla($amount, true, 0) . ' লোন দাবি করা হয়েছে'
+            'approved' => '৳' . convertNumbersToBangla($amount,true,0) . ' টাকা দাবি গৃহীত হয়েছে',
+            'declined' => '৳' . convertNumbersToBangla($amount,true, 0) . ' টাকা দাবি বাতিল করা হয়েছে',
+            'pending' => '৳' . convertNumbersToBangla($amount, true, 0) . ' টাকা দাবি করা হয়েছে'
         ];
 
         return $log[$to];
