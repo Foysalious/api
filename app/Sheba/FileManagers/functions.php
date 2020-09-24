@@ -312,7 +312,7 @@ if (!function_exists('getPartnerChequeBookImageFolder')) {
         $url = '';
         if ($with_base_url) $url = env('S3_URL');
 
-        return $url . 'images/profiles/bank_statement_';
+        return $url . 'images/partners/cheque_receipt/';
     }
 }
 
