@@ -295,6 +295,23 @@ if (!function_exists('getPartnerLogoFolder')) {
     }
 }
 
+if (!function_exists('getPartnerChequeBookImageFolder')) {
+
+    /**
+     * Get Partner Logo Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPartnerChequeBookImageFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'images/profiles/bank_statement_';
+    }
+}
+
 if (!function_exists('getEmiBankIconsFolder')) {
 
     /**
