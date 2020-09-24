@@ -108,13 +108,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
             return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bank minimum limit ' . $limitBank['min'] . ' TK and maximum ' . $limitBank['max'] . ' TK']);
         }
-
-        $allowed_to_send_request        = $partner->isAllowedToSendWithdrawalRequest();
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money;
-
-        if (!$allowed_to_send_request || ((double)$request->amount > $valid_maximum_requested_amount)) {
-            if (!$allowed_to_send_request) $message = "You have already sent a Withdrawal Request";
-            else $message = "You don't have sufficient balance";
+        if (((double)$request->amount > $valid_maximum_requested_amount)) {
+            $message = "You don't have sufficient balance";
             return api_response($request, null, 403, ['message' => $message]);
         }
         $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
@@ -146,13 +142,6 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
         }
-    }
-
-    public function getStatus($partner, Request $request)
-    {
-        $partner = $request->partner;
-        list($can_withdraw, $status) = $this->canWithdraw($partner);
-        return api_response($request, $status, 200, ['status' => $status, 'can_withdraw' => $can_withdraw]);
     }
 
     public function cancel($partner, $withdrawals, Request $request)
@@ -224,6 +213,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 'cheque_book_receipt' => $cheque_book_receipt,
                 'purpose' => 'partner_wallet_withdrawal'
             ];
+            $this->setModifier($request->manager_resource);
             $profile_bank_repo->create($data);
             return api_response($request, null, 200,['message' => 'Bank Information stored successfully']);
 
@@ -236,5 +226,4 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         }
 
     }
-
 }

@@ -263,7 +263,6 @@ class IndexRoute
                 $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
                 $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store');
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
-                $api->get('status', 'Partner\\PartnerWithdrawalRequestV2Controller@getStatus');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');
             });
