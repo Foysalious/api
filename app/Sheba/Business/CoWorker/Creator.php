@@ -281,10 +281,9 @@ class Creator
                 $coworker_invite_email->setPassword($password);
             }
 
-            $coworker_invite_email->setSubject("Login to sBusiness & Digigo")->setTemplate('emails.co-worker-invitation-v2');
-            // $coworker_invite_email->handle();
+            $coworker_invite_email->setSubject("Invitation from your co-worker to join digiGO")->setTemplate('emails.co-worker-invitation-v2');
             dispatch($coworker_invite_email);
-        }  catch (Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
         }
     }
