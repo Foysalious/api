@@ -1,12 +1,14 @@
 <?php namespace Sheba\Payment\Methods\Nagad\Response;
 
+use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
+
 class Initialize extends Response
 {
     protected $shouldDecode = true;
 
-    public function __construct($data)
+    public function __construct($data, NagadStore $store)
     {
-        parent::__construct($data);
+        parent::__construct($data, $store);
     }
 
     public function getPaymentReferenceId()

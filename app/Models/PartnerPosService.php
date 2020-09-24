@@ -59,7 +59,7 @@ class PartnerPosService extends Model
 
     public function getPriceAttribute($price)
     {
-        return $price ?: null;
+        return $price ?: 0.0;
     }
 
     public function getDiscountedAmount()
