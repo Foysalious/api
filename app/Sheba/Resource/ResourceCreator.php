@@ -20,7 +20,7 @@ class ResourceCreator
 
     public function __construct(ProfileRepository $profile_repo, ResourceRepository $resource_repo)
     {
-        $this->profiles = $profile_repo;
+        $this->profiles  = $profile_repo;
         $this->resources = $resource_repo;
     }
 
@@ -33,8 +33,8 @@ class ResourceCreator
     {
         if ($error = $this->hasProfileError()) {
             return [
-                'code' => 421,
-                'msg' => array_values($error)[0],
+                'code'  => 421,
+                'msg'   => array_values($error)[0],
                 'input' => array_keys($error)[0]
             ];
         }
@@ -58,12 +58,13 @@ class ResourceCreator
     public function create()
     {
         $this->saveImages();
-        $this->data['mobile'] = formatMobileAux($this->data['mobile']);
+        $this->data['mobile']            = formatMobileAux($this->data['mobile']);
         $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobileAux($this->data['alternate_contact']) : null;
         $this->format();
         $this->attachProfile();
         $this->data['remember_token'] = str_random(255);
-        $this->data = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image_back']);
+        $this->data['nid_image']      = isset($this->data['nid_image_front']) ? $this->data['nid_image_front'] : '';
+        $this->data                   = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image_back']);
         return $this->resources->save($this->data);
     }
 
@@ -112,22 +113,22 @@ class ResourceCreator
 
     private function format()
     {
-        $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
-        $this->data['nid_no'] = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
+        $this->data['spouse_name']     = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
+        $this->data['nid_no']          = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
         $this->data['nid_image_front'] = isset($this->data['nid_image_front']) ? $this->data['nid_image_front'] : null;
-        $this->data['nid_image_back'] = isset($this->data['nid_image_back']) ? $this->data['nid_image_back'] : null;
-        $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
+        $this->data['nid_image_back']  = isset($this->data['nid_image_back']) ? $this->data['nid_image_back'] : null;
+        $this->data['is_trained']      = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data)
-            && (
-                $this->data[$filename] instanceof Image
-                || (
-                    $this->data[$filename] instanceof UploadedFile
-                    && $this->data[$filename]->getPath() != ''
-                )
-            );
+               && (
+                   $this->data[$filename] instanceof Image
+                   || (
+                       $this->data[$filename] instanceof UploadedFile
+                       && $this->data[$filename]->getPath() != ''
+                   )
+               );
     }
 }
