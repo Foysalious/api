@@ -140,7 +140,7 @@ class CustomerController extends Controller
         try {
             $this->validate($request, ['mobile' => 'required|mobile:bd']);
             $this->setModifier($request->manager_resource);
-            $updater->setCustomer($customer)->setData($request->except([
+            $updater->setCustomer($customer)->setProfile($customer->profile)->setData($request->except([
                 'partner_id',
                 'remember_token'
             ]));
