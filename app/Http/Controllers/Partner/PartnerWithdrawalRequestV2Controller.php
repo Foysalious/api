@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
 use App\Models\Partner;
+use App\Models\PartnerBankInformation;
 use App\Models\Profile;
 use App\Models\WithdrawalRequest;
 use App\Sheba\BankingInfo\GeneralBanking;
@@ -11,6 +12,7 @@ use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -33,7 +35,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 removeSelectedFieldsFromModel($item);
             })->sortByDesc('id')->values()->all();
             $withdrawable_amount = $this->calculateWithdrawableAmount($request->partner);
-            $bank_information = ($this->getBankInformation($request->manager_resource->profile));
+            $bank_information = ($this->getBankInformation($request->partner));
             $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
             $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
             $withdraw_limit = [
@@ -48,12 +50,8 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             ];
             $banks = GeneralBanking::get();
             $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
-            if (count($withdrawalRequests) > 0) {
                 return api_response($request, $withdrawalRequests, 200,
-                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money,'banks' => $banks, 'status_message' => 'আপনি গরিব']);
-            } else {
-                return api_response($request, null, 404, ['wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit, 'security_money' => $security_money,'banks' => $banks ,'status_message' => 'আপনি গরিব']);
-            }
+                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => 'আপনি গরিব']);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -167,16 +165,17 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return ($withdrawable_amount = ($partner->wallet - ($total_pending_amount + ($partner->walletSetting->security_money ? floatval($partner->walletSetting->security_money) : 0)))) > 0 ? $withdrawable_amount : 0;
     }
 
-    private function getBankInformation(Profile $profile)
+    private function getBankInformation(Partner $partner)
     {
-        $info = $profile->banks()->where('purpose','partner_wallet_withdrawal')->orderBY('id','desc')->first();
+        $info = $partner->withdrawalBankInformations->first();
         $bank_info = null;
 
         if($info){
             $bank_info =  [
                 'bank_name' => $info->bank_name,
-                'account_no' => $info->account_no,
-                'account_type' => $info->account_type,
+                'account_name' => $info->acc_name,
+                'account_no' => $info->acc_no,
+                'account_type' => $info->acc_type,
                 'branch_name' =>  $info->branch_name,
                 'routing_no' =>  $info->routing_no,
                 'cheque_book_receipt' => $info->cheque_book_receipt,
@@ -185,15 +184,15 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         return $bank_info;
     }
 
-    public function storeBankInfo($partner, Request $request, ProfileBankingRepositoryInterface $profile_bank_repo)
+    public function storeBankInfo($partner, Request $request)
     {
         try {
             $this->validate($request, [
-                'bank_name' => 'required|in:'.implode(',', GeneralBanking::get()),
+                'bank_name' => 'required',
                 'account_no' => 'required',
-                'account_type' => 'required|in:savings,current',
+                'account_name' => 'required',
                 'branch_name' => 'required',
-                'routing_no' => 'required_',
+                'routing_no' => 'required',
                 'cheque_book_receipt' => 'sometimes|required|file|mimes:jpg,jpeg,png',
 
             ]);
@@ -202,19 +201,22 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 list($cheque_book_receipt, $cheque_book_receipt_filename) = $this->makeChequeBookReceipt($request->cheque_book_receipt, $request->partner->id.'cheque_book_receipt');
                 $cheque_book_receipt = $this->saveImageToCDN($cheque_book_receipt, getPartnerChequeBookImageFolder(), $cheque_book_receipt_filename);
             }
+            $manager_resource = $request->manager_resource;
+            $this->setModifier($manager_resource);
 
-            $data = [
-                'profile_id' => $request->manager_resource->profile->id,
-                'bank_name' => $request->bank_name,
-                'account_no' => $request->account_no,
-                'account_type' => $request->account_type,
-                'branch_name' => $request->branch_name,
-                'routing_no' => $request->routing_no,
-                'cheque_book_receipt' => $cheque_book_receipt,
-                'purpose' => 'partner_wallet_withdrawal'
-            ];
-            $this->setModifier($request->manager_resource);
-            $profile_bank_repo->create($data);
+            $bank_information              = new PartnerBankInformation();
+            $bank_information->partner_id  = $partner;
+            $bank_information->bank_name = $request->bank_name;
+            $bank_information->acc_no = $request->account_no;
+            $bank_information->acc_name= $request->account_name;
+            $bank_information->acc_type = null;
+            $bank_information->branch_name = $request->branch_name;
+            $bank_information->routing_no = $request->routing_no;
+            $bank_information->cheque_book_receipt = $cheque_book_receipt;
+            $bank_information->purpose = Purposes::PARTNER_WALLET_WITHDRAWAL;
+
+            $this->withCreateModificationField($bank_information);
+            $bank_information->save();
             return api_response($request, null, 200,['message' => 'Bank Information stored successfully']);
 
         } catch (ValidationException $e) {

@@ -12,6 +12,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\Retailer\Retailer;
 use Sheba\FraudDetection\TransactionSources;
@@ -502,10 +503,22 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 
+    public function bankInfos()
+    {
+        return $this->hasMany(PartnerBankInformation::class);
+    }
+
     public function bankInformations()
     {
-        return $this->hasOne(PartnerBankInformation::class);
+        return $this->bankInfos()->where('purpose',Purposes::GENERAL);
     }
+
+    public function withdrawalBankInformations()
+    {
+        return $this->bankInfos()->where('purpose',Purposes::PARTNER_WALLET_WITHDRAWAL);
+    }
+
+
 
     public function affiliation()
     {
