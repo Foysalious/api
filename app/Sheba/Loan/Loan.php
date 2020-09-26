@@ -408,7 +408,7 @@ class Loan
             'resource_id' => $request->manager_resource->id,
             'amount'      => $request->amount,
             'status'      => Statuses::PENDING,
-            'log'         => '৳' . convertNumbersToBangla($request->amount, true, 0) . 'টাকা দাবি করা হয়েছে',
+            'log'         => '৳' . convertNumbersToBangla($request->amount, true, 0) . ' টাকা দাবি করা হয়েছে',
         ];
 
         return (new LoanClaim())->createRequest($data);
