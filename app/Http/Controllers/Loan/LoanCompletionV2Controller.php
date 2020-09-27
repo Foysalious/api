@@ -147,7 +147,7 @@ class LoanCompletionV2Controller extends Controller
     private function documentCompletion($profile, $manager_resource, $partner, $complete_count)
     {
         $basic_informations = $partner->basicInformations;
-        $bank_informations = $partner->bankInformations->first();
+        $bank_informations = $partner->bankInformations ? $partner->bankInformations->first() : null;
         #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
 

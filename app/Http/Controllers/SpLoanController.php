@@ -113,7 +113,7 @@ class SpLoanController extends Controller
         $manager_resource                = $request->manager_resource;
         $profile                         = $manager_resource->profile;
         $basic_informations              = $partner->basicInformations;
-        $bank_informations               = $partner->bankInformations->first();
+        $bank_informations               = $partner->bankInformations ? $partner->bankInformations->first() : null;;
         $business_additional_information = $partner->businessAdditionalInformation();
         $sales_information               = $partner->salesInformation();
         #$nominee_profile = Profile::find($profile->nominee_id);
@@ -286,7 +286,7 @@ class SpLoanController extends Controller
             $manager_resource                = $request->manager_resource;
             $profile                         = $manager_resource->profile;
             $basic_informations              = $partner->basicInformations;
-            $bank_informations               = $partner->bankInformations->first();
+            $bank_informations               = $partner->bankInformations ? $partner->bankInformations->first() : null;
             $business_additional_information = $partner->businessAdditionalInformation();
             $sales_information               = $partner->salesInformation();
             $info                            = array(
@@ -361,7 +361,7 @@ class SpLoanController extends Controller
             $manager_resource   = $request->manager_resource;
             $profile            = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
-            $bank_informations  = $partner->bankInformations->first();
+            $bank_informations  = $partner->bankInformations ? $partner->bankInformations->first() : null;
             $info               = [
                 'account_holder_name' => !empty($bank_informations) ? $bank_informations->acc_name : null,
                 'account_no'          => !empty($bank_informations) ? $bank_informations->acc_no : null,
@@ -395,7 +395,7 @@ class SpLoanController extends Controller
                 'bkash_account_type' => 'string|in:personal,agent,merchant'
             ]);
             $partner           = $request->partner;
-            $bank_informations = $partner->bankInformations->first();
+            $bank_informations = $partner->bankInformations ? $partner->bankInformations->first() : null;
             $bank_data         = [
                 'partner_id'  => $partner->id,
                 'acc_name'    => $request->acc_name,
@@ -530,7 +530,7 @@ class SpLoanController extends Controller
             $manager_resource   = $request->manager_resource;
             $profile            = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
-            $bank_informations  = $partner->bankInformations->first();
+            $bank_informations  = $partner->bankInformations ? $partner->bankInformations->first() : null;
             #$nominee_profile = Profile::find($profile->nominee_id);
             $grantor_profile = Profile::find($profile->grantor_id);
             $info            = array(
@@ -627,7 +627,7 @@ class SpLoanController extends Controller
                 'picture' => 'required|mimes:jpeg,png'
             ]);
             $partner           = $request->partner;
-            $bank_informations = $partner->bankInformations->first();
+            $bank_informations = $partner->bankInformations ? $partner->bankInformations->first() : null;
             if (!$bank_informations)
                 $bank_informations = $this->createBankInformation($partner);
             $file_name = $request->picture;
