@@ -5,10 +5,12 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Exceptions\Service\OptionIsNotAvailableException;
 use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Geo;
+use Sheba\LocationService\CorruptedPriceStructureException;
 use Sheba\Map\MapClientNoResultException;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
@@ -30,16 +32,17 @@ class ServiceRequest
 
 
     /**
-     * @return  ServiceRequestObject[]
+     * @return array
      * @throws DestinationCitySameAsPickupException
+     * @throws GuzzleException
+     * @throws HyperLocationNotFoundException
      * @throws InsideCityPickUpAddressNotFoundException
+     * @throws MapClientNoResultException
      * @throws MultipleCategoryServiceRequestException
+     * @throws OptionIsNotAvailableException
      * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
      * @throws ValidationException
-     * @throws HyperLocationNotFoundException
-     * @throws GuzzleException
-     * @throws MapClientNoResultException
      */
     public function get()
     {
@@ -66,7 +69,7 @@ class ServiceRequest
             $serviceRequestObject->build();
             array_push($final, $serviceRequestObject);
         }
-        $this->checkForMultipleCategory($final);
+        $this->checkForServiceValidation($final);
         return $final;
     }
 
@@ -83,11 +86,18 @@ class ServiceRequest
     /**
      * @param ServiceRequestObject[] $services
      * @throws MultipleCategoryServiceRequestException
+     * @throws OptionIsNotAvailableException
      */
-    private function checkForMultipleCategory($services)
+    private function checkForServiceValidation($services)
     {
         $category_ids = [];
         foreach ($services as $service) {
+            if ($service->getService()->isOptions()) {
+                $option_prices = json_decode($service->getService()->variables)->prices;
+                if (!isset($option_prices->{implode(',', $service->getOption())})) {
+                    throw new OptionIsNotAvailableException("This service #" . $service->getServiceId() . " is not available.");
+                }
+            }
             array_push($category_ids, $service->getCategory()->id);
         }
         if (count(array_unique($category_ids)) > 1) throw new MultipleCategoryServiceRequestException();

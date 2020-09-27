@@ -430,7 +430,7 @@ class LoanController extends Controller
         try {
             $this->validate($request, ['picture' => 'required|mimes:jpeg,png']);
             $partner           = $request->partner;
-            $bank_informations = $partner->bankInformations;
+            $bank_informations = $partner->bankInformations->first();
             if (!$bank_informations)
                 $bank_informations = $this->createBankInformation($partner);
             $file_name = $request->picture;
