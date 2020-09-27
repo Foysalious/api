@@ -115,8 +115,7 @@ class AvailableMethods
             PaymentStrategy::CBL,
             PaymentStrategy::ONLINE,
             PaymentStrategy::BKASH,
-            PaymentStrategy::OK_WALLET,
-            PaymentStrategy::NAGAD
+            PaymentStrategy::OK_WALLET
         ];
     }
 
@@ -187,8 +186,8 @@ class AvailableMethods
     public static function getBondhuPointPayments()
     {
         return [
-            PaymentStrategy::BKASH,
             PaymentStrategy::NAGAD,
+            PaymentStrategy::BKASH
         ];
     }
 
