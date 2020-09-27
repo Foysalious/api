@@ -1,6 +1,8 @@
 <?php namespace Sheba\Services;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\NotFoundException;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use Sheba\Dal\LocationService\LocationService;
@@ -51,6 +53,7 @@ class ServicePriceCalculation
     public function setLocation($lat, $lng)
     {
         $hyper_local = HyperLocal::insidePolygon($lat, $lng)->with('location')->first();
+        if (!$hyper_local) throw new HyperLocationNotFoundException('Your are out of service area.');
         $this->location = $hyper_local->location;
         return $this;
     }
@@ -103,6 +106,7 @@ class ServicePriceCalculation
             $service = $selected_service->getService();
             $this->priceCalculation = $this->resolvePriceCalculation($service->category);
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->location->id]])->first();
+            if (!$this->category->isRentACarOutsideCity() && !$location_service) throw new NotFoundException('Service #' . $service->id . ' is not available at this location', 403);
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $this->category->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);
             $upsell_unit_price = $this->upsellCalculation->setService($service)->setLocationService($location_service)->setOption($selected_service->getOption())

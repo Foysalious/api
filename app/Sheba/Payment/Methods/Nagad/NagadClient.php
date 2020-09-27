@@ -3,6 +3,7 @@
 
 use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
+use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
@@ -11,33 +12,38 @@ class NagadClient
 {
     private $client;
     private $baseUrl;
-    private $merchantId;
-    private $publicKey;
-    private $privateKey;
-    private $contextPath;
+    /**
+     * @var NagadStore
+     */
+    private $store;
 
     public function __construct(TPProxyClient $client)
     {
-        $this->client      = $client;
-        $this->baseUrl     = config('nagad.base_url');
-        $this->merchantId  = config('nagad.merchant_id');
-        $this->publicKey   = file_get_contents(config('nagad.public_key_path'));
-        $this->privateKey  = file_get_contents(config('nagad.private_key_path'));
-        $this->contextPath = config('nagad.context_path');
+        $this->client = $client;
+
+    }
+
+    public function setStore(NagadStore $store)
+    {
+        $this->store   = $store;
+        $this->baseUrl = $this->store->getBaseUrl();
+        return $this;
     }
 
     /**
      * @param $transactionId
      * @return Initialize
-     * @throws TPProxyServerError|Exception\EncryptionFailed
+     * @throws Exception\EncryptionFailed
+     * @throws TPProxyServerError
      */
     public function init($transactionId)
     {
-        $url     = "$this->baseUrl/api/dfs/check-out/initialize/$this->merchantId/$transactionId";
-        $data    = Inputs::init($transactionId);
-        $request = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
-        $resp    = $this->client->call($request);
-        return new Initialize($resp);
+        $merchantId = $this->store->getMerchantId();
+        $url        = "$this->baseUrl/api/dfs/check-out/initialize/$merchantId/$transactionId";
+        $data       = Inputs::init($transactionId, $this->store);
+        $request    = (new TPRequest())->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data)->setUrl($url);
+        $resp       = $this->client->call($request);
+        return new Initialize($resp, $this->store);
     }
 
     /**
@@ -53,10 +59,10 @@ class NagadClient
     {
         $paymentRefId = $resp->getPaymentReferenceId();
         $url          = "$this->baseUrl/api/dfs/check-out/complete/$paymentRefId";
-        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl);
+        $data         = Inputs::complete($transactionId, $resp, $amount, $callbackUrl, $this->store);
         $request      = (new TPRequest())->setUrl($url)->setMethod(TPRequest::METHOD_POST)->setHeaders(Inputs::headers())->setInput($data);
         $resp         = $this->client->call($request);
-        return new CheckoutComplete($resp);
+        return new CheckoutComplete($resp, $this->store);
     }
 
     /**

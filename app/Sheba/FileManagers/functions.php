@@ -893,6 +893,23 @@ if (!function_exists('getBulkTopUpFolder')) {
     }
 }
 
+if (!function_exists('getBulkVendorStoreFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkVendorStoreFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_vendors_store/';
+    }
+}
+
 if (!function_exists('getPosCategoryDefaultThumb')) {
 
     /**

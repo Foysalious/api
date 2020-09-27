@@ -5,6 +5,7 @@ namespace Sheba\Payment\Methods\Nagad\Response;
 
 
 use Sheba\Payment\Methods\Nagad\Outputs;
+use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 abstract class Response
 {
@@ -14,10 +15,12 @@ abstract class Response
     protected $decode       = 'sensitiveData';
     protected $msg          = 'message';
     protected $shouldDecode = true;
+    protected $store;
 
-    public function __construct($data)
+    public function __construct($data, NagadStore $store)
     {
         $this->data = (array)$data;
+        $this->store = $store;
         if ($this->shouldDecode) {
             if (!isset($this->data[$this->decode])) {
                 $this->error = $this->data[$this->msg];
@@ -29,7 +32,7 @@ abstract class Response
 
     private function decodeOutput()
     {
-        $this->output = Outputs::decode($this->data[$this->decode]);
+        $this->output = Outputs::decode($this->data[$this->decode], $this->store);
     }
 
     public function hasError()
