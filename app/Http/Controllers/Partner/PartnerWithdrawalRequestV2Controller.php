@@ -50,7 +50,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             ];
 
             if($request->partner->withdrawalRequests()->active()->count() > 0){
-                $active_request_amount =  $partner->withdrawalRequests()->active()->sum('amount') ;
+                $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
                 if($withdrawable_amount > $limitBank['min'])
                     $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
                 else
@@ -64,6 +64,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 return api_response($request, $withdrawalRequests, 200,
                     ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
