@@ -1,5 +1,6 @@
 <?php namespace Sheba\FileManagers;
 
+use App\Sheba\FileManagers\PartnerChequeBookReceipt;
 use Intervention\Image\Image;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -67,6 +68,13 @@ trait FileManager
     {
         $filename = $this->uniqueFileName($file, $name);
         $file = (new BankStatement($file))->make();
+        return [$file, $filename];
+    }
+
+    protected function makeChequeBookReceipt($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        $file = (new PartnerChequeBookReceipt($file))->make();
         return [$file, $filename];
     }
 
