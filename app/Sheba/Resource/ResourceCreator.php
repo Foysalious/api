@@ -2,12 +2,15 @@
 
 use App\Models\Profile;
 use App\Models\Resource;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Repositories\ProfileRepository;
 use Sheba\Repositories\ResourceRepository;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 
 class ResourceCreator
 {
@@ -17,10 +20,12 @@ class ResourceCreator
 
     private $profiles;
     private $resources;
+    /** @var ResourceCreateRequest */
+    private $resourceCreateRequest;
 
     public function __construct(ProfileRepository $profile_repo, ResourceRepository $resource_repo)
     {
-        $this->profiles  = $profile_repo;
+        $this->profiles = $profile_repo;
         $this->resources = $resource_repo;
     }
 
@@ -29,12 +34,22 @@ class ResourceCreator
         $this->data = $data;
     }
 
+    /**
+     * @param ResourceCreateRequest $resourceCreateRequest
+     * @return ResourceCreator
+     */
+    public function setResourceCreateRequest($resourceCreateRequest)
+    {
+        $this->resourceCreateRequest = $resourceCreateRequest;
+        return $this;
+    }
+
     public function hasError()
     {
         if ($error = $this->hasProfileError()) {
             return [
-                'code'  => 421,
-                'msg'   => array_values($error)[0],
+                'code' => 421,
+                'msg' => array_values($error)[0],
                 'input' => array_keys($error)[0]
             ];
         }
@@ -57,22 +72,30 @@ class ResourceCreator
      */
     public function create()
     {
-        $this->saveImages();
-        $this->data['mobile']            = formatMobileAux($this->data['mobile']);
-        $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobileAux($this->data['alternate_contact']) : null;
+        $this->data['mobile'] = formatMobile($this->data['mobile']);
+        $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobile($this->data['alternate_contact']) : null;
+        $this->data['dob'] = $this->resourceCreateRequest->getBirthDate();
         $this->format();
-        $this->attachProfile();
-        $this->data['remember_token'] = str_random(255);
-        $this->data['nid_image']      = isset($this->data['nid_image_front']) ? $this->data['nid_image_front'] : '';
-        $this->data                   = array_except($this->data, ['mobile', 'name', 'email', 'address', 'has_profile', 'profile_image', 'resource_types', 'category_ids', 'nid_no', 'nid_image_front', 'nid_image_back']);
-        return $this->resources->save($this->data);
+        $profile = $this->attachProfile();
+        return $this->resources->save([
+            "spouse_name" => $this->data['spouse_name'],
+            "is_trained" => $this->data['is_trained'],
+            "profile_id" => $profile->id,
+            "remember_token" => str_random(255),
+            "alternate_contact" => $this->data['alternate_contact'],
+        ]);
     }
 
-    private function saveImages()
+    private function formatProfilePicture()
     {
-        if ($this->hasFile('profile_image')) $this->data['profile_image'] = $this->saveProfileImage();
-        if ($this->hasFile('nid_image_front')) $this->data['nid_image_front'] = $this->saveNIdImageFront();
-        if ($this->hasFile('nid_image_back')) $this->data['nid_image_back'] = $this->saveNIdImageBack();
+        if ($this->resourceCreateRequest->getProfilePicture()) $this->data['pro_pic'] = $this->saveProfileImage();
+    }
+
+    private function formatNidInformation()
+    {
+        $this->data['nid_no'] = $this->resourceCreateRequest->getNidNo();
+        if ($this->resourceCreateRequest->getNidFrontImage()) $this->data['nid_image_front'] = $this->saveNIdImageFront();
+        if ($this->resourceCreateRequest->getNidBackImage()) $this->data['nid_image_back'] = $this->saveNIdImageBack();
     }
 
     /**
@@ -82,7 +105,7 @@ class ResourceCreator
      */
     private function saveProfileImage()
     {
-        list($avatar, $avatar_filename) = $this->makeThumb($this->data['profile_image'], $this->data['name']);
+        list($avatar, $avatar_filename) = $this->makeThumb($this->resourceCreateRequest->getProfilePicture(), $this->data['name']);
         return $this->saveImageToCDN($avatar, getResourceAvatarFolder(), $avatar_filename);
     }
 
@@ -93,42 +116,46 @@ class ResourceCreator
      */
     private function saveNIdImageFront()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->data['nid_image_front'], $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidFrontImage(), $this->data['name']);
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 
     private function saveNIdImageBack()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->data['nid_image_back'], $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidBackImage(), $this->data['name']);
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 
+
+    /**
+     * @return Profile
+     */
     private function attachProfile()
     {
         $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
-        if (!($profile instanceof Profile)) $profile = $this->profiles->store($this->data);
+        if (!$profile) $profile = $this->profiles->store($this->data);
         else $this->profiles->update($profile, $this->data);
         $this->data['profile_id'] = $profile->id;
+        return $profile;
     }
 
     private function format()
     {
-        $this->data['spouse_name']     = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
-        $this->data['nid_no']          = isset($this->data['nid_no']) ? $this->data['nid_no'] : null;
-        $this->data['nid_image_front'] = isset($this->data['nid_image_front']) ? $this->data['nid_image_front'] : null;
-        $this->data['nid_image_back']  = isset($this->data['nid_image_back']) ? $this->data['nid_image_back'] : null;
-        $this->data['is_trained']      = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
+        $this->formatProfilePicture();
+        $this->formatNidInformation();
+        $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
+        $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data)
-               && (
-                   $this->data[$filename] instanceof Image
-                   || (
-                       $this->data[$filename] instanceof UploadedFile
-                       && $this->data[$filename]->getPath() != ''
-                   )
-               );
+            && (
+                $this->data[$filename] instanceof Image
+                || (
+                    $this->data[$filename] instanceof UploadedFile
+                    && $this->data[$filename]->getPath() != ''
+                )
+            );
     }
 }
