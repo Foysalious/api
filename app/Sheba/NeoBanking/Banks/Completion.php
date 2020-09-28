@@ -50,7 +50,7 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        return (new BankCompletion())->setCompletion($completion)->setCanApply(1)->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage('প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।')->setMessageType('info');
+        return (new BankCompletion())->setCompletion($completion)->setCanApply(1)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage('প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।')->setMessageType('info');
     }
 
 }

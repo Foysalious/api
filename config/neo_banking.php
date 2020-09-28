@@ -1,7 +1,8 @@
 <?php
 return [
-    'account_details_url' => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
-    'category_list'       => [
+    'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
+    'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
+    'category_list'         => [
         'NEO_1' => [
             'nid_selfie'  => 'NIDSelfie',
             'institution' => 'Institution',
@@ -11,7 +12,7 @@ return [
             'account'     => 'Account'
         ]
     ],
-    'category_titles'     => [
+    'category_titles'       => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
             'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'

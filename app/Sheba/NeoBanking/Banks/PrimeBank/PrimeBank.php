@@ -52,6 +52,7 @@ class PrimeBank extends Bank
      * @return BankCompletion
      * @throws InvalidBankCode
      * @throws InvalidListInsertion
+     * @throws ReflectionException
      */
     public function completion(): BankCompletion
     {
