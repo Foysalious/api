@@ -19,7 +19,7 @@ class SpLoanInformationCompletion extends Controller
             $manager_resource = $request->manager_resource;
             $profile = $manager_resource->profile;
             $basic_informations = $partner->basicInformations;
-            $bank_informations = $partner->bankInformations->first();
+            $bank_informations  = $partner->bankInformations ? $partner->bankInformations->first() : null;
 
             $personal = $this->personalInformationCompletion($profile, $manager_resource, $complete_count);
             $business = $this->businessInformationCompletion($partner, $basic_informations, $complete_count);
@@ -173,7 +173,7 @@ class SpLoanInformationCompletion extends Controller
     private function documentCompletion($profile, $manager_resource, $partner, $complete_count)
     {
         $basic_informations = $partner->basicInformations;
-        $bank_informations = $partner->bankInformations->first();
+        $bank_informations = $partner->bankInformations ? $partner->bankInformations->first() : null;
         #$nominee_profile = Profile::find($profile->nominee_id);
         $grantor_profile = Profile::find($profile->grantor_id);
 

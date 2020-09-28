@@ -42,7 +42,7 @@ class FinanceInfo implements Arrayable
             $this->profile = $resource->profile;
         }
         if ($this->partner) {
-            $this->bank_information = $partner->bankInformations->first();
+            $this->bank_information = $partner->bankInformations ? $partner->bankInformations->first() : null;
         }
     }
 

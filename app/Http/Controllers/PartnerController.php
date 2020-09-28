@@ -815,8 +815,8 @@ class PartnerController extends Controller
                 $locations->push([
                     'id' => $location->id,
                     'name' => $location->name,
-                    'lat'  => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
-                    'lng'  => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
+                    'lat'  => $location->geo_informations ? (double) json_decode($location->geo_informations)->lat : null,
+                    'lng'  => $location->geo_informations ? (double) json_decode($location->geo_informations)->lng : null,
                 ]);
             });
             if ($locations->count() == 0)

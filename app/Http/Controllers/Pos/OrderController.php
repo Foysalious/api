@@ -216,8 +216,9 @@ class OrderController extends Controller
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill            = $order->getNetBill();
+            $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
             if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
-                $paymentLink = $paymentLinkCreator->setAmount($request->payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
+                $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                     ->setUserName($partner->name)->setUserId($partner->id)
                     ->setUserType('partner')
                     ->setTargetId($order->id)
