@@ -15,6 +15,7 @@ use Intervention\Image\Facades\Image;
 use DB;
 use Sheba\ModificationFields;
 use Sheba\Partner\StatusChanger;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 use Sheba\Resource\PartnerResourceCreator;
 use Throwable;
 
@@ -50,7 +51,7 @@ class PersonalInformationController extends Controller
         }
     }
 
-    public function store(Request $request, PartnerResourceCreator $partnerResourceCreator)
+    public function store(Request $request, PartnerResourceCreator $partnerResourceCreator, ResourceCreateRequest $resourceCreateRequest)
     {
         try {
             $request->merge(['mobile' => trim($request->mobile)]);
@@ -58,6 +59,7 @@ class PersonalInformationController extends Controller
                 'nid_no' => 'string|unique:resources,nid_no',
                 'nid_back' => 'file',
                 'nid_front' => 'file',
+                'birth_date' => 'date|date_format:Y-m-d|before:' . Carbon::today()->subYears(18)->format('Y-m-d'),
                 'name' => 'string',
                 'address' => 'string',
                 'picture' => 'file',
@@ -88,20 +90,15 @@ class PersonalInformationController extends Controller
                 return api_response($request, 1, 200);
             } else {
                 $partnerResourceCreator->setPartner($partner);
-                if ($request->hasFile('nid_front') && $request->hasFile('nid_back')) {
-                    $nid_image = $this->mergeFrontAndBackNID($request->file('nid_front'), $request->file('nid_back'));
-                } else {
-                    $nid_image = null;
-                }
-                $partnerResourceCreator->setData(array(
+                $resourceCreateRequest->setNidNo($request->nid_no)->setNidFrontImage($request->file('nid_front'))->setNidBackImage($request->file('nid_back'))
+                    ->setProfilePicture($request->file('picture'))->setBirthDate($request->birth_date);
+                $partnerResourceCreator->setResourceCreateRequest($resourceCreateRequest)->setData(array(
                     'mobile' => $request->mobile,
                     'name' => $request->name,
                     'address' => $request->address,
-                    'profile_image' => $request->file('picture'),
                     'category_ids' => $partner->categories->pluck('id')->toArray(),
                     'resource_types' => $resource_types,
                     'nid_no' => $request->nid_no,
-                    'nid_image' => $nid_image,
                     'alternate_contact' => $request->has('additional_mobile') ? $request->additional_mobile : null
                 ));
                 if ($error = $partnerResourceCreator->hasError()) {
@@ -274,8 +271,8 @@ class PersonalInformationController extends Controller
     {
         $old_partner_resource_type = $resource->partnerResources->where('partner_id', $partner->id)->pluck('resource_type', 'id')->toArray();
         $new_partner_resource_type = $request->resource_types;
-        $removed_partner_resource_type  = array_diff($old_partner_resource_type, $new_partner_resource_type);
-        $added_partner_resource_type    = array_diff($new_partner_resource_type, $old_partner_resource_type);
+        $removed_partner_resource_type = array_diff($old_partner_resource_type, $new_partner_resource_type);
+        $added_partner_resource_type = array_diff($new_partner_resource_type, $old_partner_resource_type);
         PartnerResource::destroy(array_keys($removed_partner_resource_type));
 
         foreach ($added_partner_resource_type as $resource_type) {
