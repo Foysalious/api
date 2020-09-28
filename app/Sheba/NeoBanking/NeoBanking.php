@@ -448,4 +448,8 @@ class NeoBanking
         return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->categoryDetails((new BankFormCategoryFactory())->getCategoryByCode($category_code));
     }
 
+    public function accountInformation(){
+
+    }
+
 }

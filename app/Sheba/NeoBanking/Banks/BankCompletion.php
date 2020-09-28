@@ -12,6 +12,7 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $completion;
     protected $can_apply;
     protected $bank_detail_link;
+    protected $bank_detail_title;
     protected $message      = '';
     protected $message_type = 'info';
 
@@ -24,6 +25,24 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
         $this->completion = $completion;
         return $this;
     }
+
+     /**
+      * @return mixed
+      */
+     public function getBankDetailTitle()
+     {
+         return $this->bank_detail_title;
+     }
+
+     /**
+      * @param mixed $bank_detail_title
+      * @return BankCompletion
+      */
+     public function setBankDetailTitle($bank_detail_title)
+     {
+         $this->bank_detail_title = $bank_detail_title;
+         return $this;
+     }
 
     /**
      * @param mixed $can_apply

@@ -105,5 +105,18 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function getAccountInformation(Request $request, NeoBanking $neoBanking) {
+        try {
+            $bank             = $request->bank;
+            $partner          = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountInformation();
+            return api_response($request, $info, 200, ['data' => $info]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 
 }

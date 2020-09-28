@@ -372,7 +372,7 @@
         {{--<div>NOTICE:</div>--}}
         {{--<div class="notice">A finance charge of 1.5% will be made on unpaid balances after 30 days.</div>--}}
     {{--</div>--}}
-    @if($type=="QUOTATION")
+    @if($job->status !== 'Served')
         <div class="quote">
             <br>*** Total cost may be changed due to the nature of the service.</div>
     @endif

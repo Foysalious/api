@@ -20,6 +20,11 @@ class BankStatics
         return config('neo_banking.account_details_url');
     }
 
+    public static function AccountDetailsTitle()
+    {
+        return config('neo_banking.account_details_title');
+    }
+
     /**
      * @param $bankCode
      * @return mixed
