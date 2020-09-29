@@ -108,7 +108,7 @@ class Updater
     private function resolveProfileId()
     {
         $profile_data = [
-            'name'      => $this->data['name'],
+//            'name'      => $this->data['name'],
             'mobile'    => $this->data['mobile'],
             'email'     => $this->data['email'],
             'address'   => $this->data['address']
@@ -136,13 +136,20 @@ class Updater
             $partner_pos_customer_data = [
                 'partner_id' => $this->data['partner']->id,
                 'customer_id' => $customer->id,
-                'note' => $this->data['note']
+                'note' => $this->data['note'],
+                'nick_name' => $this->data['name']
             ];
             $partner_pos_customer = $this->partnerPosCustomers->save($partner_pos_customer_data);
         }
 
         if (isset($this->data['note']) && !empty($this->data['note']))
             $this->partnerPosCustomers->update($partner_pos_customer, ['note' => $this->data['note']]);
+
+        if (isset($this->data['name']) && !empty($this->data['name'])) {
+            $this->partnerPosCustomers->update($partner_pos_customer, ['nick_name' => $this->data['name']]);
+        }
+
+        $customer->name = $partner_pos_customer['nick_name'];
 
         return $customer;
     }

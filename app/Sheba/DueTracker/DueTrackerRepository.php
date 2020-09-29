@@ -89,7 +89,14 @@ class DueTrackerRepository extends BaseRepository
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
             $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            $posProfile              = $users = \DB::table('partner_pos_customers')
+                                                ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
+                                                ->where('pos_customers.profile_id', '=', $item['profile_id'])
+                                                ->where('partner_pos_customers.partner_id', '=', $this->partnerId)
+                                                ->select('partner_pos_customers.*');
+
+            $item['customer_name'] = $posProfile && isset($posProfile->nick_name) && !empty($posProfile->nick_name) ? $posProfile->nick_name : $profile ? $profile->name : "Unknown";
+//            $item['customer_name']   = $profile ? $profile->name : "Unknown";
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
             $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
@@ -139,7 +146,7 @@ class DueTrackerRepository extends BaseRepository
             'stats'      => $result['data']['totals'],
             'customer'   => [
                 'id'                => $customer->id,
-                'name'              => $customer->profile->name,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
                 'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
