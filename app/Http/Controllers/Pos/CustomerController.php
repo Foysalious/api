@@ -73,8 +73,7 @@ class CustomerController extends Controller
             $data                             = $customer->details();
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
-            $partnerPosCustomer = PartnerPosCustomer::byPartnerAndCustomer($request->partner->id, $customer->id)->first();
-            if($partnerPosCustomer->nick_name) $data['name'] = $partnerPosCustomer->nick_name;
+            $data['name'] = PartnerPosCustomer::getPartnerPosCustomerName($request->partner->id, $customer->id);
             $total_purchase_amount            = 0.00;
             $total_used_promo                 = 0;
             PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {

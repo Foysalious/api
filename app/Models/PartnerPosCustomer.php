@@ -39,4 +39,11 @@ class PartnerPosCustomer extends Model
         return $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->pluck('due_date_reminder');
 
     }
+
+    public function scopeGetPartnerPosCustomerName($query,$partner_id,$customer_id) {
+        $partnerPosCustomer = $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->first();
+        if($partnerPosCustomer->nick_name) return $partnerPosCustomer->nick_name;
+        $customer = PosCustomer::find((int)$customer_id);
+        return $customer->profile->name;
+    }
 }
