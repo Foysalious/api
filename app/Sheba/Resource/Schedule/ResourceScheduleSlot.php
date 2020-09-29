@@ -266,8 +266,8 @@ class ResourceScheduleSlot
                     'value' => $day->toDateString(),
                     'slots' => $slot
                 ]);
-                $day->addDay();
             }
+            $day->addDay();
         }
         return $final;
     }

@@ -88,6 +88,11 @@ class PartnerScheduleSlot
     public function get($for_days = 14)
     {
         $final = [];
+        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
+        if (!$category_partner) {
+            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
+            return null;
+        }
         $this->limit = $for_days;
         $last_day = $this->today->copy()->addDays($for_days);
         $day = $this->today->copy();
@@ -95,8 +100,8 @@ class PartnerScheduleSlot
             $slot = $this->formatSlots($day);
             if($slot) {
                 array_push($final, ['value' => $day->toDateString(), 'slots' => $slot]);
-                $day->addDay();
             }
+            $day->addDay();
         }
         return $final;
     }
@@ -239,12 +244,6 @@ class PartnerScheduleSlot
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
 
-        $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
-        if (!$category_partner) {
-            $this->setErrorMessage('Partner #' . $this->partner->id . ' doesn\'t serve category #' . $this->category->id);
-            return null;
-        }
-
         if ($this->partner) {
             $this->resources = $this->getResources();
             $this->bookedSchedules = $this->getBookedSchedules($start, $end);
@@ -272,7 +271,7 @@ class PartnerScheduleSlot
             $slot_end = humanReadableShebaTime($slot['end']);
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
-            $slot['is_valid'] = $start > $this->today ? 1 : 0;
+            $slot['is_valid'] = $start > $current_time ? 1 : 0;
         }
         return $slots;
     }
