@@ -69,7 +69,7 @@
         <tr>
             <td colspan="2"></td>
             <td class="text-left" colspan="1">DELIVERY CHARGE</td>
-            <td class="s-price">{{ $partner_order->deliveryCharge }}</td>
+            <td class="s-price">{{ $job->deliveryPrice }}</td>
         </tr>
     @elseif($job->logistic_charge)
         <tr>
@@ -104,8 +104,8 @@
     <tr>
         <td colspan="2"></td>
         @if($partner_order->due>0 && $type !== "QUOTATION")
-            <td class="text-left" colspan="1">DUE AMOUNT</td>
-            <td class="s-price">{{ $partner_order->due }}</td>
+            <td class="text-left" colspan="1">DUE AMOUNT @if($type=="QUOTATION") *** @endif</td>
+            <td class="s-price">{{ $partner_order->dueWithLogistic }}</td>
         @else
             <td class="text-left" colspan="1">GRAND TOTAL @if($type=="QUOTATION") *** @endif</td>
             <td class="s-price">{{ number_format($partner_order->grossAmountWithLogistic, 2) }}</td>
