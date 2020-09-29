@@ -42,7 +42,7 @@ class PartnerPosCustomer extends Model
 
     public function scopeGetPartnerPosCustomerName($query,$partner_id,$customer_id) {
         $partnerPosCustomer = $query->where('partner_id', $partner_id)->where('customer_id',$customer_id)->first();
-        if($partnerPosCustomer->nick_name) return $partnerPosCustomer->nick_name;
+        if($partnerPosCustomer && $partnerPosCustomer->nick_name) return $partnerPosCustomer->nick_name;
         $customer = PosCustomer::find((int)$customer_id);
         return $customer->profile->name;
     }
