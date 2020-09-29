@@ -89,17 +89,21 @@ class DueTrackerRepository extends BaseRepository
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
             $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $posProfile              = $users = \DB::table('partner_pos_customers')
-                                                ->join('pos_customers', 'partner_pos_customers.customer_id', '=', 'pos_customers.id')
-                                                ->where('pos_customers.profile_id', '=', $item['profile_id'])
-                                                ->where('partner_pos_customers.partner_id', '=', $this->partnerId)
-                                                ->select('partner_pos_customers.*');
+            $customerId              = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
 
-            $item['customer_name'] = $posProfile && isset($posProfile->nick_name) && !empty($posProfile->nick_name) ? $posProfile->nick_name : $profile ? $profile->name : "Unknown";
-//            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partnerId)->where('customer_id', $customerId)->first();
+            }
+
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $item['customer_name'] = $posProfile->nick_name;
+            } else {
+                $item['customer_name'] = $profile ? $profile->name : "Unknown";
+            }
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
-            $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
+            $item['customer_id']     = $customerId;
             return $item;
         });
         return $list;
