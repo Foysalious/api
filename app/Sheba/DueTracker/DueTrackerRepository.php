@@ -139,7 +139,7 @@ class DueTrackerRepository extends BaseRepository
             'stats'      => $result['data']['totals'],
             'customer'   => [
                 'id'                => $customer->id,
-                'name'              => $customer->profile->name,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
                 'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
