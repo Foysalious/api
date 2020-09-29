@@ -23,6 +23,7 @@ use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
+use Sheba\Business\Leave\Adjust\AdjustExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
@@ -280,7 +281,9 @@ class LeaveController extends Controller
         $business = $business_member->business;
 
         $leave_types = [];
-        $business->leaveTypes()->with(['leaves' => function ($q) { return $q->accepted(); }])
+        $business->leaveTypes()->with(['leaves' => function ($q) {
+            return $q->accepted();
+        }])
             ->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
             ->get()
             ->each(function ($leave_type) use (&$leave_types) {
@@ -291,7 +294,7 @@ class LeaveController extends Controller
                     'total_days' => $leave_type->total_days
                 ];
                 array_push($leave_types, $leave_type_data);
-        });
+            });
 
         $members = $business->members()->select('members.id', 'profile_id')->with([
             'profile' => function ($q) {
@@ -397,11 +400,11 @@ class LeaveController extends Controller
 
     private function sortByStatus($leaves)
     {
-       $pending = $leaves->where('status', Status::PENDING)->sortByDesc('created_at');
-       $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
-       $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
+        $pending = $leaves->where('status', Status::PENDING)->sortByDesc('created_at');
+        $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
+        $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
 
-       return $pending->merge($accepted)->merge($rejected);
+        return $pending->merge($accepted)->merge($rejected);
     }
 
     /**
@@ -451,7 +454,7 @@ class LeaveController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function infoUpdateBySuperAdmin (Request $request, LeaveRepository $leave_repo, LeaveUpdater $updater)
+    public function infoUpdateBySuperAdmin(Request $request, LeaveRepository $leave_repo, LeaveUpdater $updater)
     {
         $this->validate($request, [
             'leave_id' => 'required',
@@ -465,10 +468,10 @@ class LeaveController extends Controller
 
         foreach ($edit_values as $value) {
             if ($value->type === EditType::LEAVE_TYPE) {
-               $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
+                $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
             }
             if ($value->type === EditType::LEAVE_DATE) {
-               $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
+                $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
             }
             if ($value->type === EditType::SUBSTITUTE) {
                 $updater->setLeave($leave)->setUpdateType($value->type)->setSubstituteId($value->substitute_id)->updateSubstitute();
@@ -476,5 +479,37 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200);
+    }
+
+    public function adjustExcel(Request $request, AdjustExcel $adjust_excel)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+
+        $leave_types = [];
+        $business->leaveTypes()->with(['leaves' => function ($q) {
+            return $q->accepted();
+        }])
+            ->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
+            ->get()
+            ->each(function ($leave_type) use (&$leave_types) {
+                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
+                $leave_type_data = [
+                    'id' => $leave_type->id,
+                    'title' => $leave_type->title,
+                    'total_days' => $leave_type->total_days
+                ];
+                array_push($leave_types, $leave_type_data);
+            });
+        $leave_adjust_format = [
+            'title',
+            'user_email',
+            'leave_type_id',
+            'start_date',
+            'end_date',
+            'total_days'
+        ];
+        return $adjust_excel->setBalance($leave_adjust_format)->setLeaveType('$leave_types')->get();
+
     }
 }
