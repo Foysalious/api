@@ -100,8 +100,8 @@ class PartnerScheduleSlot
             $slot = $this->formatSlots($day);
             if($slot) {
                 array_push($final, ['value' => $day->toDateString(), 'slots' => $slot]);
-                $day->addDay();
             }
+            $day->addDay();
         }
         return $final;
     }
