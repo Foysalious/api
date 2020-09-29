@@ -172,6 +172,7 @@ class FacebookController extends Controller
         if ($profile && $profile->isBlackListed()) return api_response($request, null, 403, ['message' => "Your account is blocked."]);
         $from = $this->profileRepository->getAvatar($request->from);
         if ($profile == false) {
+            if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
             array_add($request, 'mobile', $code_data['mobile']);
             $profile = $this->profileRepository->registerMobile($request->all());
             $this->profileRepository->registerAvatarByKit($from, $profile);
@@ -202,6 +203,7 @@ class FacebookController extends Controller
                 if ($profile == false) {
                     $email_profile = $this->profileRepository->ifExist($request->fb_email, 'email');
                     if ($email_profile == false) {
+                        if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
                         $profile = $this->profileRepository->registerFacebook($request->all());
                         $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_image_url, 'images/profiles/');
                         $profile->update();
