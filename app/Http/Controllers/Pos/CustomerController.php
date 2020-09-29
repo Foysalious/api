@@ -148,7 +148,9 @@ class CustomerController extends Controller
             if ($error = $updater->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
             $customer = $updater->update();
-            return api_response($request, $customer, 200, ['customer' => $customer->details()]);
+            $customerDetails = $customer->details();
+            $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
+            return api_response($request, $customer, 200, ['customer' => $customerDetails]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
