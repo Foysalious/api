@@ -4,6 +4,8 @@
 namespace Sheba\EMI;
 
 
+use App\Models\PartnerPosCustomer;
+use App\Models\PosCustomer;
 use App\Models\Profile;
 use Carbon\Carbon;
 use Illuminate\Contracts\Support\Arrayable;
@@ -11,7 +13,7 @@ use Sheba\Loan\DS\ReflectionArray;
 
 class Item implements Arrayable {
     use ReflectionArray;
-    protected $id, $customer_name, $customer_mobile, $created_at, $amount, $date, $entry_at, $party, $head, $interest, $bank_transaction_charge, $source_type, $source_id, $payment_id, $payment_method, $source, $amount_cleared, $customer;
+    protected $id, $customer_name, $customer_mobile, $created_at, $amount, $date, $entry_at, $party, $head, $interest, $bank_transaction_charge, $source_type, $source_id, $payment_id, $payment_method, $source, $amount_cleared, $customer, $partner;
 
     /**
      * Get the instance as an array.
@@ -84,7 +86,17 @@ class Item implements Arrayable {
 
     private function getCustomer() {
         if (isset($this->party) && isset($this->party['profile_id'])) {
-            return Profile::select('name', 'mobile')->find($this->party['profile_id']);
+            $profile = Profile::select('name', 'mobile')->find($this->party['profile_id']);
+            $posCustomer = PosCustomer::select('id')->where('profile_id', $this->party['profile_id'])->first();
+            $customerId = isset($posCustomer) ? $posCustomer->id : null;
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partner->id)->where('customer_id', $customerId)->first();
+            }
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $profile['name'] = $posProfile->nick_name;
+            }
+
+            return $profile;
         }
         return null;
     }
