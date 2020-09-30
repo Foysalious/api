@@ -7,6 +7,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PaymentClientAuthentication\Contract as PaymentClientAuthenticationRepo;
+use Sheba\Dal\PaymentClientAuthentication\Status;
 use Sheba\ExternalPaymentLink\Client;
 
 class ClientController extends Controller
@@ -43,11 +44,11 @@ class ClientController extends Controller
         try {
             $this->validate($request, [
                 "name"            => "required|max:120",
-                "whitelisted_ips" => "required"
+                "status"          => "required|in:published,unpublished"
             ]);
             (new Client())->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
                 ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()
-                ->setPartnerId($request->partner->id)->store();
+                ->setPartnerId($request->partner->id)->setStatus($request->status)->store();
             return api_response($request, '', 200, ["data" => ["message" => "Client created successfully"]]);
         } catch (ValidationException $exception) {
             $message = getValidationErrorMessage($exception->validator->errors()->all());
