@@ -43,22 +43,24 @@ class ProfileDetailTransformer extends TransformerAbstract
         $general_banks = [];
         $mobile_banks = [];
         $is_verified = $profile->affiliate->verification_status == "verified";
-        $profile->banks->each(function ($bank) use (&$general_banks, $is_verified) {
-            $general_banks[] = [
-                'id' => $bank->id,
-                'bank_name' => $is_verified ? "" : $bank->bank_name,
-                'account_no' => $is_verified ? "" : $bank->account_no,
-                'branch_name' => $is_verified ? "" : $bank->branch_name,
-            ];
-        });
+        if(!$is_verified) {
+            $profile->banks->each(function ($bank) use (&$general_banks) {
+                $general_banks[] = [
+                    'id' => $bank->id,
+                    'bank_name' => $bank->bank_name,
+                    'account_no' => $bank->account_no,
+                    'branch_name' => $bank->branch_name,
+                ];
+            });
 
-        $profile->mobileBanks->each(function ($mobileBanks) use (&$mobile_banks, $is_verified) {
-            $mobile_banks[] = [
-                'id' => $is_verified ? "" : $mobileBanks->id,
-                'bank_name' => $is_verified ? "" : $mobileBanks->bank_name,
-                'account_no' => $is_verified ? "" : $mobileBanks->account_no,
-            ];
-        });
+            $profile->mobileBanks->each(function ($mobileBanks) use (&$mobile_banks) {
+                $mobile_banks[] = [
+                    'id' => $mobileBanks->id,
+                    'bank_name' => $mobileBanks->bank_name,
+                    'account_no' => $mobileBanks->account_no,
+                ];
+            });
+        }
         return [
             'general_banking' => ($general_banks) ? $general_banks : null,
             'mobile_banking' => ($mobile_banks) ? $mobile_banks : null
