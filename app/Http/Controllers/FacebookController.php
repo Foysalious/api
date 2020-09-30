@@ -82,7 +82,8 @@ class FacebookController extends Controller
                     if (!$profile) {
                         $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
                         if (!$profile) {
-                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
+                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile, $request) {
+                                if($request->hasHeader('portal-name')) array_add($fb_profile_info, 'portal_name', $request->header('portal-name'));
                                 $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1]));
                                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
                                 $profile->update();
