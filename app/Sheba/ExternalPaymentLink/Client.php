@@ -7,7 +7,7 @@ class Client
 {
     use ModificationFields;
 
-    private $name, $details, $whitelisted_ips, $partner_id;
+    private $name, $details, $whitelisted_ips, $partner_id, $status;
 
     private $client_id;
 
@@ -62,6 +62,12 @@ class Client
         return $this;
     }
 
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
     private function generateID()
     {
         return str_pad(mt_rand(1,999999999),self::CLIENT_ID_LENGTH,'0',STR_PAD_LEFT);
@@ -80,13 +86,13 @@ class Client
     private function processData()
     {
         return [
-            "client_id" => $this->client_id,
-            "name"      => $this->name,
-            "client_secret" => $this->client_secret,
-            "details" => $this->details,
+            "client_id"       => $this->client_id,
+            "name"            => $this->name,
+            "client_secret"   => $this->client_secret,
+            "details"         => $this->details,
             "whitelisted_ips" => $this->whitelisted_ips,
-            "partner_id" => $this->partner_id,
-            "status" => "published"
+            "partner_id"      => $this->partner_id,
+            "status"          => $this->status
         ];
     }
 }
