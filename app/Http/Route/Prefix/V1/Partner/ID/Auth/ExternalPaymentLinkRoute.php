@@ -8,6 +8,7 @@ class ExternalPaymentLinkRoute
             $api->group(['prefix' => 'external-payment-link'], function ($api) {
                 $api->group(['prefix' => 'clients'], function ($api) {
                     $api->get('/', 'ExternalPaymentLink\\ClientController@index');
+                    $api->post('/store', 'ExternalPaymentLink\\ClientController@store');
                 });
             });
         });

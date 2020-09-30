@@ -5,10 +5,15 @@ namespace App\Http\Controllers\ExternalPaymentLink;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PaymentClientAuthentication\Contract as PaymentClientAuthenticationRepo;
+use Sheba\ExternalPaymentLink\Client;
 
 class ClientController extends Controller
 {
+    /**
+     * @var PaymentClientAuthenticationRepo
+     */
     private $paymentClientRepo;
 
     public function __construct(PaymentClientAuthenticationRepo $contract)
@@ -28,6 +33,26 @@ class ClientController extends Controller
             return api_response($request, $clients, 200, ['data' => $clients]);
         }
         catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                "name"            => "required|max:120",
+                "whitelisted_ips" => "required"
+            ]);
+            (new Client())->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
+                ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()
+                ->setPartnerId($request->partner->id)->store();
+            return api_response($request, '', 200, ["data" => ["message" => "Client created successfully"]]);
+        } catch (ValidationException $exception) {
+            $message = getValidationErrorMessage($exception->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
