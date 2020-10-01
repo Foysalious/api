@@ -39,6 +39,10 @@ class ClientController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function store(Request $request)
     {
         try {
@@ -59,15 +63,39 @@ class ClientController extends Controller
         }
     }
 
-    public function clientSecretGenerate(Request $request)
+    /**
+     * @param $partner
+     * @param $client_id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function clientSecretGenerate($partner, $client_id, Request $request)
     {
         try {
-            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($request->payment_client_authentications_id)
+            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)
                 ->setClientSecret()->updateSecret();
             return api_response($request, $client, 200, ['data' => [
                 "client" => $client,
                 "message"=> "client secret updated"
             ]]);
+        }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $partner
+     * @param $client_id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function show($partner, $client_id, Request $request)
+    {
+        try {
+            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)->client();
+            return api_response($request, $client, 200, ['data' => ["client" => $client]]);
         }
         catch (\Throwable $e) {
             app('sentry')->captureException($e);

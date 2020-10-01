@@ -111,7 +111,7 @@ class Client
         return $this->client();
     }
 
-    private function client()
+    public function client()
     {
         return $this->repository->find($this->id);
     }
