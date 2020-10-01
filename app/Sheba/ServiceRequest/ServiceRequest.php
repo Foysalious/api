@@ -94,13 +94,23 @@ class ServiceRequest
         foreach ($services as $service) {
             if ($service->getService()->isOptions()) {
                 $option_prices = json_decode($service->getService()->variables)->prices;
-                if (!isset($option_prices->{implode(',', $service->getOption())})) {
+                if (!$this->hasThisOption($option_prices, implode(',', $service->getOption()))) {
                     throw new OptionIsNotAvailableException("This service #" . $service->getServiceId() . " is not available.");
                 }
             }
             array_push($category_ids, $service->getCategory()->id);
         }
         if (count(array_unique($category_ids)) > 1) throw new MultipleCategoryServiceRequestException();
+    }
+
+    private function hasThisOption($prices, $option)
+    {
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }
