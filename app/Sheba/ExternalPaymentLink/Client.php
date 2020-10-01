@@ -7,7 +7,7 @@ class Client
 {
     use ModificationFields;
 
-    private $name, $details, $whitelisted_ips, $partner_id, $status;
+    private $name, $details, $whitelisted_ips, $partner_id, $status, $id;
 
     private $client_id;
 
@@ -68,6 +68,12 @@ class Client
         return $this;
     }
 
+    public function setId($id)
+    {
+        $this->id = $id;
+        return $this;
+    }
+
     private function generateID()
     {
         return str_pad(mt_rand(1,999999999),self::CLIENT_ID_LENGTH,'0',STR_PAD_LEFT);
@@ -94,5 +100,19 @@ class Client
             "partner_id"      => $this->partner_id,
             "status"          => $this->status
         ];
+    }
+
+    public function updateSecret()
+    {
+        $this->client()->update($this->withBothModificationFields([
+            "client_secret"   => $this->client_secret
+        ]));
+
+        return $this->client();
+    }
+
+    private function client()
+    {
+        return $this->repository->find($this->id);
     }
 }
