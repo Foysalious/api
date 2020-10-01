@@ -86,7 +86,8 @@ class CustomerController extends Controller
             $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
             $data['total_used_promo']      = $total_used_promo;
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-            $data['is_customer_editable']  = $customer->isEditable();
+//            $data['is_customer_editable']  = $customer->isEditable();
+            $data['is_customer_editable']  = true;
             $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
             return api_response($request, $customer, 200, ['customer' => $data]);
         } catch (Throwable $e) {
