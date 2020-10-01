@@ -146,7 +146,7 @@ class ProfileRepository extends BaseRepository implements ProfileRepositoryInter
     {
         $profile_data = $data;
 
-        if (isset($data['profile_image'])) {
+        if (isset($data['profile_image']) && !isset($data['pro_pic'])) {
             $profile_data['pro_pic'] = $data['profile_image'];
         }
         if (isset($data['_token'])) {

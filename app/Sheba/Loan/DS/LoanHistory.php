@@ -53,7 +53,7 @@ class LoanHistory
             'field' => 'id',
             'key'   => [
                 'en' => 'ID',
-                'bn' => 'লোনের আইডি'
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'ফ্যাসিলিটি আইডি' : 'লোনের আইডি'
             ],
             'value' => [
                 'en' => $this->partnerBankLoan->id,
@@ -83,10 +83,10 @@ class LoanHistory
     {
         if ($this->partnerBankLoan->status != constants('LOAN_STATUSES')['approved']) {
             $en = 'Loan Amount';
-            $bn = 'লোনের পরিমাণ';
+            $bn = $this->partnerBankLoan->type == LoanTypes::MICRO ? 'টাকার পরিমাণ' : 'লোনের পরিমাণ';
         } else {
             $en = 'Given Loan Amount';
-            $bn = 'বরাদ্দ লোনের পরিমাণ';
+            $bn = $this->partnerBankLoan->type == LoanTypes::MICRO ? 'বরাদ্দ টাকার পরিমাণ' : 'বরাদ্দ লোনের পরিমাণ';
         }
         return [
             'field' => 'loan_amount',
@@ -123,11 +123,11 @@ class LoanHistory
             'field' => 'bank_name',
             'key'   => [
                 'en' => 'Bank Name',
-                'bn' => 'ব্যাংকের নাম',
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'প্রদানকারীর নাম' : 'ব্যাংকের নাম',
             ],
             'value' => [
-                'en' => $name,
-                'bn' => $name
+                'en' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'Sheba Platform Limited' : $name,
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'Sheba Platform Limited' : $name
             ]
         ];
     }

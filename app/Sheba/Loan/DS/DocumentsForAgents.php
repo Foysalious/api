@@ -37,7 +37,7 @@ class DocumentsForAgents implements Arrayable
         $this->resource    = $resource;
         if ($this->partner) {
             $this->basic_information = $this->partner->basicInformations;
-            $this->bank_information  = $this->partner->bankInformations;
+            $this->bank_information  = $this->partner->bankInformations->first();
         }
         if ($this->resource) {
             $this->profile = $resource->profile;

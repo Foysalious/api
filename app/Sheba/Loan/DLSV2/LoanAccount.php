@@ -62,7 +62,7 @@ class LoanAccount
     {
         $data['loan_balance']             = 0;
         $data['due_balance']              = 0;
-        $data['status_message']           = 'আপনি সর্বোচ্চ ' . convertNumbersToBangla($partner_loan->loan_amount, true, 0) . ' পর্যন্ত লোন গ্রহণ করতে পারবেন';
+        $data['status_message']           = 'আপনি সর্বোচ্চ ' . convertNumbersToBangla($partner_loan->loan_amount, true, 0) . ' পর্যন্ত টাকা গ্রহণ করতে পারবেন';
         $data['status_type']              = 'info';
         $data['can_claim']                = 1;
         $data['should_pay']               = 0;
@@ -77,7 +77,7 @@ class LoanAccount
     {
         $data['loan_balance']             = 0;
         $data['due_balance']              = 0;
-        $data['status_message']           = 'লোন দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
+        $data['status_message']           = 'টাকা দাবির আবেদনটি বিবেচনাধীন রয়েছে! অতি শীঘ্রই সেবা প্লাটফর্ম থেকে আপনার সাথে যোগাযোগ করা হবে। বিস্তারিত জানতে কল করুন ১৬৫১৬।';
         $data['status_type']              = 'warning';
         $data['can_claim']                = 0;
         $data['should_pay']               = 0;
@@ -93,7 +93,7 @@ class LoanAccount
         $is_defaulter                     = $this->isDefaulter($last_claim->defaulter_date);
         $data['loan_balance']             = $data['granted_amount'] - $due;
         $data['due_balance']              = $due;
-        $data['status_message']           = $is_defaulter ? 'আপনার লোন পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্য হাজারে '. convertNumbersToBangla(GeneralStatics::getDefaulterFine(),true, 2) .' টাকা করে যোগ হচ্ছে।' : 'লোন দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
+        $data['status_message']           = $is_defaulter ? 'আপনার টাকা পরিশোধ করার শেষ দিন অতিক্রম হয়ে গিয়েছে, আপনি এখন ডিফল্টার হয়ে গিয়েছেন, অতিরিক্ত প্রতিদিনের জন্য হাজারে '. convertNumbersToBangla(GeneralStatics::getDefaulterFine(),true, 2) .' টাকা করে যোগ হচ্ছে।' : 'টাকা দাবির আবেদনটি গৃহীত হয়েছে। দাবীকৃত টাকার পরিমাণ আপনার রবি ব্যালেন্সে যুক্ত হয়েছে, বন্ধু অ্যাপ-এ লগইন করে দেখে নিন।';
         $data['status_type']              = $is_defaulter ? 'defaulter' : 'success';
         $data['can_claim']                = 0;
         $data['should_pay']               = 1;
@@ -108,7 +108,7 @@ class LoanAccount
     {
         $data['loan_balance']             = 0;
         $data['due_balance']              = 0;
-        $data['status_message']           = 'লোন দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
+        $data['status_message']           = 'টাকা দাবির আবেদনটি গৃহীত হয়নি। দয়া করে পুনরায় আবেদন করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬।';
         $data['status_type']              = 'error';
         $data['can_claim']                = 1;
         $data['should_pay']               = 0;
