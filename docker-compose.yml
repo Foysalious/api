@@ -10,8 +10,8 @@ services:
     tty: true
     environment:
       SERVICE_NAME: app
-      DB_HOST: sheba-rr3.cifg1gfqorjf.ap-south-1.rds.amazonaws.com
-      DB_DATABASE: sheba
+      DB_HOST: database
+      DB_DATABASE: sheba_fresh_v3
       REDIS_HOST: redis
     working_dir: /var/www
     volumes:
