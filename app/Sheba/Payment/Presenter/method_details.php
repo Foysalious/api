@@ -41,7 +41,7 @@ $ok_wallet      = [
 $nagad          = [
     'name'        => 'Nagad',
     'name_bn'     => 'নগদ',
-    'asset'       => 'ssl',
+    'asset'       => 'nagad',
     'method_name' => 'nagad'
 ];
 
