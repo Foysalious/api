@@ -1,17 +1,17 @@
-version: '3'
+version: '3.5'
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    image: sheba.xyz/php
+    image: sheba.xyz/php-fpm-7.0.33
     container_name: app
     restart: unless-stopped
     tty: true
     environment:
       SERVICE_NAME: app
-      DB_HOST: database
-      DB_DATABASE: sheba_fresh_v3
+      DB_HOST: sheba-rr3.cifg1gfqorjf.ap-south-1.rds.amazonaws.com
+      DB_DATABASE: sheba
       REDIS_HOST: redis
     working_dir: /var/www
     volumes:
