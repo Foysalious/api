@@ -58,4 +58,20 @@ class ClientController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    public function clientSecretGenerate(Request $request)
+    {
+        try {
+            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($request->payment_client_authentications_id)
+                ->setClientSecret()->updateSecret();
+            return api_response($request, $client, 200, ['data' => [
+                "client" => $client,
+                "message"=> "client secret updated"
+            ]]);
+        }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }
