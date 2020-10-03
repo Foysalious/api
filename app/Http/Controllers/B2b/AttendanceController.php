@@ -359,8 +359,7 @@ class AttendanceController extends Controller
      * @return JsonResponse
      */
     public function updateAttendanceSetting($business, Request $request, TypeUpdater $type_updater,
-                                            SettingCreator $creator, SettingUpdater $updater, SettingDeleter $deleter
-)
+                                            SettingCreator $creator, SettingUpdater $updater, SettingDeleter $deleter)
     {
         $this->validate($request, ['attendance_types' => 'required|string', 'business_offices' => 'required|string']);
 
