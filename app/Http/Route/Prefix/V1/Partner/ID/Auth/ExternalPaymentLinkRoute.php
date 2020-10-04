@@ -11,7 +11,7 @@ class ExternalPaymentLinkRoute
                     $api->post('/store', 'ExternalPaymentLink\\ClientController@store');
                     $api->post('/{client_id}/generate-secret', "ExternalPaymentLink\\ClientController@clientSecretGenerate");
                     $api->get('/{client_id}/details', "ExternalPaymentLink\\ClientController@show");
-
+                    $api->post('/{client_id}/update', "ExternalPaymentLink\\ClientController@update");
                 });
             });
         });

@@ -40,7 +40,7 @@ class Client
 
     public function setWhitelistedIp($whitelisted_ip)
     {
-        $this->whitelisted_ips = json_encode($whitelisted_ip);
+        $this->whitelisted_ips = $whitelisted_ip;
         return $this;
     }
 
@@ -104,8 +104,20 @@ class Client
 
     public function updateSecret()
     {
-        $this->client()->update($this->withBothModificationFields([
+        $this->client()->update($this->withUpdateModificationField([
             "client_secret"   => $this->client_secret
+        ]));
+
+        return $this->client();
+    }
+
+    public function update()
+    {
+        $this->client()->update($this->withUpdateModificationField([
+            "name"            => $this->name,
+            "details"         => $this->details,
+            "whitelisted_ips" => $this->whitelisted_ips,
+            "status"          => $this->status
         ]));
 
         return $this->client();
