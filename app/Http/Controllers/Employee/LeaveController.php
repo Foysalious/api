@@ -97,8 +97,11 @@ class LeaveController extends Controller
         $validation_data = [
             'start_date' => 'required|before_or_equal:end_date',
             'end_date' => 'required',
-            'attachments.*' => 'file'
+            'attachments.*' => 'file',
+            'is_half_day' => 'sometimes|required|in:1,0',
+            'half_day_configuration' => "required_if:is_half_day,==,1|in:first_half,second_half"
         ];
+
         $business_member = $this->getBusinessMember($request);
         if ($this->isNeedSubstitute($business_member)) $validation_data['substitute'] = 'required|integer';
         $this->validate($request, $validation_data);
@@ -113,6 +116,8 @@ class LeaveController extends Controller
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
+            ->setIsHalfDay($request->is_half_day)
+            ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
             ->setCreatedBy($member);
 
@@ -163,8 +168,8 @@ class LeaveController extends Controller
             $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
-        $is_half_day_enable = $business->half_day;
-        $half_day_configuration = $is_half_day_enable ? json_decode($business->half_day_configuration, 1):null;
+        $is_half_day_enable = $business->is_half_day_enable;
+        $half_day_configuration = $is_half_day_enable ? json_decode($business->half_day_configuration, 1) : null;
         return api_response($request, null, 200, [
             'leave_types' => $leave_types,
             'is_half_day_enable' => $is_half_day_enable,
