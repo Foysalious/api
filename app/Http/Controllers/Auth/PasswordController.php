@@ -4,6 +4,7 @@ use App\Exceptions\MailgunClientException;
 use App\Http\Controllers\Controller;
 use App\Models\Profile;
 use Cache;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -39,19 +40,20 @@ class PasswordController extends Controller
         return api_response($request, null, 404);
     }
 
+    /**
+     * @param Profile $profile
+     * @param $column
+     * @param $email
+     * @throws MailgunClientException
+     */
     private function sendResetCode(Profile $profile, $column, $email)
     {
         $reset_token = randomString(4, 1);
         $key_name = 'password_reset_code_' . $reset_token;
-        Redis::set($key_name, json_encode([
-            "profile_id" => $profile->id,
-            'code' => $reset_token
-        ]));
-        if ($column == 'email') {
-            $this->sendPasswordResetEmail($email, $reset_token);
-        } else {
-            $this->sendPasswordResetSms($email, $reset_token);
-        }
+
+        Redis::set($key_name, json_encode(["profile_id" => $profile->id, 'code' => $reset_token]));
+        if ($column == 'email') $this->sendPasswordResetEmail($email, $reset_token);
+        else $this->sendPasswordResetSms($email, $reset_token);
         Redis::expire($key_name, 600);
     }
 
@@ -68,7 +70,7 @@ class PasswordController extends Controller
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
                 $m->to($email)->subject($subject);
             });
-        } catch (\Exception $exception) {
+        } catch (Exception $exception) {
             throw new MailgunClientException();
         }
     }
@@ -104,10 +106,17 @@ class PasswordController extends Controller
     {
         try {
             $this->validate($request, [
-                'password' => 'required|min:4',
+                'password' => 'required|min:5|max:20',
                 'from' => 'required|string|in:' . implode(',', constants('FROM')),
                 'code' => 'required'
             ]);
+            /*if (!preg_match('/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) {
+                return api_response($request, 0, 403, ['message' => "Password must contain one letter or one number"]);
+            }
+            if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)){
+                return api_response($request, 0, 403, ['message' => "Punctuations that you have used are not supported"]);
+            }*/
+
             $key = Redis::get('password_reset_code_' . (int)$request->code);
             if ($key != null) {
                 $data = json_decode($key);

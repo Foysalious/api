@@ -6,5 +6,5 @@ storage/*
 /node_modules
 npm-debug.log
 build/config.gypi
-/resources/assets/ok-wallet/*
-/resources/assets/nagad/*
+resources/assets/ok-wallet/*
+resources/assets/nagad/*

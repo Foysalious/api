@@ -23,6 +23,7 @@ use App\Transformers\Business\TenderMinimalTransformer;
 use App\Transformers\Business\TenderTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Dotenv\Exception\ValidationException;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +43,7 @@ use Sheba\Business\Procurement\StatusCalculator;
 use Sheba\Business\Procurement\StatusCalculator as ProcurementStatusCalculator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\WorkOrderDataGenerator;
+use Sheba\Dal\Procurement\PublicationStatuses;
 use Sheba\Dal\ProcurementInvitation\ProcurementInvitationRepositoryInterface;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -58,9 +60,13 @@ use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
+use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
+use Sheba\Business\Procurement\AttachmentUpdater;
+use Sheba\Business\Procurement\DescriptionUpdater;
 
 class ProcurementController extends Controller
 {
@@ -84,6 +90,8 @@ class ProcurementController extends Controller
     private $procurementOrder;
     /** @var RequestHandler $procurementRequestHandler */
     private $procurementRequestHandler;
+    /** @var ResourceCreateRequest $resourceCreateRequest */
+    private $resourceCreateRequest;
 
     /**
      * ProcurementController constructor.
@@ -96,6 +104,7 @@ class ProcurementController extends Controller
      * @param ProcurementFilterRequest $procurement_filter_request
      * @param ProcurementOrder $procurement_order
      * @param RequestHandler $procurement_request_handler
+     * @param ResourceCreateRequest $resource_create_request
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
@@ -104,7 +113,8 @@ class ProcurementController extends Controller
                                 PartnerCreateRequest $partner_create_request,
                                 ProcurementFilterRequest $procurement_filter_request,
                                 ProcurementOrder $procurement_order,
-                                RequestHandler $procurement_request_handler)
+                                RequestHandler $procurement_request_handler,
+                                ResourceCreateRequest $resource_create_request)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
@@ -114,6 +124,7 @@ class ProcurementController extends Controller
         $this->procurementFilterRequest = $procurement_filter_request;
         $this->procurementOrder = $procurement_order;
         $this->procurementRequestHandler = $procurement_request_handler;
+        $this->resourceCreateRequest = $resource_create_request;
     }
 
     public function create(Request $request)
@@ -223,7 +234,7 @@ class ProcurementController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
         $procurements = $this->procurementRepository->ofBusiness($business->id)
-            ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published'])
+            ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published', 'publication_status'])
             ->orderBy('id', 'desc');
         $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
@@ -244,9 +255,11 @@ class ProcurementController extends Controller
         if ($request->has('sort_by_created_at')) $procurements = $this->sortByCreatedAt($procurements, $request->sort_by_created_at)->values();
         $total_procurement = count($procurements);
         if ($request->has('limit')) $procurements = collect($procurements)->splice($offset, $limit);
+
         if (count($procurements) > 0) return api_response($request, $procurements, 200, [
             'procurements' => $procurements, 'total_procurement' => $total_procurement, 'is_procurement_available' => $is_procurement_available
-        ]); else return api_response($request, null, 404);
+        ]);
+        else return api_response($request, null, 404);
     }
 
     /**
@@ -257,6 +270,9 @@ class ProcurementController extends Controller
     public function filterWithStatus($procurements, $status)
     {
         if ($status === 'draft') return collect($procurements)->filter(function ($procurement) use ($status) {
+            return strtoupper($procurement['status']) == strtoupper($status);
+        });
+        if ($status === 'unpublished') return collect($procurements)->filter(function ($procurement) use ($status) {
             return strtoupper($procurement['status']) == strtoupper($status);
         });
         if ($status === 'open') return collect($procurements)->filter(function ($procurement) use ($status) {
@@ -488,9 +504,7 @@ class ProcurementController extends Controller
     public function updateGeneral($business, $procurement, Request $request, Updater $updater)
     {
         $this->validate($request, [
-            'description' => 'sometimes|required|string',
             'number_of_participants' => 'sometimes|required|numeric',
-            'last_date_of_submission' => 'sometimes|required|date_format:Y-m-d',
             'procurement_start_date' => 'sometimes|required|date_format:Y-m-d',
             'procurement_end_date' => 'sometimes|required|date_format:Y-m-d',
         ]);
@@ -498,13 +512,95 @@ class ProcurementController extends Controller
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
 
-        $this->procurementRequestHandler->setLongDescription($request->description)
-            ->setNumberOfParticipants($request->number_of_participants)
-            ->setLastDateOfSubmission($request->last_date_of_submission)
+        $this->procurementRequestHandler->setNumberOfParticipants($request->number_of_participants)
             ->setProcurementStartDate($request->procurement_start_date)
             ->setProcurementEndDate($request->procurement_end_date)
-            ->setPaymentOptions($request->payment_options);
+            ->setPaymentOptions($request->payment_options)
+            ->setCategory($request->category_id)
+            ->setTags($request->tags);
         $updater->setRequestHandler($this->procurementRequestHandler)->setProcurement($procurement)->update();
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param BasicInfoUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateBasic($business, $procurement, Request $request, BasicInfoUpdater $updater)
+    {
+        $this->validate($request, [
+            'status' => 'string',
+            'title' => 'string',
+            'estimated_price' => 'string',
+            'last_date_of_submission' => 'date_format:Y-m-d'
+        ]);
+
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if ($request->status === 'Draft') {
+            $updater->setProcurement($procurement)
+                ->setTitle($request->title)
+                ->setBudget($request->estimated_price)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForDraft();
+        }
+        if ($request->status === 'Open') {
+            $updater->setProcurement($procurement)
+                ->setLastDateOfSubmission($request->last_date_of_submission)
+                ->updateForOpen();
+        }
+
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param AttachmentUpdater $updater
+     * @return JsonResponse
+     */
+    public function updateAttachments($business, $procurement, Request $request, AttachmentUpdater $updater)
+    {
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        if ($request->added_documents && is_array($request->added_documents)) {
+            $updater->setAttachmentsForAdd($request->added_documents)->setProcurement($procurement)
+                     ->setCreatedBy($request->manager_member)->addAttachments();
+        }
+        if (!is_null($request->deleted_documents)) {
+            $deleted_documents = json_decode($request->deleted_documents);
+            $updater->setAttachmentsForDelete($deleted_documents)->deleteAttachments();
+        }
+        
+        return api_response($request, null, 200, ["message" => "Successful"]);
+    }
+
+    public function updateDescription($business, $procurement, Request $request, DescriptionUpdater $updater)
+    {
+        $this->validate($request, [
+            'description' => 'required|string'
+        ]);
+
+        $business_member = $request->business_member;
+        $this->setModifier($business_member->member);
+
+        $procurement = $this->procurementRepository->find($procurement);
+        if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+
+        $updater->setProcurement($procurement)->setDescription($request->description)->update();
 
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
@@ -593,6 +689,27 @@ class ProcurementController extends Controller
 
         if ($request->has('sharing_to')) $creator->setSharingTo($request->sharing_to);
         $creator->setIsPublished($request->is_published)->changeStatus($procurement);
+
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $procurement
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function updatePublicationStatus($business, $procurement, Request $request, Creator $creator)
+    {
+        $publication_status = implode(',', PublicationStatuses::get());
+        $this->validate($request, ['publication_status' => 'required|string:in:' . $publication_status]);
+        $this->setModifier($request->manager_member);
+
+        $procurement = Procurement::find((int)$procurement);
+        if (!$procurement) return api_response($request, null, 404);
+
+        $creator->setPublicationStatus($request->publication_status)->changePublicationStatus($procurement);
 
         return api_response($request, null, 200);
     }
@@ -791,7 +908,7 @@ class ProcurementController extends Controller
             'long_description' => $procurement->long_description,
             'labels' => $procurement->getTagNamesAttribute()->toArray(),
             'start_date' => $procurement->procurement_start_date->format('d/m/y'),
-            'published_at' => $procurement->is_published ? $procurement->published_at->format('d/m/y') : null,
+            'published_at' => ($procurement->publication_status == PublicationStatuses::PUBLISHED) ? $procurement->published_at->format('d/m/y') : null,
             'end_date' => $procurement->procurement_end_date->format('d/m/y'),
             'number_of_participants' => $procurement->number_of_participants,
             'last_date_of_submission' => $procurement->last_date_of_submission->format('Y-m-d'),
@@ -864,17 +981,14 @@ class ProcurementController extends Controller
      * @param $tender
      * @param Request $request
      * @param BidCreator $creator
-     * @param BidUpdater $updater
      * @param BidRepositoryInterface $bid_repository
-     * @param ProfileRepositoryInterface $profile_repository
      * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
      * @return JsonResponse
      * @throws Exception
      */
     public function tenderProposalStore($tender, Request $request,
-                                        BidCreator $creator, BidUpdater $updater,
+                                        BidCreator $creator,
                                         BidRepositoryInterface $bid_repository,
-                                        ProfileRepositoryInterface $profile_repository,
                                         ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
     {
         $this->validate($request, [
@@ -939,7 +1053,7 @@ class ProcurementController extends Controller
         $profile = $this->profileRepository->checkExistingProfile($request->company_phone, $request->email);
 
         if (!$profile || !$profile->resource) {
-            $this->resourceCreator->setData($this->formatProfileSpecificData($request));
+            $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->setData($this->formatProfileSpecificData($request));
             $this->resource = $this->resourceCreator->create();
         } else {
             $this->resource = $profile->resource;
