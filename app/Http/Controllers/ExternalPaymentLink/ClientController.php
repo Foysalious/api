@@ -12,9 +12,6 @@ use Sheba\ExternalPaymentLink\Client;
 
 class ClientController extends Controller
 {
-    /**
-     * @var PaymentClientAuthenticationRepo
-     */
     private $paymentClientRepo;
 
     public function __construct(PaymentClientAuthenticationRepo $contract)
@@ -32,8 +29,7 @@ class ClientController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $clients = $this->paymentClientRepo->getByPartner($request->partner->id)->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
             return api_response($request, $clients, 200, ['data' => $clients]);
-        }
-        catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -46,10 +42,7 @@ class ClientController extends Controller
     public function store(Request $request)
     {
         try {
-            $this->validate($request, [
-                "name"            => "required|max:120",
-                "status"          => "required|in:published,unpublished"
-            ]);
+            $this->validate($request, $this->validationRules());
             (new Client())->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
                 ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()
                 ->setPartnerId($request->partner->id)->setStatus($request->status)->store();
@@ -61,6 +54,14 @@ class ClientController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function validationRules()
+    {
+        return [
+            "name"            => "required|max:120",
+            "status"          => "required|in:published,unpublished"
+        ];
     }
 
     /**
@@ -78,8 +79,7 @@ class ClientController extends Controller
                 "client" => $client,
                 "message"=> "client secret updated"
             ]]);
-        }
-        catch (\Throwable $e) {
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -96,8 +96,33 @@ class ClientController extends Controller
         try {
             $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)->client();
             return api_response($request, $client, 200, ['data' => ["client" => $client]]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-        catch (\Throwable $e) {
+    }
+
+    /**
+     * @param $partner
+     * @param $client_id
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update($partner, $client_id, Request $request)
+    {
+        try {
+            $this->validate($request, $this->validationRules());
+            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)
+                ->setName($request->name)->setDetails($request->details)->setWhitelistedIp($request->whitelisted_ips)
+                ->setStatus($request->status)->update();
+            return api_response($request, $client, 200, ['data' => [
+                "message" => "client information updated",
+                "client"  => $client
+            ]]);
+        } catch (ValidationException $exception) {
+            $message = getValidationErrorMessage($exception->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
