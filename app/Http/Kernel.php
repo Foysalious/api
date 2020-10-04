@@ -13,6 +13,7 @@ use App\Http\Middleware\CustomerAuthMiddleware;
 use App\Http\Middleware\CustomerJobAuthMiddleware;
 use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\EncryptCookies;
+use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\JWT\PartnerAuthMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
@@ -108,6 +109,7 @@ class Kernel extends HttpKernel
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
         'geo.auth' => GeoAuthMiddleware::class,
         'loan.version' => DLSApiVersioning::class,
-        'jwt.partner.auth' => PartnerAuthMiddleware::class
+        'jwt.partner.auth' => PartnerAuthMiddleware::class,
+        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class
     ];
 }
