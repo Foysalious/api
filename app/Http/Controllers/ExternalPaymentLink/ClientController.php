@@ -3,11 +3,9 @@
 namespace App\Http\Controllers\ExternalPaymentLink;
 
 use Illuminate\Http\Request;
-use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PaymentClientAuthentication\Contract as PaymentClientAuthenticationRepo;
-use Sheba\Dal\PaymentClientAuthentication\Status;
 use Sheba\ExternalPaymentLink\Client;
 
 class ClientController extends Controller
@@ -45,12 +43,12 @@ class ClientController extends Controller
             $this->validate($request, $this->validationRules());
             (new Client())->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
                 ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()
-                ->setPartnerId($request->partner->id)->setStatus($request->status)->store();
+                ->setPartnerId($request->partner->id)->setStatus($request->status)->store($request->manager_resource);
             return api_response($request, '', 200, ["data" => ["message" => "Client created successfully"]]);
         } catch (ValidationException $exception) {
             $message = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (\Exception $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -60,7 +58,9 @@ class ClientController extends Controller
     {
         return [
             "name"            => "required|max:120",
-            "status"          => "required|in:published,unpublished"
+            "status"          => "required|in:published,unpublished",
+            "whitelisted_ips" => "required",
+            "details"         => "required"
         ];
     }
 
@@ -74,7 +74,7 @@ class ClientController extends Controller
     {
         try {
             $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)
-                ->setClientSecret()->updateSecret();
+                ->setClientSecret()->updateSecret($request->manager_resource);
             return api_response($request, $client, 200, ['data' => [
                 "client" => $client,
                 "message"=> "client secret updated"
@@ -114,7 +114,7 @@ class ClientController extends Controller
             $this->validate($request, $this->validationRules());
             $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)
                 ->setName($request->name)->setDetails($request->details)->setWhitelistedIp($request->whitelisted_ips)
-                ->setStatus($request->status)->update();
+                ->setStatus($request->status)->update($request->manager_resource);
             return api_response($request, $client, 200, ['data' => [
                 "message" => "client information updated",
                 "client"  => $client
