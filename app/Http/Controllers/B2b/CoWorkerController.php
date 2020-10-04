@@ -4,6 +4,7 @@ use App\Models\Business;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
@@ -143,13 +144,15 @@ class CoWorkerController extends Controller
      */
     public function getRoles(Request $request)
     {
-        $roles = BusinessRole::query()->select('id', 'name')->groupBy('name')->get();
+        $roles = BusinessRole::query()->pluck('name')->toArray();
+        $designations_list = Designations::getDesignations();
+        $all_roles = collect(array_merge($roles,$designations_list))->unique();
         if ($request->has('search')) {
-            $roles = $roles->filter(function ($role) use ($request) {
-                return str_contains(strtoupper($role->name), strtoupper($request->search));
+            $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
+                return str_contains(strtoupper($role), strtoupper($request->search));
             });
         }
-        return api_response($request, $roles, 200, ['roles' => $roles->values()]);
+        return api_response($request, $all_roles, 200, ['roles' => collect($all_roles)->values()]);
     }
 
     /**
