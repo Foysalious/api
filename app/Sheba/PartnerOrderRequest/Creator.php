@@ -115,7 +115,7 @@ class Creator
         try {
             /** @var Partner $partner */
             $partner = $this->partners->keyBy('id')->get($partner_id);
-            (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
+            (new SmsHandlerRepo('partner-order-request'))->setVendor('ssl')->send($partner->getContactNumber(), [
                 'partner_name' => $partner->name
             ]);
         } catch (Throwable $e) {
