@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
@@ -73,7 +74,9 @@ class LeaveController extends Controller
         $leave = $leave_repo->find($leave);
         $business_member = $this->getBusinessMember($request);
         if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
-        $leave = $leave->load(['leaveType' => function ($q) {return $q->withTrashed();}]);
+        $leave = $leave->load(['leaveType' => function ($q) {
+            return $q->withTrashed();
+        }]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
@@ -147,6 +150,8 @@ class LeaveController extends Controller
      */
     public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -158,8 +163,13 @@ class LeaveController extends Controller
             $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
-
-        return api_response($request, null, 200, ['leave_types' => $leave_types]);
+        $is_half_day_enable = $business->half_day;
+        $half_day_configuration = $is_half_day_enable ? json_decode($business->half_day_configuration, 1):null;
+        return api_response($request, null, 200, [
+            'leave_types' => $leave_types,
+            'is_half_day_enable' => $is_half_day_enable,
+            'half_day_configuration' => $half_day_configuration
+        ]);
     }
 
     /**
