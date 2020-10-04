@@ -210,7 +210,9 @@ class Creator
             }
         }
 
-        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
+        return $this->isHalfDay ?
+            ($this->endDate->diffInDays($this->startDate) + 0.5) - $leave_day_into_holiday_or_weekend :
+            ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     public function setSubstitute($substitute_id)
