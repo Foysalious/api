@@ -49,9 +49,9 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
-                'note' => $requestable->note,
-                'approvers' => $approvers,
-            ]
+                'note' => $requestable->note
+            ],
+            'approvers' => $approvers
         ];
     }
 
@@ -71,12 +71,12 @@ class ApprovalRequestTransformer extends TransformerAbstract
     /**
      * @param $approval_request
      * @param $profile
-     * @return string
+     * @return array
      */
     private function approvarWithStatus($approval_request, $profile)
     {
-        if ($approval_request->status == Status::ACCEPTED) return $profile->name . ' has approved.';
-        elseif ($approval_request->status == Status::REJECTED) return $profile->name . 'has rejected.';
-        else return $profile->name . ' not responded yet.';
+        if ($approval_request->status == Status::ACCEPTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
+        if ($approval_request->status == Status::REJECTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
+        return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
     }
 }
