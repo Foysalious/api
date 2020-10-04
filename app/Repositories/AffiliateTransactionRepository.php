@@ -114,7 +114,7 @@ class AffiliateTransactionRepository
         if($count = $movie_ticket->count()) $category_wise_transaction[] = $this->makeData($movie_ticket->sum('amount'), $count, "Movie Ticket", "সিনেমা টিকেট", "movie_ticket",'-');
         if($count = $movie_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($movie_ticket_commission->sum('amount'), $count, "Movie Ticket Commission", "সিনেমা টিকেট কমিশন", "movie_ticket_commission");
         if($count = $refunds->count()) $category_wise_transaction[] = $this->makeData($refunds->sum('amount'), $count, "Refunds", "রিফান্ড", "refunds");
-        if($count = $sheba_facilitated->count()) $category_wise_transaction[] = $this->makeData($sheba_facilitated->sum('amount'), $count, "Facilitated Amount", "ফ্যাসিলেটেড অ্যামাউন্ট", "facilitated_amount");
+        if($count = $sheba_facilitated->count()) $category_wise_transaction[] = $this->makeData($sheba_facilitated->sum('amount'), $count, "Facilitated Amount", "ফ্যাসিলিটি অ্যামাউন্ট", "facilitated_amount");
 
         return $category_wise_transaction;
     }
