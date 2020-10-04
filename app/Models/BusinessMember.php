@@ -142,7 +142,7 @@ class BusinessMember extends Model
             $used_days += ($end_date->diffInDays($start_date) + 1) - $leave_day_into_holiday_or_weekend;
         });
 
-        return (int)$used_days;
+        return (float)$used_days;
     }
 
     private function isLeaveFullyInAFiscalYear($fiscal_year_time_frame, Leave $leave)
