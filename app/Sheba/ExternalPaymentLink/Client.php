@@ -84,9 +84,10 @@ class Client
         return str_random(120);
     }
 
-    public function store()
+    public function store($modifier = null)
     {
-        $this->repository->create($this->withBothModificationFields($this->processData()));
+        $this->setModifier($modifier);
+        $this->repository->create($this->processData());
     }
 
     private function processData()
@@ -102,8 +103,9 @@ class Client
         ];
     }
 
-    public function updateSecret()
+    public function updateSecret($modifier = null)
     {
+        $this->setModifier($modifier);
         $this->client()->update($this->withUpdateModificationField([
             "client_secret"   => $this->client_secret
         ]));
@@ -111,8 +113,9 @@ class Client
         return $this->client();
     }
 
-    public function update()
+    public function update($modifier = null)
     {
+        $this->setModifier($modifier);
         $this->client()->update($this->withUpdateModificationField([
             "name"            => $this->name,
             "details"         => $this->details,
