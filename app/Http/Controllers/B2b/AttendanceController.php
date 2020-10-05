@@ -301,9 +301,16 @@ class AttendanceController extends Controller
         $weekend_days = $weekends->pluck('weekday_name')->toArray();
         $weekend_days = array_map('ucfirst', $weekend_days);
         $office_time = $office_hours->getOfficeTime($business);
+        $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
         $data = [
-            'office_hour_type' => 'Fixed Time', 'start_time' => Carbon::parse($office_time->start_time)->format('h:i a'), 'end_time' => Carbon::parse($office_time->end_time)->format('h:i a'), 'weekends' => $weekend_days
+            'office_hour_type' => 'Fixed Time',
+            'start_time' => $office_time->start_time ? Carbon::parse($office_time->start_time)->format('h:i a') : null,
+            'end_time' => $office_time->end_time ? Carbon::parse($office_time->end_time)->format('h:i a') : null,
+            'weekends' => $weekend_days,
+            'half_day_leave_types_count' => $half_day_leave_types->count(),
+            'half_day_leave_types' => $half_day_leave_types->pluck('title')
         ];
+        
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
