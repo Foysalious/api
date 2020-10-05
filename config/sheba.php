@@ -140,7 +140,8 @@ return [
         'date_range_service_ids' => explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DATE_RANGE')),
         'destination_fields_service_ids' => array_map('intval', explode(',', env('RENT_A_CAR_SERVICE_ID_FOR_DESTINATION_FIELD'))),
         'service_ids' => array_map('intval', explode(',', env('RENT_CAR_SERVICE_IDS'))),
-        'slug' => 'car-rental'
+        'slug' => 'car-rental',
+        'outside_city_category_id' =>  env('RENT_CAR_OUTSIDE_ID'),
     ],
     'payment_link' => [
         'sms' => env('SEND_PAYMENT_LINK_SMS', 1)
@@ -152,7 +153,7 @@ return [
     'category_groups' => [
         'trending' => env('TRENDING_CATEGORY_GROUP', 10)
     ],
-    'payout_token' => env('SHEBA_PAYOUT_TOKEN','ShebaAdminPanelToken!@#$!@#'),
+    'payout_token' => env('SHEBA_PAYOUT_TOKEN', 'ShebaAdminPanelToken!@#$!@#'),
     'tender_landing_categories_id' => explode(',', env('TENDER_LANDING_CATEGORIES_ID', '14,15,17,18,19,20,21,22')),
     'resource_max_withdraw_limit' => 1000,
     'tp_proxy_url' => env('TP_PROXY_URL'),

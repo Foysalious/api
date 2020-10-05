@@ -2,8 +2,10 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\PartnerOrder;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Sheba\UserRequestInformation;
@@ -34,6 +36,7 @@ use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
+use Sheba\PartnerOrder\InvoiceHandler;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -163,6 +166,7 @@ class JobController extends Controller
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
         $job_collection->put('is_closed', $job->partnerOrder->closed_at != null ? 1 : 0);
+        $job_collection->put('is_inspection_service', $job->jobServices[0] ? $job->jobServices[0]->service->is_inspection_service :  0);
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
         if (count($job->jobServices) == 0) {
@@ -597,7 +601,7 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
-            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'payment_method' => 'sometimes|required',
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
@@ -730,5 +734,26 @@ class JobController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInvoice(Request $request)
+    {
+        $invoice = $this->generateInvoiceOfJob($request->job);
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+    }
+
+    public function generateInvoiceOfJob(Job $job)
+    {
+        $invoice = null;
+        if($job->isServed()) {
+            return [
+                'link' => $job->partnerOrder->invoice
+            ];
+        }
+        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
     }
 }

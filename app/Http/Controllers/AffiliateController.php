@@ -12,7 +12,7 @@ use App\Models\Profile;
 use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;

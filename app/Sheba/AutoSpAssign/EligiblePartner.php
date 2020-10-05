@@ -16,6 +16,11 @@ class EligiblePartner
     private $lifetimeServedJobCount;
     public $score;
 
+    public function getScore()
+    {
+        return $this->score;
+    }
+
     public function getPackageId()
     {
         return $this->packageId;
@@ -142,6 +147,24 @@ class EligiblePartner
     public function isNew()
     {
         return $this->lifetimeServedJobCount <= 10;
+    }
+
+    public function toArray()
+    {
+        return [
+            'id' => $this->id,
+            'avg_rating' => $this->avgRating,
+            'complain_count' => $this->complainCount,
+            'impression_count' => $this->impressionCount,
+            'ita_count' => $this->itaCount,
+            'max_revenue' => $this->maxRevenue,
+            'ota_count' => $this->otaCount,
+            'package_id' => $this->packageId,
+            'resource_app_usage_count' => $this->resourceAppUsageCount,
+            'recent_served_job_count' => $this->recentServedJobCount,
+            'lifetime_served_job_count' => $this->lifetimeServedJobCount,
+            'score' => $this->score,
+        ];
     }
 
 }

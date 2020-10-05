@@ -40,7 +40,7 @@ class Validator
      */
     public function setData($data)
     {
-        $this->data = $data;
+        $this->data = (array)$data;
         return $this;
     }
 

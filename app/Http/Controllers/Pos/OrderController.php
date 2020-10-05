@@ -74,10 +74,12 @@ class OrderController extends Controller
                     ]
                 ]);
             }
-            $orders       = (empty($status) && $status === 'null') ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+
+            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->where('payment_status' , $status)->orderBy('created_at', 'desc')->get();
             $final_orders = collect();
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
+                /** @var PosOrder $order */
                 $order_data = $order->calculate();
                 $manager    = new Manager();
                 $manager->setSerializer(new CustomSerializer());
@@ -135,7 +137,7 @@ class OrderController extends Controller
     {
         try {
             /** @var PosOrder $order */
-            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->find($request->order);
+            $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->withTrashed()->find($request->order);
             if (!$order)
                 return api_response($request, null, 404, ['msg' => 'Order Not Found']);
             $order->calculate();
@@ -175,7 +177,8 @@ class OrderController extends Controller
                 'is_percentage'         => 'numeric',
                 'previous_order_id'     => 'numeric',
                 'emi_month'             => 'required_if:payment_method,emi|numeric',
-                'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount')
+                'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
+                'payment_link_amount'   => 'sometimes|numeric'
             ]);
             $link = null;
             if ($request->manager_resource) {
@@ -213,8 +216,9 @@ class OrderController extends Controller
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
             $order->net_bill            = $order->getNetBill();
+            $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
             if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
-                $paymentLink = $paymentLinkCreator->setAmount($order->net_bill)->setReason("PosOrder ID: $order->id Due payment")
+                $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
                     ->setUserName($partner->name)->setUserId($partner->id)
                     ->setUserType('partner')
                     ->setTargetId($order->id)

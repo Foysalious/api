@@ -196,6 +196,7 @@ class Creator
     /**
      * @param PosOrder $order
      * @throws InvalidDiscountType
+     * @throws \Exception
      */
     private function voucherCalculation(PosOrder $order)
     {
@@ -292,7 +293,7 @@ class Creator
             if (isset($voucher_discount)) $voucher_discount_amount = $this->getDiscountAmount($voucher_discount);
         }
         $net_price = ($total_price - $order_discount_amount - $voucher_discount_amount - $service_discount_amount);
-        return $net_price;
+        return round($net_price,2);
     }
 
     private function getDiscountAmount($discount)

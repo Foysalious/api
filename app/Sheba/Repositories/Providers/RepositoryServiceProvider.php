@@ -4,11 +4,10 @@ use App\Sheba\Repositories\Business\BidRepository;
 use App\Sheba\Repositories\PartnerWalletSettingRepository;
 use Illuminate\Support\ServiceProvider;
 use Sheba\Business\TripRequest\TripRequestRepository;
-use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
-use Sheba\Dal\ProcurementPaymentRequestStatusChangeLog\ProcurementPaymentRequestStatusChangeLogRepositoryInterface;
 use Sheba\Repositories\Business\BidItemFieldRepository;
 use Sheba\Repositories\Business\BidItemRepository;
 use Sheba\Repositories\Business\BusinessMemberRepository;
+use Sheba\Repositories\Business\DepartmentRepository;
 use Sheba\Repositories\Business\DriverRepository;
 use Sheba\Repositories\Business\FormTemplateItemRepository;
 use Sheba\Repositories\Business\FormTemplateQuestionRepository;
@@ -37,6 +36,7 @@ use Sheba\Repositories\CustomerRepository;
 use Sheba\Repositories\Interfaces\BidItemFieldRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidItemRepositoryInterface;
 use Sheba\Repositories\Interfaces\BidRepositoryInterface;
+use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Sheba\Repositories\Interfaces\Business\TripRequestRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessRoleRepositoryInterface;
@@ -120,5 +120,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(TripRequestRepositoryInterface::class, TripRequestRepository::class);
         $this->app->bind(BusinessRoleRepositoryInterface::class, BusinessRoleRepository::class);
         $this->app->bind(ProfileBankInfoInterface::class, ProfileBankInfoRepository::class);
+        $this->app->bind(DepartmentRepositoryInterface::class, DepartmentRepository::class);
     }
 }

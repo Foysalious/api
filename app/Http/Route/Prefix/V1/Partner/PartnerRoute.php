@@ -1,6 +1,7 @@
 <?php namespace App\Http\Route\Prefix\V1\Partner;
 
 use App\Http\Route\Prefix\V1\Partner\ID\Auth\IndexRoute as IDAuthRoute;
+use App\Http\Route\Prefix\V1\Partner\ID\Auth\ExternalPaymentLinkRoute;
 use App\Http\Route\Prefix\V1\Partner\ID\NonAuth\IndexRoute as IDNonAuthRoute;
 
 class PartnerRoute
@@ -10,6 +11,8 @@ class PartnerRoute
         $api->group(['prefix' => 'partners'], function ($api) {
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
+            (new ExternalPaymentLinkRoute())->set($api);
+            (new PartnerJwtAuthRoute())->set($api);
         });
     }
 }

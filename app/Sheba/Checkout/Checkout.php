@@ -3,7 +3,7 @@
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\InfoCall;
@@ -14,7 +14,7 @@ use App\Models\Location;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\Voucher;
 use App\Repositories\CustomerRepository;
 use App\Repositories\PartnerServiceRepository;
@@ -244,7 +244,7 @@ class Checkout
 
             $service_data = array('service_id' => $selected_service->id, 'quantity' => $selected_service->quantity,
                 'created_by' => $data['created_by'],
-                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price,
+                'created_by_name' => $data['created_by_name'], 'unit_price' => $discount->unit_price, 'min_price' => $discount->min_price ? $discount->min_price : 0,
                 'sheba_contribution' => $discount->__get('sheba_contribution'), 'partner_contribution' => $discount->__get('partner_contribution'),
                 'discount_id' => $discount->__get('discount_id'), 'discount' => $discount->__get('discount'),
                 'discount_percentage' => $discount->__get('discount_percentage'), 'name' => $service->name,

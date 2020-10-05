@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Resource;
 
-use App\Models\Category;
+use App\Models\PartnerResource;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
 use App\Models\Partner;
 use App\Models\Resource;
@@ -143,7 +144,10 @@ class ResourceController extends Controller
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
-        if (!$resource->categories()->where('category_id', $request->category)->first()) return api_response($request, null, 404, ["message" => "Category resource not found."]);
+        $partner_resources = PartnerResource::whereHas('categories', function($q) use ($request) {
+            $q->where('category_id', $request->category);
+        })->handyman()->select('id')->where('resource_id', $resource->id)->get();
+        if ($partner_resources->count() == 0) return api_response($request, null, 404, ["message" => "Category resource not found."]);
         $category = Category::find($request->category);
         $partner= Partner::find($request->partner);
         $date = Carbon::createFromFormat('Y-m-d', $request->date);

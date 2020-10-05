@@ -21,6 +21,8 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
+use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -58,6 +60,25 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ])->wherePivot('status', '<>', Statuses::INACTIVE);
     }
 
+    public function getAccessibleBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', '<>', Statuses::INACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
     public function businessSms()
     {
         return $this->hasMany(BusinessSmsTemplate::class);
@@ -66,6 +87,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function partners()
     {
         return $this->belongsToMany(Partner::class, 'business_partners');
+    }
+
+    public function officeHour()
+    {
+        return $this->hasOne(BusinessOfficeHour::class);
     }
 
     public function deliveryAddresses()
@@ -238,6 +264,32 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     {
         if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
+    }
+
+    public function getBusinessHalfDayConfiguration()
+    {
+        return json_decode($this->half_day_configuration, 1);
+    }
+
+    public function halfDayStartEnd($which_half)
+    {
+        return json_decode($this->half_day_configuration, 1)[$which_half];
+    }
+
+    public function halfDayStartEndTime($which_half)
+    {
+        $half_day_configuration = $this->halfDayStartEnd($which_half);
+        $start_time = Carbon::parse($half_day_configuration['start_time'])->format('h:i');
+        $end_time = Carbon::parse($half_day_configuration['end_time'])->format('h:i');
+        return $start_time . '-' . $end_time;
+    }
+
+    public function fullDayStartEndTime()
+    {
+        $full_day_configuration = $this->officeHour;
+        $start_time = Carbon::parse($full_day_configuration->start_time)->format('h:i');
+        $end_time = Carbon::parse($full_day_configuration->end_time)->format('h:i');
+        return $start_time . '-' . $end_time;
     }
 
     public function isIpBasedAttendanceEnable()

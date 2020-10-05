@@ -7,19 +7,37 @@ namespace Sheba\Payment\Methods\Nagad;
 use Carbon\Carbon;
 use Sheba\Payment\Methods\Nagad\Exception\EncryptionFailed;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
+use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 
 class Inputs
 {
-    private $merchantId;
+    /**
+     * @var NagadStore
+     */
+    private $store;
+
+    public function setStore(NagadStore $store)
+    {
+        $this->store = $store;
+        return $this;
+    }
 
     public static function headers()
     {
-        return [
-            'Content-Type'     => 'Application/json',
+        return self::makeHeaders([
+            'Content-Type'     => 'application/json',
             'X-KM-Api-Version' => 'v-0.2.0',
             'X-KM-IP-V4'       => request()->ip(),
             'X-KM-Client-Type' => 'MOBILE_WEB'
-        ];
+        ]);
+    }
+    static function makeHeaders(array $getHeaders)
+    {
+        $headers = [];
+        foreach ($getHeaders as $key => $header) {
+            array_push($headers, "$key:$header");
+        }
+        return $headers;
     }
 
     static function get_client_ip()
@@ -44,12 +62,13 @@ class Inputs
 
     /**
      * @param $transactionID
+     * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    public static function init($transactionID)
+    public static function init($transactionID,NagadStore $store)
     {
-        return self::data($transactionID);
+        return self::data($transactionID,$store);
     }
 
     /**
@@ -57,37 +76,40 @@ class Inputs
      * @param Initialize $init
      * @param            $amount
      * @param            $callbackUrl
+     * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    public static function complete($transactionId, Initialize $init, $amount, $callbackUrl)
+    public static function complete($transactionId, Initialize $init, $amount, $callbackUrl, NagadStore $store)
     {
-        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
-        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data), 'merchantCallbackURL' => $callbackUrl];
+        $data = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
+        return ['sensitiveData' => self::getEncoded($data,$store), 'signature' => self::generateSignature($data,$store), 'merchantCallbackURL' => $callbackUrl];
     }
 
     /**
      * @param string $data
+     * @param NagadStore $store
      * @return string
      * @throws EncryptionFailed
      */
-    static function getEncoded($data)
+    static function getEncoded($data,NagadStore $store)
     {
-        $key = openssl_get_publickey(file_get_contents(config('nagad.public_key_path')));
+        $key = openssl_get_publickey($store->getPublicKey());
         if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
         return base64_encode($encrypted);
     }
 
     /**
      * @param $transactionId
+     * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    private static function data($transactionId)
+    private static function data($transactionId,NagadStore $store)
     {
         $date = Carbon::now()->format('YmdHis');
-        $data = json_encode(['merchantId' => config('nagad.merchant_id'), 'orderId' => $transactionId, 'datetime' => $date, 'challenge' => self::generateRandomString(40)]);
-        return ['sensitiveData' => self::getEncoded($data), 'signature' => self::generateSignature($data), 'dateTime' => $date];
+        $data = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'datetime' => $date, 'challenge' => self::generateRandomString(40)]);
+        return ['sensitiveData' => self::getEncoded($data,$store), 'signature' => self::generateSignature($data,$store), 'dateTime' => $date];
     }
 
     private static function generateRandomString($length = 40)
@@ -101,9 +123,9 @@ class Inputs
         return $randomString;
     }
 
-    static function generateSignature($data)
+    static function generateSignature($data,NagadStore $store)
     {
-        $private_key = file_get_contents(config('nagad.private_key_path'));
+        $private_key = $store->getPrivateKey();
         openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);
         return base64_encode($signature);
     }

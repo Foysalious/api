@@ -5,6 +5,7 @@ use App\Models\Member;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessOfficeHours\Contract as BusinessOfficeHoursRepoInterface;
 use Sheba\ModificationFields;
+use Sheba\Dal\LeaveType\Model as LeaveType;
 
 class Updater
 {
@@ -18,8 +19,11 @@ class Updater
     private $weekends = [];
     private $weekend_repo;
     private $office_hour_repo;
+    private $halfDay;
+    private $halfDayConfiguration;
 
-    public function __construct(BusinessWeekendRepoInterface $weekend_repo,BusinessOfficeHoursRepoInterface  $office_hour_repo)
+    public function __construct(BusinessWeekendRepoInterface $weekend_repo,
+                                BusinessOfficeHoursRepoInterface $office_hour_repo)
     {
         $this->weekend_repo = $weekend_repo;
         $this->office_hour_repo = $office_hour_repo;
@@ -61,12 +65,26 @@ class Updater
        return $this;
     }
 
+    public function setHalfDayTimings($request)
+    {
+        $this->halfDay = (int) $request->half_day;
+        if ($this->halfDay) {
+            $this->halfDayConfiguration = $request->half_day_config;
+        }
+        return $this;
+    }
+
     public function update()
     {
         $this->setModifier($this->member);
 
         $update_weekends = $this->updateWeekends();
         $update_office_hours = $this->updateOfficeHours();
+        if ($this->halfDay) {
+            $this->updateHalfDaySettingsForActivated();
+        } else {
+            $this->updateHalfDaySettingsForDeactivated();
+        }
 
         return true;
     }
@@ -96,6 +114,25 @@ class Updater
         $office_time = $this->office_hour_repo->getOfficeTime($this->business);
         $data = [ 'start_time' => $this->start_time , 'end_time' => $this->end_time ];
         $this->office_hour_repo->update($office_time, $this->withUpdateModificationField($data));
+        return true;
+    }
+
+    private function updateHalfDaySettingsForActivated()
+    {
+        $data = [
+            'is_half_day_enable' => 1,
+            'half_day_configuration' => $this->halfDayConfiguration
+        ];
+        return $this->business->update($this->withUpdateModificationField($data));
+    }
+
+    private function updateHalfDaySettingsForDeactivated()
+    {
+        $data = [
+            'is_half_day_enable' => 0
+        ];
+        $this->business->update($this->withUpdateModificationField($data));
+        LeaveType::withTrashed()->where('is_half_day_enable', 1)->update(['is_half_day_enable' => 0]);
         return true;
     }
 }

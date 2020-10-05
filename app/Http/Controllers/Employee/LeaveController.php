@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use App\Sheba\Business\ACL\AccessControl;
@@ -71,13 +72,18 @@ class LeaveController extends Controller
     public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
     {
         $leave = $leave_repo->find($leave);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
-        $leave = $leave->load(['leaveType' => function ($q) {return $q->withTrashed();}]);
+        $leave = $leave->load(['leaveType' => function ($q) {
+            return $q->withTrashed();
+        }]);
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($leave, new LeaveTransformer());
+        $resource = new Item($leave, new LeaveTransformer($business));
         $leave = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, $leave, 200, ['leave' => $leave]);
@@ -94,8 +100,11 @@ class LeaveController extends Controller
         $validation_data = [
             'start_date' => 'required|before_or_equal:end_date',
             'end_date' => 'required',
-            'attachments.*' => 'file'
+            'attachments.*' => 'file',
+            'is_half_day' => 'sometimes|required|in:1,0',
+            'half_day_configuration' => "required_if:is_half_day,==,1|in:first_half,second_half"
         ];
+
         $business_member = $this->getBusinessMember($request);
         if ($this->isNeedSubstitute($business_member)) $validation_data['substitute'] = 'required|integer';
         $this->validate($request, $validation_data);
@@ -110,6 +119,8 @@ class LeaveController extends Controller
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
+            ->setIsHalfDay($request->is_half_day)
+            ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
             ->setCreatedBy($member);
 
@@ -143,12 +154,12 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveTypesRepoInterface $leave_types_repo
-     * @param LeaveRepoInterface $leave_repo
-     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo, LeaveRepoInterface $leave_repo, TimeFrame $time_frame)
+    public function getLeaveTypes(Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
@@ -160,8 +171,13 @@ class LeaveController extends Controller
             $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
-
-        return api_response($request, null, 200, ['leave_types' => $leave_types]);
+        $is_half_day_enable = $business->is_half_day_enable;
+        $half_day_configuration = $is_half_day_enable ? json_decode($business->half_day_configuration, 1) : null;
+        return api_response($request, null, 200, [
+            'leave_types' => $leave_types,
+            'is_half_day_enable' => $is_half_day_enable,
+            'half_day_configuration' => $half_day_configuration
+        ]);
     }
 
     /**

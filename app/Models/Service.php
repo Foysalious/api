@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BlogPost\BlogPost;
 use Sheba\Dal\ComboService\ComboService;
+use Sheba\Dal\CrosssaleService\Model as CrosssaleServiceModel;
 use Sheba\Dal\Gallery\Gallery;
 use Sheba\Dal\Partnership\Partnership;
 use Sheba\Dal\ServiceDiscount\Model as ServiceDiscount;
@@ -16,7 +17,6 @@ use stdClass;
 use Sheba\Dal\CarRentalPrice\Model as CarRentalPrice;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\PartnerService\PartnerService;
-use Sheba\Dal\ServiceSurcharge\Model as ServiceSurcharge;
 
 class Service extends Model
 {
@@ -371,5 +371,15 @@ class Service extends Model
     public function surcharges()
     {
         return $this->hasMany(ServiceSurcharge::class);
+    }
+
+    public function crossSaleService()
+    {
+        return $this->hasOne(CrosssaleServiceModel::class);
+    }
+
+    public function scopeIsCrossSaleService($query)
+    {
+        return $query->where('is_add_on', 1);
     }
 }

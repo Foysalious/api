@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -88,10 +89,21 @@ class DueTrackerRepository extends BaseRepository
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
             $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            $customerId              = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
+
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partnerId)->where('customer_id', $customerId)->first();
+            }
+
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $item['customer_name'] = $posProfile->nick_name;
+            } else {
+                $item['customer_name'] = $profile ? $profile->name : "Unknown";
+            }
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
-            $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
+            $item['customer_id']     = $customerId;
             return $item;
         });
         return $list;
@@ -138,7 +150,7 @@ class DueTrackerRepository extends BaseRepository
             'stats'      => $result['data']['totals'],
             'customer'   => [
                 'id'                => $customer->id,
-                'name'              => $customer->profile->name,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
                 'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
@@ -232,6 +244,14 @@ class DueTrackerRepository extends BaseRepository
             $payment_data['method']       = $payment_method;
             $this->paymentCreator->credit($payment_data);
         }
+    }
+
+    public function removePosOrderPayment($pos_order_id, $amount){
+       return PosOrderPayment::where('pos_order_id', $pos_order_id)
+           ->where('amount', $amount)
+           ->where('transaction_type', 'Credit')
+           ->first()
+           ->delete();
     }
 
     private function createStoreData(Request $request)

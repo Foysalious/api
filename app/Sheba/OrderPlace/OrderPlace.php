@@ -8,7 +8,7 @@ use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
@@ -16,7 +16,7 @@ use App\Models\HyperLocal;
 use App\Models\InfoCall;
 use App\Models\Job;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
@@ -128,10 +128,12 @@ class OrderPlace
     /** @var JobUpdateLogCreator */
     private $jobUpdateLogCreator;
 
-    public function __construct(Creator $creator, DiscountCalculation $discountCalculation, OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
+    public function __construct(Creator $creator, DiscountCalculation $discountCalculation,
+                                OrderVoucherData $orderVoucherData, JobUpdateLogCreator $jobUpdateLogCreator,
                                 PartnerListBuilder $partnerListBuilder, Director $director, ServiceRequest $serviceRequest,
                                 OrderRequestAlgorithm $orderRequestAlgorithm, JobDiscountHandler $job_discount_handler,
-                                UpsellCalculation $upsell_calculation, Store $order_request_store, JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
+                                UpsellCalculation $upsell_calculation, Store $order_request_store,
+                                JobDeliveryChargeCalculator $jobDeliveryChargeCalculator, Action $action)
     {
         $this->jobUpdateLogCreator = $jobUpdateLogCreator;
         $this->discountCalculation = $discountCalculation;
@@ -384,7 +386,7 @@ class OrderPlace
                 $this->jobDeliveryChargeCalculator->setJob($job)->setPartnerOrder($partner_order)->getCalculatedJob();
                 if ($this->action->canSendPartnerOrderRequest())
                     dispatch(new InitiateAutoSpAssign($partner_order, $this->customer, $this->partnersFromList->pluck('id')->toArray()));
-                if ($this->selectedPartner && !$this->action->canAssignPartner())
+                if (!$partner_order->partner_id && $this->selectedPartner && $this->action->isLateNightOrder())
                     $this->jobUpdateLogCreator->setJob($job)->setMessage($this->getMessageForPreferredSp())
                         ->setUserAgentInformation($this->userAgentInformation)->setCreatedBy($this->customer)->create();
             });
@@ -394,10 +396,14 @@ class OrderPlace
         return $order;
     }
 
+    /**
+     * @throws NotFoundException
+     */
     private function resolveAddress()
     {
         if ($this->deliveryAddressId) $this->setDeliveryAddressFromId();
         if ($this->deliveryAddress) return;
+        if(!$this->category->isRentCar() && !$this->deliveryAddressId) throw new NotFoundException('Customer delivery address not found', 404);
         $address = new CustomerDeliveryAddress();
         $address->name = $this->address;
         $address->mobile = $this->deliveryMobile;

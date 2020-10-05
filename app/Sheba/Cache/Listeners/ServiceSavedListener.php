@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Listeners;
 
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Sheba\Cache\CacheAside;
 use Sheba\Cache\Category\Children\CategoryChildrenCacheRequest;
 use Sheba\Cache\Category\Children\Services\ServicesCacheRequest;

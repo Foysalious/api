@@ -73,12 +73,12 @@ class ProfileController extends Controller
 
             $this->validate($request, [
                 'type' => 'required|in:info,image,all',
-                'name' => 'required_if:type,in:info,all|string',
-                'nid_no' => 'required_if:type,in:info,all|nid_number',
-                'dob' => 'required_if:type,in:info,all|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'nid_image_front' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg',
-                'nid_image_back' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg',
-                'pro_pic' => 'required_if:type,in:image,all|file|mimes:jpeg,png,jpg'
+                'name' => 'required_if:type,info,all|string',
+                'nid_no' => 'required_if:type,info,all|nid_number',
+                'dob' => 'required_if:type,info,all|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'nid_image_front' => 'required_if:type,image,all|file|mimes:jpeg,png,jpg',
+                'nid_image_back' => 'required_if:type,image,all|file|mimes:jpeg,png,jpg',
+                'pro_pic' => 'required_if:type,image,all|file|mimes:jpeg,png,jpg'
             ]);
 
             if ($request->type != 'image') {

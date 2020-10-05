@@ -1,8 +1,8 @@
 <?php namespace Sheba\PriceCalculation;
 
 
-use App\Models\Service;
-use Sheba\Dal\ServiceSurcharge\Model as ServiceSurcharge;
+use Sheba\Dal\Service\Service;
+use App\Models\ServiceSurcharge;
 
 abstract class PriceCalculationAbstract
 {

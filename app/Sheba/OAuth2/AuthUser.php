@@ -1,15 +1,20 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Models\Partner;
+use App\Models\Profile;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AuthUser
 {
     private $attributes = [];
+    /** @var Profile */
+    private $profile;
 
     public function __construct($attributes = [])
     {
         $this->attributes = $attributes;
+        $this->setProfile();
     }
 
     /**
@@ -20,7 +25,7 @@ class AuthUser
     {
         try {
             $token = JWTAuth::getToken();
-            if(!$token) throw new SomethingWrongWithToken("Token is missing.");
+            if (!$token) throw new SomethingWrongWithToken("Token is missing.");
             return self::createFromToken($token);
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
@@ -37,13 +42,23 @@ class AuthUser
         try {
             return new static(JWTAuth::getPayload($token)->toArray());
         } catch (JWTException $e) {
-            throw new SomethingWrongWithToken($e->getMessage());
+            throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
         }
     }
 
     public function getName()
     {
         return $this->attributes['name'];
+    }
+
+    public function isEmailVerified()
+    {
+        return $this->attributes['profile']['email_verified'];
+    }
+
+    public function getProfileId()
+    {
+        return $this->attributes['profile']['id'];
     }
 
     public function isLogisticUser()
@@ -66,21 +81,18 @@ class AuthUser
     public function getMemberId()
     {
         if (!$this->isMember()) return null;
-
         return $this->attributes['business_member']['member_id'];
     }
 
     public function getMemberAssociatedBusinessId()
     {
         if (!$this->doesMemberHasBusiness()) return null;
-
         return $this->attributes['business_member']['business_id'];
     }
 
     public function isMemberSuper()
     {
         if (!$this->doesMemberHasBusiness()) return null;
-
         return $this->attributes['business_member']['is_super'];
     }
 
@@ -92,5 +104,29 @@ class AuthUser
     public function toJson()
     {
         return json_encode($this->attributes);
+    }
+
+    private function setProfile()
+    {
+        $this->profile = Profile::find($this->attributes['profile']['id']);
+        return $this;
+    }
+
+    /**
+     * @return Resource|null
+     */
+    public function getResource()
+    {
+        if (!$this->profile) return null;
+        return $this->profile->resource;
+    }
+
+    /**
+     * @return Partner|null
+     */
+    public function getPartner()
+    {
+        if (!$this->profile || !$this->profile->resource) return null;
+        return $this->profile->resource->partners->first();
     }
 }

@@ -1,7 +1,7 @@
 <?php namespace Sheba\ServiceSubscription;
 
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\ServiceSubscription\ServiceSubscription;
 use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Illuminate\Support\Collection;
@@ -117,18 +117,28 @@ class ServiceSubscriptionInfo
         $weekly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'weekly')->valid()->first();
         /** @var $discount ServiceSubscriptionDiscount $monthly_discount */
         $monthly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'monthly')->valid()->first();
+        /** @var $discount ServiceSubscriptionDiscount $yearly_discount */
+        $yearly_discount = $this->serviceSubscription->discounts()->where('subscription_type', 'yearly')->valid()->first();
 
         $serviceSubscription['weekly_discount'] = $weekly_discount ? [
             'value' => (double)$weekly_discount->discount_amount,
             'is_percentage' => $weekly_discount->isPercentage(),
-            'cap' => (double)$weekly_discount->cap
+            'cap' => (double)$weekly_discount->cap,
+            'min_discount_quantity' => $weekly_discount->min_discount_qty
         ] : null;
         $serviceSubscription['monthly_discount'] = $monthly_discount ? [
             'value' => (double)$monthly_discount->discount_amount,
             'is_percentage' => $monthly_discount->isPercentage(),
-            'cap' => (double)$monthly_discount->cap
+            'cap' => (double)$monthly_discount->cap,
+            'min_discount_quantity' => $monthly_discount->min_discount_qty
         ] : null;
-        $cross_sale_service = $this->serviceSubscription->service->category->crossSaleService;
+        $serviceSubscription['yearly_discount'] = $yearly_discount ? [
+            'value' => (double)$yearly_discount->discount_amount,
+            'is_percentage' => $yearly_discount->isPercentage(),
+            'cap' => (double)$yearly_discount->cap,
+            'min_discount_quantity' => $yearly_discount->min_discount_qty
+        ] : null;
+        $cross_sale_service = $this->serviceSubscription->service->crossSaleService;
         $serviceSubscription['cross_sale'] = $cross_sale_service ? [
             'title' => $cross_sale_service->title,
             'description' => $cross_sale_service->description,

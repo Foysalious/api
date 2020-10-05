@@ -26,13 +26,10 @@ class LeaveSettingsController extends Controller
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
+
         $business_member = $business_member_repo->find($business_member['id']);
-        $leaves = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
-        $leave_types = $leaves->map(function ($leave) {
-            return collect($leave->toArray())
-                ->only(['id', 'title', 'total_days'])
-                ->all();
-        });
+        $leave_types = $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
+
         return api_response($request, null, 200, ['leave_types' => $leave_types]);
     }
 
@@ -43,12 +40,13 @@ class LeaveSettingsController extends Controller
      */
     public function store(Request $request, LeaveTypeCreator $leave_type_creator)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
 
         $leave_setting = $leave_type_creator->setBusiness($request->business)->setMember($business_member->member)
             ->setTitle($request->title)->setTotalDays($request->total_days)
+            ->setIsLeaveHalfDayEnable($request->is_half_day_enable)
             ->create();
 
         return api_response($request, null, 200, ['leave_setting' => $leave_setting->id]);
@@ -63,7 +61,7 @@ class LeaveSettingsController extends Controller
      */
     public function update($business, $leave_setting, Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
@@ -71,7 +69,8 @@ class LeaveSettingsController extends Controller
         $leave_setting = $leave_types_repo->find($leave_setting);
         $data = [
             'title' => $request->title,
-            'total_days' => $request->total_days
+            'total_days' => $request->total_days,
+            'is_half_day_enable' => $request->is_half_day_enable
         ];
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
         $leave_setting = $leave_types_repo->find($leave_setting->id);
@@ -103,13 +102,10 @@ class LeaveSettingsController extends Controller
      * @param OthersInfo $info
      * @return JsonResponse
      */
-    public function othersInfo (Request $request, OthersInfo $info)
+    public function othersInfo(Request $request, OthersInfo $info)
     {
         $others_info = $info->setBusiness($request->business)->getInfo();
-
-        return api_response($request, null, 200, [
-            'others_info' => $others_info
-        ]);
+        return api_response($request, null, 200, ['others_info' => $others_info]);
     }
 
     /**
@@ -117,20 +113,18 @@ class LeaveSettingsController extends Controller
      * @param OthersUpdater $updater
      * @return JsonResponse
      */
-    public function othersUpdate (Request $request, OthersUpdater $updater)
+    public function othersUpdate(Request $request, OthersUpdater $updater)
     {
-        $this->validate($request, [
-            'sandwich_leave' => 'required',
-            'fiscal_year' => 'required'
-        ]);
+        $this->validate($request, ['sandwich_leave' => 'required', 'fiscal_year' => 'required']);
         $business_member = $request->business_member;
         $this->setModifier($business_member->member);
 
         $updater->setBusiness($request->business)
-                 ->setMember($business_member->member)
-                 ->setSandwichLeave($request->sandwich_leave)
-                 ->setFiscalYear($request->fiscal_year)
-                 ->update();
+            ->setMember($business_member->member)
+            ->setSandwichLeave($request->sandwich_leave)
+            ->setFiscalYear($request->fiscal_year)
+            ->update();
+
         return api_response($request, null, 200);
     }
 }

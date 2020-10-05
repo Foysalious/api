@@ -71,7 +71,8 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        $this->validate($request, [
+        try{
+            $this->validate($request, [
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
@@ -79,8 +80,6 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-        if($request->is_robi_topup == 1 && !$this->checkVendor($request->vendor_id))
-            return api_response($request, null, 403, ['message' => "Invalid Vendor"]);
 
         $agent = $this->getAgent($request);
         if ($this->hasLastTopupWithinIntervalTime($agent))
@@ -114,12 +113,6 @@ class TopUpController extends Controller
 
     }
 
-    private function checkVendor($vendor_id)
-    {
-        $eligible_vendors = TopUpVendor::whereIn('name',[Vendors::ROBI,Vendors::AIRTEL])->pluck('id');
-        return in_array($vendor_id,$eligible_vendors->toArray());
-    }
-
     /**
      * @param Request $request
      * @param VendorFactory $vendor
@@ -140,9 +133,6 @@ class TopUpController extends Controller
             }
 
             $agent = $this->getAgent($request);
-            if (get_class($agent) == "App\Models\Partner")
-                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 

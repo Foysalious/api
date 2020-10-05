@@ -107,10 +107,8 @@ class ApprovalRequestController extends Controller
         $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
-        $approvers = $this->getApprover($requestable);
         $attachments = $this->getAttachments($requestable);
         $approval_request = $approval_request + [
-                'approvers' => $approvers,
                 'attachments' => $attachments,
                 'department' => [
                     'department_id' => $role ? $role->businessDepartment->id : null,
@@ -120,25 +118,6 @@ class ApprovalRequestController extends Controller
             ];
 
         return api_response($request, null, 200, ['approval_details' => $approval_request]);
-    }
-
-    /**
-     * @param $requestable
-     * @return array
-     */
-    private function getApprover($requestable)
-    {
-        $approvers = [];
-        foreach ($requestable->requests as $approval_request) {
-            /** @var BusinessMember $business_member */
-            $business_member = $this->getBusinessMemberById($approval_request->approver_id);
-            /** @var Member $member */
-            $member = $business_member->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
-            array_push($approvers, ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]]);
-        }
-        return $approvers;
     }
 
     /**

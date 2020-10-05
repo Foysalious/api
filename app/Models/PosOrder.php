@@ -122,7 +122,8 @@ class PosOrder extends Model {
     }
 
     private function _setPaymentStatus() {
-        $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        $this->payment_status = $status = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        $this->update(['payment_status' => $status]);
         return $this;
     }
 
@@ -165,6 +166,10 @@ class PosOrder extends Model {
         return $query->where('customer_id', $customer_id);
     }
 
+    public function scopeByPartnerAndCustomer($query, $partner_id, $customer_id) {
+        return $query->where('partner_id', $partner_id )->where('customer_id', $customer_id);
+    }
+
     public function scopeByVoucher($query, $voucher_id) {
         if (is_array($voucher_id))
             return $query->whereIn('voucher_id', $voucher_id); else
@@ -183,7 +188,7 @@ class PosOrder extends Model {
      * @return string
      */
     public function getPaymentStatus() {
-        return $this->paymentStatus;
+        return $this->payment_status;
     }
 
     /**

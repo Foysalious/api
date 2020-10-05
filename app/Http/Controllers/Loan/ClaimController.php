@@ -34,7 +34,7 @@ class ClaimController extends Controller
             if(!$loan->canClaim($request))
                 throw new NotEligibleForClaim();
             $loan->claim($request);
-            return api_response($request, null, 200, ['message' => 'আপনার লোন দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
+            return api_response($request, null, 200, ['message' => 'আপনার টাকা দাবির আবেদনটি সফলভাবে গৃহীত হয়েছে। সকল তথ্য যাচাই করার পর আপনার বন্ধু আকাউন্টে টাকা জমা হয়ে যাবে।']);
         } catch (NotAllowedToAccess $e) {
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (NotEligibleForClaim $e) {

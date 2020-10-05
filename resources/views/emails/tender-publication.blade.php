@@ -1,5 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" style="width:100%;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
     <meta charset="UTF-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
@@ -22,150 +22,78 @@
     </xml>
     <![endif]-->
     <!--[if !mso]><!-- -->
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,400i,700,700i" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Poppins:400,400i,700,700i" rel="stylesheet">
+    <!--<![endif]-->
+    <!--[if !mso]><!-- -->
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,700i" rel="stylesheet">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
     <!--<![endif]-->
     <style type="text/css">
-        @media only screen and (max-width:600px) {p, ul li, ol li, a { font-size:14px!important; line-height:150%!important } h1 { font-size:26px!important; text-align:center; line-height:120%!important } h2 { font-size:24px!important; text-align:center; line-height:120%!important } h3 { font-size:20px!important; text-align:center; line-height:120%!important } h1 a { font-size:26px!important } h2 a { font-size:24px!important } h3 a { font-size:20px!important } .es-menu td a { font-size:13px!important } .es-header-body p, .es-header-body ul li, .es-header-body ol li, .es-header-body a { font-size:13px!important } .es-footer-body p, .es-footer-body ul li, .es-footer-body ol li, .es-footer-body a { font-size:13px!important } .es-infoblock p, .es-infoblock ul li, .es-infoblock ol li, .es-infoblock a { font-size:11px!important } *[class="gmail-fix"] { display:none!important } .es-m-txt-c, .es-m-txt-c h1, .es-m-txt-c h2, .es-m-txt-c h3 { text-align:center!important } .es-m-txt-r, .es-m-txt-r h1, .es-m-txt-r h2, .es-m-txt-r h3 { text-align:right!important } .es-m-txt-l, .es-m-txt-l h1, .es-m-txt-l h2, .es-m-txt-l h3 { text-align:left!important } .es-m-txt-r img, .es-m-txt-c img, .es-m-txt-l img { display:inline!important } .es-button-border { display:block!important } a.es-button { font-size:14px!important; display:block!important; border-left-width:0px!important; border-right-width:0px!important } .es-btn-fw { border-width:10px 0px!important; text-align:center!important } .es-adaptive table, .es-btn-fw, .es-btn-fw-brdr, .es-left, .es-right { width:100%!important } .es-content table, .es-header table, .es-footer table, .es-content, .es-footer, .es-header { width:100%!important; max-width:600px!important } .es-adapt-td { display:block!important; width:100%!important } .adapt-img { width:100%!important; height:auto!important } .es-m-p0 { padding:0!important } .es-m-p0r { padding-right:0!important } .es-m-p0l { padding-left:0!important } .es-m-p0t { padding-top:0!important } .es-m-p0b { padding-bottom:0!important } .es-m-p20b { padding-bottom:20px!important } .es-mobile-hidden, .es-hidden { display:none!important } tr.es-desk-hidden, td.es-desk-hidden, table.es-desk-hidden { display:table-row!important; width:auto!important; overflow:visible!important; float:none!important; max-height:inherit!important; line-height:inherit!important } .es-desk-menu-hidden { display:table-cell!important } table.es-table-not-adapt, .esd-block-html table { width:auto!important } table.es-social { display:inline-block!important } table.es-social td { display:inline-block!important } .es-m-p5 { padding:5px!important } .es-m-p5t { padding-top:5px!important } .es-m-p5b { padding-bottom:5px!important } .es-m-p5r { padding-right:5px!important } .es-m-p5l { padding-left:5px!important } .es-m-p10 { padding:10px!important } .es-m-p10t { padding-top:10px!important } .es-m-p10b { padding-bottom:10px!important } .es-m-p10r { padding-right:10px!important } .es-m-p10l { padding-left:10px!important } .es-m-p15 { padding:15px!important } .es-m-p15t { padding-top:15px!important } .es-m-p15b { padding-bottom:15px!important } .es-m-p15r { padding-right:15px!important } .es-m-p15l { padding-left:15px!important } .es-m-p20 { padding:20px!important } .es-m-p20t { padding-top:20px!important } .es-m-p20r { padding-right:20px!important } .es-m-p20l { padding-left:20px!important } .es-m-p25 { padding:25px!important } .es-m-p25t { padding-top:25px!important } .es-m-p25b { padding-bottom:25px!important } .es-m-p25r { padding-right:25px!important } .es-m-p25l { padding-left:25px!important } .es-m-p30 { padding:30px!important } .es-m-p30t { padding-top:30px!important } .es-m-p30b { padding-bottom:30px!important } .es-m-p30r { padding-right:30px!important } .es-m-p30l { padding-left:30px!important } .es-m-p35 { padding:35px!important } .es-m-p35t { padding-top:35px!important } .es-m-p35b { padding-bottom:35px!important } .es-m-p35r { padding-right:35px!important } .es-m-p35l { padding-left:35px!important } .es-m-p40 { padding:40px!important } .es-m-p40t { padding-top:40px!important } .es-m-p40b { padding-bottom:40px!important } .es-m-p40r { padding-right:40px!important } .es-m-p40l { padding-left:40px!important } }
-        #outlook a {
-            padding:0;
-        }
-        .ExternalClass {
-            width:100%;
-        }
-        .ExternalClass,
-        .ExternalClass p,
-        .ExternalClass span,
-        .ExternalClass font,
-        .ExternalClass td,
-        .ExternalClass div {
-            line-height:100%;
-        }
-        .es-button {
-            mso-style-priority:100!important;
-            text-decoration:none!important;
-        }
-        a[x-apple-data-detectors] {
-            color:inherit!important;
-            text-decoration:none!important;
-            font-size:inherit!important;
-            font-family:inherit!important;
-            font-weight:inherit!important;
-            line-height:inherit!important;
-        }
-        .es-desk-hidden {
-            display:none;
-            float:left;
-            overflow:hidden;
-            width:0;
-            max-height:0;
-            line-height:0;
-            mso-hide:all;
-        }
-        .es-button-border:hover a.es-button {
-            background:#3498db!important;
-            border-color:#3498db!important;
-        }
-        .es-button-border:hover {
-            border-color:#42d159 #42d159 #42d159 #42d159!important;
-            background:#3498db!important;
+        .middle {
+            vertical-align:middle;
         }
     </style>
 </head>
-<body style="width:100%;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">
-<div class="es-wrapper-color" style="background-color:#F6F6F6">
+<body>
+<div class="es-wrapper-color">
     <!--[if gte mso 9]>
     <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
-        <v:fill type="tile" color="#f6f6f6"></v:fill>
+        <v:fill type="tile" color="null"></v:fill>
     </v:background>
     <![endif]-->
-    <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top">
-        <tr style="border-collapse:collapse">
-            <td valign="top" style="padding:0;Margin:0">
-                <table cellpadding="0" cellspacing="0" class="es-content" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-                    <tr style="border-collapse:collapse">
-                        <td align="center" style="padding:0;Margin:0">
-                            <table bgcolor="transparent" class="es-content-body" align="center" cellpadding="0" cellspacing="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px">
-                                <tr style="border-collapse:collapse">
-                                    <td align="left" style="Margin:0;padding-top:10px;padding-bottom:10px;padding-left:20px;padding-right:20px">
-                                        <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                            <tr style="border-collapse:collapse">
-                                                <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
-                                                    <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;display:none"></td>
-                                                        </tr>
-                                                    </table></td>
-                                            </tr>
-                                        </table></td>
-                                </tr>
-                            </table></td>
-                    </tr>
-                </table>
-                <table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-                    <tr style="border-collapse:collapse">
-                        <td align="center" style="padding:0;Margin:0">
-                            <table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" cellspacing="0" cellpadding="0" bgcolor="transparent" align="center">
-                                <tr style="border-collapse:collapse">
-                                    <td style="Margin:0;padding-top:15px;padding-bottom:15px;padding-left:20px;padding-right:20px;background-position:center bottom" align="left">
-                                        <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                            <tr style="border-collapse:collapse">
-                                                <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-                                                    <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;display:none"></td>
-                                                        </tr>
-                                                    </table></td>
-                                            </tr>
-                                        </table></td>
-                                </tr>
-                            </table></td>
-                    </tr>
-                </table>
-                <table class="es-content" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-                    <tr style="border-collapse:collapse">
-                        <td align="center" style="padding:0;Margin:0">
-                            <table class="es-content-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" cellspacing="0" cellpadding="0" bgcolor="transparent" align="center">
-                                <tr style="border-collapse:collapse">
-                                    <td align="left" style="padding:0;Margin:0">
-                                        <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                            <tr style="border-collapse:collapse">
-                                                <td valign="top" align="center" style="padding:0;Margin:0;width:600px">
-                                                    <table style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:separate;border-spacing:0px;background-position:center bottom;background-color:#FFFFFF;border-radius:5px" width="100%" cellspacing="0" cellpadding="0" bgcolor="#ffffff" role="presentation">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;font-size:0">
-                                                                <table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+    <table class="es-wrapper" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+            <td valign="top">
+                <table class="es-content table-body" cellspacing="0" cellpadding="0" align="center" style="border:solid 1px #D3D8E6;border-top: none">
+                    <tr>
+                        <td align="center">
+                            <table class="es-content-body" style="background-color:transparent;width:600px" cellspacing="0" cellpadding="0" bgcolor="transparent" align="center">
+                                <tr>
+                                    <td align="left">
+                                        <table width="100%" cellspacing="0" cellpadding="0">
+                                            <tr>
+                                                <td valign="top" align="center" style="width:600px">
+                                                    <table style="background-position:center bottom;background-color:#FFFFFF;border-radius:5px;border-collapse:separate" width="100%" cellspacing="0" cellpadding="0" bgcolor="#ffffff" role="presentation">
+                                                        <tr>
+                                                            <td align="center" style="font-size:0">
+                                                                <table border="0" width="100%" height="100%" cellpadding="0" cellspacing="0" role="presentation">
                                                                     <tr style="border-collapse:collapse">
-                                                                        <td style="padding:0;Margin:0;border-bottom:5px solid #437FF5;background:none;height:1px;width:100%;margin:0px"></td>
+                                                                        <td style="padding:0;Margin:0;border-top:5px solid #437FF5;background:none;height:1px;width:100%;margin:0px"></td>
                                                                     </tr>
                                                                 </table></td>
                                                         </tr>
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="left" style="padding:0;Margin:0;padding-right:5px;padding-left:20px;padding-top:30px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="180"></td>
+                                                        <tr>
+                                                            <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt style="display:block" width="180"></td>
                                                         </tr>
-                                                        <tr style="border-collapse:collapse">
-                                                            <td class="es-m-txt-l" align="left" style="Margin:0;padding-bottom:5px;padding-top:20px;padding-left:20px;padding-right:20px"><h2 style="Margin:0;line-height:26px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:22px;font-style:normal;font-weight:normal;color:#3F3D3D"><strong>Tender Published</strong></h2></td>
+                                                        <tr>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="heading-style" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:24px;font-weight:600"></p></td>
                                                         </tr>
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="left" style="padding:0;Margin:0;padding-top:10px;padding-left:20px;padding-right:20px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D">Dear <strong>{{$business_name}}</strong>,<br>Your tender has been published successfully. To get more bid you can the tender in various Facebook, LinkedIn and WhatsApp from the <a target="_blank" href="{{$portal_link}}" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#2CB543">sBusiness portal</a>. To view the details&nbsp;<a target="_blank" href="{{$tender_detail}}" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#2CB543">click here</a></p></td>
+                                                        <tr>
+                                                            <td class="padding-side" align="left" style="padding:0 60px">
+                                                                <p class="message" style="opacity:1;font-family:Lato;font-size:14px;line-height: 1.57;">Dear {{$business_contract_person}},<br>
+                                                                    Your tender has been published successfully. To get more bid you can share the
+                                                                    tender in various social platforms e.g. Facebook, LinkedIn and WhatsApp from the
+                                                                    <a target="_blank" href="{{ $tender_detail }}" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:14px;text-decoration:underline;color:#2CB543">sBusiness portal</a>.
+                                                                </p>
+                                                            </td>
                                                         </tr>
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="left" style="Margin:0;padding-top:10px;padding-left:20px;padding-right:20px;padding-bottom:30px"><p style="Margin:0;-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-size:14px;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;line-height:21px;color:#3F3D3D"><strong>Thank you,<br>Tender team, <u>sBusiness.xyz</u><br>Sheba Platform Limited</strong></p></td>
+                                                        <tr>
+                                                            <td align="left"></td>
                                                         </tr>
-                                                    </table></td>
-                                            </tr>
-                                        </table></td>
-                                </tr>
-                                <tr style="border-collapse:collapse">
-                                    <td align="left" style="padding:0;Margin:0;padding-top:20px;padding-left:20px;padding-right:20px">
-                                        <table cellpadding="0" cellspacing="0" width="100%" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                            <tr style="border-collapse:collapse">
-                                                <td align="center" valign="top" style="padding:0;Margin:0;width:560px">
-                                                    <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;padding-bottom:15px"><h3 style="Margin:0;line-height:24px;mso-line-height-rule:exactly;font-family:roboto, 'helvetica neue', helvetica, arial, sans-serif;font-size:20px;font-style:normal;font-weight:normal;color:#3F3D3D">POWERED BY</h3></td>
+                                                        <tr>
+                                                            <td align="left"></td>
                                                         </tr>
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/ShebaXyz.png" alt style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic" width="160"></td>
+                                                        <tr>
+                                                            <td class="padding-side pt-30 pb-30" align="left" style="padding:0 60px;padding-bottom:30px;padding-top:30px">
+                                                                <a href="{{ $public_tender_detail }}" target="_blank" style="width:200px;height:50px;border-radius:3px;background-color:#437FF5;text-align:center;border:0;padding: 18px 50px;text-decoration: none !important;"class="btn btn-info" role="button"><span class="button-link" style="color:white;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">View Details</span></a>
+                                                            </td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><span class="faq-que" style="opacity:1;font-family:Lato;font-size:14px;line-height: 1.57;">Thank you,<br>Tender team, <u>sBusiness.xyz</u><br>Sheba Platform Limited</span></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="faq-ans pb-30" style="padding-bottom:30px;opacity:0.8;font-size:14px;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif"></p></td>
                                                         </tr>
                                                     </table></td>
                                             </tr>
@@ -174,53 +102,15 @@
                             </table></td>
                     </tr>
                 </table>
-                <table class="es-footer" cellspacing="0" cellpadding="0" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%;background-color:transparent;background-repeat:repeat;background-position:center top">
-                    <tr style="border-collapse:collapse">
-                        <td align="center" style="padding:0;Margin:0">
-                            <table class="es-footer-body" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px" cellspacing="0" cellpadding="0" bgcolor="#FFFFFF" align="center">
-                                <tr style="border-collapse:collapse">
-                                    <td style="Margin:0;padding-top:5px;padding-bottom:20px;padding-left:20px;padding-right:20px;background-color:transparent" bgcolor="transparent" align="left">
-                                        <!--[if mso]><table style="width:560px" cellpadding="0" cellspacing="0"><tr><td style="width:270px" valign="top"><![endif]-->
-                                        <table class="es-left" cellspacing="0" cellpadding="0" align="left" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:left">
-                                            <tr style="border-collapse:collapse">
-                                                <td valign="top" align="center" style="padding:0;Margin:0;width:270px">
-                                                    <table style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-position:center top" width="100%" cellspacing="0" cellpadding="0">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;display:none"></td>
-                                                        </tr>
-                                                    </table></td>
-                                            </tr>
-                                        </table>
-                                        <!--[if mso]></td><td style="width:20px"></td><td style="width:270px" valign="top"><![endif]-->
-                                        <table class="es-right" cellspacing="0" cellpadding="0" align="right" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;float:right">
-                                            <tr style="border-collapse:collapse">
-                                                <td align="left" style="padding:0;Margin:0;width:270px">
-                                                    <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;display:none"></td>
-                                                        </tr>
-                                                    </table></td>
-                                            </tr>
-                                        </table>
-                                        <!--[if mso]></td></tr></table><![endif]--></td>
-                                </tr>
-                            </table></td>
-                    </tr>
-                </table>
-                <table cellpadding="0" cellspacing="0" class="es-content" align="center" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;table-layout:fixed !important;width:100%">
-                    <tr style="border-collapse:collapse">
-                        <td align="center" style="padding:0;Margin:0">
-                            <table bgcolor="transparent" class="es-content-body" align="center" cellpadding="0" cellspacing="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px;background-color:transparent;width:600px">
-                                <tr style="border-collapse:collapse">
-                                    <td align="left" style="Margin:0;padding-left:20px;padding-right:20px;padding-top:30px;padding-bottom:30px">
-                                        <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                            <tr style="border-collapse:collapse">
-                                                <td valign="top" align="center" style="padding:0;Margin:0;width:560px">
-                                                    <table width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
-                                                        <tr style="border-collapse:collapse">
-                                                            <td align="center" style="padding:0;Margin:0;display:none"></td>
-                                                        </tr>
-                                                    </table></td>
+                <table cellpadding="0" cellspacing="0" class="es-content" align="center">
+                    <tr>
+                        <td align="left">
+                            <table cellpadding="0" cellspacing="0" width="100%">
+                                <tr>
+                                    <td align="center" valign="top" style="width:560px">
+                                        <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
+                                            <tr>
+                                                <td align="center"><h3 class="footer pt-30" style="padding-top:30px;font-family:lato, 'helvetica neue', helvetica, arial, sans-serif;opacity:0.8;line-height:19px;font-size:16px;font-weight: 600">POWERED BY SHEBA.XYZ</h3></td>
                                             </tr>
                                         </table></td>
                                 </tr>

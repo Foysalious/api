@@ -13,6 +13,7 @@ class ServiceList
     private $request;
     private $resource;
     private $geo;
+    private $categoryId;
 
     public function setJob(Job $job)
     {
@@ -30,11 +31,17 @@ class ServiceList
         return $this;
     }
 
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
+        return $this;
+    }
+
     public function getServicesList()
     {
         $is_published_for_backend = $this->request->is_published_for_backend;
         $location = $this->job->partnerOrder->order->location->id;
-        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function($q) use ($location) {
+        $services = $this->job->partnerOrder->partner->services()->whereHas('locations', function ($q) use ($location) {
             $q->where('location_id', $location);
         })->select($this->getSelectColumnsOfService())->where('category_id', $this->job->category_id)->where(function ($q) use ($is_published_for_backend) {
             if (!$is_published_for_backend) $q->where('publication_status', 1);
@@ -84,13 +91,13 @@ class ServiceList
     {
         $answers = collect();
         $answers_index = collect();
-            $options = explode(',', $option->answers);
-            foreach ($options as $key => $option) {
-                if (in_array($key, $options_from_pivot)) {
-                    $answers->push($option);
-                    $answers_index->push($key);
-                }
+        $options = explode(',', $option->answers);
+        foreach ($options as $key => $option) {
+            if (in_array($key, $options_from_pivot)) {
+                $answers->push($option);
+                $answers_index->push($key);
             }
+        }
         $answers_with_index = [];
         $answers_with_index['answers'] = $answers;
         $answers_with_index['answers_index'] = $answers_index;
@@ -101,15 +108,13 @@ class ServiceList
     {
         $services = $services->filter(function ($service) {
             if ($service->variable_type == 'Fixed') {
-                $jobService = $this->job->jobServices()->where('service_id',$service->id)->first();
+                $jobService = $this->job->jobServices()->where('service_id', $service->id)->first();
                 if (count($jobService) > 0) {
                     return $service->id !== $jobService->service_id;
-                }
-                else {
+                } else {
                     return $service;
                 }
-            }
-            else {
+            } else {
                 return $service;
             }
         })->values();
@@ -128,7 +133,8 @@ class ServiceList
         return $this;
     }
 
-    public function getAllServices() {
+    public function getAllServices()
+    {
         $hyperLocation = HyperLocal::insidePolygon($this->geo->getLat(), $this->geo->getLng())->with('location')->first();
 
         if (is_null($hyperLocation)) return null;
@@ -139,8 +145,9 @@ class ServiceList
             $q->where('publication_status', 1);
         })->whereHas('locations', function ($q) use ($location) {
             $q->where('locations.id', $location);
-        })->get();
-
+        });
+        if ($this->categoryId) $services->where('category_id', $this->categoryId);
+        $services = $services->get();
         $services->each(function (&$service) {
             $variables = json_decode($service->variables);
             if ($service->variable_type == 'Options') {
@@ -184,4 +191,5 @@ class ServiceList
         }
         return $options;
     }
+
 }

@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 use App\Models\Location;

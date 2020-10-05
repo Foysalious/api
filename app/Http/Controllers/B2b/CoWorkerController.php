@@ -4,6 +4,7 @@ use App\Models\Business;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
 use Sheba\Business\CoWorker\Creator as CoWorkerCreator;
@@ -95,6 +96,11 @@ class CoWorkerController extends Controller
         $this->coWorkerRequester = $coWorker_requester;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function basicInfoStore($business, Request $request)
     {
         $this->validate($request, [
@@ -130,6 +136,23 @@ class CoWorkerController extends Controller
 
         if ($member) return api_response($request, null, 200, ['member_id' => $member->id, 'pro_pic' => $member->profile->pro_pic]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getRoles(Request $request)
+    {
+        $roles = BusinessRole::query()->pluck('name')->toArray();
+        $designations_list = Designations::getDesignations();
+        $all_roles = collect(array_merge($roles,$designations_list))->unique();
+        if ($request->has('search')) {
+            $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
+                return str_contains(strtoupper($role), strtoupper($request->search));
+            });
+        }
+        return api_response($request, $all_roles, 200, ['roles' => collect($all_roles)->values()]);
     }
 
     /**
@@ -374,7 +397,7 @@ class CoWorkerController extends Controller
                         }
                     ]));
                     $member->push();
-            });
+                });
 
             if ($request->has('department')) {
                 $members = $members->filter(function ($member) use ($request) {
@@ -394,7 +417,6 @@ class CoWorkerController extends Controller
             }
             $members = $members->get()->unique();
         }
-        if ($request->has('search')) $members = $this->searchWithEmployeeName($members, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
@@ -405,6 +427,7 @@ class CoWorkerController extends Controller
         if ($request->has('sort_by_name')) $employees = $this->sortByName($employees, $request->sort_by_name)->values();
         if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
+        if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
 
         $total_employees = count($employees);
         $employees = collect($employees)->splice($offset, $limit);
@@ -437,7 +460,7 @@ class CoWorkerController extends Controller
                 ->where('member_id', $member->id)
                 ->where('status', Statuses::INACTIVE)
                 ->first();
-
+            if (!$business_member) return api_response($request, null, 404);
             $member->setRelation('businessMemberGenerated', $business_member->load([
                 'role' => function ($q) {
                     $q->select('business_roles.id', 'business_department_id', 'name')->with([
@@ -715,16 +738,31 @@ class CoWorkerController extends Controller
     }
 
     /**
-     * @param $members
+     * @param $employees
      * @param Request $request
      * @return mixed
      */
-    private function searchWithEmployeeName($members, Request $request)
+    private function searchEmployee($employees, Request $request)
     {
-        return $members->filter(function ($member) use ($request) {
-            $profile = $member->profile;
-            return str_contains(strtoupper($profile->name), strtoupper($request->search));
+        $employees = $employees->toArray();
+        $employee_ids = array_filter($employees, function ($employee) use ($request) {
+            return str_contains($employee['employee_id'], $request->search);
         });
+        $employee_names = array_filter($employees, function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['profile']['name']), strtoupper($request->search));
+        });
+        $employee_emails = array_filter($employees, function ($employee) use ($request) {
+            return str_contains(strtoupper($employee['profile']['email']), strtoupper($request->search));
+        });
+        $employee_mobiles = array_filter($employees, function ($employee) use ($request) {
+            return str_contains($employee['profile']['mobile'], formatMobile($request->search));
+        });
+
+        $searched_employees = collect(array_merge($employee_ids, $employee_names, $employee_emails, $employee_mobiles));
+        $searched_employees = $searched_employees->unique(function ($employee) {
+            return $employee['id'];
+        });
+        return $searched_employees->values()->all();
     }
 
     private function findByStatus($employees, $status)
