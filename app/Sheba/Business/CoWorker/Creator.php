@@ -169,10 +169,7 @@ class Creator
     public function basicInfoStore()
     {
         $profile = $this->profileRepository->checkExistingEmail($this->basicRequest->getEmail());
-
-        if ($this->basicRequest->getRole())
-            $this->businessRole = $this->getBusinessRole();
-
+        if ($this->basicRequest->getRole()) $this->businessRole = $this->getBusinessRole();
         $member = null;
         if (!$profile) {
             $profile = $this->createProfile();
@@ -185,7 +182,6 @@ class Creator
                 $this->businessMember = $this->createBusinessMember($this->business, $member);
             }
         }
-
         $this->sendExistingUserMail($profile);
         return $member;
     }
@@ -241,7 +237,7 @@ class Creator
     private function getBusinessRole()
     {
         $business_role = $this->businessRoleRepository
-            ->whereLike('name', $this->basicRequest->getRole())
+            ->where('name', $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
         if ($business_role) return $business_role;
