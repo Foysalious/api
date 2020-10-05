@@ -23,7 +23,6 @@ class OrderAdapter implements PayableAdapter
     private $emiMonth;
     private $paymentMethod;
 
-
     public function __construct()
     {
         $this->isAdvancedPayment = 0;
@@ -137,13 +136,13 @@ class OrderAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/quick-purchase/" . $this->partnerOrder->id;
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
     private function getFailUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/quick-purchase/" . $this->partnerOrder->id;
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
@@ -164,5 +163,4 @@ class OrderAdapter implements PayableAdapter
         if (in_array($this->job->status, [JobStatuses::DECLINED]) || $this->job->hasPendingCancelRequest()) return false;
         return true;
     }
-
 }
