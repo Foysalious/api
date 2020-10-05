@@ -52,10 +52,11 @@ class CustomerController extends Controller
     }
 
     /**
-     * @param $partner
-     * @param $customer
-     * @param Request $request
-     * @param EntryRepository $entry_repo
+     * @param                      $partner
+     * @param                      $customer
+     * @param Request              $request
+     * @param EntryRepository      $entry_repo
+     * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
     public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)

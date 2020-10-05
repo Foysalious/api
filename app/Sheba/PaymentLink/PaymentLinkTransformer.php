@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PosCustomer;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
 
 class PaymentLinkTransformer
@@ -94,6 +95,7 @@ class PaymentLinkTransformer
     public function getPayer()
     {
         $order = $this->getTarget();
+        if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
 
@@ -114,6 +116,8 @@ class PaymentLinkTransformer
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
             return $model_name . 'PosOrder';
+        if ($this->response->targetType == 'external_payment')
+            return "Sheba\\Dal\\ExternalPayment\\Model";
     }
 
     private function getPaymentLinkPayer()
