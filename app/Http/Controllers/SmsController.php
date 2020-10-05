@@ -45,7 +45,8 @@ class SmsController extends Controller
     private function _validateSend($request)
     {
         $validator = Validator::make($request->all(), [
-            'mobile' => 'required|string|mobile:bd', 'action' => 'required|string|in:bondhu,marketplace'
+            'mobile' => 'required|string|mobile:bd',
+            'action' => 'required|string|in:bondhu,marketplace'
         ], ['mobile' => 'Invalid mobile number!']);
 
         return $validator->fails() ? $validator->errors()->all()[0] : false;
@@ -62,14 +63,5 @@ class SmsController extends Controller
             $without_HTTP[0] . '//' . $trim[0] == env('SHEBA_FRONT_END_URL') ||
             $without_HTTP[0] . '//' . $trim[0] == env('SHEBA_BONDHU_URL') ||
             $without_HTTP[0] . '//' . $trim[0] == env('SHEBA_MARKETPLACE_URL');
-    }
-
-    public function sendTest(Request $request)
-    {
-        /** @var \Predis\ClientInterface $redis */
-        $redis = \Illuminate\Support\Facades\Redis::connection();
-        $data = $request->ip() . "---" . \Carbon\Carbon::now()->toDateTimeString();
-        $redis->rpush('sms-rate-limit-test', [$data]);
-        return api_response($request, null, 200);
     }
 }

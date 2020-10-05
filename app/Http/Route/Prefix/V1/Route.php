@@ -67,7 +67,6 @@ class Route
             $api->post('vouchers', 'CheckoutController@validateVoucher');
             $api->post('rating', 'ReviewController@giveRatingFromEmail');
             $api->post('sms', 'SmsController@send')->middleware('throttle:2,60');
-            $api->post('test-sms', 'SmsController@sendTest')->middleware('throttle:2,60');
             $api->post('faq', 'ShebaController@sendFaq');
             $api->get('lpg-service', 'ServiceController@getLpg');
             $api->group(['prefix' => 'offers'], function ($api) {
