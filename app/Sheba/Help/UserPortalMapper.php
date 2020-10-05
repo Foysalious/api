@@ -8,6 +8,7 @@ class UserPortalMapper
 
     const ADMIN = 'admin-portal';
     const BUSINESS = 'business-portal';
+    const EMPLOYEE = 'digigo-portal';
 
     public static function getPortalByUser($user)
     {
