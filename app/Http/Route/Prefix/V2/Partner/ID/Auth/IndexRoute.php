@@ -259,6 +259,13 @@ class IndexRoute
                 $api->get('check-first-time-user', 'Partner\ProfileController@checkFirstTimeUser');
 
             });
+            $api->group(['prefix' => 'withdrawals'], function ($api) {
+                $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
+                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store');
+                $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
+                $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
+                $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');
+            });
             (new LoanRoute())->indexed($api);
             (new IncomeExpenseRoute())->set($api);
             (new BidRoute())->set($api);
