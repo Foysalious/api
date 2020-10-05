@@ -69,7 +69,7 @@ class BusinessStatics
     public static function agreements()
     {
         $partner_portal = env('SHEBA_PARTNER_URL');
-        return ['licence_agreement' => "$partner_portal/api/micro-loan-terms", 'ipdc_data_agreement' => "$partner_portal/api/micro-loan-report-share", 'ipdc_cib_agreement' => "$partner_portal/api/micro-loan-data-share"];
+        return ['licence_agreement' => "$partner_portal/api/micro-loan-terms", 'ipdc_data_agreement' => "$partner_portal/api/micro-loan-report-share"];
 
     }
 }
