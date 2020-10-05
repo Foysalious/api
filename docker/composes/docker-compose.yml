@@ -9,5 +9,6 @@ services:
     volumes:
       - ../../:/var/www
       - ../php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ../php/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
     networks:
       - api-service-network

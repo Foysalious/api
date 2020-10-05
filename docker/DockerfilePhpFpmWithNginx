@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libxpm-dev \
     libvpx-dev \
-    libxml2-dev
+    libxml2-dev \
+    git
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
