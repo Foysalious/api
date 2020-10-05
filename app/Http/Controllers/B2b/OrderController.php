@@ -53,6 +53,9 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $customer = $request->manager_member->customer;
+        if (!$customer)
+            return api_response($request, null, 200, ['orders' => [], 'total_orders' => 0]);
+
         list($offset, $limit) = calculatePagination($request);
         $customer = $customer->load([
             'orders' => function ($q) {
@@ -125,7 +128,7 @@ class OrderController extends Controller
         $total_jobs = count($all_jobs);
         if ($request->has('limit')) $all_jobs = collect($all_jobs)->splice($offset, $limit);
 
-        return api_response($request, null, 200, ['orders' => $all_jobs, 'total_orders' => $total_jobs,]);
+        return api_response($request, null, 200, ['orders' => $all_jobs, 'total_orders' => $total_jobs]);
     }
 
     /**
