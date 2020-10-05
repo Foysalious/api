@@ -28,7 +28,7 @@ class ClientController extends Controller
             $clients = $this->paymentClientRepo->getByPartner($request->partner->id)->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
             return api_response($request, $clients, 200, ['data' => $clients]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -48,8 +48,8 @@ class ClientController extends Controller
         } catch (ValidationException $exception) {
             $message = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Exception $e) {
-            app('sentry')->captureException($e);
+        } catch (\Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -80,7 +80,7 @@ class ClientController extends Controller
                 "message"=> "client secret updated"
             ]]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -97,7 +97,7 @@ class ClientController extends Controller
             $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)->client();
             return api_response($request, $client, 200, ['data' => ["client" => $client]]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -123,7 +123,7 @@ class ClientController extends Controller
             $message = getValidationErrorMessage($exception->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
