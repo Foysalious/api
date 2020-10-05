@@ -1,0 +1,16 @@
+version: '3.5'
+services:
+  api-service:
+    build:
+      context: ../
+      dockerfile: DockerfilePhpFpmWithNginx
+    image: sheba.xyz/php-fpm-7.0.33-with-nginx
+    environment:
+      SERVICE_NAME: app
+    ports: 
+      - "80:80"
+
+networks:
+  api-service-network:    
+    external:
+      name: sheba-docker_development_network
