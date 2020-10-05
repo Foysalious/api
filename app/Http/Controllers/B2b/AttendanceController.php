@@ -307,6 +307,7 @@ class AttendanceController extends Controller
             'start_time' => $office_time->start_time ? Carbon::parse($office_time->start_time)->format('h:i a') : null,
             'end_time' => $office_time->end_time ? Carbon::parse($office_time->end_time)->format('h:i a') : null,
             'weekends' => $weekend_days,
+            'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),
             'half_day_leave_types' => $half_day_leave_types->pluck('title')
         ];
