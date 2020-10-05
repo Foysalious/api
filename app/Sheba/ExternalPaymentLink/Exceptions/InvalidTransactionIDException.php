@@ -6,8 +6,8 @@ namespace Sheba\ExternalPaymentLink\Exceptions;
 
 use Throwable;
 
-class InvalidTransactionIDException extends \Exception
+class InvalidTransactionIDException extends ExternalPaymentLinkException
 {
-    public function __construct($message = "Invalid Transaction ID,Please provide a unique transaction ID", $code = 400, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
+    public function __construct($message = "Invalid Transaction ID,Please provide a unique transaction ID", $code = 504, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
 
 }

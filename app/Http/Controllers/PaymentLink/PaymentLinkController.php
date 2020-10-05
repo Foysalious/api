@@ -23,6 +23,7 @@ use Sheba\Usage\Usage;
 class PaymentLinkController extends Controller
 {
     use ModificationFields;
+
     private $paymentLinkClient;
     private $paymentLinkRepo;
     private $creator;
@@ -54,7 +55,7 @@ class PaymentLinkController extends Controller
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -91,7 +92,8 @@ class PaymentLinkController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            dd($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -100,15 +102,14 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount'  => 'required',
-                'purpose' => 'required','customer_id' => 'sometimes|integer|exists:pos_customers,id',
-                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
+                'amount'    => 'required',
+                'purpose'   => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
-            if ($request->has('emi_month') && (double)$request->amount < config('emi.manager.minimum_emi_amount')) return api_response($request, null, 400, ['message' => 'Amount must be greater then or equal BDT ' . config('emi.manager.minimum_emi_amount')]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order');if ($request->has('emi_month')) {
-                $data = Calculations::getMonthData($request->amount, $request->emi_month, false);
-                $this->creator->setEmiMonth((int)$request->emi_month)->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
-            }
+            $emi_month_invalidity = Creator::validateEmiMonth($request->all());
+            if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order')->setEmiMonth((int)$request->emi_month)->setEmiCalculations();
+
             if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
@@ -223,7 +224,7 @@ class PaymentLinkController extends Controller
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
                     $payments = $payable->payments ? $payable->payments : null;
-                    foreach ($payments as $payment){
+                    foreach ($payments as $payment) {
                         $payment = [
                             'id'         => $payment ? $payment->id : null,
                             'code'       => $payment ? '#' . $payment->id : null,
