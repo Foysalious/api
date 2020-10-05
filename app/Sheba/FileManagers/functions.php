@@ -295,6 +295,23 @@ if (!function_exists('getPartnerLogoFolder')) {
     }
 }
 
+if (!function_exists('getPartnerChequeBookImageFolder')) {
+
+    /**
+     * Get Partner Logo Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPartnerChequeBookImageFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'images/partners/cheque_receipt/';
+    }
+}
+
 if (!function_exists('getEmiBankIconsFolder')) {
 
     /**
@@ -873,6 +890,23 @@ if (!function_exists('getBulkTopUpFolder')) {
         if ($with_base_url) $url = env('S3_URL');
 
         return $url . 'bulk_top_ups/';
+    }
+}
+
+if (!function_exists('getBulkVendorStoreFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkVendorStoreFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_vendors_store/';
     }
 }
 

@@ -66,6 +66,7 @@ class RentACarController extends Controller
         try {
             $this->validate($request, ['services' => 'required|string', 'lat' => 'required|numeric', 'lng' => 'required|numeric']);
             $services = json_decode($request->services, 1);
+            $services[0]['option'] = [0]; //Static option set to make service object
             $services = $service_request_object = $service_request->setServices($services)->get();
             $service = $services[0];
 

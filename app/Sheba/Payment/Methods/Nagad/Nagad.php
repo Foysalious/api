@@ -4,7 +4,9 @@
 use App\Models\Payable;
 use App\Models\Payment;
 use Exception;
+use Sheba\Payment\Methods\Nagad\Exception\InvalidOrderId;
 use Sheba\Payment\Methods\Nagad\Exception\InvalidPaymentRef;
+use Sheba\Payment\Methods\Nagad\Stores\NagadStore;
 use Sheba\Payment\Methods\PaymentMethod;
 use Sheba\Payment\Statuses;
 use Throwable;
@@ -16,6 +18,10 @@ class Nagad extends PaymentMethod
     private $client;
     private $VALIDATE_URL;
     private $refId;
+    /**
+     * @var NagadStore
+     */
+    private $store;
 
     /**
      * @param mixed $refId
@@ -34,6 +40,14 @@ class Nagad extends PaymentMethod
         $this->VALIDATE_URL = config('sheba.api_url') . "/v1/nagad/validate";
     }
 
+    public function setStore(NagadStore $store)
+    {
+        $this->store = $store;
+        return $this;
+    }
+
+
+
     /**
      * @param Payable $payable
      * @return Payment
@@ -42,15 +56,15 @@ class Nagad extends PaymentMethod
      */
     public function init(Payable $payable): Payment
     {
-        $payment                         = $this->createPayment($payable);
+        $payment                         = $this->createPayment($payable,$this->store->getName());
         $payment->gateway_transaction_id = Inputs::orderID();
         $payment->update();
         try {
-            $initResponse = $this->client->init($payment->gateway_transaction_id);
+            $initResponse = $this->client->setStore($this->store)->init($payment->gateway_transaction_id);
             if ($initResponse->hasError()) {
                 throw  new Exception($initResponse->toString());
             }
-            $resp = $this->client->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
+            $resp = $this->client->setStore($this->store)->placeOrder($payment->gateway_transaction_id, $initResponse, $payable->amount, $this->VALIDATE_URL);
             if ($resp->hasError()) {
                 throw new Exception($resp->toString());
             }
@@ -64,12 +78,17 @@ class Nagad extends PaymentMethod
         }
     }
 
+    /**
+     * @param Payment $payment
+     * @return Payment
+     * @throws InvalidOrderId
+     */
     public function validate(Payment $payment): Payment
     {
-        $res=[];
+        $res=(new Validator([],true));
         try {
             if (empty($this->refId)) throw new InvalidPaymentRef();
-            $res = $this->client->validate($this->refId);
+            $res = $this->client->setStore($this->store)->validate($this->refId);
             if ($res->getStatus()) {
                 $this->statusChanger->setPayment($payment)->changeToValidated($res->toString());
                 return $payment;
