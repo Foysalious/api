@@ -30,6 +30,7 @@ class BusinessRoute
         });
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
+                $api->get('refresh-token', 'Profile\ProfileController@refreshToken');
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
