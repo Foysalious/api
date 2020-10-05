@@ -74,6 +74,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
                     $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
                 });
+                $api->group(['prefix' => 'half-day-setting'], function ($api) {
+                    $api->post('/', 'B2b\AttendanceController@updateHalfDaySetting');
+                });
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
                     $api->post('/', 'B2b\AttendanceController@storeHoliday');
