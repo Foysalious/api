@@ -40,12 +40,13 @@ class LeaveSettingsController extends Controller
      */
     public function store(Request $request, LeaveTypeCreator $leave_type_creator)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
 
         $leave_setting = $leave_type_creator->setBusiness($request->business)->setMember($business_member->member)
             ->setTitle($request->title)->setTotalDays($request->total_days)
+            ->setIsLeaveHalfDayEnable($request->is_half_day_enable)
             ->create();
 
         return api_response($request, null, 200, ['leave_setting' => $leave_setting->id]);
@@ -60,7 +61,7 @@ class LeaveSettingsController extends Controller
      */
     public function update($business, $leave_setting, Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
@@ -68,7 +69,8 @@ class LeaveSettingsController extends Controller
         $leave_setting = $leave_types_repo->find($leave_setting);
         $data = [
             'title' => $request->title,
-            'total_days' => $request->total_days
+            'total_days' => $request->total_days,
+            'is_half_day_enable' => $request->is_half_day_enable
         ];
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
         $leave_setting = $leave_types_repo->find($leave_setting->id);
