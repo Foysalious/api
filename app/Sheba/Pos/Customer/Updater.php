@@ -131,7 +131,11 @@ class Updater
         } else
             $customer = $this->posCustomers->save(['profile_id' => $this->profile->id]);
 
-        $partner_pos_customer = $this->partnerPosCustomers->setModel(new PartnerPosCustomer())->where('customer_id', $customer->id)->first();
+        $partner_pos_customer = $this->partnerPosCustomers->setModel(new PartnerPosCustomer())
+            ->where('customer_id', $customer->id)
+            ->where('partner_id', $this->data['partner']->id)
+            ->first();
+
         if (!$partner_pos_customer) {
             $partner_pos_customer_data = [
                 'partner_id' => $this->data['partner']->id,
