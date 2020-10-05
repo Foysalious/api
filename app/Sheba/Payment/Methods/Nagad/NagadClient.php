@@ -1,7 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Nagad;
 
 
-use GuzzleHttp\Client;
 use Sheba\Payment\Methods\Nagad\Response\CheckoutComplete;
 use Sheba\Payment\Methods\Nagad\Response\Initialize;
 use Sheba\TPProxy\TPProxyClient;
