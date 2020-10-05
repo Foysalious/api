@@ -33,6 +33,7 @@ use Sheba\Business\Holiday\HolidayList;
 use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
+use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -309,7 +310,8 @@ class AttendanceController extends Controller
             'weekends' => $weekend_days,
             'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),
-            'half_day_leave_types' => $half_day_leave_types->pluck('title')
+            'half_day_leave_types' => $half_day_leave_types->pluck('title'),
+            'half_day_initial_timings' => $this->getHalfDayTimings($business)
         ];
         
         return api_response($request, null, 200, ['office_timing' => $data]);
@@ -548,5 +550,46 @@ class AttendanceController extends Controller
     private function isFailedToUpdateAllSettings(array $errors, $business_offices)
     {
         return count($errors) == count($business_offices);
+    }
+
+    private function getHalfDayTimings(Business $business)
+    {
+        if ($business->half_day_configuration) {
+            $half_day_times = json_decode($business->half_day_configuration);
+            return [
+                'first_half' => [
+                    'start_time' => Carbon::parse($half_day_times->first_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->first_half->end_time)->format('h:i a')
+                ],
+                'second_half' => [
+                    'start_time' => Carbon::parse($half_day_times->second_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->second_half->end_time)->format('h:i a')
+                ]
+            ];
+        } else {
+            return [
+                'first_half' => [
+                    'start_time' => '09:00 am',
+                    'end_time' => '12:59 pm'
+                ],
+                'second_half' => [
+                    'start_time' => '01:00 pm',
+                    'end_time' => '06:00 pm'
+                ]
+            ];
+        }
+    }
+
+    public function updateHalfDaySetting($business, Request $request, HalfDaySettingUpdater $updater)
+    {
+        $this->validate($request, ['half_day' => 'required', 'half_day_config' => 'required|string']);
+
+        $business_member = $request->business_member;
+        $business = $request->business;
+        $this->setModifier($business_member->member);
+
+        $updater->setBusiness($business)->setHalfDayConfig($request->half_day_config)->update();
+
+        return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
 }
