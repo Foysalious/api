@@ -132,7 +132,7 @@ class Updater
             'is_half_day_enable' => 0
         ];
         $this->business->update($this->withUpdateModificationField($data));
-        LeaveType::withTrashed()->where('is_half_day_enable', 1)->update(['is_half_day_enable' => 0]);
+        LeaveType::withTrashed()->where('business_id', $this->business->id)->where('is_half_day_enable', 1)->update(['is_half_day_enable' => 0]);
         return true;
     }
 }
