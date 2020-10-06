@@ -67,6 +67,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['active', 'invited']);
+    }
+
     /**
      * @param Carbon $date
      * @return bool
@@ -134,8 +139,14 @@ class BusinessMember extends Model
                 $period = CarbonPeriod::create($start_date, $end_date);
                 foreach ($period as $date) {
                     $day_name_in_lower_case = strtolower($date->format('l'));
-                    if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                    if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+                    if (in_array($day_name_in_lower_case, $business_weekend)) {
+                        $leave_day_into_holiday_or_weekend++;
+                        continue;
+                    }
+                    if (in_array($date->toDateString(), $business_holiday)) {
+                        $leave_day_into_holiday_or_weekend++;
+                        continue;
+                    }
                 }
             }
 
