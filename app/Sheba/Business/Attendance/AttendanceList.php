@@ -355,7 +355,7 @@ class AttendanceList
                 'date' => $attendance->date
             ]);
         }
-        dd($business_members_in_leave);
+
         foreach ($business_members_in_leave as $index => $business_member_in_leave) {
             if (in_array($business_member_in_leave['member']['id'], $this->usersWhoGiveAttendance)) {
                 unset($business_members_in_leave[$index]);
