@@ -70,7 +70,7 @@ class AttendanceController extends Controller
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)->setStatus($request->status)->setSearch($request->search)
             ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->setSortKey($request->sort)->setSortColumn($request->sort_column)->setStatusFilter($request->status_filter)
             ->get();
 
         $count = count($attendances);
