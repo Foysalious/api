@@ -13,7 +13,6 @@ class PartnerRoute
             (new IDAuthRoute())->set($api);
             (new PartnerJwtAuthRoute())->set($api);
         });
-
         (new ExternalPaymentLinkRoute())->set($api);
     }
 }
