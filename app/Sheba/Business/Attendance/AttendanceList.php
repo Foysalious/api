@@ -346,8 +346,8 @@ class AttendanceList
                 'check_in' => $checkin_data,
                 'check_out' => $checkout_data,
                 'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                'is_half_day' => 0,
-                'half_day_configuration' => null,
+                'is_half_day_leave' => 0,
+                'half_day_leave_configuration' => null,
                 'is_present' => $this->isPresent($attendance),
                 'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                 'is_absent' => 0,
@@ -412,8 +412,8 @@ class AttendanceList
                 'check_in' => null,
                 'check_out' => null,
                 'active_hours' => null,
-                'is_half_day' => 0,
-                'half_day_configuration' => null,
+                'is_half_day_leave' => 0,
+                'half_day_leave_configuration' => null,
                 'is_present' => 0,
                 'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                 'is_absent' => 1,
@@ -430,7 +430,7 @@ class AttendanceList
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
         $leaves = $this->leaveRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'end_date', 'status')
+            ->select('id', 'business_member_id', 'end_date', 'status', 'is_half_day', 'half_day_configuration')
             ->whereIn('business_member_id', $business_member_ids)
             ->accepted()
             ->where('start_date', '<=', $this->startDate->toDateString())->where('end_date', '>=', $this->endDate->toDateString())
@@ -458,8 +458,8 @@ class AttendanceList
                 'check_in' => null,
                 'check_out' => null,
                 'active_hours' => null,
-                'is_half_day' => $leave->is_half_day ? 1 : 0,
-                'half_day_configuration' => $leave->is_half_day ? $leave->half_day_configuration : null,
+                'is_half_day_leave' => $leave->is_half_day ? 1 : 0,
+                'half_day_leave_configuration' => $leave->is_half_day ? $leave->half_day_configuration : null,
                 'is_present' => 0,
                 'is_holiday' => 0,
                 'is_absent' => 0,
