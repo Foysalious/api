@@ -118,7 +118,7 @@ class ExternalPayments
     {
         $data                    = $this->data;
         $data['partner_id']      = $this->client->partner->id;
-        $data['customer_mobile'] = $data['customer_mobile'] ?: '';
+        $data['customer_mobile'] = $data['customer_mobile'] ? BDMobileFormatter::format($data['customer_mobile']) : '';
         $data['customer_name']   = $data['customer_name'] ?: '';
         return $this->client->payments()->create($this->withCreateModificationField($data));
     }
@@ -151,7 +151,7 @@ class ExternalPayments
             }
             $pPosCustomer = PartnerPosCustomer::where('partner_id', $this->client->partner->id)->where('customer_id', $posCustomer->id)->first();
             if (!$pPosCustomer) {
-                $this->partnerPosCustomerRepo->save(['partner_id' => $this->client->partner->id, 'customer_id' => $posCustomer->id, 'nick_name' => $this->data['customer_name']]+(new RequestIdentification())->get());
+                $this->partnerPosCustomerRepo->save(['partner_id' => $this->client->partner->id, 'customer_id' => $posCustomer->id, 'nick_name' => $this->data['customer_name']] + (new RequestIdentification())->get());
             }
             $this->creator->setPayerId($posCustomer->id)->setPayerType('pos_customer');
 
