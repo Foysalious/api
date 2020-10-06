@@ -73,14 +73,14 @@ class LeaveSettingsController extends Controller
         if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
 
-        $leave_setting = $leave_types_repo->find($leave_setting);
+        $leave_setting = $leave_types_repo->findWithTrashed($leave_setting);
         $data = [
             'title' => $request->title,
             'total_days' => $request->total_days,
             'is_half_day_enable' => $request->is_half_day_enable
         ];
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
-        $leave_setting = $leave_types_repo->find($leave_setting->id);
+        $leave_setting = $leave_types_repo->findWithTrashed($leave_setting->id);
         return api_response($request, null, 200, ['leave_setting' => $leave_setting]);
     }
 
