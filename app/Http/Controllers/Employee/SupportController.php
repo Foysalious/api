@@ -28,9 +28,16 @@ class SupportController extends Controller
         $this->repo = $repo;
     }
 
+    /**
+     * @param Request $request
+     * @param Creator $creator
+     * @param MemberRepositoryInterface $member_repository
+     * @return JsonResponse
+     */
     public function store(Request $request, Creator $creator, MemberRepositoryInterface $member_repository)
     {
         $this->validate($request, ['description' => 'required|string']);
+
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
@@ -40,7 +47,7 @@ class SupportController extends Controller
         $this->setModifier($member);
 
         /** @var Support $support */
-        $support = $creator->setMember($member)->setDescription($request->description)->create();
+        $support = $creator->setMember($member)->setBusinessId($business_member['business_id'])->setDescription($request->description)->create();
 
         return api_response($request, $support, 200, ['support' => ['id' => $support->id]]);
     }
