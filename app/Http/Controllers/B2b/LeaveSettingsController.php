@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
 use App\Sheba\Business\BusinessBasicInformation;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -25,12 +27,17 @@ class LeaveSettingsController extends Controller
     public function index(Request $request, LeaveTypesRepoInterface $leave_types_repo, BusinessMemberRepositoryInterface $business_member_repo)
     {
         $business_member = $request->business_member;
+        $business = $request->business;
         if (!$business_member) return api_response($request, null, 404);
 
         $business_member = $business_member_repo->find($business_member['id']);
         $leave_types = $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
+        $half_day_config = [
+           'is_half_day_enable' => $business->is_half_day_enable,
+           'half_day_initial_timings' => $this->getHalfDayTimings($business)
+        ];
 
-        return api_response($request, null, 200, ['leave_types' => $leave_types]);
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_settings' => $half_day_config]);
     }
 
     /**
@@ -40,12 +47,13 @@ class LeaveSettingsController extends Controller
      */
     public function store(Request $request, LeaveTypeCreator $leave_type_creator)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
 
         $leave_setting = $leave_type_creator->setBusiness($request->business)->setMember($business_member->member)
             ->setTitle($request->title)->setTotalDays($request->total_days)
+            ->setIsLeaveHalfDayEnable($request->is_half_day_enable)
             ->create();
 
         return api_response($request, null, 200, ['leave_setting' => $leave_setting->id]);
@@ -60,7 +68,7 @@ class LeaveSettingsController extends Controller
      */
     public function update($business, $leave_setting, Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
@@ -68,7 +76,8 @@ class LeaveSettingsController extends Controller
         $leave_setting = $leave_types_repo->find($leave_setting);
         $data = [
             'title' => $request->title,
-            'total_days' => $request->total_days
+            'total_days' => $request->total_days,
+            'is_half_day_enable' => $request->is_half_day_enable
         ];
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
         $leave_setting = $leave_types_repo->find($leave_setting->id);
@@ -124,5 +133,33 @@ class LeaveSettingsController extends Controller
             ->update();
 
         return api_response($request, null, 200);
+    }
+
+    private function getHalfDayTimings(Business $business)
+    {
+        if ($business->half_day_configuration) {
+            $half_day_times = json_decode($business->half_day_configuration);
+            return [
+                'first_half' => [
+                    'start_time' => Carbon::parse($half_day_times->first_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->first_half->end_time)->format('h:i a')
+                ],
+                'second_half' => [
+                    'start_time' => Carbon::parse($half_day_times->second_half->start_time)->format('h:i a'),
+                    'end_time' => Carbon::parse($half_day_times->second_half->end_time)->format('h:i a')
+                ]
+            ];
+        } else {
+            return [
+                'first_half' => [
+                    'start_time' => '09:00 am',
+                    'end_time' => '12:59 pm'
+                ],
+                'second_half' => [
+                    'start_time' => '01:00 pm',
+                    'end_time' => '06:00 pm'
+                ]
+            ];
+        }
     }
 }
