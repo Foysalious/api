@@ -7,7 +7,7 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class AffiliateWalletTransfer
 {
-    private $affiliate, $amount, $type, $loan_id;
+    private $affiliate, $amount, $loan_id;
 
     public function setAffiliate(Affiliate $affiliate)
     {
@@ -18,12 +18,6 @@ class AffiliateWalletTransfer
     public function setAmount($amount)
     {
         $this->amount = $amount;
-        return $this;
-    }
-
-    public function setType($type)
-    {
-        $this->type = $type;
         return $this;
     }
 
