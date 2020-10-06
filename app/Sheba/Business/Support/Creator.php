@@ -28,12 +28,20 @@ class Creator
         $this->pushNotification = new PushNotificationHandler();
     }
 
+    /**
+     * @param Member $member
+     * @return $this
+     */
     public function setMember(Member $member)
     {
         $this->member = $member;
         return $this;
     }
 
+    /**
+     * @param $description
+     * @return $this
+     */
     public function setDescription($description)
     {
         $this->description = $description;
@@ -42,17 +50,15 @@ class Creator
 
     public function create()
     {
-        $support = null;
-        DB::transaction(function () use (&$support) {
-            $support = $this->supportRepository->create([
-                'member_id' => $this->member->id,
-                'long_description' => $this->description
-            ]);
-        });
+        $support = $this->supportRepository->create([
+            'member_id' => $this->member->id,
+            'long_description' => $this->description
+        ]);
 
         try {
             $this->notifySuperAdmins($support);
         } catch (Exception $e) {
+            app('sentry')->captureException($e);
         }
 
         return $support;
