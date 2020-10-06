@@ -62,7 +62,9 @@ class ReviewList
         })->filter(function ($review) {
             return !empty($review->review);
         })->sortByDesc('created_at');
-        return $reviews->values()->splice($this->offset, $this->limit);
+        $reviews = $reviews->values();
+        if ($this->limit) $reviews = $reviews->splice($this->offset, $this->limit);
+        return $reviews;
     }
 
     private function filterReviews($reviews)
