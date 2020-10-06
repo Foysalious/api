@@ -118,6 +118,8 @@ class LeaveController extends Controller
      */
     public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo)
     {
+        /** @var Business $business */
+        $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
@@ -135,7 +137,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($profile, $role, $leave_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business,$profile, $role, $leave_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
