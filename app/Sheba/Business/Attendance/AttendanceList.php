@@ -308,19 +308,26 @@ class AttendanceList
 
         $is_weekend_or_holiday = $this->isWeekendHolidayLeave();
         $business_members_in_leave = $this->getBusinessMemberWhoAreOnLeave();
-        dd($business_members_in_leave);
-        #dd($this->usersLeaveIds, $this->usersWhoOnLeave);
-        if ($this->statusFilter == self::PRESENT || is_null($this->statusFilter)) {
+
+        if ($this->statusFilter == self::PRESENT  || $this->statusFilter == 'all') {
             foreach ($this->attendances as $attendance) {
                 $checkin_data = $checkout_data = null;
                 $is_on_leave = $this->isOnLeave($attendance->businessMember->member->id);
+                $is_on_half_day_leave = 0;
+                $which_half_day = null;
+                if ($is_on_leave) {
+                   $leave = $this->usersLeaveIds[$attendance->businessMember->member->id];
+                   $is_on_half_day_leave = $leave['leave']['is_half_day_leave'];
+                   $which_half_day = $leave['leave']['which_half_day'];
+                }
+
                 array_push($this->usersWhoGiveAttendance, $attendance->businessMember->member->id);
                 if ($is_on_leave && (!!$this->checkinStatus || !!$this->checkoutStatus)) continue;
 
                 foreach ($attendance->actions as $action) {
                     if ($action->action == Actions::CHECKIN) {
                         $checkin_data = collect([
-                            'status' => $is_weekend_or_holiday || $is_on_leave ? null : $action->status,
+                            'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ? json_decode($action->location)->address : null,
                             'checkin_time' => Carbon::parse($attendance->date . ' ' . $attendance->checkin_time)->format('g:i a')
@@ -328,7 +335,7 @@ class AttendanceList
                     }
                     if ($action->action == Actions::CHECKOUT) {
                         $checkout_data = collect([
-                            'status' => $is_weekend_or_holiday || $is_on_leave ? null : $action->status,
+                            'status' => $this->getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave,$is_on_half_day_leave),
                             'is_remote' => $action->is_remote ?: 0,
                             'address' => $action->is_remote ? json_decode($action->location)->address : null,
                             'checkout_time' => $attendance->checkout_time ? Carbon::parse($attendance->date . ' ' . $attendance->checkout_time)->format('g:i a') : null,
@@ -350,11 +357,9 @@ class AttendanceList
                     'check_in' => $checkin_data,
                     'check_out' => $checkout_data,
                     'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
-                    'is_half_day_leave' => 0,
-                    'half_day_leave_configuration' => null,
-                    #'is_present' => $this->isPresent($attendance),
+                    'is_half_day_leave' => $is_on_half_day_leave,
+                    'which_half_day_leave' => $which_half_day,
                     'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
-                    #'is_absent' => 0,
                     'is_on_leave' => 0,
                     'date' => $attendance->date
                 ]);
@@ -419,7 +424,7 @@ class AttendanceList
                 'check_out' => null,
                 'active_hours' => null,
                 'is_half_day_leave' => 0,
-                'half_day_leave_configuration' => null,
+                'which_half_day_leave' => null,
                 #'is_present' => 0,
                 'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                 #'is_absent' => 1,
@@ -428,6 +433,14 @@ class AttendanceList
             ]);
         }
         return $data;
+    }
+
+    private function getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave,$is_on_half_day_leave)
+    {
+        if ($is_on_half_day_leave) return $action->status;
+        if ($is_weekend_or_holiday) return null;
+        if ($is_on_leave) return null;
+        return $action->status;
     }
 
     private function getBusinessMemberWhoAreOnLeave()
@@ -451,11 +464,15 @@ class AttendanceList
 
         foreach ($leaves as $leave) {
             array_push($this->usersWhoOnLeave, $leave->businessMember->member->id);
-            array_push($this->usersLeaveIds, [
+            $this->usersLeaveIds[$leave->businessMember->member->id] = [
                 'member_id' => $leave->businessMember->member->id,
                 'business_member_id' => $leave->businessMember->id,
-                'leave_id' => $leave->id
-            ]);
+                'leave' => [
+                    'id' => $leave->id,
+                    'is_half_day_leave' => (int)$leave->is_half_day,
+                    'which_half_day' => $leave->is_half_day ? $leave->half_day_configuration : null
+                ]
+            ];
             if (!!$this->checkinStatus || !!$this->checkoutStatus) continue;
             array_push($data, [
                 'id' => $leave->id,
@@ -474,10 +491,8 @@ class AttendanceList
                 'check_out' => null,
                 'active_hours' => null,
                 'is_half_day_leave' => $leave->is_half_day ? 1 : 0,
-                'half_day_leave_configuration' => $leave->is_half_day ? $leave->half_day_configuration : null,
-                #'is_present' => 0,
+                'which_half_day_leave' => $leave->is_half_day ? $leave->half_day_configuration : null,
                 'is_holiday' => 0,
-                #'is_absent' => 0,
                 'is_on_leave' => 1,
                 'date' => null
             ]);
