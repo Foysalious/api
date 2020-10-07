@@ -46,7 +46,7 @@ class PaymentsController extends Controller
             /** @var PaymentClientAuthentication $client */
             $client  = $request->client;
             $payment = $payments->setClient($client)->getPaymentDetails($request->transaction_id);
-            return api_response($request, $payment, 200, ['data' => $payment]);
+            return api_response($request, $payment, 200, ['data' => ["transaction_details" => $payment]]);
 
         } catch (ValidationException $exception) {
             $msg = getValidationErrorMessage($exception->validator->errors()->all());
