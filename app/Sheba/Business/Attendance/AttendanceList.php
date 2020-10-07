@@ -313,9 +313,12 @@ class AttendanceList
                 }
 
                 if ($this->statusFilter == self::ON_LEAVE && !$is_on_half_day_leave) continue;
-
                 array_push($this->usersWhoGiveAttendance, $attendance->businessMember->member->id);
-                if ($is_on_leave && (!!$this->checkinStatus || !!$this->checkoutStatus)) continue;
+
+                if (
+                    !$is_on_half_day_leave &&
+                    $is_on_leave && (!!$this->checkinStatus || !!$this->checkoutStatus)
+                ) continue;
 
                 foreach ($attendance->actions as $action) {
                     if ($action->action == Actions::CHECKIN) {
@@ -357,7 +360,6 @@ class AttendanceList
                 unset($business_members_in_leave[$index]);
             }
         }
-
         $present_and_on_leave_business_members = array_merge($data, $business_members_in_leave);
         $business_members_in_absence = $this->statusFilter == self::ABSENT ? $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members) : [];
         $final_data = array_merge($present_and_on_leave_business_members, $business_members_in_absence);
