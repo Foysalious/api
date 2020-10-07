@@ -576,7 +576,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     public function getNotification($affiliate, $notification, Request $request)
     {
         try {
-            $notifications = $request->affiliate->notifications()->select('id', 'title', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
+            $notifications = $request->affiliate->notifications()->select('id', 'title', 'description', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
             if (count($notifications) > 0) {
                 $notifications = $notifications->map(function ($notification) {
                     $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
