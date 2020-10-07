@@ -12,6 +12,7 @@ use Sheba\Dal\PaymentClientAuthentication\Model as PaymentClientAuthentication;
 use Sheba\ExternalPaymentLink\Exceptions\InvalidEmiMonthException;
 use Sheba\ExternalPaymentLink\Exceptions\InvalidTransactionIDException;
 use Sheba\ExternalPaymentLink\Exceptions\PaymentLinkInitiateException;
+use Sheba\ExternalPaymentLink\Exceptions\TransactionIDNotFoundException;
 use Sheba\ExternalPaymentLink\Statics\ExternalPaymentStatics;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
@@ -27,13 +28,13 @@ class ExternalPayments
 
     /** @var Creator $creator */
     private $creator;
-    /** @var PaymentClientAuthentication $client */
     /** @var ProfileRepository $profileRepo */
     private $profileRepo;
     /** @var PosCustomerRepository $posCustomerRepo */
     private $posCustomerRepo;
     /** @var PartnerPosCustomerRepository $partnerPosCustomerRepo */
     private $partnerPosCustomerRepo;
+    /** @var PaymentClientAuthentication $client */
     private $client;
     private $transactionID;
     private $data;
@@ -99,6 +100,38 @@ class ExternalPayments
         $already = $this->client->payments()->byTransactionID($this->transactionID)->first();
         if (!empty($already)) throw new InvalidTransactionIDException();
         return $this;
+    }
+
+    /**
+     * @param $transaction_id
+     * @return mixed
+     * @throws TransactionIDNotFoundException
+     */
+    public function getPaymentDetails($transaction_id)
+    {
+        $this->setTransactionID($transaction_id);
+        $payment = $this->client->payments()->byTransactionID($this->transactionID)->first();
+        if(empty($payment)) throw new TransactionIDNotFoundException();
+        return $this->formatData($payment);
+    }
+
+    private function formatData($payment)
+    {
+        return [
+            "id"              => $payment->id,
+            "amount"          => $payment->amount,
+            "success_url"     => $payment->success_url,
+            "fail_url"        => $payment->fail_url,
+            "customer_mobile" => $payment->customer_mobile,
+            "customer_name"   => $payment->customer_name,
+            "emi_month"       => $payment->emi_month,
+            "partner_id"      => $payment->partner_id,
+            "client_id"       => $payment->client_id,
+            "transaction_id"  => $payment->transaction_id,
+            "payment_id"      => $payment->payment_id,
+            "payment_status"  => $payment->payment ? $payment->payment->status : null,
+            "payment_at"      => $payment->payment ? $payment->payment->created_at : null
+        ];
     }
 
     /**
