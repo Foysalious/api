@@ -42,7 +42,7 @@ RUN { \
     } > /usr/local/etc/php/conf.d/php-opocache-cfg.ini
 
 
-COPY /nginx/conf.d/nginx-local.conf /etc/nginx/sites-enabled/default
+COPY /nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
 COPY entrypoint.sh /etc/entrypoint.sh
 
 RUN chmod +x /etc/entrypoint.sh
