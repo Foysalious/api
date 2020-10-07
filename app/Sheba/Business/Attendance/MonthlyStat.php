@@ -33,7 +33,7 @@ class MonthlyStat
     {
         $data = [];
         $weekend_day = $this->businessWeekend->pluck('weekday_name')->toArray();
-        $leaves = $this->formatLeaveAsDateArray();
+        list($leaves, $leaves_date_with_half_and_full_day) = $this->formatLeaveAsDateArray();
 
         foreach ($this->businessHoliday as $holiday) {
             $start_date = Carbon::parse($holiday->start_date);
@@ -52,6 +52,8 @@ class MonthlyStat
             Statuses::ABSENT => 0,
             Statuses::LEFT_TIMELY => 0,
             'on_leave' => 0,
+            'full_day_leave' => 0,
+            'half_day_leave' => 0,
             'present' => 0
         ];
 
@@ -69,7 +71,9 @@ class MonthlyStat
             if ($is_weekend_or_holiday_or_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves, $dates_of_holidays_formatted);
                 $statistics['working_days']--;
-                if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+                #if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
+                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
 
             /** @var Attendance $attendance */
@@ -115,10 +119,13 @@ class MonthlyStat
             $is_weekend_or_holiday = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
             if ($is_weekend_or_holiday) {
                 $statistics['working_days']--;
-                if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+                #if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
+                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
         }
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
+        $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
 
         return $this->forOneEmployee ? ['statistics' => $statistics, 'daily_breakdown' => $daily_breakdown] : ['statistics' => $statistics];
     }
@@ -163,14 +170,18 @@ class MonthlyStat
     private function formatLeaveAsDateArray()
     {
         $business_member_leaves_date = [];
-        $this->businessMemberLeave->each(function ($leave) use (&$business_member_leaves_date) {
+        $business_member_leaves_date_with_half_and_full_day = [];
+        $this->businessMemberLeave->each(function ($leave) use (&$business_member_leaves_date, &$business_member_leaves_date_with_half_and_full_day) {
             $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
             foreach ($leave_period as $date) {
                 array_push($business_member_leaves_date, $date->toDateString());
+                $business_member_leaves_date_with_half_and_full_day[$date->toDateString()] = [
+                    'is_half_day_leave' => $leave->is_half_day,
+                ];
             }
         });
 
-        return array_unique($business_member_leaves_date);
+        return [array_unique($business_member_leaves_date), $business_member_leaves_date_with_half_and_full_day];
     }
 
     /**
@@ -181,6 +192,32 @@ class MonthlyStat
     private function isLeave(Carbon $date, array $leaves)
     {
         return in_array($date->format('Y-m-d'), $leaves);
+    }
+
+    /**
+     * @param Carbon $date
+     * @param array $leaves_date_with_half_and_full_day
+     * @return int
+     */
+    private function isFullDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
+    {
+        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
+            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['is_half_day_leave'] == 0) return 1;
+        }
+        return 0;
+    }
+
+    /**
+     * @param Carbon $date
+     * @param array $leaves_date_with_half_and_full_day
+     * @return int
+     */
+    private function isHalfDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
+    {
+        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
+            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['is_half_day_leave'] == 1) return 1;
+        }
+        return 0;
     }
 
     /**
