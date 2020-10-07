@@ -17,6 +17,7 @@ class ExternalPaymentLinkRoute
         });
         $api->group(['prefix' => 'ecom-payment', 'middleware' => ['external_payment_link.auth']], function ($api) {
             $api->post('/initiate', 'ExternalPaymentLink\\PaymentsController@initiate');
+            $api->get('/details', 'ExternalPaymentLink\\PaymentsController@getDetails');
         });
     }
 }
