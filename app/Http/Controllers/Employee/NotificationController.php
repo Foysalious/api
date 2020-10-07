@@ -119,7 +119,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New announcement arrived',
@@ -131,7 +130,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('attendance')) {
             $pushNotificationHandler->send([
                 "title" => 'Attendance Alert',
@@ -142,7 +140,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('leave_request_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New Leave Request Arrived',

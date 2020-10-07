@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
+use App\Jobs\Business\SendLeavePushNotificationToEmployee;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use Exception;
@@ -82,25 +83,10 @@ class Creator
     /**
      * @param ApprovalRequest $approval_request
      */
-    public function sendPushToApprover(ApprovalRequest $approval_request)
+    private function sendPushToApprover(ApprovalRequest $approval_request)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $approval_request->approver;
         $leave_applicant = $this->member->profile->name;
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-
-        $notification_data = [
-            "title" => 'Leave request',
-            "message" => "$leave_applicant requested for a leave which needs your approval",
-            "event_type" => 'leave_request',
-            "event_id" => $approval_request->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ];
-
-        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
+        dispatch(new SendLeavePushNotificationToEmployee($approval_request, $leave_applicant));
     }
 
     /**

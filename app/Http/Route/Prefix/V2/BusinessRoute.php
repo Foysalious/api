@@ -30,6 +30,7 @@ class BusinessRoute
         });
         $api->group(['prefix' => 'businesses', 'middleware' => ['business.auth']], function ($api) {
             $api->group(['prefix' => '{business}'], function ($api) {
+                $api->get('refresh-token', 'Profile\ProfileController@refreshToken');
                 $api->get('members', 'B2b\MemberController@index');
                 $api->post('/invite', 'B2b\BusinessesController@inviteVendors');
                 $api->get('/vendors', 'B2b\BusinessesController@getVendorsList');
@@ -88,6 +89,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
+                    $api->get('/roles', 'B2b\CoWorkerController@getRoles');
                     $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
                     $api->group(['prefix' => '{employee}'], function ($api) {
@@ -122,6 +124,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\OrderController@index');
                     $api->group(['prefix' => '{order}', 'middleware' => ['business_order.auth']], function ($api) {
                         $api->get('/', 'B2b\OrderController@show');
+                        $api->post('/reviews', 'B2b\ReviewController@store');
+                        $api->post('/rates', 'B2b\RateController@store');
+                        $api->get('/rates', 'B2b\RateController@index');
                         $api->get('bills/clear', 'B2b\OrderController@clearBills');
                         $api->get('bills', 'B2b\OrderController@getBills');
                     });
