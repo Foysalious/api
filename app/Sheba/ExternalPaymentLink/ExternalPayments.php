@@ -148,6 +148,7 @@ class ExternalPayments
     {
         $response = null;
         DB::transaction(function () use (&$response) {
+            $this->processData();
             $payment  = $this->createPaymentRequest();
             $response = $this->createPaymentLink($payment);
         });
@@ -159,7 +160,7 @@ class ExternalPayments
     {
         $this->data['customer_mobile'] = $this->data['customer_mobile'] ? BDMobileFormatter::format($this->data['customer_mobile']) : '';
         $this->data['customer_name']   = $this->data['customer_name'] ?: '';
-        $this->data['purpose']         = !empty($this->data['purpose']) ? $this->data['purpose'] : 'ECOM Payment';
+        $this->data['purpose']         = ExternalPaymentStatics::getPurpose($this->data, $this->client);
     }
 
     private function createPaymentRequest()
