@@ -6,6 +6,7 @@ namespace Sheba\ExternalPaymentLink;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\Profile;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\PaymentClientAuthentication\Model as PaymentClientAuthentication;
@@ -115,22 +116,29 @@ class ExternalPayments
         return $this->formatData($payment);
     }
 
-    private function formatData($payment)
+    private function formatData($external_payment)
     {
         return [
-            "id"              => $payment->id,
-            "amount"          => $payment->amount,
-            "success_url"     => $payment->success_url,
-            "fail_url"        => $payment->fail_url,
-            "customer_mobile" => $payment->customer_mobile,
-            "customer_name"   => $payment->customer_name,
-            "emi_month"       => $payment->emi_month,
-            "partner_id"      => $payment->partner_id,
-            "client_id"       => $payment->client_id,
-            "transaction_id"  => $payment->transaction_id,
-            "payment_id"      => $payment->payment_id,
-            "payment_status"  => $payment->payment ? $payment->payment->status : null,
-            "payment_at"      => $payment->payment ? $payment->payment->created_at : null
+            "id"                          => $external_payment->id,
+            "amount"                      => $external_payment->amount,
+            "success_url"                 => $external_payment->success_url,
+            "fail_url"                    => $external_payment->fail_url,
+            "customer_mobile"             => $external_payment->customer_mobile,
+            "customer_name"               => $external_payment->customer_name,
+            "emi_month"                   => $external_payment->emi_month,
+            "partner_id"                  => $external_payment->partner_id,
+            "purpose"                     => $external_payment->purpose,
+            "client_id"                   => $external_payment->client_id,
+            "client_name"                 => $this->client->name,
+            "transaction_id"              => $external_payment->transaction_id,
+            "created_at"                  => Carbon::parse($external_payment->created_at)->toDateTimeString(),
+            "created_by"                  => $external_payment->created_by_name,
+            "payment_id"                  => $external_payment->payment_id,
+            "payment_status"              => $external_payment->payment ? $external_payment->payment->status : "pending",
+            "payment_transaction_details" => $external_payment->payment ? json_decode($external_payment->payment->transaction_details) : null,
+            "payment_from_ip"             => $external_payment->payment ? $external_payment->payment->ip : null,
+            "payment_at"                  => $external_payment->payment ? Carbon::parse($external_payment->payment->created_at)->toDateTimeString() : null,
+            "invoice_link"                => $external_payment->payment ? $external_payment->payment->invoice_link : null
         ];
     }
 
