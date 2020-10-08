@@ -18,12 +18,15 @@ class ExternalPaymentStatics
             'emi_month'       => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
             'payment_details' => 'sometimes|string',
             'purpose'         => 'sometimes|string'
-
         ];
     }
 
     public static function dataFields()
     {
         return array_keys(self::getPaymentInitiateValidator());
+    }
+
+    public static function getPurpose($data,$client){
+        return isset($data['purpose'])&&!empty($data['purpose']) ? $data['purpose'] : $client->default_purpose?:'E-Com Payments';
     }
 }
