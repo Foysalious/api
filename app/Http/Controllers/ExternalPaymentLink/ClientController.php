@@ -106,13 +106,14 @@ class ClientController extends Controller
      * @param $partner
      * @param $client_id
      * @param Request $request
+     * @param Client $clients
      * @return \Illuminate\Http\JsonResponse
      */
-    public function update($partner, $client_id, Request $request)
+    public function update($partner, $client_id, Request $request, Client $clients)
     {
         try {
             $this->validate($request, $this->validationRules());
-            $client = (new Client())->setRepository($this->paymentClientRepo)->setId($client_id)
+            $client = $clients->setRepository($this->paymentClientRepo)->setId($client_id)->setDefaultFields($request)
                 ->setName($request->name)->setDetails($request->details)->setWhitelistedIp($request->whitelisted_ips)
                 ->setStatus($request->status)->update($request->manager_resource);
             return api_response($request, $client, 200, ['data' => [
