@@ -1,13 +1,11 @@
 FROM php:7.0-fpm
 
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/
-
-# Set working directory
-WORKDIR /var/www
+# PHP_CPPFLAGS are used by the docker-php-ext-* scripts
+ENV PHP_CPPFLAGS="$PHP_CPPFLAGS -std=c++11"
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
+    nginx \
     libpng-dev \
     zlib1g-dev \
     libsasl2-dev \
@@ -17,14 +15,15 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libxpm-dev \
     libvpx-dev \
-    libxml2-dev
+    libxml2-dev \
+    git
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install extensions
 RUN docker-php-ext-configure gd --with-gd --with-freetype-dir=/usr/include/ --with-jpeg-dir=/usr/include/ --with-png-dir=/usr/include/
-RUN docker-php-ext-install pdo_mysql mbstring zip calendar soap gd
+RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd
 
 # Install mongodb extension
 RUN pecl install mongodb-1.4.4 \
@@ -33,19 +32,22 @@ RUN pecl install mongodb-1.4.4 \
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Add user for laravel application
-RUN groupadd -g 1000 www
-RUN useradd -u 1000 -ms /bin/bash -g www www
+RUN { \
+        echo 'opcache.memory_consumption=128'; \
+        echo 'opcache.interned_strings_buffer=8'; \
+        echo 'opcache.max_accelerated_files=4000'; \
+        echo 'opcache.revalidate_freq=2'; \
+        echo 'opcache.fast_shutdown=1'; \
+        echo 'opcache.enable_cli=1'; \
+    } > /usr/local/etc/php/conf.d/php-opocache-cfg.ini
 
-# Copy existing application directory contents
-# COPY . /var/www
+COPY entrypoint.sh /etc/entrypoint.sh
 
-# Copy existing application directory permissions
-# COPY --chown=www:www . /var/www
+RUN chmod +x /etc/entrypoint.sh
 
-# Change current user to www
-USER www
+RUN usermod -u 1000 www-data
 
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
-CMD ["php-fpm"]
+# Set working directory
+WORKDIR /var/www
+
+EXPOSE 80 443
