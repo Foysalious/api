@@ -410,12 +410,28 @@ class AttendanceList
                             'profile' => function ($q) {
                                 $q->select('id', 'name');
                             }]);
-                }, 'role'])
+                },
+                'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }
+            ])
             ->where('business_id', $this->business->id)
             ->active()
-            ->whereNotIn('id', $present_and_on_leave_business_member_ids)
-            ->get();
+            ->whereNotIn('id', $present_and_on_leave_business_member_ids);
 
+        if ($this->businessDepartmentId) {
+            $business_members = $business_members->whereHas('role', function ($q) {
+                $q->whereHas('businessDepartment', function ($q) {
+                    $q->where('business_departments.id', $this->businessDepartmentId);
+                });
+            });
+        }
+
+        $business_members = $business_members->get();
         $data = [];
         foreach ($business_members as $business_member) {
             array_push($data, $this->getBusinessMemberData($business_member) + [
@@ -480,19 +496,19 @@ class AttendanceList
                                 }
                             ]);
                         }
-                        ]);
+                    ]);
             }]);
 
         if ($this->businessDepartmentId) {
             $leaves = $leaves->whereHas('businessMember', function ($q) {
-                $q->whereHas('role', function ($q){
-                    $q->whereHas('businessDepartment', function ($q){
+                $q->whereHas('role', function ($q) {
+                    $q->whereHas('businessDepartment', function ($q) {
                         $q->where('business_departments.id', $this->businessDepartmentId);
                     });
                 });
             });
         }
-        $leaves  = $leaves->get();
+        $leaves = $leaves->get();
 
         $data = [];
         foreach ($leaves as $leave) {
