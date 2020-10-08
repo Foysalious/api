@@ -9,6 +9,7 @@ use App\Sheba\Business\Leave\Updater as LeaveUpdater;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -171,8 +172,17 @@ class LeaveController extends Controller
             $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
+
         $is_half_day_enable = $business->is_half_day_enable;
-        $half_day_configuration = $is_half_day_enable ? json_decode($business->half_day_configuration, 1) : null;
+        $half_day_configuration = null;
+        if ($is_half_day_enable) {
+            $half_day_configuration = json_decode($business->half_day_configuration, 1);
+            foreach ($half_day_configuration as $key => $item) {
+                $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:m A');
+                $half_day_configuration[$key]['end_time'] = Carbon::parse($half_day_configuration[$key]['end_time'])->format('h:m A');
+            }
+        }
+
         return api_response($request, null, 200, [
             'leave_types' => $leave_types,
             'is_half_day_enable' => $is_half_day_enable,
