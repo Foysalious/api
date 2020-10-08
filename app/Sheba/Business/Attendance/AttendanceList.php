@@ -292,6 +292,9 @@ class AttendanceList
         return count($role_ids) > 0 ? $role_ids->pluck('id')->toArray() : [];
     }
 
+    /**
+     * @return array|Collection
+     */
     private function getDataV2()
     {
         $data = [];
@@ -370,27 +373,6 @@ class AttendanceList
     }
 
     /**
-     * @param BusinessMember $business_member
-     * @return array
-     */
-    private function getBusinessMemberData(BusinessMember $business_member)
-    {
-        return [
-            'business_member_id' => $business_member->id,
-            'member' => [
-                'id' => $business_member->member->id,
-                'name' => $business_member->member->profile->name
-            ],
-            'department' => $business_member->role ? [
-                'id' => $business_member->role->business_department_id,
-                'name' => $this->departments->where('id', $business_member->role->business_department_id)->first() ?
-                    $this->departments->where('id', $business_member->role->business_department_id)->first()->name :
-                    'n/s'
-            ] : null
-        ];
-    }
-
-    /**
      * @param $present_and_on_leave_business_members
      * @return array
      */
@@ -451,20 +433,6 @@ class AttendanceList
         return $data;
     }
 
-    /**
-     * @param $action
-     * @param $is_weekend_or_holiday
-     * @param $is_on_leave
-     * @param $is_on_half_day_leave
-     * @return null
-     */
-    private function getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave)
-    {
-        if ($is_on_half_day_leave) return $action->status;
-        if ($is_weekend_or_holiday || $is_on_leave) return null;
-
-        return $action->status;
-    }
 
     private function getBusinessMemberWhoAreOnLeave()
     {
@@ -541,6 +509,27 @@ class AttendanceList
     }
 
     /**
+     * @param BusinessMember $business_member
+     * @return array
+     */
+    private function getBusinessMemberData(BusinessMember $business_member)
+    {
+        return [
+            'business_member_id' => $business_member->id,
+            'member' => [
+                'id' => $business_member->member->id,
+                'name' => $business_member->member->profile->name
+            ],
+            'department' => $business_member->role ? [
+                'id' => $business_member->role->business_department_id,
+                'name' => $this->departments->where('id', $business_member->role->business_department_id)->first() ?
+                    $this->departments->where('id', $business_member->role->business_department_id)->first()->name :
+                    'n/s'
+            ] : null
+        ];
+    }
+
+    /**
      * @param $final_data
      * @return array
      */
@@ -568,6 +557,9 @@ class AttendanceList
         return $text;
     }
 
+    /**
+     * @return bool
+     */
     private function isWeekendHolidayLeave()
     {
         $business_weekend = $this->businessWeekend->getAllByBusiness($this->business);
@@ -585,6 +577,21 @@ class AttendanceList
 
         return $this->isWeekend($this->startDate, $weekend_day)
             || $this->isHoliday($this->startDate, $dates_of_holidays_formatted);
+    }
+
+    /**
+     * @param $action
+     * @param $is_weekend_or_holiday
+     * @param $is_on_leave
+     * @param $is_on_half_day_leave
+     * @return null
+     */
+    private function getStatusBasedOnLeaveAction($action, $is_weekend_or_holiday, $is_on_leave, $is_on_half_day_leave)
+    {
+        if ($is_on_half_day_leave) return $action->status;
+        if ($is_weekend_or_holiday || $is_on_leave) return null;
+
+        return $action->status;
     }
 
     /**
