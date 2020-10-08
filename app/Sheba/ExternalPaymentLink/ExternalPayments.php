@@ -112,7 +112,7 @@ class ExternalPayments
     {
         $this->setTransactionID($transaction_id);
         $payment = $this->client->payments()->byTransactionID($this->transactionID)->first();
-        if(empty($payment)) throw new TransactionIDNotFoundException();
+        if (empty($payment)) throw new TransactionIDNotFoundException();
         return $this->formatData($payment);
     }
 
@@ -155,12 +155,18 @@ class ExternalPayments
 
     }
 
+    private function processData()
+    {
+        $this->data['customer_mobile'] = $this->data['customer_mobile'] ? BDMobileFormatter::format($this->data['customer_mobile']) : '';
+        $this->data['customer_name']   = $this->data['customer_name'] ?: '';
+        $this->data['purpose']         = !empty($this->data['purpose']) ? $this->data['purpose'] : 'ECOM Payment';
+    }
+
     private function createPaymentRequest()
     {
-        $data                    = $this->data;
-        $data['partner_id']      = $this->client->partner->id;
-        $data['customer_mobile'] = $data['customer_mobile'] ? BDMobileFormatter::format($data['customer_mobile']) : '';
-        $data['customer_name']   = $data['customer_name'] ?: '';
+
+        $data               = $this->data;
+        $data['partner_id'] = $this->client->partner->id;
         return $this->client->payments()->create($this->withCreateModificationField($data));
     }
 
@@ -184,9 +190,9 @@ class ExternalPayments
 
     private function setCustomer()
     {
-        if (isset($this->data['customer_mobile'])) {
-            $this->data['customer_mobile'] = BDMobileFormatter::format($this->data['customer_mobile']);
-            $posCustomer                   = PosCustomer::query()->getByMobile($this->data['customer_mobile']);
+        if (!empty($this->data['customer_mobile'])) {
+
+            $posCustomer = PosCustomer::query()->getByMobile($this->data['customer_mobile']);
             if (!$posCustomer) {
                 $posCustomer = $this->createPosCustomer();
             }
