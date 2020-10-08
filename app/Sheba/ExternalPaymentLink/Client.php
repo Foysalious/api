@@ -7,7 +7,7 @@ class Client
 {
     use ModificationFields;
 
-    private $name, $details, $whitelisted_ips, $partner_id, $status, $id;
+    private $name, $details, $whitelisted_ips, $partner_id, $status, $default_purpose, $default_redirect_url, $id;
 
     private $client_id;
 
@@ -74,6 +74,13 @@ class Client
         return $this;
     }
 
+    public function setDefaultFields($request)
+    {
+        $this->default_purpose      = $request->default_purpose;
+        $this->default_redirect_url = $request->default_redirect_url;
+        return $this;
+    }
+
     private function generateID()
     {
         return str_pad(mt_rand(1,999999999),self::CLIENT_ID_LENGTH,'0',STR_PAD_LEFT);
@@ -117,10 +124,12 @@ class Client
     {
         $this->setModifier($modifier);
         $this->client()->update($this->withUpdateModificationField([
-            "name"            => $this->name,
-            "details"         => $this->details,
-            "whitelisted_ips" => $this->whitelisted_ips,
-            "status"          => $this->status
+            "name"                 => $this->name,
+            "details"              => $this->details,
+            "whitelisted_ips"      => $this->whitelisted_ips,
+            "status"               => $this->status,
+            "default_purpose"      => $this->default_purpose,
+            "default_redirect_url" => $this->default_redirect_url
         ]));
 
         return $this->client();
