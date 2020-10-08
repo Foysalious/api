@@ -130,7 +130,9 @@ class SubscriptionController extends Controller
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator, SubscriptionDiscount $subscriptionDiscount)
     {
         $subscriptions = ServiceSubscription::active()->validDiscountsOrderByAmount()->get();
+        $final_subscriptions = collect([]);
         foreach ($subscriptions as $index => $subscription) {
+            if($subscription->service->publication_status !== 1) continue;
             if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
                 array_forget($subscriptions, $index);
                 continue;
@@ -154,10 +156,10 @@ class SubscriptionController extends Controller
             $subscription['thumb'] = $service['thumb'];
             $subscription['banner'] = $service['banner'];
             $subscription['unit'] = $service['unit'];
-
+            $final_subscriptions->push($subscription);
         }
-        if (count($subscriptions) > 0)
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->sortBy('discount.discount_amount')->values()->all()]);
+        if (count($final_subscriptions) > 0)
+            return api_response($request, $final_subscriptions, 200, ['subscriptions' => $final_subscriptions->sortBy('discount.discount_amount')->values()->all()]);
         else
             return api_response($request, null, 404);
     }
