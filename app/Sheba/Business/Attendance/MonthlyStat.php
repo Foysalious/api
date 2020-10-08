@@ -65,13 +65,13 @@ class MonthlyStat
                 'attendance' => null,
                 'is_absent' => 0,
             ];
-            # $is_weekend_or_holiday_or_leave = $this->isWeekendHolidayLeave($date, $weekend_day, $dates_of_holidays_formatted, $leaves);
+
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
 
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
-                $statistics['working_days']--;
+                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day))$statistics['working_days']--;
                 #if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
@@ -98,15 +98,15 @@ class MonthlyStat
                             'is_remote' => $attendance_checkout_action->is_remote ?: 0,
                             'address' => $attendance_checkout_action->is_remote ? json_decode($attendance_checkout_action->location)->address : null
                         ] : null,
-                        'note' => (!($is_weekend_or_holiday || $is_on_leave) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
+                        'note' => (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null,
                         'active_hours' => $attendance->staying_time_in_minutes ? $this->formatMinute($attendance->staying_time_in_minutes) : null,
                     ];
                 }
-                if (!($is_weekend_or_holiday || $is_on_leave) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
-                if (!($is_weekend_or_holiday || $is_on_leave) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
+                if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
+                if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
             }
 
-            if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $is_on_leave), $date)) {
+            if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
                 if ($this->forOneEmployee) $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
@@ -120,8 +120,7 @@ class MonthlyStat
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
             if ($is_weekend_or_holiday || $is_on_leave) {
-                $statistics['working_days']--;
-                #if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
+                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
