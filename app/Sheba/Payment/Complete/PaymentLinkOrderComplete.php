@@ -46,7 +46,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
         $this->invoiceCreator        = app(InvoiceCreator::class);
-        $this->paymentLinkCommission = 2.5;
+        $this->paymentLinkCommission = 2;
     }
 
     public function complete()
@@ -154,9 +154,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
             $walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
-        $minus_wallet_amount    = $this->getPaymentLinkFee($recharge_wallet_amount);
-        $formatted_minus_amount = number_format($minus_wallet_amount, 2);
-        $minus_log              = "(3TK + 2.5%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+
+        $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
+        $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
+        $minus_log                 = "(3TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
