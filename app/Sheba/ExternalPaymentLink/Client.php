@@ -100,13 +100,15 @@ class Client
     private function processData()
     {
         return [
-            "client_id"       => $this->client_id,
-            "name"            => $this->name,
-            "client_secret"   => $this->client_secret,
-            "details"         => $this->details,
-            "whitelisted_ips" => $this->whitelisted_ips,
-            "partner_id"      => $this->partner_id,
-            "status"          => $this->status
+            "client_id"            => $this->client_id,
+            "name"                 => $this->name,
+            "client_secret"        => $this->client_secret,
+            "details"              => $this->details,
+            "whitelisted_ips"      => $this->whitelisted_ips,
+            "partner_id"           => $this->partner_id,
+            "status"               => $this->status,
+            "default_purpose"      => $this->default_purpose,
+            "default_redirect_url" => $this->default_redirect_url
         ];
     }
 

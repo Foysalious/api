@@ -35,14 +35,15 @@ class ClientController extends Controller
 
     /**
      * @param Request $request
+     * @param Client $clients
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $request)
+    public function store(Request $request, Client $clients)
     {
         try {
             $this->validate($request, $this->validationRules());
-            (new Client())->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
-                ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()
+            $clients->setRepository($this->paymentClientRepo)->setName($request->name)->setDetails($request->details)
+                ->setWhitelistedIp($request->whitelisted_ips)->setClientId()->setClientSecret()->setDefaultFields($request)
                 ->setPartnerId($request->partner->id)->setStatus($request->status)->store($request->manager_resource);
             return api_response($request, '', 200, ["data" => ["message" => "Client created successfully"]]);
         } catch (ValidationException $exception) {
