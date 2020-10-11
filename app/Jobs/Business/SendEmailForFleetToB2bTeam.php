@@ -30,26 +30,24 @@ class SendEmailForFleetToB2bTeam extends Job implements ShouldQueue
 
     public function handle()
     {
-        $location = null;
-        $geo_information = json_decode($this->business->geo_informations, 1);
-        $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
-        if (!is_null($hyperLocation)) $location = $hyperLocation->location;
+        if ($this->attempts() <= 1) {
+            $location = null;
+            $geo_information = json_decode($this->business->geo_informations, 1);
+            $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
-        $company_name = $this->business->name;
-        $contact_person_name = $this->business->getContactPerson();
-        $contact_person_email = $this->business->getContactEmail();
-        $contact_person_mobile = $this->business->getContactNumber();
-        $address = $location->name;
-        $subject = $company_name . " has shown interest in Fleet management.";
+            $company_name = $this->business->name;
+            $contact_person_name = $this->business->getContactPerson();
+            $contact_person_email = $this->business->getContactEmail();
+            $contact_person_mobile = $this->business->getContactNumber();
+            $address = $location->name;
+            $subject = $company_name . " has shown interest in Fleet management.";
 
-        Mail::send('emails.fleet-mail', [
-            'company_name' => $company_name,
-            'contact_person_name' => $contact_person_name,
-            'contact_person_email' => $contact_person_email,
-            'contact_person_mobile' => $contact_person_mobile,
-            'address' => $address
-        ], function ($m) use ($subject) {
-            $m->to($this->toMail)->subject($subject);
-        });
+            Mail::send('emails.fleet-mail', [
+                'company_name' => $company_name, 'contact_person_name' => $contact_person_name, 'contact_person_email' => $contact_person_email, 'contact_person_mobile' => $contact_person_mobile, 'address' => $address
+            ], function ($m) use ($subject) {
+                $m->to($this->toMail)->subject($subject);
+            });
+        }
     }
 }

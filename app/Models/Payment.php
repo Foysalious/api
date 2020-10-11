@@ -23,6 +23,11 @@ class Payment extends Model
         return $this->hasMany(PaymentDetail::class);
     }
 
+    public function externalPayments()
+    {
+        return $this->hasOne(\Sheba\Dal\ExternalPayment\Model::class);
+    }
+
     /**
      *
      * Scope functions

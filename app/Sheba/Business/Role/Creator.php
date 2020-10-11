@@ -42,7 +42,6 @@ class Creator
             'name' => $this->requester->getName(),
             'is_published' => $this->requester->getIsPublished()
         ];
-
         return $this->businessRoleRepository->create($this->withCreateModificationField($data));
     }
 }

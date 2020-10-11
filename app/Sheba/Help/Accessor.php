@@ -8,4 +8,5 @@ class Accessor
 
     const ADMIN = 'admin';
     const BUSINESS = 'business';
+    const EMPLOYEE = 'employee';
 }
