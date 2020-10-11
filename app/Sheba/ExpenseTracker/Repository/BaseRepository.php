@@ -17,6 +17,8 @@ class BaseRepository
 
     protected $paymentCreator;
 
+    protected $partnerId;
+
     /**
      * BaseRepository constructor.
      * @param ExpenseTrackerClient $client
@@ -42,6 +44,7 @@ class BaseRepository
             $partner->update($data);
         }
         $this->accountId = $partner->expense_account_id;
+        $this->partnerId = $partner->id;
         return $this;
     }
 }
