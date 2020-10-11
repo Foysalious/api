@@ -199,8 +199,7 @@ class ExternalPayments
     private function setCustomer()
     {
         if (!empty($this->data['customer_mobile'])) {
-
-            $posCustomer = PosCustomer::query()->getByMobile($this->data['customer_mobile']);
+            $posCustomer = PosCustomer::query()->getByMobile($this->data['customer_mobile'])->first();
             if (!$posCustomer) {
                 $posCustomer = $this->createPosCustomer();
             }
@@ -215,7 +214,7 @@ class ExternalPayments
 
     private function createPosCustomer()
     {
-        $profile = Profile::where('mobile', $this->data['customer_mobile']);
+        $profile = Profile::where('mobile', $this->data['customer_mobile'])->first();
         if (!$profile) {
             $profile = $this->profileRepo->store($this->withCreateModificationField(['mobile' => $this->data['customer_mobile'], 'name' => isset($this->data['customer_name']) ? $this->data['customer_name'] : '']));
         }
