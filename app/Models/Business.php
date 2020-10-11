@@ -90,7 +90,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function activePartners()
     {
-        return $this->partners()->where('is_active_for_b2b');
+        return $this->partners()->where('is_active_for_b2b', 1);
     }
 
     public function deliveryAddresses()
