@@ -199,8 +199,7 @@ class ExternalPayments
     private function setCustomer()
     {
         if (!empty($this->data['customer_mobile'])) {
-
-            $posCustomer = PosCustomer::query()->getByMobile($this->data['customer_mobile']);
+            $posCustomer = PosCustomer::query()->getByMobile($this->data['customer_mobile'])->first();
             if (!$posCustomer) {
                 $posCustomer = $this->createPosCustomer();
             }
