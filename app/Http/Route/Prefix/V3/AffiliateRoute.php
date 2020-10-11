@@ -8,6 +8,8 @@ class AffiliateRoute
             $api->group(['prefix' => 'orders'], function ($api) {
                 $api->post('/', 'Order\OrderController@storeFromBondhu');
             });
+            $api->get('notifications', 'AffiliateController@getNotifications');
+            $api->get('notifications/{notification}', 'AffiliateController@getNotification');
         });
     }
 }
