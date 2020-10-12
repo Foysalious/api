@@ -320,6 +320,11 @@ class Route
                         $api->post('/', 'DummyInventoryController@brandStore');
                         $api->post('/{brand}', 'DummyInventoryController@brandUpdate');
                     });
+                    $api->group(['prefix' => 'units'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@unitList');
+                        $api->post('/', 'DummyInventoryController@unitStore');
+                        $api->post('/{brand}', 'DummyInventoryController@unitUpdate');
+                    });
                 });
             });
         });
