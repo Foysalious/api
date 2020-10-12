@@ -158,6 +158,11 @@ class PosOrder extends Model {
         return $this->hasMany(PosOrderLog::class);
     }
 
+    public function scopeGetPartnerWiseOrderId($query, $id) {
+        $pos_order = $query->where('id', $id)->first();
+        return $pos_order->partner_wise_order_id;
+    }
+
     public function scopeByPartner($query, $partner_id) {
         return $query->where('partner_id', $partner_id);
     }
