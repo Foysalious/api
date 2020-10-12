@@ -313,6 +313,16 @@ class Route
                 $api->get('validate','NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+
+            $api->group(['prefix' => 'partners/{partner}'], function ($api) {
+                $api->group(['prefix' => 'inventory'], function ($api) {
+                    $api->group(['prefix' => 'brands'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@brandList');
+                        $api->post('/', 'DummyInventoryController@brandStore');
+                        $api->post('/{brand}', 'DummyInventoryController@brandUpdate');
+                    });
+                });
+            });
         });
         return $api;
     }
