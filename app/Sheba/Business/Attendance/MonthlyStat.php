@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Attendance;
 
+use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Sheba\Dal\Attendance\Model as Attendance;
@@ -229,9 +230,9 @@ class MonthlyStat
     private function whichHalfDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
     {
         if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
-            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['which_half_day'] == 'first_half') return 'first_half';
+            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['which_half_day'] == HalfDayType::FIRST_HALF) return HalfDayType::FIRST_HALF;
         }
-        return 'second_half';
+        return HalfDayType::SECOND_HALF;
     }
 
     /**
