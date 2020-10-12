@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
+use App\Models\Department;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
@@ -144,7 +145,8 @@ class CoWorkerController extends Controller
      */
     public function getRoles(Request $request)
     {
-        $roles = BusinessRole::query()->pluck('name')->toArray();
+        $business_department_ids = BusinessDepartment::query()->where('business_id', $request->business->id)->pluck('id')->toArray();
+        $roles = BusinessRole::query()->whereIn('business_department_id', $business_department_ids)->pluck('name')->toArray();
         $designations_list = Designations::getDesignations();
         $all_roles = collect(array_merge($roles,$designations_list))->unique();
         if ($request->has('search')) {
