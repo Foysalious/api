@@ -5,7 +5,7 @@ class ComplainPercentage extends Parameter
 {
     protected function getWeight()
     {
-        return 10;
+        return config('auto_sp.weights.quality.complain');
     }
 
     protected function getValueForPartner()

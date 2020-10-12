@@ -581,11 +581,11 @@ return [
             'prefix'     => 'T',
             'department' => 'TEL'
         ],
-        'DDN'        => [
-            'name'      => 'DDN',
-            'short_name'=> 'DDN',
-            'prefix'    =>  'D',
-            'department'=>  'AC'
+        'DDN'         => [
+            'name'       => 'DDN',
+            'short_name' => 'DDN',
+            'prefix'     => 'D',
+            'department' => 'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [
@@ -837,7 +837,7 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 200,
             'max' => 15000
         ],
         'bank'  => [
@@ -1079,10 +1079,10 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'Resource',
-        env('SHEBA_MANGER_APP')      => 'Partner',
-        'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser',
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser',
         'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
@@ -1213,8 +1213,8 @@ return [
                 'cap'        => 200
             ],
             'AMBASSADOR' => [
-                'percentage' => 2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TOP_UP'        => [
@@ -1223,8 +1223,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.02,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'MOVIE'         => [
@@ -1233,8 +1233,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TRANSPORT'     => [
@@ -1323,7 +1323,6 @@ return [
         'Service',
         'Non Service'
     ],
-
     'LOAN_GROUP'                                       => [
         'G1',
         'G2',

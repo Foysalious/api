@@ -6,7 +6,7 @@ class PackageScore extends Parameter
 
     protected function getWeight()
     {
-        return 5;
+        return config('auto_sp.weights.quality.package');
     }
 
     protected function getValueForPartner()
