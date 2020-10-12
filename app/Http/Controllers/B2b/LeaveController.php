@@ -36,6 +36,7 @@ use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
+use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
 
 class LeaveController extends Controller
 {
@@ -476,5 +477,19 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business_id
+     * @param Request $request
+     * @param AdjustmentApprovers $approvers
+     * @return JsonResponse
+     */
+    public function getSuperAdmins($business_id, Request $request, AdjustmentApprovers $approvers)
+    {
+        $approvers = $approvers->setBusiness($request->business)->getApprovers();
+        return api_response($request, null, 200, [
+            'approvers' => $approvers
+        ]);
     }
 }
