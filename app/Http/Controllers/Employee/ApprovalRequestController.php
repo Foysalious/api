@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Models\Attachment;
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
@@ -46,6 +47,9 @@ class ApprovalRequestController extends Controller
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
         $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
@@ -64,7 +68,7 @@ class ApprovalRequestController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($approval_requests_list, $approval_request);
@@ -87,7 +91,8 @@ class ApprovalRequestController extends Controller
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         if ($business_member->id != $approval_request->approver_id)
@@ -104,7 +109,7 @@ class ApprovalRequestController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $attachments = $this->getAttachments($requestable);
