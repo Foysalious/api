@@ -11,15 +11,16 @@ class CheckoutStatusCalculator extends StatusCalculator
     public function calculate()
     {
         $checkout_time = null;
+
         if ($this->whichHalfDay) {
             if ($this->whichHalfDay == HalfDayType::FIRST_HALF) {
-                $checkout_time = Carbon::parse($this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+                $checkout_time = $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
             }
             if ($this->whichHalfDay == HalfDayType::SECOND_HALF) {
-                $checkout_time = Carbon::parse($this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+                $checkout_time = $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
             }
         } else {
-            $checkout_time = app(new TimeByBusiness())->getOfficeEndTimeByBusiness();
+            $checkout_time = (new TimeByBusiness())->getOfficeEndTimeByBusiness();
             if (is_null($checkout_time)) return Statuses::LEFT_TIMELY;
         }
 

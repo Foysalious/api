@@ -147,7 +147,6 @@ class Creator
             $status = $this->checkinStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
         else
             $status = $this->checkoutStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
-
         $attendance_log_data = [
             'attendance_id' => $this->attendance->id,
             'action' => $this->action,
