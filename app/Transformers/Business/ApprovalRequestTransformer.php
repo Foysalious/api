@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Business;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
@@ -14,12 +15,15 @@ use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 class ApprovalRequestTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
-    /** @var Profile Profile */
+    /** @var Profile $profile */
     private $profile;
+    /** @var Business $business */
+    private $business;
 
-    public function __construct(Profile $profile)
+    public function __construct(Profile $profile, Business $business)
     {
         $this->profile = $profile;
+        $this->business = $business;
     }
 
     /**
@@ -44,8 +48,16 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $this->profile->name,
                 'type' => $leave_type->title,
-                'total_days' => (int)$requestable->total_days,
+                'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
+
+                'is_half_day' => $requestable->is_half_day,
+                'half_day_configuration' => $requestable->is_half_day ? [
+                    'half_day' => $requestable->half_day_configuration,
+                    'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
+                ] : null,
+                'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
+
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
