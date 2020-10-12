@@ -5,7 +5,7 @@ class Ita extends Parameter
 {
     protected function getWeight()
     {
-        return 25;
+        return config('auto_sp.weights.quality.ita');
     }
 
     protected function getValueForPartner()
