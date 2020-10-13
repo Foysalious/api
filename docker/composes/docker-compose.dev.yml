@@ -5,6 +5,7 @@ services:
       SERVICE_NAME: app
     volumes:
       - ../nginx/conf.d/nginx-dev.conf /etc/nginx/sites-enabled/default
+      - ~/.composer/auth.json:/root/.composer/auth.json
     ports:
       - "9096:80"
 

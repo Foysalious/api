@@ -7,23 +7,18 @@
 # git commit -m "Make deploy.sh executable."
 # git push
 
-
 sudo git fetch origin
 branch_name="$(git symbolic-ref --short -q HEAD 2>/dev/null)"
 reset="sudo git reset --hard origin/"
 reset_branch="$reset$branch_name"
-eval $reset_branch
+eval "$reset_branch"
 
 if [ "$branch_name" = master ]; then
-    # Sentry release version create
-    VERSION=$(sentry-cli releases propose-version)
-    # Create a release
-    sentry-cli releases new -p api $VERSION
-    # Associate commits with the release
-    sentry-cli releases set-commits --auto $VERSION
-    # Finalize release
-    sentry-cli releases finalize $VERSION
-    php artisan set-release-number --release=$VERSION
+  VERSION=$(sentry-cli releases propose-version)
+  sentry-cli releases new -p api "$VERSION"
+  sentry-cli releases set-commits --auto "$VERSION"
+  sentry-cli releases finalize "$VERSION"
+  php artisan set-release-number --release="$VERSION"
 fi
 
 sudo composer install --ignore-platform-reqs --no-interaction
