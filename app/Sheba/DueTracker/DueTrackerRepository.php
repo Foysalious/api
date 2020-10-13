@@ -135,6 +135,11 @@ class DueTrackerRepository extends BaseRepository
             return $item;
         });
 
+        if(array_key_exists('offset', $request->all()) && array_key_exists('limit', $request->all())) {
+            list($offset, $limit) = calculatePagination($request);
+            $list               = $list->slice($offset)->take($limit)->values();
+        }
+
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
