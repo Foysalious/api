@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Leave;
 
+use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
 use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
@@ -226,10 +227,15 @@ class Creator
                 ->create();
             $this->createAttachments($leave);
         });
+
         if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
+
         return $leave;
     }
 
+    /**
+     * @param Leave $leave
+     */
     private function createAttachments(Leave $leave)
     {
         foreach ($this->attachments as $attachment) {
@@ -240,31 +246,12 @@ class Creator
         }
     }
 
-    public function sendPushToSubstitute(Leave $leave)
+    /**
+     * @param Leave $leave
+     */
+    private function sendPushToSubstitute(Leave $leave)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $leave->businessMember;
-        /** @var BusinessMember $substitute_business_member */
-        $substitute_business_member = BusinessMember::findOrFail($leave->substitute_id);
-        /** @var Member $member */
-        $member = $business_member->member;
-        /** @var Profile $profile */
-        $leave_applicant = $member->profile->name;
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-        $start_date = $leave->start_date->format('d/m/Y');
-        $end_date = $leave->end_date->format('d/m/Y');
-        $notification_data = [
-            "title" => 'Leave substitute',
-            "message" => "You have been chosen as $leave_applicant's substitute from $start_date to $end_date",
-            "event_type" => 'substitute',
-            "event_id" => $leave->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ];
-
-        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
+        dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
     }
 
     private function getManager($business_member)

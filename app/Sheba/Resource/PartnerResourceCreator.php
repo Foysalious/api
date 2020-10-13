@@ -12,14 +12,17 @@ class PartnerResourceCreator
     private $partner;
     private $data;
     private $resource;
-
     private $resourceCreator;
     private $partnerResources;
-
     private $resourceTypes;
     /** @var ResourceCreateRequest */
     private $resourceCreateRequest;
 
+    /**
+     * PartnerResourceCreator constructor.
+     * @param ResourceCreator $resource_creator
+     * @param PartnerResourceRepository $partner_resources
+     */
     public function __construct(ResourceCreator $resource_creator, PartnerResourceRepository $partner_resources)
     {
         $this->resourceTypes = constants('RESOURCE_TYPES');
@@ -68,12 +71,13 @@ class PartnerResourceCreator
 
     public function create()
     {
-        if (empty($this->resource)) $this->resource = $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->create();
+        if (empty($this->resource))
+            $this->resource = $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->create();
+
         $this->associatePartnerResource();
         $this->setResourceCategories();
         $this->notifyPMTeam($this->resource);
     }
-
 
     public function associatePartnerResource()
     {
@@ -117,5 +121,4 @@ class PartnerResourceCreator
             "event_id" => $this->partner->id
         ];
     }
-
 }

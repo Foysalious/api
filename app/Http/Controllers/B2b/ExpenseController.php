@@ -90,30 +90,30 @@ class ExpenseController extends Controller
             ->groupby('year', 'month', 'member_id')
             ->orderBy('created_at', 'desc');
 
-        $start_date = null;
-        $end_date = null;
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
         }
-
         if (($start_date && $end_date) && !$request->has('key')) {
             $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
+
         $expenses = $expenses->get();
 
         foreach ($expenses as $key => $expense) {
             $member = $expense->member;
             $expense['employee_name'] = $member->profile->name;
             $expense['employee_department'] = $member->businessMember->department() ? $member->businessMember->department()->name : null;
-            #$expense['attachment'] = $this->expense_repo->getAttachments($expense, $request) ? $this->expense_repo->getAttachments($expense, $request) : null;
             unset($expense->member);
         }
-        $totalExpenseCount = $expenses->count();
+
+        $total_expense_count = $expenses->count();
+
         if ($request->has('limit')) $expenses = $expenses->splice($offset, $limit);
-        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $totalExpenseCount]);
+
+        return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count]);
     }
 
     public function show($business, $expense, Request $request)

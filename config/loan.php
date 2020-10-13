@@ -18,7 +18,7 @@ return [
     ],
 
     'maximum_amount'                       => [
-        LoanTypes::TERM  => env('TERM_LOAN_MAXIMUM_AMOUNT', 50000),
+        LoanTypes::TERM  => env('TERM_LOAN_MAXIMUM_AMOUNT', 5000000),
         LoanTypes::MICRO => env('MICRO_LOAN_MAXIMUM_AMOUNT', 5000)
     ],
     'repayment_defaulter_default_duration' => 5,
