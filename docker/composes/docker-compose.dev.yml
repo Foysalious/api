@@ -4,7 +4,7 @@ services:
     environment:
       SERVICE_NAME: app
     volumes:
-      - ../nginx/conf.d/nginx-dev.conf /etc/nginx/sites-enabled/default
+      - ../nginx/conf.d/nginx-dev.conf:/etc/nginx/sites-enabled/default
       - ~/.composer/auth.json:/root/.composer/auth.json
     ports:
       - ${PORT}:80
