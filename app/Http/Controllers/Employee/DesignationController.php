@@ -21,9 +21,11 @@ class DesignationController extends Controller
         $business = $this->getBusiness($request);
         if (!$business) return api_response($request, null, 404);
 
-        $roles = BusinessRole::query()->pluck('name')->toArray();
+        $business_department_ids = BusinessDepartment::query()->where('business_id', $business->id)->pluck('id')->toArray();
+        $roles = BusinessRole::query()->whereIn('business_department_id', $business_department_ids)->pluck('name')->toArray();
         $designations_list = Designations::getDesignations();
         $all_roles = collect(array_merge($roles,$designations_list))->unique();
+
         if ($request->has('search')) {
             $all_roles = array_filter($all_roles->toArray(), function ($role) use ($request) {
                 return str_contains(strtoupper($role), strtoupper($request->search));
