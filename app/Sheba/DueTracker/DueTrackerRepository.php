@@ -129,7 +129,7 @@ class DueTrackerRepository extends BaseRepository
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
         $due_list = collect($result['data']['list']);
-        if(array_key_exists('offset', $request->all()) && array_key_exists('limit', $request->all())) {
+        if(isset($request['offset']) && isset($request['limit'])) {
             list($offset, $limit) = calculatePagination($request);
             $due_list               = $due_list->slice($offset)->take($limit)->values();
         }
