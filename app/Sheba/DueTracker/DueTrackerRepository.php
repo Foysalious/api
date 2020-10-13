@@ -128,17 +128,17 @@ class DueTrackerRepository extends BaseRepository
         $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
-        $list   = collect($result['data']['list'])->map(function ($item) {
+        $due_list = collect($result['data']['list']);
+        if(array_key_exists('offset', $request->all()) && array_key_exists('limit', $request->all())) {
+            list($offset, $limit) = calculatePagination($request);
+            $due_list               = $due_list->slice($offset)->take($limit)->values();
+        }
+        $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
             $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
             return $item;
         });
-
-        if(array_key_exists('offset', $request->all()) && array_key_exists('limit', $request->all())) {
-            list($offset, $limit) = calculatePagination($request);
-            $list               = $list->slice($offset)->take($limit)->values();
-        }
 
         $total_credit       = 0;
         $total_debit        = 0;
