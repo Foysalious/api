@@ -56,7 +56,6 @@ class PosOrderTransformer extends TransformerAbstract
 
             }
         }
-
         return $data;
     }
 
@@ -78,6 +77,7 @@ class PosOrderTransformer extends TransformerAbstract
 
     public function includeCustomer($order)
     {
+        if ($order->customer) $order->customer['partner_id'] = $order->partner_id;
         $collection = $this->item($order->customer, new PosCustomerTransformer());
         return $collection->getData() ? $collection : null;
     }
