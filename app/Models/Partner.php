@@ -487,7 +487,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasAppropriateCreditLimit()
     {
-        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+        return (double)$this->wallet >= ($this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : constants('PARTNER_DEFAULT_SECURITY_MONEY'));
     }
 
     public function bankInfos()
