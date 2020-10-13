@@ -5,7 +5,7 @@ services:
       context: ../
       dockerfile: Dockerfile
     image: sheba.xyz/php-fpm-7.0.33-with-nginx
-    container_name: api-service
+    container_name: ${CONTAINER_NAME}
     restart: unless-stopped
     tty: true
     env_file: ../../.env

@@ -6,10 +6,10 @@ services:
       VIRTUAL_HOST: ${API_DOMAIN}
     volumes:
       - ../nginx/conf.d/nginx-local.conf:/etc/nginx/sites-enabled/default
-    ports: 
+    ports:
       - ${PORT}:80
 
 networks:
-  api-service-network:    
+  api-service-network:
     external:
-      name: sheba-docker_development_network
+      name: ${EXTERNAL_NETWORK}
