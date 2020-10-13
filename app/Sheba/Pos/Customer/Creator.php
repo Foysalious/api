@@ -87,6 +87,7 @@ class Creator {
         $this->data['profile_id'] = $this->resolveProfileId();
         $customer                 = $this->createPosCustomer();
         $this->data['partner_id'] = $this->partner ? $this->partner->id : $this->data['partner']->id;
+        $this->data['nick_name'] = $this->data['name'];
         $this->data               = array_except($this->data, ['mobile', 'name', 'email', 'address', 'profile_image', 'partner', 'manager_resource', 'profile_id']);
         $partner_pos_customer     = $this->partnerPosCustomers->where('partner_id', $this->data['partner_id'])->where('customer_id', $customer->id)->first();
         if (!$partner_pos_customer) {
