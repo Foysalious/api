@@ -50,6 +50,10 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $approverId;
+    private $isLeaveAdjustment;
+    private $isHalfDay;
+    private $halfDayConfigure;
     private $substitute;
     private $createdBy;
     /** @var UploadedFile[] */
@@ -104,6 +108,8 @@ class Creator
         $this->business = $this->businessMember->business;
         $this->getManager($this->businessMember);
 
+        if ($this->isLeaveAdjustment) return $this;
+
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
             return $this;
@@ -154,6 +160,18 @@ class Creator
         return $this;
     }
 
+    public function setIsHalfDay($is_half_day)
+    {
+        $this->isHalfDay = $is_half_day;
+        return $this;
+    }
+
+    public function setHalfDayConfigure($half_day_configuration)
+    {
+        $this->halfDayConfigure = $half_day_configuration;
+        return $this;
+    }
+
     public function setNote($note)
     {
         $this->note = $note;
@@ -166,6 +184,18 @@ class Creator
         return $this;
     }
 
+    public function setApproverId($approver_id)
+    {
+        $this->approvers = [$approver_id];
+        return $this;
+    }
+
+    public function setIsLeaveAdjustment($is_leave_adjustment = false)
+    {
+        $this->isLeaveAdjustment = $is_leave_adjustment;
+        return $this;
+    }
+
     /**
      * @param $attachments UploadedFile[]
      * @return $this
@@ -174,24 +204,6 @@ class Creator
     {
         $this->attachments = $attachments;
         return $this;
-    }
-
-    private function setTotalDays()
-    {
-        $leave_day_into_holiday_or_weekend = 0;
-        if (!$this->business->is_sandwich_leave_enable) {
-            $business_holiday = $this->businessHoliday->getAllDateArrayByBusiness($this->business);
-            $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
-
-            $period = CarbonPeriod::create($this->startDate, $this->endDate);
-            foreach ($period as $date) {
-                $day_name_in_lower_case = strtolower($date->format('l'));
-                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
-            }
-        }
-
-        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     public function setSubstitute($substitute_id)
@@ -214,9 +226,13 @@ class Creator
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
+            'is_half_day' => $this->isHalfDay,
+            'half_day_configuration' => $this->halfDayConfigure,
             'total_days' => $this->setTotalDays(),
-            'left_days' => $this->getLeftDays()
+            'left_days' => $this->getLeftDays(),
+            'status' => $this->isLeaveAdjustment ? 'accepted' : 'pending'
         ];
+
         $leave = null;
         DB::transaction(function () use ($data, &$leave) {
             $this->setModifier($this->businessMember->member);
@@ -224,6 +240,7 @@ class Creator
             $this->approval_request_creator->setBusinessMember($this->businessMember)
                 ->setApproverId($this->approvers)
                 ->setRequestable($leave)
+                ->setIsLeaveAdjustment($this->isLeaveAdjustment)
                 ->create();
             $this->createAttachments($leave);
         });
@@ -231,6 +248,32 @@ class Creator
         if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
 
         return $leave;
+    }
+
+    private function setTotalDays()
+    {
+        $leave_day_into_holiday_or_weekend = 0;
+        if (!$this->business->is_sandwich_leave_enable) {
+            $business_holiday = $this->businessHoliday->getAllDateArrayByBusiness($this->business);
+            $business_weekend = $this->businessWeekend->getAllByBusiness($this->business)->pluck('weekday_name')->toArray();
+
+            $period = CarbonPeriod::create($this->startDate, $this->endDate);
+            foreach ($period as $date) {
+                $day_name_in_lower_case = strtolower($date->format('l'));
+                if (in_array($day_name_in_lower_case, $business_weekend)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
+                if (in_array($date->toDateString(), $business_holiday)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
+            }
+        }
+
+        return $this->isHalfDay ?
+            ($this->endDate->diffInDays($this->startDate) + 0.5) - $leave_day_into_holiday_or_weekend :
+            ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     /**
@@ -288,7 +331,6 @@ class Creator
     {
         $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
-
         return $business_total_leave_days_by_types - $used_days;
     }
 }
