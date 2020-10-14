@@ -51,6 +51,7 @@
         .table td {
             text-align: center;
             padding: 0px 10px;
+            line-height: 1;
         }
 
         .table-head {
@@ -148,19 +149,20 @@
     @endif
     <table style="width: 100%;line-height: 1">
         <tr>
-            <td style="width: 70%"> Customer name: {{ $customer["name"]}}</td>
-            <td style="width: 30%">Number of Transactions: {{$other_info["total_transactions"]}}</td>
+            <td style="width: 65%"> Customer name: {{ $customer["name"]}}</td>
+            <td style="width: 35%">Number of Transactions: {{$other_info["total_transactions"]}}</td>
         </tr>
     </table>
     <table style="width: 100%;line-height: 1">
         <tr>
-            <td style="width: 70%">Total credits: <span style="color: #219653">{{$other_info["total_credit"]}} tk</span></td>
-            <td style="width: 30%">Total debits: <span style="color: #DC1E1E">{{$other_info["total_debit"]}} tk</span></td>
+            <td style="width: 65%">Total credits: <span style="color: #219653">{{$other_info["total_credit"]}} tk</span></td>
+            <td style="width: 35%">Total debits: <span style="color: #DC1E1E">{{$other_info["total_debit"]}} tk</span></td>
         </tr>
     </table>
     <table style="width: 100%;line-height: 1">
         <tr>
-            <td style="width: 70%">Date: {{ date("d-m-Y, h:i:s a") }}</td>
+            <td style="width: 65%">Date: {{ date("d-m-Y, h:i:s a") }}</td>
+            <td style="width: 35%">Balance: <span style="color:{{$balance["color"]}}">{{$balance["amount"]}} tk ( {{$balance["type"]}} )</span></td>
         </tr>
     </table>
     <table class="table table-bordered">
@@ -176,15 +178,30 @@
         <tbody>
             @foreach($list as $key=>$item)
             <tr>
-                <td>{{++$key}}</td>
-                <td>{{date('d-m-Y', strtotime($item['created_at'])) }}</td>
-                <td>{{$item['head']}}</td>
-                @if($item['type'] === 'deposit')
-                    <td style="color: #219653">0</td>
-                    <td style="color: #DC1E1E">{{$item['amount'] }}</td>
+                <td style="width: 9%">{{++$key}}</td>
+                <td style="width: 15%">{{date('d-m-Y', strtotime($item['created_at'])) }}</td>
+
+                @if($item['source_type'] === 'PosOrder')
+                    <td style="width: 50%">Purchase, Order Id #{{$item['partner_wise_order_id']}}</td>
+                @elseif($item['head'] === 'Due Tracker')
+                    @if($item['note'])
+                        @if(strlen($item['note']) > 120)
+                            <td style="width: 50%">{{substr($item['note'], 0, 120)}}... </td>
+                        @else
+                            <td style="width: 50%"> {{$item['note']}} </td>
+                        @endif
                     @else
-                    <td style="color: #219653">{{$item['amount'] }}</td>
-                    <td style="color: #DC1E1E">0</td>
+                        <td style="width: 50%"> -- </td>
+                    @endif
+                @else
+                    <td style="width: 50%">{{$item['head']}}</td>
+                @endif
+                @if($item['type'] === 'deposit')
+                    <td style="color: #219653;width: 13%">0</td>
+                    <td style="color: #DC1E1E;width: 13%">{{$item['amount'] }}</td>
+                    @else
+                    <td style="color: #219653;width: 13%">{{$item['amount'] }}</td>
+                    <td style="color: #DC1E1E;width: 13%">0</td>
                 @endif
             </tr>
         @endforeach
@@ -194,6 +211,12 @@
                 <td style="color: #DC1E1E">{{$other_info["total_debit"]}}</td>
             </tr>
         </tbody>
+    </table>
+    <table style="width: 100%;line-height: 1">
+        <tr>
+            <td style="width: 65%"></td>
+            <td style="width: 35%">Balance: <span style="color:{{$balance["color"]}}">{{$balance["amount"]}} tk ( {{$balance["type"]}} )</span></td>
+        </tr>
     </table>
 </div>
 </body>

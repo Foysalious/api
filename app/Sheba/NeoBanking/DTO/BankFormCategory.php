@@ -20,6 +20,7 @@ abstract class BankFormCategory
     protected $bank;
     protected $bankInfoRepo;
     protected $last_updated = 'today';
+    protected $bankAccountData;
 
     public function __construct()
     {
@@ -34,6 +35,7 @@ abstract class BankFormCategory
     abstract public function post();
 
     abstract public function getLastUpdated();
+    abstract public function getDummy();
 
     public function setData(array $data)
     {
@@ -91,5 +93,23 @@ abstract class BankFormCategory
     public function getCompletionDetails(): BankCompletionDetail
     {
         return (new BankCompletionDetail())->setTitle($this->getTitle())->setCode($this->code)->setLastUpdated($this->getLastUpdated())->setCompletionPercentage($this->completion());
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getData()
+    {
+        return $this->data;
+    }
+
+    /**
+     * @param mixed $bankAccountData
+     * @return BankFormCategory
+     */
+    public function setBankAccountData($bankAccountData)
+    {
+        $this->bankAccountData = $bankAccountData;
+        return $this;
     }
 }

@@ -4,11 +4,10 @@
 namespace Sheba\NeoBanking\Exceptions;
 
 
-use Exception;
 use Throwable;
 
-class InvalidListInsertion extends Exception
+class InvalidListInsertion extends NeoBankingException
 {
-    public function __construct($message = "Trying to insert invalid list item", $code = 0, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
+    public function __construct($message = "Trying to insert invalid list item", $code = 500, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
 
 }

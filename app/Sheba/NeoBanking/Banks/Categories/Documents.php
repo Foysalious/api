@@ -30,4 +30,9 @@ class Documents extends BankFormCategory
     {
         return $this->last_updated;
     }
+
+    public function getDummy()
+    {
+        // TODO: Implement getDummy() method.
+    }
 }
