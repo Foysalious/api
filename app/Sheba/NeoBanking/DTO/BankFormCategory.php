@@ -20,6 +20,7 @@ abstract class BankFormCategory
     protected $bank;
     protected $bankInfoRepo;
     protected $last_updated = 'today';
+    protected $bankAccountData;
 
     public function __construct()
     {
@@ -100,5 +101,15 @@ abstract class BankFormCategory
     public function getData()
     {
         return $this->data;
+    }
+
+    /**
+     * @param mixed $bankAccountData
+     * @return BankFormCategory
+     */
+    public function setBankAccountData($bankAccountData)
+    {
+        $this->bankAccountData = $bankAccountData;
+        return $this;
     }
 }

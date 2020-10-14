@@ -11,6 +11,7 @@ use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
+use Sheba\NeoBanking\PartnerNeoBankingInfo;
 
 class PrimeBank extends Bank
 {
@@ -37,7 +38,6 @@ class PrimeBank extends Bank
     {
         return $category->getDummy();
     }
-
 
     /**
      * @return array

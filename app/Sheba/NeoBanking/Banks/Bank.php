@@ -9,6 +9,7 @@ use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use Sheba\Dal\NeoBank\Model as NeoBank;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
+use Sheba\NeoBanking\PartnerNeoBankingInfo;
 use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 abstract class Bank
@@ -26,6 +27,7 @@ abstract class Bank
     protected $bankRepo;
     /** @var Partner $partner */
     protected $partner;
+    protected $bankInfo;
 
     /**
      * @param Partner $partner
@@ -74,20 +76,28 @@ abstract class Bank
         $this->code    = $this->model->bank_code;
     }
 
-    abstract public function categories():BankFormCategoryList;
+    abstract public function categories(): BankFormCategoryList;
 
     abstract public function accountInfo(): BankAccountInfo;
 
     abstract public function categoryDetails(BankFormCategory $category): array;
 
     abstract public function homeInfo(): array;
-    abstract public function completion():BankCompletion;
-    abstract public function accountDetailInfo():BankAccountInfoWithTransaction;
+
+    abstract public function completion(): BankCompletion;
+
+    abstract public function accountDetailInfo(): BankAccountInfoWithTransaction;
+
     /**
      * @return Partner
      */
     public function getPartner()
     {
         return $this->partner;
+    }
+
+    public function loadInfo()
+    {
+        $this->bankInfo = (new PartnerNeoBankingInfo())->setPartner($this->partner);
     }
 }

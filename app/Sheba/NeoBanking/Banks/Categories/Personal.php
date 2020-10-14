@@ -18,7 +18,7 @@ class Personal extends BankFormCategory
 
     public function get()
     {
-        // TODO: Implement get() method.
+
     }
 
     public function post()
