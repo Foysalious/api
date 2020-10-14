@@ -4,6 +4,7 @@
 namespace Sheba\NeoBanking\Banks\Categories;
 
 
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 
 class Account extends BankFormCategory
@@ -21,6 +22,9 @@ class Account extends BankFormCategory
     public function get()
     {
         return [];
+    }
+    public function getDummy(){
+        return (new CategoryGetter())->setCategory($this)->toArray();
     }
 
     public function post()

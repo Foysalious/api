@@ -35,7 +35,7 @@ class PrimeBank extends Bank
 
     public function categoryDetails(BankFormCategory $category): array
     {
-        return $category->get();
+        return $category->getDummy();
     }
 
 
