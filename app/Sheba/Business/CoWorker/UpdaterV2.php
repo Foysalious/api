@@ -108,15 +108,16 @@ class UpdaterV2
      */
     public function setDesignation($designation)
     {
-        $this->designation = $designation;
+        $this->designation = strtolower($designation);
         $this->businessRole = $this->getBusinessRole();
+
         return $this;
     }
 
     private function getBusinessRole()
     {
         $business_role = $this->businessRoleRepository
-            ->whereLike('name', $this->designation)
+            ->where('name', $this->designation)
             ->where('business_department_id', $this->department)
             ->first();
 
