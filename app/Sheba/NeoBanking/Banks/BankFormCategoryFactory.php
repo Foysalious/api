@@ -71,13 +71,14 @@ class BankFormCategoryFactory
      */
     public function getCategoryByCode($code): BankFormCategory
     {
+        $this->bank->loadInfo();
         $categoryList = BankStatics::BankCategoryList($this->bank->code);
         if (isset($categoryList[$code])) {
             $cat = $categoryList[$code];
             /** @var BankFormCategory $cls */
-
             $cls = app("$this->classPath\\$cat");
             $cls->setPartner($this->partner)->setBank($this->bank);
+            $cls->setBankAccountData($this->bank->getBankInfo());
             return $cls;
         }
         throw new InvalidBankFormCategoryCode();

@@ -1,4 +1,48 @@
 <?php
+function addressViews($type)
+{
+    return [
+        [
+            'field_type'    => 'editText',
+            'title'         => 'িট নং / গ্রামের নাম *',
+            'name'          => 'street_village_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'িট নং / গ্রামের নাম  পূরণ আবশ্যক '
+        ],
+        [
+            'field_type'    => 'editText',
+            'title'         => 'োস্ট কোড *',
+            'name'          => 'postcode_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'োস্ট কোড  পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'েলা *',
+            'name'          => 'district_' . $type . '_address',
+            'hint'          => '',
+            'list_type'     => 'new_page_radio',
+            'error_message' => 'েলার নাম পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'থানা / উপজেলা *',
+            'list_type'     => 'new_page_radio',
+            'name'          => 'district_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'দেশ *',
+            'list_type'     => 'new_page_radio',
+            'name'          => 'district_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'েশের পূরণ আবশ্যক'
+        ]
+    ];
+}
+
 return [
     'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
@@ -105,25 +149,50 @@ return [
                 'error_message' => 'ই-টিন নাম্বার পূরণ আবশ্যক'
             ],
             [
-                'field_type'=>'editText',
-                'title'=>'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার  *',
-                'name'=>'NID_passport_birth_cer_number',
-                'hint'=>'654564544645464',
-                'error_message'=>'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+                'field_type'    => 'editText',
+                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার  *',
+                'name'          => 'NID_passport_birth_cer_number',
+                'hint'          => '654564544645464',
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'আপনার বর্তমান ঠিকানা'
+            ],
+            [
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'present_address',
+                'views'      => addressViews('present')
+            ],
+            [
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'present_address',
+                'views'      => [
+                    [
+                        'field_type' => 'checkbox',
+                        'name'       => 'present_permanent_same_address_checked',
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'textView',
+                        'title'      => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
+                        'name'       => 'present_permanent_same_address_text'
+                    ]
+                ]
             ],
             [
                 'field_type'=>'header',
-                'title'=>'আপনার বর্তমান ঠিকানা'
+                'title'=>'আপনার স্থায়ী ঠিকানা',
+                ''
             ],
             [
-                'field_type'=>'MultipleView',
-                'title'=>'',
-                'name'=>'present_address',
-                'views'=>[
-                    ''
-                ]
-            ]
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'permanent_address',
+                'views'      => addressViews('permanent')
+            ],
         ]
     ]
 ];
-

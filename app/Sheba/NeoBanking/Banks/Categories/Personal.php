@@ -3,6 +3,8 @@
 
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\DTO\FormItemBuilder;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Personal extends BankFormCategory
 {
@@ -18,7 +20,13 @@ class Personal extends BankFormCategory
 
     public function get()
     {
-
+        $formItems  = FormStatics::personal();
+        $data = [];
+        foreach ($formItems as $item) {
+            $data[] = (new FormItemBuilder())->setData($this->bankAccountData->personal())->build($item);
+        }
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this)->toArray();
     }
 
     public function post()
@@ -494,7 +502,7 @@ class Personal extends BankFormCategory
         }
       ]
     }
-  ]',0));
+  ]', 0));
         return (new CategoryGetter())->setCategory($this)->toArray();
     }
 }

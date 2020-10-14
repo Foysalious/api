@@ -6,6 +6,7 @@ namespace Sheba\NeoBanking\DTO;
 
 use Sheba\NeoBanking\Banks\Bank;
 use Sheba\NeoBanking\Banks\BankCompletionDetail;
+use Sheba\NeoBanking\PartnerNeoBankingInfo;
 use Sheba\NeoBanking\Repositories\NeoBankAccountInformationRepository;
 use Sheba\NeoBanking\Statics\BankStatics;
 
@@ -20,6 +21,7 @@ abstract class BankFormCategory
     protected $bank;
     protected $bankInfoRepo;
     protected $last_updated = 'today';
+    /** @var PartnerNeoBankingInfo */
     protected $bankAccountData;
 
     public function __construct()
@@ -104,7 +106,7 @@ abstract class BankFormCategory
     }
 
     /**
-     * @param mixed $bankAccountData
+     * @param PartnerNeoBankingInfo $bankAccountData
      * @return BankFormCategory
      */
     public function setBankAccountData($bankAccountData)
