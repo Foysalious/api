@@ -107,12 +107,16 @@ class ScheduleSlot
 
     private function getBookedSchedules($start, $end)
     {
-        return ResourceSchedule::whereIn('resource_id', $this->resources->pluck('id')->unique()->toArray())->select('start', 'end', 'resource_id', DB::raw('Date(start) as schedule_date'))->where('start', '>=', $start)->where('end', '<=', $end)->get();
+        return ResourceSchedule::whereIn('resource_id', $this->resources->pluck('id')->unique()->toArray())
+            ->select('start', 'end', 'resource_id', DB::raw('Date(start) as schedule_date'))
+            ->where('start', '>=', $start)
+            ->where('end', '<=', $end)
+            ->get();
     }
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where(function ($q) use ($start, $end) {
+        $leaves = $this->partner->leaves()->select('id', 'artisan_id', 'start', 'end')->where(function ($q) use ($start, $end) {
             $q->where(function ($q) use ($start, $end) {
                 $q->whereBetween('start', [$start, $end]);
             })->orWhere(function ($q) use ($start, $end) {
@@ -132,24 +136,25 @@ class ScheduleSlot
     private function addAvailabilityByWorkingInformation(Carbon $day)
     {
         $working_day = $this->getWorkingDay($day);
-        if ($working_day) {
-            $date_string = $day->toDateString();
-            $working_hour_start_time = Carbon::parse($date_string . ' ' . $working_day->start_time);
-            $working_hour_end_time = Carbon::parse($date_string . ' ' . $working_day->end_time);
-            $isToday = $day->isToday();
-            foreach ($this->shebaSlots as $slot) {
-                $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
-                    $slot['is_available'] = 0;
-                } else {
-                    $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
-                    $slot['is_available'] = $is_available ? 1 : 0;
-                }
-            }
-        } else {
+        if (!$working_day) {
             $this->shebaSlots->each(function ($slot) {
                 $slot['is_available'] = 0;
             });
+            return;
+        }
+
+        $date_string = $day->toDateString();
+        $working_hour_start_time = Carbon::parse($date_string . ' ' . $working_day->start_time);
+        $working_hour_end_time = Carbon::parse($date_string . ' ' . $working_day->end_time);
+        $isToday = $day->isToday();
+        foreach ($this->shebaSlots as $slot) {
+            $slot_start_time = Carbon::parse($date_string . ' ' . $slot->start);
+            if (!($slot_start_time->gte($working_hour_start_time) && $slot_start_time->lte($working_hour_end_time)) || $this->isBetweenAnyLeave($slot_start_time) || ($isToday && ($slot_start_time < $day))) {
+                $slot['is_available'] = 0;
+            } else {
+                $is_available = ($working_hour_end_time->notEqualTo($slot_start_time) && $slot_start_time->between($working_hour_start_time, $working_hour_end_time, true));
+                $slot['is_available'] = $is_available ? 1 : 0;
+            }
         }
     }
 
@@ -160,18 +165,16 @@ class ScheduleSlot
 
     private function isBetweenAnyLeave(Carbon $time)
     {
-        if (!$this->runningLeaves) return false; else {
-            foreach ($this->runningLeaves as $runningLeave) {
-                $start = $runningLeave->start;
-                $end = $runningLeave->end;
-                if ($end) {
-                    if ($time->between($start, $end)) return true;
-                } else {
-                    if ($time->gte($start) && $end == null) return true;
-                }
-            }
-            return false;
+        if (!$this->runningLeaves) return false;
+
+        foreach ($this->runningLeaves as $running_leave) {
+            $start = $running_leave->start;
+            $end = $running_leave->end;
+            if ($end && $time->between($start, $end)) return true;
+            if ($end == null && $time->gte($start)) return true;
         }
+
+        return false;
     }
 
     private function addAvailabilityByResource(Carbon $day)
@@ -201,17 +204,17 @@ class ScheduleSlot
 
     private function addAvailabilityByPreparationTime(Carbon $day)
     {
-        if ($this->preparationTime > 0) {
-            $date_string = $day->toDateString();
-            $this->shebaSlots->each(function ($slot) use ($date_string) {
-                if ($slot->is_available) {
-                    $start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                    $end_time = Carbon::parse($date_string . ' ' . $slot->end);
-                    $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
-                    $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
-                }
-            });
-        }
+        if ($this->preparationTime <= 0) return;
+
+        $date_string = $day->toDateString();
+        $this->shebaSlots->each(function ($slot) use ($date_string) {
+            if (!$slot->is_available) return;
+
+            $start_time = Carbon::parse($date_string . ' ' . $slot->start);
+            $end_time = Carbon::parse($date_string . ' ' . $slot->end);
+            $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
+            $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
+        });
     }
 
     private function formatSlots(Carbon $day, $slots)
@@ -229,7 +232,6 @@ class ScheduleSlot
             $slot['end'] = $slot_end;
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
             $slot['is_available'] = isset($slot['is_available']) ? $slot['is_available'] : $slot['is_valid'];
-
         }
         return $slots;
     }
