@@ -11,3 +11,5 @@ resources/assets/nagad/*
 
 .composer/.htaccess
 .composer/cache/.htaccess
+
+composer-auth.json
