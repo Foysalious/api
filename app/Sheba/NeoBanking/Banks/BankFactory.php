@@ -45,7 +45,6 @@ class BankFactory
         $bankClassPath = "Sheba\\NeoBanking\\Banks\\";
         $code          = $this->bank->bank_code;
         if (isset($classMap[$code])) {
-
             $class=$classMap[$code];
             /** @var Bank $bank */
             $bank = app("$bankClassPath$class\\$class");

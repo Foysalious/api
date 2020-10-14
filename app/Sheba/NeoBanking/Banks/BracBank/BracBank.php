@@ -28,7 +28,7 @@ class BracBank  extends Bank
 
     public function categoryDetails(BankFormCategory $category): array
     {
-        // TODO: Implement categoryDetails() method.
+       return $category->get();
     }
 
     public function homeInfo(): array

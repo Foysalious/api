@@ -445,10 +445,13 @@ class NeoBanking
      */
     public function getCategoryDetail($category_code)
     {
-        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->categoryDetails((new BankFormCategoryFactory())->getCategoryByCode($category_code));
+        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        return $bank->categoryDetails((new BankFormCategoryFactory())->setBank($bank)->getCategoryByCode($category_code));
+
     }
 
-    public function accountInformation(){
+    public function accountInformation()
+    {
 
     }
 
