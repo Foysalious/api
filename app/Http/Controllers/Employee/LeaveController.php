@@ -176,10 +176,10 @@ class LeaveController extends Controller
         $is_half_day_enable = $business->is_half_day_enable;
         $half_day_configuration = null;
         if ($is_half_day_enable) {
-            $half_day_configuration = json_decode($business->half_day_configuration, 1);
+            $half_day_configuration = $business->getBusinessHalfDayConfiguration();
             foreach ($half_day_configuration as $key => $item) {
-                $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:m A');
-                $half_day_configuration[$key]['end_time'] = Carbon::parse($half_day_configuration[$key]['end_time'])->format('h:m A');
+                $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:i A');
+                $half_day_configuration[$key]['end_time'] = Carbon::parse($half_day_configuration[$key]['end_time'])->format('h:i A');
             }
         }
 

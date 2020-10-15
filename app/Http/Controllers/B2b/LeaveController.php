@@ -64,6 +64,8 @@ class LeaveController extends Controller
 
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
+        /** @var Business $business */
+        $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
 
@@ -94,7 +96,7 @@ class LeaveController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($leaves, $approval_request);
