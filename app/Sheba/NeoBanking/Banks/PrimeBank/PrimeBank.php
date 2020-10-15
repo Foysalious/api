@@ -6,6 +6,7 @@ use Sheba\NeoBanking\Banks\Bank;
 use Sheba\NeoBanking\Banks\BankAccountInfo;
 use Sheba\NeoBanking\Banks\BankCompletion;
 use Sheba\NeoBanking\Banks\BankHomeInfo;
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
@@ -34,7 +35,7 @@ class PrimeBank extends Bank
         return $this->apiClient->setPartner($this->partner)->getAccountInfo();
     }
 
-    public function categoryDetails(BankFormCategory $category): array
+    public function categoryDetails(BankFormCategory $category): CategoryGetter
     {
         return $category->get();
     }
@@ -63,4 +64,5 @@ class PrimeBank extends Bank
     {
         return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
     }
+
 }

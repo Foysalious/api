@@ -4,31 +4,31 @@ function addressViews($type)
     return [
         [
             'field_type'    => 'editText',
-            'title'         => 'িট নং / গ্রামের নাম *',
+            'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
             'name'          => 'street_village_' . $type . '_address',
             'hint'          => '',
-            'error_message' => 'িট নং / গ্রামের নাম  পূরণ আবশ্যক '
+            'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'editText',
-            'title'         => 'োস্ট কোড *',
+            'title'         => 'পোস্ট কোড *',
             'name'          => 'postcode_' . $type . '_address',
             'hint'          => '',
-            'error_message' => 'োস্ট কোড  পূরণ আবশ্যক'
+            'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'dropdown',
-            'title'         => 'েলা *',
+            'title'         => 'জেলা *',
             'name'          => 'district_' . $type . '_address',
             'hint'          => '',
             'list_type'     => 'new_page_radio',
-            'error_message' => 'েলার নাম পূরণ আবশ্যক'
+            'error_message' => 'জেলার নাম পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'dropdown',
             'title'         => 'থানা / উপজেলা *',
             'list_type'     => 'new_page_radio',
-            'name'          => 'district_' . $type . '_address',
+            'name'          => 'sub_district_' . $type . '_address',
             'hint'          => '',
             'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
         ],
@@ -36,9 +36,9 @@ function addressViews($type)
             'field_type'    => 'dropdown',
             'title'         => 'দেশ *',
             'list_type'     => 'new_page_radio',
-            'name'          => 'district_' . $type . '_address',
+            'name'          => 'country_' . $type . '_address',
             'hint'          => '',
-            'error_message' => 'েশের পূরণ আবশ্যক'
+            'error_message' => 'দেশের নাম পূরণ আবশ্যক'
         ]
     ];
 }
@@ -87,7 +87,8 @@ return [
         'personal' => [
             [
                 'field_type' => 'header',
-                'title'      => 'সাধারণ তথ্য'
+                'title'      => 'সাধারণ তথ্য',
+                'mandatory'  => false,
             ],
             [
                 'field_type'    => 'editText',
@@ -102,7 +103,7 @@ return [
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক"',
+                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
             ],
             [
                 'field_type'    => 'editText',
@@ -129,17 +130,17 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'েশা  *',
+                'title'         => 'পেশা *',
                 'name'          => 'occupation_name',
                 'hint'          => 'Farmer',
-                'error_message' => 'েশার ধরণ পূরণ আবশ্যক'
+                'error_message' => 'পেশার ধরণ পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'প্রতিষ্ঠান এর নাম লিখুন',
                 'name'          => 'company_name',
                 'hint'          => 'Sheba.xyz',
-                'error_message' => 'রতিষ্ঠান এর নাম পূরণ আবশ্যক'
+                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -151,24 +152,27 @@ return [
             [
                 'field_type'    => 'editText',
                 'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার  *',
-                'name'          => 'NID_passport_birth_cer_number',
+                'name'          => 'nid_passport_birth_cer_number',
                 'hint'          => '654564544645464',
                 'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
             ],
             [
                 'field_type' => 'header',
-                'title'      => 'আপনার বর্তমান ঠিকানা'
+                'title'      => 'আপনার বর্তমান ঠিকানা',
+                'mandatory'  => false
             ],
             [
                 'field_type' => 'MultipleView',
                 'title'      => '',
                 'name'       => 'present_address',
-                'views'      => addressViews('present')
+                'views'      => addressViews('present'),
+                'mandatory'  => false
             ],
             [
                 'field_type' => 'MultipleView',
                 'title'      => '',
                 'name'       => 'present_address',
+                'mandatory'  => false,
                 'views'      => [
                     [
                         'field_type' => 'checkbox',
@@ -178,19 +182,21 @@ return [
                     [
                         'field_type' => 'textView',
                         'title'      => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
-                        'name'       => 'present_permanent_same_address_text'
+                        'name'       => 'present_permanent_same_address_text',
+                        'mandatory'  => false
                     ]
                 ]
             ],
             [
-                'field_type'=>'header',
-                'title'=>'আপনার স্থায়ী ঠিকানা',
-                ''
+                'field_type' => 'header',
+                'title'      => 'আপনার স্থায়ী ঠিকানা',
+                'mandatory'  => false
             ],
             [
                 'field_type' => 'MultipleView',
                 'title'      => '',
                 'name'       => 'permanent_address',
+                'mandatory'  => false,
                 'views'      => addressViews('permanent')
             ],
         ]

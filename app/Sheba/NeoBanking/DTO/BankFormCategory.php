@@ -6,6 +6,7 @@ namespace Sheba\NeoBanking\DTO;
 
 use Sheba\NeoBanking\Banks\Bank;
 use Sheba\NeoBanking\Banks\BankCompletionDetail;
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\PartnerNeoBankingInfo;
 use Sheba\NeoBanking\Repositories\NeoBankAccountInformationRepository;
 use Sheba\NeoBanking\Statics\BankStatics;
@@ -32,9 +33,9 @@ abstract class BankFormCategory
 
     abstract public function completion();
 
-    abstract public function get();
+    abstract public function get():CategoryGetter;
 
-    abstract public function post();
+    abstract public function post($data);
 
     abstract public function getLastUpdated();
     abstract public function getDummy();

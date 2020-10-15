@@ -18,20 +18,21 @@ class Personal extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
-        $formItems  = FormStatics::personal();
-        $data = [];
+        $formItems = FormStatics::personal();
+        $data      = [];
+        $formData  = $this->bankAccountData->getByCode($this->code);
         foreach ($formItems as $item) {
-            $data[] = (new FormItemBuilder())->setData($this->bankAccountData->personal())->build($item);
+            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
         }
         $this->setData($data);
-        return (new CategoryGetter())->setCategory($this)->toArray();
+        return (new CategoryGetter())->setCategory($this);
     }
 
-    public function post()
+    public function post($data)
     {
-        // TODO: Implement post() method.
+        return !!$this->bankAccountData->postByCode($this->code, $data);
     }
 
     public function getLastUpdated()

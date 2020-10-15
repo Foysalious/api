@@ -512,9 +512,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasMany(PartnerNeoBankingAccount::class);
     }
 
-    public function neoBankInf()
+    public function neoBankInfo()
     {
-        return $this->belongsTo(PartnerNeoBankingInfo::class);
+        return $this->hasOne(PartnerNeoBankingInfo::class,'partner_id','id');
     }
 
     public function affiliation()

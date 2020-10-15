@@ -13,9 +13,21 @@ class NeoBanking
     private $bank;
     private $partner;
     private $resource;
+    private $post_data;
 
     public function __construct()
     {
+    }
+
+
+    /**
+     * @param mixed $post_data
+     * @return NeoBanking
+     */
+    public function setPostData($post_data)
+    {
+        $this->post_data = (array)json_decode($post_data, 0);
+        return $this;
     }
 
     public function setBank($bank)
@@ -446,13 +458,26 @@ class NeoBanking
     public function getCategoryDetail($category_code)
     {
         $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
-        return $bank->categoryDetails((new BankFormCategoryFactory())->setBank($bank)->getCategoryByCode($category_code));
+        return $bank->categoryDetails((new BankFormCategoryFactory())->setBank($bank)->getCategoryByCode($category_code))->toArray();
 
     }
 
     public function accountInformation()
     {
 
+    }
+
+    /**
+     * @param $category_code
+     * @throws Exceptions\InvalidBankCode
+     * @throws Exceptions\InvalidBankFormCategoryCode
+     * @throws Exceptions\CategoryPostDataInvalidException
+     */
+    public function postCategoryDetail($category_code)
+    {
+        $bank     = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        $category = (new BankFormCategoryFactory())->setBank($bank)->setPartner($this->partner)->getCategoryByCode($category_code);
+        return $bank->loadInfo()->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
     }
 
 }

@@ -6,9 +6,11 @@ namespace Sheba\NeoBanking\Banks;
 
 use App\Models\Partner;
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use Carbon\Carbon;
 use Sheba\Dal\NeoBank\Model as NeoBank;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
+use Sheba\NeoBanking\Exceptions\CategoryPostDataInvalidException;
 use Sheba\NeoBanking\PartnerNeoBankingInfo;
 use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
@@ -68,7 +70,7 @@ abstract class Bank
         return null;
     }
 
-    function mapBank()
+    private function mapBank()
     {
         $this->id      = $this->model->id;
         $this->name    = $this->model->name;
@@ -81,13 +83,18 @@ abstract class Bank
 
     abstract public function accountInfo(): BankAccountInfo;
 
-    abstract public function categoryDetails(BankFormCategory $category): array;
+    abstract public function categoryDetails(BankFormCategory $category): CategoryGetter;
 
     abstract public function homeInfo(): array;
 
     abstract public function completion(): BankCompletion;
 
     abstract public function accountDetailInfo(): BankAccountInfoWithTransaction;
+
+    public function postCategoryDetail(BankFormCategory $category, $data)
+    {
+        return $category->post($data);
+    }
 
     /**
      * @return Partner
@@ -109,5 +116,46 @@ abstract class Bank
     public function getBankInfo()
     {
         return $this->bankInfo;
+    }
+
+    /**
+     * @param $category
+     * @param $post_data
+     * @return $this
+     * @throws CategoryPostDataInvalidException
+     */
+    public function validateCategoryDetail($category, $post_data)
+    {
+        $detail = $this->categoryDetails($category);
+        $this->validatePostData($detail->getFormItems(), $post_data);
+        return $this;
+    }
+
+    /**
+     * @param $detail
+     * @param $post_data
+     * @throws CategoryPostDataInvalidException
+     */
+    private function validatePostData($detail, $post_data)
+    {
+
+        $data = (array)$post_data;
+        foreach ($detail as $key => $item) {
+            if ($item['field_type'] == 'multiView') {
+                $this->validatePostData($item['views'], $data[$item['name']]);
+                continue;
+            }
+            if ($item['mandatory'] && (!isset($data[$item['name']]) || empty($data[$item['name']]))) {
+                throw new CategoryPostDataInvalidException($item['error_message']);
+            }
+            if ($item['field_type'] == 'date') {
+                try {
+                    Carbon::parse($data[$item['name']]);
+                } catch (\Throwable $e) {
+                    throw new CategoryPostDataInvalidException("Date is Invalid");
+                }
+            };
+
+        }
     }
 }

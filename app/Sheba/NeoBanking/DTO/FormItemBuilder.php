@@ -17,7 +17,7 @@ class FormItemBuilder
      */
     public function setData($data)
     {
-        $this->data = $data;
+        $this->data = (array)$data;
         return $this;
     }
 
@@ -28,10 +28,10 @@ class FormItemBuilder
         return $item;
     }
 
-    private function initItem()
+    private function initItem($set = true)
     {
         $item = (new FormItem())->setFormInput($this->item);
-        $this->setValue($item);
+        if ($set) $this->setValue($item);
         return $item;
     }
 
@@ -111,7 +111,7 @@ class FormItemBuilder
      */
     public function MultipleView()
     {
-        $item  = $this->initItem();
+        $item  = $this->initItem(false);
         $views = [];
         $data  = isset($this->data[$this->item['name']]) ? $this->data[$this->item['name']] : [];
         foreach ($item->getViews() as $view) {

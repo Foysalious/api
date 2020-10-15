@@ -3265,7 +3265,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "2e5cab9490faec2aca70d491e0ce2f3ed183ff22"
+                "reference": "7737fa86e524474f6e5e56a90c8069bbe00e987a"
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3292,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-10-07T13:18:45+00:00"
+            "time": "2020-10-15T11:56:57+00:00"
         },
         {
             "name": "sheba/notification",
@@ -5119,6 +5119,12 @@
                 "php",
                 "utf-8"
             ],
+            "funding": [
+                {
+                    "url": "https://www.paypal.me/mpdf",
+                    "type": "custom"
+                }
+            ],
             "time": "2020-07-15T09:48:00+00:00"
         },
         {
@@ -5166,6 +5172,12 @@
                 "duplicate",
                 "object",
                 "object graph"
+            ],
+            "funding": [
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
+                    "type": "tidelift"
+                }
             ],
             "time": "2020-06-29T13:22:24+00:00"
         },
