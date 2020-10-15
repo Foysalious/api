@@ -450,9 +450,10 @@ class NeoBanking
 
     }
 
-    public function accountInformation()
+    public function getNidInfo($data)
     {
-
+        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        return $bank->getNidInfo($data);
     }
 
 }

@@ -127,14 +127,14 @@ class NeoBankingController extends Controller
         try {
             $this->validate($request, [
                 'bank_code' => 'required|string',
-                'id_front' =>'required|mimes:jpeg,png',
-                'id_back' =>'required|mimes:jpeg,png',
+//                'id_front' =>'required|mimes:jpeg,png',
+//                'id_back' =>'required|mimes:jpeg,png',
             ]);
-            $bank             = $request->bank;
+            $bank             = $request->bank_code;
+            $partner          = $request->partner;
             $data['id_front'] = $request->id_front;
             $data['id_back'] = $request->id_back;
-            dd($data);
-            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountInformation();
+            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->getNidInfo($data);
             return api_response($request, $info, 200, ['data' => $info]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
