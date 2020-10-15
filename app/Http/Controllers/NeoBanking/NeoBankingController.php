@@ -145,5 +145,27 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function nidVerification(Request $request, NeoBanking $neoBanking) {
+        try {
+            $this->validate($request, [
+                'bank_code' => 'required|string',
+//                'id_front' =>'required|mimes:jpeg,png',
+//                'id_back' =>'required|mimes:jpeg,png',
+            ]);
+            $bank             = $request->bank_code;
+            $partner          = $request->partner;
+            $data['id_front'] = $request->id_front;
+            $data['id_back'] = $request->id_back;
+            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->getNidInfo($data);
+            return api_response($request, $info, 200, ['data' => $info]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 
 }

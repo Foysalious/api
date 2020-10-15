@@ -7,6 +7,7 @@ namespace Sheba\NeoBanking\Banks;
 use App\Models\Partner;
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use Carbon\Carbon;
+use App\Sheba\NeoBanking\Banks\NidInformation;
 use Sheba\Dal\NeoBank\Model as NeoBank;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
@@ -95,6 +96,8 @@ abstract class Bank
     {
         return $category->post($data);
     }
+
+    abstract public function getNidInfo($data): NidInformation;
 
     /**
      * @return Partner

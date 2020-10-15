@@ -8,11 +8,11 @@ use Sheba\NeoBanking\Banks\BankCompletion;
 use Sheba\NeoBanking\Banks\BankHomeInfo;
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
+use App\Sheba\NeoBanking\Banks\NidInformation;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
-use Sheba\NeoBanking\PartnerNeoBankingInfo;
 
 class PrimeBank extends Bank
 {
@@ -63,6 +63,11 @@ class PrimeBank extends Bank
     public function accountDetailInfo(): BankAccountInfoWithTransaction
     {
         return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
+    }
+
+    public function getNidInfo($data): NidInformation
+    {
+        return $this->apiClient->getNidInfo($data);
     }
 
 }

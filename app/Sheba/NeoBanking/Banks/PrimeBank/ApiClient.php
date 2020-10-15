@@ -2,8 +2,8 @@
 
 
 namespace Sheba\NeoBanking\Banks\PrimeBank;
-
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Sheba\NeoBanking\BankApiClient;
 use Sheba\NeoBanking\Banks\BankAccountDetailInfo;
 use Sheba\NeoBanking\Banks\BankAccountInfo;
@@ -37,5 +37,9 @@ class ApiClient extends BankApiClient
             ]));
         }
         return (new BankAccountInfoWithTransaction())->setAccountInfo($accountDetailInfo)->setTransactions($transactionList);
+    }
+
+    function getNidInfo($data){
+        return (new PrimeBankClient())->post('api/v1/nid-verification',$data);
     }
 }

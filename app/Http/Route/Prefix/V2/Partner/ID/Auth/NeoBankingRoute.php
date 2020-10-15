@@ -16,6 +16,7 @@ class NeoBankingRoute
                     $api->get('/account-information', 'NeoBanking\\NeoBankingController@getAccountInformation');
                     $api->get('/category', 'NeoBanking\\NeoBankingController@getCategoryWiseDetails');
                     $api->post('/category', 'NeoBanking\\NeoBankingController@submitCategoryWistDetails');
+                    $api->post('/nid-verification', 'NeoBanking\\NeoBankingController@nidVerification');
                 });
             });
         });

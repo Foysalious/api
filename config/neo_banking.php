@@ -44,6 +44,7 @@ function addressViews($type)
 }
 
 return [
+    'prime_bank_sbs_url' => env('PRIME_BANK_SBS_URL'),
     'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
     'category_list'         => [
