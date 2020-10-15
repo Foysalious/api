@@ -363,6 +363,7 @@ class AttendanceList
                 unset($business_members_in_leave[$index]);
             }
         }
+
         $present_and_on_leave_business_members = array_merge($data, $business_members_in_leave);
         $business_members_in_absence = $this->statusFilter == self::ABSENT ? $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members) : [];
         $final_data = array_merge($present_and_on_leave_business_members, $business_members_in_absence);
@@ -383,6 +384,9 @@ class AttendanceList
         $present_and_on_leave_business_member_ids = array_map(function ($business_member) use ($business_member_ids) {
             return $business_member_ids[] = $business_member['business_member_id'];
         }, $present_and_on_leave_business_members);
+
+        $business_member_ids_who_give_attendance = $this->attendances->pluck('business_member_id')->toArray();
+        $present_and_on_leave_business_member_ids = array_merge($present_and_on_leave_business_member_ids, $business_member_ids_who_give_attendance);
 
         $business_members = $this->businessMemberRepository->builder()->select('id', 'member_id', 'business_role_id')
             ->with([
