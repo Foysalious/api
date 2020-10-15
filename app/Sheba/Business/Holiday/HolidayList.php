@@ -33,11 +33,32 @@ class HolidayList
                 'name' => $holiday->title
             ]);
         }
+
         $business_holidays = collect($holiday_list);
+
         if($request->has('sort_on_date')) $business_holidays = $this->holidaySortOnDate($business_holidays,$request->sort_on_date)->values();
         if($request->has('sort_on_days')) $business_holidays = $this->holidaySortOnDays($business_holidays,$request->sort_on_days)->values();
         if($request->has('sort_on_name')) $business_holidays = $this->holidaySortOnName($business_holidays,$request->sort_on_name)->values();
+
         return $business_holidays;
+    }
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getAllHolidayDates(Request $request)
+    {
+        $holiday_list = [];
+        $business_holidays = $this->business_holidays_repo->getAllByBusiness($this->business);
+
+        foreach ($business_holidays as $holiday) {
+            for ($d = $holiday->start_date; $d->lte($holiday->end_date); $d->addDay()) {
+                $holiday_list[] = $d->format('Y-m-d');
+            }
+        }
+
+        return  array_unique($holiday_list);
     }
 
     private function searchWithHolidayName($business_holidays, Request $request)
