@@ -6,7 +6,7 @@ use App\Models\Resource;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\RequestException;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 
 class StatusUpdater
 {
@@ -15,11 +15,11 @@ class StatusUpdater
     /** @var Job */
     private $job;
     private $status;
-    /** @var UserAgentInformation */
+    /** @var UserRequestInformation */
     private $userAgentInformation;
 
 
-    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
+    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

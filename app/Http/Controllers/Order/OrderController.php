@@ -27,7 +27,7 @@ use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 use Throwable;
 
 class OrderController extends Controller
@@ -35,7 +35,7 @@ class OrderController extends Controller
     use DispatchesJobs;
     use ModificationFields;
 
-    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation)
+    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserRequestInformation $userAgentInformation)
     {
         try {
             $request->merge(['mobile' => formatMobile($request->mobile)]);
