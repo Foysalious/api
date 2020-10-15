@@ -533,4 +533,12 @@ class AttendanceController extends Controller
     {
         return count($errors) == count($business_offices);
     }
+
+    public function getAllHolidayDates(Request $request)
+    {
+        $holiday_list = new HolidayList($request->business, $this->holidayRepository);
+        $holidays = $holiday_list->getAllHolidayDates($request);
+
+        return api_response($request, null, 200, ['business_holidays' => array_values($holidays)]);
+    }
 }
