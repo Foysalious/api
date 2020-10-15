@@ -229,8 +229,7 @@ class Creator
             'is_half_day' => $this->isHalfDay,
             'half_day_configuration' => $this->halfDayConfigure,
             'total_days' => $this->setTotalDays(),
-            'left_days' => $this->getLeftDays(),
-            'status' => $this->isLeaveAdjustment ? 'accepted' : 'pending'
+            'left_days' => $this->getLeftDays()
         ];
 
         $leave = null;
