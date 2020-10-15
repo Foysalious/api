@@ -50,8 +50,6 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
-    private $approverId;
-    private $isLeaveAdjustment;
     private $isHalfDay;
     private $halfDayConfigure;
     private $substitute;
@@ -107,8 +105,6 @@ class Creator
         $this->businessMember = $business_member->load('member', 'business');
         $this->business = $this->businessMember->business;
         $this->getManager($this->businessMember);
-
-        if ($this->isLeaveAdjustment) return $this;
 
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
@@ -184,18 +180,6 @@ class Creator
         return $this;
     }
 
-    public function setApproverId($approver_id)
-    {
-        $this->approvers = [$approver_id];
-        return $this;
-    }
-
-    public function setIsLeaveAdjustment($is_leave_adjustment = false)
-    {
-        $this->isLeaveAdjustment = $is_leave_adjustment;
-        return $this;
-    }
-
     /**
      * @param $attachments UploadedFile[]
      * @return $this
@@ -204,50 +188,6 @@ class Creator
     {
         $this->attachments = $attachments;
         return $this;
-    }
-
-    public function setSubstitute($substitute_id)
-    {
-        $this->substitute = $substitute_id;
-        return $this;
-    }
-
-    /**
-     * @return mixed
-     * @throws Exception
-     */
-    public function create()
-    {
-        $data = [
-            'title' => $this->title,
-            'note' => $this->note,
-            'business_member_id' => $this->businessMember->id,
-            'substitute_id' => $this->substitute,
-            'leave_type_id' => $this->leaveTypeId,
-            'start_date' => $this->startDate,
-            'end_date' => $this->endDate,
-            'is_half_day' => $this->isHalfDay,
-            'half_day_configuration' => $this->halfDayConfigure,
-            'total_days' => $this->setTotalDays(),
-            'left_days' => $this->getLeftDays(),
-            'status' => $this->isLeaveAdjustment ? 'accepted' : 'pending'
-        ];
-
-        $leave = null;
-        DB::transaction(function () use ($data, &$leave) {
-            $this->setModifier($this->businessMember->member);
-            $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
-            $this->approval_request_creator->setBusinessMember($this->businessMember)
-                ->setApproverId($this->approvers)
-                ->setRequestable($leave)
-                ->setIsLeaveAdjustment($this->isLeaveAdjustment)
-                ->create();
-            $this->createAttachments($leave);
-        });
-
-        if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
-
-        return $leave;
     }
 
     private function setTotalDays()
@@ -274,6 +214,47 @@ class Creator
         return $this->isHalfDay ?
             ($this->endDate->diffInDays($this->startDate) + 0.5) - $leave_day_into_holiday_or_weekend :
             ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
+    }
+
+    public function setSubstitute($substitute_id)
+    {
+        $this->substitute = $substitute_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     * @throws Exception
+     */
+    public function create()
+    {
+        $data = [
+            'title' => $this->title,
+            'note' => $this->note,
+            'business_member_id' => $this->businessMember->id,
+            'substitute_id' => $this->substitute,
+            'leave_type_id' => $this->leaveTypeId,
+            'start_date' => $this->startDate,
+            'end_date' => $this->endDate,
+            'is_half_day' => $this->isHalfDay,
+            'half_day_configuration' => $this->halfDayConfigure,
+            'total_days' => $this->setTotalDays(),
+            'left_days' => $this->getLeftDays()
+        ];
+        $leave = null;
+        DB::transaction(function () use ($data, &$leave) {
+            $this->setModifier($this->businessMember->member);
+            $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
+            $this->approval_request_creator->setBusinessMember($this->businessMember)
+                ->setApproverId($this->approvers)
+                ->setRequestable($leave)
+                ->create();
+            $this->createAttachments($leave);
+        });
+
+        if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
+
+        return $leave;
     }
 
     /**
