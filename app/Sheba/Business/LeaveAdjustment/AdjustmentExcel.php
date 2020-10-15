@@ -5,16 +5,18 @@ class AdjustmentExcel
 {
     const SHEET = "data";
 
-    const TITLE_COLUMN = "A";
-    const LEAVE_TYPE_ID_COLUMN = "B";
-    const START_DATE_COLUMN = "C";
-    const END_DATE_COLUMN = "D";
-    const NOTE_COLUMN = "E";
-    const IS_HALF_DAY_COLUMN = "F";
-    const HALF_DAY_CONFIGURATION_COLUMN = "G";
-    const APPROVER_ID_COLUMN = "H";
-    const MESSAGE_COLUMN = "I";
+    const USERS_MAIL_COLUMN = "A";
+    const TITLE_COLUMN = "B";
+    const LEAVE_TYPE_ID_COLUMN = "C";
+    const START_DATE_COLUMN = "D";
+    const END_DATE_COLUMN = "E";
+    const NOTE_COLUMN = "F";
+    const IS_HALF_DAY_COLUMN = "G";
+    const HALF_DAY_CONFIGURATION_COLUMN = "H";
+    const APPROVER_ID_COLUMN = "I";
+    const MESSAGE_COLUMN = "J";
 
+    const USERS_MAIL_COLUMN_TITLE = "users_mail";
     const TITLE_COLUMN_TITLE = "title";
     const LEAVE_TYPE_ID_COLUMN_TITLE = "leave_type_id";
     const START_DATE_COLUMN_TITLE = "start_date";
