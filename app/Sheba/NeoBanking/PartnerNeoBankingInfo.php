@@ -18,10 +18,16 @@ class PartnerNeoBankingInfo
     {
         $this->partner = $partner;
         $this->data    = $this->partner->neoBankInfo;
+        if (!empty($this->data) && !empty($this->data->information_for_bank))
+            $this->information_form_bank_account = json_decode($this->data->information_for_bank, 0);
         return $this;
     }
 
-    public function personal() { }
+    public function personal()
+    {
+        if (!empty($this->information_form_bank_account)) return $this->information_form_bank_account['personal'];
+        return [];
+    }
 
     public function institution() { }
 

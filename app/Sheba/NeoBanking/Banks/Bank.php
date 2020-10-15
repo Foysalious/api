@@ -28,6 +28,7 @@ abstract class Bank
     protected $bankRepo;
     /** @var Partner $partner */
     protected $partner;
+    /** @var PartnerNeoBankingInfo $bankInfo */
     protected $bankInfo;
 
     /**
@@ -102,5 +103,14 @@ abstract class Bank
     public function loadInfo()
     {
         $this->bankInfo = (new PartnerNeoBankingInfo())->setPartner($this->partner);
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBankInfo()
+    {
+        return $this->bankInfo;
     }
 }

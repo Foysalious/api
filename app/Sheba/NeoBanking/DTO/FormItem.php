@@ -8,21 +8,21 @@ use Illuminate\Contracts\Support\Arrayable;
 use ReflectionClass;
 use ReflectionException;
 
-abstract class FormItem implements Arrayable
+class FormItem implements Arrayable
 {
-    protected $field_type  = 'common';
-    protected $title       = 'Some Header';
+    protected $field_type    = 'common';
+    protected $title         = '';
     protected $input_type;
-    protected $name;
+    protected $name          = '';
     protected $value;
-    protected $hint;
-    protected $error_message;
-    protected $mandatory   = true;
-    protected $is_editable = true;
+    protected $hint          = '';
+    protected $error_message = '';
+    protected $mandatory     = true;
+    protected $is_editable   = true;
     protected $list_type;
-    protected $views       = [];
-    protected $list        = [];
-    protected $check_list  = [];
+    protected $views         = [];
+    protected $list          = [];
+    protected $check_list    = [];
 
     /**
      * @return array
@@ -259,6 +259,14 @@ abstract class FormItem implements Arrayable
     public function setCheckList($check_list)
     {
         $this->check_list = $check_list;
+        return $this;
+    }
+
+    public function setFormInput($input)
+    {
+        foreach ($input as $key => $value) {
+            if (isset($this->$key)) $this->$key = $value;
+        }
         return $this;
     }
 
