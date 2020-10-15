@@ -11,6 +11,7 @@ class AffiliateRoute
             $api->get('notifications', 'AffiliateController@getNotifications');
             $api->get('notifications/{notification}', 'AffiliateController@getNotification');
             $api->get('notification-seen/{id}', 'B2b\BusinessesController@notificationSeen');
+            $api->post('top-up', 'TopUpController@topUpWithPin');
         });
     }
 }

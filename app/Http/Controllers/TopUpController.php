@@ -28,6 +28,10 @@ use Storage;
 use Excel;
 use Throwable;
 
+use Hash;
+use App\Models\Affiliate;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+
 class TopUpController extends Controller
 {
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
@@ -71,6 +75,52 @@ class TopUpController extends Controller
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
         try {
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'amount' => 'required|min:10|max:1000|numeric',
+                'is_robi_topup' => 'sometimes|in:0,1'
+            ]);
+
+
+            $agent = $this->getAgent($request);
+
+            if ($this->hasLastTopupWithinIntervalTime($agent))
+                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+
+            if ($top_up_request->hasError())
+                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+            if ($topup_order) {
+                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository)
+    {
+        try {
+
+            $aff = Affiliate::where('id', $affiliate)->first();
+            $profileid = $aff->profile_id;
+            $profile = $profileRepository->where('id', $profileid)->first();
+
+            if(!Hash::check($request->password, $profile->password)){
+                return api_response($request, null, 403, ['message' => "Credential Mismatch"]);
+            }
+
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
