@@ -105,6 +105,10 @@ class StatusChanger
     public function decline(Request $request)
     {
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
+
+        $partner_order = $this->partnerOrderRequest->partnerOrder;
+        if ($partner_order->partner_id) return;
+
         if ($partner_ids = $this->orderRequestStore->setPartnerOrderId($this->partnerOrderRequest->partnerOrder->id)->get()) {
             foreach ($partner_ids as $partner_id) {
                 $order_request = $this->partnerOrderRequest->partnerOrder->partnerOrderRequests->where('partner_id', $partner_id)->first();
