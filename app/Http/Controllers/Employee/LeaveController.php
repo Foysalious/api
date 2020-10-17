@@ -173,9 +173,8 @@ class LeaveController extends Controller
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
 
-        $is_half_day_enable = $business->is_half_day_enable;
         $half_day_configuration = null;
-        if ($is_half_day_enable) {
+        if ($business->is_half_day_enable) {
             $half_day_configuration = $business->getBusinessHalfDayConfiguration();
             foreach ($half_day_configuration as $key => $item) {
                 $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:i A');
@@ -183,11 +182,7 @@ class LeaveController extends Controller
             }
         }
 
-        return api_response($request, null, 200, [
-            'leave_types' => $leave_types,
-            'is_half_day_enable' => $is_half_day_enable,
-            'half_day_configuration' => $half_day_configuration
-        ]);
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
     }
 
     /**
