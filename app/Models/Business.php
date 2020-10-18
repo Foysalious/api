@@ -94,6 +94,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->hasOne(BusinessOfficeHour::class);
     }
 
+    public function activePartners()
+    {
+        return $this->partners()->where('is_active_for_b2b', 1);
+    }
+
     public function deliveryAddresses()
     {
         return $this->hasMany(BusinessDeliveryAddress::class);
