@@ -111,16 +111,14 @@ return [
                 'title'         => 'বাবার নাম  *',
                 'name'          => 'father_name',
                 'hint'          => 'ABUL KALAM',
-                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
-                'is_editable'   => false
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'মায়ের নাম  *',
                 'name'          => 'mother_name',
                 'hint'          => 'Mrs. ABUL',
-                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
-                'is_editable'   => false,
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type' => 'editText',
@@ -222,14 +220,14 @@ return [
                 'name'          => 'email',
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
+                'mandatory'     => false
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'আপনার প্রতিষ্ঠানের নাম (বড় অক্ষরে) *',
                 'name'          => 'company_name',
                 'hint'          => 'AZAD TELECOM',
-                'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক',
-                'is_editable'   => false
+                'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক'
             ],
             [
                 'field_type'  => 'header',
@@ -270,21 +268,24 @@ return [
                 'title'         => "রেজিস্ট্রেশন নং",
                 'name'          => 'registration_number',
                 'hint'          => '90145',
-                'error_message' => "রেজিস্ট্রেশন নং পূরণ আবশ্যক"
+                'error_message' => "রেজিস্ট্রেশন নং পূরণ আবশ্যক",
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'date',
                 'title'         => 'নিবন্ধনের তারিখ ',
                 'name'          => 'registration_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'নিবন্ধনের তারিখ  পূরণ আবশ্যক"'
+                'error_message' => 'নিবন্ধনের তারিখ  পূরণ আবশ্যক"',
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'অনুমোদনকারী প্রতিষ্ঠান এবং দেশ',
                 'name'          => 'grantor_organization_and_country',
-                'hint'          => 'উদাহরণ: Grameen phone, Bangladesh',
-                'error_message' => 'নঅনুমোদনকারী প্রতিষ্ঠান এবং দেশের নাম পূরণ আবশ্যক '
+                'hint'          => 'উদাহরণ: Sheba Platform Limited, Bangladesh',
+                'error_message' => 'নঅনুমোদনকারী প্রতিষ্ঠান এবং দেশের নাম পূরণ আবশ্যক ',
+                'mandatory'     => false,
             ],
             [
                 'field_type'  => 'header',
@@ -310,14 +311,16 @@ return [
                 'title'         => 'ভ্যাট রেজিস্ট্রেশন নাম্বার (যদি থাকে)',
                 'name'          => 'vat_registration_number',
                 'hint'          => 'এখানে লিখুন',
-                'error_message' => ''
+                'error_message' => '',
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'প্রতিষ্ঠানের ই-টিন নাম্বার (যদি থাকে)',
                 'name'          => 'organization_etin_number',
                 'hint'          => 'এখানে লিখুন',
-                'error_message' => ''
+                'error_message' => '',
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'dropdown',
@@ -325,7 +328,8 @@ return [
                 'name'          => "organization_type_list",
                 'hint'          => '',
                 'list_type'     => 'new_page_radio',
-                'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক'
+                'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক',
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'dropdown',
@@ -333,14 +337,16 @@ return [
                 'name'          => "business_type_list",
                 'hint'          => '',
                 'list_type'     => 'new_page_radio',
-                'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক'
+                'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক',
+                'mandatory'     => false,
             ],
             [
                 'field_type'    => 'editText',
                 'title'         => 'বাৎসরিক আয়ের পরিমান',
                 'name'          => 'yearly_earning',
                 'hint'          => 'উদাহরণ: 10000',
-                'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক'
+                'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক',
+                'mandatory'     => false,
             ],
         ]
     ],

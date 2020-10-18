@@ -149,19 +149,19 @@ class NeoBankingController extends Controller
         try {
             $this->validate($request, [
                 'bank_code' => 'required|string',
-//                'id_front' =>'required|mimes:jpeg,png',
-//                'id_back' =>'required|mimes:jpeg,png',
+                'id_front' =>'required|mimes:jpeg,png',
+                'id_back' =>'required|mimes:jpeg,png',
             ]);
             $bank             = $request->bank_code;
-            $partner          = $request->partner;
             $data['id_front'] = $request->id_front;
-            $data['id_back'] = $request->id_back;
-            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->getNidInfo($data);
-            return api_response($request, $info, 200, ['data' => $info]);
+            $data['id_back']  = $request->id_back;
+            $info             = (new NeoBanking())->setBank($bank)->getNidInfo($data)->toArray();
+            return api_response($request, $info, 200, ['data' => $info['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
