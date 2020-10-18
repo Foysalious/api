@@ -6,14 +6,25 @@ namespace App\Sheba\NeoBanking\Banks;
 
 class NidInformation
 {
-    protected $data;
 
     /**
-     * @param mixed $data
+     * @var NidDetailsInfo $nidInfo
      */
-    public function setData($data)
+    protected $nidInfo;
+
+    /**
+     * @param NidDetailsInfo $nidInfo
+     * @return NidInformation
+     */
+    public function setNidInfo($nidInfo)
     {
-        $this->data = $data;
+        $this->nidInfo = $nidInfo;
+        return $this;
+    }
+
+    public function toArray()
+    {
+        return $this->nidInfo;
     }
 
 }

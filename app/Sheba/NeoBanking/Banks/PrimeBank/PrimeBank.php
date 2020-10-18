@@ -1,6 +1,7 @@
 <?php namespace Sheba\NeoBanking\Banks\PrimeBank;
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use ReflectionException;
 use Sheba\NeoBanking\Banks\Bank;
 use Sheba\NeoBanking\Banks\BankAccountInfo;
@@ -67,7 +68,8 @@ class PrimeBank extends Bank
 
     public function getNidInfo($data): NidInformation
     {
-        return $this->apiClient->getNidInfo($data);
+        $ocr_data = (new PrimeBankClient())->post('api/v1/nid-verification',$data);
+        return (new NidInformation())->setNidInfo($ocr_data);
     }
 
 }
