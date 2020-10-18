@@ -11,6 +11,26 @@ class TimeByBusiness
 {
     public function getOfficeStartTimeByBusiness()
     {
+        $now = Carbon::now();
+        /** @var Business $business */
+        $business = $this->getBusiness();
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember();
+
+        $business_member_is_on_leaves = $business_member->isOnLeaves($now);
+        if ($business_member_is_on_leaves) {
+            /** @var Leave $leave */
+            $leave = $business_member->getLeaveOnASpecificDate($now);
+
+            if ($leave->is_half_day) {
+                if ($leave->half_day_configuration == HalfDayType::FIRST_HALF) {
+                    return $business->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+                } else {
+                    return $business->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+                }
+            }
+        }
+
         $business_hour = BusinessOfficeHour::where('business_id', $this->getBusiness()->id)->first();
         if (is_null($business_hour)) return null;
         return $business_hour->start_time;
