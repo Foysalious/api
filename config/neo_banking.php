@@ -85,7 +85,7 @@ return [
 
     ],
     'category_form_items'   => [
-        'personal' => [
+        'personal'    => [
             [
                 'field_type' => 'header',
                 'title'      => 'সাধারণ তথ্য',
@@ -163,14 +163,14 @@ return [
                 'mandatory'  => false
             ],
             [
-                'field_type' => 'MultipleView',
+                'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'present_address',
                 'views'      => addressViews('present'),
                 'mandatory'  => false
             ],
             [
-                'field_type' => 'MultipleView',
+                'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'present_address',
                 'mandatory'  => false,
@@ -194,11 +194,153 @@ return [
                 'mandatory'  => false
             ],
             [
-                'field_type' => 'MultipleView',
+                'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'permanent_address',
                 'mandatory'  => false,
                 'views'      => addressViews('permanent')
+            ],
+        ],
+        'institution' => [
+            [
+                'field_type'  => 'header',
+                "title"       => "যোগাযোগ এর তথ্য",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'মোবাইল নাম্বার  *',
+                'hint'          => '+880 1678242900',
+                'name'          => 'mobile',
+                'error_message' => "মোবাইল নাম্বার পূরণ আবশ্যক",
+                'is_editable'   => false
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'ই-মেইল আইডি',
+                'name'          => 'email',
+                'hint'          => 'arafat@gmail.com',
+                'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'আপনার প্রতিষ্ঠানের নাম (বড় অক্ষরে) *',
+                'name'          => 'company_name',
+                'hint'          => 'AZAD TELECOM',
+                'error_message' => 'প্রতিষ্ঠানের নাম  পূরণ আবশ্যক',
+                'is_editable'   => false
+            ],
+            [
+                'field_type'  => 'header',
+                "title"       => "ট্রেড লাইসেন্স সম্পর্কিত তথ্য",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'সট্রেড লাইসেন্স নং *',
+                'name'          => 'trade_licence_number',
+                'hint'          => 'উদাহরণ: AHMED TELECOM',
+                'error_message' => 'ট্রেড লাইসেন্স নং পূরণ আবশ্যক'
+
+            ],
+            [
+                'field_type'    => 'date',
+                'title'         => 'নিবন্ধনের তারিখ *',
+                'name'          => 'trade_licence_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'টনিবন্ধনের তারিখ  পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => "অনুমোদনকারী প্রতিষ্ঠান *",
+                'name'          => 'grantor_organization',
+                'hint'          => 'Sheba.xyz',
+                'error_message' => 'পঅনুমোদনকারী প্রতিষ্ঠানের নাম পূরণ আবশ্যক '
+            ],
+            [
+                'field_type'  => 'header',
+                "title"       => "রেজিস্ট্রেশন সম্পর্কিত তথ্য",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => "রেজিস্ট্রেশন নং",
+                'name'          => 'registration_number',
+                'hint'          => '90145',
+                'error_message' => "রেজিস্ট্রেশন নং পূরণ আবশ্যক"
+            ],
+            [
+                'field_type'    => 'date',
+                'title'         => 'নিবন্ধনের তারিখ ',
+                'name'          => 'registration_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'নিবন্ধনের তারিখ  পূরণ আবশ্যক"'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'অনুমোদনকারী প্রতিষ্ঠান এবং দেশ',
+                'name'          => 'grantor_organization_and_country',
+                'hint'          => 'উদাহরণ: Grameen phone, Bangladesh',
+                'error_message' => 'নঅনুমোদনকারী প্রতিষ্ঠান এবং দেশের নাম পূরণ আবশ্যক '
+            ],
+            [
+                'field_type'  => 'header',
+                "title"       => "ব্যবসা / অফিস - এর ঠিকানা",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => '',
+                'name'       => 'business_office_address',
+                'views'      => addressViews('office'),
+                'mandatory'  => false
+            ],
+            [
+                'field_type'  => 'header',
+                'title'       => "অন্যান্য তথ্য",
+                'mandatory'   => false,
+                'is_editable' => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'ভ্যাট রেজিস্ট্রেশন নাম্বার (যদি থাকে)',
+                'name'          => 'vat_registration_number',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => ''
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'প্রতিষ্ঠানের ই-টিন নাম্বার (যদি থাকে)',
+                'name'          => 'organization_etin_number',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => ''
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'প্রতিষ্ঠানের ধরণ',
+                'name'          => "organization_type_list",
+                'hint'          => '',
+                'list_type'     => 'new_page_radio',
+                'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'ব্যবসার ধরণ',
+                'name'          => "business_type_list",
+                'hint'          => '',
+                'list_type'     => 'new_page_radio',
+                'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'বাৎসরিক আয়ের পরিমান',
+                'name'          => 'yearly_earning',
+                'hint'          => 'উদাহরণ: 10000',
+                'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক'
             ],
         ]
     ]
