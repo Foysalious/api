@@ -3,6 +3,8 @@
 
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\DTO\FormItemBuilder;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Personal extends BankFormCategory
 {
@@ -16,14 +18,21 @@ class Personal extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
-        // TODO: Implement get() method.
+        $formItems = FormStatics::personal();
+        $data      = [];
+        $formData  = $this->bankAccountData->getByCode($this->code);
+        foreach ($formItems as $item) {
+            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
+        }
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this);
     }
 
-    public function post()
+    public function post($data)
     {
-        // TODO: Implement post() method.
+        return !!$this->bankAccountData->postByCode($this->code, $data);
     }
 
     public function getLastUpdated()
@@ -494,7 +503,7 @@ class Personal extends BankFormCategory
         }
       ]
     }
-  ]',0));
+  ]', 0));
         return (new CategoryGetter())->setCategory($this)->toArray();
     }
 }

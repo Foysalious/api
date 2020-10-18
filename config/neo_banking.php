@@ -1,5 +1,50 @@
 <?php
+function addressViews($type)
+{
+    return [
+        [
+            'field_type'    => 'editText',
+            'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
+            'name'          => 'street_village_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'editText',
+            'title'         => 'পোস্ট কোড *',
+            'name'          => 'postcode_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'জেলা *',
+            'name'          => 'district_' . $type . '_address',
+            'hint'          => '',
+            'list_type'     => 'new_page_radio',
+            'error_message' => 'জেলার নাম পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'থানা / উপজেলা *',
+            'list_type'     => 'new_page_radio',
+            'name'          => 'sub_district_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+        ],
+        [
+            'field_type'    => 'dropdown',
+            'title'         => 'দেশ *',
+            'list_type'     => 'new_page_radio',
+            'name'          => 'country_' . $type . '_address',
+            'hint'          => '',
+            'error_message' => 'দেশের নাম পূরণ আবশ্যক'
+        ]
+    ];
+}
+
 return [
+    'prime_bank_sbs_url' => env('PRIME_BANK_SBS_URL'),
     'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
     'category_list'         => [
@@ -38,5 +83,124 @@ return [
             'bn' => 'অ্যাকাউন্ট সম্পর্কিত তথ্য '
         ]
 
-    ]
+    ],
+    'category_form_items'   => [
+        'personal' => [
+            [
+                'field_type' => 'header',
+                'title'      => 'সাধারণ তথ্য',
+                'mandatory'  => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'আবেদনকারীর নাম (বড় অক্ষরে)  *',
+                'hint'          => 'ABUL KALAM AZAD',
+                'name'          => 'applicant_name',
+                'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
+                'is_editable'   => false
+            ],
+            [
+                'field_type'    => 'date',
+                'title'         => 'জন্ম তারিখ *',
+                'name'          => 'birth_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'বাবার নাম  *',
+                'name'          => 'father_name',
+                'hint'          => 'ABUL KALAM',
+                'error_message' => 'বাবার নাম পূরণ আবশ্যক',
+                'is_editable'   => false
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'মায়ের নাম  *',
+                'name'          => 'mother_name',
+                'hint'          => 'Mrs. ABUL',
+                'error_message' => 'মায়ের নাম পূরণ আবশ্যক',
+                'is_editable'   => false,
+            ],
+            [
+                'field_type' => 'editText',
+                'title'      => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
+                'name'       => 'husband_or_wife_name',
+                'hint'       => 'BUILLA AZAD',
+                'mandatory'  => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'পেশা *',
+                'name'          => 'occupation_name',
+                'hint'          => 'Farmer',
+                'error_message' => 'পেশার ধরণ পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'প্রতিষ্ঠান এর নাম লিখুন',
+                'name'          => 'company_name',
+                'hint'          => 'Sheba.xyz',
+                'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'ই-টিন নাম্বার  *',
+                'name'          => 'etin_number',
+                'hint'          => '4654453',
+                'error_message' => 'ই-টিন নাম্বার পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার  *',
+                'name'          => 'nid_passport_birth_cer_number',
+                'hint'          => '654564544645464',
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'আপনার বর্তমান ঠিকানা',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'present_address',
+                'views'      => addressViews('present'),
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'present_address',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'checkbox',
+                        'name'       => 'present_permanent_same_address_checked',
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'textView',
+                        'title'      => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
+                        'name'       => 'present_permanent_same_address_text',
+                        'mandatory'  => false
+                    ]
+                ]
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'আপনার স্থায়ী ঠিকানা',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'MultipleView',
+                'title'      => '',
+                'name'       => 'permanent_address',
+                'mandatory'  => false,
+                'views'      => addressViews('permanent')
+            ],
+        ]
+    ],
+    'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
 ];

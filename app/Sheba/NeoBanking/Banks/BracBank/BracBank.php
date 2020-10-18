@@ -26,7 +26,7 @@ class BracBank  extends Bank
         return new BankAccountInfo();
     }
 
-    public function categoryDetails(BankFormCategory $category): array
+    public function categoryDetails(BankFormCategory $category): CategoryGetter
     {
        return $category->get();
     }

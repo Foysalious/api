@@ -22,4 +22,9 @@ class CategoryGetter
         return ['title' => $this->category->getTitle(), 'form_items' => $this->category->getData(), 'completion' => $this->category->completion()];
     }
 
+    public function getFormItems()
+    {
+        return $this->category->getData();
+    }
+
 }
