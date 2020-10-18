@@ -40,6 +40,7 @@ class ApiClient extends BankApiClient
     }
 
     function getNidInfo($data){
-        return (new PrimeBankClient())->post('api/v1/nid-verification',$data);
+        $data = (new PrimeBankClient())->post('api/v1/nid-verification',$data);
+        dd($data);
     }
 }

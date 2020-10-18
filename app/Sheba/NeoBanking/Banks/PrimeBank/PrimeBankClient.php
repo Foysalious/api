@@ -5,6 +5,8 @@ namespace App\Sheba\NeoBanking\Banks\PrimeBank;
 
 
 use GuzzleHttp\Client;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 
 class PrimeBankClient
 {
@@ -30,11 +32,10 @@ class PrimeBankClient
     private function call($method, $uri, $data = null)
     {
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
-        dd($res);
-//        $res = json_decode($res->getBody()->getContents(), true);
-//        if ($res['code'] != 200) throw new Exception($res['message'],$res['code']);
-//
-//        unset($res['code'], $res['message']);
+        $res = json_decode($res->getBody()->getContents(), true);
+        if ($res['code'] != 200) throw new Exception($res['message'],$res['code']);
+
+        unset($res['code'], $res['message']);
         return $res;
     }
 
@@ -45,9 +46,14 @@ class PrimeBankClient
 
     private function getOptions($data = null)
     {
-        $options = [];
-        if ($data)
-            $options['form_params'] = $data;
+        $request = request();
+        /** @var UploadedFile $file */
+        $id_front = $request->file('id_front');
+        $id_back = $request->file('id_back');
+        $options['multipart'] = [
+            ['name' => 'id_front', 'filename' => $id_front->getClientOriginalName()],
+            ['name' => 'id_back', 'filename' => $id_back->getClientOriginalName()],
+        ];
         return $options;
     }
 
