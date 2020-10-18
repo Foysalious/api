@@ -201,5 +201,6 @@ return [
                 'views'      => addressViews('permanent')
             ],
         ]
-    ]
+    ],
+    'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
 ];
