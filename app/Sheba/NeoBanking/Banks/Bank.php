@@ -143,7 +143,6 @@ abstract class Bank
      */
     private function validatePostData($detail, $post_data)
     {
-
         $data = (array)$post_data;
         foreach ($detail as $key => $item) {
             if ($item['field_type'] == 'multiView') {
@@ -160,7 +159,6 @@ abstract class Bank
                     throw new CategoryPostDataInvalidException("Date is Invalid");
                 }
             };
-
         }
     }
 }

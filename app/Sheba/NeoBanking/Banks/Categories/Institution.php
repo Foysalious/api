@@ -33,7 +33,7 @@ class Institution extends BankFormCategory
 
     public function post($data)
     {
-        // TODO: Implement post() method.
+        return !!$this->bankAccountData->postByCode($this->code, $data);
     }
 
     public function getLastUpdated()
