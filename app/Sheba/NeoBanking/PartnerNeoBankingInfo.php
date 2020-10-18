@@ -33,7 +33,7 @@ class PartnerNeoBankingInfo
 
     public function institution()
     {
-        if (!empty($this->information_for_bank_account)) return $this->information_for_bank_account['institution'];
+        if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['institution'])) return $this->information_for_bank_account['institution'];
         return [];
     }
 
