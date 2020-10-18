@@ -147,6 +147,7 @@ class Creator
             $status = $this->checkinStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
         else
             $status = $this->checkoutStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
+
         $attendance_log_data = [
             'attendance_id' => $this->attendance->id,
             'action' => $this->action,
@@ -158,6 +159,7 @@ class Creator
             'is_remote' => $this->isRemote
         ];
         $this->address = $this->getAddress();
+
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }

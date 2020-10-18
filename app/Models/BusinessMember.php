@@ -167,4 +167,14 @@ class BusinessMember extends Model
         return $leave->start_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end) &&
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
     }
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function getLeaveOnASpecificDate(Carbon $date)
+    {
+        $date = $date->toDateString();
+        return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+    }
 }
