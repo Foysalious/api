@@ -468,6 +468,14 @@ class NeoBanking
         return $bank->getNidInfo($data);
     }
 
+    public function getSDKLivelinessToken()
+    {
+        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        return $bank->getSDKLivelinessToken();
+    }
+
+
+
     /**
      * @param $category_code
      * @throws Exceptions\InvalidBankCode

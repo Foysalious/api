@@ -168,13 +168,18 @@ class NeoBankingController extends Controller
     }
 
     public function gigatechLivelinessAuthToken(Request $request) {
-        $token = config('neo_banking.gigatech_liveliness_sdk_auth_token');
-        if ($token) {
-            return api_response($request, null, 200, ['token' => $token]);
+        try {
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $bank             = $request->bank_code;
+            $partner          = $request->partner;
+            $token           = (new NeoBanking())->setBank($bank)->setPartner($partner)->getSDKLivelinessToken();
+            return api_response($request, $token, 200, $token);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
         }
-
-        return api_response($request, null, 400);
     }
-
-
 }
