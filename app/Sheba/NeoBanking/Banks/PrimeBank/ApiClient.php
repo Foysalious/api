@@ -38,9 +38,4 @@ class ApiClient extends BankApiClient
         }
         return (new BankAccountInfoWithTransaction())->setAccountInfo($accountDetailInfo)->setTransactions($transactionList);
     }
-
-    function getNidInfo($data){
-        $data = (new PrimeBankClient())->post('api/v1/nid-verification',$data);
-        dd($data);
-    }
 }
