@@ -167,5 +167,14 @@ class NeoBankingController extends Controller
         }
     }
 
+    public function gigatechLivelinessAuthToken(Request $request) {
+        $token = config('neo_banking.gigatech_liveliness_sdk_auth_token');
+        if ($token) {
+            return api_response($request, null, 200, ['token' => $token]);
+        }
+
+        return api_response($request, null, 400);
+    }
+
 
 }
