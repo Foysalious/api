@@ -31,10 +31,13 @@ use Throwable;
 use Hash;
 use App\Models\Affiliate;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
+use Sheba\ModificationFields;
 
 class TopUpController extends Controller
 {
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+    use ModificationFields;
 
     public function getVendor(Request $request)
     {
@@ -109,18 +112,14 @@ class TopUpController extends Controller
 
     }
 
-    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository)
+    private function affiliateLogout(Affiliate $affiliate)
+    {
+        $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
+    }
+    
+    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo)
     {
         try {
-
-            $aff = Affiliate::where('id', $affiliate)->first();
-            $profileid = $aff->profile_id;
-            $profile = $profileRepository->where('id', $profileid)->first();
-
-            if(!Hash::check($request->password, $profile->password)){
-                return api_response($request, null, 403, ['message' => "Credential Mismatch"]);
-            }
-
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
@@ -128,6 +127,39 @@ class TopUpController extends Controller
                 'amount' => 'required|min:10|max:1000|numeric',
                 'is_robi_topup' => 'sometimes|in:0,1'
             ]);
+
+            $aff = Affiliate::where('id', $affiliate)->first();
+            $profileid = $aff->profile_id;
+            $profile = $profileRepository->where('id', $profileid)->first();
+
+            if(!Hash::check($request->password, $profile->password)){
+                $data = [
+                    'profile_id' => $profileid,
+                    'affiliate_id' => $affiliate,
+                    'topup_number' => $request->mobile,
+                    'topup_amount' => $request->amount,
+                    'password' => $request->password,
+                    'ip_address' => $request->ip(),
+                ];
+        
+                $dd= $wrongPINCountRepo->create($this->withBothModificationFields($data));
+
+                $wrongPinCount = $wrongPINCountRepo->where('affiliate_id', $affiliate)->get()->count();
+
+                if($wrongPinCount >=3){
+                    $this->affiliateLogout($aff);
+                    $wrongPINCountRepo->where('affiliate_id', $affiliate)->delete();
+                    return api_response($request, null, 403, ['message' => "Wrong PIN count reached 3."]);
+                }
+
+                return api_response($request, null, 403, ['message' => "Credential Mismatch."]);
+
+            } else {
+                $wp_count = $wrongPINCountRepo->where('affiliate_id', $affiliate)->get()->count();
+                if($wp_count > 0){
+                    $countFreshed = $wrongPINCountRepo->where('affiliate_id', $affiliate)->delete();
+                }
+            }
 
 
             $agent = $this->getAgent($request);
