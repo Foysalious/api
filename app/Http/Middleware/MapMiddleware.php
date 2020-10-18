@@ -46,6 +46,7 @@ class MapMiddleware
             "https://topup.dev-sheba.xyz",
             "https://pl.dev-sheba.xyz",
             "https://pl.sheba.xyz",
+            "http://payment-link-web.sheba.test",
             "https://topup.sheba.xyz",
             "https://transport.sheba.xyz",
             "https://movie.sheba.xyz"

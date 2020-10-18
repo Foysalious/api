@@ -46,7 +46,8 @@ class CompletionStatics
             'stock_price',
             'yearly_sales',
             'full_time_employee',
-            'tin_no'
+            'tin_no',
+            "ipdc_cib_agreement_checked",
         ]);
         $term   = array_merge($term, [
             "proof_of_photograph",

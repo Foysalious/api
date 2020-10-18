@@ -9,7 +9,9 @@ use Sheba\Dal\SubscriptionOrder\Statuses;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 use Sheba\Payment\PayableType;
 use Sheba\Dal\SubscriptionOrderPayment\Model as SubscriptionOrderPayment;
+use Sheba\Payment\Statuses as PaymentStatuses;
 use Sheba\ServiceRequest\ServiceRequestObject;
+use Sheba\Dal\Category\Category;
 
 class SubscriptionOrder extends Model implements SubscriptionOrderInterface, PayableType
 {
@@ -119,9 +121,24 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
             $partner_order->calculate(1);
             return $partner_order;
         });
-        $this->totalPrice = (double)$partner_orders->sum('totalPrice');
-        $this->due = (double)$partner_orders->sum('due');
-        $this->paid = (double)$partner_orders->sum('paid');
+        if ($partner_orders->count() == 0) {
+            $service_details = json_decode($this->service_details);
+            $this->totalPrice = (double)$service_details->discounted_price;
+            $this->paid = (double)$this->getPaidAmount();
+            $this->due = $this->totalPrice - $this->paid;
+        } else {
+            $this->totalPrice = (double)$partner_orders->sum('totalPrice');
+            $this->due = (double)$partner_orders->sum('due');
+            $this->paid = (double)$partner_orders->sum('paid');
+        }
+    }
+
+    private function getPaidAmount()
+    {
+        $payable = Payable::whereHas('payments', function ($q) {
+            $q->where('status', PaymentStatuses::COMPLETED);
+        })->where('type_id', $this->id)->where('type', 'subscription_order')->first();
+        return $payable ? $payable->amount : 0;
     }
 
     public function getTotalPrice()
@@ -171,5 +188,20 @@ class SubscriptionOrder extends Model implements SubscriptionOrderInterface, Pay
     public function isMonthly()
     {
         return $this->billing_cycle == Cycles::MONTHLY;
+    }
+
+    public function hasPartner()
+    {
+        return $this->partner != null;
+    }
+
+    public function canCreateOrderRequest()
+    {
+        return !$this->hasPartner() && !$this->hasOrderRequests();
+    }
+
+    public function hasOrderRequests()
+    {
+        return $this->subscriptionOrderRequests()->count() > 0;
     }
 }

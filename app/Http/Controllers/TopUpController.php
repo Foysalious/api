@@ -79,8 +79,6 @@ class TopUpController extends Controller
                 'is_robi_topup' => 'sometimes|in:0,1'
             ]);
 
-            if ($request->is_robi_topup == 1)
-                $this->checkVendor($request->vendor_id);
 
             $agent = $this->getAgent($request);
 
@@ -107,12 +105,6 @@ class TopUpController extends Controller
 
     }
 
-    private function checkVendor($vendor_id)
-    {
-        $eligible_vendors = TopUpVendor::whereIn('name', ['Robi', 'Airtel'])->pluck('id');
-        return in_array($vendor_id, $eligible_vendors->toArray());
-    }
-
     /**
      * @param Request $request
      * @param VendorFactory $vendor
@@ -133,9 +125,6 @@ class TopUpController extends Controller
             }
 
             $agent = $this->getAgent($request);
-            if (get_class($agent) == "App\Models\Partner")
-                return api_response($request, null, 403, ['message' => "Temporary turned off"]);
-
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 

@@ -12,7 +12,7 @@ use App\Models\Profile;
 use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
 use App\Repositories\LocationRepository;
@@ -134,7 +134,9 @@ class AffiliateController extends Controller
                 'total_sp_referred'      => $affiliate->partnerAffiliations->count(),
                 'last_updated'           => Carbon::parse($affiliate->updated_at)->format('dS F,g:i A'),
                 'robi_topup_wallet'      => (double)$affiliate->robi_topup_wallet,
-                "is_robi_retailer"       => $affiliate->retailers->where('strategic_partner_id',2)->count() ? 1 : 0
+                "is_robi_retailer"       => $affiliate->retailers->where('strategic_partner_id',2)->count() ? 1 : 0,
+                'total_notifications'    => $affiliate->notifications()->count(),
+                'total_unseen_notifications'    => $affiliate->notifications()->where('is_seen', 0)->count(),
 
             ];
             return api_response($request, $info, 200, ['info' => $info]);
@@ -562,6 +564,26 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                     return $notification;
                 });
                 return api_response($request, $notifications, 200, ['notifications' => $notifications]);
+            } else {
+                return api_response($request, null, 404);
+            }
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNotification($affiliate, $notification, Request $request)
+    {
+        try {
+            $notifications = $request->affiliate->notifications()->select('id', 'title', 'description', 'event_type', 'event_id', 'type', 'is_seen', 'created_at')->where('id', $notification)->get();
+            if (count($notifications) > 0) {
+                $notifications = $notifications->map(function ($notification) {
+                    $notification->event_type = str_replace('App\Models\\', "", $notification->event_type);
+                    array_add($notification, 'timestamp', $notification->created_at->timestamp);
+                    return $notification;
+                });
+                return api_response($request, $notifications, 200, ['notification' => $notifications]);
             } else {
                 return api_response($request, null, 404);
             }

@@ -1,10 +1,11 @@
 <?php namespace Sheba\Resource\Jobs\Service;
 
 
+use App\Exceptions\NotFoundException;
 use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Order;
 use App\Models\PartnerOrder;
 use Sheba\Dal\JobService\JobServiceRepositoryInterface;
@@ -104,6 +105,7 @@ class Creator
             if ($this->policy->existInJob($selected_service)) throw new ServiceExistsInOrderException();
             $service = $selected_service->getService();
             $location_service = LocationService::where([['service_id', $service->id], ['location_id', $this->order->deliveryAddress->location_id]])->first();
+            if (!$selected_service->getCategory()->isRentACarOutsideCity() && !$location_service) throw new NotFoundException('Service #' . $service->id . ' is not available at this location #' . $this->order->deliveryAddress->location_id);
             $this->priceCalculation = $this->resolvePriceCalculation($selected_service->getCategory());
             $this->priceCalculation->setService($service)->setOption($selected_service->getOption())->setQuantity($selected_service->getQuantity());
             $selected_service->getCategory()->isRentACarOutsideCity() ? $this->priceCalculation->setPickupThanaId($selected_service->getPickupThana()->id)->setDestinationThanaId($selected_service->getDestinationThana()->id) : $this->priceCalculation->setLocationService($location_service);

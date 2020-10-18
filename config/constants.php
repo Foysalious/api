@@ -818,7 +818,7 @@ return [
         'Recurring' => 'Recurring'
     ],
     'REWARD_CONSTRAINTS'                          => [
-        'category'        => 'App\Models\Category',
+        'category'        => 'Sheba\Dal\Category\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
     ],
     'PARTNER_PACKAGE_UPDATE_STATUSES'             => [
@@ -1079,7 +1079,6 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-
         env('SHEBA_RESOURCE_APP') => 'Resource',
         env('SHEBA_MANGER_APP') => 'Partner',
         'user' => 'Profile',
@@ -1328,5 +1327,36 @@ return [
         'G1',
         'G2',
         'G3'
+    ],
+    'PARTNER_BUSINESS_TYPE' => [
+        'মুদি ব্যবসা',
+        'কাপড়ের ব্যবসা',
+        'ইলেক্ট্রনিক্স',
+        'ই-কমার্স',
+        'এফ-কমার্স বা ফেসবুক ব্যবসা',
+        'এম-কমার্স বা মোবাইল টপআপ ব্যবসা',
+        'ঔষধের দোকান',
+        'মোবাইল এবং গ্যাজেট',
+        'কনফেকশনারি এন্ড ফুডস',
+        'গৃহস্থালি জিনিসপত্র',
+        'কাঁচামালের ব্যবসায়',
+        'হার্ডওয়্যার',
+        'কসমেটিক্স',
+        'ফার্নিচার',
+        'খেলনার দোকান',
+        'চশমার দোকান',
+        'মোটর যন্ত্রাংশের ব্যবসায়',
+        'রেস্টুরেন্ট ও ক্যাটারিং ব্যবসায়',
+        'পোলট্রি এন্ড এগ্রো ব্যবসায়',
+        'হ্যান্ডি ক্রাফট ব্যবসায়',
+        'রেন্ট-এ-কার বা গাড়ি ভাড়া ব্যবসায়',
+        'ক্লিনিং ও পেস্ট কন্ট্রোল',
+        'বিউটি ও সেলুন',
+        'টিকেট ও ট্রাভেলস ব্যবসায়',
+        'লন্ড্রি',
+        'বাসা বদল ব্যবসা',
+        'পেইন্টিং ও রেনোভেশন',
+        'সার্ভিস ও রিপেয়ারিং',
+        'অন্যান্য'
     ]
 ];

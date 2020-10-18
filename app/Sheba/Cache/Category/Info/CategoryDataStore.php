@@ -1,8 +1,8 @@
 <?php namespace Sheba\Cache\Category\Info;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\Job;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use Sheba\Cache\CacheRequest;
 use Sheba\Cache\DataStoreObject;

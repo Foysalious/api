@@ -380,22 +380,32 @@
                                                             </td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="es-p20t es-p5b es-p20r es-p20l es-m-txt-l" align="left"><h2><strong>Co-worker Invitation</strong></h2></td>
+                                                            <td class="es-p20t es-p5b es-p20r es-p20l es-m-txt-l" align="left">
+                                                                <h2><strong>Dear Sir/Mam,</strong></h2>
+                                                            </td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="es-p10t es-p20r es-p20l" align="left"><p>You have been invited / added to join as a co-worker and start using sBusiness &amp; digiGo. Follow this 2 steps to join.</p></td>
+                                                            <td class="es-p10t es-p20r es-p20l" align="left">
+                                                                <p>
+                                                                    You have been invited/added to join as a co-worker. Start using <a target="_blank" href="https://business.sheba.xyz/">sBusiness.xyz</a> & digiGO by following these 2 steps:
+                                                                </p>
+                                                            </td>
                                                         </tr>
                                                         <tr>
                                                             <td class="es-p10t es-p30b es-p20r es-p20l" align="left">
                                                                 <p>
-                                                                    1. Download this app first here - <a target="_blank" href="https://play.google.com/store/apps/details?id=xyz.sheba.emanager&hl=en">Play store</a>&nbsp;and <a target="_blank" href="https://www.apple.com/us/search/digigo-office?src=globalnav">App store</a><br>digiGO play store link: https://play.google.com/store/apps/details?id=xyz.sheba.emanager&amp;hl=en<br>digiGO app store link:&nbsp;https://www.apple.com/us/search/digigo-office?src=globalnav<br><br>
+                                                                    1. Download this app first here - <br>
+                                                                    For Android click here: <a target="_blank" href="https://play.google.com/store/apps/details?id=xyz.sheba.emanager&hl=en">Play store</a><br>
+                                                                    For iOS click here: <a target="_blank" href="https://www.apple.com/us/search/digigo-office?src=globalnav">App store</a><br><br>
                                                                     @if(!empty($password))
-                                                                    2. Your short password : <strong>{{ $password }}</strong><br>
+                                                                    2. Your short password: <strong>{{ $password }}</strong> (Please change the password after login to your account)<br>
                                                                     @else
                                                                     2. Use Your existing password
                                                                     @endif
                                                                     <br><br>
-                                                                    <strong>Regards,<br>Team sBusiness.xyz</strong>
+                                                                    You are ready to use digiGO app now. Please get guidance from your HR on how to use it. Moreover, to know it's features you can read this: <a target="_blank" href="https://www.sheba.xyz/blog/en/hr-work-is-now-hassle-free/"> Article </a>
+                                                                    <br><br>
+                                                                    <strong>Regards,<br>sBusiness Team</strong>
                                                                 </p>
                                                             </td>
                                                         </tr>
@@ -473,7 +483,8 @@
                                 </tr>
                             </table></td>
                     </tr>
-                </table></td>
+                </table>
+            </td>
         </tr>
     </table>
 </div>

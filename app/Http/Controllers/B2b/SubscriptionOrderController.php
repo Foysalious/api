@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Sheba\Logs\ErrorLog;

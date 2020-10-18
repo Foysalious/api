@@ -5,7 +5,7 @@ use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
 use App\Models\Location;
-use App\Models\LocationService;
+use Sheba\Dal\LocationService\LocationService;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Sheba\Address\AddressValidator;

@@ -3,7 +3,7 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
@@ -12,7 +12,7 @@ use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
 use App\Models\Resource;
-use App\Models\Service;
+use Sheba\Dal\Service\Service;
 use App\Models\Slider;
 use App\Models\SliderPortal;
 use Illuminate\Http\JsonResponse;
@@ -268,14 +268,19 @@ class ShebaController extends Controller {
         /** @var Payment $payment */
         $payment = Payment::where('transaction_id', $transaction_id)->first();
         if (!$payment) return api_response($request, null, 404, ['message' => 'No Payment found']);
-
+        $external_payment = $payment->externalPayments;
         if (!$payment->isComplete() && !$payment->isPassed()) {
             if ($error = $payment->getErrorMessage()) {
                 $message = 'Your payment has been failed due to ' . $error;
             } else {
                 $message = 'Payment Failed.';
             }
-            return api_response($request, null, 404, ['message' => $message]);
+            $fail_url = null;
+            if($external_payment){
+                $fail_url = $external_payment->fail_url;
+            }
+            return api_response($request, null, 404,
+                ['message' => $message,'external_payment_redirection_url'=>$fail_url]);
         }
 
         /** @var Payable $payable */
@@ -286,7 +291,8 @@ class ShebaController extends Controller {
             'description' => $payable->description,
             'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link' => $payment->invoice_link,
-            'transaction_id' => $transaction_id
+            'transaction_id' => $transaction_id,
+            'external_payment_redirection_url'=>$external_payment ? $external_payment->success_url : null
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);

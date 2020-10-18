@@ -2,7 +2,7 @@
 
 namespace App\Sheba\Reports;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use Excel;
 use Illuminate\Support\Facades\Storage;
 use Sheba\Reports\ExcelHandler;

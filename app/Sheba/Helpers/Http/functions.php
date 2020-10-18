@@ -3,19 +3,22 @@
 use App\Http\Requests\ApiRequest;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Helpers\Http\ShebaRequestHeader;
+use Sheba\Helpers\Http\ShebaResponse;
 use Sheba\Portals\Portals;
 
 if (!function_exists('api_response')) {
     /**
-     * @param $request
-     * @param $internal_response
-     * @param $response_code
+     * @param            $request
+     * @param            $internal_response
+     * @param            $response_code
      * @param array|null $external_response
      * @return JsonResponse
      */
     function api_response($request, $internal_response, $response_code, array $external_response = null)
     {
-        $public_response = constants('API_RESPONSE_CODES')[$response_code];
+
+        $public_response = (new ShebaResponse)->$response_code;
         if ($external_response != null) {
             $public_response = array_merge($public_response, $external_response);
         }
@@ -36,7 +39,7 @@ if (!function_exists('calculatePagination')) {
     {
         $offset = $request->has('offset') ? $request->offset : 0;
         $limit  = $request->has('limit') ? $request->limit : 50;
-        return [ $offset, $limit ];
+        return [$offset, $limit];
     }
 }
 
@@ -49,13 +52,13 @@ if (!function_exists('calculatePaginationNew')) {
     {
         $page  = $request->has('page') ? $request->page : 0;
         $limit = $request->has('limit') ? $request->limit : 50;
-        return [ $page, $limit ];
+        return [$page, $limit];
     }
 }
 
 if (!function_exists('calculateSort')) {
     /**
-     * @param $request
+     * @param        $request
      * @param string $default
      * @return array
      */
@@ -63,7 +66,7 @@ if (!function_exists('calculateSort')) {
     {
         $offset = $request->has('sort') ? $request->sort : $default;
         $limit  = $request->has('sort_order') ? $request->sort_order : 'DESC';
-        return [ $offset, $limit ];
+        return [$offset, $limit];
     }
 }
 
@@ -84,7 +87,7 @@ if (!function_exists('getValidationErrorMessage')) {
 
 if (!function_exists('decodeGuzzleResponse')) {
     /**
-     * @param $response
+     * @param      $response
      * @param bool $assoc
      * @return array
      */
@@ -102,5 +105,27 @@ if (!function_exists('getUserTypeFromRequestHeader')) {
     function getUserTypeFromRequestHeader(Request $request)
     {
         return Portals::getUserTypeFromPortal($request->header('portal-name'));
+    }
+}
+
+if (!function_exists('getShebaRequestHeader')) {
+    /**
+     * @return ShebaRequestHeader
+     */
+    function getShebaRequestHeader()
+    {
+        $request = \request();
+        $header  = new ShebaRequestHeader();
+
+        if ($request->hasHeader(ShebaRequestHeader::VERSION_CODE_KEY))
+            $header->setVersionCode($request->header(ShebaRequestHeader::VERSION_CODE_KEY));
+
+        if ($request->hasHeader(ShebaRequestHeader::PORTAL_NAME_KEY))
+            $header->setPortalName($request->header(ShebaRequestHeader::PORTAL_NAME_KEY));
+
+        if ($request->hasHeader(ShebaRequestHeader::PLATFORM_NAME_KEY))
+            $header->setPlatformName($request->header(ShebaRequestHeader::PLATFORM_NAME_KEY));
+
+        return $header;
     }
 }

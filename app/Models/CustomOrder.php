@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Comment\MorphCommentable;
 use Sheba\Comment\MorphComments;
+use Sheba\Dal\Service\Service;
 
 class CustomOrder extends Model implements MorphCommentable
 {
