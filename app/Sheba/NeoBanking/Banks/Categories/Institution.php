@@ -4,6 +4,8 @@
 use Sheba\NeoBanking\Banks\BankCompletionDetail;
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\DTO\FormItemBuilder;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Institution extends BankFormCategory
 {
@@ -17,12 +19,19 @@ class Institution extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get() : CategoryGetter
     {
-        // TODO: Implement get() method.
+        $formItems = FormStatics::institution();
+        $data      = [];
+        $formData  = $this->bankAccountData->getByCode($this->code);
+        foreach ($formItems as $item) {
+            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
+        }
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this);
     }
 
-    public function post()
+    public function post($data)
     {
         // TODO: Implement post() method.
     }
