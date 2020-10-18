@@ -57,6 +57,7 @@ class Repository extends ClientRepository {
     public function getRecent() {
         $list = collect($this->client->emiList(3));
         $data = $list->map(function ($item) {
+            $item['partner'] = $this->partner;
             $nItem = new Item((array)$item);
             return $nItem->toShort();
         });
@@ -86,6 +87,7 @@ class Repository extends ClientRepository {
 
     private function getShortItems(Collection $list) {
         return $list->map(function ($item) {
+            $item['partner'] = $this->partner;
             $nItem = new Item((array)$item);
             return $nItem->toShort();
         });
