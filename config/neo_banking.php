@@ -343,5 +343,6 @@ return [
                 'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক'
             ],
         ]
-    ]
+    ],
+    'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
 ];
