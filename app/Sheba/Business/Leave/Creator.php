@@ -50,6 +50,8 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $isHalfDay;
+    private $halfDayConfigure;
     private $substitute;
     private $createdBy;
     /** @var UploadedFile[] */
@@ -154,6 +156,18 @@ class Creator
         return $this;
     }
 
+    public function setIsHalfDay($is_half_day)
+    {
+        $this->isHalfDay = $is_half_day;
+        return $this;
+    }
+
+    public function setHalfDayConfigure($half_day_configuration)
+    {
+        $this->halfDayConfigure = $half_day_configuration;
+        return $this;
+    }
+
     public function setNote($note)
     {
         $this->note = $note;
@@ -186,12 +200,20 @@ class Creator
             $period = CarbonPeriod::create($this->startDate, $this->endDate);
             foreach ($period as $date) {
                 $day_name_in_lower_case = strtolower($date->format('l'));
-                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+                if (in_array($day_name_in_lower_case, $business_weekend)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
+                if (in_array($date->toDateString(), $business_holiday)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
             }
         }
 
-        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
+        return $this->isHalfDay ?
+            ($this->endDate->diffInDays($this->startDate) + 0.5) - $leave_day_into_holiday_or_weekend :
+            ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     public function setSubstitute($substitute_id)
@@ -214,6 +236,8 @@ class Creator
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
+            'is_half_day' => $this->isHalfDay,
+            'half_day_configuration' => $this->halfDayConfigure,
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
@@ -288,7 +312,6 @@ class Creator
     {
         $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
-
         return $business_total_leave_days_by_types - $used_days;
     }
 }
