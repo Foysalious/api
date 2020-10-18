@@ -109,7 +109,7 @@ class FormItemBuilder
      * @return array
      * @throws ReflectionException
      */
-    public function MultipleView()
+    public function multipleView()
     {
         $item  = $this->initItem(false);
         $views = [];
