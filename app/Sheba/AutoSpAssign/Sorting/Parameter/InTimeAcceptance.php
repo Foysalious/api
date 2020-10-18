@@ -1,7 +1,7 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Parameter;
 
 
-class Ita extends Parameter
+class InTimeAcceptance extends Parameter
 {
     protected function getWeight()
     {
