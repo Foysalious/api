@@ -128,13 +128,18 @@ class DueTrackerRepository extends BaseRepository
         $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
-        $list   = collect($result['data']['list'])->map(function ($item) {
+        $due_list = collect($result['data']['list']);
+        if(isset($request['offset']) && isset($request['limit'])) {
+            list($offset, $limit) = calculatePagination($request);
+            $due_list               = $due_list->slice($offset)->take($limit)->values();
+        }
+        $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
             return $item;
         });
-        list($offset, $limit) = calculatePagination($request);
-        $list               = $list->slice($offset)->take($limit)->values();
+
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
@@ -160,6 +165,12 @@ class DueTrackerRepository extends BaseRepository
                 'total_transactions' => $total_transactions,
                 'total_credit'       => $total_credit,
                 'total_debit'        => $total_debit,
+            ],
+            'balance' => [
+                'amount' => abs($total_debit - $total_credit),
+                'type' => $total_debit > $total_credit ? 'Advance' : 'Due',
+                'color' => $total_debit > $total_credit ? '#219653' : '#DC1E1E'
+
             ]
         ];
     }
