@@ -227,7 +227,7 @@ class Creator
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'is_half_day' => $this->isHalfDay,
-            'half_day_configuration' => $this->halfDayConfigure,
+            'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure :null,
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];

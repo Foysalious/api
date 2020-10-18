@@ -82,6 +82,7 @@ class LeaveAdjustmentController extends Controller
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
 
         $leave = $leave->create();
+        $leave = $leave->fresh();
         $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
         $this->storeLeaveLog($leave);
 
@@ -110,7 +111,7 @@ class LeaveAdjustmentController extends Controller
             $data = Excel::selectSheets(AdjustmentExcel::SHEET)->load($file_path)->get();
 
             $data = $data->filter(function ($row) {
-                return ($row->users_email && $row->title && $row->leave_type_id && $row->start_date && $row->end_date && $row->note && $row->is_half_day && $row->half_day_configuration && $row->approver_id);
+                return ($row->users_email && $row->title && $row->leave_type_id && $row->start_date && $row->end_date && $row->approver_id);
             });
 
             $total = $data->count();
@@ -127,8 +128,7 @@ class LeaveAdjustmentController extends Controller
             $data->each(function ($value) use (
                 $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
             ) {
-
-                if (!($value->$users_email && $value->$title && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$is_half_day && $value->$approver_id)) {
+                if (!($value->$users_email && $value->$title && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
                     return;
                 }
 
@@ -150,6 +150,7 @@ class LeaveAdjustmentController extends Controller
                     ->setApproverId($value->$approver_id);
 
                 $leave = $leave->create();
+                $leave = $leave->fresh();
                 $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
                 $this->storeLeaveLog($leave);
             });
@@ -158,7 +159,6 @@ class LeaveAdjustmentController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
