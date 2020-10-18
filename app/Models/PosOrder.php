@@ -159,8 +159,8 @@ class PosOrder extends Model {
     }
 
     public function scopeGetPartnerWiseOrderId($query, $id) {
-        $pos_order = $query->where('id', $id)->first();
-        return $pos_order->partner_wise_order_id;
+        $pos_order = $query->withTrashed()->where('id', $id)->first();
+        return $pos_order ? $pos_order->partner_wise_order_id : null;
     }
 
     public function scopeByPartner($query, $partner_id) {
