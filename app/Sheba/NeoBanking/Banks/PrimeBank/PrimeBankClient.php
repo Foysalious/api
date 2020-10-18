@@ -46,10 +46,6 @@ class PrimeBankClient
 
     private function getOptions($data = null)
     {
-        $options['headers'] = [
-            'Accept' => 'application/json'
-        ];
-
         $request = request();
         /** @var UploadedFile $file */
         $id_front = $request->file('id_front');
@@ -58,7 +54,6 @@ class PrimeBankClient
             ['name' => 'id_front', 'filename' => $id_front->getClientOriginalName()],
             ['name' => 'id_back', 'filename' => $id_back->getClientOriginalName()],
         ];
-        dd($options);
         return $options;
     }
 
