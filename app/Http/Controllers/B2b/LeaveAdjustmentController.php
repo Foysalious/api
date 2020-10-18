@@ -55,11 +55,12 @@ class LeaveAdjustmentController extends Controller
             'leave_type_id' => 'required|integer',
             'start_date' => 'required|before_or_equal:end_date',
             'end_date' => 'required',
-            'note' => 'sometimes|required',
             'is_half_day' => 'sometimes|required|in:1,0',
-            'half_day_configuration' => "required_if:is_half_day,==,1|in:first_half,second_half",
             'approver_id' => 'required|integer',
         ]);
+        $validation_data['half_day_configuration'] = $request->is_half_day ? 'required|in:first_half,second_half' : '';
+        $this->validate($request, $validation_data);
+
         /** @var Business $business */
         $business = $request->business;
         $business_member_ids = $business->getAccessibleBusinessMember()->pluck('id')->toArray();
@@ -75,6 +76,8 @@ class LeaveAdjustmentController extends Controller
             return api_response($request, null, 420, ['message' => 'This business member is not belongs to this business']);
         } elseif (!in_array($request->leave_type_id, $business_leave_type_ids)) {
             return api_response($request, null, 420, ['message' => 'This leave type is not belongs to this business']);
+        } elseif (!in_array($request->approver_id, $super_business_member_ids)) {
+            return api_response($request, null, 420, ['message' => 'This approver is not your super admin']);
         } elseif ((int)$request->is_half_day == 1 && $total_leave_days > 1) {
             return api_response($request, null, 420, ['message' => 'Half Day leave cannot be more than 1 day']);
         }
@@ -155,7 +158,7 @@ class LeaveAdjustmentController extends Controller
 
             $excel_error = null;
             $halt_top_up = false;
-            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
+            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
 
                 $leave_start_date = Carbon::parse($value->$start_date);
                 $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
@@ -181,6 +184,9 @@ class LeaveAdjustmentController extends Controller
                 } elseif (!in_array($value->$leave_type_id, $business_leave_type_ids)) {
                     $halt_top_up = true;
                     $excel_error = 'This leave type is not belongs to this business';
+                } elseif (!in_array($value->$approver_id, $super_business_member_ids)) {
+                    $halt_top_up = true;
+                    $excel_error = 'This approver is not your super admin';
                 } elseif ((int)$value->$is_half_day == 1 && $total_leave_days > 1) {
                     $halt_top_up = true;
                     $excel_error = 'Half Day leave cannot be more than 1 day';
