@@ -15,20 +15,6 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getOrganizationInformation($partner, Request $request)
-    {
-        try {
-            $bank             = $request->bank;
-            $partner          = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $info             = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->organizationInformation();
-            return api_response($request, $info, 200, ['data' => $info]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function getHomepage($partner, Request $request, NeoBanking $neoBanking)
     {
         try {
@@ -51,7 +37,6 @@ class NeoBankingController extends Controller
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails()->toArray();
             return api_response($request, $account_details, 200, ['data' => $account_details]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -107,7 +92,6 @@ class NeoBankingController extends Controller
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
