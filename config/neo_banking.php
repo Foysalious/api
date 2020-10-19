@@ -393,21 +393,18 @@ return [
                         'field_type' => 'radioButton',
                         'name'       => 'birth_certificate_number',
                         'title'      => 'জন্ম নিবন্ধন নাম্বার',
-                        'value'      => 1,
                         'mandatory'  => false
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'passport_number',
                         'title'      => 'পাসপোর্ট',
-                        'value'      => 0,
                         'mandatory'  => false
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'nid_number',
                         'title'      => 'পাসপোর্ট',
-                        'value'      => 0,
                         'mandatory'  => false
                     ]
                 ]

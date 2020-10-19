@@ -27,7 +27,7 @@ class PartnerNeoBankingInfo
 
     public function personal()
     {
-        if (!empty($this->information_for_bank_account)) return $this->information_for_bank_account['personal'];
+        if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['personal'])) return $this->information_for_bank_account['personal'];
         return [];
     }
 
