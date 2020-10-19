@@ -50,7 +50,7 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
-    private $isHalfDay;
+    private $isHalfDay = 0;
     private $halfDayConfigure;
     private $substitute;
     private $createdBy;
