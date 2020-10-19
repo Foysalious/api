@@ -6,21 +6,21 @@ function addressViews($type)
             'field_type'    => 'editText',
             'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
             'name'          => 'street_village_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
             'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'editText',
             'title'         => 'পোস্ট কোড *',
             'name'          => 'postcode_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'পোস্ট কোড',
             'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'dropdown',
             'title'         => 'জেলা *',
             'name'          => 'district_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'জেলা',
             'list_type'     => 'new_page_radio',
             'error_message' => 'জেলার নাম পূরণ আবশ্যক'
         ],
@@ -29,15 +29,14 @@ function addressViews($type)
             'title'         => 'থানা / উপজেলা *',
             'list_type'     => 'new_page_radio',
             'name'          => 'sub_district_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'থানা / উপজেলা',
             'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
         ],
         [
-            'field_type'    => 'dropdown',
+            'field_type'    => 'editText',
             'title'         => 'দেশ *',
-            'list_type'     => 'new_page_radio',
             'name'          => 'country_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'দেশ',
             'error_message' => 'দেশের নাম পূরণ আবশ্যক'
         ]
     ];
@@ -72,11 +71,11 @@ return [
         ],
         'nominee'     => [
             'en' => 'Nominee',
-            'bn' => 'বনমিনি তথ্য '
+            'bn' => 'নমিনি তথ্য '
         ],
         'documents'   => [
             'en' => 'Documents',
-            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড '
+            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট'
         ],
         'account'     => [
             'en' => 'Account',
@@ -104,7 +103,7 @@ return [
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
                 'field_type'    => 'editText',
@@ -121,11 +120,12 @@ return [
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
             ],
             [
-                'field_type' => 'editText',
-                'title'      => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
-                'name'       => 'husband_or_wife_name',
-                'hint'       => 'BUILLA AZAD',
-                'mandatory'  => false,
+                'field_type'    => 'editText',
+                'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
+                'name'          => 'husband_or_wife_name',
+                'hint'          => 'BUILLA AZAD',
+                'mandatory'     => false,
+                'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -327,7 +327,7 @@ return [
                 'title'         => 'প্রতিষ্ঠানের ধরণ',
                 'name'          => "organization_type_list",
                 'hint'          => '',
-                'list_type'     => 'new_page_radio',
+                'list_type'     => 'dialog',
                 'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক',
                 'mandatory'     => false,
             ],
@@ -336,7 +336,7 @@ return [
                 'title'         => 'ব্যবসার ধরণ',
                 'name'          => "business_type_list",
                 'hint'          => '',
-                'list_type'     => 'new_page_radio',
+                'list_type'     => 'dialog',
                 'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক',
                 'mandatory'     => false,
             ],
@@ -353,7 +353,7 @@ return [
             [
                 'field_type' => 'header',
                 'title'      => 'সাধারণ তথ্য',
-                'mandatory'  => false,
+                'mandatory'  => false
             ],
             [
                 'field_type'    => 'editText',
@@ -367,7 +367,7 @@ return [
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'nominee_birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -393,19 +393,22 @@ return [
                         'field_type' => 'radioButton',
                         'name'       => 'birth_certificate_number',
                         'title'      => 'জন্ম নিবন্ধন নাম্বার',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'passport_number',
                         'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'nid_number',
                         'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ]
                 ]
             ],
@@ -484,8 +487,8 @@ return [
                         'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
                     ],
                     [
-                        'field_type'    => 'dropdown',
-                        'title'         => 'দেশ *',
+                        'field_type'    => 'editText',
+                        'title'         => 'দেশ ',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'country_nominee_guardian_address',
                         'hint'          => '',

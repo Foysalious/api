@@ -22,13 +22,7 @@ class Institution extends BankFormCategory
     public function get() : CategoryGetter
     {
         $formItems = FormStatics::institution();
-        $data      = [];
-        $formData  = $this->bankAccountData->getByCode($this->code);
-        foreach ($formItems as $item) {
-            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
-        }
-        $this->setData($data);
-        return (new CategoryGetter())->setCategory($this);
+        return $this->getFormData($formItems);
     }
 
     public function post($data)
@@ -38,7 +32,7 @@ class Institution extends BankFormCategory
 
     public function getLastUpdated()
     {
-        // TODO: Implement getLastUpdated() method.
+        return $this->last_updated;
     }
 
     public function getDummy()

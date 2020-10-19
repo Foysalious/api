@@ -82,7 +82,9 @@ class FormItemBuilder
      */
     private function dropdown()
     {
-        return $this->initItem()->toArray();
+        $item = $this->initItem();
+        if (isset($this->item['list_type'])) $item->setListType($this->item['list_type']);
+        return $item->toArray();
     }
 
     /**
@@ -112,7 +114,8 @@ class FormItemBuilder
     private function radioButton()
     {
         $item = $this->initItem();
-        if ($item->getValue() !== 0 || $item->getValue() !== 1) $item->setValue(0);
+        if (isset($this->item['value'])) $item->setValue($this->item['value']);
+        if ($item->getValue() !== 0 && $item->getValue() !== 1) $item->setValue(0);
         return $item->toArray();
     }
 
