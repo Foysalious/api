@@ -50,6 +50,7 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $isHalfDay = 0;
     private $approverId;
     private $isLeaveAdjustment;
     private $isHalfDay;
