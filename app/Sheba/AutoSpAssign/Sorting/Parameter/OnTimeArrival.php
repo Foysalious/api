@@ -1,7 +1,7 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Parameter;
 
 
-class Ota extends Parameter
+class OnTimeArrival extends Parameter
 {
     protected function getWeight()
     {
