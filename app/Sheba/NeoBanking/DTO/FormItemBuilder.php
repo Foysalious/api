@@ -109,6 +109,17 @@ class FormItemBuilder
      * @return array
      * @throws ReflectionException
      */
+    private function radioButton()
+    {
+        $item = $this->initItem();
+        if ($item->getValue() !== 0 || $item->getValue() !== 1) $item->setValue(0);
+        return $item->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     public function multipleView()
     {
         $item  = $this->initItem(false);

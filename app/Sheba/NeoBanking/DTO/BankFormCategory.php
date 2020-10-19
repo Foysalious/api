@@ -106,6 +106,17 @@ abstract class BankFormCategory
         return $this->data;
     }
 
+    public function getFormData($formItems)
+    {
+        $data      = [];
+        $formData  = $this->bankAccountData->getByCode($this->code);
+        foreach ($formItems as $item) {
+            $data[] = (new FormItemBuilder())->setData($formData)->build($item);
+        }
+        $this->setData($data);
+        return (new CategoryGetter())->setCategory($this);
+    }
+
     /**
      * @param PartnerNeoBankingInfo $bankAccountData
      * @return BankFormCategory

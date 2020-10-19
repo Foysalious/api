@@ -348,6 +348,156 @@ return [
                 'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক',
                 'mandatory'     => false,
             ],
+        ],
+        'nominee'     => [
+            [
+                'field_type' => 'header',
+                'title'      => 'সাধারণ তথ্য',
+                'mandatory'  => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'নমিনির নাম *',
+                'hint'          => 'এখানে লিখুন',
+                'name'          => 'nominee_name',
+                'error_message' => 'নমিনির নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'date',
+                'title'         => 'জন্ম তারিখ *',
+                'name'          => 'nominee_birth_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'আবেদনকারীর সাথে সম্পর্ক *',
+                'name'          => 'nominee_relation',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'আবেদনকারীর সাথে সম্পর্ক পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
+                'name'          => 'identification_number',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => '',
+                'name'       => 'identification_number_type',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'birth_certificate_number',
+                        'title'      => 'জন্ম নিবন্ধন নাম্বার',
+                        'value'      => 1,
+                        'mandatory'  => false
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'passport_number',
+                        'title'      => 'পাসপোর্ট',
+                        'value'      => 0,
+                        'mandatory'  => false
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'nid_number',
+                        'title'      => 'পাসপোর্ট',
+                        'value'      => 0,
+                        'mandatory'  => false
+                    ]
+                ]
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'নমিনির স্থায়ী ঠিকানা ',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => '',
+                'name'       => 'nominee_permanent_address',
+                'views'      => addressViews('nominee'),
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'নমিনির অভিভাবকের তথ্য (নমিনির বয়স  যদি ১৮ বছরের নিচে হয়)',
+                'mandatory'  => false
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'অভিভাবক (নমিনি যদি ১৮ বছরের নিচে হয়) ',
+                'name'          => 'nominee_guardian',
+                'hint'          => 'এখানে লিখুন',
+                'mandatory'     => false
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'অভিভাবকের জাতীয় পরিচয়পত্রের নাম্বার ',
+                'name'          => 'nominee_guardian_nid',
+                'hint'          => 'এখানে লিখুন',
+                'mandatory'     => false
+            ],
+            [
+                'field_type' => 'header',
+                'title'      => 'নমিনির অভিভাবকের স্থায়ী ঠিকানা ',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => '',
+                'name'       => 'nominee_guardian_address',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type'    => 'editText',
+                        'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
+                        'name'          => 'street_village_nominee_guardian_address',
+                        'hint'          => '',
+                        'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক',
+                        'mandatory'     => false
+                    ],
+                    [
+                        'field_type'    => 'editText',
+                        'title'         => 'পোস্ট কোড *',
+                        'name'          => 'postcode_nominee_guardian_address',
+                        'hint'          => '',
+                        'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
+                        'mandatory'     => false
+                    ],
+                    [
+                        'field_type'    => 'dropdown',
+                        'title'         => 'জেলা *',
+                        'name'          => 'district_nominee_guardian_address',
+                        'hint'          => '',
+                        'list_type'     => 'new_page_radio',
+                        'error_message' => 'জেলার নাম পূরণ আবশ্যক'
+                    ],
+                    [
+                        'field_type'    => 'dropdown',
+                        'title'         => 'থানা / উপজেলা *',
+                        'list_type'     => 'new_page_radio',
+                        'name'          => 'sub_district_nominee_guardian_address',
+                        'hint'          => '',
+                        'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+                    ],
+                    [
+                        'field_type'    => 'dropdown',
+                        'title'         => 'দেশ *',
+                        'list_type'     => 'new_page_radio',
+                        'name'          => 'country_nominee_guardian_address',
+                        'hint'          => '',
+                        'error_message' => 'দেশের নাম পূরণ আবশ্যক',
+                        'mandatory'     => false
+                    ]
+                ]
+            ],
+
         ]
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
