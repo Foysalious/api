@@ -115,7 +115,7 @@ class AttendanceTransformer extends TransformerAbstract
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
             }
 
-            if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
+            if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day), $date)) {
                 $breakdown_data['is_absent'] = 1;
                 $statistics[Statuses::ABSENT]++;
             }
@@ -261,11 +261,13 @@ class AttendanceTransformer extends TransformerAbstract
     /**
      * @param Attendance $attendance | null
      * @param $is_weekend_or_holiday_or_leave
+     * @param $is_half_day_leave
      * @param Carbon $date
      * @return bool
      */
-    private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
+    private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, $is_half_day_leave, Carbon $date)
     {
+        if ($is_half_day_leave && !$attendance) return true;
         return !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
     }
 
