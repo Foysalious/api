@@ -72,11 +72,11 @@ return [
         ],
         'nominee'     => [
             'en' => 'Nominee',
-            'bn' => 'বনমিনি তথ্য '
+            'bn' => 'নমিনি তথ্য '
         ],
         'documents'   => [
             'en' => 'Documents',
-            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট আপলোড '
+            'bn' => 'প্রয়ােজনীয় ডকুমেন্ট'
         ],
         'account'     => [
             'en' => 'Account',
@@ -354,6 +354,7 @@ return [
                 'field_type' => 'header',
                 'title'      => 'সাধারণ তথ্য',
                 'mandatory'  => false,
+                'value'      => 'Hello World'
             ],
             [
                 'field_type'    => 'editText',
@@ -393,19 +394,22 @@ return [
                         'field_type' => 'radioButton',
                         'name'       => 'birth_certificate_number',
                         'title'      => 'জন্ম নিবন্ধন নাম্বার',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'passport_number',
                         'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ],
                     [
                         'field_type' => 'radioButton',
                         'name'       => 'nid_number',
                         'title'      => 'পাসপোর্ট',
-                        'mandatory'  => false
+                        'mandatory'  => false,
+                        'value'      => 0
                     ]
                 ]
             ],
