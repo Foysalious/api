@@ -8,6 +8,6 @@ use Throwable;
 
 class InvalidBankFormCategoryCode extends NeoBankingException
 {
-    public function __construct($message = "Invalid Bank Form Category Code", $code = 500, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
+    public function __construct($message = "Invalid Bank Form Category Code", $code = 400, Throwable $previous = null) { parent::__construct($message, $code, $previous); }
 
 }
