@@ -6,7 +6,7 @@ class Impression extends Parameter
 
     protected function getWeight()
     {
-        return 10;
+        return config('auto_sp.weights.impression');
     }
 
     protected function getValueForPartner()

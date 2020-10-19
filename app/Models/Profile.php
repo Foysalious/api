@@ -50,6 +50,7 @@ class Profile extends Model {
         'nominee_relation',
         'grantor_id',
         'grantor_relation',
+        'portal_name',
         'created_by',
         'nid_issue_date',
         'birth_place',

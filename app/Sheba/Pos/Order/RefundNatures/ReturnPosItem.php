@@ -61,9 +61,11 @@ abstract class ReturnPosItem extends RefundNature
 
     /**
      * GENERATE LOG DETAILS DATA
+     * @param null $order
      */
-    protected function generateDetails()
+    protected function generateDetails($order = null)
     {
+        if(isset($order) && !isset($this->oldOrder)) $this->oldOrder = $order;
         $changes = [];
         $this->services->each(function ($service) use (&$changes) {
             $changes[$service->id]['qty']        = [

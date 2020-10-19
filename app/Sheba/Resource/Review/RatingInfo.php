@@ -36,7 +36,9 @@ class RatingInfo
                 'badge' => $answer->first()->answer->badge,
                 'asset' => $answer->first()->answer->asset,
                 'count' => $answer->count(),
-            ]:[];
+            ]:null;
+        })->filter(function ($value) {
+            return !!($value);
         })->toArray();
         $compliment_counts = array_values($compliment_counts);
         $breakdown = $this->reviewRepository->getReviewBreakdown($reviews);
