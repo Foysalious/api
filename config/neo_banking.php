@@ -33,9 +33,8 @@ function addressViews($type)
             'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
         ],
         [
-            'field_type'    => 'dropdown',
+            'field_type'    => 'editText',
             'title'         => 'দেশ *',
-            'list_type'     => 'new_page_radio',
             'name'          => 'country_' . $type . '_address',
             'hint'          => '',
             'error_message' => 'দেশের নাম পূরণ আবশ্যক'
@@ -327,7 +326,7 @@ return [
                 'title'         => 'প্রতিষ্ঠানের ধরণ',
                 'name'          => "organization_type_list",
                 'hint'          => '',
-                'list_type'     => 'new_page_radio',
+                'list_type'     => 'dialog',
                 'error_message' => 'প্রতিষ্ঠানের ধরণ পূরণ আবশ্যক',
                 'mandatory'     => false,
             ],
@@ -336,7 +335,7 @@ return [
                 'title'         => 'ব্যবসার ধরণ',
                 'name'          => "business_type_list",
                 'hint'          => '',
-                'list_type'     => 'new_page_radio',
+                'list_type'     => 'dialog',
                 'error_message' => 'ব্যবসার ধরণ পূরণ আবশ্যক',
                 'mandatory'     => false,
             ],
@@ -487,8 +486,8 @@ return [
                         'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
                     ],
                     [
-                        'field_type'    => 'dropdown',
-                        'title'         => 'দেশ *',
+                        'field_type'    => 'editText',
+                        'title'         => 'দেশ ',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'country_nominee_guardian_address',
                         'hint'          => '',
