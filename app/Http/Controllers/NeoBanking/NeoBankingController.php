@@ -92,6 +92,7 @@ class NeoBankingController extends Controller
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -139,7 +140,7 @@ class NeoBankingController extends Controller
             $bank             = $request->bank_code;
             $data['id_front'] = $request->id_front;
             $data['id_back']  = $request->id_back;
-            $info             = (new NeoBanking())->setBank($bank)->getNidInfo($data)->toArray();
+            $info             = (new NeoBanking())->setBank($bank)->getNidInfo($data);
             return api_response($request, $info, 200, ['data' => $info['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
