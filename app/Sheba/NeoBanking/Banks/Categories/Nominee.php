@@ -1,7 +1,10 @@
 <?php namespace Sheba\NeoBanking\Banks\Categories;
 
 
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\DTO\FormItemBuilder;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Nominee extends BankFormCategory
 {
@@ -15,12 +18,13 @@ class Nominee extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
-        // TODO: Implement get() method.
+        $formItems = FormStatics::nominee();
+        return $this->getFormData($formItems);
     }
 
-    public function post()
+    public function post($data)
     {
         return $this->last_updated;
     }
