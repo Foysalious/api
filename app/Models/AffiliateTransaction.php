@@ -26,7 +26,8 @@ class AffiliateTransaction extends Model
             ['log', 'NOT LIKE', '%Manually Received%'],
             ['log', 'NOT LIKE', '%Credit Purchase%'],
             ['log', 'NOT LIKE', '%is refunded%'],
-            ['log', 'NOT LIKE', '%manually refunded in your account%']
+            ['log', 'NOT LIKE', '%manually refunded in your account%'],
+            ['log', 'NOT LIKE', '%Sheba facilitated amount%']
         ]);
     }
 
@@ -79,5 +80,10 @@ class AffiliateTransaction extends Model
     public function scopeManualDisbursement($query)
     {
         return $query->where('log', 'LIKE', "%received from manual disbursement%");
+    }
+
+    public function scopeShebaFacilitated($query)
+    {
+        return $query->where('log', 'LIKE', "%Sheba facilitated amount%");
     }
 }

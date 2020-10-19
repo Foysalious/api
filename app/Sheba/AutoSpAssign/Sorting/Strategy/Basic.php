@@ -5,72 +5,37 @@ use Sheba\AutoSpAssign\EligiblePartner;
 use Sheba\AutoSpAssign\Sorting\Parameter\AvgRating;
 use Sheba\AutoSpAssign\Sorting\Parameter\ComplainPercentage;
 use Sheba\AutoSpAssign\Sorting\Parameter\Impression;
-use Sheba\AutoSpAssign\Sorting\Parameter\Ita;
+use Sheba\AutoSpAssign\Sorting\Parameter\InTimeAcceptance;
 use Sheba\AutoSpAssign\Sorting\Parameter\MaxRevenue;
-use Sheba\AutoSpAssign\Sorting\Parameter\Ota;
+use Sheba\AutoSpAssign\Sorting\Parameter\OnTimeArrival;
 use Sheba\AutoSpAssign\Sorting\Parameter\PackageScore;
 use Sheba\AutoSpAssign\Sorting\Parameter\Parameter;
 use Sheba\AutoSpAssign\Sorting\Parameter\ResourceAppUsage;
 
-class Basic implements Strategy
+class Basic extends Strategy
 {
-
-    private $maxRevenue;
-    private $minRevenue;
-    private $minRating;
-    private $maxRating;
     private $maxImpression;
     private $minImpression;
 
     /**
-     * @return Parameter[]
+     * @param EligiblePartner[] $partners
      */
-    public function getNormalizedParameters()
+    protected function initiateMinMaxForNonNormalizedParams($partners)
     {
-        return [
-            new ComplainPercentage(),
-            new Ita(),
-            new Ota(),
-            new PackageScore(),
-            new ResourceAppUsage()
-        ];
+        parent::initiateMinMaxForNonNormalizedParams($partners);
+
+        $this->maxImpression = $this->minImpression = (double)$partners[0]->getImpressionCount();
     }
 
-
-    public function setMaxRevenue($maxRevenue)
+    /**
+     * @param EligiblePartner $partner
+     */
+    protected function updateMinMaxOfNonNormalizedParamsForAPartner(EligiblePartner $partner)
     {
-        $this->maxRevenue = $maxRevenue;
-        return $this;
-    }
+        parent::updateMinMaxOfNonNormalizedParamsForAPartner($partner);
 
-    public function setMinRevenue($minRevenue)
-    {
-        $this->minRevenue = $minRevenue;
-        return $this;
-    }
-
-    public function setMinRating($minRating)
-    {
-        $this->minRating = $minRating;
-        return $this;
-    }
-
-    public function setMaxRating($maxRating)
-    {
-        $this->maxRating = $maxRating;
-        return $this;
-    }
-
-    public function setMaxImpression($maxImpression)
-    {
-        $this->maxImpression = $maxImpression;
-        return $this;
-    }
-
-    public function setMinImpression($minImpression)
-    {
-        $this->minImpression = $minImpression;
-        return $this;
+        $this->maxImpression = (double)$partner->getImpressionCount() > $this->maxImpression ? $partner->getImpressionCount() : $this->maxImpression;
+        $this->minImpression = (double)$partner->getImpressionCount() < $this->minImpression ? $partner->getAvgRating() : $this->minImpression;
     }
 
     /**
@@ -79,53 +44,27 @@ class Basic implements Strategy
      */
     public function sort($partners)
     {
-        $max_rating = (double)$partners[0]->getAvgRating();
-        $min_rating = (double)$partners[0]->getAvgRating();
-        $max_revenue = (double)$partners[0]->getMaxRevenue();
-        $min_revenue = (double)$partners[0]->getMaxRevenue();
-        $max_impression = (double)$partners[0]->getImpressionCount();
-        $min_impression = (double)$partners[0]->getImpressionCount();
+        $this->setMinMaxForNonNormalizedParams($partners);
+
+        $new_sp = $old_sp = [];
         foreach ($partners as $partner) {
-            $max_revenue = (double)$partner->getMaxRevenue() > $max_revenue ? $partner->getMaxRevenue() : $max_revenue;
-            $max_rating = (double)$partner->getAvgRating() > $max_rating ? $partner->getAvgRating() : $max_rating;
-            $max_impression = (double)$partner->getImpressionCount() > $max_impression ? $partner->getImpressionCount() : $max_impression;
-            $min_revenue = (double)$partner->getMaxRevenue() < $min_revenue ? $partner->getMaxRevenue() : $min_revenue;
-            $min_rating = (double)$partner->getAvgRating() < $min_rating ? $partner->getAvgRating() : $min_rating;
-            $min_impression = (double)$partner->getImpressionCount() < $min_impression ? $partner->getAvgRating() : $min_impression;
-        }
-        $this->setMaxRevenue($max_revenue)->setMinRevenue($min_revenue)->setMaxRating($max_rating)->setMinRating($min_rating)
-            ->setMaxImpression($max_impression)->setMinImpression($min_impression);
-        $newSp = $oldSp = [];
-        foreach ($partners as $partner) {
-            $score = $this->getScore($partner) + $this->getScoreForNonNormalizedParams($partner);
+            $score = $this->calculateScoreWithImpression($partner, $this->getQualityScore($partner));
             $partner->setScore($score);
-            if ($partner->isNew()) array_push($newSp, $partner);
-            else array_push($oldSp, $partner);
+            if ($partner->isNew()) array_push($new_sp, $partner);
+            else array_push($old_sp, $partner);
         }
-        $newSp = collect($newSp)->sortByDesc('score')->toArray();
-        $oldSp = collect($oldSp)->sortByDesc('score')->toArray();
-        return array_merge($newSp, $oldSp);
+
+        $new_sp = collect($new_sp)->sortByDesc('score')->toArray();
+        $old_sp = collect($old_sp)->sortByDesc('score')->toArray();
+        return array_merge($new_sp, $old_sp);
     }
 
-    private function getScore(EligiblePartner $partner)
+    private function calculateScoreWithImpression(EligiblePartner $partner, $quality_score)
     {
-        $score = 0;
-        foreach ($this->getNormalizedParameters() as $param) {
-            $score += $param->setPartner($partner)->getScore();
-        }
-        return $score;
-    }
-
-    private function getScoreForNonNormalizedParams(EligiblePartner $partner)
-    {
-        $score = 0;
-        $param = new MaxRevenue();
-        $rating_param = new AvgRating();
         $impression = new Impression();
-        $score += $param->setMaxValue($this->maxRevenue)->setMinValue($this->minRevenue)->setPartner($partner)->getScore();
-        $score += $rating_param->setMaxValue($this->maxRating)->setMinValue($this->minRating)->setPartner($partner)->getScore();
-        $score += $impression->setMaxValue($this->maxImpression)->setMinValue($this->minImpression)->setPartner($partner)->getScore();
-        return $score;
+        $impression_weighted_score = $impression->setMaxValue($this->maxImpression)->setMinValue($this->minImpression)
+            ->setPartner($partner)->getScore();
+        $impression_weight = $impression->getWeightInScaleOf1();
+        return $quality_score * (1 - $impression_weight) + $impression_weighted_score;
     }
-
 }

@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog\StatusCalculator;
 
+use App\Models\Business;
 use Sheba\Dal\Attendance\Model as Attendance;
 
 abstract class StatusCalculator
@@ -7,7 +8,15 @@ abstract class StatusCalculator
     /** @var Attendance $attendance */
     protected $attendance;
     protected $action;
+    protected $business;
+    protected $whichHalfDay;
 
+
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
+    }
     /**
      * @param Attendance $attendance
      * @return $this
@@ -21,6 +30,11 @@ abstract class StatusCalculator
     public function setAction($action)
     {
         $this->action = $action;
+        return $this;
+    }
+    public function setWhichHalfDay($which_half)
+    {
+        $this->whichHalfDay = $which_half;
         return $this;
     }
 

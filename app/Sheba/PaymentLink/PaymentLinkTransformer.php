@@ -3,11 +3,13 @@
 use App\Models\Partner;
 use App\Models\PosCustomer;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
+use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
 
 class PaymentLinkTransformer
 {
     private $response;
+    private $target;
 
     public function getResponse()
     {
@@ -94,6 +96,7 @@ class PaymentLinkTransformer
     public function getPayer()
     {
         $order = $this->getTarget();
+        if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
     }
 
@@ -103,8 +106,9 @@ class PaymentLinkTransformer
     public function getTarget()
     {
         if ($this->response->targetType) {
-            $model_name = $this->resolveTargetClass();
-            return $model_name::find($this->response->targetId);
+            $model_name   = $this->resolveTargetClass();
+            $this->target = $model_name::find($this->response->targetId);
+            return $this->target;
         } else
             return null;
     }
@@ -114,6 +118,8 @@ class PaymentLinkTransformer
         $model_name = "App\\Models\\";
         if ($this->response->targetType == 'pos_order')
             return $model_name . 'PosOrder';
+        if ($this->response->targetType == 'external_payment')
+            return "Sheba\\Dal\\ExternalPayment\\Model";
     }
 
     private function getPaymentLinkPayer()
@@ -133,5 +139,45 @@ class PaymentLinkTransformer
         if ($receiver instanceof Partner) return false;
         /** @var Partner $receiver */
         return $receiver->isMissionSaveBangladesh();
+    }
+
+    public function isExternalPayment()
+    {
+        return !!($this->target instanceof ExternalPayment);
+    }
+
+    public function getSuccessUrl()
+    {
+        return $this->target->success_url.'?transaction_id='.$this->target->transaction_id;
+    }
+
+    public function getFailUrl()
+    {
+        return $this->target->fail_url.'?transaction_id='.$this->target->transaction_id;
+    }
+
+    public function toArray()
+    {
+        $user       = $this->getPaymentReceiver();
+        $payer      = $this->getPayer();
+        $isExternal = $this->isExternalPayment();
+        return [
+                   'id'                  => $this->getLinkID(),
+                   'identifier'          => $this->getLinkIdentifier(),
+                   'purpose'             => $this->getReason(),
+                   'amount'              => $this->getAmount(),
+                   'emi_month'           => $this->getEmiMonth(),
+                   'payment_receiver'    => [
+                       'name'  => $user->name,
+                       'image' => $user->logo,
+                       'id'    => $user->id,
+                   ],
+                   'payer'               => $payer ? [
+                       'name'   => $payer->name,
+                       'mobile' => $payer->mobile
+                   ] : null,
+                   'is_external_payment' => $isExternal,
+               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+
     }
 }

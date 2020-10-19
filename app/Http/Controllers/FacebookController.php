@@ -82,7 +82,8 @@ class FacebookController extends Controller
                     if (!$profile) {
                         $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
                         if (!$profile) {
-                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
+                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile, $request) {
+                                if($request->hasHeader('portal-name')) array_add($fb_profile_info, 'portal_name', $request->header('portal-name'));
                                 $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1]));
                                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
                                 $profile->update();
@@ -172,6 +173,7 @@ class FacebookController extends Controller
         if ($profile && $profile->isBlackListed()) return api_response($request, null, 403, ['message' => "Your account is blocked."]);
         $from = $this->profileRepository->getAvatar($request->from);
         if ($profile == false) {
+            if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
             array_add($request, 'mobile', $code_data['mobile']);
             $profile = $this->profileRepository->registerMobile($request->all());
             $this->profileRepository->registerAvatarByKit($from, $profile);
@@ -202,6 +204,7 @@ class FacebookController extends Controller
                 if ($profile == false) {
                     $email_profile = $this->profileRepository->ifExist($request->fb_email, 'email');
                     if ($email_profile == false) {
+                        if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
                         $profile = $this->profileRepository->registerFacebook($request->all());
                         $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_image_url, 'images/profiles/');
                         $profile->update();

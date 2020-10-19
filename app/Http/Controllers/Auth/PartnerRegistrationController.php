@@ -89,7 +89,7 @@ class PartnerRegistrationController extends Controller
      */
     public function register(Request $request)
     {
-        ini_set('max_execution_time', 120);
+        ini_set('max_execution_time', 220);
         try {
             $this->validate($request, [
                 'code'         => "required|string",
@@ -182,6 +182,8 @@ class PartnerRegistrationController extends Controller
         }
         if ($request->has('refer_code'))
             $data['refer_code'] = $request->refer_code;
+        if ($request->has('business_type'))
+            $data['business_type'] = $request->business_type;
         return $data;
     }
 
@@ -228,10 +230,9 @@ class PartnerRegistrationController extends Controller
 
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
         $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
-        $counter = 0;
-        while (in_array($name, array_merge($blacklist, $already_used))) {
-            $name = $base_name . $counter;
-            $counter++;
+        if (in_array($name, array_merge($blacklist, $already_used))) {
+//            $name = $base_name . uniqid();
+            $name=$base_name.(count($already_used)+1);
         }
 
         return $name;
@@ -322,7 +323,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
-        ini_set('max_execution_time',120);
+        ini_set('max_execution_time',220);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
@@ -330,7 +331,8 @@ class PartnerRegistrationController extends Controller
                 'geo' => 'string',
                 'name' => 'string',
                 'number' => 'string',
-                'address' => 'string'
+                'address' => 'string',
+                'business_type' => 'string'
             ]);
             $profile = $request->profile;
             if (!$profile->resource)
@@ -368,7 +370,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByResource(Request $request)
     {
-        ini_set('max_execution_time',120);
+        ini_set('max_execution_time',220);
         try {
             $this->validate($request, [
                 'resource_id'    => 'required|int',
@@ -416,7 +418,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerReferAffiliate($affiliate, Request $request)
     {
-        ini_set('max_execution_time',120);
+        ini_set('max_execution_time',220);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
