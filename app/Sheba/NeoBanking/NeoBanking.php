@@ -148,17 +148,20 @@ class NeoBanking
 
     public function getNidInfo($data)
     {
-        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getNidInfo($data);
     }
 
     public function getSDKLivelinessToken()
     {
-        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getSDKLivelinessToken();
     }
 
-
+    public function getGigatechKycStatus($data) {
+        $bank = (new BankFactory())->setBank($this->bank)->get();
+        return $bank->getGigatechKycStatus($data);
+    }
 
     /**
      * @param $category_code

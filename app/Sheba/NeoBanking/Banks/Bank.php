@@ -101,6 +101,8 @@ abstract class Bank
 
     abstract public function getSDKLivelinessToken();
 
+    abstract public function getGigatechKycStatus($data);
+
         /**
      * @return Partner
      */

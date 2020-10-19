@@ -76,4 +76,9 @@ class PrimeBank extends Bank
         return (new PrimeBankClient())->get('api/v1/liveliness-auth-token');
     }
 
+    public function getGigatechKycStatus($data)
+    {
+        return (new PrimeBankClient())->post('api/v1/kyc-status', $data);
+    }
+
 }
