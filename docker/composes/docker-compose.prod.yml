@@ -5,8 +5,8 @@ services:
       SERVICE_NAME: app
     volumes:
       - ../nginx/conf.d/nginx-prod.conf:/etc/nginx/sites-enabled/default
-    ports: 
-      - "80:80"
+    ports:
+      - ${PORT}:80
 
 networks:
   api-service-network:
