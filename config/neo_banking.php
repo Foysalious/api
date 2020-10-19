@@ -6,21 +6,21 @@ function addressViews($type)
             'field_type'    => 'editText',
             'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
             'name'          => 'street_village_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
             'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'editText',
             'title'         => 'পোস্ট কোড *',
             'name'          => 'postcode_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'পোস্ট কোড',
             'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'dropdown',
             'title'         => 'জেলা *',
             'name'          => 'district_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'জেলা',
             'list_type'     => 'new_page_radio',
             'error_message' => 'জেলার নাম পূরণ আবশ্যক'
         ],
@@ -29,14 +29,14 @@ function addressViews($type)
             'title'         => 'থানা / উপজেলা *',
             'list_type'     => 'new_page_radio',
             'name'          => 'sub_district_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'থানা / উপজেলা',
             'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
         ],
         [
             'field_type'    => 'editText',
             'title'         => 'দেশ *',
             'name'          => 'country_' . $type . '_address',
-            'hint'          => '',
+            'hint'          => 'দেশ',
             'error_message' => 'দেশের নাম পূরণ আবশ্যক'
         ]
     ];
@@ -120,11 +120,12 @@ return [
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
             ],
             [
-                'field_type' => 'editText',
-                'title'      => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
-                'name'       => 'husband_or_wife_name',
-                'hint'       => 'BUILLA AZAD',
-                'mandatory'  => false,
+                'field_type'    => 'editText',
+                'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
+                'name'          => 'husband_or_wife_name',
+                'hint'          => 'BUILLA AZAD',
+                'mandatory'     => false,
+                'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',

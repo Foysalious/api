@@ -82,7 +82,9 @@ class FormItemBuilder
      */
     private function dropdown()
     {
-        return $this->initItem()->toArray();
+        $item = $this->initItem();
+        if (isset($this->item['list_type'])) $item->setListType($this->item['list_type']);
+        return $item->toArray();
     }
 
     /**
