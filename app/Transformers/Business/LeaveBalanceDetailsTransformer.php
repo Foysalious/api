@@ -108,7 +108,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                 'id' => $leave->id,
                 'date' => $leave->created_at->format('d/m/Y'),
                 'leave_type' => $leave->leaveType->title,
-                'leave_days' => (int)$leave->total_days,
+                'leave_days' => (double)$leave->total_days,
                 'status' => LeaveStatusPresenter::statuses()[$leave->status],
                 'approval_request_status' => $get_current_login_user_leave_request ?
                     ApprovalRequestPresenter::statuses()[$get_current_login_user_leave_request->status] : 'N/A',
