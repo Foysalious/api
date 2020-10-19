@@ -15,4 +15,9 @@ class FormStatics
     {
         return config('neo_banking.category_form_items.institution');
     }
+
+    public static function nominee()
+    {
+        return config('neo_banking.category_form_items.nominee');
+    }
 }

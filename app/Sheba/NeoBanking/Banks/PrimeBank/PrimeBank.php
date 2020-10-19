@@ -66,10 +66,9 @@ class PrimeBank extends Bank
         return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
     }
 
-    public function getNidInfo($data): NidInformation
+    public function getNidInfo($data)
     {
-        $ocr_data = (new PrimeBankClient())->post('api/v1/nid-verification',$data);
-        return (new NidInformation())->setNidInfo($ocr_data);
+        return (new PrimeBankClient())->post('api/v1/nid-verification',$data);
     }
 
     public function getSDKLivelinessToken()

@@ -97,7 +97,7 @@ abstract class Bank
         return $category->post($data);
     }
 
-    abstract public function getNidInfo($data): NidInformation;
+    abstract public function getNidInfo($data);
 
     abstract public function getSDKLivelinessToken();
 
