@@ -3,9 +3,9 @@
 use Sheba\AutoSpAssign\EligiblePartner;
 use Sheba\AutoSpAssign\Sorting\Parameter\AvgRating;
 use Sheba\AutoSpAssign\Sorting\Parameter\ComplainPercentage;
-use Sheba\AutoSpAssign\Sorting\Parameter\Ita;
+use Sheba\AutoSpAssign\Sorting\Parameter\InTimeAcceptance;
 use Sheba\AutoSpAssign\Sorting\Parameter\MaxRevenue;
-use Sheba\AutoSpAssign\Sorting\Parameter\Ota;
+use Sheba\AutoSpAssign\Sorting\Parameter\OnTimeArrival;
 use Sheba\AutoSpAssign\Sorting\Parameter\PackageScore;
 use Sheba\AutoSpAssign\Sorting\Parameter\Parameter;
 use Sheba\AutoSpAssign\Sorting\Parameter\ResourceAppUsage;
@@ -54,8 +54,8 @@ abstract class Strategy
     {
         return [
             new ComplainPercentage(),
-            new Ita(),
-            new Ota(),
+            new InTimeAcceptance(),
+            new OnTimeArrival(),
             new PackageScore(),
             new ResourceAppUsage()
         ];
