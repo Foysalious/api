@@ -72,4 +72,9 @@ class PrimeBank extends Bank
         return (new NidInformation())->setNidInfo($ocr_data);
     }
 
+    public function getSDKLivelinessToken()
+    {
+        return (new PrimeBankClient())->get('api/v1/liveliness-auth-token');
+    }
+
 }

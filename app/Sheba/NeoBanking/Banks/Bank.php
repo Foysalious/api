@@ -99,7 +99,9 @@ abstract class Bank
 
     abstract public function getNidInfo($data): NidInformation;
 
-    /**
+    abstract public function getSDKLivelinessToken();
+
+        /**
      * @return Partner
      */
     public function getPartner()

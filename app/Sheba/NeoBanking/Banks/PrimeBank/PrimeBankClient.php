@@ -32,15 +32,17 @@ class PrimeBankClient
 
     private function call($method, $uri, $data = null)
     {
+        $options = $data ? $this->getOptions($data) : [];
+
         try {
-            $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data));
+            $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
             $res = json_decode($res->getBody()->getContents(), true);
             if ($res['code'] != 200) throw new Exception($res['message'],$res['code']);
 
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
-            dd($e);
+            dd($e->getMessage());
         }
     }
 
