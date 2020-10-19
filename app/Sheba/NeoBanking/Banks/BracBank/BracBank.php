@@ -5,6 +5,7 @@ namespace Sheba\NeoBanking\Banks;
 
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
+use App\Sheba\NeoBanking\Banks\NidInformation;
 use ReflectionClass;
 use ReflectionException;
 use Sheba\NeoBanking\DTO\BankFormCategory;
@@ -18,7 +19,7 @@ class BracBank  extends Bank
 
     public function categories():BankFormCategoryList
     {
-        // TODO: Implement categories() method.
+        return new BankFormCategoryList();
     }
 
     public function accountInfo(): BankAccountInfo
@@ -33,16 +34,26 @@ class BracBank  extends Bank
 
     public function homeInfo(): array
     {
-        // TODO: Implement homeInfo() method.
+        return [];
     }
 
     public function completion(): BankCompletion
     {
-        // TODO: Implement completion() method.
+        return new BankCompletion();
     }
 
     public function accountDetailInfo(): BankAccountInfoWithTransaction
     {
-        // TODO: Implement accountDetailInfo() method.
+        return new BankAccountInfoWithTransaction();
+    }
+
+    public function getNidInfo($data): NidInformation
+    {
+        return new NidInformation();
+    }
+
+    public function getSDKLivelinessToken()
+    {
+        return null;
     }
 }
