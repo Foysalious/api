@@ -104,7 +104,7 @@ return [
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
                 'field_type'    => 'editText',
@@ -353,8 +353,7 @@ return [
             [
                 'field_type' => 'header',
                 'title'      => 'সাধারণ তথ্য',
-                'mandatory'  => false,
-                'value'      => 'Hello World'
+                'mandatory'  => false
             ],
             [
                 'field_type'    => 'editText',
@@ -368,7 +367,7 @@ return [
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'nominee_birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ  পূরণ আবশ্যক',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
