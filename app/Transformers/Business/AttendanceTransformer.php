@@ -267,7 +267,7 @@ class AttendanceTransformer extends TransformerAbstract
      */
     private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, $is_half_day_leave, Carbon $date)
     {
-        if ($is_half_day_leave && !$attendance) return true;
+        #if ($is_half_day_leave && !$attendance) return true;
         return !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
     }
 
