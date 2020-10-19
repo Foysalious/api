@@ -53,14 +53,25 @@ class PrimeBankClient
 
     private function getOptions($data = null)
     {
-        $request = request();
-        /** @var UploadedFile $file */
-        $id_front = $request->file('id_front');
-        $id_back = $request->file('id_back');
-        $options['multipart'] = [
-            ['name' => 'id_front', 'contents' => File::get($id_front->getRealPath()), 'filename' => $id_front->getClientOriginalName()],
-            ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()]
-        ];
+        $options =[];
+
+        if($data){
+            $request = request();
+            /** @var UploadedFile $id_front */
+            /** @var UploadedFile $id_back */
+            $id_front = $request->file('id_front');
+            $id_back = $request->file('id_back');
+
+            if($id_front && $id_back) {
+                $options['multipart'] = [
+                    ['name' => 'id_front', 'contents' => File::get($id_front->getRealPath()), 'filename' => $id_front->getClientOriginalName()],
+                    ['name' => 'id_back', 'contents' => File::get($id_back->getRealPath()), 'filename' => $id_back->getClientOriginalName()]
+                ];
+            } else {
+                $options['form_params'] = $data;
+                $options['json']        = $data;
+            }
+        }
         return $options;
     }
 
