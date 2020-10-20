@@ -13,6 +13,7 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -979,6 +980,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function isMissionSaveBangladesh()
     {
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
+    }
+
+    public function posCategories()
+    {
+        return $this->hasMany(PartnerPosCategory::class);
     }
 
 }
