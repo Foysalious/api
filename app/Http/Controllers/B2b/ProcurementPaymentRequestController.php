@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\SendTenderBillInvoiceEmailToBusiness;
 use App\Models\Bid;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Mail;
 use Sheba\Business\Procurement\BillInvoiceDataGenerator;
 use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
@@ -104,6 +106,16 @@ class ProcurementPaymentRequestController extends Controller
             ->setBid($bid)
             ->get();
         #return view('pdfs.procurement_invoice', compact('procurement_info'));
-        return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
+
+        App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save(public_path('assets/').'invoice.pdf');
+
+        $this->dispatch(new SendTenderBillInvoiceEmailToBusiness(public_path('assets/').'invoice.pdf'));
+
+        #return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
+
+    }
+    public function testEmail()
+    {
+        #$this->dispatch(new SendTenderBillInvoiceEmailToBusiness());
     }
 }
