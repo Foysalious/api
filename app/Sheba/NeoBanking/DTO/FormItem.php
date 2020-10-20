@@ -14,7 +14,7 @@ class FormItem implements Arrayable
     protected $title         = '';
     protected $input_type;
     protected $name          = '';
-    protected $value;
+    protected $value         = '';
     protected $hint          = '';
     protected $error_message = '';
     protected $mandatory     = true;
