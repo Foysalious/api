@@ -4,6 +4,7 @@ use App\Models\Bid;
 use App\Models\Business;
 use App\Models\Procurement;
 use Carbon\Carbon;
+use NumberFormatter;
 use Sheba\Business\ProcurementPaymentRequest\Status;
 use Sheba\Dal\ProcurementPaymentRequest\Model as ProcurementPaymentRequest;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
@@ -100,6 +101,7 @@ class BillInvoiceDataGenerator
         ];
         if ($data['type'] == self::INVOICE) $data += [
             'code' => $this->procurement->invoiceCode(),
+            'paid' => (double)$this->procurement->paid,
             'amount_to_be_paid' => (double)$this->paymentRequest->amount,
             'due_after_amount_to_be_paid' => (double)$this->procurement->totalPrice - ($this->procurement->paid + $this->paymentRequest->amount)
         ];
@@ -110,6 +112,10 @@ class BillInvoiceDataGenerator
             'payment_date' => $this->paymentRequest->statusChangeLogs()->orderBy('id', 'desc')->first()->created_at->format('d M, Y'),
             'payment_method' => 'Cash On Delivery'
         ];
+
+        $data['total_amount_in_word'] = 'one thousand tk only';
+        //dd($this->bid->terms);
+        $data['terms_and_conditions'] = $this->bid->terms;
 
         return $data;
     }

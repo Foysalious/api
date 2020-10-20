@@ -1,7 +1,7 @@
 <?php
 $formatted_type = ucwords($procurement_info['type'])
 ?>
-        <!DOCTYPE html>
+<!DOCTYPE html>
 
 <html lang="en">
 <head>
@@ -10,7 +10,7 @@ $formatted_type = ucwords($procurement_info['type'])
     <meta name="description" content="">
     <meta name="author" content="Fazal Mahmud Niloy">
     <style>
-        @media print {
+        @media  print {
             table {
                 page-break-after: auto;
                 page-break-inside: auto;
@@ -35,15 +35,10 @@ $formatted_type = ucwords($procurement_info['type'])
             border: solid 1px #d1d7e6;
         }
 
-        .companyInfo {
-            width: 100%;
-            border: 0;
-        }
-
         .addresses {
             width: 100%;
             border: 0;
-            margin: 10px 0 0 12px;
+            margin-left: 12px;
         }
 
         .addressRow {
@@ -59,11 +54,23 @@ $formatted_type = ucwords($procurement_info['type'])
         }
 
         .itemsSpec {
-            font-weight: bold;
+            background: #f8f8fb;
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 12px;
-            background: #f8f8fb;
+            font-weight: bold;
+        }
+
+        .billHeader {
+            background-color: #f8f8fb;
+        }
+
+        .billHeader td {
+            border: solid 1px #d2d8e6;
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .itemsSpecLabel {
@@ -89,6 +96,7 @@ $formatted_type = ucwords($procurement_info['type'])
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 10px;
+
         }
 
         .total {
@@ -96,11 +104,9 @@ $formatted_type = ucwords($procurement_info['type'])
             opacity: 0.8;
             font-family: Helvetica;
             font-size: 12px;
-            color: #333333;
         }
 
         /*invoice page end*/
-
         @font-face {
             font-family: Lato;
         }
@@ -116,7 +122,45 @@ $formatted_type = ucwords($procurement_info['type'])
             border-collapse: collapse;
         }
 
-        @page {
+        .table1th {
+            /*font-family: Lato;*/
+            font-weight: normal;
+            opacity: 0.8;
+            font-size: 10px;
+            text-align: left;
+        }
+
+        .tableHeadRegular {
+            opacity: 0.8;
+            font-family: Lato;
+            font-size: 10px;
+            font-weight: bold;
+            padding: 9px 20px;
+            text-align: left;
+            background-color: #fff8f8fb;
+        }
+
+        .tQuestion {
+            font-size: 10px;
+            font-weight: bold;
+            font-family: Lato;
+            opacity: 0.8;
+        }
+
+        .tAnswer {
+            font-size: 10px;
+            opacity: 0.6;
+            font-weight: normal;
+            font-family: Lato;
+            padding-top: 5px;
+        }
+
+        .pageCounter:after {
+            content: counter(page);
+        }
+
+
+        @page  {
             margin-top: 20px;
         }
 
@@ -133,7 +177,7 @@ $formatted_type = ucwords($procurement_info['type'])
         .footer {
             width: 100%;
             font-family: Lato;
-            position: fixed;
+            /*position: fixed;*/
             left: 0;
             bottom: 20px;
             border: none;
@@ -161,11 +205,30 @@ $formatted_type = ucwords($procurement_info['type'])
             height: 20px;
         }
 
+        /*new styles end*/
         .logo {
             width: 40px;
             height: 40px;
             border-radius: 5px;
             border: solid 1px rgba(0, 0, 0, 0.05);
+        }
+
+        .companyInfo {
+            width: 100%;
+            border: 0;
+        }
+
+        .addressesInfo {
+            width: 100%;
+            margin-top: 50px;
+            border: solid 1px #d2d8e6;
+            background-color: #f8f8fb;
+        }
+
+        .addressRowDetail {
+            opacity: 0.8;
+            font-family: Helvetica;
+            font-size: 10px;
         }
 
         .companyInfoName {
@@ -184,62 +247,102 @@ $formatted_type = ucwords($procurement_info['type'])
         .companyInfoWorkOrderTitle {
             opacity: 0.6;
             font-family: Lato;
-            font-size: 14px;
+            font-size: 16px;
         }
 
         .companyInfoWorkOrderCode {
             opacity: 0.8;
             font-family: Lato;
-            font-size: 14px;
+            font-size: 16px;
             font-weight: bold;
         }
-
-        .companyInfoBillInfo {
-            font-family: Helvetica;
-            font-size: 12px;
-            color: #646465;
-        }
-
-        .companyInfoBillInfoDetails {
-            font-family: Helvetica;
-            font-size: 12px;
-            color: #000000;
-        }
-
-        .addressesInfo {
+        .rules {
+            border: 0;
             width: 100%;
-            margin-top: 60px;
-            border: solid 1px #d2d8e6;
-            background-color: #f8f8fb;
         }
-
-        .addressRowDetail {
-            opacity: 0.8;
-            font-family: Helvetica;
-            font-size: 10px;
+        .mode-list {
+            border: 0;
+            margin-left: 30px;
         }
-
-        .billHeader {
-            background-color: #f8f8fb;
+        .myheader{
+            border: 0;
+            width: 100%;
+            position: fixed;
+            top: 0;
+            margin-bottom: 30px;
         }
-
-        .billHeader td {
-            border: solid 1px #d2d8e6;
-            opacity: 0.8;
-            font-family: Helvetica;
-            font-size: 12px;
+        .mode-list tr td{
+            padding:3px;
+        }
+        .myfooter {
+            width: 100%;
+            border: 0;
+            background: #212182;
+            min-height: 150px;
+            position:fixed;
+            bottom: 7em;
+        }
+        .vertical-line{
+            width:0px;
+            z-index:10011;
+            border-right: thin solid red;
+            position: absolute;
+            height: 100%;
+            left: 20px;
+        }
+        .getintouch {
+            border: 0;
+        }
+        .getintouch .touch-title, .touch-contact{
+            color: #fff;
+            font-size: 16px;
             font-weight: bold;
         }
-
-        .totalDetail {
-            padding-top: 4px;
-            padding-bottom: 4px;
+        .footerlogo {
+            width: 25%;
+        }
+        tr td address {
+            padding-left: 10px;
+            color: #fff;
+            font-size: 12px;
+        }
+        .social {
+            border: 0;
+            color: #fff;
+            font-size: 12px;
+        }
+        .social h4 {
+            font-size: 16px;
+            margin-bottom: 0;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        tr.social-link td {
+            height: 20px;
+        }
+        tr.social-link span {
+            font-size: 10px;
+            border: 1px solid #fff;
+            border-radius: 50%;
+            padding: 3px;
+        }
+        .myheader h5 {
+            font-family: Roboto Condensed;
+            font-size: 25px;
+            margin: 0;
+            color: #1a214e;
+            margin-left: 100px;
+        }
+        a{
+            text-decoration: none;
+            color:#fff
         }
     </style>
     <meta name="keyword" content="">
 </head>
 <body style="margin-top: 55px; margin-bottom: 22px; font-family: Lato;">
 
+<?php /*
 {{--FOOTER START--}}
 <table class="footer">
     <tr>
@@ -255,6 +358,21 @@ $formatted_type = ucwords($procurement_info['type'])
     </tr>
 </table>
 {{--FOOTER END--}}
+*/?>
+
+<table class="myheader" width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
+    <tr style="border-collapse:collapse">
+        <td valign="top" align="center" style="padding:0;Margin:0;width:600px">
+            <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px; border:0; margin-bottom: 40px;">
+                <tr style="border-collapse:collapse">
+                    <td align="left" style="padding:0;Margin:0;font-size:0;border-right: 2px solid #1a214e;"><a href="#" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:Arial, sans-serif;font-size:14px;text-decoration:underline;color:#333333"><img src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt="Camellia logo" title="sBusiness" width="300" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
+                    <td><h5>Your Business<br>Assistant</h5></td>
+                </tr>
+            </table></td>
+    </tr>
+</table></td>
+</tr>
+</table>
 
 <table class="documentTitle">
     <tr>
@@ -393,6 +511,14 @@ $formatted_type = ucwords($procurement_info['type'])
     @if ($procurement_info['type'] == 'invoice')
         <tr class="total">
             <td colspan="4"></td>
+            <td class="padding-left totalDetail">Paid</td>
+            <td class="padding-left totalDetail">
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
+                {{ $procurement_info['paid'] }}
+            </td>
+        </tr>
+        <tr class="total">
+            <td colspan="4"></td>
             <td class="padding-left totalDetail">Amount to be paid</td>
             <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
@@ -402,7 +528,7 @@ $formatted_type = ucwords($procurement_info['type'])
 
         <tr class="total">
             <td colspan="4"></td>
-            <td class="padding-left totalDetail">due</td>
+            <td class="padding-left totalDetail">Due</td>
             <td class="padding-left totalDetail">
                 <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
                 {{ $procurement_info['due_after_amount_to_be_paid'] }}
@@ -442,6 +568,68 @@ $formatted_type = ucwords($procurement_info['type'])
         <td class="padding-left totalDetail">
             <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
             {{ $procurement_info['grand_total'] }}
+        </td>
+    </tr>
+</table>
+
+<table class="rules" cellpadding="10">
+    <tr class="amount">
+        <td colspan="2" align="">In Word: {{ $procurement_info['total_amount_in_word'] }}</td>
+    </tr>
+    <tr class="paymentmode-title">
+        <td colspan="2" align="">Terms & Conditions:</td>
+    </tr>
+    <tr>
+        <td colspan="2">
+            {!! $procurement_info['terms_and_conditions'] !!}
+        </td>
+    </tr>
+</table>
+
+<table class="myfooter">
+    <tr>
+        <td class="footerlogo" align="center"><img src="http://aarplanet.com/sbusiness_Logo.png" width="100"></td>
+        <td style="width: 40%;padding-left: 0px;padding-right: 0px;">
+            <table class="getintouch">
+                <tr class="touch-title">
+                    <td>Get in Touch</td>
+                </tr>
+                <tr class="touch-title">
+                    <td colspan="2"><hr></td>
+                </tr>
+                <tr >
+                    <td  class="touch-contact">16516<br>b2b@sheba.xyz</td>
+                    <td>
+                        <address>
+                            House #63 (1st floor)<br>
+                            Road #04, Block-C<br>
+                            Banani, Dhaka 1213<br>
+                        </address>
+                    </td>
+                </tr>
+            </table>
+        </td>
+        <td style="">
+            <table class="social">
+                <tr>
+                    <td><h4>Follow Us on Social Platform</h4></td>
+                </tr>
+                <tr>
+                    <td><hr></td>
+                </tr>
+                <tr class="social-link">
+                    <td><a href="bit.ly/sBusinessFB"><img src="http://aarplanet.com/facebook.png" style="width: 16px;vertical-align: top;border: 1px solid #fff;border-radius: 50%;">&nbsp;bit.ly/sBusinessFB</a></td>
+                </tr>
+                <tr class="social-link">
+                    <td><a href="bit.ly/sBusinessLinkedIn"><img src="http://aarplanet.com/linkedin.png" style="width: 16px;vertical-align: top;border: 1px solid #fff;border-radius: 50%;">&nbsp;bit.ly/sBusinessLinkedIn</a></td>
+                </tr>
+                <tr class="social-link">
+                    <td><a href="bit.ly/sBusinessInsta"><img src="http://aarplanet.com/instagram.png" style="width: 16px;vertical-align: top;border: 1px solid #fff;border-radius: 50%;">&nbsp;bit.ly/sBusinessInsta</a></td>
+                </tr>
+                <tr class="social-link">
+                    <td><a href="bit.ly/sBusinessYouTube"><img src="http://aarplanet.com/youtube.png" style="width: 16px;vertical-align: top;border: 1px solid #fff;border-radius: 50%;">&nbsp;bit.ly/sBusinessYouTube</a></td>
+                </tr>
+            </table>
         </td>
     </tr>
 </table>
