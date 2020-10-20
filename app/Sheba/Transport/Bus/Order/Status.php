@@ -8,4 +8,5 @@ class Status
 
     const CONFIRMED = "confirmed";
     const INITIATED = "initiated";
+    const FAILED = "failed";
 }

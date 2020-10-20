@@ -60,6 +60,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'pos'], function ($api) {
+                $api->get('/master-categories', 'Pos\CategoryController@getMasterCategories');
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
                     $api->get('/master', 'Pos\CategoryController@getMasterCategoriesWithSubCategory');

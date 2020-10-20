@@ -5,6 +5,7 @@ use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -78,6 +79,7 @@ class TopUp
         }
 
         $response = $this->response->getSuccess();
+        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->getMessage())));
         try {
             DB::transaction(function () use ($response, $topup_order) {
                 $this->setModifier($this->agent);

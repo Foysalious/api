@@ -121,7 +121,9 @@ class ServiceController extends Controller
             $this->validate($request, [
                 'name'        => 'required',
                 'category_id' => 'required|in:' . implode(',', $secondaries_categories),
-                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
+                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
+                'end_date' => 'required_with:discount_amount|date'
+
 
             ]);
             $this->setModifier($request->manager_resource);
@@ -157,6 +159,7 @@ class ServiceController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

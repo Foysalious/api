@@ -367,6 +367,13 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param GeoCode $geo_code
+     * @param Address $address
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
     public function placeOrder(Request $request, GeoCode $geo_code, Address $address)
     {
         try {

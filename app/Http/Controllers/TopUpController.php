@@ -5,6 +5,7 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
+use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -77,17 +78,24 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        try {
+        try{
             $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric',
-                'is_robi_topup' => 'sometimes|in:0,1'
-            ]);
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric',
+            'is_robi_topup' => 'sometimes|in:0,1'
+        ]);
 
 
-            $agent = $this->getAgent($request);
+        $agent = $this->getAgent($request);
+        if ($this->hasLastTopupWithinIntervalTime($agent))
+            return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+
+        if ($top_up_request->hasError())
+            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);

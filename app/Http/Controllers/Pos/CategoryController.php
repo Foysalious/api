@@ -110,4 +110,40 @@ class CategoryController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getMasterCategories(Request $request, $partner)
+    {
+        try {
+            $data = [];
+            $partner = $request->partner;
+            $master_categories = $partner->posCategories()->get();
+
+            if (!$master_categories) return api_response($request, null, 404);
+
+            $data['total_category'] = count($master_categories);
+            $data['categories'] = [];
+
+            foreach ($master_categories as $master_category) {
+                $category = $master_category->category()->first();
+                $item['name'] = $category->name;
+                $total_services = 0;
+                $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
+                    $total_services += $child->services()->where('partner_id', $partner->id)->where('publication_status', 1)->count();
+                });
+                $item['total_items'] = $total_services;
+                array_push($data['categories'], $item);
+            }
+
+            return api_response($request, $master_categories, 200, ['data' => $data]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
 }

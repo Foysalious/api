@@ -22,7 +22,6 @@ class PartnerPackage implements Package
         $this->partner->discount_id = $discount_id;
         $this->partner->subscription_rules = $this->package->rules;
         $this->partner->update();
-
         $this->upgradeCommission($this->package->commission);
     }
 

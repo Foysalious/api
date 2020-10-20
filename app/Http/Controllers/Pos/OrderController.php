@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -74,10 +76,12 @@ class OrderController extends Controller
                     ]
                 ]);
             }
-            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+
+            $orders       = empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($offset)->take($limit)->get() : $orders_query->where('payment_status' , $status)->orderBy('created_at', 'desc')->get();
             $final_orders = collect();
             foreach ($orders as $index => $order) {
                 $order->isRefundable();
+                /** @var PosOrder $order */
                 $order_data = $order->calculate();
                 $manager    = new Manager();
                 $manager->setSerializer(new CustomSerializer());
@@ -85,7 +89,7 @@ class OrderController extends Controller
                 $order_formatted = $manager->createData($resource)->toArray()['data'];
                 $final_orders->push($order_formatted);
             }
-            if (!empty($status))
+            if (!empty($status) && $status !== 'null')
                 $final_orders = $final_orders->where('status', $status)->slice($offset)->take($limit);
             $final_orders = $final_orders->groupBy('date')->toArray();
 
@@ -185,9 +189,13 @@ class OrderController extends Controller
                 $usage_type = Usage::Partner()::POS_ORDER_CREATE;
                 $this->setModifier($modifier);
             } else {
+                /** @var Partner $partner */
                 $partner              = $partnerRepository->find((int)$partner);
+                /** @var Profile $profile */
                 $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
-                $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
+                $_data['mobile']=$request->customer_mobile;
+                $_data['name']=$request->customer_name;
+                $partner_pos_customer = $posCustomerCreator->setData($_data)->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
                 $modifier = $profile->customer;
                 $usage_type = Usage::Partner()::PRODUCT_LINK;
@@ -470,11 +478,14 @@ class OrderController extends Controller
             $payment_creator->credit($payment_data);
             $order                 = $order->calculate();
             $order->payment_status = $order->getPaymentStatus();
+
             $this->updateIncome($order, $request->paid_amount, $request->emi_month);
-            /**
+             /**
              * USAGE LOG
              */
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::POS_DUE_COLLECTION)->create($request->manager_resource);
+
+
             return api_response($request, null, 200, [
                 'msg'   => 'Payment Collect Successfully',
                 'order' => $order

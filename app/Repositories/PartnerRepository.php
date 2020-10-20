@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Partner\LeaveStatus;
 use Sheba\ResourceScheduler\ResourceHandler;
 
 class PartnerRepository
@@ -23,11 +24,15 @@ class PartnerRepository
     private $partner;
     private $serviceRepo;
     private $features;
+    /** @var LeaveStatus */
+    private $leaveStatus;
+
     public function __construct($partner)
     {
         $this->partner     = $partner instanceof Partner ? $partner : Partner::find($partner);
         $this->serviceRepo = new ServiceRepository();
         $this->features=['payment_link', 'pos', 'inventory', 'referral', 'due'];
+        $this->leaveStatus = new LeaveStatus();
     }
     public function getFeatures(){
         return $this->features;
@@ -71,6 +76,7 @@ class PartnerRepository
             });
         }
         return $resources->map(function ($resource) use ($category_id, $date, $preferred_time, $job, $subscription_order) {
+            $leave_status = $this->leaveStatus->setArtisan($resource)->getCurrentStatus();
             $data                            = [];
             $data['id']                      = $resource->id;
             $data['profile_id']              = $resource->profile_id;
@@ -91,6 +97,7 @@ class PartnerRepository
             $data['resource_type']           = $resource->pivot->resource_type;
             $data['is_verified']             = $resource->is_verified;
             $data['is_available']            = $resource->is_tagged;
+            $data['is_online']               = $leave_status['status'] ? 0 : 1;
             $data['booked_jobs']             = [];
             $data['is_tagged']               = $resource->is_tagged;
             $data['total_tagged_categories'] = isset($resource->total_tagged_categories) ? count($resource->total_tagged_categories) : count($resource->categoriesIn($this->partner->id));

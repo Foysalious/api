@@ -8,6 +8,7 @@ use Sheba\Profile\Creator as ProfileCreator;
 class Creator
 {
     use ModificationFields;
+
     private $profileRepository;
     private $customerRepository;
     private $profileCreator;
