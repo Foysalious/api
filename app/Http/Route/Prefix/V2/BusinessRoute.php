@@ -122,6 +122,9 @@ class BusinessRoute
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
                     });
+                    $api->group(['prefix' => 'super-admins'], function ($api) {
+                        $api->get('/', 'B2b\LeaveController@getSuperAdmins');
+                    });
                     $api->group(['prefix' => 'settings'], function ($api) {
                         $api->get('/', 'B2b\LeaveSettingsController@index');
                         $api->post('/', 'B2b\LeaveSettingsController@store');
