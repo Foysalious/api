@@ -38,6 +38,7 @@ abstract class BankFormCategory
     abstract public function post($data);
 
     abstract public function getLastUpdated();
+
     abstract public function getDummy();
 
     public function setData(array $data)
