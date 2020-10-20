@@ -138,7 +138,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business,$profile, $role, $leave_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -351,9 +351,10 @@ class LeaveController extends Controller
      * @param $business_member_id
      * @param Request $request
      * @param TimeFrame $time_frame
+     * @param LeaveLogRepo $leave_log_repo
      * @return JsonResponse
      */
-    public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame)
+    public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMemberById($business_member_id);
@@ -363,7 +364,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame));
+        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame, $leave_log_repo));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         if ($request->file == 'pdf') {
