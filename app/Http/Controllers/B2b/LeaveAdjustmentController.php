@@ -3,6 +3,7 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
+use Sheba\Business\LeaveAdjustment\GenerateAdjustmentExcel;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelUploadError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -239,6 +240,30 @@ class LeaveAdjustmentController extends Controller
         }
     }
 
+    public function adjustExcel(Request $request, GenerateAdjustmentExcel $generate_adjustment_excel)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+
+        $leave_types = [];
+        $business->leaveTypes()->with(['leaves' => function ($q) {
+            return $q->accepted();
+        }])->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
+            ->get()
+            ->each(function ($leave_type) use (&$leave_types) {
+                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
+                $leave_type_data = [
+                    'id' => $leave_type->id,
+                    'title' => $leave_type->title,
+                    'total_days' => $leave_type->total_days
+                ];
+                array_push($leave_types, $leave_type_data);
+            });
+
+        $leave_adjustment_excel_format = [];
+        return $generate_adjustment_excel->setAdjustmentData($leave_adjustment_excel_format)->setLeaveType($leave_types)->get();
+
+    }
     /**
      * @param $leave
      */
