@@ -138,9 +138,6 @@ class BusinessRoute
                             $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
                         });
                     });
-                    $api->group(['prefix' => 'super-admins'], function ($api) {
-                        $api->get('/', 'B2b\LeaveController@getSuperAdmins');
-                    });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'B2b\OrderController@index');
