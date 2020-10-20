@@ -147,7 +147,7 @@ abstract class Bank
     {
         $data = (array)$post_data;
         foreach ($detail as $key => $item) {
-            if ($item['field_type'] == 'multiView') {
+            if ($item['field_type'] == 'multipleView') {
                 $this->validatePostData($item['views'], $data[$item['name']]);
                 continue;
             }

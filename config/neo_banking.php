@@ -456,17 +456,17 @@ return [
                 'views'      => [
                     [
                         'field_type'    => 'editText',
-                        'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
+                        'title'         => 'স্ট্রিট নং / গ্রামের নাম',
                         'name'          => 'street_village_nominee_guardian_address',
-                        'hint'          => '',
+                        'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
                         'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক',
                         'mandatory'     => false
                     ],
                     [
                         'field_type'    => 'editText',
-                        'title'         => 'পোস্ট কোড *',
+                        'title'         => 'পোস্ট কোড',
                         'name'          => 'postcode_nominee_guardian_address',
-                        'hint'          => '',
+                        'hint'          => 'পোস্ট কোড',
                         'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
                         'mandatory'     => false
                     ],
@@ -474,7 +474,7 @@ return [
                         'field_type'    => 'dropdown',
                         'title'         => 'জেলা *',
                         'name'          => 'district_nominee_guardian_address',
-                        'hint'          => '',
+                        'hint'          => 'জেলা',
                         'list_type'     => 'new_page_radio',
                         'error_message' => 'জেলার নাম পূরণ আবশ্যক'
                     ],
@@ -483,7 +483,7 @@ return [
                         'title'         => 'থানা / উপজেলা *',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'sub_district_nominee_guardian_address',
-                        'hint'          => '',
+                        'hint'          => 'থানা / উপজেলা',
                         'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
                     ],
                     [
@@ -491,7 +491,7 @@ return [
                         'title'         => 'দেশ ',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'country_nominee_guardian_address',
-                        'hint'          => '',
+                        'hint'          => 'দেশ',
                         'error_message' => 'দেশের নাম পূরণ আবশ্যক',
                         'mandatory'     => false
                     ]
