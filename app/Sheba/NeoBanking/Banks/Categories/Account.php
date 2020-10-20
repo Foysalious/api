@@ -6,6 +6,7 @@ namespace Sheba\NeoBanking\Banks\Categories;
 
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Account extends BankFormCategory
 {
@@ -19,15 +20,13 @@ class Account extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get() :CategoryGetter
     {
-        return [];
-    }
-    public function getDummy(){
-        return (new CategoryGetter())->setCategory($this)->toArray();
+        $formItems = FormStatics::account();
+        return $this->getFormData($formItems);
     }
 
-    public function post()
+    public function post($data)
     {
         // TODO: Implement post() method.
     }
@@ -35,5 +34,10 @@ class Account extends BankFormCategory
     public function getLastUpdated()
     {
         return $this->last_updated;
+    }
+
+    public function getDummy()
+    {
+        return [];
     }
 }

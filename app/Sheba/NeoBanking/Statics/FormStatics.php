@@ -20,4 +20,9 @@ class FormStatics
     {
         return config('neo_banking.category_form_items.nominee');
     }
+
+    public static function account()
+    {
+        return config('neo_banking.category_form_items.account');
+    }
 }

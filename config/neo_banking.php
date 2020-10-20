@@ -42,6 +42,25 @@ function addressViews($type)
     ];
 }
 
+function booleanView($type){
+    return [
+        [
+            'field_type' => 'radioButton',
+            'name'       => $type.'_yes',
+            'title'      => 'Yes',
+            'mandatory'  => false,
+            'value'      => 1
+        ],
+        [
+            'field_type' => 'radioButton',
+            'name'       => $type.'_no',
+            'title'      => 'No',
+            'mandatory'  => false,
+            'value'      => 0
+        ]
+    ];
+}
+
 return [
     'prime_bank_sbs_url' => env('PRIME_BANK_SBS_URL'),
     'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
@@ -498,6 +517,176 @@ return [
                 ]
             ],
 
+        ],
+        'account'     => [
+            [
+                'field_type'    => 'editText',
+                'title'         => 'অ্যাকাউন্টের নাম',
+                'hint'          => 'ABUL KALAM AZAD',
+                'name'          => 'applicant_name',
+                'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
+                'mandatory'     => false,
+                'is_editable'   => false
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'অ্যাকাউন্টের ধরণ *',
+                'name'       => 'type_of_account',
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_savings',
+                        'title'      => 'Savings',
+                        'mandatory'  => false,
+                        'value'      => 1
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_current',
+                        'title'      => 'Current',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_snd',
+                        'title'      => 'SND',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_fc',
+                        'title'      => 'FC',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_erq',
+                        'title'      => 'ERQ',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'account_others',
+                        'title'      => 'Others',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                ]
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'ব্রাঞ্চ ',
+                'list_type'     => 'same_page_radio',
+                'name'          => 'branch',
+                'hint'          => 'ব্রাঞ্চ ',
+                'error_message' => 'ব্রাঞ্চ নাম পূরণ আবশ্যক',
+                'mandatory'     => false
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'মূদ্রা ',
+                'name'       => 'money_type',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'money_taka',
+                        'title'      => 'টাকা',
+                        'mandatory'  => false,
+                        'value'      => 1
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'money_dollar',
+                        'title'      => 'ডলার',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'money_euro',
+                        'title'      => 'ইউরো',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'money_pound',
+                        'title'      => 'পাউন্ড',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'money_others',
+                        'title'      => 'অন্যান্য',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'অপারেশনের ধরণ ',
+                'name'       => 'type_of_operation',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'operation_individual',
+                        'title'      => 'Individual',
+                        'mandatory'  => false,
+                        'value'      => 1
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'operation_joint',
+                        'title'      => 'Joint',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'operation_others',
+                        'title'      => 'Others',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'প্রাথমিক জমা',
+                'hint'          => 'উদাহরণ: 5000',
+                'name'          => 'first_deposit',
+                'error_message' => '',
+                'mandatory'     => false
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'চেক বই নিতে চান?',
+                'name'       => 'check_book',
+                'mandatory'  => false,
+                'views'      => booleanView('check_book')
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'ই-স্টেটমেন্ট',
+                'name'       => 'e_payment',
+                'mandatory'  => false,
+                'views'      => booleanView('e_payment')
+            ],
+            [
+                'field_type' => 'multipleView',
+                'title'      => 'ইন্টারনেট ব্যাংকিং ',
+                'name'       => 'internet_banking',
+                'mandatory'  => false,
+                'views'      => booleanView('internet_banking')
+            ]
         ]
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
