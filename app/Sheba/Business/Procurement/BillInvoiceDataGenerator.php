@@ -80,7 +80,7 @@ class BillInvoiceDataGenerator
 
         $data = [
             'type' => $this->getType(),
-            'submitted_date' => $this->paymentRequest->created_at->format('d M, Y'),
+            'submitted_date' => $this->paymentRequest ? $this->paymentRequest->created_at->format('d M, Y') : null,
             'from' => [
                 'name' => $this->business->name,
                 'address' => $this->business->address,
@@ -97,24 +97,31 @@ class BillInvoiceDataGenerator
             'sub_total' => (double)$this->procurement->totalPrice,
             'grand_total' => (double)$this->procurement->totalPrice,
             'due' => (double)$this->procurement->due,
-            "tk_sign" => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png"
+            'tk_sign' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/icons/taka.png",
+            'terms_and_conditions' => $this->bid->terms
         ];
+
         if ($data['type'] == self::INVOICE) $data += [
             'code' => $this->procurement->invoiceCode(),
             'paid' => (double)$this->procurement->paid,
-            'amount_to_be_paid' => (double)$this->paymentRequest->amount,
-            'due_after_amount_to_be_paid' => (double)$this->procurement->totalPrice - ($this->procurement->paid + $this->paymentRequest->amount)
+            'amount_to_be_paid' => $this->paymentRequest ? (double)$this->paymentRequest->amount : (double)$this->procurement->due,
+            'due_after_amount_to_be_paid' => $this->paymentRequest ?
+                (double)$this->procurement->totalPrice - ($this->procurement->paid + $this->paymentRequest->amount) : (double)$this->procurement->due
         ];
 
         if ($data['type'] == self::BILL) $data += [
             'code' => $this->procurement->billCode(),
-            'paid' => (double)$this->paymentRequest->amount,
-            'payment_date' => $this->paymentRequest->statusChangeLogs()->orderBy('id', 'desc')->first()->created_at->format('d M, Y'),
+            'paid' => $this->paymentRequest ? (double)$this->paymentRequest->amount : (double)$this->procurement->paid,
+            'payment_date' => $this->paymentRequest ?
+                $this->paymentRequest->statusChangeLogs()->orderBy('id', 'desc')->first()->created_at->format('d M, Y') :
+                $this->procurement->closed_and_paid_at->format('d M, Y'),
             'payment_method' => 'Cash On Delivery'
         ];
 
-        $data['total_amount_in_word'] = 'one thousand tk only';
-        $data['terms_and_conditions'] = $this->bid->terms;
+        $total = $this->procurement->totalPrice;
+        $total_in_words = (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($total);
+        $total_amount_in_words= ucwords(str_replace('-', ' ', $total_in_words));
+        $data['total_amount_in_word'] = $total_amount_in_words . ' Only';
 
         return $data;
     }
@@ -140,6 +147,10 @@ class BillInvoiceDataGenerator
 
     private function getType()
     {
+        if (!$this->paymentRequest) {
+            if ($this->procurement->status == Statuses::SERVED) return self::BILL;
+            return self::INVOICE;
+        }
         if ($this->paymentRequest->status == Status::APPROVED) return self::BILL;
         return self::INVOICE;
     }

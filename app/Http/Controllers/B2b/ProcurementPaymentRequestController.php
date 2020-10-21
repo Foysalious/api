@@ -14,7 +14,6 @@ use App\Http\Controllers\Controller;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use Sheba\Reports\PdfHandler;
 use Throwable;
 
 class ProcurementPaymentRequestController extends Controller
@@ -97,8 +96,7 @@ class ProcurementPaymentRequestController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator
-    )
+    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator)
     {
         $business = $request->business;
         $bid = Bid::findOrFail((int)$bid);
@@ -110,8 +108,8 @@ class ProcurementPaymentRequestController extends Controller
             ->setBid($bid)
             ->get();
 
-        #return view('pdfs.procurement_invoice', compact('procurement_info'));
-        #return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
+        # return view('pdfs.procurement_invoice', compact('procurement_info'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
 
         $file_name = public_path('assets/') . Carbon::now()->timestamp . "_invoice_bill_$business->id.pdf";
         App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
