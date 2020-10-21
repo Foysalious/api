@@ -13,6 +13,7 @@ use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Sheba\Business\Procurement\BillEmailToBusinessSuperAdmin;
 use Sheba\Business\Procurement\BillInvoiceDataGenerator;
 use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\OrderClosedHandler;
@@ -48,8 +49,8 @@ class Updater
     private $requestHandler;
     /** @var ProcurementCreator $procurementCreator */
     private $procurementCreator;
-    /** @var BillInvoiceDataGenerator $dataGenerator */
-    private $dataGenerator;
+    /** @var BillEmailToBusinessSuperAdmin $billEmail */
+    private $billEmail;
 
     /**
      * Updater constructor.
@@ -70,7 +71,7 @@ class Updater
                                 PaymentCreator $payment_creator,
                                 ProcurementItemRepositoryInterface $procurement_item_repository,
                                 ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
-                                ProcurementCreator $procurement_creator, BillInvoiceDataGenerator $data_generator)
+                                ProcurementCreator $procurement_creator, BillEmailToBusinessSuperAdmin $bill_email)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
@@ -81,7 +82,7 @@ class Updater
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
         $this->procurementCreator = $procurement_creator;
-        $this->dataGenerator = $data_generator;
+        $this->billEmail = $bill_email;
     }
 
     /**
@@ -271,10 +272,6 @@ class Updater
         $message = $bid->bidder->name . " has served your order";
         $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->procurement->id . '?bid=' . $bid->id;
 
-        $procurement_info = $this->dataGenerator->setBusiness($business)->setProcurement($this->procurement->id)->setBid($bid)->get();
-        $file_name = public_path('assets/') . Carbon::now()->timestamp . "_" . $procurement_info['type'] . ".pdf";
-        App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
-
         foreach ($business->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
@@ -283,16 +280,8 @@ class Updater
                 'event_id' => $bid->id,
                 'link' => $link
             ]);
-
-            /** @var Member $member */
-            // $email = $member->profile->email;
-            $email = 'pasha@sheba.xyz';
-            if ($email) {
-                (new SendTenderBillInvoiceEmailToBusiness($email, $file_name))->handle();
-                // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
-            }
-
         }
-        unlink($file_name);
+
+        $this->billEmail->setProcurement($this->procurement)->send();
     }
 }
