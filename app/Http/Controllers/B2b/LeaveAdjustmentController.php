@@ -240,7 +240,7 @@ class LeaveAdjustmentController extends Controller
         }
     }
 
-    public function adjustExcel(Request $request, GenerateAdjustmentExcel $generate_adjustment_excel)
+    public function generateAdjustmentExcel(Request $request, GenerateAdjustmentExcel $generate_adjustment_excel)
     {
         /** @var Business $business */
         $business = $request->business;
