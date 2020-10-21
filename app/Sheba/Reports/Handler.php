@@ -65,7 +65,8 @@ abstract class Handler
      */
     public function setFilename($name)
     {
-        $this->filename = ucfirst(strtolower($name));
+        $this->filename = $this->isRaw ? $name : ucfirst(strtolower($name));
+        dd($this->filename);
         return $this;
     }
 

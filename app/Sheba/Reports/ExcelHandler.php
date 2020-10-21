@@ -16,6 +16,7 @@ class ExcelHandler extends Handler
     private $downloadFormat = "csv";
     private $autoSize = null;
     private $columnFormat = null;
+    protected $isRaw = false;
 
     public function __construct(Excel $excel)
     {
@@ -99,6 +100,15 @@ class ExcelHandler extends Handler
     }
 
     /**
+     * @param bool $is_raw
+     * @return $this
+     */
+    public function setIsRawExcel($is_raw = false)
+    {
+        $this->isRaw = $is_raw;
+        return $this;
+    }
+    /**
      * Generate the excel.
      *
      * @return LaravelExcelWriter
@@ -116,6 +126,12 @@ class ExcelHandler extends Handler
             $excel->sheet($this->sheetName, function (LaravelExcelWorksheet $sheet) {
                 if(!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
                 if(!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
+                if ($this->isRaw){
+                    $data = ['users_email', 'title', 'leave_type_id', 'start_date', 'end_date', 'note', 'is_half_day', 'half_day_configuration', 'approver_id', 'message'];
+                    $sheet->fromArray(array($data), null, 'E1', false, false);
+                    #$sheet->row(2, ['users_email', 'title', 'leave_type_id', 'start_date', 'end_date', 'note', 'is_half_day', 'half_day_configuration', 'approver_id', 'message']);
+                    #config('excel.import.heading', 'original');
+                }
                 $sheet->loadView($this->viewFileName, $this->data);
             });
         });
