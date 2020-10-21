@@ -40,34 +40,30 @@ class LeaveAdjustmentExcel
         return $this;
     }
 
-    public function updateUser($message)
+    public function updateLeaveTypeId($message)
     {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::USERS_MAIL_COLUMN . $this->row, $message);
+        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::LEAVE_TYPE_ID . $this->row, $message);
         $this->excel->save();
-        return;
+        return $this;
     }
 
-    public function updateTile($message)
+    public function updateLeaveTypeTile($message)
     {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::TITLE_COLUMN . $this->row, $message);
+        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::LEAVE_TYPE_TITLE . $this->row, $message);
         $this->excel->save();
-        return;
+        return $this;
     }
 
-    public function updateMsg($message)
+    public function updateLeaveTotalDays($message)
     {
-        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::MESSAGE_COLUMN . $this->row, $message);
+        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::TOTAL_DAYS . $this->row, $message);
         $this->excel->save();
-        return;
+        return $this;
     }
 
     public function takeCompletedAction()
     {
-        $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
-        $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-        $file_path = $this->saveFileToCDN($this->file, getLeaveAdjustmentFolder(), $file_name);
+        $this->excel->download();
         unlink($this->file);
-        return $file_path;
-
     }
 }
