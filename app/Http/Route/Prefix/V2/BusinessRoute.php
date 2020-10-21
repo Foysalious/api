@@ -80,6 +80,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
+                    $api->get('all-dates', 'B2b\AttendanceController@getAllHolidayDates');
                     $api->post('/', 'B2b\AttendanceController@storeHoliday');
                     $api->group(['prefix' => '{holiday}'], function ($api) {
                         $api->post('/', 'B2b\AttendanceController@update');
@@ -120,6 +121,9 @@ class BusinessRoute
                     $api->group(['prefix' => 'balance'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
+                    });
+                    $api->group(['prefix' => 'super-admins'], function ($api) {
+                        $api->get('/', 'B2b\LeaveController@getSuperAdmins');
                     });
                     $api->group(['prefix' => 'settings'], function ($api) {
                         $api->get('/', 'B2b\LeaveSettingsController@index');

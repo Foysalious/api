@@ -111,7 +111,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
 
     private function getLeaveLogDetails($requestable)
     {
-        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->get()->map(function ($log) {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->where('type', '<>', 'leave_adjustment')->select('log', 'created_at')->get()->map(function ($log) {
             return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
         })->toArray();
         return $logs ? $logs : null;
