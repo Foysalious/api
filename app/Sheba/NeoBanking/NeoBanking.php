@@ -14,6 +14,7 @@ class NeoBanking
     private $partner;
     private $resource;
     private $post_data;
+    private $gigatechKycData;
 
     public function __construct()
     {
@@ -34,6 +35,12 @@ class NeoBanking
     {
         if (!($bank instanceof NeoBank)) $bank = (new NeoBankRepository())->getByCode($bank);
         $this->bank = $bank;
+        return $this;
+    }
+
+    public function setGigatechKycData($gigatechKycData)
+    {
+        $this->gigatechKycData = $gigatechKycData;
         return $this;
     }
 
@@ -161,6 +168,11 @@ class NeoBanking
     public function getGigatechKycStatus($data) {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getGigatechKycStatus($data);
+    }
+
+    public function storeGigatechKyc() {
+        $bank = (new BankFactory())->setBank($this->bank)->get();
+        return $bank->storeGigatechKyc($this->gigatechKycData);
     }
 
     /**
