@@ -3,8 +3,12 @@
 use App\Models\Affiliate;
 use App\Models\Partner;
 use Carbon\Carbon;
+use Exception;
+use Sheba\Dal\TopUpBlacklistNumber\Contract;
+use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Event;
 
 class TopUpRequest
 {
@@ -23,11 +27,12 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $from_robi_topup_wallet;
-    private $walletType;
+    private $topUpBlockNumberRepository;
 
-    public function __construct(VendorFactory $vendor_factory)
+    public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
         $this->vendorFactory = $vendor_factory;
+        $this->topUpBlockNumberRepository = $top_up_block_number_repository;
     }
 
     /**
@@ -62,12 +67,12 @@ class TopUpRequest
     /**
      * @param $vendor_id
      * @return $this
-     * @throws \Exception
+     * @throws Exception
      */
     public function setVendorId($vendor_id)
     {
         $this->vendorId = $vendor_id;
-        $this->vendor   = $this->vendorFactory->getById($this->vendorId);
+        $this->vendor = $this->vendorFactory->getById($this->vendorId);
         return $this;
     }
 
@@ -143,7 +148,18 @@ class TopUpRequest
 
     public function hasError()
     {
-
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        }
+        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
+            Event::fire(new TopUpRequestOfBlockedNumber($this->agent,$this->mobile));
+            $this->errorMessage = "You can't recharge to a blocked number.";
+            return 1;
+        }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
@@ -154,13 +170,6 @@ class TopUpRequest
         }
         if (!$this->vendor->isPublished()) {
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
-            return 1;
-        }
-        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
-            $this->errorMessage = "You are not verified to do this operation.";
-            return 1;
-        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
-            $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
 
