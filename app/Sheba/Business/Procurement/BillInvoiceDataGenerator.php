@@ -114,7 +114,6 @@ class BillInvoiceDataGenerator
         ];
 
         $data['total_amount_in_word'] = 'one thousand tk only';
-        //dd($this->bid->terms);
         $data['terms_and_conditions'] = $this->bid->terms;
 
         return $data;

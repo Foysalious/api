@@ -239,16 +239,17 @@ class Updater
                 $this->procurementRepository->update($this->procurement, ['status' => $this->status]);
                 $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 $this->procurement->calculate();
+
                 if ($this->status == 'served') {
                     $this->procurementRepository->update($this->procurement, ['closed_at' => Carbon::now()]);
                     $this->procurementOrderCloseHandler->setProcurement($this->procurement->fresh())->run();
-                    $this->notify();
                 }
             });
-
         } catch (QueryException $e) {
             throw  $e;
         }
+
+        if ($this->status == 'served') $this->notify();
         return $this->procurement;
     }
 
@@ -257,6 +258,7 @@ class Updater
         $bid = $this->procurement->getActiveBid();
         $message = $bid->bidder->name . " has served your order";
         $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->procurement->id . '?bid=' . $bid->id;
+
         foreach ($this->procurement->owner->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
@@ -265,6 +267,8 @@ class Updater
                 'event_id' => $bid->id,
                 'link' => $link
             ]);
+
+            // send email
         }
     }
 }

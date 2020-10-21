@@ -1,11 +1,12 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Jobs\SendTenderBillInvoiceEmailToBusiness;
+use App\Jobs\Business\SendTenderBillInvoiceEmailToBusiness;
 use App\Models\Bid;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Mail;
 use Sheba\Business\Procurement\BillInvoiceDataGenerator;
 use Sheba\Business\ProcurementPaymentRequest\Creator;
 use Sheba\Business\ProcurementPaymentRequest\Updater;
@@ -13,6 +14,7 @@ use App\Http\Controllers\Controller;
 use Sheba\Dal\ProcurementPaymentRequest\ProcurementPaymentRequestRepositoryInterface;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
+use Sheba\Reports\PdfHandler;
 use Throwable;
 
 class ProcurementPaymentRequestController extends Controller
@@ -93,8 +95,10 @@ class ProcurementPaymentRequestController extends Controller
      * @param Request $request
      * @param BillInvoiceDataGenerator $data_generator
      * @return mixed
+     * @throws Exception
      */
-    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator)
+    public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator
+    )
     {
         $business = $request->business;
         $bid = Bid::findOrFail((int)$bid);
@@ -105,17 +109,16 @@ class ProcurementPaymentRequestController extends Controller
             ->setPaymentRequest($payment_request)
             ->setBid($bid)
             ->get();
-        #return view('pdfs.procurement_invoice', compact('procurement_info'));
-
-        App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save(public_path('assets/').'invoice.pdf');
-
-        $this->dispatch(new SendTenderBillInvoiceEmailToBusiness(public_path('assets/').'invoice.pdf'));
-
+        return view('pdfs.procurement_invoice', compact('procurement_info'));
         #return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
 
-    }
-    public function testEmail()
-    {
-        #$this->dispatch(new SendTenderBillInvoiceEmailToBusiness());
+        $file_name = public_path('assets/') . Carbon::now()->timestamp . "_invoice_bill_$business->id.pdf";
+        App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
+
+        $email = 'pasha@sheba.xyz';
+        (new SendTenderBillInvoiceEmailToBusiness($email, $file_name))->handle();
+        // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
+
+        unlink($file_name);
     }
 }
