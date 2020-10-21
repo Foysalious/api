@@ -33,7 +33,7 @@ class GenerateAdjustmentExcel
     public function get()
     {
         $this->makeData();
-        return $this->excelHandler->setIsRawExcel(true)->setFilename('data')->createReport($this->data)->download();
+        return $this->excelHandler->setFilename('data')->createReport($this->data)->download();
     }
 
     private function makeData()

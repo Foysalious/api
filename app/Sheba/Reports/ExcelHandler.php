@@ -16,7 +16,6 @@ class ExcelHandler extends Handler
     private $downloadFormat = "csv";
     private $autoSize = null;
     private $columnFormat = null;
-    protected $isRaw = false;
 
     public function __construct(Excel $excel)
     {
@@ -100,15 +99,6 @@ class ExcelHandler extends Handler
     }
 
     /**
-     * @param bool $is_raw
-     * @return $this
-     */
-    public function setIsRawExcel($is_raw = false)
-    {
-        $this->isRaw = $is_raw;
-        return $this;
-    }
-    /**
      * Generate the excel.
      *
      * @return LaravelExcelWriter
@@ -116,7 +106,7 @@ class ExcelHandler extends Handler
      */
     public function create()
     {
-        if(empty($this->data)) throw new Exception('Invalid Data');
+        if (empty($this->data)) throw new Exception('Invalid Data');
         $this->sheetName = $this->sheetName ?: $this->name;
 
         return $this->excel->create($this->filename, function (LaravelExcelWriter $excel) {
@@ -124,14 +114,8 @@ class ExcelHandler extends Handler
             $excel->setCreator('Sheba')->setCompany('Sheba');
 
             $excel->sheet($this->sheetName, function (LaravelExcelWorksheet $sheet) {
-                if(!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
-                if(!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
-                if ($this->isRaw){
-                    $data = ['users_email', 'title', 'leave_type_id', 'start_date', 'end_date', 'note', 'is_half_day', 'half_day_configuration', 'approver_id', 'message'];
-                    $sheet->fromArray(array($data), null, 'E1', false, false);
-                    #$sheet->row(2, ['users_email', 'title', 'leave_type_id', 'start_date', 'end_date', 'note', 'is_half_day', 'half_day_configuration', 'approver_id', 'message']);
-                    #config('excel.import.heading', 'original');
-                }
+                if (!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
+                if (!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
                 $sheet->loadView($this->viewFileName, $this->data);
             });
         });
@@ -160,8 +144,8 @@ class ExcelHandler extends Handler
     /**
      * Generate and save the excel.
      *
-     * @throws Exception
      * @return string Path of the saved file.
+     * @throws Exception
      */
     public function save()
     {
