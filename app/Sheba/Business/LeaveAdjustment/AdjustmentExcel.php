@@ -16,6 +16,10 @@ class AdjustmentExcel
     const APPROVER_ID_COLUMN = "I";
     const MESSAGE_COLUMN = "J";
 
+    const LEAVE_TYPE_ID = "L";
+    const LEAVE_TYPE_TITLE = "M";
+    const TOTAL_DAYS = "N";
+
     const USERS_MAIL_COLUMN_TITLE = "users_email";
     const TITLE_COLUMN_TITLE = "title";
     const LEAVE_TYPE_ID_COLUMN_TITLE = "leave_type_id";

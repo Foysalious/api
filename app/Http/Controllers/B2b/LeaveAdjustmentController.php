@@ -263,15 +263,13 @@ class LeaveAdjustmentController extends Controller
         $file_name = basename($url);
         $file_path = $dir . $file_name;
         file_put_contents($file_path, file_get_contents($url));
-        Excel::selectSheets(AdjustmentExcel::SHEET)->load($file_path)->get();
 
-        $excel_error = null;
         foreach ($leave_types as $key => $leave_type) {
-            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 2)->updateTile($leave_type['title'])
-                ->updateUser($leave_type['title'])->updateMsg($leave_type['title']);
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 3)->updateLeaveTypeId($leave_type['id'])
+                ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
         }
-
-        return api_response($request, null, 200, ['leave_adjustment_excel' => $leave_adjustment_excel->takeCompletedAction()]);
+        $leave_adjustment_excel->takeCompletedAction();
+        return api_response($request, null, 200);
     }
 
     /**
