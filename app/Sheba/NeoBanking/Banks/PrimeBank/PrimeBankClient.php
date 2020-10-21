@@ -4,6 +4,7 @@
 namespace App\Sheba\NeoBanking\Banks\PrimeBank;
 
 
+use Exception;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
