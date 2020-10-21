@@ -3,7 +3,6 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
-use Sheba\Business\LeaveAdjustment\GenerateAdjustmentExcel;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcel;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelUploadError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -24,7 +23,6 @@ use App\Models\Member;
 use Exception;
 use Throwable;
 use Excel;
-use Maatwebsite\Excel\Facades\Excel as AdjustExcel;
 
 class LeaveAdjustmentController extends Controller
 {
