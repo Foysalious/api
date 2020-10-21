@@ -62,6 +62,17 @@ class FormItemBuilder
      * @return array
      * @throws ReflectionException
      */
+    private function imageDocument()
+    {
+        $item = $this->initItem();
+        if (isset($this->item['input_type']) && $this->item['input_type'] == "image") $item->setInputType('image');
+        return $item->toArray();
+    }
+
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
     private function header()
     {
         return $this->initItem()->toArray();
