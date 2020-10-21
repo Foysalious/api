@@ -155,11 +155,6 @@ class TopUpRequest
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
-        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
-            Event::fire(new TopUpRequestOfBlockedNumber($this->agent,$this->mobile));
-            $this->errorMessage = "You can't recharge to a blocked number.";
-            return 1;
-        }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
@@ -172,7 +167,11 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
-
+        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
+            Event::fire(new TopUpRequestOfBlockedNumber($this->agent, $this->mobile));
+            $this->errorMessage = "You can't recharge to a blocked number.";
+            return 1;
+        }
         return 0;
     }
 
