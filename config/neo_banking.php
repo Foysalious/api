@@ -687,6 +687,101 @@ return [
                 'mandatory'  => false,
                 'views'      => booleanView('internet_banking')
             ]
+        ],
+        'documents'    => [
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'ট্রেড লাইসেন্স',
+                'hint'          => 'ট্রেড লাইসেন্স',
+                'name'          => 'trade_licence_document',
+                'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'কোম্পানির লেটার-হেড প্যাড',
+                'hint'          => 'কোম্পানির লেটার-হেড প্যাড',
+                'name'          => 'company_letter_head',
+                'error_message' => 'কোম্পানির লেটার-হেড প্যাড এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'ট্রেড সিল',
+                'hint'          => 'ট্রেড সিল',
+                'name'          => 'trade_seal_document',
+                'error_message' => 'ট্রেড সিল এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'ই-টিন',
+                'hint'          => 'ই-টিন',
+                'name'          => 'e_tin_document',
+                'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'ভ্যাট রেজিস্ট্রেশন',
+                'hint'          => 'ভ্যাট রেজিস্ট্রেশন',
+                'name'          => 'vat_registration_document',
+                'error_message' => 'ভ্যাট রেজিস্ট্রেশন এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'রেন্টাল এগ্রিমেন্ট (যদি থাকে)',
+                'hint'          => 'রেন্টাল এগ্রিমেন্ট',
+                'name'          => 'rental_agreement_document',
+                'error_message' => 'রেন্টাল এগ্রিমেন্ট এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ],
+            [
+                'field_type'    => 'imageDocument',
+                "input_type"    => "image",
+                'title'         => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
+                'hint'          => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
+                'name'          => 'bill_document',
+                'error_message' => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
+            ]
+        ],
+        'nid_selfie'    => [
+            [
+                'field_type' => 'header',
+                'title'      => 'NID তথ্য যাচাই করুন',
+                'mandatory'  => false,
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'নাম *',
+                'hint'          => 'আবুল কালাম আজাদ',
+                'name'          => 'nid_name',
+                'error_message' => 'নাম পূরণ আবশ্যক',
+                'is_editable'   => true
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'পিতার নাম *',
+                'hint'          => 'মোতালেব খান',
+                'name'          => 'nid_father_name',
+                'error_message' => 'নাম পূরণ আবশ্যক',
+                'is_editable'   => true
+            ],
+            [
+                'field_type'    => 'date',
+                'title'         => 'জন্ম তারিখ *',
+                'name'          => 'birth_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+            ]
         ]
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')

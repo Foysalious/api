@@ -117,6 +117,29 @@ class NeoBankingController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
+            $neoData = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request);
+            $neoData->postCategoryDetail($request->category_code);
+            return api_response($request, null, 200);
+        } catch (NeoBankingException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     public function getAccountInformation(Request $request, NeoBanking $neoBanking)
     {
         try {
