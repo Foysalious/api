@@ -8,7 +8,8 @@ $formatted_type = ucwords($procurement_info['type'])
     <!-- start: Meta -->
     <title>{{ $formatted_type }}</title>
     <meta name="description" content="">
-    <meta name="author" content="Fazal Mahmud Niloy">
+    <meta name="author" content="Asad Ahmed">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
     <style>
         @media  print {
             table {
@@ -113,6 +114,7 @@ $formatted_type = ucwords($procurement_info['type'])
 
         body {
             counter-reset: page;
+            margin:25px;
         }
 
         /*
@@ -161,7 +163,9 @@ $formatted_type = ucwords($procurement_info['type'])
 
 
         @page  {
-            margin-top: 20px;
+            margin-top: 10px;
+            margin-left: 0px;
+            margin-right:0px;
         }
 
         .header {
@@ -220,7 +224,7 @@ $formatted_type = ucwords($procurement_info['type'])
 
         .addressesInfo {
             width: 100%;
-            margin-top: 50px;
+            margin-top: 80px;
             border: solid 1px #d2d8e6;
             background-color: #f8f8fb;
         }
@@ -266,10 +270,11 @@ $formatted_type = ucwords($procurement_info['type'])
         }
         .myheader{
             border: 0;
-            width: 100%;
-            position: fixed;
-            top: 0;
-            margin-bottom: 30px;
+            width: 80%;
+            /*position: fixed;
+            top: 0;*/
+            margin: 0 auto;
+            margin-bottom: 10px;
         }
         .mode-list tr td{
             padding:3px;
@@ -277,10 +282,12 @@ $formatted_type = ucwords($procurement_info['type'])
         .myfooter {
             width: 100%;
             border: 0;
-            background: #212182;
-            min-height: 150px;
+            background: #070550;
+            min-height: 155px;
             position:fixed;
-            bottom: 7em;
+            bottom: 6.5em;
+            margin-left: 0px;
+            margin-right:-60px;
         }
         .vertical-line{
             width:0px;
@@ -327,11 +334,11 @@ $formatted_type = ucwords($procurement_info['type'])
             padding: 3px;
         }
         .myheader h5 {
-            font-family: Roboto Condensed;
-            font-size: 25px;
+            font-family: Arial, sans-serif;
+            font-size: 22px;
             margin: 0;
             color: #1a214e;
-            margin-left: 100px;
+            margin-left: 50px;
         }
         a{
             text-decoration: none;
@@ -362,10 +369,10 @@ $formatted_type = ucwords($procurement_info['type'])
 
 <table class="myheader" width="100%" cellspacing="0" cellpadding="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px">
     <tr style="border-collapse:collapse">
-        <td valign="top" align="center" style="padding:0;Margin:0;width:600px">
+        <td valign="top" align="right" style="padding:0;Margin:0;width:600px">
             <table width="100%" cellspacing="0" cellpadding="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-collapse:collapse;border-spacing:0px; border:0; margin-bottom: 40px;">
                 <tr style="border-collapse:collapse">
-                    <td align="left" style="padding:0;Margin:0;font-size:0;border-right: 2px solid #1a214e;"><a href="#" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:Arial, sans-serif;font-size:14px;text-decoration:underline;color:#333333"><img src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt="Camellia logo" title="sBusiness" width="300" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
+                    <td align="center" style="padding:0;Margin:0;font-size:0;border-right: 2px solid #1a214e;"><a href="#" target="_blank" style="-webkit-text-size-adjust:none;-ms-text-size-adjust:none;mso-line-height-rule:exactly;font-family:Arial, sans-serif;font-size:14px;text-decoration:underline;color:#333333"><img src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt="Camellia logo" title="sBusiness" width="300" style="display:block;border:0;outline:none;text-decoration:none;-ms-interpolation-mode:bicubic"></a></td>
                     <td><h5>Your Business<br>Assistant</h5></td>
                 </tr>
             </table></td>
@@ -375,7 +382,7 @@ $formatted_type = ucwords($procurement_info['type'])
 </table>
 
 <table class="documentTitle">
-    <tr>
+    <tr align="center">
         <td>{{ $formatted_type }}</td>
     </tr>
     <tr>
