@@ -91,6 +91,12 @@ trait FileManager
         return [$file, $filename];
     }
 
+    protected function makeNeoBankingFile($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
+    }
+
     protected function makeVatRegistration($file, $name)
     {
         $filename = $this->uniqueFileName($file, $name);

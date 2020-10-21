@@ -2,6 +2,8 @@
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use Sheba\Dal\NeoBank\Model as NeoBank;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\FileManagers\FileManager;
 use Sheba\NeoBanking\Banks\BankFactory;
 use Sheba\NeoBanking\Banks\BankFormCategoryFactory;
 use Sheba\NeoBanking\DTO\BankFormCategory;
@@ -9,11 +11,14 @@ use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 class NeoBanking
 {
+    use FileManager, CdnFileManager;
+
     /** @var NeoBank $bank */
     private $bank;
     private $partner;
     private $resource;
     private $post_data;
+    private $uploadFolder;
 
     public function __construct()
     {
@@ -46,6 +51,23 @@ class NeoBanking
     public function setResource($resource)
     {
         $this->resource = $resource;
+        return $this;
+    }
+
+    private function setUploadFolder()
+    {
+        $this->uploadFolder   = getNeoBankingFolder(). $this->partner->id . '/';
+        return $this;
+    }
+
+    public function uploadDocument($request)
+    {
+        $this->setUploadFolder();
+        $file = $request->file;
+        $key  = $request->key;
+        list($file, $filename) = $this->makeNeoBankingFile($file, $key);
+        $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
+        $this->setPostData(json_encode([$key => $url]));
         return $this;
     }
 
