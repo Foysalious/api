@@ -370,5 +370,10 @@ class PartnerRepository
             return ['key'=>$item,'details'=>$details[$item]];
         }, $screens);
     }
+
+    public function updateWebstoreSettings($data)
+    {
+        $this->partner->update($data);
+    }
 }
 
