@@ -110,14 +110,5 @@ class ProcurementPaymentRequestController extends Controller
 
         # return view('pdfs.procurement_invoice', compact('procurement_info'));
         return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
-
-        $file_name = public_path('assets/') . Carbon::now()->timestamp . "_invoice_bill_$business->id.pdf";
-        App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
-
-        #$email = 'pasha@sheba.xyz';
-        #(new SendTenderBillInvoiceEmailToBusiness($email, $file_name))->handle();
-        // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
-
-        #unlink($file_name);
     }
 }

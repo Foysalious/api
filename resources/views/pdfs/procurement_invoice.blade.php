@@ -512,21 +512,20 @@
                     {{ $procurement_info['paid'] }}
                 </td>
             </tr>
+            @if ($procurement_info['is_for_payment_request'])
             <tr class="total">
                 <td colspan="4"></td>
                 <td class="padding-left totalDetail">Amount to be paid</td>
                 <td class="padding-left totalDetail">
-                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-                    {{ $procurement_info['amount_to_be_paid'] }}
+                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign"> {{ $procurement_info['amount_to_be_paid'] }}
                 </td>
             </tr>
-
+            @endif
             <tr class="total">
                 <td colspan="4"></td>
                 <td class="padding-left totalDetail">Due</td>
                 <td class="padding-left totalDetail">
-                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-                    {{ $procurement_info['due_after_amount_to_be_paid'] }}
+                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign"> {{ $procurement_info['due_after_amount_to_be_paid'] }}
                 </td>
             </tr>
         @endif
@@ -536,33 +535,27 @@
                 <td colspan="4"></td>
                 <td class="padding-left totalDetail">Paid</td>
                 <td class="padding-left totalDetail">
-                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-                    {{ $procurement_info['paid'] }}
+                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign"> {{ $procurement_info['paid'] }}
                 </td>
             </tr>
-
             <tr class="total">
                 <td colspan="4"></td>
                 <td class="padding-left totalDetail">due</td>
                 <td class="padding-left totalDetail">
-                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-                    {{ $procurement_info['due'] }}
+                    <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign"> {{ $procurement_info['due'] }}
                 </td>
             </tr>
         @endif
 
         <tr>
-            <td colspan="6">
-                <hr style="margin: 2px 0 2px">
-            </td>
+            <td colspan="6"><hr style="margin: 2px 0 2px"></td>
         </tr>
 
         <tr class="total">
             <td colspan="4"></td>
             <td class="padding-left totalDetail">Grand Total</td>
             <td class="padding-left totalDetail">
-                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign">
-                {{ $procurement_info['grand_total'] }}
+                <img style="width: 12px; height: 13px;" src="{{ $procurement_info['tk_sign'] }}" alt="tk_sign"> {{ $procurement_info['grand_total'] }}
             </td>
         </tr>
     </table>
