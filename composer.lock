@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "84dac13cc19e7f3f645f20598080a305",
+    "content-hash": "4b3960d00d0f7ae0e913ba00bd568d6d",
     "packages": [
         {
             "name": "algolia/algoliasearch-client-php",
@@ -3264,7 +3264,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "34aaaff081530ef0a9393ccd5e94a2e98ea7a292"
             },
             "require": {
@@ -3299,7 +3299,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://bitbucket.org/startern/sheba_notification.git",
                 "reference": "5c77770b2cea422d4ad8d909b6bd22d152bde39d"
             },
             "require": {
@@ -3331,7 +3331,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
+                "url": "https://bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3360,7 +3360,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://bitbucket.org/startern/sheba_sms.git",
                 "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
             },
             "require": {
@@ -3389,7 +3389,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://bitbucket.org/startern/sheba_voucher.git",
                 "reference": "935f243725f82caf0e5d717627ead59c076f581f"
             },
             "require": {

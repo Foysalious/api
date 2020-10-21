@@ -4,8 +4,13 @@ services:
     environment:
       SERVICE_NAME: app
       VIRTUAL_HOST: ${API_DOMAIN}
+    working_dir: /var/www
+    entrypoint: /etc/entrypoint.sh
     volumes:
+      - ../../:/var/www
       - ../nginx/conf.d/nginx-local.conf:/etc/nginx/sites-enabled/default
+      - ../php/local.ini:/usr/local/etc/php/conf.d/local.ini
+      - ../php/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
     ports:
       - ${PORT}:80
     extra_hosts:

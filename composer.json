@@ -94,24 +94,24 @@
   },
   "repositories": [
     {
-      "type": "vcs",
-      "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_voucher.git"
     },
     {
-      "type": "vcs",
-      "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_dal.git"
     },
     {
-      "type": "vcs",
-      "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_notification.git"
     },
     {
-      "type": "vcs",
-      "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_sms.git"
     },
     {
-      "type": "vcs",
-      "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git"
+      "type": "git",
+      "url": "https://bitbucket.org/startern/sheba_report.git"
     }
   ]
 }

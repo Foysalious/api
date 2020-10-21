@@ -13,3 +13,5 @@ resources/assets/nagad/*
 .composer/cache/.htaccess
 
 composer-auth.json
+
+.sentryclirc

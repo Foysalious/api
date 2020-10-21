@@ -1,13 +1,14 @@
 version: '3.5'
 services:
   api-service:
+    image: registry.sheba.xyz/${CONTAINER_NAME}
     environment:
       SERVICE_NAME: app
-    volumes:
-      - ../nginx/conf.d/nginx-prod.conf:/etc/nginx/sites-enabled/default
+      VIRTUAL_HOST: ${API_DOMAIN}
     ports:
       - ${PORT}:80
 
 networks:
   api-service-network:
-    driver: bridge
+    external:
+      name: ${EXTERNAL_NETWORK}

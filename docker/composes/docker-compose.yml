@@ -9,12 +9,6 @@ services:
     restart: unless-stopped
     tty: true
     env_file: ../../.env
-    working_dir: /var/www
-    volumes:
-      - ../../:/var/www
-      - ../php/local.ini:/usr/local/etc/php/conf.d/local.ini
-      - ../php/memory_limit.ini:/usr/local/etc/php/conf.d/memory_limit.ini
-    entrypoint: /etc/entrypoint.sh
     healthcheck:
       test: curl -sS http://127.0.0.1 || exit 1
       interval: 15s

@@ -33,20 +33,9 @@ RUN pecl install mongodb-1.4.4 \
 
 # Install composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-
 RUN composer global require hirak/prestissimo
 
-RUN { \
-        echo 'opcache.memory_consumption=128'; \
-        echo 'opcache.interned_strings_buffer=8'; \
-        echo 'opcache.max_accelerated_files=4000'; \
-        echo 'opcache.revalidate_freq=2'; \
-        echo 'opcache.fast_shutdown=1'; \
-        echo 'opcache.enable_cli=1'; \
-    } > /usr/local/etc/php/conf.d/php-opocache-cfg.ini
-
 COPY entrypoint.sh /etc/entrypoint.sh
-
 RUN chmod +x /etc/entrypoint.sh
 
 RUN usermod -u 1000 www-data
