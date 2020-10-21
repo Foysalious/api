@@ -693,16 +693,17 @@ return [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
                 'title'         => 'ট্রেড লাইসেন্স',
-                'hint'          => 'trade_licence_document',
-                'name'          => 'ট্রেড লাইসেন্স',
+                'hint'          => 'ট্রেড লাইসেন্স',
+                'name'          => 'trade_licence_document',
                 'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
             ],
             [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
                 'title'         => 'কোম্পানির লেটার-হেড প্যাড',
                 'hint'          => 'কোম্পানির লেটার-হেড প্যাড',
-                'name'          => 'company_latter_head',
+                'name'          => 'company_letter_head',
                 'error_message' => 'কোম্পানির লেটার-হেড প্যাড এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -721,7 +722,8 @@ return [
                 'title'         => 'ই-টিন',
                 'hint'          => 'ই-টিন',
                 'name'          => 'e_tin_document',
-                'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক'
+                'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
+                "mandatory"     => false
             ],
             [
                 'field_type'    => 'imageDocument',

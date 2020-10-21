@@ -34,6 +34,7 @@ class PrimeBankClient
     private function call($method, $uri, $data = null)
     {
         $options = $data ? $this->getOptions($data) : [];
+
         try {
             $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
             $res = json_decode($res->getBody()->getContents(), true);
