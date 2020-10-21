@@ -1,12 +1,12 @@
 <?php namespace Sheba\NeoBanking\Banks\Categories;
 
-
-use Sheba\NeoBanking\Banks\BankCompletionDetail;
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class Documents extends BankFormCategory
 {
-    protected $code = 'document';
+    protected $code = 'documents';
 
     public function completion()
     {
@@ -16,12 +16,13 @@ class Documents extends BankFormCategory
         ];
     }
 
-    public function get()
+    public function get() :CategoryGetter
     {
-        // TODO: Implement get() method.
+        $formItems = FormStatics::documents();
+        return $this->getFormData($formItems);
     }
 
-    public function post()
+    public function post($data)
     {
         // TODO: Implement post() method.
     }
