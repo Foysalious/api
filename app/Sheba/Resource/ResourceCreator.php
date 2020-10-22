@@ -126,13 +126,13 @@ class ResourceCreator
      */
     private function saveNIdImageFront()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidFrontImage(), $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidFrontImage(), $this->data['name']."_nid_front");
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 
     private function saveNIdImageBack()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidBackImage(), $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidBackImage(), $this->data['name']."_nid_back");
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 

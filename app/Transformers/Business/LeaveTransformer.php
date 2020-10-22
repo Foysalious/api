@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -13,6 +14,12 @@ use Sheba\Dal\LeaveType\Model as LeaveType;
 class LeaveTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = ['attachments'];
+    private $business;
+
+    public function __construct(Business $business)
+    {
+        $this->business = $business;
+    }
 
     public function transform(Leave $leave)
     {
@@ -24,13 +31,18 @@ class LeaveTransformer extends TransformerAbstract
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
         /** @var Profile $profile */
         $leave_substitute = $substitute_member ? $substitute_member->profile : null;
-
         return [
             'title' => $leave->title,
             'leave_type' => $leave_type->title,
             'start_date' => $leave->start_date,
             'end_date' => $leave->end_date,
             'total_days' => $leave->total_days,
+            'is_half_day' => $leave->is_half_day,
+            'half_day_configuration' => $leave->is_half_day ? [
+                'half_day' => $leave->half_day_configuration,
+                'half_day_time' => $this->business->halfDayStartEnd($leave->half_day_configuration),
+            ] : null,
+            'time' => $leave->is_half_day ? $this->business->halfDayStartEndTime($leave->half_day_configuration) : $this->business->fullDayStartEndTime(),
             'status' => LeaveStatusPresenter::statuses()[$leave->status],
             'requested_on' => $leave->created_at,
             'note' => $leave->note,
