@@ -259,9 +259,7 @@ class LeaveAdjustmentController extends Controller
             });
 
         $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/bulk_upload_template/leave_adjustment_bulk_attachment_file.xlsx';
-        $dir = '/var/www/html/storage/exports/';
-        $file_name = basename($url);
-        $file_path = $dir . $file_name;
+        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
         file_put_contents($file_path, file_get_contents($url));
 
         foreach ($leave_types as $key => $leave_type) {
