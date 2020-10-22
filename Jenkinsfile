@@ -30,7 +30,7 @@ pipeline {
                                     makeEmptyDirs: false,
                                     noDefaultExcludes: false,
                                     patternSeparator: '[, ]+',
-                                    remoteDirectory: 'sockets',
+                                    remoteDirectory: 'api',
                                     remoteDirectorySDF: false,
                                     removePrefix: '',
                                     sourceFiles: '**/*.env'
@@ -38,7 +38,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/sockets && mv development.env .env && sudo ./bin/deploy.sh development',
+                                    execCommand: 'cd /var/www/api && mv development.env .env && sudo ./bin/deploy.sh development',
                                     execTimeout: 120000,
                                     flatten: false,
                                     makeEmptyDirs: false,
@@ -69,12 +69,12 @@ pipeline {
             steps {
                 script {
                     sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'production-server',
+                        sshPublisherDesc(configName: 'api-node-03',
                             transfers: [
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/sockets && sudo ./bin/deploy.sh master',
+                                    execCommand: 'cd /var/www/api && sudo ./bin/deploy.sh master',
                                     execTimeout: 120000,
                                     flatten: false,
                                     makeEmptyDirs: false,
