@@ -18,6 +18,7 @@ class NeoBanking
     private $partner;
     private $resource;
     private $post_data;
+    private $gigatechKycData;
     private $uploadFolder;
 
     public function __construct()
@@ -42,6 +43,12 @@ class NeoBanking
         return $this;
     }
 
+    public function setGigatechKycData($gigatechKycData)
+    {
+        $this->gigatechKycData = $gigatechKycData;
+        return $this;
+    }
+
     public function setPartner($partner)
     {
         $this->partner = $partner;
@@ -60,11 +67,9 @@ class NeoBanking
         return $this;
     }
 
-    public function uploadDocument($request)
+    public function uploadDocument($file, $key)
     {
         $this->setUploadFolder();
-        $file = $request->file;
-        $key  = $request->key;
         list($file, $filename) = $this->makeNeoBankingFile($file, $key);
         $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
         $this->setPostData(json_encode([$key => $url]));
@@ -183,6 +188,11 @@ class NeoBanking
     public function getGigatechKycStatus($data) {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getGigatechKycStatus($data);
+    }
+
+    public function storeGigatechKyc() {
+        $bank = (new BankFactory())->setBank($this->bank)->get();
+        return $bank->storeGigatechKyc($this->gigatechKycData);
     }
 
     /**

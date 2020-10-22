@@ -80,4 +80,9 @@ class PrimeBank extends Bank
         return (new PrimeBankClient())->post('api/v1/kyc-status', $data);
     }
 
+    public function storeGigatechKyc($data)
+    {
+        return (new PrimeBankClient())->post('api/v1/kyc-submit', $data);
+    }
+
 }
