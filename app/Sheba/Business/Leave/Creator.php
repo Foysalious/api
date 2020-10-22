@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Leave;
 
+use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
 use App\Models\Business;
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
@@ -49,6 +50,8 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
+    private $isHalfDay;
+    private $halfDayConfigure;
     private $substitute;
     private $createdBy;
     /** @var UploadedFile[] */
@@ -153,6 +156,18 @@ class Creator
         return $this;
     }
 
+    public function setIsHalfDay($is_half_day)
+    {
+        $this->isHalfDay = $is_half_day;
+        return $this;
+    }
+
+    public function setHalfDayConfigure($half_day_configuration)
+    {
+        $this->halfDayConfigure = $half_day_configuration;
+        return $this;
+    }
+
     public function setNote($note)
     {
         $this->note = $note;
@@ -185,12 +200,20 @@ class Creator
             $period = CarbonPeriod::create($this->startDate, $this->endDate);
             foreach ($period as $date) {
                 $day_name_in_lower_case = strtolower($date->format('l'));
-                if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+                if (in_array($day_name_in_lower_case, $business_weekend)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
+                if (in_array($date->toDateString(), $business_holiday)) {
+                    $leave_day_into_holiday_or_weekend++;
+                    continue;
+                }
             }
         }
 
-        return ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
+        return $this->isHalfDay ?
+            ($this->endDate->diffInDays($this->startDate) + 0.5) - $leave_day_into_holiday_or_weekend :
+            ($this->endDate->diffInDays($this->startDate) + 1) - $leave_day_into_holiday_or_weekend;
     }
 
     public function setSubstitute($substitute_id)
@@ -213,6 +236,8 @@ class Creator
             'leave_type_id' => $this->leaveTypeId,
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
+            'is_half_day' => $this->isHalfDay,
+            'half_day_configuration' => $this->halfDayConfigure,
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
@@ -226,10 +251,15 @@ class Creator
                 ->create();
             $this->createAttachments($leave);
         });
+
         if ($leave->substitute_id) $this->sendPushToSubstitute($leave);
+
         return $leave;
     }
 
+    /**
+     * @param Leave $leave
+     */
     private function createAttachments(Leave $leave)
     {
         foreach ($this->attachments as $attachment) {
@@ -240,31 +270,12 @@ class Creator
         }
     }
 
-    public function sendPushToSubstitute(Leave $leave)
+    /**
+     * @param Leave $leave
+     */
+    private function sendPushToSubstitute(Leave $leave)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $leave->businessMember;
-        /** @var BusinessMember $substitute_business_member */
-        $substitute_business_member = BusinessMember::findOrFail($leave->substitute_id);
-        /** @var Member $member */
-        $member = $business_member->member;
-        /** @var Profile $profile */
-        $leave_applicant = $member->profile->name;
-        $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
-        $channel = config('sheba.push_notification_channel_name.employee');
-        $start_date = $leave->start_date->format('d/m/Y');
-        $end_date = $leave->end_date->format('d/m/Y');
-        $notification_data = [
-            "title" => 'Leave substitute',
-            "message" => "You have been chosen as $leave_applicant's substitute from $start_date to $end_date",
-            "event_type" => 'substitute',
-            "event_id" => $leave->id,
-            "sound" => "notification_sound",
-            "channel_id" => $channel,
-            "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-        ];
-
-        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
+        dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
     }
 
     private function getManager($business_member)
@@ -301,7 +312,6 @@ class Creator
     {
         $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
-
         return $business_total_leave_days_by_types - $used_days;
     }
 }

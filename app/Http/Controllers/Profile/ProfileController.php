@@ -71,6 +71,21 @@ class ProfileController extends Controller
         return api_response($request, null, 200, ['info' => $info]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param AccountServer $accounts
+     * @return JsonResponse
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function refreshToken($business, Request $request, AccountServer $accounts)
+    {
+        $this->validate($request, ['token' => 'required']);
+        $token = $accounts->getRefreshToken($request->token);
+        return api_response($request, null, 200, ['token' => $token]);
+    }
+
     public function sendEmailVerificationCode(Request $request)
     {
         try {

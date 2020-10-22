@@ -89,10 +89,21 @@ class DueTrackerRepository extends BaseRepository
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
             $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            $customerId              = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
+
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partnerId)->where('customer_id', $customerId)->first();
+            }
+
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $item['customer_name'] = $posProfile->nick_name;
+            } else {
+                $item['customer_name'] = $profile ? $profile->name : "Unknown";
+            }
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
-            $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
+            $item['customer_id']     = $customerId;
             return $item;
         });
         return $list;
@@ -117,13 +128,18 @@ class DueTrackerRepository extends BaseRepository
         $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
         $url    = $this->updateRequestParam($request, $url);
         $result = $this->client->get($url);
-        $list   = collect($result['data']['list'])->map(function ($item) {
+        $due_list = collect($result['data']['list']);
+        if(isset($request['offset']) && isset($request['limit'])) {
+            list($offset, $limit) = calculatePagination($request);
+            $due_list               = $due_list->slice($offset)->take($limit)->values();
+        }
+        $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
             return $item;
         });
-        list($offset, $limit) = calculatePagination($request);
-        $list               = $list->slice($offset)->take($limit)->values();
+
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
@@ -139,7 +155,7 @@ class DueTrackerRepository extends BaseRepository
             'stats'      => $result['data']['totals'],
             'customer'   => [
                 'id'                => $customer->id,
-                'name'              => $customer->profile->name,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
                 'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
@@ -149,6 +165,12 @@ class DueTrackerRepository extends BaseRepository
                 'total_transactions' => $total_transactions,
                 'total_credit'       => $total_credit,
                 'total_debit'        => $total_debit,
+            ],
+            'balance' => [
+                'amount' => abs($total_debit - $total_credit),
+                'type' => $total_debit > $total_credit ? 'Advance' : 'Due',
+                'color' => $total_debit > $total_credit ? '#219653' : '#DC1E1E'
+
             ]
         ];
     }

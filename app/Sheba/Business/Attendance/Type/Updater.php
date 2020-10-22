@@ -32,8 +32,10 @@ class Updater
         } else {
             /** @var BusinessAttendanceTypes $attendance_type */
             $attendance_type = $this->attendanceTypeRepo->where('id', $this->type_id)->withTrashed()->first();
-            if ($this->action == AttendanceType::CHECKED && $attendance_type->trashed()) $attendance_type->restore();
-            if ($this->action == AttendanceType::UNCHECKED && !$attendance_type->trashed()) $attendance_type->delete();
+            if ($attendance_type) {
+                if ($this->action == AttendanceType::CHECKED && $attendance_type->trashed()) $attendance_type->restore();
+                if ($this->action == AttendanceType::UNCHECKED && !$attendance_type->trashed()) $attendance_type->delete();
+            }
         }
     }
 
