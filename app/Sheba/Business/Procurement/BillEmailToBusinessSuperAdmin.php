@@ -48,8 +48,7 @@ class BillEmailToBusinessSuperAdmin
 
         foreach ($business->superAdmins as $member) {
             /** @var Member $member */
-            // $email = $member->profile->email;
-            $email = 'pasha@sheba.xyz';
+            $email = $member->profile->email;
             if ($email) {
                 (new SendTenderBillInvoiceEmailToBusiness($email, $file_name))->handle();
                 // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
