@@ -263,7 +263,7 @@ class LeaveAdjustmentController extends Controller
         file_put_contents($file_path, file_get_contents($url));
 
         foreach ($leave_types as $key => $leave_type) {
-            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 4)->updateLeaveTypeId($leave_type['id'])
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 7)->updateLeaveTypeId($leave_type['id'])
                 ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
         }
         $leave_adjustment_excel->takeCompletedAction();
