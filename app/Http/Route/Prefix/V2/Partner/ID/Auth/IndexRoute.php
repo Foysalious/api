@@ -8,6 +8,7 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('webstore-dashboard', 'Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
@@ -15,6 +16,7 @@ class IndexRoute
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
+            $api->post('webstore-settings', 'Pos\WebstoreSettingsController@update');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
