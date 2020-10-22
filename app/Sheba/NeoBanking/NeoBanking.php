@@ -60,11 +60,9 @@ class NeoBanking
         return $this;
     }
 
-    public function uploadDocument($request)
+    public function uploadDocument($file, $key)
     {
         $this->setUploadFolder();
-        $file = $request->file;
-        $key  = $request->key;
         list($file, $filename) = $this->makeNeoBankingFile($file, $key);
         $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
         $this->setPostData(json_encode([$key => $url]));
