@@ -66,9 +66,10 @@ WORKDIR /var/www
 
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
-RUN ./bin/sentry_release.sh
 
-RUN composer install --ignore-platform-reqs
+RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
+
+RUN php artisan config:clear
 
 EXPOSE 80 443
 

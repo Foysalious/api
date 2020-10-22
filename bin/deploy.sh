@@ -10,6 +10,7 @@ pull_from_docker_registry() {
   docker pull registry.sheba.xyz/"${CONTAINER_NAME}"
 
   ./bin/dcup.sh prod -d
+  ./bin/sentry_release_with_redis_entry_script.sh
 }
 
 # USE ON LOCAL

@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-
 . ./bin/parse_env.sh
 
 if [ "${APP_ENV}" = production ]; then

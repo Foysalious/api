@@ -4,11 +4,9 @@ services:
     image: registry.sheba.xyz/${CONTAINER_NAME}
     environment:
       SERVICE_NAME: app
-      VIRTUAL_HOST: ${API_DOMAIN}
     ports:
       - ${PORT}:80
 
 networks:
   api-service-network:
-    external:
-      name: ${EXTERNAL_NETWORK}
+    driver: bridge
