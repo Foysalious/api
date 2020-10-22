@@ -66,6 +66,11 @@ class PosOrderRepository extends BaseRepository
         return $this->calculate($this->createdQuery($date)->of($partner->id)->get());
     }
 
+    public function getCreatedWebstoreOrdersBetweenDateByPartner(TimeFrame $time_frame, Partner $partner)
+    {
+        return $this->calculate($this->createdQueryBetween($time_frame)->of($partner->id)->webstoreOrders()->get());
+    }
+
     private function createdQuery(Carbon $date)
     {
         return $this->priceQuery()->createdAt($date);
