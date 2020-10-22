@@ -1,4 +1,4 @@
-<?php namespace App\Http\Controllers\Webstore;
+<?php namespace App\Http\Controllers\Partner\Webstore;
 
 use App\Models\Partner;
 use Carbon\Carbon;
