@@ -753,36 +753,7 @@ return [
                 "mandatory"     => false
             ]
         ],
-        'nid_selfie'    => [
-            [
-                'field_type' => 'header',
-                'title'      => 'NID তথ্য যাচাই করুন',
-                'mandatory'  => false,
-            ],
-            [
-                'field_type'    => 'editText',
-                'title'         => 'নাম *',
-                'hint'          => 'আবুল কালাম আজাদ',
-                'name'          => 'nid_name',
-                'error_message' => 'নাম পূরণ আবশ্যক',
-                'is_editable'   => true
-            ],
-            [
-                'field_type'    => 'editText',
-                'title'         => 'পিতার নাম *',
-                'hint'          => 'মোতালেব খান',
-                'name'          => 'nid_father_name',
-                'error_message' => 'নাম পূরণ আবশ্যক',
-                'is_editable'   => true
-            ],
-            [
-                'field_type'    => 'date',
-                'title'         => 'জন্ম তারিখ *',
-                'name'          => 'birth_date',
-                'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
-            ]
-        ]
+        'nid_selfie'    => []
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
 ];
