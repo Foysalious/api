@@ -1,8 +1,6 @@
-<?php namespace App\Http\Controllers\Pos;
+<?php namespace App\Http\Controllers\Partner\Webstore;
 
-use App\Models\Partner;
 use Illuminate\Http\Request;
-
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
