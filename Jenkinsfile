@@ -1,8 +1,8 @@
 pipeline {
     agent any
-    environment {
+    /*environment {
         CONTAINER_NAME = "${sh(script: './bin/parse_env.sh | echo $CONTAINER_NAME', returnStdout: true)}"
-    }
+    }*/
     stages {
         stage('Make ENV File') {
             steps {
@@ -11,6 +11,7 @@ pipeline {
                     string(credentialsId: 'VAULT_SECRET_ID', variable: 'VAULT_SECRET_ID')
                 ]) {
                     sh './bin/make_env.sh'
+                    sh './bin/parse_env.sh'
                 }
             }
         }
@@ -59,13 +60,14 @@ pipeline {
             }
         }
         stage('Build For Production') {
-            when { branch 'master' }
+            when { branch 'master-docker' }
             steps {
+                 sh './bin/copy_needed_auth.sh'
                  sh './bin/build.sh'
             }
         }
         stage('Deploy To Production') {
-            when { branch 'master' }
+            when { branch 'master-docker' }
             steps {
                 script {
                     sshPublisher(publishers: [
@@ -95,7 +97,7 @@ pipeline {
             }
         }
         stage('Clean Up Build') {
-            when { branch 'master' }
+            when { branch 'master-docker' }
             steps {
                 sh './bin/remove_build.sh'
             }

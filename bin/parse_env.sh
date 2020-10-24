@@ -6,7 +6,7 @@
 # shellcheck disable=SC2035
 count=$(ls -1 *.env 2>/dev/null | wc -l)
 if [ "$count" != 0 ]; then
-  sudo mv *.env .env
+  mv *.env .env
 fi
 
 # shellcheck disable=SC2046
