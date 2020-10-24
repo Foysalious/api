@@ -42,7 +42,10 @@ RUN pecl install mongodb-1.4.4 \
 RUN curl -sL https://sentry.io/get-cli/ | bash
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+# RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php \
+        && mv composer.phar /usr/local/bin/ \
+        && ln -s /usr/local/bin/composer.phar /usr/local/bin/composer
 # RUN composer global require hirak/prestissimo
 
 # Copy existing application directory permissions
