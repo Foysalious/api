@@ -3,7 +3,7 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
-use Sheba\Business\LeaveAdjustment\GenerateAdjustmentExcel;
+use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcel;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelUploadError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -71,7 +71,6 @@ class LeaveAdjustmentController extends Controller
         $leave_start_date = Carbon::parse($request->start_date);
         $leave_end_date = Carbon::parse($request->end_date)->endOfDay();
         $total_leave_days = $leave_end_date->diffInDays($leave_start_date) + 1;
-
 
         if (!in_array($request->business_member_id, $business_member_ids)) {
             return api_response($request, null, 420, ['message' => 'This business member is not belongs to this business']);
@@ -194,8 +193,10 @@ class LeaveAdjustmentController extends Controller
                 } else {
                     $excel_error = null;
                 }
+
                 $leave_adjustment_excel_error->setAgent($business)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
+
             if ($halt_top_up) {
                 $excel_data_format_errors = $leave_adjustment_excel_error->takeCompletedAction();
                 return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
@@ -240,30 +241,35 @@ class LeaveAdjustmentController extends Controller
         }
     }
 
-    public function adjustExcel(Request $request, GenerateAdjustmentExcel $generate_adjustment_excel)
+    /**
+     * @param Request $request
+     * @param LeaveAdjustmentExcel $leave_adjustment_excel
+     * @return JsonResponse
+     */
+    public function generateAdjustmentExcel(Request $request, LeaveAdjustmentExcel $leave_adjustment_excel)
     {
         /** @var Business $business */
         $business = $request->business;
 
         $leave_types = [];
-        $business->leaveTypes()->with(['leaves' => function ($q) {
-            return $q->accepted();
-        }])->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
-            ->get()
+        $business->leaveTypes()->whereNull('deleted_at')->select('id', 'title', 'total_days', 'deleted_at')->get()
             ->each(function ($leave_type) use (&$leave_types) {
-                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
-                $leave_type_data = [
-                    'id' => $leave_type->id,
-                    'title' => $leave_type->title,
-                    'total_days' => $leave_type->total_days
-                ];
+                $leave_type_data = ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days];
                 array_push($leave_types, $leave_type_data);
             });
 
-        $leave_adjustment_excel_format = [];
-        return $generate_adjustment_excel->setAdjustmentData($leave_adjustment_excel_format)->setLeaveType($leave_types)->get();
+        $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/bulk_upload_template/leave_adjustment_bulk_attachment_file.xlsx';
+        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+        file_put_contents($file_path, file_get_contents($url));
 
+        foreach ($leave_types as $key => $leave_type) {
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 7)->updateLeaveTypeId($leave_type['id'])
+                ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
+        }
+        $leave_adjustment_excel->takeCompletedAction();
+        return api_response($request, null, 200);
     }
+
     /**
      * @param $leave
      */
