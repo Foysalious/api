@@ -31,7 +31,8 @@ class LeaveSettingsController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $business_member = $business_member_repo->find($business_member['id']);
-        $leave_types = $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
+        $leave_types = $request->has('trashed') && $request->trashed === '0' ?
+            $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business) : $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
         $half_day_config = [
            'is_half_day_enable' => $business->is_half_day_enable,
            'half_day_initial_timings' => $this->getHalfDayTimings($business)
