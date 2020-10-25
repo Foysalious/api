@@ -157,7 +157,7 @@ class TopUpController extends Controller
                 if($wrongPinCount >=3){
                     $this->affiliateLogout($aff);
                     $wrongPINCountRepo->where('affiliate_id', $affiliate)->delete();
-                    return api_response($request, null, 403, ['message' => "Wrong PIN count reached 3."]);
+                    return api_response($request, null, 404, ['message' => "User logged out due to wrong PIN count reached 3."]);
                 }
 
                 return api_response($request, null, 403, ['message' => "Credential Mismatch."]);
