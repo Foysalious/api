@@ -39,7 +39,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/api && mv development.env .env && sudo ./bin/deploy.sh development',
+                                    execCommand: 'cd /var/www/api && mv development.env .env && ./bin/deploy.sh development',
                                     execTimeout: 120000,
                                     flatten: false,
                                     makeEmptyDirs: false,
@@ -76,7 +76,7 @@ pipeline {
                                 sshTransfer(
                                     cleanRemote: false,
                                     excludes: '',
-                                    execCommand: 'cd /var/www/api && sudo ./bin/deploy.sh master',
+                                    execCommand: 'cd /var/www/api && ./bin/deploy.sh master',
                                     execTimeout: 120000,
                                     flatten: false,
                                     makeEmptyDirs: false,
