@@ -68,7 +68,6 @@ class CategoryController extends Controller
                 $category->children->each(function ($child) use (&$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
                     array_push($deleted_services, $child->deletedServices->all());
-
                 });
                 removeRelationsAndFields($category);
                 if (!empty($all_services)) $all_services = array_merge(... $all_services);
@@ -80,8 +79,10 @@ class CategoryController extends Controller
             });
 
             $items_with_buying_price = 0;
-            $master_categories->each(function ($category) use (&$total_items, &$total_buying_price, &$items_with_buying_price) {
-                $category->services->each(function ($service) use (&$total_items, &$total_buying_price, &$items_with_buying_price) {
+            $master_categories->each(function ($category) use (&$category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
+                $category_id = $category->id;
+                $category->services->each(function ($service) use ($category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
+                    $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
                     $total_items++;
