@@ -76,8 +76,11 @@ class Updater
         $requestConfig['second_half']['start_time'] = Carbon::parse($requestConfig['second_half']['start_time'])->format('H:i').':59';
         $requestConfig['second_half']['end_time'] = Carbon::parse($requestConfig['second_half']['end_time'])->format('H:i').':59';
 
+        $requestConfig = json_encode($requestConfig);
+
+        //dd($this->halfDay);
         if ($this->halfDay) {
-            $this->halfDayConfiguration = $request->half_day_config;
+            $this->halfDayConfiguration = $requestConfig;
         }
         return $this;
     }
@@ -131,6 +134,7 @@ class Updater
             'is_half_day_enable' => 1,
             'half_day_configuration' => $this->halfDayConfiguration
         ];
+        //dd($data);
         return $this->business->update($this->withUpdateModificationField($data));
     }
 
