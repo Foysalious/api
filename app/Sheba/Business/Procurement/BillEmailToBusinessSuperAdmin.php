@@ -47,7 +47,7 @@ class BillEmailToBusinessSuperAdmin
         App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
 
         $data = [
-            'subject'=> $procurement_info['type'] . " for " . $procurement_info['code'],
+            'subject'=> ucwords($procurement_info['type']) . " for " . $procurement_info['code'],
             'order_id'=> $procurement_info['code'],
             'type'=> $procurement_info['type']
         ];
@@ -55,7 +55,7 @@ class BillEmailToBusinessSuperAdmin
         foreach ($business->superAdmins as $member) {
             /** @var Member $member */
             $email = $member->profile->email;
-            $data['super_admin_name'] = $member->profile->name ?: "Sir/Madam";
+            $data['super_admin_name'] = $member->profile->name ? ucwords($member->profile->name) : "Sir/Madam";
             if ($email) {
                 (new SendTenderBillInvoiceEmailToBusiness($email, $file_name, $data))->handle();
                 // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
