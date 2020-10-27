@@ -20,6 +20,9 @@ class AdjustmentExcel
     const LEAVE_TYPE_TITLE = "M";
     const TOTAL_DAYS = "N";
 
+    const SUPER_ADMIN_ID = "P";
+    const SUPER_ADMIN_NAME = "Q";
+
     const USERS_MAIL_COLUMN_TITLE = "users_email";
     const TITLE_COLUMN_TITLE = "title";
     const LEAVE_TYPE_ID_COLUMN_TITLE = "leave_type_id";
