@@ -266,6 +266,14 @@ class LeaveAdjustmentController extends Controller
             $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateLeaveTypeId($leave_type['id'])
                 ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
         }
+       
+        $super_admins = $business->getAccessibleBusinessMember()->where('is_super', 1)->get();
+        foreach ($super_admins as $key => $admin) {
+            $profile = $admin->member->profile;
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateSuperAdminId($admin->id)
+                ->updateSuperAdminName($profile->name);
+        }
+
         $leave_adjustment_excel->takeCompletedAction();
         return api_response($request, null, 200);
     }
