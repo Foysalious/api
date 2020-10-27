@@ -64,6 +64,12 @@ RUN chmod +x /etc/entrypoint.sh
 # Set working directory
 WORKDIR /var/www
 
+# Laravel specific file permission
+RUN find ./ -type f -exec chmod 664 {} \;
+RUN find ./ -type d -exec chmod 775 {} \;
+RUN chgrp -R www-data storage bootstrap/cache
+RUN chmod -R ug+rwx storage bootstrap/cache
+
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
