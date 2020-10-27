@@ -62,7 +62,7 @@ class Updater
      * @param ProcurementItemRepositoryInterface $procurement_item_repository
      * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
      * @param ProcurementCreator $procurement_creator
-     * @param BillInvoiceDataGenerator $data_generator
+     * @param BillEmailToBusinessSuperAdmin $bill_email
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 OrderClosedHandler $procurement_order_close_handler,
