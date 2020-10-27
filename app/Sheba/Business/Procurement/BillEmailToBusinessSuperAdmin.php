@@ -49,7 +49,8 @@ class BillEmailToBusinessSuperAdmin
         $data = [
             'subject'=> ucwords($procurement_info['type']) . " for " . $procurement_info['code'],
             'order_id'=> $procurement_info['code'],
-            'type'=> $procurement_info['type']
+            'type'=> $procurement_info['type'],
+            'url'=> config('sheba.business_url') . "/dashboard/orders/rfq/" . $this->procurement->id . "/bill?bidId=" . $this->bid->id
         ];
 
         foreach ($business->superAdmins as $member) {
