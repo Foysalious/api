@@ -57,12 +57,12 @@ class PersonalInformationController extends Controller
             $request->merge(['mobile' => trim($request->mobile)]);
             $this->validate($request, [
                 'nid_no' => 'string|unique:resources,nid_no',
-                'nid_back' => 'file',
-                'nid_front' => 'file',
+                'nid_back' => 'file|mimes:jpeg,png,jpg',
+                'nid_front' => 'file|mimes:jpeg,png,jpg',
                 'birth_date' => 'date|date_format:Y-m-d|before:' . Carbon::today()->subYears(18)->format('Y-m-d'),
                 'name' => 'string',
                 'address' => 'string',
-                'picture' => 'file',
+                'picture' => 'file|mimes:jpeg,png,jpg',
                 'resource' => 'numeric',
                 'mobile' => 'required_without:resource|string|mobile:bd',
                 'additional_mobile' => 'mobile:bd'
@@ -115,9 +115,6 @@ class PersonalInformationController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers\Pos;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\Profile;
 use App\Transformers\CustomSerializer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
@@ -185,9 +187,13 @@ class OrderController extends Controller
                 $usage_type = Usage::Partner()::POS_ORDER_CREATE;
                 $this->setModifier($modifier);
             } else {
+                /** @var Partner $partner */
                 $partner              = $partnerRepository->find((int)$partner);
+                /** @var Profile $profile */
                 $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
-                $partner_pos_customer = $posCustomerCreator->setProfile($profile)->setPartner($partner)->create();
+                $_data['mobile']=$request->customer_mobile;
+                $_data['name']=$request->customer_name;
+                $partner_pos_customer = $posCustomerCreator->setData($_data)->setProfile($profile)->setPartner($partner)->create();
                 $pos_customer         = $partner_pos_customer->customer;
                 $modifier = $profile->customer;
                 $usage_type = Usage::Partner()::PRODUCT_LINK;
