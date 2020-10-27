@@ -56,24 +56,29 @@ class CategoryController extends Controller
                                 $discounts_query->where($updated_after_clause);
                             }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc');
 
-                        }])->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
+                        }]);
+                    if ($request->has('updated_after')) {
+                        $q->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
                             $deleted_service_query->where($deleted_after_clause)->where($deleted_service_where_query)->select($this->getSelectColumnsOfDeletedService());
                         }]);
+                    }
                 }]);
 
             $all_services = [];
             $deleted_services = [];
 
-            $master_categories->each(function ($category) use (&$all_services, &$deleted_services) {
-                $category->children->each(function ($child) use (&$children, &$all_services, &$deleted_services) {
+            $master_categories->each(function ($category) use ($request,&$all_services, &$deleted_services) {
+                $category->children->each(function ($child) use ($request,&$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
                     array_push($deleted_services, $child->deletedServices->all());
                 });
                 removeRelationsAndFields($category);
                 if (!empty($all_services)) $all_services = array_merge(... $all_services);
-                if (!empty($all_services)) $deleted_services = array_merge(... $deleted_services);
+                if (!empty($deleted_services)) $deleted_services = array_merge(... $deleted_services);
                 $category->setRelation('services', collect($all_services));
-                $category->setRelation('deleted_services', collect($deleted_services));
+                if ($request->has('updated_after')) {
+                    $category->setRelation('deletedServices', collect($deleted_services));
+                }
                 $all_services = [];
                 $deleted_services = [];
             });
@@ -91,8 +96,13 @@ class CategoryController extends Controller
                 });
             });
 
+
+            $final =  $master_categories->filter(function ($master_category){
+               return ($master_category->services->count() > 0) ||  ($master_category->deletedServices->count() > 0);
+            })->values()->all();
+
             $data = [];
-            $data['categories'] = $master_categories;
+            $data['categories'] = $final;
             $data['total_items'] = (double)$total_items;
             $data['total_buying_price'] = (double)$total_buying_price;
             $data['items_with_buying_price'] = $items_with_buying_price;
