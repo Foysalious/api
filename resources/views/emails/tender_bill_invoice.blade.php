@@ -92,8 +92,8 @@
                                                         </tr>
                                                         <tr>
                                                             <td class="padding-side" align="left" style="padding:0 60px">
-                                                                <p class="message" style="opacity:0.8;font-family:Lato;font-size:16px">
-                                                                    Please find the {{ $type }} for the <b>{{ $order_id }}</b> which is attached in this mail.
+                                                                <p class="message" style="opacity:0.8;font-family:Poppins, sans-serif;font-size:16px">
+                                                                    Please find the {{ $type }} for the {{ $type }} id: <b><a href="{{ $url }}">{{ $order_id }}</a></b> which is attached in this mail.
                                                                 </p>
                                                             </td>
                                                         </tr>

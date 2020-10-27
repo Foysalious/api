@@ -41,7 +41,8 @@ class SendTenderBillInvoiceEmailToBusiness extends Job implements ShouldQueue
             Mail::send('emails.tender_bill_invoice', [
                 'super_admin_name' => $this->data['super_admin_name'],
                 'order_id' => $this->data['order_id'],
-                'type' => $this->data['type']
+                'type' => $this->data['type'],
+                'url' => $this->data['url']
             ], function ($m) use ($subject) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
                 $m->to($this->email)->subject($subject);
