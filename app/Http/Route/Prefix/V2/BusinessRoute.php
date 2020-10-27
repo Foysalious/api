@@ -76,6 +76,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
                     $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
                 });
+                $api->group(['prefix' => 'half-day-setting'], function ($api) {
+                    $api->post('/', 'B2b\AttendanceController@updateHalfDaySetting');
+                });
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
                     $api->post('/', 'B2b\AttendanceController@storeHoliday');
@@ -103,6 +106,7 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->get('/adjust', 'B2b\LeaveController@adjustExcel');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {

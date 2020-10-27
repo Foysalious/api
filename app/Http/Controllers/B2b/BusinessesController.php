@@ -320,13 +320,14 @@ class BusinessesController extends Controller
      */
     public function getVendorsListV3($business, Request $request, ProfileRepositoryInterface $profile_repository)
     {
+        /** @var Business $business */
         $business = $request->business;
         if (!$business) return api_response($request, null, 404);
 
         $vendors = collect();
         $sheba_verified_vendors = collect();
 
-        $business->partners()
+        $business->activePartners()
             ->with('resources.profile')
             ->select('id', 'name', 'logo', 'address')
             ->get()
