@@ -21,8 +21,7 @@ class CategoryController extends Controller
             };
             $deleted_after_clause = function ($q) use ($request, $partner) {
                 if ($request->has('updated_after')) {
-                    $q->select('id','partner_id','pos_category_id')->partner($partner->id)
-                        ->where('deleted_at', '>=', $request->updated_after);
+                    $q->where('deleted_at', '>=', $request->updated_after);
                 }
             };
             $service_where_query  = function ($service_query) use ($partner, $updated_after_clause, $request) {
@@ -38,10 +37,14 @@ class CategoryController extends Controller
                 }
             };
 
+            $deleted_service_where_query  = function ($deleted_service_query) use ($partner, $updated_after_clause, $request) {
+                $deleted_service_query->partner($partner->id);
+            };
+
             $partner_categories = $this->getPartnerCategories($partner);
 
-            $master_categories = PosCategory::whereIn('id',$partner_categories)->select($this->getSelectColumnsOfCategory())->get()
-                ->load(['children' => function ($q) use ($request, $service_where_query, $updated_after_clause,$deleted_after_clause) {
+            $master_categories = PosCategory::whereIn('id', $partner_categories)->select($this->getSelectColumnsOfCategory())->get()
+                ->load(['children' => function ($q) use ($request, $service_where_query, $deleted_service_where_query, $updated_after_clause, $deleted_after_clause) {
                     $q->whereHas('services', $service_where_query)
                         ->with(['services' => function ($service_query) use ($service_where_query, $updated_after_clause) {
                             $service_query->where($service_where_query);
@@ -54,26 +57,28 @@ class CategoryController extends Controller
                             }])->select($this->getSelectColumnsOfService())->orderBy('name', 'asc');
 
                         }]);
-
-                    if ($request->has('updated_after') ) {
-                        $q->with(['deletedServices' => $deleted_after_clause]);
+                    if ($request->has('updated_after')) {
+                        $q->orWhereHas('deletedServices', $deleted_service_where_query)->with(['deletedServices' => function ($deleted_service_query) use ($deleted_after_clause, $deleted_service_where_query) {
+                            $deleted_service_query->where($deleted_after_clause)->where($deleted_service_where_query)->select($this->getSelectColumnsOfDeletedService());
+                        }]);
                     }
                 }]);
 
             $all_services = [];
             $deleted_services = [];
 
-            $master_categories->each(function ($category) use(&$all_services,&$deleted_services) {
-                $category->children->each(function($child) use(&$all_services,&$deleted_services){
-
-                    array_push($all_services,$child->services->all());
-                    array_push($deleted_services,$child->deletedServices->all());
+            $master_categories->each(function ($category) use ($request,&$all_services, &$deleted_services) {
+                $category->children->each(function ($child) use ($request,&$children, &$all_services, &$deleted_services) {
+                    array_push($all_services, $child->services->all());
+                    array_push($deleted_services, $child->deletedServices->all());
                 });
                 removeRelationsAndFields($category);
-                $all_services = array_merge(... $all_services);
-                $deleted_services = array_merge(... $deleted_services);
-                $category->setRelation('services',collect($all_services));
-                $category->setRelation('deleted_services',collect($deleted_services));
+                if (!empty($all_services)) $all_services = array_merge(... $all_services);
+                if (!empty($deleted_services)) $deleted_services = array_merge(... $deleted_services);
+                $category->setRelation('services', collect($all_services));
+                if ($request->has('updated_after')) {
+                    $category->setRelation('deletedServices', collect($deleted_services));
+                }
                 $all_services = [];
                 $deleted_services = [];
             });
@@ -81,19 +86,24 @@ class CategoryController extends Controller
             $items_with_buying_price = 0;
             $master_categories->each(function ($category) use (&$category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
                 $category_id = $category->id;
-                 $category->services->each(function ($service) use ($category_id,&$total_items, &$total_buying_price,  &$items_with_buying_price) {
+                $category->services->each(function ($service) use ($category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
                     $service->pos_category_id = $category_id;
-                    $service->unit          = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
+                    $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
                     $total_items++;
-                    if($service->cost) $items_with_buying_price += 1;
+                    if ($service->cost) $items_with_buying_price += 1;
                     $total_buying_price += $service->cost * $service->stock;
                 });
             });
 
-            $data                       = [];
-            $data['categories']         = $master_categories;
-            $data['total_items']        = (double)$total_items;
+
+            $final =  $master_categories->filter(function ($master_category){
+               return ($master_category->services->count() > 0) ||  ($master_category->deletedServices->count() > 0);
+            })->values()->all();
+
+            $data = [];
+            $data['categories'] = $final;
+            $data['total_items'] = (double)$total_items;
             $data['total_buying_price'] = (double)$total_buying_price;
             $data['items_with_buying_price'] = $items_with_buying_price;
 
@@ -128,6 +138,14 @@ class CategoryController extends Controller
             'thumb', 'banner', 'app_thumb', 'app_banner', 'cost', 'price', 'wholesale_price', 'vat_percentage', 'stock', 'unit', 'warranty', 'warranty_unit', 'show_image', 'shape', 'color'
         ];
     }
+    private function getSelectColumnsOfDeletedService()
+    {
+        return [
+            'id','partner_id','pos_category_id'
+        ];
+    }
+
+
 
     private function getSelectColumnsOfCategory()
     {
