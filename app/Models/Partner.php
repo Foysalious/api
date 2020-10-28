@@ -580,11 +580,14 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
+<<<<<<< Updated upstream
 
     public function retailers()
     {
         return $this->getFirstAdminResource()->retailers();
     }
+=======
+>>>>>>> Stashed changes
 
     public function movieTicketOrders()
     {
