@@ -10,8 +10,8 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         try {
-            $partner            = $request->partner;
-            $total_items        = 0.00;
+            $partner = $request->partner;
+            $total_items = 0.00;
             $total_buying_price = 0.00;
 
             $updated_after_clause = function ($q) use ($request) {
@@ -24,7 +24,7 @@ class CategoryController extends Controller
                     $q->where('deleted_at', '>=', $request->updated_after);
                 }
             };
-            $service_where_query  = function ($service_query) use ($partner, $updated_after_clause, $request) {
+            $service_where_query = function ($service_query) use ($partner, $updated_after_clause, $request) {
                 $service_query->partner($partner->id);
 
                 if ($request->has('updated_after')) {
@@ -37,7 +37,7 @@ class CategoryController extends Controller
                 }
             };
 
-            $deleted_service_where_query  = function ($deleted_service_query) use ($partner, $updated_after_clause, $request) {
+            $deleted_service_where_query = function ($deleted_service_query) use ($partner, $updated_after_clause, $request) {
                 $deleted_service_query->partner($partner->id);
             };
 
@@ -67,8 +67,8 @@ class CategoryController extends Controller
             $all_services = [];
             $deleted_services = [];
 
-            $master_categories->each(function ($category) use ($request,&$all_services, &$deleted_services) {
-                $category->children->each(function ($child) use ($request,&$children, &$all_services, &$deleted_services) {
+            $master_categories->each(function ($category) use ($request, &$all_services, &$deleted_services) {
+                $category->children->each(function ($child) use ($request, &$children, &$all_services, &$deleted_services) {
                     array_push($all_services, $child->services->all());
                     array_push($deleted_services, $child->deletedServices->all());
                 });
@@ -83,26 +83,28 @@ class CategoryController extends Controller
                 $deleted_services = [];
             });
 
-            $items_with_buying_price = 0;
-            $master_categories->each(function ($category) use (&$category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
+            $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
                 $category_id = $category->id;
-                $category->services->each(function ($service) use ($category_id,&$total_items, &$total_buying_price, &$items_with_buying_price) {
+                $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
                     $total_items++;
-                    if ($service->cost) $items_with_buying_price += 1;
+                    if ($service->cost) $items_with_buying_price++;
                     $total_buying_price += $service->cost * $service->stock;
                 });
             });
 
+            if ($request->has('updated_after')) {
+                $master_categories = $master_categories->filter(function ($master_category) {
+                    return ($master_category->services->count() > 0) || ($master_category->deletedServices->count() > 0);
+                });
+            }
 
-            $final =  $master_categories->filter(function ($master_category){
-               return ($master_category->services->count() > 0) ||  ($master_category->deletedServices->count() > 0);
-            })->values()->all();
+
 
             $data = [];
-            $data['categories'] = $final;
+            $data['categories'] = $master_categories->values()->all();
             $data['total_items'] = (double)$total_items;
             $data['total_buying_price'] = (double)$total_buying_price;
             $data['items_with_buying_price'] = $items_with_buying_price;
