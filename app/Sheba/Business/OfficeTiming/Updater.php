@@ -71,10 +71,16 @@ class Updater
         $this->halfDay = (int) $request->half_day;
         $requestConfig = json_decode($request->half_day_config, true);
 
-        $requestConfig['first_half']['start_time'] = Carbon::parse($requestConfig['first_half']['start_time'])->format('H:i').':59';
-        $requestConfig['first_half']['end_time'] = Carbon::parse($requestConfig['first_half']['end_time'])->format('H:i').':59';
-        $requestConfig['second_half']['start_time'] = Carbon::parse($requestConfig['second_half']['start_time'])->format('H:i').':59';
-        $requestConfig['second_half']['end_time'] = Carbon::parse($requestConfig['second_half']['end_time'])->format('H:i').':59';
+        $requestConfig = [
+            'first_half' => [
+                'start_time' => Carbon::parse($requestConfig['first_half']['start_time'])->format('H:i').':59',
+                'end_time' => Carbon::parse($requestConfig['first_half']['end_time'])->format('H:i').':59',
+            ],
+            'second_half' => [
+                'start_time' => Carbon::parse($requestConfig['second_half']['start_time'])->format('H:i').':59',
+                'end_time' => Carbon::parse($requestConfig['second_half']['end_time'])->format('H:i').':59',
+            ]
+        ];
 
         $requestConfig = json_encode($requestConfig);
 
