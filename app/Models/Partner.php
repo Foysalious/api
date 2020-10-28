@@ -606,6 +606,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     }
 
 
+    public function retailers()
+    {
+        return $this->getFirstAdminResource()->retailers();
+    }
+
     public function movieTicketOrders()
     {
         return $this->morphMany(MovieTicketOrder::class, 'agent');
