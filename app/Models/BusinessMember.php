@@ -8,6 +8,7 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Helpers\TimeFrame;
 
 class BusinessMember extends Model
@@ -65,11 +66,6 @@ class BusinessMember extends Model
     public function manager()
     {
         return $this->belongsTo(BusinessMember::class, 'manager_id');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->whereIn('status', ['active', 'invited']);
     }
 
     /**
@@ -177,4 +173,16 @@ class BusinessMember extends Model
         $date = $date->toDateString();
         return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
     }
+
+    public function leaveTypes()
+    {
+        return $this->hasMany(BusinessMemberLeaveType::class);
+    }
+
+    public function getLeaveTypes()
+    {
+        if ($this->leaveTypes->get()) return $this->leaveTypes;
+        return $this->business->leaveTypes;
+    }
+
 }
