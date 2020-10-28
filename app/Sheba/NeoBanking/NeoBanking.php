@@ -76,6 +76,12 @@ class NeoBanking
         return $this;
     }
 
+    public function getImageUrl($file, $key) {
+        $this->setUploadFolder();
+        list($file, $filename) = $this->makeNeoBankingFile($file, $key);
+        return $this->saveFileToCDN($file, $this->uploadFolder, $filename);
+    }
+
     /**
      * @return BankAccountInfoWithTransaction
      * @throws Exceptions\InvalidBankCode
@@ -192,7 +198,16 @@ class NeoBanking
 
     public function storeGigatechKyc() {
         $bank = (new BankFactory())->setBank($this->bank)->get();
-        return $bank->storeGigatechKyc($this->gigatechKycData);
+        $response = $bank->storeGigatechKyc($this->gigatechKycData);
+        if(4002 === $response['data']["status_code"]) {
+            $nid_front = $this->getImageUrl($this->gigatechKycData['id_front'], "nid_front");
+            $nid_back = $this->getImageUrl($this->gigatechKycData['id_back'], "nid_back");
+            $applicant_photo = $this->getImageUrl($this->gigatechKycData['applicant_photo'], "applicant_photo");
+            $data = array_except($this->gigatechKycData, ["is_kyc_store","remember_token","applicant_photo","id_front","id_back"]);
+            $data = array_merge($data, ['nid_front'=>$nid_front, 'nid_back'=>$nid_back, 'applicant_photo' =>$applicant_photo]);
+            $this->setPostData( json_encode($data))->postCategoryDetail('nid_selfie');
+        }
+        return $response;
     }
 
     /**
