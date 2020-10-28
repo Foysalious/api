@@ -40,6 +40,20 @@ class LeaveAdjustmentExcel
         return $this;
     }
 
+    public function updateSuperAdminId($message)
+    {
+        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::SUPER_ADMIN_ID . $this->row, $message);
+        $this->excel->save();
+        return $this;
+    }
+
+    public function updateSuperAdminName($message)
+    {
+        $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::SUPER_ADMIN_NAME . $this->row, $message);
+        $this->excel->save();
+        return $this;
+    }
+
     public function updateLeaveTypeId($message)
     {
         $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::LEAVE_TYPE_ID . $this->row, $message);
