@@ -124,7 +124,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                 ]
             ]);
 
-            $logs = $this->leaveLogRepo->where('leave_id', $leave->id)->where('type', 'leave_adjustment')->select('log', 'created_at')->get();
+            $logs = $this->leaveLogRepo->where('leave_id', $leave->id)->where('type', 'leave_adjustment')->where('is_changed_by_super', 0)->select('log', 'created_at')->get();
             if (!$logs->isEmpty()) {
                 $logs->map(function ($log) use (&$all_leave_logs) {
                     array_push($all_leave_logs, [

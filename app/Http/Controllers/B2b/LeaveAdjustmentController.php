@@ -107,7 +107,7 @@ class LeaveAdjustmentController extends Controller
 
         $leave = $leave->create();
         $leave = $leave->fresh();
-        $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
+        $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->setIsLeaveAdjustment(true)->updateStatus();
         $this->storeLeaveLog($leave);
 
         return api_response($request, null, 200, ['leave' => $leave->id]);
@@ -146,7 +146,6 @@ class LeaveAdjustmentController extends Controller
 
             $total = $data->count();
             $users_email = AdjustmentExcel::USERS_MAIL_COLUMN_TITLE;
-            $title = AdjustmentExcel::TITLE_COLUMN_TITLE;
             $leave_type_id = AdjustmentExcel::LEAVE_TYPE_ID_COLUMN_TITLE;
             $start_date = AdjustmentExcel::START_DATE_COLUMN_TITLE;
             $end_date = AdjustmentExcel::END_DATE_COLUMN_TITLE;
@@ -158,7 +157,7 @@ class LeaveAdjustmentController extends Controller
 
             $excel_error = null;
             $halt_top_up = false;
-            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
+            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
 
                 $leave_start_date = Carbon::parse($value->$start_date);
                 $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
@@ -203,9 +202,9 @@ class LeaveAdjustmentController extends Controller
             }
 
             $data->each(function ($value) use (
-                $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
+                $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
             ) {
-                if (!($value->$users_email && $value->$title && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
+                if (!($value->$users_email && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
                     return;
                 }
 
@@ -216,7 +215,7 @@ class LeaveAdjustmentController extends Controller
                 $business_member_for_approver = $this->businessMemberRepository->find($value->$approver_id);
 
                 $leave = $leave_creator->setIsLeaveAdjustment(true)
-                    ->setTitle($value->$title)
+                    ->setTitle('Manual Leave Adjustment')
                     ->setBusinessMember($business_member_for_leave)
                     ->setLeaveTypeId($value->$leave_type_id)
                     ->setStartDate($value->$start_date)
@@ -228,7 +227,7 @@ class LeaveAdjustmentController extends Controller
 
                 $leave = $leave->create();
                 $leave = $leave->fresh();
-                $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
+                $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->setIsLeaveAdjustment(true)->updateStatus();
                 $this->storeLeaveLog($leave);
             });
             return api_response($request, null, 200);
@@ -287,7 +286,7 @@ class LeaveAdjustmentController extends Controller
         $log_data = [
             'leave_id' => $leave->id,
             'type' => Type::LEAVE_ADJUSTMENT,
-            'log' => $leave->total_days . ' ' . $leave_type->title . ' were manually synced in leave balance record for this coworker.',
+            'log' => $leave->total_days . ' ' . $leave_type->title . ' manually adjusted in leave balance record.',
         ];
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
     }
