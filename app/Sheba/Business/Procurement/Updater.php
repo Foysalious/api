@@ -1,14 +1,21 @@
 <?php namespace App\Sheba\Business\Procurement;
 
+use App\Jobs\Business\SendTenderBillInvoiceEmailToBusiness;
+use App\Models\Bid;
+use App\Models\Business;
+use App\Models\Member;
 use App\Models\Procurement;
 use App\Models\ProcurementItem;
 use App\Models\ProcurementItemField;
 use App\Models\Tag;
 use Carbon\Carbon;
-use Clockwork\DataSource\DBALDataSource;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Sheba\Business\Procurement\BillEmailToBusinessSuperAdmin;
+use Sheba\Business\Procurement\BillInvoiceDataGenerator;
+use Sheba\Business\Procurement\Statuses;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\Procurement\RequestHandler;
 use Sheba\Business\Procurement\Type;
@@ -42,6 +49,8 @@ class Updater
     private $requestHandler;
     /** @var ProcurementCreator $procurementCreator */
     private $procurementCreator;
+    /** @var BillEmailToBusinessSuperAdmin $billEmail */
+    private $billEmail;
 
     /**
      * Updater constructor.
@@ -53,6 +62,7 @@ class Updater
      * @param ProcurementItemRepositoryInterface $procurement_item_repository
      * @param ProcurementItemFieldRepositoryInterface $procurement_item_field_repository
      * @param ProcurementCreator $procurement_creator
+     * @param BillEmailToBusinessSuperAdmin $bill_email
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 OrderClosedHandler $procurement_order_close_handler,
@@ -61,7 +71,7 @@ class Updater
                                 PaymentCreator $payment_creator,
                                 ProcurementItemRepositoryInterface $procurement_item_repository,
                                 ProcurementItemFieldRepositoryInterface $procurement_item_field_repository,
-                                ProcurementCreator $procurement_creator)
+                                ProcurementCreator $procurement_creator, BillEmailToBusinessSuperAdmin $bill_email)
     {
         $this->procurementRepository = $procurement_repository;
         $this->statusLogCreator = $creator;
@@ -72,6 +82,7 @@ class Updater
         $this->procurementItemRepository = $procurement_item_repository;
         $this->procurementItemFieldRepository = $procurement_item_field_repository;
         $this->procurementCreator = $procurement_creator;
+        $this->billEmail = $bill_email;
     }
 
     /**
@@ -239,25 +250,29 @@ class Updater
                 $this->procurementRepository->update($this->procurement, ['status' => $this->status]);
                 $this->statusLogCreator->setProcurement($this->procurement)->setPreviousStatus($previous_status)->setStatus($this->status)->create();
                 $this->procurement->calculate();
-                if ($this->status == 'served') {
+
+                if ($this->status == Statuses::SERVED) {
                     $this->procurementRepository->update($this->procurement, ['closed_at' => Carbon::now()]);
                     $this->procurementOrderCloseHandler->setProcurement($this->procurement->fresh())->run();
-                    $this->notify();
                 }
             });
-
         } catch (QueryException $e) {
             throw  $e;
         }
+
+        if ($this->status == Statuses::SERVED) $this->notify();
         return $this->procurement;
     }
 
     private function notify()
     {
+        /** @var Business $business */
+        $business = $this->procurement->owner;
         $bid = $this->procurement->getActiveBid();
         $message = $bid->bidder->name . " has served your order";
         $link = config('sheba.business_url') . '/dashboard/procurement/orders/' . $this->procurement->id . '?bid=' . $bid->id;
-        foreach ($this->procurement->owner->superAdmins as $member) {
+
+        foreach ($business->superAdmins as $member) {
             notify()->member($member)->send([
                 'title' => $message,
                 'type' => 'warning',
@@ -266,5 +281,7 @@ class Updater
                 'link' => $link
             ]);
         }
+
+        $this->billEmail->setProcurement($this->procurement)->send();
     }
 }
