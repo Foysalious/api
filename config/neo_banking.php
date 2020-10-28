@@ -6,6 +6,7 @@ function addressViews($type)
             'field_type'    => 'editText',
             'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
             'name'          => 'street_village_' . $type . '_address',
+            'id'            => 'street_village_' . $type . '_address',
             'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
             'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
         ],
@@ -13,6 +14,7 @@ function addressViews($type)
             'field_type'    => 'editText',
             'title'         => 'পোস্ট কোড *',
             'name'          => 'postcode_' . $type . '_address',
+            'id'            => 'postcode_' . $type . '_address',
             'hint'          => 'পোস্ট কোড',
             'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
         ],
@@ -20,6 +22,7 @@ function addressViews($type)
             'field_type'    => 'dropdown',
             'title'         => 'জেলা *',
             'name'          => 'district_' . $type . '_address',
+            'id'            => 'district_' . $type . '_address',
             'hint'          => 'জেলা',
             'list_type'     => 'new_page_radio',
             'error_message' => 'জেলার নাম পূরণ আবশ্যক'
@@ -29,6 +32,7 @@ function addressViews($type)
             'title'         => 'থানা / উপজেলা *',
             'list_type'     => 'new_page_radio',
             'name'          => 'sub_district_' . $type . '_address',
+            'id'            => 'sub_district_' . $type . '_address',
             'hint'          => 'থানা / উপজেলা',
             'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
         ],
@@ -36,6 +40,7 @@ function addressViews($type)
             'field_type'    => 'editText',
             'title'         => 'দেশ *',
             'name'          => 'country_' . $type . '_address',
+            'id'            => 'country_' . $type . '_address',
             'hint'          => 'দেশ',
             'error_message' => 'দেশের নাম পূরণ আবশ্যক'
         ]
@@ -114,6 +119,7 @@ return [
                 'title'         => 'আবেদনকারীর নাম (বড় অক্ষরে)  *',
                 'hint'          => 'ABUL KALAM AZAD',
                 'name'          => 'applicant_name',
+                'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
                 'is_editable'   => false
             ],
@@ -121,6 +127,7 @@ return [
                 'field_type'    => 'date',
                 'title'         => 'জন্ম তারিখ *',
                 'name'          => 'birth_date',
+                'id'            => 'birth_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
@@ -128,6 +135,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'বাবার নাম  *',
                 'name'          => 'father_name',
+                'id'            => 'father_name',
                 'hint'          => 'ABUL KALAM',
                 'error_message' => 'বাবার নাম পূরণ আবশ্যক'
             ],
@@ -135,6 +143,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'মায়ের নাম  *',
                 'name'          => 'mother_name',
+                'id'            => 'mother_name',
                 'hint'          => 'Mrs. ABUL',
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
             ],
@@ -142,6 +151,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
                 'name'          => 'husband_or_wife_name',
+                'id'            => 'husband_or_wife_name',
                 'hint'          => 'BUILLA AZAD',
                 'mandatory'     => false,
                 'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
@@ -150,6 +160,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'পেশা *',
                 'name'          => 'occupation_name',
+                'id'            => 'occupation_name',
                 'hint'          => 'Farmer',
                 'error_message' => 'পেশার ধরণ পূরণ আবশ্যক'
             ],
@@ -157,6 +168,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'প্রতিষ্ঠান এর নাম লিখুন',
                 'name'          => 'company_name',
+                'id'            => 'company_name',
                 'hint'          => 'Sheba.xyz',
                 'error_message' => 'প্রতিষ্ঠান এর নাম পূরণ আবশ্যক'
             ],
@@ -164,6 +176,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'ই-টিন নাম্বার  *',
                 'name'          => 'etin_number',
+                'id'            => 'etin_number',
                 'hint'          => '4654453',
                 'error_message' => 'ই-টিন নাম্বার পূরণ আবশ্যক'
             ],
@@ -171,6 +184,7 @@ return [
                 'field_type'    => 'editText',
                 'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার  *',
                 'name'          => 'nid_passport_birth_cer_number',
+                'id'            => 'nid_passport_birth_cer_number',
                 'hint'          => '654564544645464',
                 'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
             ],
@@ -183,6 +197,7 @@ return [
                 'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'present_address',
+                'id'         => 'present_address',
                 'views'      => addressViews('present'),
                 'mandatory'  => false
             ],
@@ -190,17 +205,20 @@ return [
                 'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'present_address',
+                'id'         => 'present_address',
                 'mandatory'  => false,
                 'views'      => [
                     [
                         'field_type' => 'checkbox',
                         'name'       => 'present_permanent_same_address_checked',
+                        'id'         => 'present_permanent_same_address_checked',
                         'value'      => 0
                     ],
                     [
                         'field_type' => 'textView',
                         'title'      => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
                         'name'       => 'present_permanent_same_address_text',
+                        'id'         => 'present_permanent_same_address_text',
                         'mandatory'  => false
                     ]
                 ]
