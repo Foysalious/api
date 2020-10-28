@@ -85,8 +85,8 @@ class SmsHandler
 
     private function checkVariables($variables)
     {
-        if (count(array_diff(explode(';', $this->template->variables), array_keys($variables)))) {
-            throw new Exception("Variable doesn't match");
-        }
+        if ($this->template->doesVariablesMatch($variables)) return;
+
+        throw new Exception("Variable doesn't match");
     }
 }
