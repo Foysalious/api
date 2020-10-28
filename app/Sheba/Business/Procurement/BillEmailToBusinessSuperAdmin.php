@@ -6,10 +6,13 @@ use App\Models\Business;
 use App\Models\Member;
 use App\Models\Procurement;
 use Carbon\Carbon;
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Support\Facades\App;
 
 class BillEmailToBusinessSuperAdmin
 {
+    use DispatchesJobs;
+
     /** @var BillInvoiceDataGenerator $dataGenerator */
     private $dataGenerator;
     /** @var Procurement $procurement */
@@ -43,7 +46,7 @@ class BillEmailToBusinessSuperAdmin
         $business = $this->procurement->owner;
         $procurement_info = $this->dataGenerator->setBusiness($business)->setProcurement($this->procurement->id)->setBid($this->bid)->get();
 
-        $file_name = public_path('assets/') . Carbon::now()->timestamp . "_" . $procurement_info['type'] . ".pdf";
+        $file_name = public_path('temp/') . Carbon::now()->timestamp . "_" . $procurement_info['type'] . ".pdf";
         App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->save($file_name);
 
         $data = [
@@ -58,8 +61,7 @@ class BillEmailToBusinessSuperAdmin
             $email = $member->profile->email;
             $data['super_admin_name'] = $member->profile->name ? ucwords($member->profile->name) : "Sir/Madam";
             if ($email) {
-                (new SendTenderBillInvoiceEmailToBusiness($email, $file_name, $data))->handle();
-                // $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file));
+                $this->dispatch(new SendTenderBillInvoiceEmailToBusiness($email, $file_name, $data));
             }
         }
         unlink($file_name);
