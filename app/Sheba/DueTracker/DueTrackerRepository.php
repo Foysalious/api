@@ -58,7 +58,7 @@ class DueTrackerRepository extends BaseRepository
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
         $total = $list->count();
-        if ($paginate) {
+        if ($paginate && isset($request['offset']) && isset($request['limit'])) {
             list($offset, $limit) = calculatePagination($request);
             $list = $list->slice($offset)->take($limit)->values();
         }

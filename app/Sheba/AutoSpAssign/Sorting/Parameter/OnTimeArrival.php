@@ -1,15 +1,15 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Parameter;
 
 
-class Ita extends Parameter
+class OnTimeArrival extends Parameter
 {
     protected function getWeight()
     {
-        return 25;
+        return config('auto_sp.weights.quality.ota');
     }
 
     protected function getValueForPartner()
     {
-        return $this->partner->getIta();
+        return $this->partner->getOta();
     }
 }

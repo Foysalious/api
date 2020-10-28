@@ -95,6 +95,6 @@ class Repository extends ClientRepository {
 
     public function details($id) {
         $item = $this->client->getDetailEntry($id);
-        return $item?(new Item((array)$item))->toDetails():null;
+        return $item ? (new Item((array)$item))->setPartner($this->partner)->toDetails() : null;
     }
 }

@@ -68,6 +68,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['active', 'invited']);
+    }
+
     /**
      * @param Carbon $date
      * @return bool
@@ -149,7 +154,7 @@ class BusinessMember extends Model
             $used_days += ($end_date->diffInDays($start_date) + 1) - $leave_day_into_holiday_or_weekend;
         });
 
-        return (int)$used_days;
+        return (float)$used_days;
     }
 
     private function isLeaveFullyInAFiscalYear($fiscal_year_time_frame, Leave $leave)
@@ -175,4 +180,14 @@ class BusinessMember extends Model
         return $this->business->leaveTypes;
     }
 
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function getLeaveOnASpecificDate(Carbon $date)
+    {
+        $date = $date->toDateString();
+        return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+    }
 }

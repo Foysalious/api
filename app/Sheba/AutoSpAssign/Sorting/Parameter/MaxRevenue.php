@@ -5,7 +5,7 @@ class MaxRevenue extends Parameter
 {
     protected function getWeight()
     {
-        return 15;
+        return config('auto_sp.weights.quality.max_revenue');
     }
 
     protected function getValueForPartner()

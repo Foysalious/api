@@ -8,6 +8,7 @@ class BusinessRoute
         $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
+        $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
 
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
@@ -75,6 +76,9 @@ class BusinessRoute
                     $api->get('/', 'B2b\AttendanceController@getAttendanceSetting');
                     $api->post('/update', 'B2b\AttendanceController@updateAttendanceSetting');
                 });
+                $api->group(['prefix' => 'half-day-setting'], function ($api) {
+                    $api->post('/', 'B2b\AttendanceController@updateHalfDaySetting');
+                });
                 $api->group(['prefix' => 'holidays'], function ($api) {
                     $api->get('/', 'B2b\AttendanceController@getHolidays');
                     $api->post('/', 'B2b\AttendanceController@storeHoliday');
@@ -102,6 +106,7 @@ class BusinessRoute
                     });
                 });
                 $api->group(['prefix' => 'leaves'], function ($api) {
+                    $api->get('/adjust', 'B2b\LeaveController@adjustExcel');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
