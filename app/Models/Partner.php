@@ -14,7 +14,6 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
-use Sheba\Dal\Retailer\Retailer;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
@@ -604,12 +603,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
-
-
-    public function retailers()
-    {
-        return $this->getFirstAdminResource()->retailers();
-    }
+    
 
     public function movieTicketOrders()
     {
