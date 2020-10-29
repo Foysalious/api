@@ -45,13 +45,15 @@ class LeaveAdjustmentController extends Controller
     }
 
     /**
+     * @param $business
      * @param Request $request
      * @param LeaveCreator $leave_creator
      * @return JsonResponse
      * @throws Exception
      */
-    public function leaveAdjustment(Request $request, LeaveCreator $leave_creator)
+    public function leaveAdjustment($business,Request $request, LeaveCreator $leave_creator)
     {
+        if ($business != $request->business->id) return api_response($request, null, 400, ['message' => 'Not found']);
         $this->validate($request, [
             'business_member_id' => 'required|integer',
             'leave_type_id' => 'required|integer',
@@ -115,14 +117,17 @@ class LeaveAdjustmentController extends Controller
     }
 
     /**
+     * @param $business
      * @param Request $request
      * @param LeaveCreator $leave_creator
      * @param LeaveAdjustmentExcelUploadError $leave_adjustment_excel_error
      * @return JsonResponse
      */
-    public function bulkLeaveAdjustment(Request $request, LeaveCreator $leave_creator, LeaveAdjustmentExcelUploadError $leave_adjustment_excel_error)
+    public function bulkLeaveAdjustment($business, Request $request, LeaveCreator $leave_creator, LeaveAdjustmentExcelUploadError $leave_adjustment_excel_error)
     {
         try {
+            if ($business != $request->business->id) return api_response($request, null, 400, ['message' => 'Not found']);
+
             $this->validate($request, ['file' => 'required|file']);
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
@@ -130,6 +135,7 @@ class LeaveAdjustmentController extends Controller
 
             /** @var Business $business */
             $business = $request->business;
+
             /** @var Member $manager_member */
             $manager_member = $request->manager_member;
             $this->setModifier($manager_member);
@@ -142,7 +148,7 @@ class LeaveAdjustmentController extends Controller
             $data = Excel::selectSheets(AdjustmentExcel::SHEET)->load($file_path)->get();
 
             $data = $data->filter(function ($row) {
-                return ($row->users_email && $row->title && $row->leave_type_id && $row->start_date && $row->end_date && $row->approver_id);
+                return ($row->users_email && $row->leave_type_id && $row->start_date && $row->end_date && $row->approver_id);
             });
 
             $total = $data->count();
@@ -157,8 +163,8 @@ class LeaveAdjustmentController extends Controller
 
 
             $excel_error = null;
-            $halt_top_up = false;
-            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
+            $halt_execution = false;
+            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_execution, $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
 
                 $leave_start_date = Carbon::parse($value->$start_date);
                 $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
@@ -167,28 +173,28 @@ class LeaveAdjustmentController extends Controller
                 $profile = $this->profileRepository->checkExistingEmail($value->$users_email);
 
                 if (!isEmailValid($value->$users_email)) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'Email is invalid';
                 } elseif (!$profile) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'Profile not found';
                 } elseif (!$profile->member) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'Member not found';
                 } elseif (!$profile->member->businessMember) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'Business Member not found';
                 } elseif (!in_array($profile->member->businessMember->id, $business_member_ids)) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'This profile is not belongs to this business';
                 } elseif (!in_array($value->$leave_type_id, $business_leave_type_ids)) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'This leave type is not belongs to this business';
                 } elseif (!in_array($value->$approver_id, $super_business_member_ids)) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'This approver is not your super admin';
                 } elseif ((int)$value->$is_half_day == 1 && $total_leave_days > 1) {
-                    $halt_top_up = true;
+                    $halt_execution = true;
                     $excel_error = 'Half Day leave cannot be more than 1 day';
                 } else {
                     $excel_error = null;
@@ -197,7 +203,7 @@ class LeaveAdjustmentController extends Controller
                 $leave_adjustment_excel_error->setAgent($business)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
 
-            if ($halt_top_up) {
+            if ($halt_execution) {
                 $excel_data_format_errors = $leave_adjustment_excel_error->takeCompletedAction();
                 return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
             }
@@ -242,12 +248,14 @@ class LeaveAdjustmentController extends Controller
     }
 
     /**
+     * @param $business
      * @param Request $request
      * @param LeaveAdjustmentExcel $leave_adjustment_excel
      * @return JsonResponse
      */
-    public function generateAdjustmentExcel(Request $request, LeaveAdjustmentExcel $leave_adjustment_excel)
+    public function generateAdjustmentExcel($business, Request $request, LeaveAdjustmentExcel $leave_adjustment_excel)
     {
+        if ($business != $request->business->id) return api_response($request, null, 400, ['message' => 'Not found']);
         /** @var Business $business */
         $business = $request->business;
 
