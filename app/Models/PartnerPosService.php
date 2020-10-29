@@ -5,10 +5,11 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
 use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 
-class PartnerPosService extends Model
+class PartnerPosService extends BaseModel
 {
     use SoftDeletes, AlgoliaEloquentTrait;
 
