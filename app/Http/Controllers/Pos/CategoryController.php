@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
 use Illuminate\Http\Request;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
 class CategoryController extends Controller
 {
@@ -180,17 +181,14 @@ class CategoryController extends Controller
         try {
             $data = [];
             $partner = $request->partner;
-            $partner_pos_categories = $partner->posCategories()->get();
+            $master_categories = PartnerPosCategory::byMasterCategoryByPartner($partner->id)->get();
 
-            if (!$partner_pos_categories) return api_response($request, null, 404);
+            if (!$master_categories) return api_response($request, null, 404);
 
+            $data['total_category'] = count($master_categories);
             $data['categories'] = [];
-            $total_category = 0;
-            foreach ($partner_pos_categories as $master_category) {
+            foreach ($master_categories as $master_category) {
                 $category = $master_category->category()->first();
-                if(!is_null($category->parent_id))
-                    continue;
-                $total_category++;
                 $item['name'] = $category->name;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
@@ -199,7 +197,6 @@ class CategoryController extends Controller
                 $item['total_items'] = $total_services;
                 array_push($data['categories'], $item);
             }
-            $data['total_category'] = $total_category;
 
             return api_response($request, null, 200, ['data' => $data]);
 
