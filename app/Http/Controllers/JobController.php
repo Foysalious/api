@@ -598,7 +598,7 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
-            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
