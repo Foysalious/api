@@ -180,15 +180,17 @@ class CategoryController extends Controller
         try {
             $data = [];
             $partner = $request->partner;
-            $master_categories = $partner->posCategories()->get();
+            $partner_pos_categories = $partner->posCategories()->get();
 
-            if (!$master_categories) return api_response($request, null, 404);
+            if (!$partner_pos_categories) return api_response($request, null, 404);
 
-            $data['total_category'] = count($master_categories);
             $data['categories'] = [];
-
-            foreach ($master_categories as $master_category) {
+            $total_category = 0;
+            foreach ($partner_pos_categories as $master_category) {
                 $category = $master_category->category()->first();
+                if(!is_null($category->parent_id))
+                    continue;
+                $total_category++;
                 $item['name'] = $category->name;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
@@ -197,8 +199,9 @@ class CategoryController extends Controller
                 $item['total_items'] = $total_services;
                 array_push($data['categories'], $item);
             }
+            $data['total_category'] = $total_category;
 
-            return api_response($request, $master_categories, 200, ['data' => $data]);
+            return api_response($request, null, 200, ['data' => $data]);
 
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
