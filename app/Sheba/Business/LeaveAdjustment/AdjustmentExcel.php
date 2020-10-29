@@ -15,12 +15,12 @@ class AdjustmentExcel
     const APPROVER_ID_COLUMN = "H";
     const MESSAGE_COLUMN = "I";
 
-    const LEAVE_TYPE_ID = "L";
-    const LEAVE_TYPE_TITLE = "M";
-    const TOTAL_DAYS = "N";
+    const LEAVE_TYPE_ID = "K";
+    const LEAVE_TYPE_TITLE = "L";
+    const TOTAL_DAYS = "M";
 
-    const SUPER_ADMIN_ID = "P";
-    const SUPER_ADMIN_NAME = "Q";
+    const SUPER_ADMIN_ID = "O";
+    const SUPER_ADMIN_NAME = "P";
 
     const USERS_MAIL_COLUMN_TITLE = "users_email";
     const LEAVE_TYPE_ID_COLUMN_TITLE = "leave_type_id";
