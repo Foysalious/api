@@ -1,12 +1,26 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
+use App\Transformers\CustomSerializer;
+use App\Transformers\Partner\WebstoreSettingsTransformer;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Item;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 
 class WebstoreSettingsController extends Controller
 {
+    public function index($partner, Request $request)
+    {
+        $partner = $request->partner;
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Item($partner, new WebstoreSettingsTransformer());
+        $settings = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
+    }
+
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $this->validate($request, [
