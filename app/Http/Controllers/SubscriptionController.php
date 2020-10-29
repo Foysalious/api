@@ -129,7 +129,7 @@ class SubscriptionController extends Controller
 
     public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator, SubscriptionDiscount $subscriptionDiscount)
     {
-        $subscriptions = ServiceSubscription::active()->validDiscountsOrderByAmount()->get();
+        $subscriptions = ServiceSubscription::validDiscountsOrderByAmount()->active()->get();
         $final_subscriptions = collect([]);
         foreach ($subscriptions as $index => $subscription) {
             if($subscription->service->publication_status !== 1) continue;
