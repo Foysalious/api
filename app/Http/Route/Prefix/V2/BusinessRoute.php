@@ -8,6 +8,7 @@ class BusinessRoute
         $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
         $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
+        $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
 
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
@@ -108,7 +109,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'leaves'], function ($api) {
                     $api->post('/adjustment', 'B2b\LeaveAdjustmentController@leaveAdjustment');
                     $api->post('/bulk-adjustment', 'B2b\LeaveAdjustmentController@bulkLeaveAdjustment');
-                    $api->get('/adjust', 'B2b\LeaveAdjustmentController@adjustExcel');
+                    $api->get('/generate-adjustment-excel', 'B2b\LeaveAdjustmentController@generateAdjustmentExcel');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
@@ -122,6 +123,17 @@ class BusinessRoute
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
                     });
+                    $api->group(['prefix' => 'prorate'], function ($api) {
+                        $api->post('/', 'B2b\ProrateController@store');
+                        $api->get('/', 'B2b\ProrateController@index');
+
+                        $api->group(['prefix' => '{prorate}'], function ($api) {
+                            $api->post('/', 'B2b\ProrateController@edit');
+                        });
+                    });
+                    $api->group(['prefix' => 'super-admins'], function ($api) {
+                        $api->get('/', 'B2b\LeaveController@getSuperAdmins');
+                    });
                     $api->group(['prefix' => 'settings'], function ($api) {
                         $api->get('/', 'B2b\LeaveSettingsController@index');
                         $api->post('/', 'B2b\LeaveSettingsController@store');
@@ -134,9 +146,6 @@ class BusinessRoute
                             $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
                             $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
                         });
-                    });
-                    $api->group(['prefix' => 'super-admins'], function ($api) {
-                        $api->get('/', 'B2b\LeaveController@getSuperAdmins');
                     });
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
@@ -343,21 +352,6 @@ class BusinessRoute
                     $api->get('/types', 'B2b\ApprovalFlowController@getTypes');
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
-                });
-                $api->group(['prefix' => 'leaves'], function ($api) {
-                    $api->group(['prefix' => 'settings'], function ($api) {
-                        $api->get('/', 'B2b\LeaveSettingsController@index');
-                        $api->post('/', 'B2b\LeaveSettingsController@store');
-
-                        $api->group(['prefix' => '{setting}'], function ($api) {
-                            $api->post('update', 'B2b\LeaveSettingsController@update');
-                            $api->delete('delete', 'B2b\LeaveSettingsController@delete');
-                        });
-                        $api->group(['prefix' => 'others'], function ($api) {
-                            $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
-                            $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
-                        });
-                    });
                 });
             });
         });

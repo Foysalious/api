@@ -15,6 +15,7 @@ class NeoBankingRoute
                     $api->get('/account-information', 'NeoBanking\\NeoBankingController@getAccountInformation');
                     $api->get('/category', 'NeoBanking\\NeoBankingController@getCategoryWiseDetails');
                     $api->post('/category', 'NeoBanking\\NeoBankingController@submitCategoryWistDetails');
+                    $api->post('/category/document-upload', 'NeoBanking\\NeoBankingController@uploadCategoryWiseDocument');
                     $api->post('/nid-verification', 'NeoBanking\\NeoBankingController@nidVerification');
                     $api->get('/gigatech-liveliness-auth-token', 'NeoBanking\\NeoBankingController@gigatechLivelinessAuthToken');
                     $api->get('/gigatech-kyc-status', 'NeoBanking\\NeoBankingController@getGigatechKycStatus');

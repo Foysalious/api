@@ -476,8 +476,11 @@ class ProcurementController extends Controller
      */
     public function show($business, $procurement, Request $request)
     {
+        /** @var Procurement $procurement */
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+        if ($procurement->owner instanceof Business && ($procurement->owner->id != $request->business->id))
+            return api_response($request, null, 404, ["message" => "Not found."]);
 
         $share = $this->getShareInformation($procurement);
         $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');

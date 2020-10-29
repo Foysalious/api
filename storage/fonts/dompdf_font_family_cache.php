@@ -104,4 +104,7 @@
   'kalpurush' => array(
     'normal' => $fontDir . '/a3103b2e0a0dabbae96411225bd98aef',
   ),
+  'roboto condensed' => array(
+    'normal' => $fontDir . '/13b971d7e3cad1816a0a8fd8c7b0ff17',
+  ),
 ) ?>

@@ -58,7 +58,7 @@ class HolidayList
             }
         }
 
-        return  array_unique($holiday_list);
+        return array_unique($holiday_list);
     }
 
     private function searchWithHolidayName($business_holidays, Request $request)

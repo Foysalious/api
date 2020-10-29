@@ -117,21 +117,26 @@ class ServiceController extends Controller
     public function store(Request $request, ProductCreator $creator)
     {
         try {
-            $secondaries_categories = PosCategory::child()->pluck('id')->toArray();
+            $sub_categories = PosCategory::child()->pluck('id')->toArray();
+            $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
                 'name'        => 'required',
-                'category_id' => 'required|in:' . implode(',', $secondaries_categories),
+                'category_id' => 'required_without:master_category_id|in:' . implode(',', $sub_categories),
+                'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
                 'end_date' => 'required_with:discount_amount|date'
-
-
             ]);
             $this->setModifier($request->manager_resource);
-            $partner_pos_service = $creator->setData($request->all())->create();
+
+            if(!$request->category_id)
+                $request->merge($this->resolveSubcategory($request->master_category_id));
+
+            $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+
             $partner_pos_service->unit          = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
@@ -159,10 +164,39 @@ class ServiceController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $master_category
+     * @return array
+     */
+    private function resolveSubcategory($master_category)
+    {
+        $default_subcategory = PosCategory::where('name','Sub None Category')->where('parent_id',$master_category)->first();
+        if($default_subcategory)
+            return ['category_id' => $default_subcategory->id];
+        $sub_category = $this->createSubcategory($master_category);
+        return ['category_id' => $sub_category->id];
+    }
+
+    /**
+     * @param $master_category
+     * @return PosCategory
+     */
+    private function createSubcategory($master_category)
+    {
+        $master_category = PosCategory::where('id',$master_category)->first();
+        $master_category->parent_id = $master_category->id;
+        $master_category->name = 'Sub None Category';
+        $master_category->slug = 'sub-none-category';
+
+        $sub_category = collect($master_category)->all();
+
+      return  PosCategory::create(array_except($sub_category , 'id'));
+
     }
 
     /**

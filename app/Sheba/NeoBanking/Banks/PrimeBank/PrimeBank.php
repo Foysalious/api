@@ -9,7 +9,6 @@ use Sheba\NeoBanking\Banks\BankCompletion;
 use Sheba\NeoBanking\Banks\BankHomeInfo;
 use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
-use App\Sheba\NeoBanking\Banks\NidInformation;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
@@ -79,6 +78,11 @@ class PrimeBank extends Bank
     public function getGigatechKycStatus($data)
     {
         return (new PrimeBankClient())->post('api/v1/kyc-status', $data);
+    }
+
+    public function storeGigatechKyc($data)
+    {
+        return (new PrimeBankClient())->post('api/v1/kyc-submit', $data);
     }
 
 }

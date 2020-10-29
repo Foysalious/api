@@ -23,7 +23,6 @@ use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
-use Sheba\Business\Leave\Adjust\AdjustExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
@@ -140,7 +139,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business,$profile, $role, $leave_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -353,9 +352,10 @@ class LeaveController extends Controller
      * @param $business_member_id
      * @param Request $request
      * @param TimeFrame $time_frame
+     * @param LeaveLogRepo $leave_log_repo
      * @return JsonResponse
      */
-    public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame)
+    public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMemberById($business_member_id);
@@ -365,7 +365,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame));
+        $resource = new Item($business_member, new LeaveBalanceDetailsTransformer($leave_types, $time_frame, $leave_log_repo));
         $leave_balance = $manager->createData($resource)->toArray()['data'];
 
         if ($request->file == 'pdf') {
@@ -486,37 +486,6 @@ class LeaveController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function adjustExcel(Request $request, AdjustExcel $adjust_excel)
-    {
-        /** @var Business $business */
-        $business = $request->business;
-
-        $leave_types = [];
-        $business->leaveTypes()->with(['leaves' => function ($q) {
-            return $q->accepted();
-        }])
-            ->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')
-            ->get()
-            ->each(function ($leave_type) use (&$leave_types) {
-                if ($leave_type->trashed() && $leave_type->leaves->isEmpty()) return;
-                $leave_type_data = [
-                    'id' => $leave_type->id,
-                    'title' => $leave_type->title,
-                    'total_days' => $leave_type->total_days
-                ];
-                array_push($leave_types, $leave_type_data);
-            });
-        $leave_adjust_format = [
-            'title',
-            'user_email',
-            'leave_type_id',
-            'start_date',
-            'end_date',
-            'total_days'
-        ];
-        return $adjust_excel->setBalance($leave_adjust_format)->setLeaveType('$leave_types')->get();
-
-    }
 
     /**
      * @param $business_id

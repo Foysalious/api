@@ -595,6 +595,7 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['message' => "Update Successful"]);
     }
 
+
     public function getAllHolidayDates(Request $request)
     {
         $holiday_list = new HolidayList($request->business, $this->holidayRepository);

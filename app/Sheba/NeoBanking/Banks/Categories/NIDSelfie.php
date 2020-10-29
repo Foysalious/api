@@ -1,7 +1,9 @@
 <?php namespace Sheba\NeoBanking\Banks\Categories;
 
 
+use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Statics\FormStatics;
 
 class NIDSelfie extends BankFormCategory
 {
@@ -12,9 +14,10 @@ class NIDSelfie extends BankFormCategory
         parent::__construct();
     }
 
-    public function get()
+    public function get(): CategoryGetter
     {
-        // TODO: Implement get() method.
+        $formItems = FormStatics::nidSelfie();
+        return $this->getFormData($formItems);
     }
 
     public function completion()
@@ -25,9 +28,9 @@ class NIDSelfie extends BankFormCategory
         ];
     }
 
-    public function post()
+    public function post($data)
     {
-        // TODO: Implement post() method.
+        return !!$this->bankAccountData->postByCode($this->code, $data);
     }
 
     public function getLastUpdated()
