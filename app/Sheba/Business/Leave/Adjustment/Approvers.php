@@ -25,24 +25,26 @@ class Approvers
     {
         $this->business = $business;
         return $this;
+
     }
 
     /**
      * @return array
      */
-    public function getApprovers() {
-        $approvers = $this->business_member_repo->where('business_id', $this->business->id)->where('is_super',1)->get();
-
+    public function getApprovers()
+    {
+        $approvers = $this->business_member_repo->where('business_id', $this->business->id)->where('is_super', 1)->get();
         $super_admins = [];
-
         $approvers->each(function ($approver) use (&$super_admins) {
+
             $member = $approver->member;
             $profile = $member->profile;
-            array_push($super_admins,[
+            array_push($super_admins, [
                 'id' => $approver->id,
                 'name' => $profile->name
             ]);
         });
         return $super_admins;
     }
+
 }

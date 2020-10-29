@@ -572,6 +572,17 @@ if (!function_exists('getLoanFolder')) {
     }
 }
 
+if (!function_exists('getNeoBankingFolder')) {
+    function getNeoBankingFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) {
+            $url = env('S3_URL');
+        }
+        return $url . 'images/profiles/neo_banking_documents/';
+    }
+}
+
 if (!function_exists('getTradeLicenceDocumentsFolder')) {
 
     function getTradeLicenceDocumentsFolder($with_base_url = false)
@@ -925,6 +936,40 @@ if (!function_exists('getBulkTopUpFolder')) {
     }
 }
 
+if (!function_exists('getLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'Leave_adjustment/';
+    }
+}
+
+if (!function_exists('getBulkLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_Leave_adjustment/';
+    }
+}
+
 if (!function_exists('getBulkVendorStoreFolder')) {
 
     /**
@@ -1111,7 +1156,7 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
 }
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
     {
         $url = '';
         if ($with_base_url)

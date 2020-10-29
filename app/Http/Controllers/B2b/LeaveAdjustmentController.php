@@ -3,6 +3,7 @@
 use App\Models\Business;
 use Carbon\Carbon;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
+use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcel;
 use Sheba\Business\LeaveAdjustment\LeaveAdjustmentExcelUploadError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -22,6 +23,7 @@ use App\Models\Member;
 use Exception;
 use Throwable;
 use Excel;
+use Sheba\Dal\Leave\Model as Leave;
 
 class LeaveAdjustmentController extends Controller
 {
@@ -71,7 +73,6 @@ class LeaveAdjustmentController extends Controller
         $leave_end_date = Carbon::parse($request->end_date)->endOfDay();
         $total_leave_days = $leave_end_date->diffInDays($leave_start_date) + 1;
 
-
         if (!in_array($request->business_member_id, $business_member_ids)) {
             return api_response($request, null, 420, ['message' => 'This business member is not belongs to this business']);
         } elseif (!in_array($request->leave_type_id, $business_leave_type_ids)) {
@@ -107,7 +108,7 @@ class LeaveAdjustmentController extends Controller
 
         $leave = $leave->create();
         $leave = $leave->fresh();
-        $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
+        $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->setIsLeaveAdjustment(true)->updateStatus();
         $this->storeLeaveLog($leave);
 
         return api_response($request, null, 200, ['leave' => $leave->id]);
@@ -146,7 +147,6 @@ class LeaveAdjustmentController extends Controller
 
             $total = $data->count();
             $users_email = AdjustmentExcel::USERS_MAIL_COLUMN_TITLE;
-            $title = AdjustmentExcel::TITLE_COLUMN_TITLE;
             $leave_type_id = AdjustmentExcel::LEAVE_TYPE_ID_COLUMN_TITLE;
             $start_date = AdjustmentExcel::START_DATE_COLUMN_TITLE;
             $end_date = AdjustmentExcel::END_DATE_COLUMN_TITLE;
@@ -158,7 +158,7 @@ class LeaveAdjustmentController extends Controller
 
             $excel_error = null;
             $halt_top_up = false;
-            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
+            $data->each(function ($value, $key) use ($business, $file_path, $total, $excel_error, &$halt_top_up, $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $approver_id, $is_half_day, $half_day_configuration, $leave_adjustment_excel_error, $business_member_ids, $super_business_member_ids, $business_leave_type_ids) {
 
                 $leave_start_date = Carbon::parse($value->$start_date);
                 $leave_end_date = Carbon::parse($value->$end_date)->endOfDay();
@@ -193,17 +193,19 @@ class LeaveAdjustmentController extends Controller
                 } else {
                     $excel_error = null;
                 }
+
                 $leave_adjustment_excel_error->setAgent($business)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
+
             if ($halt_top_up) {
                 $excel_data_format_errors = $leave_adjustment_excel_error->takeCompletedAction();
                 return api_response($request, null, 420, ['message' => 'Check The Excel Properly', 'excel_errors' => $excel_data_format_errors]);
             }
 
             $data->each(function ($value) use (
-                $users_email, $leave_creator, $title, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
+                $users_email, $leave_creator, $leave_type_id, $start_date, $end_date, $note, $is_half_day, $half_day_configuration, $approver_id
             ) {
-                if (!($value->$users_email && $value->$title && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
+                if (!($value->$users_email && $value->$leave_type_id && $value->$start_date && $value->$end_date && $value->$approver_id)) {
                     return;
                 }
 
@@ -214,7 +216,7 @@ class LeaveAdjustmentController extends Controller
                 $business_member_for_approver = $this->businessMemberRepository->find($value->$approver_id);
 
                 $leave = $leave_creator->setIsLeaveAdjustment(true)
-                    ->setTitle($value->$title)
+                    ->setTitle('Manual Leave Adjustment')
                     ->setBusinessMember($business_member_for_leave)
                     ->setLeaveTypeId($value->$leave_type_id)
                     ->setStartDate($value->$start_date)
@@ -226,7 +228,7 @@ class LeaveAdjustmentController extends Controller
 
                 $leave = $leave->create();
                 $leave = $leave->fresh();
-                $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->updateStatus();
+                $this->updater->setLeave($leave)->setStatus('accepted')->setBusinessMember($business_member_for_approver)->setIsLeaveAdjustment(true)->updateStatus();
                 $this->storeLeaveLog($leave);
             });
             return api_response($request, null, 200);
@@ -240,15 +242,53 @@ class LeaveAdjustmentController extends Controller
     }
 
     /**
+     * @param Request $request
+     * @param LeaveAdjustmentExcel $leave_adjustment_excel
+     * @return JsonResponse
+     */
+    public function generateAdjustmentExcel(Request $request, LeaveAdjustmentExcel $leave_adjustment_excel)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+
+        $leave_types = [];
+        $business->leaveTypes()->whereNull('deleted_at')->select('id', 'title', 'total_days', 'deleted_at')->get()
+            ->each(function ($leave_type) use (&$leave_types) {
+                $leave_type_data = ['id' => $leave_type->id, 'title' => $leave_type->title, 'total_days' => $leave_type->total_days];
+                array_push($leave_types, $leave_type_data);
+            });
+
+        $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/b2b/bulk_upload_template/leave_adjustment_bulk_attachment_file.xlsx';
+        $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+        file_put_contents($file_path, file_get_contents($url));
+
+        foreach ($leave_types as $key => $leave_type) {
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateLeaveTypeId($leave_type['id'])
+                ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
+        }
+
+        $super_admins = $business->getAccessibleBusinessMember()->where('is_super', 1)->get();
+        foreach ($super_admins as $key => $admin) {
+            $profile = $admin->member->profile;
+            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateSuperAdminId($admin->id)
+                ->updateSuperAdminName($profile->name);
+        }
+
+        $leave_adjustment_excel->takeCompletedAction();
+        return api_response($request, null, 200);
+    }
+
+    /**
      * @param $leave
      */
     private function storeLeaveLog($leave)
     {
         $leave_type = $this->leaveTypeRepo->find($leave->leave_type_id);
+        $total_days = (float)$leave->total_days > 1 ? (int)$leave->total_days : (float)$leave->total_days;
         $log_data = [
             'leave_id' => $leave->id,
             'type' => Type::LEAVE_ADJUSTMENT,
-            'log' => $leave->total_days . ' ' . $leave_type->title . ' were manually synced in leave balance record for this coworker.',
+            'log' => $total_days . ' ' . $leave_type->title . ' manually adjusted in leave balance record.',
         ];
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
     }

@@ -6,13 +6,11 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
-use Sheba\FileManagers\CdnFileManager;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\NeoBanking;
 
 class NeoBankingController extends Controller
 {
-    use CdnFileManager;
     public function __construct()
     {
     }
@@ -105,6 +103,29 @@ class NeoBankingController extends Controller
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'post_data' => 'required']);
             $data = $request->post_data;
             $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->setPostData($data)->postCategoryDetail($request->category_code);
+            return api_response($request, null, 200);
+        } catch (NeoBankingException $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param NeoBanking $neoBanking
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
+            $neoData = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request->file, $request->key);
+            $neoData->postCategoryDetail($request->category_code);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
@@ -231,9 +252,8 @@ class NeoBankingController extends Controller
             $bank             = $request->bank_code;
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
-            $photo = $request->file('applicant_photo');
-            dd($photo);
-            $result             = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->getGigatechKycStatus();
+            $data = $this->kycData($request->all());
+            $result             = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->setGigatechKycData($data)->storeGigatechKyc();
             return api_response($request, $result, 200, ['data' => $result['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -243,6 +263,11 @@ class NeoBankingController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function kycData($data) {
+
+        return array_except($data, ['manager_resource', 'partner', 'bank_code']);
     }
 
     private function getKycStatus($mobile) {

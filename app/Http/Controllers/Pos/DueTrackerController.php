@@ -26,6 +26,8 @@ class DueTrackerController extends Controller
      */
     public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
             if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
@@ -59,6 +61,8 @@ class DueTrackerController extends Controller
      */
     public function dueListByProfile(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $request->merge(['customer_id' => $customer_id]);
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);

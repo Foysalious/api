@@ -88,18 +88,23 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        DB::transaction(function () use ($request, $partner_order, $job) {
-            $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-            $partner_order->update(['partner_id' => $request->partner->id]);
+        try {
+            DB::transaction(function () use ($request, $partner_order, $job) {
+                $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+                $partner_order->update(['partner_id' => $request->partner->id]);
 
-            $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
-            $job->update([
-                'commission_rate' => $commissions->getServiceCommission(),
-                'material_commission_rate' => $commissions->getMaterialCommission()
-            ]);
+                $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
+                $job->update([
+                    'commission_rate' => $commissions->getServiceCommission(),
+                    'material_commission_rate' => $commissions->getMaterialCommission()
+                ]);
 
-            $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
-        });
+                $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
+            });
+        } catch (\Exception $e) {
+            $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
+        }
+
     }
 
     public function decline(Request $request)

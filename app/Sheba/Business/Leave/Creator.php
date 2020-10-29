@@ -50,9 +50,9 @@ class Creator
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
-    private $isHalfDay;
     private $approverId;
     private $isLeaveAdjustment;
+    private $isHalfDay;
     private $halfDayConfigure;
     private $substitute;
     private $createdBy;
@@ -106,9 +106,9 @@ class Creator
     {
         $this->businessMember = $business_member->load('member', 'business');
         $this->business = $this->businessMember->business;
-        $this->getManager($this->businessMember);
-
         if ($this->isLeaveAdjustment) return $this;
+
+        $this->getManager($this->businessMember);
 
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');

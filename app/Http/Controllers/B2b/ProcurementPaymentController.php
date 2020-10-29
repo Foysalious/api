@@ -1,10 +1,18 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendTenderBillInvoiceEmailToBusiness;
+use App\Models\Business;
+use App\Models\Member;
 use App\Models\Procurement;
 use App\Sheba\Business\Procurement\Updater;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
+use Sheba\Business\Procurement\BillEmailToBusinessSuperAdmin;
+use Sheba\Business\Procurement\BillInvoiceDataGenerator;
 use Sheba\Business\Procurement\OrderClosedHandler;
 use Sheba\Business\Procurement\RequestHandler;
 use Sheba\Business\ProcurementPayment\Creator;
@@ -25,13 +33,15 @@ class ProcurementPaymentController extends Controller
      * @param ProcurementRepositoryInterface $procurement_repository
      * @param OrderClosedHandler $procurement_order_close_handler
      * @param RequestHandler $request_handler
+     * @param BillEmailToBusinessSuperAdmin $bill_email
      * @return JsonResponse
+     * @throws Exception
      */
     public function adjustPayment($business, $procurement, Request $request,
                                   Creator $payment_creator, Updater $procurement_updater,
                                   ProcurementRepositoryInterface $procurement_repository,
                                   OrderClosedHandler $procurement_order_close_handler,
-                                  RequestHandler $request_handler)
+                                  RequestHandler $request_handler, BillEmailToBusinessSuperAdmin $bill_email)
     {
         $this->validate($request, ['payment_method' => 'required|string', 'sheba_collection' => 'required|numeric']);
         $this->setModifier($request->manager_member);
@@ -70,6 +80,9 @@ class ProcurementPaymentController extends Controller
                 ->setProcurement($procurement->fresh())
                 ->run();
         });
+
+        $procurement = $procurement->fresh();
+        if ($procurement->isClosedAndPaid()) $bill_email->setProcurement($procurement)->send();
 
         return api_response($request, 1, 200);
     }
