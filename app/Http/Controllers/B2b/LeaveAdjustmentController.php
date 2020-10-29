@@ -23,6 +23,7 @@ use App\Models\Member;
 use Exception;
 use Throwable;
 use Excel;
+use Sheba\Dal\Leave\Model as Leave;
 
 class LeaveAdjustmentController extends Controller
 {
@@ -265,7 +266,7 @@ class LeaveAdjustmentController extends Controller
             $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateLeaveTypeId($leave_type['id'])
                 ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
         }
-       
+
         $super_admins = $business->getAccessibleBusinessMember()->where('is_super', 1)->get();
         foreach ($super_admins as $key => $admin) {
             $profile = $admin->member->profile;
@@ -283,10 +284,11 @@ class LeaveAdjustmentController extends Controller
     private function storeLeaveLog($leave)
     {
         $leave_type = $this->leaveTypeRepo->find($leave->leave_type_id);
+        $total_days = (float)$leave->total_days > 1 ? (int)$leave->total_days : (float)$leave->total_days;
         $log_data = [
             'leave_id' => $leave->id,
             'type' => Type::LEAVE_ADJUSTMENT,
-            'log' => $leave->total_days . ' ' . $leave_type->title . ' manually adjusted in leave balance record.',
+            'log' => $total_days . ' ' . $leave_type->title . ' manually adjusted in leave balance record.',
         ];
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
     }
