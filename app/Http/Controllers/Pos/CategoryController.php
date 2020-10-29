@@ -4,6 +4,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
 use Illuminate\Http\Request;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
 class CategoryController extends Controller
 {
@@ -180,13 +181,12 @@ class CategoryController extends Controller
         try {
             $data = [];
             $partner = $request->partner;
-            $master_categories = $partner->posCategories()->get();
+            $master_categories = PartnerPosCategory::byMasterCategoryByPartner($partner->id)->get();
 
             if (!$master_categories) return api_response($request, null, 404);
 
             $data['total_category'] = count($master_categories);
             $data['categories'] = [];
-
             foreach ($master_categories as $master_category) {
                 $category = $master_category->category()->first();
                 $item['name'] = $category->name;
@@ -198,7 +198,7 @@ class CategoryController extends Controller
                 array_push($data['categories'], $item);
             }
 
-            return api_response($request, $master_categories, 200, ['data' => $data]);
+            return api_response($request, null, 200, ['data' => $data]);
 
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);

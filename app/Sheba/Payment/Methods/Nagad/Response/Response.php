@@ -21,7 +21,7 @@ abstract class Response
     {
         $this->store = $store;
         $this->data  = (array)$data;
-        if (!isset($this->data[$this->decode])) {
+        if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
             $this->error = $this->data[$this->msg];
         } else {
             if ($this->shouldDecode) {

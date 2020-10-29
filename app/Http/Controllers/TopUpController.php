@@ -87,7 +87,6 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-
         $agent = $this->getAgent($request);
         if ($this->hasLastTopupWithinIntervalTime($agent))
             return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
@@ -114,6 +113,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 500);
             }
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
