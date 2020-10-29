@@ -417,20 +417,19 @@ class OrderController extends Controller
             ]);
 
             $order = $order->placeOrder($request);
-            if ($order) {
-                if ($request->has('issue_id')) {
-                    $issue = InspectionItemIssue::find((int)$request->issue_id);
-                    $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
-                }
-                $this->sendNotifications($order);
-                return api_response($request, $order, 200, [
-                    'job_id' => $order->jobs->first()->id,
-                    'order_id' => $order->jobs->first()->partnerOrder->id,
-                    'order_code' => $order->code()
-                ]);
-            } else {
-                return api_response($request, null, 500);
+
+            if (!$order) return api_response($request, null, 422, ['message' => "You have selected a partner who doesn't provide service at you area. Please change your delivery address."]);
+
+            if ($request->has('issue_id')) {
+                $issue = InspectionItemIssue::find((int)$request->issue_id);
+                $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
             }
+            $this->sendNotifications($order);
+            return api_response($request, $order, 200, [
+                'job_id' => $order->jobs->first()->id,
+                'order_id' => $order->jobs->first()->partnerOrder->id,
+                'order_code' => $order->code()
+            ]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);
