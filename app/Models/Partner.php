@@ -68,7 +68,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             'reward_point'        => 'int',
             'current_impression'  => 'double',
             'impression_limit'    => 'double',
-            'uses_sheba_logistic' => 'int'
+            'uses_sheba_logistic' => 'int',
+            'delivery_charge' => 'double',
         ];
     protected $resourcePivotColumns
                        = [
