@@ -195,7 +195,7 @@ class ServiceController extends Controller
 
         $sub_category = collect($master_category)->all();
 
-      return  PosCategory::create(array_except($sub_category , 'id'));
+      return  PosCategory::create($this->withCreateModificationField(array_except($sub_category , ['id','created_at','created_by','created_by_name','updated_at','updated_by','updated_by_name'])));
 
     }
 
