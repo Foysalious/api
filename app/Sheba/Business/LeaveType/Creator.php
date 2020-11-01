@@ -19,6 +19,10 @@ class Creator
     private $total_days;
     private $isHalfDayEnable;
 
+    /**
+     * Creator constructor.
+     * @param LeaveTypesRepoInterface $leave_type_repo
+     */
     public function __construct(LeaveTypesRepoInterface $leave_type_repo)
     {
         $this->leaveTypeRepository = $leave_type_repo;

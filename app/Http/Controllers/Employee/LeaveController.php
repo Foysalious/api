@@ -114,13 +114,15 @@ class LeaveController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $substitute = $request->has('substitute') ? $request->substitute : null;
+        $is_half_day = $request->has('is_half_day') ? $request->is_half_day : 0;
+
         $leave = $leave_creator->setTitle($request->title)
             ->setSubstitute($substitute)
             ->setBusinessMember($business_member)
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setIsHalfDay($request->is_half_day)
+            ->setIsHalfDay($is_half_day)
             ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
             ->setCreatedBy($member);
