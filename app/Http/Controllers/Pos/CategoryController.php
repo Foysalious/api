@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
@@ -174,7 +175,7 @@ class CategoryController extends Controller
     /**
      * @param Request $request
      * @param $partner
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getMasterCategories(Request $request, $partner)
     {
