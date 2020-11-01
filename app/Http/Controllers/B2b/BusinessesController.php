@@ -171,10 +171,20 @@ class BusinessesController extends Controller
         return api_response($request, $vendor, 200, ['vendor' => $vendor]);
     }
 
+    /**
+     * @param $business
+     * @param $vendor
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorAdminInfo($business, $vendor, Request $request)
     {
         $partner = Partner::find((int)$vendor);
+        if (!$partner) return api_response($request, null, 200);
+
         $resource = $partner->admins->first();
+        if (!$resource) return api_response($request, null, 200);
+
         $resource = [
             "id" => $resource->id,
             "name" => $resource->profile->name,
@@ -184,6 +194,7 @@ class BusinessesController extends Controller
             "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
             "nid_image_back" => $resource->profile->nid_image_back
         ];
+
         return api_response($request, $resource, 200, ['vendor' => $resource]);
     }
 
