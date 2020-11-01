@@ -9,6 +9,7 @@ use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresent
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\Leave\Status;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Helpers\TimeFrame;
 
 class LeaveBalanceDetailsTransformer extends TransformerAbstract
@@ -18,16 +19,19 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
     private $timeFrame;
     /** @var BusinessMember $businessMember */
     private $businessMember;
+    private $leaveLogRepo;
 
     /**
      * LeaveBalanceDetailsTransformer constructor.
      * @param $leave_types
      * @param TimeFrame $time_frame
+     * @param LeaveLogRepo $leave_log_repo
      */
-    public function __construct($leave_types, TimeFrame $time_frame)
+    public function __construct($leave_types, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
         $this->leave_types = $leave_types;
         $this->timeFrame = $time_frame;
+        $this->leaveLogRepo = $leave_log_repo;
     }
 
     /**
@@ -56,7 +60,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
 
         $leaves_approved_count = $leaves->where('status', Status::ACCEPTED)->count();
         $leaves_rejected_count = $leaves->where('status', Status::REJECTED)->count();
-
+        list($leaves, $leave_logs) = $this->formatLeavesAndLogs($leaves);
         return [
             'employee_name' => $profile->name,
             'employee_pro_pic' => $profile->pro_pic,
@@ -68,7 +72,8 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
             'approved_count' => $leaves_approved_count,
             'rejected_count' => $leaves_rejected_count,
             'leave_balance' => $this->calculate(),
-            'leaves' => $this->formatLeaves($leaves)
+            'leaves' => $leaves,
+            'leave_logs' => $leave_logs
         ];
     }
 
@@ -97,10 +102,11 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
      * @param $leaves
      * @return array
      */
-    private function formatLeaves($leaves)
+    private function formatLeavesAndLogs($leaves)
     {
         $requested_business_member_id = request()->business_member->id;
         $all_leaves = [];
+        $all_leave_logs = [];
         foreach ($leaves as $leave) {
             $get_current_login_user_leave_request = $leave->requests->where('approver_id', $requested_business_member_id)->first();
 
@@ -108,7 +114,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                 'id' => $leave->id,
                 'date' => $leave->created_at->format('d/m/Y'),
                 'leave_type' => $leave->leaveType->title,
-                'leave_days' => (int)$leave->total_days,
+                'leave_days' => (double)$leave->total_days,
                 'status' => LeaveStatusPresenter::statuses()[$leave->status],
                 'approval_request_status' => $get_current_login_user_leave_request ?
                     ApprovalRequestPresenter::statuses()[$get_current_login_user_leave_request->status] : 'N/A',
@@ -117,8 +123,18 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
                     'id' => $get_current_login_user_leave_request ? $get_current_login_user_leave_request->id : null
                 ]
             ]);
+
+            $logs = $this->leaveLogRepo->where('leave_id', $leave->id)->where('type', 'leave_adjustment')->where('is_changed_by_super', 0)->select('log', 'created_at')->get();
+            if (!$logs->isEmpty()) {
+                $logs->map(function ($log) use (&$all_leave_logs) {
+                    array_push($all_leave_logs, [
+                        'log' => $log->log,
+                        'created_at' => $log->created_at->format('h:i A - d M, Y')
+                    ]);
+                });
+            }
         }
 
-        return $all_leaves;
+        return [$all_leaves, $all_leave_logs];
     }
 }

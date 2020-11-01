@@ -11,20 +11,25 @@ use Illuminate\Validation\ValidationException;
 use DB;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Illuminate\Support\Facades\Redis;
+use Sheba\Partner\LeaveStatus;
 use Throwable;
 
 class ResourceController extends Controller
 {
+    const COMPLIMENT_QUESTION_ID = 2;
     private $reviewRepository;
     private $profileRepo;
 
     const REPTO_IP = '52.89.162.43';
     #const REPTO_IP = '103.4.146.66';
+    /** @var LeaveStatus */
+    private $leaveStatus;
 
     public function __construct()
     {
         $this->reviewRepository = new ReviewRepository();
         $this->profileRepo = new ProfileRepository();
+        $this->leaveStatus = new LeaveStatus();
     }
 
     /**
@@ -37,6 +42,7 @@ class ResourceController extends Controller
     {
         try {
             $resource = $request->resource;
+            $leave_status = $this->leaveStatus->setArtisan($resource)->getCurrentStatus();
             $specialized_categories = $resource->categoriesIn($request->partner->id)->pluck('name');
             $resource['specialized_categories'] = $specialized_categories;
             $resource['total_specialized_categories'] = $specialized_categories->count();
@@ -45,6 +51,8 @@ class ResourceController extends Controller
             $profile = $resource->profile;
             $resource['name'] = $profile->name;
             $resource['mobile'] = $profile->mobile;
+            $resource['email'] = $profile->email;
+            $resource['dob'] = $profile->dob;
             $resource['address'] = $profile->address;
             $resource['profile_picture'] = $profile->pro_pic;
             $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
@@ -54,6 +62,7 @@ class ResourceController extends Controller
             })->count();
             $resource['joined_at'] = (PartnerResource::where([['resource_id', $resource->id], ['partner_id', (int)$partner]])->first())->created_at->timestamp;
             $resource['types'] = $resource->typeIn($partner);
+            $resource['is_online'] = $leave_status['status'] ? 0 : 1;
             removeRelationsAndFields($resource);
             return api_response($request, $resource, 200, ['resource' => $resource]);
         } catch (Throwable $e) {
@@ -68,6 +77,15 @@ class ResourceController extends Controller
             list($offset, $limit) = calculatePagination($request);
             $resource = $request->resource->load(['reviews' => function ($q) {
                 $q->with('job.partner_order.order');
+                $q->with([
+                    'rates' => function ($q) {
+                        $q->select('review_id', 'review_type', 'rate_answer_id')->where('rate_question_id', self::COMPLIMENT_QUESTION_ID)->with([
+                            'answer' => function ($q) {
+                                $q->select('id', 'answer', 'badge', 'asset');
+                            }
+                        ]);
+                    }
+                ]);
             }]);
             $breakdown = $this->reviewRepository->getReviewBreakdown($resource->reviews);
             $resource['rating'] = $this->reviewRepository->getAvgRating($resource->reviews);
@@ -76,12 +94,24 @@ class ResourceController extends Controller
                 return $item->review != '' || $item->review != null;
             })->sortByDesc('created_at');
             $resource['total_reviews'] = $reviews->count();
+            $compliment_counts = $resource->reviews->pluck('rates')->filter(function ($rate) {
+                return $rate->count();
+            })->flatten()->groupBy('rate_answer_id')->map(function ($answer, $index) {
+                $first_answer = $answer->first();
+                return [
+                    'id' => $index,
+                    'name' => $first_answer->answer->answer,
+                    'badge' => $first_answer->answer->badge,
+                    'asset' => $first_answer->answer->asset,
+                    'count' => $answer->count(),
+                ];
+            });
             foreach ($reviews as $review) {
                 $review['order_id'] = $review->job->partner_order->id;
                 $review['order_code'] = $review->job->partner_order->code();
                 removeRelationsAndFields($review);
             }
-            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'breakdown' => $breakdown);
+            $info = array('rating' => $resource['rating'], 'total_reviews' => $reviews->count(), 'reviews' => array_slice($reviews->toArray(), $offset, $limit), 'compliments' => $compliment_counts->values(), 'breakdown' => $breakdown);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

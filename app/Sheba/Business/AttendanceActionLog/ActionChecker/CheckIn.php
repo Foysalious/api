@@ -34,6 +34,7 @@ class CheckIn extends ActionChecker
         $weekendHoliday = new WeekendHolidayByBusiness();
         $time = new TimeByBusiness();
         $last_checkin_time = $time->getOfficeStartTimeByBusiness();
+
         if (is_null($last_checkin_time)) return;
         if (!$this->isSuccess()) return;
         if (Carbon::now() > Carbon::parse($last_checkin_time)) {

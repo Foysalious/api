@@ -26,7 +26,6 @@ class Creator
     private $interest;
     private $bankTransactionCharge;
 
-
     /**
      * Creator constructor.
      *
@@ -108,6 +107,7 @@ class Creator
         $this->emiMonth = $emi_month;
         return $this;
     }
+
 
     /**
      * @param mixed $interest

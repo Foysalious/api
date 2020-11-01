@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
+use App\Models\Business;
 use Sheba\Dal\AttendanceActionLog\EloquentImplementation as AttendanceActionLogRepositoryInterface;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckinStatusCalculator;
 use Sheba\Business\AttendanceActionLog\StatusCalculator\CheckoutStatusCalculator;
@@ -12,6 +13,7 @@ class Creator
 {
     private $attendanceActionLogRepository;
     private $action;
+    private $business;
     private $deviceId;
     /** @var Attendance $attendance */
     private $attendance;
@@ -21,6 +23,7 @@ class Creator
     private $userAgent;
     private $note;
     private $isRemote;
+    private $whichHalfDay;
     private $address;
     /** @var CheckinStatusCalculator $checkinStatusCalculator */
     private $checkinStatusCalculator;
@@ -41,6 +44,12 @@ class Creator
         $this->attendanceActionLogRepository = $attendance_action_log_repository;
         $this->checkinStatusCalculator = $checkin_status_calculator;
         $this->checkoutStatusCalculator = $checkout_status_calculator;
+    }
+
+    public function setBusiness(Business $business)
+    {
+        $this->business = $business;
+        return $this;
     }
 
     /**
@@ -120,14 +129,24 @@ class Creator
     }
 
     /**
+     * @param $which_half
+     * @return $this
+     */
+    public function setWhichHalfDay($which_half)
+    {
+        $this->whichHalfDay = $which_half;
+        return $this;
+    }
+
+    /**
      * @return mixed
      */
     public function create()
     {
         if ($this->action == Actions::CHECKIN)
-            $status = $this->checkinStatusCalculator->setAction($this->action)->setAttendance($this->attendance)->calculate();
+            $status = $this->checkinStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
         else
-            $status = $this->checkoutStatusCalculator->setAction($this->action)->setAttendance($this->attendance)->calculate();
+            $status = $this->checkoutStatusCalculator->setBusiness($this->business)->setAction($this->action)->setAttendance($this->attendance)->setWhichHalfDay($this->whichHalfDay)->calculate();
 
         $attendance_log_data = [
             'attendance_id' => $this->attendance->id,
@@ -140,6 +159,7 @@ class Creator
             'is_remote' => $this->isRemote
         ];
         $this->address = $this->getAddress();
+
         if ($this->geo) $attendance_log_data['location'] = json_encode(['lat' => $this->geo->getLat(), 'lng' => $this->geo->getLng(), 'address' => $this->address]);
         return $this->attendanceActionLogRepository->create($attendance_log_data);
     }

@@ -304,6 +304,7 @@ class Route
             $api->group(['prefix' => 'profile', 'middleware' => ['profile.auth']], function ($api) {
                 $api->post('change-picture', 'ProfileController@changePicture');
             });
+
             $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
                 $api->get('/notifications', 'BankUser\NotificationController@index');
                 $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
@@ -312,6 +313,21 @@ class Route
                 $api->get('validate','NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+
+            $api->group(['prefix' => 'partners/{partner}'], function ($api) {
+                $api->group(['prefix' => 'inventory'], function ($api) {
+                    $api->group(['prefix' => 'brands'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@brandList');
+                        $api->post('/', 'DummyInventoryController@brandStore');
+                        $api->post('/{brand}', 'DummyInventoryController@brandUpdate');
+                    });
+                    $api->group(['prefix' => 'units'], function ($api) {
+                        $api->get('/', 'DummyInventoryController@unitList');
+                        $api->post('/', 'DummyInventoryController@unitStore');
+                        $api->post('/{brand}', 'DummyInventoryController@unitUpdate');
+                    });
+                });
+            });
         });
         return $api;
     }

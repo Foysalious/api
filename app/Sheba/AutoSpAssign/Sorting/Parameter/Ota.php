@@ -5,7 +5,7 @@ class Ota extends Parameter
 {
     protected function getWeight()
     {
-        return 15;
+        return config('auto_sp.weights.quality.ota');
     }
 
     protected function getValueForPartner()

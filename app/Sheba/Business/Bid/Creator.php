@@ -126,15 +126,16 @@ class Creator
                     }
                 }
                 $this->updatePrice($bid);
-                $this->createAttachments($bid);
-                $this->sendToBusinessVendorParticipatedEmail($bid);
-                $this->sendVendorParticipatedNotification($bid);
             });
         } catch (QueryException $e) {
             throw $e;
         } catch (Exception $e) {
             throw $e;
         }
+
+        $this->createAttachments($bid);
+        $this->sendToBusinessVendorParticipatedEmail($bid);
+        $this->sendVendorParticipatedNotification($bid);
 
         return $bid;
     }

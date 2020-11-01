@@ -8,6 +8,7 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Helpers\TimeFrame;
 
 class BusinessMember extends Model
@@ -134,15 +135,21 @@ class BusinessMember extends Model
                 $period = CarbonPeriod::create($start_date, $end_date);
                 foreach ($period as $date) {
                     $day_name_in_lower_case = strtolower($date->format('l'));
-                    if (in_array($day_name_in_lower_case, $business_weekend)) { $leave_day_into_holiday_or_weekend++; continue; }
-                    if (in_array($date->toDateString(), $business_holiday)) { $leave_day_into_holiday_or_weekend++; continue; }
+                    if (in_array($day_name_in_lower_case, $business_weekend)) {
+                        $leave_day_into_holiday_or_weekend++;
+                        continue;
+                    }
+                    if (in_array($date->toDateString(), $business_holiday)) {
+                        $leave_day_into_holiday_or_weekend++;
+                        continue;
+                    }
                 }
             }
 
             $used_days += ($end_date->diffInDays($start_date) + 1) - $leave_day_into_holiday_or_weekend;
         });
 
-        return (int)$used_days;
+        return (float)$used_days;
     }
 
     private function isLeaveFullyInAFiscalYear($fiscal_year_time_frame, Leave $leave)
@@ -156,4 +163,26 @@ class BusinessMember extends Model
         return $leave->start_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end) &&
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
     }
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function getLeaveOnASpecificDate(Carbon $date)
+    {
+        $date = $date->toDateString();
+        return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+    }
+
+    public function leaveTypes()
+    {
+        return $this->hasMany(BusinessMemberLeaveType::class);
+    }
+
+    public function getLeaveTypes()
+    {
+        if ($this->leaveTypes->get()) return $this->leaveTypes;
+        return $this->business->leaveTypes;
+    }
+
 }

@@ -9,6 +9,8 @@ use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
+use Sheba\Dal\POSOrder\SalesChannels;
+use Sheba\Dal\POSOrder\OrderStatuses;
 
 class PosOrder extends Model {
     use SoftDeletes;
@@ -122,7 +124,8 @@ class PosOrder extends Model {
     }
 
     private function _setPaymentStatus() {
-        $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        $this->payment_status = $status = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
+        $this->update(['payment_status' => $status]);
         return $this;
     }
 
@@ -158,8 +161,8 @@ class PosOrder extends Model {
     }
 
     public function scopeGetPartnerWiseOrderId($query, $id) {
-        $pos_order = $query->where('id', $id)->first();
-        return $pos_order->partner_wise_order_id;
+        $pos_order = $query->withTrashed()->where('id', $id)->first();
+        return $pos_order ? $pos_order->partner_wise_order_id : null;
     }
 
     public function scopeByPartner($query, $partner_id) {
@@ -192,7 +195,7 @@ class PosOrder extends Model {
      * @return string
      */
     public function getPaymentStatus() {
-        return $this->paymentStatus;
+        return $this->payment_status;
     }
 
     /**
@@ -308,5 +311,25 @@ class PosOrder extends Model {
 
     public function payments() {
         return $this->hasMany(PosOrderPayment::class);
+    }
+
+    public function scopeWebstoreOrders($query)
+    {
+        return $query->where('sales_channel', SalesChannels::WEBSTORE);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->where('status', OrderStatuses::PENDING);
+    }
+
+    public function scopeProcessing($query)
+    {
+        return $query->where('status', OrderStatuses::PROCESSING);
+    }
+
+    public function scopeShipped($query)
+    {
+        return $query->where('status', OrderStatuses::SHIPPED);
     }
 }

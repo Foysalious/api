@@ -58,7 +58,7 @@ class DueTrackerRepository extends BaseRepository
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
         $total = $list->count();
-        if ($paginate) {
+        if ($paginate && isset($request['offset']) && isset($request['limit'])) {
             list($offset, $limit) = calculatePagination($request);
             $list = $list->slice($offset)->take($limit)->values();
         }
@@ -258,11 +258,12 @@ class DueTrackerRepository extends BaseRepository
     }
 
     public function removePosOrderPayment($pos_order_id, $amount){
-       return PosOrderPayment::where('pos_order_id', $pos_order_id)
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
            ->where('amount', $amount)
            ->where('transaction_type', 'Credit')
-           ->first()
-           ->delete();
+           ->first();
+        return $payment ? $payment->delete() : false;
+
     }
 
     private function createStoreData(Request $request)

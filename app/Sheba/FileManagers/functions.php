@@ -118,6 +118,7 @@ if (!function_exists('getCategoryGroupAppBannerFolder')) {
 if (!function_exists('getCategoryGroupThumbFolder')) {
     /**
      * Get Category Group Thumb Folder
+     *
      * @param bool $with_base_url
      * @return string
      */
@@ -133,6 +134,7 @@ if (!function_exists('getCategoryGroupThumbFolder')) {
 if (!function_exists('getCategoryGroupAppThumbFolder')) {
     /**
      * Get Category Group App Thumb Folder
+     *
      * @param bool $with_base_url
      * @return string
      */
@@ -148,6 +150,7 @@ if (!function_exists('getCategoryGroupAppThumbFolder')) {
 if (!function_exists('getCategoryGroupIconFolder')) {
     /**
      * Get Category Group App Thumb Folder
+     *
      * @param bool $with_base_url
      * @return string
      */
@@ -163,6 +166,7 @@ if (!function_exists('getCategoryGroupIconFolder')) {
 if (!function_exists('getCategoryGroupIconPngFolder')) {
     /**
      * Get Category Group App Thumb Folder
+     *
      * @param bool $with_base_url
      * @return string
      */
@@ -568,6 +572,17 @@ if (!function_exists('getLoanFolder')) {
     }
 }
 
+if (!function_exists('getNeoBankingFolder')) {
+    function getNeoBankingFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) {
+            $url = env('S3_URL');
+        }
+        return $url . 'images/profiles/neo_banking_documents/';
+    }
+}
+
 if (!function_exists('getTradeLicenceDocumentsFolder')) {
 
     function getTradeLicenceDocumentsFolder($with_base_url = false)
@@ -576,6 +591,15 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         if ($with_base_url) $url = env('S3_URL');
 
         return $url . 'partner/trade_license/trade_';
+    }
+}
+if (!function_exists('getPartnerProofOfBusinessFolder')) {
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
+    {
+        $url = '';
+        if ($with_base_url)
+            $url = env('S3_URL');
+        return $url . "partner/$partner_id/proof-of-business";
     }
 }
 if (!function_exists('getLoanDocumentFolder')) {
@@ -608,9 +632,28 @@ if (!function_exists('getFileTypeIcon')) {
      */
     function getFileTypeIcon($type)
     {
-        $type = strtolower($type);
+        $type            = strtolower($type);
         $file_type_icons = [
-            'xls' => 'file-excel-o', 'xlsx' => 'file-excel-o', 'csv' => 'file-excel-o', 'ppt' => 'file-powerpoint-o', 'pptx' => 'file-powerpoint-o', 'docx' => 'file-word-o', 'doc' => 'file-word-o', 'odt' => 'file-word-o', 'rtf' => 'file-word-o', 'txt' => 'file-text-o', 'pdf' => 'file-pdf-o', 'rar' => 'file-archive-o', 'zip' => 'file-archive-o', 'jpg' => 'file-image-o', 'jpeg' => 'file-image-o', 'png' => 'file-image-o', 'gif' => 'file-image-o', 'mp4' => 'file-video-o', 'mp3' => 'file-audio-o', 'wma' => 'file-audio-o'
+            'xls'  => 'file-excel-o',
+            'xlsx' => 'file-excel-o',
+            'csv'  => 'file-excel-o',
+            'ppt'  => 'file-powerpoint-o',
+            'pptx' => 'file-powerpoint-o',
+            'docx' => 'file-word-o',
+            'doc'  => 'file-word-o',
+            'odt'  => 'file-word-o',
+            'rtf'  => 'file-word-o',
+            'txt'  => 'file-text-o',
+            'pdf'  => 'file-pdf-o',
+            'rar'  => 'file-archive-o',
+            'zip'  => 'file-archive-o',
+            'jpg'  => 'file-image-o',
+            'jpeg' => 'file-image-o',
+            'png'  => 'file-image-o',
+            'gif'  => 'file-image-o',
+            'mp4'  => 'file-video-o',
+            'mp3'  => 'file-audio-o',
+            'wma'  => 'file-audio-o'
         ];
 
         if (!array_key_exists($type, $file_type_icons)) {
@@ -893,6 +936,40 @@ if (!function_exists('getBulkTopUpFolder')) {
     }
 }
 
+if (!function_exists('getLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'Leave_adjustment/';
+    }
+}
+
+if (!function_exists('getBulkLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_Leave_adjustment/';
+    }
+}
+
 if (!function_exists('getBulkVendorStoreFolder')) {
 
     /**
@@ -1051,7 +1128,6 @@ if (!function_exists('getVatRegistrationDocumentsFolder')) {
         return $url . 'partner/vat_registration/vat_';
     }
 }
-
 if (!function_exists('getDueTrackerAttachmentsFolder')) {
     function getDueTrackerAttachmentsFolder($with_base_url = false)
     {
@@ -1080,7 +1156,7 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
 }
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
     {
         $url = '';
         if ($with_base_url)

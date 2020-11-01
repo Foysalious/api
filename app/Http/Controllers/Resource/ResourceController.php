@@ -133,18 +133,6 @@ class ResourceController extends Controller
             : api_response($request, null, 404);
     }
 
-    public function getRatingInfo(Request $request, RatingInfo $ratingInfo)
-    {
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $resource = $auth_user->getResource();
-
-        $rating = $ratingInfo->setResource($resource)->getRatingInfo();
-
-
-        return $rating ? api_response($request, $rating, 200, ['info' => $rating]) : api_response($request, null, 404);
-    }
-
     public function checkSchedule(Request $request, ResourceScheduleSlot $slot, ResourceScheduleChecker $resourceScheduleChecker)
     {
         $this->validate($request, [
@@ -169,5 +157,17 @@ class ResourceController extends Controller
         $schedule = $resourceScheduleChecker->setSchedules($dates)->setDate($request->date)->setTime($request->time)->checkScheduleAvailability();
         if (empty($schedule)) return api_response($request, $schedule, 404, ["message" => 'Schedule not found.']);
         return api_response($request, $schedule, 200, ['schedule' => $schedule]);
+    }
+
+    public function getRatingInfo(Request $request, RatingInfo $ratingInfo)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $resource = $auth_user->getResource();
+
+        $rating = $ratingInfo->setResource($resource)->getRatingInfo();
+
+
+        return $rating ? api_response($request, $rating, 200, ['info' => $rating]) : api_response($request, null, 404);
     }
 }

@@ -1,19 +1,15 @@
 <?php namespace Sheba\MovieTicket\Vendor\BlockBuster;
 
 use App\Models\MovieTicketVendor;
-use App\Models\MovieTicketVendorCommission;
 use Exception;
 use GuzzleHttp\Client;
-use Sheba\MovieTicket\Actions;
-use Sheba\MovieTicket\MovieTicket;
 use Sheba\MovieTicket\MovieTicketRequest;
 use Sheba\MovieTicket\Response\BlockBusterResponse;
 use Sheba\MovieTicket\Response\MovieResponse;
-use Sheba\MovieTicket\TransactionGenerator;
-use Sheba\MovieTicket\Vendor\BlockBuster\KeyEncryptor;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\MovieTicket\Vendor\Vendor;
 use SimpleXMLElement;
+use Sheba\MovieTicket\Actions;
 
 class BlockBuster extends Vendor
 {
@@ -24,6 +20,7 @@ class BlockBuster extends Vendor
 
     // API Urls
     private $apiUrl;
+    private $balanceApiUrl;
     private $imageServerUrl;
 
     private $httpClient;
@@ -53,6 +50,7 @@ class BlockBuster extends Vendor
         $this->secretCode = config('blockbuster.secret_code');
         $this->apiKey = config('blockbuster.api_key');
         $this->apiUrl = config('blockbuster.base_url');
+        $this->balanceApiUrl = config('blockbuster.balance_api_base_url');
         $this->httpClient = new Client();
 
     }
@@ -79,6 +77,9 @@ class BlockBuster extends Vendor
                 break;
             case Actions::UPDATE_MOVIE_SEAT_STATUS:
                 $api_url = $this->apiUrl . 'movie_ticket_confirm.php';
+                break;
+            case Actions::GET_VENDOR_BALANCE:
+                $api_url =  $this->balanceApiUrl.'balance/balance.php';
                 break;
             default:
                 throw new Exception('Invalid Action');
@@ -192,6 +193,9 @@ class BlockBuster extends Vendor
             case Actions::UPDATE_MOVIE_SEAT_STATUS:
                 return $this->updateMovieTicketStatus($response);
                 break;
+            case Actions::GET_VENDOR_BALANCE:
+                return $this->getVendorBalance($response);
+                break;
             default:
                 throw new Exception('Invalid Action');
                 break;
@@ -302,6 +306,23 @@ class BlockBuster extends Vendor
         throw new Exception('Server error');
     }
 
+    /**
+     * @param $response
+     * @return mixed
+     * @throws Exception
+     */
+    private function getVendorBalance($response)
+    {
+        if($response && $response->api_validation && $response->api_validation->status === "ok") {
+            if($response->api_response)
+                return $response->api_response->available_balance;
+            else
+                return $response->api_response;
+        }
+        throw new \Exception('Server error');
+
+    }
+
     private function priceAfterShebaCommission($original_price)
     {
         $price_without_sheba_commission = round((float)$original_price, 2);
@@ -325,5 +346,24 @@ class BlockBuster extends Vendor
     public function parseMovieIdToBlockBusterFormat($id)
     {
         return str_pad($id, 5, '0', STR_PAD_LEFT);
+    }
+
+    /**
+     * @return mixed
+     * @throws GuzzleException
+     * @throws Exception
+     */
+    public function balance()
+    {
+        try {
+            $this->init();
+            return $this->post(Actions::GET_VENDOR_BALANCE, []);
+        } catch (GuzzleException $e) {
+            throw $e;
+        } catch (Exception $e) {
+            throw $e;
+        }
+
+
     }
 }

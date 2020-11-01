@@ -184,6 +184,8 @@ class PartnerRegistrationController extends Controller
             $data['refer_code'] = $request->refer_code;
         if ($request->has('business_type'))
             $data['business_type'] = $request->business_type;
+        if ($request->has('has_webstore'))
+            $data['has_webstore'] = $request->has_webstore;
         return $data;
     }
 
@@ -332,7 +334,8 @@ class PartnerRegistrationController extends Controller
                 'name' => 'string',
                 'number' => 'string',
                 'address' => 'string',
-                'business_type' => 'string'
+                'business_type' => 'string',
+                'has_webstore' => 'sometimes|numeric|between:0,1'
             ]);
             $profile = $request->profile;
             if (!$profile->resource)

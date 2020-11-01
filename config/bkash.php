@@ -32,5 +32,6 @@ return [
         'username' => env('BKASH_PAYOUT_USERNAME'),
         'password' => env('BKASH_PAYOUT_PASSWORD'),
         'url' => env('BKASH_PAYOUT_URL')
-    ]
+    ],
+    'client_url' => env('BKASH_CLIENT_URL', "https://bkash-client.dev-sheba.xyz")
 ];
