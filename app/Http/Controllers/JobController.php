@@ -4,6 +4,7 @@ use App\Models\CustomerFavorite;
 use App\Models\Job;
 use App\Models\PartnerOrder;
 use Illuminate\Support\Facades\App;
+use Sheba\Authentication\AuthUser;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -755,5 +756,19 @@ class JobController extends Controller
             ];
         }
         return (new InvoiceHandler($job->partnerOrder))->save('quotation');
+    }
+
+    public function rescheduleJob($customer, $job, Request $request)
+    {
+        return api_response($request, 1, 200);
+
+        $job = Job::find($job);
+        if ($job == null) return api_response($request, null, 404);
+
+        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+
+        dd($auth_user);
     }
 }
