@@ -13,7 +13,7 @@ class LeaveAdjustmentExcel
     private $file;
     private $row;
     private $totalRow;
-    /** @var LaravelExcelReader */
+    /** @var LaravelExcelReader $excel */
     private $excel = null;
 
     public function setAgent($agent)
@@ -28,12 +28,6 @@ class LeaveAdjustmentExcel
         return $this;
     }
 
-    private function getExcel()
-    {
-        if (!$this->excel) $this->excel = Excel::selectSheets(AdjustmentExcel::SHEET)->load($this->file);
-        return $this->excel;
-    }
-
     public function setRow($row)
     {
         $this->row = $row;
@@ -45,6 +39,12 @@ class LeaveAdjustmentExcel
         $this->getExcel()->getActiveSheet()->setCellValue(AdjustmentExcel::SUPER_ADMIN_ID . $this->row, $message);
         $this->excel->save();
         return $this;
+    }
+
+    private function getExcel()
+    {
+        if (!$this->excel) $this->excel = Excel::selectSheets(AdjustmentExcel::SHEET)->load($this->file);
+        return $this->excel;
     }
 
     public function updateSuperAdminName($message)
@@ -77,7 +77,7 @@ class LeaveAdjustmentExcel
 
     public function takeCompletedAction()
     {
-        $this->excel->download();
+        $this->excel->download('xlsx');
         unlink($this->file);
     }
 }
