@@ -3265,7 +3265,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "e0a59ba8caac1dbb1d89e4e4459359d47fa8a514"
+                "reference": "645940f7a653134285a38641989c86afbb6df7dc"
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3292,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2020-10-26T03:58:15+00:00"
+            "time": "2020-10-18T11:14:28+00:00"
         },
         {
             "name": "sheba/notification",
@@ -6062,12 +6062,6 @@
                 "fpdf",
                 "fpdi",
                 "pdf"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-04-28T12:40:35+00:00"
         },

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Referral;
 
 use App\Http\Controllers\Controller;
+use App\Models\Partner;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -26,13 +27,13 @@ class PartnerReferralController extends Controller
             $total_success = $reference->totalSuccessfulRefer();
             return api_response($request, $reference->refers, 200, [
                 'data' => [
-                    'refers'        => $refers,
-                    'total_income'  => $income,
-                    'total_sms'     => $total_sms,
-                    'total_success' => $total_success,
-                    'total_step'    => count(config('partner.referral_steps')),
+                    'refers'          => $refers,
+                    'total_income'    => $income,
+                    'total_sms'       => $total_sms,
+                    'total_success'   => $total_success,
+                    'total_step'      => count(config('partner.referral_steps')),
                     'stepwise_income' => collect(config('partner.referral_steps'))
-                        ->map(function($item) {
+                        ->map(function ($item) {
                             return $item['amount'];
                         })
                 ]
@@ -51,18 +52,19 @@ class PartnerReferralController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param Request    $request
      * @param ShortenUrl $shortenUrl
      * @return JsonResponse
      */
     public function referLinkGenerate(Request $request, ShortenUrl $shortenUrl)
     {
         try {
-            $refer_code = $request->partner->refer_code;
-            $url_to_shorten = config('partner')['referral_base_link'] . $refer_code;
-            $deep_link = $shortenUrl->shorten('bit.ly', $url_to_shorten)['link'];
-            return api_response($request, $deep_link, 200, ['link' => $deep_link]);
-
+            /** @var Partner $partner */
+            $partner    = $request->partner;
+            $refer_code = $partner->refer_code;
+            if (empty($refer_code)) $refer_code = $partner->referCode();
+            $partner->update(['refer_code' => $refer_code]);
+            return api_response($request, $refer_code, 200, ['link' => $refer_code]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -118,55 +120,57 @@ class PartnerReferralController extends Controller
 
     }
 
-    public function getReferralFaqs(Request $request){
-        try{
+    public function getReferralFaqs(Request $request)
+    {
+        try {
 
             $faqs = array(
                 array(
                     'question' => 'sManager রেফার কি?',
-                    'answer' => 'আপনার ব্যবসায়ী বন্ধুকে sManager অ্যাপ ব্যবহার করতে পরামর্শ দেয়াই হচ্ছে sManager রেফার। একি সাথে আপনি রেফার করে আয় করতে পারবেন।'
+                    'answer'   => 'আপনার ব্যবসায়ী বন্ধুকে sManager অ্যাপ ব্যবহার করতে পরামর্শ দেয়াই হচ্ছে sManager রেফার। একি সাথে আপনি রেফার করে আয় করতে পারবেন।'
                 ),
                 array(
                     'question' => 'রেফার এ সর্বোচ্চ কত টাকা আয় করতে পারবেন?',
-                    'answer' => 'প্রতিটা রেফার থেকে আপনি সর্বোচ্চ ৬০ টাকা এবং যত খুশি তত রেফার করে আয় করতে পারবেন।'
+                    'answer'   => 'প্রতিটা রেফার থেকে আপনি সর্বোচ্চ ৬০ টাকা এবং যত খুশি তত রেফার করে আয় করতে পারবেন।'
                 ),
                 array(
                     'question' => 'কিভাবে রেফার করবেন?',
-                    'answer' => 'আপনার ব্যবসায়ী বন্ধুকে SMS করে অথবা লিঙ্ক শেয়ার করে রেফার করতে পারবেন।'
+                    'answer'   => 'আপনার ব্যবসায়ী বন্ধুকে SMS করে অথবা লিঙ্ক শেয়ার করে রেফার করতে পারবেন।'
                 ),
                 array(
                     'question' => 'রেফারের টাকা কিভাবে পাবেন?',
-                    'answer' => 'প্রতি ধাপ শেষ হওয়ার পরে ঐ ধাপের নির্ধারিত টাকা আপনার ওয়ালেট এ জমা হয়ে যাবে।'
+                    'answer'   => 'প্রতি ধাপ শেষ হওয়ার পরে ঐ ধাপের নির্ধারিত টাকা আপনার ওয়ালেট এ জমা হয়ে যাবে।'
                 ),
                 array(
                     'question' => 'কোন ফিচার ব্যবহার করলে ঐ দিনকে ব্যবহৃত দিন বলে ধরা হবে?',
-                    'answer' => 'বেচা বিক্রি, স্টক, হিসাব খাতা, মার্কেটিং ও প্রোমো, বিক্রির খাতা, ডিজিটাল কালেকশন, বাকির খাতা।'
+                    'answer'   => 'বেচা বিক্রি, স্টক, হিসাব খাতা, মার্কেটিং ও প্রোমো, বিক্রির খাতা, ডিজিটাল কালেকশন, বাকির খাতা।'
                 )
 
             );
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
 
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function getReferralSteps(Request $request){
-        try{
-            $stepDetails = collect(config('partner.referral_steps'))
-                ->map(function($item) {
+    public function getReferralSteps(Request $request)
+    {
+        try {
+            $stepDetails          = collect(config('partner.referral_steps'))
+                ->map(function ($item) {
                     return [
-                        'ধাপ' => $item['step'],
-                        'আপনার আয়' => convertNumbersToBangla($item['amount'],true,0),
+                        'ধাপ'          => $item['step'],
+                        'আপনার আয়'     => convertNumbersToBangla($item['amount'], true, 0),
                         'কিভাবে করবেন' => $item['details']
                     ];
                 });
-            $data['steps'] = $stepDetails;
-            $data['total_income'] = convertNumbersToBangla(collect(config('partner.referral_steps'))->sum('amount'),true,0);
+            $data['steps']        = $stepDetails;
+            $data['total_income'] = convertNumbersToBangla(collect(config('partner.referral_steps'))->sum('amount'), true, 0);
             return api_response($request, $stepDetails, 200, ['data' => $data]);
 
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
