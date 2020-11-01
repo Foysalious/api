@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\Attendance;
 
+use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Sheba\Dal\Attendance\Model as Attendance;
@@ -72,7 +73,6 @@ class MonthlyStat
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day))$statistics['working_days']--;
-                #if ($this->isLeave($date, $leaves)) $statistics['on_leave']++;
                 if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
                 if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
             }
@@ -230,9 +230,9 @@ class MonthlyStat
     private function whichHalfDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
     {
         if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
-            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['which_half_day'] == 'first_half') return 'first_half';
+            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['which_half_day'] == HalfDayType::FIRST_HALF) return HalfDayType::FIRST_HALF;
         }
-        return 'second_half';
+        return HalfDayType::SECOND_HALF;
     }
 
     /**
@@ -260,7 +260,6 @@ class MonthlyStat
         if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) return $this->whichHalfDayLeave($date, $leaves_date_with_half_and_full_day);
         if ($this->isHoliday($date, $dates_of_holidays_formatted)) return 'holiday';
         return 'weekend';
-        #return $this->isLeave($date, $leaves_date_with_half_and_full_day) ? 'On Leave' : ($this->isHoliday($date, $dates_of_holidays_formatted) ? 'Holiday' : 'Weekend');
     }
 
     /**

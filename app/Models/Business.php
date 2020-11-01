@@ -94,6 +94,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->hasOne(BusinessOfficeHour::class);
     }
 
+    public function activePartners()
+    {
+        return $this->partners()->where('is_active_for_b2b', 1);
+    }
+
     public function deliveryAddresses()
     {
         return $this->hasMany(BusinessDeliveryAddress::class);
@@ -273,7 +278,17 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function halfDayStartEnd($which_half)
     {
-        return json_decode($this->half_day_configuration, 1)[$which_half];
+        return $this->getBusinessHalfDayConfiguration()[$which_half];
+    }
+
+    public function halfDayStartTimeUsingWhichHalf($which_half)
+    {
+        return $this->getBusinessHalfDayConfiguration()[$which_half]['start_time'];
+    }
+
+    public function halfDayEndTimeUsingWhichHalf($which_half)
+    {
+        return $this->getBusinessHalfDayConfiguration()[$which_half]['end_time'];
     }
 
     public function halfDayStartEndTime($which_half)

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\Dal\LoanClaimRequest\Statuses;
+use Sheba\Loan\AffiliateWalletTransfer;
 use Sheba\Loan\Notifications;
 use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Statics\GeneralStatics;
@@ -68,8 +69,10 @@ class LoanClaim
                 $this->setDefaulterDate($claim);
                 $claim_amount = $claim->amount;
                 $affiliate = $claim->resource->profile->affiliate;
-                if (isset($affiliate) && $claim_amount > 0)
-                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
+                if (isset($affiliate) && $claim_amount > 0) {
+//                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
+                    (new AffiliateWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->process();
+                }
                 $this->deductClaimApprovalFee();
                 $this->checkAndDeductAnnualFee($claim);
                 $this->calculateAndDeductShebaInterest($claim->amount);

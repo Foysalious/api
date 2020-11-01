@@ -363,11 +363,18 @@ class AttendanceList
                 unset($business_members_in_leave[$index]);
             }
         }
+
         $present_and_on_leave_business_members = array_merge($data, $business_members_in_leave);
-        $business_members_in_absence = $this->statusFilter == self::ABSENT ? $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members) : [];
+        if ($this->statusFilter == self::ABSENT) {
+            $business_members_in_absence = $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members) ;
+            $present_and_on_leave_business_members = [];
+        } else {
+            $business_members_in_absence = [];
+        }
         $final_data = array_merge($present_and_on_leave_business_members, $business_members_in_absence);
 
-        if ($this->search) $final_data = collect($this->searchWithEmployeeName($final_data))->values();
+        if ($this->search)
+            $final_data = collect($this->searchWithEmployeeName($final_data))->values();
 
         return $final_data;
     }
@@ -383,6 +390,9 @@ class AttendanceList
         $present_and_on_leave_business_member_ids = array_map(function ($business_member) use ($business_member_ids) {
             return $business_member_ids[] = $business_member['business_member_id'];
         }, $present_and_on_leave_business_members);
+
+        $business_member_ids_who_give_attendance = $this->attendances->pluck('business_member_id')->toArray();
+        $present_and_on_leave_business_member_ids = array_merge($present_and_on_leave_business_member_ids, $business_member_ids_who_give_attendance);
 
         $business_members = $this->businessMemberRepository->builder()->select('id', 'member_id', 'business_role_id')
             ->with([
@@ -414,6 +424,7 @@ class AttendanceList
         }
 
         $business_members = $business_members->get();
+
         $data = [];
         foreach ($business_members as $business_member) {
             array_push($data, $this->getBusinessMemberData($business_member) + [
@@ -433,10 +444,9 @@ class AttendanceList
         return $data;
     }
 
-
     private function getBusinessMemberWhoAreOnLeave()
     {
-        if (!($this->statusFilter == self::ON_LEAVE || $this->statusFilter == self::ALL)) return [];
+        if (!($this->statusFilter == self::ON_LEAVE || $this->statusFilter == self::ABSENT || $this->statusFilter == self::ALL)) return [];
 
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];

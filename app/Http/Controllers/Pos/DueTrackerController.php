@@ -26,6 +26,8 @@ class DueTrackerController extends Controller
      */
     public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
             if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
@@ -45,7 +47,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -59,6 +61,8 @@ class DueTrackerController extends Controller
      */
     public function dueListByProfile(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $request->merge(['customer_id' => $customer_id]);
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
@@ -78,7 +82,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -109,7 +113,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -141,7 +145,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -169,7 +173,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -189,7 +193,7 @@ class DueTrackerController extends Controller
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -212,7 +216,7 @@ class DueTrackerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -231,10 +235,10 @@ class DueTrackerController extends Controller
             $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
             return api_response($request, true, 200);
         } catch (ExpenseTrackingServerError $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -264,7 +268,7 @@ class DueTrackerController extends Controller
             $message = "Insufficient Balance";
             return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -281,7 +285,7 @@ class DueTrackerController extends Controller
             $faqs = $dueTrackerRepository->getFaqs();
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -306,7 +310,7 @@ class DueTrackerController extends Controller
             $message = "Unauthorized Request";
             return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -330,7 +334,7 @@ class DueTrackerController extends Controller
             $message = "Unauthorized Request";
             return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

@@ -33,8 +33,6 @@ class BusinessCommonInformationCreator
     private $attendanceTypesCreator;
     /** @var BusinessGovtHolidayCreator $businessGovtHolidayCreator */
     private $businessGovtHolidayCreator;
-
-
     /** @var OfficeTimingCreateRequest $officeTimingCreateRequest */
     private $officeTimingCreateRequest;
     /** @var WeekendCreateRequest $weekendCreateRequest */
@@ -43,16 +41,25 @@ class BusinessCommonInformationCreator
     private $attendanceTypeCreateRequest;
     /** @var BusinessGovtHolidayCreatorRequest $businessGovtHolidayCreatorRequest */
     private $businessGovtHolidayCreatorRequest;
-
     /** @var LeaveTypeCreator $leaveTypeCreator */
     private $leaveTypeCreator;
-
-
     /** @var Business $business */
     public $business;
     /** @var Member $member */
     public $member;
 
+    /**
+     * BusinessCommonInformationCreator constructor.
+     * @param InitialOfficeTimeBusinessCommonInformationCreator $initialize_office_hour
+     * @param InitialWeekendBusinessCommonInformationCreator $initialize_weekend
+     * @param InitialAttendanceTypeBusinessCommonInformationCreator $initialize_attendance_types
+     * @param BusinessGovtHolidayCreator $initialize_holiday
+     * @param OfficeTimingCreateRequest $office_timing_create_request
+     * @param WeekendCreateRequest $weekend_create_request
+     * @param AttendanceTypeCreateRequest $attendance_type_create_request
+     * @param BusinessGovtHolidayCreatorRequest $business_govt_holiday_creator_request
+     * @param LeaveTypeCreator $leave_type_creator
+     */
     public function __construct(InitialOfficeTimeBusinessCommonInformationCreator $initialize_office_hour,
                                 InitialWeekendBusinessCommonInformationCreator $initialize_weekend,
                                 InitialAttendanceTypeBusinessCommonInformationCreator $initialize_attendance_types,
@@ -104,6 +111,7 @@ class BusinessCommonInformationCreator
                 ->setMember($this->member)
                 ->setTitle($value)
                 ->setTotalDays(DefaultType::getDays()[$key])
+                ->setIsLeaveHalfDayEnable(0)
                 ->create();
         }
 

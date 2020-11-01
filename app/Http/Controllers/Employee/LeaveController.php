@@ -114,13 +114,15 @@ class LeaveController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $substitute = $request->has('substitute') ? $request->substitute : null;
+        $is_half_day = $request->has('is_half_day') ? $request->is_half_day : 0;
+
         $leave = $leave_creator->setTitle($request->title)
             ->setSubstitute($substitute)
             ->setBusinessMember($business_member)
             ->setLeaveTypeId($request->leave_type_id)
             ->setStartDate($request->start_date)
             ->setEndDate($request->end_date)
-            ->setIsHalfDay($request->is_half_day)
+            ->setIsHalfDay($is_half_day)
             ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
             ->setCreatedBy($member);
@@ -173,21 +175,16 @@ class LeaveController extends Controller
             $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
 
-        $is_half_day_enable = $business->is_half_day_enable;
         $half_day_configuration = null;
-        if ($is_half_day_enable) {
-            $half_day_configuration = json_decode($business->half_day_configuration, 1);
+        if ($business->is_half_day_enable) {
+            $half_day_configuration = $business->getBusinessHalfDayConfiguration();
             foreach ($half_day_configuration as $key => $item) {
-                $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:m A');
-                $half_day_configuration[$key]['end_time'] = Carbon::parse($half_day_configuration[$key]['end_time'])->format('h:m A');
+                $half_day_configuration[$key]['start_time'] = Carbon::parse($half_day_configuration[$key]['start_time'])->format('h:i A');
+                $half_day_configuration[$key]['end_time'] = Carbon::parse($half_day_configuration[$key]['end_time'])->format('h:i A');
             }
         }
 
-        return api_response($request, null, 200, [
-            'leave_types' => $leave_types,
-            'is_half_day_enable' => $is_half_day_enable,
-            'half_day_configuration' => $half_day_configuration
-        ]);
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
     }
 
     /**
