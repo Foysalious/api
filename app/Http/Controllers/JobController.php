@@ -3,6 +3,7 @@
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use Sheba\Authentication\AuthUser;
+use Sheba\Customer\Jobs\Reschedule\Reschedule;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -41,6 +42,7 @@ use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Services\FormatServices;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class JobController extends Controller
@@ -734,17 +736,20 @@ class JobController extends Controller
         }
     }
 
-    public function rescheduleJob($customer, $job, Request $request)
+    public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
-        return api_response($request, 1, 200);
+//        return api_response($request, 1, 200);
+        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
 
         $job = Job::find($job);
         if ($job == null) return api_response($request, null, 404);
 
-        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
+        $user_agent_information->setRequest($request);
+        $reschedule_job->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+            ->setScheduleTimeSlot($request->schedule_time_slot);
 
-        dd($auth_user);
+        $response = $reschedule_job->reschedule();
+
+        return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 }
