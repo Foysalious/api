@@ -88,6 +88,7 @@ class CustomerRoute
                         $api->get('bills', 'JobController@getBills');
                         $api->get('invoice', 'JobController@getInvoice');
                         $api->get('bills/clear', 'JobController@clearBills');
+                        $api->post('reschedule', 'JobController@rescheduleJob');
                         $api->get('logs', 'JobController@getLogs');
                         $api->get('logs/order', 'JobController@getOrderLogs');
                         $api->post('reviews', 'ReviewController@store');
