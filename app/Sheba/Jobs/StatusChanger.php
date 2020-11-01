@@ -4,7 +4,7 @@ use App\Models\Job;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use App\Models\Resource;
 use App\Repositories\ResourceJobRepository;
-use App\Sheba\UserRequestInformation;
+use App\Sheba\UserRequestInformationOld;
 use Illuminate\Http\Request;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\PushNotificationHandler;
@@ -144,7 +144,7 @@ class StatusChanger
 
     private function jobUpdateLog($job_id, $log, $created_by)
     {
-        JobUpdateLog::create(array_merge((new UserRequestInformation(\request()))->getInformationArray(), [
+        JobUpdateLog::create(array_merge((new UserRequestInformationOld(\request()))->getInformationArray(), [
             'job_id' => $job_id,
             'log' => $log,
             'created_by' => $created_by->id,

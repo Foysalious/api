@@ -9,7 +9,7 @@ use App\Models\Resource;
 use App\Repositories\PartnerOrderRepository;
 use App\Repositories\ResourceJobRepository;
 use Sheba\Jobs\JobTime;
-use App\Sheba\UserRequestInformation;
+use App\Sheba\UserRequestInformationOld;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Database\QueryException;
@@ -22,7 +22,7 @@ use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
 use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
 use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 use Throwable;
 
 class PartnerJobController extends Controller
@@ -272,7 +272,7 @@ class PartnerJobController extends Controller
         }
     }
 
-    public function addMaterial($partner, $job, Request $request, UserAgentInformation $user_agent_information, ServiceUpdateRequest $update_request)
+    public function addMaterial($partner, $job, Request $request, UserRequestInformation $user_agent_information, ServiceUpdateRequest $update_request)
     {
         $this->validate($request, ['name' => 'required|string', 'price' => 'required|numeric|min:1']);
         $this->setModifier($request->manager_resource);
@@ -282,7 +282,7 @@ class PartnerJobController extends Controller
         return api_response($request, 1, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
-    public function updateMaterial($partner, $job, Request $request, ServiceUpdateRequest $update_request, UserAgentInformation $user_agent_information)
+    public function updateMaterial($partner, $job, Request $request, ServiceUpdateRequest $update_request, UserRequestInformation $user_agent_information)
     {
         $this->validate($request, [
             'material_id' => 'required|numeric',
@@ -306,7 +306,7 @@ class PartnerJobController extends Controller
             'created_by_name' => class_basename($created_by) . "-" . $created_by->profile->name,
             'created_by_type' => 'App\\Models\\' . class_basename($created_by)
         ];
-        JobUpdateLog::create(array_merge((new UserRequestInformation(\request()))->getInformationArray(), $logData));
+        JobUpdateLog::create(array_merge((new UserRequestInformationOld(\request()))->getInformationArray(), $logData));
     }
 
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
