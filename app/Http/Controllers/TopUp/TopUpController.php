@@ -12,6 +12,7 @@ use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\TopUpFailedReason;
+use Sheba\TopUp\Vendor\Vendor;
 use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
@@ -92,17 +93,26 @@ class TopUpController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param VendorFactory $vendor
+     * @param TopUpRequest $top_up_request
+     * @param Creator $creator
+     * @param TopUpExcelDataFormatError $top_up_excel_data_format_error
+     * @return JsonResponse
+     */
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error)
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
-            $extension        = $request->file('file')->getClientOriginalExtension();
+            $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
+            if (!in_array($extension, $valid_extensions))
+                return api_response($request, null, 400, ['message' => 'File type not support']);
 
-            $agent     = $request->user;
-            $file      = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+            $agent = $request->user;
+            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
             $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
@@ -115,9 +125,13 @@ class TopUpController extends Controller
 
             $excel_error = null;
             $halt_top_up = false;
-            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error) {
+            $blocked_amount_by_operator = $this->getBlockedAmountForTopup();
+
+            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+
                 if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'Mobile number Invalid, Amount Should be Integer';
@@ -127,9 +141,13 @@ class TopUpController extends Controller
                 } elseif (!$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'Amount Should be Integer';
+                } elseif ($this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+                    $halt_top_up = true;
+                    $excel_error = 'Amount Blocked For OTF';
                 } else {
                     $excel_error = null;
                 }
+
                 $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
             });
 
@@ -141,18 +159,14 @@ class TopUpController extends Controller
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-                $type_field     = TopUpExcel::TYPE_COLUMN_TITLE;
-                $mobile_field   = TopUpExcel::MOBILE_COLUMN_TITLE;
-                $amount_field   = TopUpExcel::AMOUNT_COLUMN_TITLE;
-                $name_field     = TopUpExcel::NAME_COLUMN_TITLE;
+                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+                $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+                $name_field = TopUpExcel::NAME_COLUMN_TITLE;
                 if (!$value->$operator_field) return;
 
-                $vendor_id   = $vendor->getIdByName($value->$operator_field);
-                $request     = $top_up_request->setType($value->$type_field)
-                                              ->setBulkId($bulk_request->id)
-                                              ->setMobile(BDMobileFormatter::format($value->$mobile_field))
-                                              ->setAmount($value->$amount_field)
-                                              ->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
+                $vendor_id = $vendor->getIdByName($value->$operator_field);
+                $request = $top_up_request->setType($value->$type_field)->setBulkId($bulk_request->id)->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
                 $topup_order = $creator->setTopUpRequest($request)->create();
                 if (!$topup_order) return;
 
@@ -163,6 +177,7 @@ class TopUpController extends Controller
                     $sentry->captureException(new Exception("Bulk Topup request error"));
                     return;
                 }
+
                 dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
             });
 
@@ -194,6 +209,36 @@ class TopUpController extends Controller
     {
         if (preg_match('/^\d+$/', $amount)) return true;
         return false;
+    }
+
+    /**
+     * @param array $blocked_amount_by_operator
+     * @param $operator
+     * @param $amount
+     * @return bool
+     */
+    private function isAmountBlocked(array $blocked_amount_by_operator, $operator, $amount)
+    {
+        if ($operator == 'GP') return in_array($amount, $blocked_amount_by_operator[1]);
+        if ($operator == 'BANGLALINK') return in_array($amount, $blocked_amount_by_operator[2]);
+        if ($operator == 'ROBI') return in_array($amount, $blocked_amount_by_operator[3]);
+        if ($operator == 'AIRTEL') return in_array($amount, $blocked_amount_by_operator[6]);
+
+        return false;
+    }
+
+    private function getBlockedAmountForTopup()
+    {
+        $blocked_amount = '[{"operator_id":"1","operator_name":"GrameenPhone","amount":"17","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"17","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"33","connection_type":"prepaid","offer_type":"internet","offer_title":"350MB, 3 Days","offer_description":"350MB, 3 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"33","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"33","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"33","connection_type":"postpaid","offer_type":"internet","offer_title":"350MB, 3 Days","offer_description":"350MB, 3 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"34","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"34","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"37","connection_type":"prepaid","offer_type":"internet","offer_title":"85 MB, 7 Days","offer_description":"85 MB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"37","connection_type":"postpaid","offer_type":"internet","offer_title":"85 MB, 7 Days","offer_description":"85 MB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"38","connection_type":"prepaid","offer_type":"internet","offer_title":"85 MB, 7 Days","offer_description":"85 MB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"38","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"38","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":"2GB, 2 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"38","connection_type":"postpaid","offer_type":"internet","offer_title":"85 MB, 7 Days","offer_description":"85 MB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"41","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":"2 GB, 2 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"41","connection_type":"postpaid","offer_type":null,"offer_title":"2 GB, 2 Days","offer_description":"2 GB, 2 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"42","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"42","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"43","connection_type":"prepaid","offer_type":"voice","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"43","connection_type":"postpaid","offer_type":"voice","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"54","connection_type":"prepaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"54","connection_type":"postpaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"58","connection_type":"prepaid","offer_type":"internet","offer_title":"115 MB , 30 Days","offer_description":"115 MB , 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"58","connection_type":"postpaid","offer_type":"internet","offer_title":"115 MB , 30 Days","offer_description":"115 MB , 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"66","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"66","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"67","connection_type":"prepaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"67","connection_type":"postpaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"89","connection_type":"prepaid","offer_type":"internet","offer_title":"1GB, 7 Days","offer_description":"1GB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"89","connection_type":"postpaid","offer_type":"internet","offer_title":"1GB, 7 Days","offer_description":"1GB, 7 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"93","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"108","connection_type":"prepaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"108","connection_type":"postpaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"113","connection_type":"prepaid","offer_type":"voice","offer_title":"200 Min (Any Operator), 10 Days","offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"113","connection_type":"postpaid","offer_type":"voice","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"119","connection_type":"prepaid","offer_type":"internet","offer_title":"250MB, 28 Days","offer_description":"250MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"119","connection_type":"postpaid","offer_type":"internet","offer_title":"250MB, 28 Days","offer_description":"250MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"149","connection_type":"prepaid","offer_type":"internet","offer_title":"555 MB, 28 Days","offer_description":"555 MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"149","connection_type":"postpaid","offer_type":"internet","offer_title":"555 MB, 28 Days","offer_description":"555 MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"156","connection_type":"prepaid","offer_type":"internet","offer_title":"555 MB, 28 Days","offer_description":"555 MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"156","connection_type":"postpaid","offer_type":"internet","offer_title":"555 MB, 28 Days","offer_description":"555 MB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"237","connection_type":"prepaid","offer_type":"voice","offer_title":null,"offer_description":"410 Min (Any Operator), 15 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"237","connection_type":"postpaid","offer_type":"voice","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"239","connection_type":"prepaid","offer_type":"internet","offer_title":"1.5GB , 30 Days","offer_description":"1.5GB , 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"239","connection_type":"postpaid","offer_type":"internet","offer_title":"1.5GB , 30 Days","offer_description":"1.5GB , 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"247","connection_type":"prepaid","offer_type":"internet","offer_title":"1.5GB, 30 Days","offer_description":"1.5GB, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"247","connection_type":"postpaid","offer_type":"internet","offer_title":"1.5GB, 30 Days","offer_description":"1.5GB, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"258","connection_type":"prepaid","offer_type":"internet","offer_title":"1.5GB, 30 Days","offer_description":"1.5GB, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"258","connection_type":"postpaid","offer_type":"internet","offer_title":"1.5GB, 30 Days","offer_description":"1.5GB, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"278","connection_type":"prepaid","offer_type":"internet","offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"278","connection_type":"postpaid","offer_type":"internet","offer_title":null,"offer_description":"2030-12-31"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"288","connection_type":"prepaid","offer_type":"voice","offer_title":"500 Min  + 4 MMS, 30 Days","offer_description":"500 Min  + 4 MMS, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"288","connection_type":"postpaid","offer_type":"voice","offer_title":"500 Min  + 4 MMS, 30 Days","offer_description":"500 Min  + 4 MMS, 30 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"353","connection_type":"prepaid","offer_type":"internet","offer_title":"3.5 GB (2.5 GB + 1 GB 4G Only), 28 Days","offer_description":"3.5 GB (2.5 GB + 1 GB 4G Only), 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"353","connection_type":"postpaid","offer_type":"internet","offer_title":"3.5 GB (2.5 GB + 1 GB 4G Only), 28 Days","offer_description":"3.5 GB (2.5 GB + 1 GB 4G Only), 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"448","connection_type":"prepaid","offer_type":"internet","offer_title":"5.5 GB (3.5 GB + 2 GB 4G Only), 28 Days","offer_description":"5.5 GB (3.5 GB + 2 GB 4G Only), 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"448","connection_type":"postpaid","offer_type":"internet","offer_title":"5.5 GB (3.5 GB + 2 GB 4G Only), 28 Days","offer_description":"5.5 GB (3.5 GB + 2 GB 4G Only), 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"638","connection_type":"prepaid","offer_type":"internet","offer_title":"6 GB, 28 Days","offer_description":"6 GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"638","connection_type":"postpaid","offer_type":"internet","offer_title":"6 GB, 28 Days","offer_description":"6 GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"1157","connection_type":"prepaid","offer_type":null,"offer_title":"10GB, 28 Days","offer_description":"10GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"1157","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"1","operator_name":"GrameenPhone","amount":"1522","connection_type":"prepaid","offer_type":null,"offer_title":"12GB, 28 Days","offer_description":"12GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"1522","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":"12GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"2436","connection_type":"prepaid","offer_type":null,"offer_title":"20GB, 28 Days","offer_description":"20GB, 28 Days"},{"operator_id":"1","operator_name":"GrameenPhone","amount":"2436","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":"20GB, 28 Days"},{"operator_id":"2","operator_name":"Banglalink","amount":"23","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"23","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"48","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"48","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"222","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"222","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"224","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"2","operator_name":"Banglalink","amount":"224","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"42","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"53","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"93","connection_type":"prepaid","offer_type":"internet","offer_title":"Special Pack","offer_description":"Special Pack, Please see details in robi.com.bd"},{"operator_id":"3","operator_name":"Robi Telecom","amount":"96","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"114","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"121","connection_type":"prepaid","offer_type":"internet","offer_title":"1024 MB 14 Days For Selected users 1GB 28 days, For Regular user 1 GB 14 Days. To eligibility for 1GB offer user/retailer need to check in *999# menu.","offer_description":"1024 MB 14 Days For Selected users 1GB 28 days, For Regular user 1 GB 14 Days. To eligibility for 1GB offer user/retailer need to check in *999# menu."},{"operator_id":"3","operator_name":"Robi Telecom","amount":"124","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"136","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"136","connection_type":"postpaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"156","connection_type":"prepaid","offer_type":"","offer_title":"","offer_description":""},{"operator_id":"3","operator_name":"Robi Telecom","amount":"179","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"516","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"3","operator_name":"Robi Telecom","amount":"591","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null},{"operator_id":"6","operator_name":"Airtel Bangladesh","amount":"221","connection_type":"prepaid","offer_type":null,"offer_title":null,"offer_description":null}]';
+        $blocked_amount_by_operator = [];
+        foreach (json_decode($blocked_amount) as $data) {
+            if (isset($blocked_amount_by_operator[$data->operator_id]))
+                array_push($blocked_amount_by_operator[$data->operator_id], $data->amount);
+            else
+                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
+        }
+
+        return $blocked_amount_by_operator;
     }
 
     public function activeBulkTopUps(Request $request)
