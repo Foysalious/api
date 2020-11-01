@@ -137,6 +137,7 @@ class PartnerPosService extends BaseModel
             'name' => $this->name,
             'description' => $this->description,
             'publication_status' => $this->publication_status,
+            'is_published_for_shop' => $this->is_published_for_shop,
             'app_thumb' => $this->app_thumb,
         ];
     }
