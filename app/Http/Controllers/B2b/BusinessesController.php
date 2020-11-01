@@ -180,10 +180,10 @@ class BusinessesController extends Controller
     public function getVendorAdminInfo($business, $vendor, Request $request)
     {
         $partner = Partner::find((int)$vendor);
-        if (!$partner) return api_response($request, null, 200);
+        if (!$partner) return api_response($request, null, 404);
 
         $resource = $partner->admins->first();
-        if (!$resource) return api_response($request, null, 200);
+        if (!$resource) return api_response($request, null, 404);
 
         $resource = [
             "id" => $resource->id,
