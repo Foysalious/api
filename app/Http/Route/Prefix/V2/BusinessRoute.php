@@ -123,14 +123,6 @@ class BusinessRoute
                         $api->get('/lists', 'B2b\LeaveController@allLeaveBalance');
                         $api->get('/{balance}', 'B2b\LeaveController@leaveBalanceDetails');
                     });
-                    $api->group(['prefix' => 'prorate'], function ($api) {
-                        $api->post('/', 'B2b\ProrateController@store');
-                        $api->get('/', 'B2b\ProrateController@index');
-
-                        $api->group(['prefix' => '{prorate}'], function ($api) {
-                            $api->post('/', 'B2b\ProrateController@edit');
-                        });
-                    });
                     $api->group(['prefix' => 'super-admins'], function ($api) {
                         $api->get('/', 'B2b\LeaveController@getSuperAdmins');
                     });
@@ -145,6 +137,14 @@ class BusinessRoute
                         $api->group(['prefix' => 'others'], function ($api) {
                             $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
                             $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
+                        });
+                    });
+                    $api->group(['prefix' => 'prorate'], function ($api) {
+                        $api->post('/', 'B2b\ProrateController@store');
+                        $api->get('/', 'B2b\ProrateController@index');
+                        $api->post('/delete', 'B2b\ProrateController@delete');
+                        $api->group(['prefix' => '{prorate}'], function ($api) {
+                            $api->post('/', 'B2b\ProrateController@edit');
                         });
                     });
                 });
