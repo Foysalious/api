@@ -180,7 +180,6 @@ class BusinessMember extends Model
         return $this->business->leaveTypes;
     }
 
-
     /**
      * @param Carbon $date
      * @return bool
