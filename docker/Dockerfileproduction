@@ -61,19 +61,24 @@ COPY ./docker/nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
 COPY ./docker/entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
 
+RUN chmod -R g+w /var/www/storage
+RUN chmod -R g+w /var/www/bootstrap
+
 # Set working directory
 WORKDIR /var/www
 
 # Laravel specific file permission
-RUN find ./ -type f -exec chmod 664 {} \;
-RUN find ./ -type d -exec chmod 775 {} \;
-RUN chgrp -R www-data storage bootstrap/cache
-RUN chmod -R ug+rwx storage bootstrap/cache
+# RUN find ./ -type f -exec chmod 664 {} \;
+# RUN find ./ -type d -exec chmod 775 {} \;
+# RUN chgrp -R www-data storage bootstrap/cache
+# RUN chmod -R ug+rwx storage bootstrap/cache
 
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
 
 RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
+
+# RUN chmod -R g+w /var/www/vendor
 
 RUN php artisan config:clear
 
