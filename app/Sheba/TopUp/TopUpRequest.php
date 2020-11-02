@@ -168,7 +168,7 @@ class TopUpRequest
             return 1;
         }
         if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
-            Event::fire(new TopUpRequestOfBlockedNumber($this->agent, $this->mobile));
+            Event::fire(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }

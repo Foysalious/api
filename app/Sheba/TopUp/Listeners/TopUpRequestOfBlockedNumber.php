@@ -23,19 +23,18 @@ class TopUpRequestOfBlockedNumber
         $this->notifyConcerningPersons($event);
     }
 
-    private function blockUser($event)
+    private function blockUser(TopUpRequestOfBlockedNumberEvent $event)
     {
-        if (!$event->agent instanceof Affiliate) return;
-        $event->agent->update(['verification_status' => 'rejected']);
+        if (!$event->topupRequest->getAgent() instanceof Affiliate) return;
+        $event->topupRequest->getAgent()->update(['verification_status' => 'rejected']);
     }
 
-    private function notifyConcerningPersons($event)
+    private function notifyConcerningPersons(TopUpRequestOfBlockedNumberEvent $event)
     {
         $receivers = TopUpTransactionBlockNotificationReceiver::with('user')->get();
         foreach ($receivers as $receiver) {
             try {
-                $this->sms->shoot(BDMobileFormatter::format($receiver->user->mobile), "Topup request blocked for trying to recharge to this blocked number, " .
-                    $event->blockedMobileNumber . config('sheba.admin_url') . "/affiliate/" . $event->agent->id);
+                $this->sms->shoot(BDMobileFormatter::format($receiver->user->mobile), "Topup request blocked for trying to recharge to this blocked number, ");
             } catch (RequestException $exception) {
             }
         }
