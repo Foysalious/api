@@ -75,4 +75,19 @@ class ProrateController extends Controller
         return api_response($request, null, 200);
     }
 
+    public function delete($business, Request $request)
+    {
+        $this->validate($request, [
+            'business_member_leave_type_ids' => 'required|array',
+        ]);
+        /** @var Member $manager_member */
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+        foreach ($request->business_member_leave_type_ids as $id){
+            /**@var BusinessMemberLeaveType $business_member_leave_type */
+            $business_member_leave_type = $this->businessMemberLeaveTypeRepo->find($id);
+            $this->businessMemberLeaveTypeRepo->delete($business_member_leave_type);
+        }
+        return api_response($request, null, 200);
+    }
 }

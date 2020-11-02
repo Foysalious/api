@@ -68,6 +68,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['active', 'invited']);
+    }
+
     /**
      * @param Carbon $date
      * @return bool
@@ -164,16 +169,6 @@ class BusinessMember extends Model
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
     }
 
-    /**
-     * @param Carbon $date
-     * @return bool
-     */
-    public function getLeaveOnASpecificDate(Carbon $date)
-    {
-        $date = $date->toDateString();
-        return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
-    }
-
     public function leaveTypes()
     {
         return $this->hasMany(BusinessMemberLeaveType::class);
@@ -185,4 +180,14 @@ class BusinessMember extends Model
         return $this->business->leaveTypes;
     }
 
+
+    /**
+     * @param Carbon $date
+     * @return bool
+     */
+    public function getLeaveOnASpecificDate(Carbon $date)
+    {
+        $date = $date->toDateString();
+        return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
+    }
 }
