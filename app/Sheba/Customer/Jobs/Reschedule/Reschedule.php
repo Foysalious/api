@@ -4,6 +4,7 @@
 namespace Sheba\Customer\Jobs\Reschedule;
 
 
+use App\Models\Customer;
 use App\Models\Job;
 use GuzzleHttp\Client;
 use Sheba\Jobs\JobTime;
@@ -20,12 +21,15 @@ class Reschedule
 
     private $scheduleDate;
     private $scheduleTimeSlot;
+    private $customer;
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;
     }
+
+
 
     /**
      * @param Job $job
@@ -34,6 +38,18 @@ class Reschedule
     public function setJob(Job $job)
     {
         $this->job = $job;
+        return $this;
+    }
+
+
+
+    /**
+     * @param Customer $customer
+     * @return Reschedule
+     */
+    public function setCustomer(Customer $customer)
+    {
+        $this->customer = $customer;
         return $this;
     }
     /**
@@ -66,6 +82,8 @@ class Reschedule
         $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/reschedule',
             [
                 'form_params' => [
+                    'customer_id' => $this->customer->id,
+                    'remember_token' => $this->customer->remember_token,
                     'schedule_date' => $this->scheduleDate,
                     'preferred_time' => $this->scheduleTimeSlot,
                     'portal_name' => $this->userAgentInformation->getPortalName(),

@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
 use Sheba\Authentication\AuthUser;
@@ -738,14 +739,20 @@ class JobController extends Controller
 
     public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
-//        return api_response($request, 1, 200);
         $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
 
         $job = Job::find($job);
         if ($job == null) return api_response($request, null, 404);
 
         $user_agent_information->setRequest($request);
-        $reschedule_job->setJob($job)->setUserAgentInformation($user_agent_information)->setScheduleDate($request->schedule_date)
+
+        $customer = Customer::find($customer);
+
+        $reschedule_job
+            ->setCustomer($customer)
+            ->setJob($job)
+            ->setUserAgentInformation($user_agent_information)
+            ->setScheduleDate($request->schedule_date)
             ->setScheduleTimeSlot($request->schedule_time_slot);
 
         $response = $reschedule_job->reschedule();
