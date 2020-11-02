@@ -105,6 +105,14 @@ class PartnerPosService extends BaseModel
         return $this->runningDiscounts()->first();
     }
 
+    public function getDiscountPercentage()
+    {
+        $discount = $this->discount();
+        if ($discount->is_amount_percentage)
+            return $discount->amount;
+        return round((($discount->amount/ $this->price) * 100),0);
+    }
+
     public function runningDiscounts()
     {
         $now = Carbon::now();
