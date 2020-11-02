@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
@@ -174,7 +175,7 @@ class CategoryController extends Controller
     /**
      * @param Request $request
      * @param $partner
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getMasterCategories(Request $request, $partner)
     {
@@ -189,6 +190,7 @@ class CategoryController extends Controller
             $data['categories'] = [];
             foreach ($master_categories as $master_category) {
                 $category = $master_category->category()->first();
+                $item['id'] = $category->id;
                 $item['name'] = $category->name;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
