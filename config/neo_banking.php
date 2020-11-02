@@ -204,8 +204,8 @@ return [
             [
                 'field_type' => 'multipleView',
                 'title'      => '',
-                'name'       => 'present_address',
-                'id'         => 'present_address',
+                'name'       => 'present_permanent_address_check',
+                'id'         => 'present_permanent_address_check',
                 'mandatory'  => false,
                 'views'      => [
                     [
@@ -232,6 +232,7 @@ return [
                 'field_type' => 'multipleView',
                 'title'      => '',
                 'name'       => 'permanent_address',
+                'id'         => 'permanent_address',
                 'mandatory'  => false,
                 'views'      => addressViews('permanent')
             ],
