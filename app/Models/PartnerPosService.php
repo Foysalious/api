@@ -1,13 +1,13 @@
 <?php namespace App\Models;
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use App\Sheba\Algolia\Events\PartnerPosServiceCreated;
+use App\Sheba\Algolia\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Sheba\Dal\BaseModel;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceCreated;
-use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
+
 
 class PartnerPosService extends BaseModel
 {
