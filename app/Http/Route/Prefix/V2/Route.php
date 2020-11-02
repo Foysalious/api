@@ -157,6 +157,7 @@ class Route
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
                 $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
+                $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
