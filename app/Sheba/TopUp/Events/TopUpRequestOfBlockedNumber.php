@@ -2,24 +2,24 @@
 
 use App\Events\Event;
 use Illuminate\Queue\SerializesModels;
-use Sheba\TopUp\TopUpAgent;
+use Sheba\TopUp\TopUpRequest;
 
 class TopUpRequestOfBlockedNumber extends Event
 {
     use SerializesModels;
 
-    public $agent;
-    public $blockedMobileNumber;
+    /**
+     * @var TopUpRequest
+     */
+    public $topupRequest;
+
 
     /**
-     * Create a new event instance.
-     *
-     * @param TopUpAgent $agent
-     * @param $blocked_mobile_number
+     * TopUpRequestOfBlockedNumber constructor.
+     * @param TopUpRequest $request
      */
-    public function __construct(TopUpAgent $agent, $blocked_mobile_number)
+    public function __construct(TopUpRequest $request)
     {
-        $this->agent = $agent;
-        $this->blockedMobileNumber = $blocked_mobile_number;
+        $this->topupRequest = $request;
     }
 }
