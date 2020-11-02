@@ -22,7 +22,6 @@ class MemberManager
         return $customer;
     }
 
-
     /**
      * @param Member $member
      * @param Business $business
