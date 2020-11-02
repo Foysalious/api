@@ -1,7 +1,6 @@
 <?php namespace App\Models;
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
-use App\Sheba\Algolia\Events\PartnerPosServiceCreated;
 use App\Sheba\Algolia\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -18,7 +17,6 @@ class PartnerPosService extends BaseModel
     protected $dates   = ['deleted_at'];
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
-    public static $createdEventClass = PartnerPosServiceCreated::class;
     public static $autoIndex = false;
 
     public $algoliaSettings = [
