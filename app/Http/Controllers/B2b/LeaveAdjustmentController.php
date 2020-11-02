@@ -271,14 +271,21 @@ class LeaveAdjustmentController extends Controller
         file_put_contents($file_path, file_get_contents($url));
 
         foreach ($leave_types as $key => $leave_type) {
-            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateLeaveTypeId($leave_type['id'])
-                ->updateLeaveTypeTile($leave_type['title'])->updateLeaveTotalDays($leave_type['total_days']);
+            $leave_adjustment_excel->setAgent($business)
+                ->setFile($file_path)
+                ->setRow($key + 9)
+                ->updateLeaveTypeId($leave_type['id'])
+                ->updateLeaveTypeTile($leave_type['title'])
+                ->updateLeaveTotalDays($leave_type['total_days']);
         }
 
         $super_admins = $business->getAccessibleBusinessMember()->where('is_super', 1)->get();
         foreach ($super_admins as $key => $admin) {
             $profile = $admin->member->profile;
-            $leave_adjustment_excel->setAgent($business)->setFile($file_path)->setRow($key + 9)->updateSuperAdminId($admin->id)
+            $leave_adjustment_excel->setAgent($business)
+                ->setFile($file_path)
+                ->setRow($key + 9)
+                ->updateSuperAdminId($admin->id)
                 ->updateSuperAdminName($profile->name);
         }
 
