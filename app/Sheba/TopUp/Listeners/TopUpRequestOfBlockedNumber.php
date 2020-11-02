@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Listeners;
 
 use App\Models\Affiliate;
+use App\Repositories\SmsHandler;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Dal\TopUpTransactionBlockNotificationReceiver\TopUpTransactionBlockNotificationReceiver;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -26,7 +27,7 @@ class TopUpRequestOfBlockedNumber
     private function blockUser(TopUpRequestOfBlockedNumberEvent $event)
     {
         if (!$event->topupRequest->getAgent() instanceof Affiliate) return;
-        $event->topupRequest->getAgent()->update(['verification_status' => 'rejected']);
+        $event->topupRequest->getAgent()->update(['verification_status' => 'rejected', 'reject_reason' => "Unusual / Suspicious account activity"]);
     }
 
     private function notifyConcerningPersons(TopUpRequestOfBlockedNumberEvent $event)
@@ -34,7 +35,12 @@ class TopUpRequestOfBlockedNumber
         $receivers = TopUpTransactionBlockNotificationReceiver::with('user')->get();
         foreach ($receivers as $receiver) {
             try {
-                $this->sms->shoot(BDMobileFormatter::format($receiver->user->mobile), "Topup request blocked for trying to recharge to this blocked number, ");
+                (new SmsHandler('affiliate-rejected-for-block-topup'))->send(BDMobileFormatter::format($receiver->user->mobile), [
+                    'blocked_number' => $event->topupRequest->getMobile(),
+                    'amount' => $event->topupRequest->getAmount(),
+                    'agent_id' => $event->topupRequest->getAgent()->id,
+                    'agent_number' => $event->topupRequest->getAgent()->profile->mobile,
+                ]);
             } catch (RequestException $exception) {
             }
         }
