@@ -9,6 +9,8 @@ use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
+use Sheba\Dal\POSOrder\SalesChannels;
+use Sheba\Dal\POSOrder\OrderStatuses;
 
 class PosOrder extends Model {
     use SoftDeletes;
@@ -308,5 +310,10 @@ class PosOrder extends Model {
 
     public function payments() {
         return $this->hasMany(PosOrderPayment::class);
+    }
+
+    public function scopeSalesChannel($query, $salesChannel)
+    {
+        return $query->where('sales_channel', $salesChannel);
     }
 }
