@@ -9,8 +9,7 @@ use Sheba\Pos\Log\Supported\Types;
 use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
-use Sheba\Dal\POSOrder\SalesChannels;
-use Sheba\Dal\POSOrder\OrderStatuses;
+
 
 class PosOrder extends Model {
     use SoftDeletes;
