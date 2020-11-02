@@ -190,6 +190,7 @@ class CategoryController extends Controller
             $data['categories'] = [];
             foreach ($master_categories as $master_category) {
                 $category = $master_category->category()->first();
+                $item['id'] = $category->id;
                 $item['name'] = $category->name;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
