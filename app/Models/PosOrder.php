@@ -332,4 +332,9 @@ class PosOrder extends Model {
     {
         return $query->where('status', OrderStatuses::SHIPPED);
     }
+
+    public function scopeSalesChannel($query, $salesChannel)
+    {
+        return $query->where('sales_channel', $salesChannel);
+    }
 }
