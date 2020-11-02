@@ -261,9 +261,18 @@ class TopUpController extends Controller
     {
         $special_amount = $special_amount->get();
         $blocked_amount = $special_amount->blockedAmount->list;
+        $trigger_amount = $special_amount->triggerAmount->list;
+
         $blocked_amount_by_operator = [];
 
         foreach ($blocked_amount as $data) {
+            if (isset($blocked_amount_by_operator[$data->operator_id]))
+                array_push($blocked_amount_by_operator[$data->operator_id], $data->amount);
+            else
+                $blocked_amount_by_operator[$data->operator_id] = [$data->amount];
+        }
+
+        foreach ($trigger_amount as $data) {
             if (isset($blocked_amount_by_operator[$data->operator_id]))
                 array_push($blocked_amount_by_operator[$data->operator_id], $data->amount);
             else
