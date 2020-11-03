@@ -18,7 +18,7 @@ class BondhuOrderRequest extends ApiRequest
     {
         $all = parent::all();
         $all['mobile'] = $this->has('mobile') ? formatMobile($this->input('mobile')) : null;
-        $all['payment_method'] = 'cod';
+        // $all['payment_method'] = 'bondhu_balance';
         $all['sales_channel'] = $this->has('sales_channel')?$this->input('sales_channel'):constants('SALES_CHANNELS')['Bondhu']['name'];
 
         return $all;
@@ -42,7 +42,7 @@ class BondhuOrderRequest extends ApiRequest
             'email' => 'sometimes|email',
             'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
             'time' => 'required|string',
-            'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
+            'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance,',
             'address' => 'required_without:address_id',
             'address_id' => 'required_without:address',
             'resource' => 'sometimes|numeric',
