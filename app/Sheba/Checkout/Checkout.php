@@ -57,6 +57,8 @@ class Checkout
     private $category;
     /** @var Partner */
     private $partner;
+    private $payer_id;
+    private $payer_type;
 
     public function __construct($customer)
     {
@@ -67,6 +69,18 @@ class Checkout
         $this->partnerListRequest = new PartnerListRequest();
         $this->discountRepo = app(DiscountRepository::class);
         $this->jobDiscountHandler = app(JobDiscountHandler::class);
+        $this->payer_id = null;
+        $this->payer_type = null;
+    }
+
+    public function setPayerId($payer_id)
+    {
+        $this->payer_id = (int)$payer_id;
+    }
+
+    public function setPayerType($payer_type)
+    {
+        $this->payer_type = $payer_type;
     }
 
     /**
@@ -170,6 +184,8 @@ class Checkout
         }
         if ($request->has('business_id')) $data['business_id'] = $request->business_id;
         $data['vendor_id'] = $request->has('vendor_id') ? $request->vendor_id : null;
+        $data['payer_id'] = $this->payer_id;
+        $data['payer_type'] = $this->payer_type;
         $data['pap_visitor_id'] = $request->has('pap_visitor_id') ? $request->pap_visitor_id : null;
         $data['created_by'] = $created_by = $request->has('created_by') ? $request->created_by : $this->customer->id;
         $data['created_by_name'] = $created_by_name = $request->has('created_by_name') ? $request->created_by_name : 'Customer - ' . $this->customer->profile->name;
@@ -271,6 +287,8 @@ class Checkout
         $order->partner_id = isset($data['partner_id']) ? $data['partner_id'] : null;
         $order->business_id = isset($data['business_id']) ? $data['business_id'] : null;
         $order->vendor_id = isset($data['vendor_id']) ? $data['vendor_id'] : null;
+        $order->payer_type = isset($data['payer_type']) ? $data['payer_type'] : 'customer';
+        $order->payer_id = isset($data['payer_id']) ? $data['payer_id'] : null;
         $customer_delivery_address = $this->getDeliveryAddress($data);
         $order->delivery_address_id = $customer_delivery_address != null ? $customer_delivery_address->id : null;
         $order->fill((new RequestIdentification())->get());
