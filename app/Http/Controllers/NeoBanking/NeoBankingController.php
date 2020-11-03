@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\NeoBanking;
 
+use App\Models\Partner;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
@@ -282,6 +283,33 @@ class NeoBankingController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function notificationStore(Request $request)
+    {
+        try {
+            $partner = Partner::find($request->user_id);
+            notify()->partner($partner)->send($this->populateData($request));
+            return api_response($request, null, 200, ['data' => "Notification stored"]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    private function populateData($data)
+    {
+        return [
+            "title"      => $data->title,
+            "link"       => $data->link,
+            "type"       => $data->type,
+            "event_type" => $data->event_type,
+            "event_id"   => $data->event_id
+        ];
     }
 
     private function kycData($data) {
