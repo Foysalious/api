@@ -2,7 +2,7 @@
 
 
 use App\Models\PartnerPosService;
-use App\Sheba\Algolia\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved as PartnerPosServiceSavedEvent;
 
 class PartnerPosServiceSaved
 {
