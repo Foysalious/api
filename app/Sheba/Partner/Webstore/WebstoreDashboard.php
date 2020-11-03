@@ -80,6 +80,7 @@ class WebstoreDashboard
         $stats['product_stats'] = $this->getProductStats();
         $stats['order_stats'] = $this->getOrderStats();
         $stats['sales_stats'] = $this->getSalesStats();
+        $stats['is_inventory_empty'] = !$this->partner->posServices()->count() ? 1 : 0;
         return $stats;
     }
 }
