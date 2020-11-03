@@ -209,10 +209,12 @@ return [
                 'mandatory'  => false,
                 'views'      => [
                     [
-                        'field_type' => 'checkbox',
-                        'name'       => 'present_permanent_same_address_checked',
-                        'id'         => 'present_permanent_same_address_checked',
-                        'value'      => 0
+                        'field_type'    => 'checkbox',
+                        'name'          => 'present_permanent_same_address_checked',
+                        'id'            => 'present_permanent_same_address_checked',
+                        "error_message" => "",
+                        'value'         => "0",
+                        'mandatory'     => false
                     ],
                     [
                         'field_type' => 'textView',
