@@ -6,7 +6,13 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style type="text/css">
-        @import url('https://fonts.maateen.me/mukti/font.css');
+        @font-face {
+            font-family: 'Kalpurush';
+            font-style: normal;
+            font-weight: normal;
+            src: url(http://example.com/fonts/firefly.ttf) format('truetype');
+        }
+        @import url('https://fonts.maateen.me/kalpurush/font.css');
 
         .page-break {
             page-break-after: always;
@@ -16,7 +22,7 @@
             page-break-before: auto;
         }
         body {
-            font-family: 'Mukti',  'Roboto',sans-serif;
+            font-family: 'Kalpurush', Arial, sans-serif !important;
             color: #4a4a4a;
             font-style: normal;
             font-weight: normal;
