@@ -67,14 +67,9 @@ class PdfHandler extends Handler
 
     public function save($mPdf = false)
     {
-        $this->create();
         if (!is_dir(public_path('temp'))) {
             mkdir(public_path('temp'), 0777, true);
         }
-        $folder = $this->folder ?: 'invoices/pdf/';
-        $time = time();
-        $file = $this->filename . "_$time." . $this->downloadFormat;
-        $path = public_path('temp') . '/' . $file;
         if ($mPdf) {
             $defaultConfig = (new ConfigVariables())->getDefaults();
             $fontDirs = $defaultConfig['fontDir'];
@@ -94,13 +89,22 @@ class PdfHandler extends Handler
             $mPDF->shrink_tables_to_fit = 1;
             $data = view($this->viewFileName, $this->data)->render();
             $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
-            $output = $mPDF->Output("$this->filename". "_$time." ."$this->downloadFormat", "S");
-            $this->pdf->save($path, $output);
+
+            $folder = $this->folder ?: 'invoices/pdf/';
+            $time = time();
+            $file = $this->filename . "_$time." . $this->downloadFormat;
+            $path = public_path('temp') . '/' . $file;
+            $mPDF->Output($path, "F");
             $cdn = $this->saveFileToCDN($path, $folder, $file);
             File::delete($path);
             return $cdn;
-
         }
+        $this->create();
+        $folder = $this->folder ?: 'invoices/pdf/';
+        $time = time();
+        $file = $this->filename . "_$time." . $this->downloadFormat;
+        $path = public_path('temp') . '/' . $file;
+        dd($path, $folder, $file);
         $this->pdf->save($path);
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
