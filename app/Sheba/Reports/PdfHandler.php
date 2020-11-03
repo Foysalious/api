@@ -65,17 +65,42 @@ class PdfHandler extends Handler
         return $this->pdf->download("$this->filename.$this->downloadFormat");
     }
 
-    public function save()
+    public function save($mPdf = false)
     {
         $this->create();
         if (!is_dir(public_path('temp'))) {
             mkdir(public_path('temp'), 0777, true);
         }
-
         $folder = $this->folder ?: 'invoices/pdf/';
         $time = time();
         $file = $this->filename . "_$time." . $this->downloadFormat;
         $path = public_path('temp') . '/' . $file;
+        if ($mPdf) {
+            $defaultConfig = (new ConfigVariables())->getDefaults();
+            $fontDirs = $defaultConfig['fontDir'];
+            $defaultFontConfig = (new FontVariables())->getDefaults();
+            $fontData = $defaultFontConfig['fontdata'];
+            $mPDF = new Mpdf([
+                'fontDir' => array_merge($fontDirs, [
+                    storage_path('/fonts'),
+                ]), 'fontdata' => $fontData + [
+                        'kalpurush' => [
+                            'R' => 'Siyamrupali.ttf', 'I' => 'Siyamrupali.ttf', 'useOTL' => 0xFF, 'useKashida' => 75,
+                        ]
+                    ], 'default_font' => 'kalpurush'
+            ]);
+            $mPDF->simpleTables = true;
+            $mPDF->packTableData = true;
+            $mPDF->shrink_tables_to_fit = 1;
+            $data = view($this->viewFileName, $this->data)->render();
+            $mPDF->WriteHTML("$data", HTMLParserMode::DEFAULT_MODE);
+            $output = $mPDF->Output("$this->filename". "_$time." ."$this->downloadFormat", "S");
+            $this->pdf->save($path, $output);
+            $cdn = $this->saveFileToCDN($path, $folder, $file);
+            File::delete($path);
+            return $cdn;
+
+        }
         $this->pdf->save($path);
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
