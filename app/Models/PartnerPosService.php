@@ -1,7 +1,7 @@
 <?php namespace App\Models;
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
-use App\Sheba\Algolia\Events\PartnerPosServiceSaved;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
