@@ -25,8 +25,8 @@
     @endforeach
     <tr>
         <td style="text-align: right" colspan="3">Total</td>
-        <td style="color: #219653">{{$stats["deposit"]}}</td>
-        <td style="color: #DC1E1E">{{$stats["due"]}}</td>
+        <td style="text-align: center;color: #219653">{{$stats["deposit"]}}</td>
+        <td style="text-align: center;color: #DC1E1E">{{$stats["due"]}}</td>
     </tr>
     </tbody>
 </table>

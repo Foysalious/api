@@ -76,7 +76,7 @@ class DueTrackerController extends Controller
             if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save();
+                $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {

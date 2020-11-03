@@ -40,8 +40,8 @@
     @endforeach
     <tr>
         <td style="text-align: right" colspan="3">Total</td>
-        <td style="color: #219653">{{$other_info["total_credit"]}}</td>
-        <td style="color: #DC1E1E">{{$other_info["total_debit"]}}</td>
+        <td style="text-align: center;color: #219653">{{$other_info["total_credit"]}}</td>
+        <td style="text-align: center;color: #DC1E1E">{{$other_info["total_debit"]}}</td>
     </tr>
     </tbody>
 </table>
