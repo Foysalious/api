@@ -98,7 +98,9 @@ class ProrateController extends Controller
                     'profile' => [
                         'id' => $profile->id,
                         'name' => $profile->name,
-                    ]
+                    ],
+                    'leave_type' => $prorate->leaveType->title,
+                    'total_days' => $prorate->total_days
                 ]);
             }
             array_push($department_info, [
@@ -107,9 +109,16 @@ class ProrateController extends Controller
                 'employees' => $employee_data
             ]);
         }
-        $department_info = collect($department_info)->filter(function ($employee) use ($request) {
+        $department_info = collect($department_info);
+        $department_info = $department_info->filter(function ($employee) use ($request) {
             return count($employee['employees']) > 0;
         })->values();
+
+        if ($request->has('department')){
+            $department_info = $department_info->filter(function ($employee) use ($request) {
+                return $employee['department_id'] == $request->department;
+            });
+        }
 
         return api_response($request, null, 200, ['leave_prorate' => $department_info]);
     }
