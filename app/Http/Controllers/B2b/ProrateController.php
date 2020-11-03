@@ -89,7 +89,6 @@ class ProrateController extends Controller
                 $business_member = $prorate->businessMember;
                 $member = $business_member->member;
                 $profile = $member->profile;
-                $department = $business_member->department();
 
                 array_push($employee_data, [
                     'id' => $prorate->id,
@@ -100,7 +99,9 @@ class ProrateController extends Controller
                         'name' => $profile->name,
                     ],
                     'leave_type' => $prorate->leaveType->title,
-                    'total_days' => $prorate->total_days
+                    'total_days' => $prorate->total_days,
+                    'note' => $prorate->note,
+                    'department' => $business_department->name,
                 ]);
             }
             array_push($department_info, [
