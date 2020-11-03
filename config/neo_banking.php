@@ -213,7 +213,7 @@ return [
                         'name'          => 'present_permanent_same_address_checked',
                         'id'            => 'present_permanent_same_address_checked',
                         "error_message" => "",
-                        'value'         => "0",
+                        'value'         => 0,
                         'mandatory'     => false
                     ],
                     [

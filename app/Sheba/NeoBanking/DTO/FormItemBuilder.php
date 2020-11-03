@@ -114,7 +114,7 @@ class FormItemBuilder
     private function checkbox()
     {
         $item = $this->initItem();
-        if ($item->getValue() !== 0 || $item->getValue() !== 1) $item->setValue(0);
+        if ($item->getValue() !== 0 && $item->getValue() !== 1) $item->setValue(0);
         return $item->toArray();
     }
 
