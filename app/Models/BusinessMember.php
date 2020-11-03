@@ -176,7 +176,7 @@ class BusinessMember extends Model
 
     public function getLeaveTypes()
     {
-        if ($this->leaveTypes->get()) return $this->leaveTypes;
+        if (!$this->leaveTypes->isEmpty()) return $this->leaveTypes;
         return $this->business->leaveTypes;
     }
 
