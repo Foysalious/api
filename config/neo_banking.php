@@ -291,7 +291,7 @@ return [
                 'name'          => 'trade_licence_date',
                 'id'            => 'trade_licence_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'টনিবন্ধনের তারিখ  পূরণ আবশ্যক'
+                'error_message' => 'নিবন্ধনের তারিখ  পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
