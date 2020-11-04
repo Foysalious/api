@@ -18,11 +18,7 @@
                 <td style="text-align: center; width: 50%">Purchase, Order Id #{{$item['partner_wise_order_id']}}</td>
             @elseif($item['head'] === 'Due Tracker')
                 @if($item['note'])
-                    @if(strlen($item['note']) > 120)
-                        <td style="text-align: center; width: 50%">{{substr($item['note'], 0, 120)}}... </td>
-                    @else
-                        <td style="text-align: center; width: 50%"> {{$item['note']}} </td>
-                    @endif
+                    <td style="text-align: center; width: 50%"> {{$item['note']}} </td>
                 @else
                     <td style="text-align: center; width: 50%"> -- </td>
                 @endif
