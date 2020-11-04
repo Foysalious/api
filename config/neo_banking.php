@@ -599,6 +599,7 @@ return [
                 'field_type' => 'multipleView',
                 'title'      => 'অ্যাকাউন্টের ধরণ *',
                 'name'       => 'type_of_account',
+                'value'      => 'অ্যাকাউন্টের ধরণ *',
                 'id'         => 'type_of_account',
                 'views'      => [
                     [
@@ -666,6 +667,7 @@ return [
                 'title'      => 'মূদ্রা ',
                 'name'       => 'money_type',
                 'id'         => 'money_type',
+                'value'      => 'মূদ্রা ',
                 'mandatory'  => false,
                 'views'      => [
                     [
@@ -715,6 +717,7 @@ return [
                 'title'      => 'অপারেশনের ধরণ ',
                 'name'       => 'type_of_operation',
                 'id'         => 'type_of_operation',
+                'value'      => 'অপারেশনের ধরণ ',
                 'mandatory'  => false,
                 'views'      => [
                     [
@@ -758,6 +761,7 @@ return [
                 'title'      => 'চেক বই নিতে চান?',
                 'name'       => 'check_book',
                 'id'         => 'check_book',
+                'value'      => 'চেক বই নিতে চান?',
                 'mandatory'  => false,
                 'views'      => booleanView('check_book')
             ],
@@ -766,6 +770,7 @@ return [
                 'title'      => 'ই-স্টেটমেন্ট',
                 'name'       => 'e_payment',
                 'id'         => 'e_payment',
+                'value'      => 'ই-স্টেটমেন্ট',
                 'mandatory'  => false,
                 'views'      => booleanView('e_payment')
             ],
@@ -774,6 +779,7 @@ return [
                 'title'      => 'ইন্টারনেট ব্যাংকিং ',
                 'name'       => 'internet_banking',
                 'id'         => 'internet_banking',
+                'value'      => 'ইন্টারনেট ব্যাংকিং ',
                 'mandatory'  => false,
                 'views'      => booleanView('internet_banking')
             ]
