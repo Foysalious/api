@@ -25,6 +25,7 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
+use Sheba\Pos\Jobs\OrderStatusUpdateSMS;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
@@ -307,6 +308,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        if ($order->partner->wallet >= 1) dispatch(new OrderStatusUpdateSMS($order, $request->status));
         return api_response($request, null, 200, ['message'   => 'Status Updated Successfully']);
     }
 
