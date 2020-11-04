@@ -308,6 +308,7 @@ class NeoBankingController extends Controller
     {
         $topic        = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel      = config('sheba.push_notification_channel_name.manager');
+        $sound        = config('sheba.push_notification_sound.manager');
         $notification_data = [
             "title"      => $data->title,
             "message"    => $data->title,
