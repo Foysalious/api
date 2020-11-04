@@ -317,7 +317,7 @@ class NeoBankingController extends Controller
             "event_id"   => $data->event_id
         ];
 
-        (new PushNotificationHandler())->send($notification_data, $topic, $channel);
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
 
     }
 
