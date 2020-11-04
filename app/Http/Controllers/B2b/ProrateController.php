@@ -99,6 +99,7 @@ class ProrateController extends Controller
                         'name' => $profile->name,
                         'pro_pic' => $profile->pro_pic,
                     ],
+                    'leave_type_id' => $prorate->leaveType->id,
                     'leave_type' => $prorate->leaveType->title,
                     'total_days' => $prorate->total_days,
                     'note' => $prorate->note,
