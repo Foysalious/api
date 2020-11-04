@@ -16,7 +16,8 @@ function addressViews($type)
             'name'          => 'postcode_' . $type . '_address',
             'id'            => 'postcode_' . $type . '_address',
             'hint'          => 'পোস্ট কোড',
-            'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক'
+            'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
+            'input_type'    => 'number',
         ],
         [
             'field_type'    => 'dropdown',
@@ -178,7 +179,8 @@ return [
                 'name'          => 'etin_number',
                 'id'            => 'etin_number',
                 'hint'          => '4654453',
-                'error_message' => 'ই-টিন নাম্বার পূরণ আবশ্যক'
+                'error_message' => 'ই-টিন নাম্বার পূরণ আবশ্যক',
+                'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'editText',
@@ -253,6 +255,7 @@ return [
                 'name'          => 'mobile',
                 'id'            => 'mobile',
                 'error_message' => "মোবাইল নাম্বার পূরণ আবশ্যক",
+                'input_type'    => 'phone',
                 'is_editable'   => false
             ],
             [
@@ -262,6 +265,7 @@ return [
                 'id'            => 'email',
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
+                'input_type'    => 'email',
                 'mandatory'     => false
             ],
             [
@@ -280,11 +284,12 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'সট্রেড লাইসেন্স নং *',
+                'title'         => 'ট্রেড লাইসেন্স নং *',
                 'name'          => 'trade_licence_number',
                 'id'            => 'trade_licence_number',
                 'hint'          => 'উদাহরণ: AHMED TELECOM',
-                'error_message' => 'ট্রেড লাইসেন্স নং পূরণ আবশ্যক'
+                'error_message' => 'ট্রেড লাইসেন্স নং পূরণ আবশ্যক',
+                'input_type'    => 'number',
 
             ],
             [
@@ -317,6 +322,7 @@ return [
                 'hint'          => '90145',
                 'error_message' => "রেজিস্ট্রেশন নং পূরণ আবশ্যক",
                 'mandatory'     => false,
+                'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'date',
@@ -364,6 +370,7 @@ return [
                 'hint'          => 'এখানে লিখুন',
                 'error_message' => '',
                 'mandatory'     => false,
+                'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'editText',
@@ -373,6 +380,7 @@ return [
                 'hint'          => 'এখানে লিখুন',
                 'error_message' => '',
                 'mandatory'     => false,
+                'input_type'    => 'number'
             ],
             [
                 'field_type'    => 'dropdown',
@@ -402,6 +410,7 @@ return [
                 'hint'          => 'উদাহরণ: 10000',
                 'error_message' => 'বাৎসরিক আয়ের পরিমান পূরণ আবশ্যক',
                 'mandatory'     => false,
+                'input_type'    => 'number'
             ],
         ],
         'nominee'     => [
@@ -507,7 +516,8 @@ return [
                 'name'          => 'nominee_guardian_nid',
                 'id'            => 'nominee_guardian_nid',
                 'hint'          => 'এখানে লিখুন',
-                'mandatory'     => false
+                'mandatory'     => false,
+                'input_type'    => 'number'
             ],
             [
                 'field_type' => 'header',
@@ -537,7 +547,8 @@ return [
                         'id'            => 'postcode_nominee_guardian_address',
                         'hint'          => 'পোস্ট কোড',
                         'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
-                        'mandatory'     => false
+                        'mandatory'     => false,
+                        'input_type'    => 'number'
                     ],
                     [
                         'field_type'    => 'dropdown',
@@ -737,7 +748,8 @@ return [
                 'name'          => 'first_deposit',
                 'id'            => 'first_deposit',
                 'error_message' => '',
-                'mandatory'     => false
+                'mandatory'     => false,
+                'input_type'    => 'number'
             ],
             [
                 'field_type' => 'multipleView',

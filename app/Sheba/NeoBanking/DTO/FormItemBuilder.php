@@ -55,6 +55,9 @@ class FormItemBuilder
     {
         $item = $this->initItem();
         if (empty($this->item['input_type'])) $item->setInputType('text');
+        if (isset($this->item['input_type']) && $this->item['input_type'] == "phone") $item->setInputType('phone');
+        if (isset($this->item['input_type']) && $this->item['input_type'] == "email") $item->setInputType('email');
+        if (isset($this->item['input_type']) && $this->item['input_type'] == "number") $item->setInputType('number');
         return $item->toArray();
     }
 
