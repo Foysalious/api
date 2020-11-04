@@ -33,6 +33,7 @@ use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\RefundNature;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
+use Sheba\Pos\Order\StatusChanger;
 use Sheba\Pos\Order\Updater;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
@@ -299,6 +300,14 @@ class OrderController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateStatus(Request $request, StatusChanger $statusChanger)
+    {
+        $this->setModifier($request->manager_resource);
+        $order = PosOrder::with('items')->find($request->order);
+        $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        return api_response($request, null, 200, ['message'   => 'Status Updated Successfully']);
     }
 
     /**
