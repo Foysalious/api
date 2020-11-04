@@ -262,7 +262,7 @@ class OrderCreateRequest
         $response = $this->orderCreator->setServices($this->services)->setCustomer($this->getCustomer())->setDeliveryName($this->name)->setMobile($this->mobile)
             ->setDate($this->date)->setTime($this->time)->setAddressId($this->getDeliveryAddress()->id)->setAdditionalInformation($this->additionalInformation)
             ->setPartnerId($this->partnerId)->setSalesChannel($this->salesChannel)->setPaymentMethod($this->paymentMethod)
-            ->setPortalName(Portals::RESOURCE_APP)->create();
+            ->setPortalName(Portals::RESOURCE_APP)->setResource($this->resource)->create();
         $this->response->setResponse($response);
         if ($this->assignResource && $this->response->hasSuccess()) {
             $this->job = Job::find($this->response->getResponse()->job_id);

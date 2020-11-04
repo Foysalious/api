@@ -4,7 +4,6 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use Sheba\Helpers\TimeFrame;
-use Sheba\Pos\Order\OrderPaymentStatuses;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
 class WebstoreDashboard
@@ -46,7 +45,7 @@ class WebstoreDashboard
 
     private function getProductStats()
     {
-        $product_stats['total_products'] = $this->partner->posServices->count();
+        $product_stats['total_products'] = $this->partner->posServices()->count();
         $product_stats['total_published_products'] = $this->partner->posServices()->publishedForShop()->count();
         return $product_stats;
     }
