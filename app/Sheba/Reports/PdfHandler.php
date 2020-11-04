@@ -104,7 +104,6 @@ class PdfHandler extends Handler
         $time = time();
         $file = $this->filename . "_$time." . $this->downloadFormat;
         $path = public_path('temp') . '/' . $file;
-        dd($path, $folder, $file);
         $this->pdf->save($path);
         $cdn = $this->saveFileToCDN($path, $folder, $file);
         File::delete($path);
