@@ -73,6 +73,7 @@ return [
     'prime_bank_sbs_url' => env('PRIME_BANK_SBS_URL'),
     'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
+    'sbs_access_token'      => env('SBS_ACCESS_TOKEN', '1234567890'),
     'category_list'         => [
         'NEO_1' => [
             'nid_selfie'  => 'NIDSelfie',
