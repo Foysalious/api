@@ -148,7 +148,6 @@ class TopUpRequest
 
     public function hasError()
     {
-        if($this->agent->profile)
         if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
