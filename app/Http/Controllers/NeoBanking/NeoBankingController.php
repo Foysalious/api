@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\NeoBanking;
+use Sheba\PushNotificationHandler;
 
 class NeoBankingController extends Controller
 {
@@ -289,16 +290,33 @@ class NeoBankingController extends Controller
      * @param Request $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function notificationStore(Request $request)
+    public function sendNotification(Request $request)
     {
         try {
             $partner = Partner::find($request->user_id);
             notify()->partner($partner)->send($this->populateData($request));
+            if(isset($partner))
+                $this->sendPushNotification($partner, $request);
             return api_response($request, null, 200, ['data' => "Notification stored"]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function sendPushNotification($partner, $data)
+    {
+        $topic        = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel      = config('sheba.push_notification_channel_name.manager');
+        $notification_data = [
+            "title"      => $data->title,
+            "sound"      => "notification_sound",
+            "event_type" => $data->event_type,
+            "event_id"   => $data->event_id
+        ];
+
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel);
+
     }
 
     private function populateData($data)
