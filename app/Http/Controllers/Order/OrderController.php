@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
@@ -64,8 +65,7 @@ class OrderController extends Controller
                 'created_by' => 'numeric',
                 'created_by_name' => 'string',
             ], ['mobile' => 'Invalid mobile number!']);
-            if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
-            else $this->setModifier($request->customer);
+            $this->setModifierFromRequest($request);
             $userAgentInformation->setRequest($request);
             $order = $order_place
                 ->setCustomer($request->customer)
@@ -119,6 +119,21 @@ class OrderController extends Controller
             logError($e, $request, $message);
             return api_response($request, $message, 400, ['message' => $message]);
         }
+    }
+
+    private function setModifierFromRequest(Request $request)
+    {
+        if ($request->has('created_by_type')) {
+            if ($request->created_by_type === 'App\Models\Resource') {
+                $this->setModifier(Resource::find((int)$request->created_by));
+                return;
+            };
+        }
+
+
+
+        if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
+        else $this->setModifier($request->customer);
     }
 
     /**
