@@ -2,7 +2,7 @@
     <thead>
     <tr class="table-head">
         <th>No</th>
-        <th style="text-align: center">Name</th>
+        <th style="text-align: left">Name</th>
         <th style="text-align: center">Mobile</th>
         <th style="text-align: center">Deposit</th>
         <th style="text-align: center">Due</th>
