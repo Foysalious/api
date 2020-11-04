@@ -18,6 +18,7 @@ class Creator
     protected $paymentMethod;
     protected $deliveryName;
     protected $portalName;
+    protected $resource;
 
     public function setCustomer(Customer $customer)
     {
@@ -91,27 +92,38 @@ class Creator
         return $this;
     }
 
+    public function setResource($resource)
+    {
+        $this->resource = $resource;
+        return $this;
+    }
+
     public function create()
     {
         $client = new Client();
         $url = config('sheba.api_url') . "/v3/customers/" . $this->customer->id . "/orders";
+        $form_params = [
+            'services' => $this->services,
+            'name' => $this->deliveryName,
+            'mobile' => $this->mobile,
+            'remember_token' => $this->customer->remember_token,
+            'sales_channel' => $this->salesChannel,
+            'payment_method' => $this->paymentMethod,
+            'date' => $this->date,
+            'time' => $this->time,
+            'additional_information' => $this->additionalInformation,
+            'address_id' => $this->addressId,
+            'partner' => $this->partnerId
+        ];
+        if($this->resource) {
+            $form_params['created_by_type'] = 'App\Models\Resource';
+            $form_params['created_by'] = $this->resource->id;
+        }
         $res = $client->request('POST', $url, [
             'headers' => [
                 'Portal-Name' => $this->portalName
             ],
-            'form_params' => [
-                'services' => $this->services,
-                'name' => $this->deliveryName,
-                'mobile' => $this->mobile,
-                'remember_token' => $this->customer->remember_token,
-                'sales_channel' => $this->salesChannel,
-                'payment_method' => $this->paymentMethod,
-                'date' => $this->date,
-                'time' => $this->time,
-                'additional_information' => $this->additionalInformation,
-                'address_id' => $this->addressId,
-                'partner' => $this->partnerId
-            ]
+            'form_params' => $form_params
         ]);
         return json_decode($res->getBody());
     }
