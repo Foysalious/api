@@ -169,6 +169,10 @@ class TopUpRequest
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
+        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
+            return 1;
+        }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
@@ -185,15 +189,7 @@ class TopUpRequest
             Event::fire(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
-        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
-            $this->errorMessage = "You are not verified to do this operation.";
-            return 1;
         }
-        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
-            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
-            return 1;
-        }
-
         return 0;
     }
 
