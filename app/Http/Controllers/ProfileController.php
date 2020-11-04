@@ -18,6 +18,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Affiliate\VerificationStatus;
 use Sheba\Auth\Auth;
+use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Dal\ProfileNIDSubmissionLog\Contact as ProfileNIDSubmissionRepo;
 use Sheba\Dal\ResourceStatusChangeLog\Model as ResourceStatusChangeLogModel;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -30,6 +31,7 @@ use Sheba\Repositories\ProfileRepository as ShebaProfileRepository;
 use Sheba\Sms\Sms;
 use Throwable;
 use Validator;
+use Event;
 
 class ProfileController extends Controller
 {
@@ -198,6 +200,7 @@ class ProfileController extends Controller
         $password = str_random(6);
         $smsSent = $sms->setVendor('sslwireless')->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
         $profile->update(['password' => bcrypt($password)]);
+        event(new ProfilePasswordUpdated($profile));
         return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);
 
     }

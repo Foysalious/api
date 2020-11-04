@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Cache;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
+use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
@@ -126,6 +127,7 @@ class CustomerController extends Controller
             }
             $profile->password = bcrypt($request->new_password);
             $profile->update();
+            event(new ProfilePasswordUpdated($profile));
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
