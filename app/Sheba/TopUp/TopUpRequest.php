@@ -154,6 +154,9 @@ class TopUpRequest
         } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
+        } else if ($this->agent->profile && $this->agent->profile->isBlackListed()) {
+            $this->errorMessage = "You are blacklisted.";
+            return 1;
         }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
