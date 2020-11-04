@@ -181,7 +181,6 @@ class BusinessesController extends Controller
     {
         $partner = Partner::find((int)$vendor);
         if (!$partner) return api_response($request, null, 404);
-
         $resource = $partner->admins->first();
         if (!$resource) return api_response($request, null, 404);
 
@@ -194,8 +193,7 @@ class BusinessesController extends Controller
             "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
             "nid_image_back" => $resource->profile->nid_image_back
         ];
-
-        return api_response($request, $resource, 200, ['vendor' => $resource]);
+        return api_response($request, null, 200, ['vendor' => $resource]);
     }
 
     public function getNotifications($business, Request $request)
