@@ -18,10 +18,11 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         TopUpRequestOfBlockedNumberEvent::class => [
-            TopUpRequestOfBlockedNumber::class,
+            TopUpRequestOfBlockedNumber::class
+        ],
         ProfilePasswordUpdated::class => [
             ProfilePasswordUpdatedListener::class
-        ],
+        ]
     ];
 
     /**
