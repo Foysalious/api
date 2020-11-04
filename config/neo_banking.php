@@ -56,15 +56,15 @@ function booleanView($type){
             'id'         => $type.'_yes',
             'title'      => 'Yes',
             'mandatory'  => false,
-            'value'      => 1
+            'value'      => "1"
         ],
         [
             'field_type' => 'radioButton',
             'name'       => $type.'_no',
-            'id'         => $type.'_yes',
+            'id'         => $type.'_no',
             'title'      => 'No',
             'mandatory'  => false,
-            'value'      => 0
+            'value'      => "0"
         ]
     ];
 }
