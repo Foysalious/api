@@ -171,6 +171,9 @@ class TopUpRequest
         } else if ($this->agent instanceof Business && $this->isAmountBlocked()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
+        } else if ($this->agent->profile && $this->agent->profile->isBlackListed()) {
+            $this->errorMessage = "You are blacklisted.";
+            return 1;
         }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
