@@ -53,6 +53,7 @@ function booleanView($type){
         [
             'field_type' => 'radioButton',
             'name'       => $type.'_yes',
+            'id'         => $type.'_yes',
             'title'      => 'Yes',
             'mandatory'  => false,
             'value'      => 1
@@ -60,6 +61,7 @@ function booleanView($type){
         [
             'field_type' => 'radioButton',
             'name'       => $type.'_no',
+            'id'         => $type.'_yes',
             'title'      => 'No',
             'mandatory'  => false,
             'value'      => 0
