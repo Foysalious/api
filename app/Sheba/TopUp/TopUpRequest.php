@@ -28,6 +28,8 @@ class TopUpRequest
     private $walletType;
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
+    protected $userAgent;
+    protected $ip;
 
     /**
      * TopUpRequest constructor.
@@ -248,5 +250,27 @@ class TopUpRequest
     {
         $last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
+    }
+
+    public function setUserAgent($userAgent)
+    {
+        $this->userAgent = $userAgent;
+        return $this;
+    }
+
+    public function setIp($ip)
+    {
+        $this->ip = $ip;
+        return $this;
+    }
+
+    public function getUserAgent()
+    {
+        return $this->userAgent;
+    }
+
+    public function getIp()
+    {
+        return $this->ip;
     }
 }
