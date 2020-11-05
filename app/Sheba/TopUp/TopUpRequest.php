@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\Affiliate;
+use App\Models\Business;
 use App\Models\Partner;
 use Carbon\Carbon;
 use Exception;
@@ -28,6 +29,9 @@ class TopUpRequest
     private $bulk_id;
     private $from_robi_topup_wallet;
     private $topUpBlockNumberRepository;
+    /** @var array $blockedAmountByOperator */
+    private $blockedAmountByOperator = [];
+
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -146,6 +150,16 @@ class TopUpRequest
         return getOriginalMobileNumber($this->mobile);
     }
 
+    /**
+     * @param array $blocked_amount_by_operator
+     * @return TopUpRequest
+     */
+    public function setBlockedAmount(array $blocked_amount_by_operator = [])
+    {
+        $this->blockedAmountByOperator = $blocked_amount_by_operator;
+        return $this;
+    }
+
     public function hasError()
     {
         if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
@@ -156,6 +170,9 @@ class TopUpRequest
             return 1;
         } else if ($this->agent->profile && $this->agent->profile->isBlackListed()) {
             $this->errorMessage = "You are blacklisted.";
+            return 1;
+        } else if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
         }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
@@ -176,6 +193,20 @@ class TopUpRequest
             return 1;
         }
         return 0;
+    }
+
+    /**
+     * @return bool
+     */
+    private function isAmountBlocked()
+    {
+        if (empty($this->blockedAmountByOperator)) return false;
+        if ($this->vendorId == VendorFactory::GP) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::GP]);
+        if ($this->vendorId == VendorFactory::BANGLALINK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
+        if ($this->vendorId == VendorFactory::ROBI) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
+        if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
+
+        return false;
     }
 
     public function getErrorMessage()
