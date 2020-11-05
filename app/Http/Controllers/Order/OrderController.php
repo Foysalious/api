@@ -111,8 +111,8 @@ class OrderController extends Controller
             ];
             if ($partner_order->partner_id) {
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
-                $this->sendNotifications($customer, $order);
             }
+            $this->sendNotifications($customer, $order);
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -129,6 +129,7 @@ class OrderController extends Controller
     private function sendNotifications($customer, $order)
     {
         try {
+            dd('sms');
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
