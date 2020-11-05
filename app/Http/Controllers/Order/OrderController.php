@@ -129,7 +129,6 @@ class OrderController extends Controller
     private function sendNotifications($customer, $order)
     {
         try {
-            dd('sms');
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
