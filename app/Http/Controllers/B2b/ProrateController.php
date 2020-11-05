@@ -61,7 +61,7 @@ class ProrateController extends Controller
                                 $q->select('id', 'profile_id')
                                     ->with([
                                         'profile' => function ($q) {
-                                            $q->select('id', 'name');
+                                            $q->select('id', 'name', 'pro_pic');
                                         }]);
                             },
                             'role' => function ($q) {
