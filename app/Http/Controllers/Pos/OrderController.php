@@ -120,7 +120,8 @@ class OrderController extends Controller
                 'previous_order_id'     => 'numeric',
                 'emi_month'             => 'required_if:payment_method,emi|numeric',
                 'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
-                'payment_link_amount'   => 'sometimes|numeric'
+                'payment_link_amount'   => 'sometimes|numeric',
+                'sales_channel'         => 'sometimes|string'
             ]);
             $link = null;
             if ($request->manager_resource) {

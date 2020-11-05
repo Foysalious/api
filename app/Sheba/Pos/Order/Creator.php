@@ -6,6 +6,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -114,6 +115,7 @@ class Creator
         $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
         $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
+        $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
