@@ -32,7 +32,7 @@ RUN pecl install mongodb-1.4.4 \
     && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongo.ini
 
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=1.8.6
 RUN composer global require hirak/prestissimo
 
 COPY entrypoint.sh /etc/entrypoint.sh
