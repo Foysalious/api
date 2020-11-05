@@ -3,10 +3,9 @@
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use Illuminate\Http\Request;
 use Sheba\OAuth2\AuthUser;
 use Sheba\OAuth2\SomethingWrongWithToken;
-use Tymon\JWTAuth\Facades\JWTAuth;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 
 class MemberAuthMiddleware
@@ -14,8 +13,8 @@ class MemberAuthMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \Closure $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      * @throws SomethingWrongWithToken
      */
@@ -27,6 +26,7 @@ class MemberAuthMiddleware
 
         if ($member->id == (int)$request->member) {
             $request->merge(['member' => $member]);
+            /** @var Business $business */
             $business = $member->businesses->first();
             if ($business) {
                 $request->merge(['business' => $business]);
@@ -36,6 +36,7 @@ class MemberAuthMiddleware
             }
             return $next($request);
         }
+
         return response()->json(['message' => 'unauthorized', 'code' => 409]);
     }
 }
