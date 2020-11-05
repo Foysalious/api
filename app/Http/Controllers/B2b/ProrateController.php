@@ -120,7 +120,7 @@ class ProrateController extends Controller
         if ($request->has('department')) {
             $department_info = $department_info->filter(function ($employee) use ($request) {
                 return $employee['department_id'] == $request->department;
-            });
+            })->values();
         }
 
         return api_response($request, null, 200, ['leave_prorate' => $department_info]);
