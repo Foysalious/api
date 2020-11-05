@@ -165,7 +165,7 @@ class PosOrderList
         $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
-        return empty($status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
+        return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
     }
 
     private function filteredBySearchQuery($orders_query, $search_query)

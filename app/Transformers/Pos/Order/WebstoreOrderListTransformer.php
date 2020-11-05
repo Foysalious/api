@@ -11,7 +11,7 @@ class WebstoreOrderListTransformer extends TransformerAbstract
         $order->calculate();
         return [
             'id' => $order->id,
-            'customer_name' => $order->customer->profile->name,
+            'customer_name' => $order->customer && $order->customer->profile ? $order->customer->profile->name : null,
             'created_at' => $order->created_at->format('Y-m-d h:i A'),
             'price' => (double)$order->getNetBill(),
             'status' => $order->status
