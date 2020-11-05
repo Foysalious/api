@@ -136,6 +136,7 @@ class TopUpController extends Controller
             $profileid = $aff->profile_id;
             $profile = $profileRepository->where('id', $profileid)->first();
             $userAgentInformation->setRequest($request);
+            dd($userAgentInformation->getIp());
 
         if(!Hash::check($request->password, $profile->password)){
             $data = [
