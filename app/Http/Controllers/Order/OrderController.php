@@ -152,7 +152,7 @@ class OrderController extends Controller
 
             if (!(bool)config('sheba.send_order_create_sms')) return;
 
-            (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
+            (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
                 'order_code' => $order->code()
             ]);
 
@@ -264,7 +264,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
