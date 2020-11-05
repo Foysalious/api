@@ -46,6 +46,8 @@ class Creator
         $gateway_factory = new GatewayFactory();
         $gateway = $gateway_factory->setGatewayName($top_up_order->gateway)->get();
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
+        $top_up_order->ip = $this->topUpRequest->getIp();
+        $top_up_order->user_agent = $this->topUpRequest->getUserAgent();
         $this->setModifier($agent);
         $this->withCreateModificationField($top_up_order);
         $top_up_order->save();

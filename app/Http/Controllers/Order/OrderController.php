@@ -111,8 +111,8 @@ class OrderController extends Controller
             ];
             if ($partner_order->partner_id) {
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
-                $this->sendNotifications($customer, $order);
             }
+            $this->sendNotifications($customer, $order);
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -153,7 +153,7 @@ class OrderController extends Controller
             if (!(bool)config('sheba.send_order_create_sms')) return;
 
             if ($this->isSendingServedConfirmationSms($order)) {
-                (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
                     'order_code' => $order->code()
                 ]);
             }
@@ -266,7 +266,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }

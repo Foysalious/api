@@ -18,6 +18,7 @@ use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
+use Sheba\UserAgentInformation;
 use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
@@ -73,9 +74,10 @@ class TopUpController extends Controller
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @param TopUpSpecialAmount $special_amount
+     * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
      */
-    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount)
+    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
     {
         try {
             $this->validate($request, [
@@ -85,11 +87,14 @@ class TopUpController extends Controller
                 'amount'          => 'required|min:10|max:1000|numeric'
             ]);
             $agent = $request->user;
+            $userAgentInformation->setRequest($request);
             $top_up_request->setAmount($request->amount)
                 ->setMobile($request->mobile)
                 ->setType($request->connection_type)
                 ->setAgent($agent)
-                ->setVendorId($request->vendor_id);
+                ->setVendorId($request->vendor_id)
+                ->setIp($userAgentInformation->getIp())
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($agent instanceof Business) {
                 $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
