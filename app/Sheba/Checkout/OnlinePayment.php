@@ -4,7 +4,7 @@ use App\Library\PortWallet;
 use App\Models\PartnerOrder;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use App\Repositories\NotificationRepository;
-use App\Sheba\UserRequestInformation;
+use App\Sheba\UserRequestInformationOld;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\Redis;
@@ -82,7 +82,7 @@ class OnlinePayment
                             'type' => 'ADVANCED_PAYMENT_DB_ERROR', 'isDue' => 0, 'message' => "Your payment has successfully received but there was a system error. Our Order Manager will contact with you shortly");
                     }
                 } else {
-                    $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => json_encode($portwallet_response)]));
+                    $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformationOld($request))->getInformationArray(), ['transaction_detail' => json_encode($portwallet_response)]));
                     if ($response) {
                         if ($response->code == 200) {
                             $notification = (new NotificationRepository())->forOnlinePayment($partnerOrder->id, $amount);
@@ -125,7 +125,7 @@ class OnlinePayment
                 $partner_order_payment->created_by_type = "App\Models\Customer";
                 $partner_order_payment->created_by_name = 'Customer - ' . $partnerOrder->order->customer->profile->name;
                 $partner_order_payment->transaction_detail = $this->formatTransactionData($portwallet_response);
-                $partner_order_payment->fill((new UserRequestInformation($request))->getInformationArray());
+                $partner_order_payment->fill((new UserRequestInformationOld($request))->getInformationArray());
                 $partner_order_payment->save();
             });
             return $partner_order_payment;
@@ -237,7 +237,7 @@ class OnlinePayment
                     return null;
                 }
             } else {
-                $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformation($request))->getInformationArray(), ['transaction_detail' => $this->formatTransactionData($payment_gateway_response)]));
+                $response = $this->clearSpPayment($partnerOrder, $amount, array_merge((new UserRequestInformationOld($request))->getInformationArray(), ['transaction_detail' => $this->formatTransactionData($payment_gateway_response)]));
                 if ($response) {
                     if ($response->code == 200) {
                         $this->message = "Payment Successfully Received!";

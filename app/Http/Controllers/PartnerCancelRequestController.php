@@ -8,13 +8,13 @@ use Sheba\CancelRequest\PartnerRequestor;
 use Sheba\CancelRequest\RequestedByType;
 use Sheba\CancelRequest\SendCancelRequest;
 use Sheba\CancelRequest\SendCancelRequestJob;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 
 class PartnerCancelRequestController extends Controller
 {
     use  DispatchesJobs;
 
-    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor, UserAgentInformation $userAgentInformation, SendCancelRequest $send_cancel_request)
+    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor, UserRequestInformation $userAgentInformation, SendCancelRequest $send_cancel_request)
     {
         $job = $request->job;
         $reasons = JobCancelReason::where('is_published_for_sp', 1)->pluck('id');

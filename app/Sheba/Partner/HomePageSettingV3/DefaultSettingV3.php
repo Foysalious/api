@@ -113,6 +113,13 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
+        $digital_banking= [
+            "key" => "digital_banking",
+            "name_en" => "Digital Banking",
+            "name_bn" => "ব্যাংক একাউন্ট",
+            "is_on_homepage" => 0
+        ];
+
         $topup = [
             "key" => "topup",
             "name_en" => "Top Up",
@@ -120,7 +127,7 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $topup];
+        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $digital_banking, $topup];
     }
     public static function getLastUpdatedAt()
     {

@@ -330,7 +330,7 @@ class AttendanceController extends Controller
             'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
             'half_day' => 'required', 'half_day_config' => 'string'
         ],[
-          'end_time.after' => 'Start Time Must Be Less Than End Time'
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)

@@ -4,7 +4,7 @@
 use App\Models\Job;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Dal\JobUpdateLog\JobUpdateLogRepositoryInterface;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 
 class Creator
 {
@@ -12,7 +12,7 @@ class Creator
     private $job;
     private $jobUpdateLogRepository;
     private $message;
-    /** @var UserAgentInformation */
+    /** @var UserRequestInformation */
     private $userAgentInformation;
     /** @var Model */
     private $createdBy;
@@ -39,7 +39,7 @@ class Creator
     }
 
     /**
-     * @param UserAgentInformation $userAgentInformation
+     * @param UserRequestInformation $userAgentInformation
      * @return Creator
      */
     public function setUserAgentInformation($userAgentInformation)

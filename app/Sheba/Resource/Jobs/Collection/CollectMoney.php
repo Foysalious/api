@@ -5,20 +5,20 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Resource;
 use GuzzleHttp\Client;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 
 class CollectMoney
 {
     /** @var Resource */
     private $resource;
-    /** @var UserAgentInformation */
+    /** @var UserRequestInformation */
     private $userAgentInformation;
     private $collectionAmount;
     /** @var PartnerOrder */
     private $partnerOrder;
 
 
-    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
+    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

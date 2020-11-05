@@ -174,7 +174,10 @@ class BusinessesController extends Controller
     public function getVendorAdminInfo($business, $vendor, Request $request)
     {
         $partner = Partner::find((int)$vendor);
+        if (!$partner) return api_response($request, null, 404);
         $resource = $partner->admins->first();
+        if (!$resource) return api_response($request, null, 404);
+
         $resource = [
             "id" => $resource->id,
             "name" => $resource->profile->name,
@@ -184,7 +187,7 @@ class BusinessesController extends Controller
             "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
             "nid_image_back" => $resource->profile->nid_image_back
         ];
-        return api_response($request, $resource, 200, ['vendor' => $resource]);
+        return api_response($request, null, 200, ['vendor' => $resource]);
     }
 
     public function getNotifications($business, Request $request)
@@ -297,7 +300,7 @@ class BusinessesController extends Controller
         foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
             array_push($banks, [
                 'key' => $bank,
-                'value' => ucwords(str_replace('_', ' ', $bank)),
+                'value' => ucwords(str_replace('_',' ',$bank)),
             ]);
         }
         return api_response($request, null, 200, ['banks' => $banks]);
@@ -333,10 +336,10 @@ class BusinessesController extends Controller
             ->get()
             ->each(function ($partner) use ($vendors) {
                 $vendor = [
-                    "id" => $partner->id,
-                    "name" => $partner->name,
-                    "logo" => $partner->logo,
-                    "mobile" => $partner->getContactNumber()
+                    "id"    => $partner->id,
+                    "name"  => $partner->name,
+                    "logo"  => $partner->logo,
+                    "mobile"=> $partner->getContactNumber()
                 ];
 
                 $vendors->push($vendor);

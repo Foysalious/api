@@ -6,7 +6,7 @@ use Sheba\Dal\Payable\Types;
 use Sheba\Dal\Payment\PaymentRepositoryInterface;
 use Sheba\Repositories\CancelRequestRepository;
 use Sheba\Repositories\JobRepository;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 
 abstract class Requestor
 {

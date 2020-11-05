@@ -24,8 +24,11 @@ class JWTAuthMiddleware
         try {
             if ($auth_user = $this->auth->authenticate()) {
                 $user = $auth_user->getAvatar();
-                $type = strtolower(class_basename($user));
-                $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
+                if($user) {
+                    $type = strtolower(class_basename($user));
+                    $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
+                }
+                $request->merge(['auth_user' => $auth_user]);
                 return $next($request);
             } else {
                 return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);

@@ -8,7 +8,7 @@ use App\Models\PartnerBankInformation;
 use App\Models\Profile;
 use App\Models\WithdrawalRequest;
 use App\Sheba\BankingInfo\GeneralBanking;
-use App\Sheba\UserRequestInformation;
+use App\Sheba\UserRequestInformationOld;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -122,7 +122,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             $message = "You don't have sufficient balance";
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
+        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformationOld($request))->getInformationArray(), [
             'requester_id'    => $partner->id,
             'requester_type'  => RequesterTypes::PARTNER,
             'amount'          => $request->amount,

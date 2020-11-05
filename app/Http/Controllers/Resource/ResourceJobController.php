@@ -19,7 +19,7 @@ use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\Resource\Jobs\Updater\StatusUpdater;
 use Sheba\Resource\Schedule\Extend\ExtendTime;
 use Sheba\Resource\Service\ServiceList;
-use Sheba\UserAgentInformation;
+use Sheba\UserRequestInformation;
 use Throwable;
 
 class ResourceJobController extends Controller
@@ -98,7 +98,7 @@ class ResourceJobController extends Controller
         return api_response($request, $job, 200, ['job' => $job]);
     }
 
-    public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserAgentInformation $user_agent_information)
+    public function updateStatus(Job $job, Request $request, StatusUpdater $status_updater, UserRequestInformation $user_agent_information)
     {
         $this->validate($request, ['status' => 'string|in:process,served']);
         /** @var AuthUser $auth_user */
@@ -111,7 +111,7 @@ class ResourceJobController extends Controller
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
-    public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
+    public function rescheduleJob(Job $job, Request $request, Reschedule $reschedule_job, UserRequestInformation $user_agent_information)
     {
         try {
             $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
@@ -132,7 +132,7 @@ class ResourceJobController extends Controller
 
     }
 
-    public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
+    public function collectMoney(Job $job, Request $request, CollectMoney $collect_money, UserRequestInformation $user_agent_information)
     {
         $this->validate($request, ['amount' => 'required|numeric']);
         /** @var AuthUser $auth_user */
@@ -192,7 +192,7 @@ class ResourceJobController extends Controller
         }
     }
 
-    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest, UserAgentInformation $user_agent_information)
+    public function updateService(Job $job, Request $request, ServiceUpdateRequest $updateRequest, UserRequestInformation $user_agent_information)
     {
         try {
             $this->validate($request, ['services' => 'string', 'quantity' => 'string', 'materials' => 'string']);

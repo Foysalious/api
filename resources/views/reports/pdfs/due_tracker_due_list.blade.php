@@ -178,15 +178,15 @@
         <tbody>
         @foreach($list as $key=>$item)
             <tr>
-                <td>{{++$key}}</td>
-                <td>{{$item['customer_name']}}</td>
-                <td>{{$item['customer_mobile']}}</td>
+                <td style="width: 10%">{{++$key}}</td>
+                <td style="width: 40%">{{$item['customer_name']}}</td>
+                <td style="width: 20%">{{$item['customer_mobile']}}</td>
                 @if($item['balance_type'] === 'due')
-                    <td style="color: #219653">0</td>
-                    <td style="color: #DC1E1E">{{$item['balance'] }}</td>
+                    <td style="color: #219653; width: 15%">0</td>
+                    <td style="color: #DC1E1E; width: 15%">{{$item['balance'] }}</td>
                 @else
-                    <td style="color: #219653">{{$item['balance'] }}</td>
-                    <td style="color: #DC1E1E">0</td>
+                    <td style="color: #219653; width: 15%">{{$item['balance'] }}</td>
+                    <td style="color: #DC1E1E; width: 15%">0</td>
                 @endif
             </tr>
         @endforeach

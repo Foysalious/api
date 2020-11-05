@@ -37,9 +37,9 @@ class TPProxyClient
 
             $proxy_response = $response->getBody()->getContents();
             if (!$proxy_response) throw new TPProxyServerError();
-            $proxy_response = json_decode($proxy_response);
-            if ($proxy_response->code != 200) throw new TPProxyServerError($proxy_response->message);
-            return $proxy_response->tp_response;
+            $proxy_response = json_decode($proxy_response, true);
+            if ($proxy_response['code'] != 200) throw new TPProxyServerError($proxy_response['message']);
+            return $proxy_response['tp_response'];
         } catch (GuzzleException $e) {
             $sentry = app('sentry');
             $sentry->user_context(['request' =>[$request->getUrl(),$request->getHeaders(),$request->getInput(),$request->getMethod()] ]);

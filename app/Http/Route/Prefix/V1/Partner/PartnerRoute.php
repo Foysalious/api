@@ -11,8 +11,8 @@ class PartnerRoute
         $api->group(['prefix' => 'partners'], function ($api) {
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
+            (new PartnerJwtAuthRoute())->set($api);
         });
-
         (new ExternalPaymentLinkRoute())->set($api);
     }
 }
