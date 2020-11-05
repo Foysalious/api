@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Partner;
 use App\Models\Payment;
+use App\Models\Resource;
 use App\Models\User;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
@@ -64,8 +65,7 @@ class OrderController extends Controller
                 'created_by' => 'numeric',
                 'created_by_name' => 'string',
             ], ['mobile' => 'Invalid mobile number!']);
-            if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
-            else $this->setModifier($request->customer);
+            $this->setModifierFromRequest($request);
             $userAgentInformation->setRequest($request);
             $order = $order_place
                 ->setCustomer($request->customer)
@@ -121,6 +121,21 @@ class OrderController extends Controller
         }
     }
 
+    private function setModifierFromRequest(Request $request)
+    {
+        if ($request->has('created_by_type')) {
+            if ($request->created_by_type === 'App\Models\Resource') {
+                $this->setModifier(Resource::find((int)$request->created_by));
+                return;
+            };
+        }
+
+
+
+        if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
+        else $this->setModifier($request->customer);
+    }
+
     /**
      * @TODO FIx notification sending
      * @param $customer
@@ -137,11 +152,9 @@ class OrderController extends Controller
 
             if (!(bool)config('sheba.send_order_create_sms')) return;
 
-            if ($this->isSendingServedConfirmationSms($order)) {
-                (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
-                    'order_code' => $order->code()
-                ]);
-            }
+            (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
+                'order_code' => $order->code()
+            ]);
 
             if (!$order->jobs->first()->resource_id) {
                 (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
@@ -251,7 +264,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
