@@ -132,10 +132,10 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-            $aff = Affiliate::where('id', $affiliate)->first();
-            $profileid = $aff->profile_id;
-            $profile = $profileRepository->where('id', $profileid)->first();
-            $userAgentInformation->setRequest($request);
+        $aff = Affiliate::where('id', $affiliate)->first();
+        $profileid = $aff->profile_id;
+        $profile = $profileRepository->where('id', $profileid)->first();
+        $userAgentInformation->setRequest($request);
 
         if(!Hash::check($request->password, $profile->password)){
             $data = [
