@@ -218,6 +218,7 @@ class Creator
      */
     public function create()
     {
+        dd('here');
         $data = [
             'title' => $this->title,
             'note' => $this->note,
@@ -328,7 +329,9 @@ class Creator
 
     private function getLeftDays()
     {
-        $business_total_leave_days_by_types = $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
+        $business_total_leave_days_by_types = collect(array_filter($this->businessMember->getAllLeaveTypesWithBreakDown(), function ($leave_type){
+            return $leave_type['id'] == $this->leaveTypeId;
+        }))->first()['total_days'];
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
         return $business_total_leave_days_by_types - $used_days;
     }

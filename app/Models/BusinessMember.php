@@ -181,6 +181,28 @@ class BusinessMember extends Model
     }
 
     /**
+     * @return array
+     */
+    public function getAllLeaveTypesWithBreakDown()
+    {
+        $all_leave_type = [];
+        $business_member_leave_types = $this->getLeaveTypes();
+
+        foreach ($business_member_leave_types as $business_member_leave_type) {
+            $leave_type = ($business_member_leave_type instanceof BusinessMemberLeaveType) ? $business_member_leave_type->leaveType : $business_member_leave_type;
+            $total_days = ($business_member_leave_type instanceof BusinessMemberLeaveType) ? $business_member_leave_type->total_days : $business_member_leave_type->total_days;
+
+            array_push($all_leave_type, [
+                "id" => $leave_type->id,
+                "title" => $leave_type->title,
+                "total_days" => $total_days,
+                "is_half_day_enable" => $leave_type->is_half_day_enable
+            ]);
+        }
+        return $all_leave_type;
+    }
+
+    /**
      * @param Carbon $date
      * @return bool
      */
