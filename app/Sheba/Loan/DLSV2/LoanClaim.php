@@ -168,7 +168,7 @@ class LoanClaim
      */
     private function calculateAndDeductShebaInterest($claim_amount)
     {
-        $amount = ($claim_amount * (GeneralStatics::getMicroLoanShebaInterest() / 100)) * GeneralStatics::getRepaymentDefaultDuration();
+        $amount = round(($claim_amount * (GeneralStatics::getMicroLoanShebaInterest() / 100)) * GeneralStatics::getRepaymentDefaultDuration(),0,PHP_ROUND_HALF_DOWN);
         (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($amount)->storeCreditShebaInterestFee();
     }
 

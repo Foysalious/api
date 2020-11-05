@@ -1,6 +1,5 @@
 <?php namespace Sheba\TPProxy;
 
-
 class TPRequest
 {
     const METHOD_GET  = "get";
