@@ -75,6 +75,17 @@ class StatusChanger
         $this->changedJob = $this->assignResource($job, $selected_resource, $request->manager_resource);
     }
 
+    public function unacceptJobAndUnAssignResource(Request $request)
+    {
+        $job = $request->job;
+        if ($request->resource_id) {
+            scheduler($job->resource)->release($job);
+            $job->resource_id = null;
+            $job->update();
+        }
+        $this->changeStatus($job, $request, JobStatuses::PENDING);
+    }
+
     private function assignResource(Job $job, $resource_id, Resource $manager_resource)
     {
         $old_resource = $job->resource_id;

@@ -106,7 +106,7 @@ class ExcelHandler extends Handler
      */
     public function create()
     {
-        if(empty($this->data)) throw new Exception('Invalid Data');
+        if (empty($this->data)) throw new Exception('Invalid Data');
         $this->sheetName = $this->sheetName ?: $this->name;
 
         return $this->excel->create($this->filename, function (LaravelExcelWriter $excel) {
@@ -114,8 +114,8 @@ class ExcelHandler extends Handler
             $excel->setCreator('Sheba')->setCompany('Sheba');
 
             $excel->sheet($this->sheetName, function (LaravelExcelWorksheet $sheet) {
-                if(!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
-                if(!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
+                if (!is_null($this->autoSize)) $sheet->setAutoSize($this->autoSize);
+                if (!is_null($this->columnFormat)) $sheet->setColumnFormat($this->columnFormat);
                 $sheet->loadView($this->viewFileName, $this->data);
             });
         });
@@ -144,8 +144,8 @@ class ExcelHandler extends Handler
     /**
      * Generate and save the excel.
      *
-     * @throws Exception
      * @return string Path of the saved file.
+     * @throws Exception
      */
     public function save()
     {

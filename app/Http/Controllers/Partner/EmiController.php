@@ -64,7 +64,7 @@ class EmiController extends Controller {
                 return api_response($request->original(), $data, 200, ['data' => $data]);
             return api_response($request->original(), null, 404);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request->original(), null, 500);
         }
     }

@@ -20,9 +20,10 @@ class Creator
     private $approverId;
     private $requestableType;
     private $requestableId;
-    /** @var PushNotificationHandler $pushNotificationHandler*/
+    /** @var PushNotificationHandler $pushNotificationHandler */
     private $pushNotificationHandler;
     private $member;
+    private $isLeaveAdjustment;
 
     /**
      * Creator constructor.
@@ -63,20 +64,29 @@ class Creator
         return $this;
     }
 
+    public function setIsLeaveAdjustment($is_leave_adjustment = false)
+    {
+        $this->isLeaveAdjustment = $is_leave_adjustment;
+        return $this;
+    }
+
     public function create()
     {
         foreach ($this->approverId as $approver_id) {
             $data = $this->withCreateModificationField([
                 'requestable_type' => $this->requestableType,
                 'requestable_id' => $this->requestableId,
-                'status' => Status::PENDING,
+                'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
                 'approver_id' => $approver_id
             ]);
             $approval_request = $this->approvalRequestRepo->create($data);
-            try {
-                $this->sendPushToApprover($approval_request);
-                $this->sendShebaNotificationToApprover($approval_request);
-            } catch (Exception $e) {}
+            if (!$this->isLeaveAdjustment) {
+                try {
+                    $this->sendPushToApprover($approval_request);
+                    $this->sendShebaNotificationToApprover($approval_request);
+                } catch (Exception $e) {
+                }
+            }
         }
     }
 
