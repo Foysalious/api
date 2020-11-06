@@ -228,7 +228,7 @@ class Creator
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'is_half_day' => $this->isHalfDay,
-            'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure :null,
+            'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure : null,
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
@@ -329,11 +329,16 @@ class Creator
 
     private function getLeftDays()
     {
-        $business_total_leave_days_by_types = collect(array_filter($this->businessMember->getAllLeaveTypesWithBreakDown(), function ($leave_type){
-            return $leave_type['id'] == $this->leaveTypeId;
-        }))->first()['total_days'];
+        $business_total_leave_days_by_types = $this->getBusinessTotalLeaveDaysByTypes();
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
         return $business_total_leave_days_by_types - $used_days;
+    }
+
+    private function getBusinessTotalLeaveDaysByTypes()
+    {
+        $business_member_leave_type = $this->businessMember->leaveTypes()->where('leave_type_id', $this->leaveTypeId)->first();
+        if ($business_member_leave_type) return $business_member_leave_type->total_days;
+        return $this->businessMember->business->leaveTypes->where('id', $this->leaveTypeId)->first()->total_days;
     }
 }
 
