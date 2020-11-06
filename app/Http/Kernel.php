@@ -1,14 +1,12 @@
-<?php
-
-namespace App\Http;
+<?php namespace App\Http;
 
 use App\Http\Middleware\B2B\OrderMiddleware;
-use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\TopUpAuthMiddleware;
+use Fideloper\Proxy\TrustProxies;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
@@ -21,7 +19,8 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        Middleware\CheckForMaintenanceMode::class
+        Middleware\CheckForMaintenanceMode::class,
+        TrustProxies::class
     ];
 
     /**
@@ -37,10 +36,9 @@ class Kernel extends HttpKernel
             \Illuminate\View\Middleware\ShareErrorsFromSession::class,
             \App\Http\Middleware\VerifyCsrfToken::class,
         ],
-
         'api' => [
             'throttle:60,1',
-        ],
+        ]
     ];
 
     /**
