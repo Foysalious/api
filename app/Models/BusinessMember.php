@@ -175,6 +175,17 @@ class BusinessMember extends Model
     }
 
     /**
+     * @param $leave_type_id
+     * @return mixed
+     */
+    public function getTotalLeaveDaysByLeaveTypes($leave_type_id)
+    {
+        $business_member_leave_type = $this->leaveTypes()->where('leave_type_id', $leave_type_id)->first();
+        if ($business_member_leave_type) return $business_member_leave_type->total_days;
+        return $this->business->leaveTypes()->withTrashed()->where('id', $leave_type_id)->first()->total_days;
+    }
+
+    /**
      * @param Carbon $date
      * @return bool
      */
