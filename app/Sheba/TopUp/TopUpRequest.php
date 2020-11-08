@@ -33,7 +33,6 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    protected $ip;
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -264,12 +263,6 @@ class TopUpRequest
         return $this;
     }
 
-    public function setIp($ip)
-    {
-        $this->ip = $ip;
-        return $this;
-    }
-
     public function getUserAgent()
     {
         return $this->userAgent;
@@ -277,6 +270,18 @@ class TopUpRequest
 
     public function getIp()
     {
-        return $this->ip;
+        $ip_methods = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+        foreach ($ip_methods as $key) {
+            if (array_key_exists($key, $_SERVER) === true) {
+                foreach (explode(',', $_SERVER[$key]) as $ip) {
+                    $ip = trim($ip); //just to be safe
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip;
+                    }
+                }
+            }
+        }
+
+        return request()->ip();
     }
 }
