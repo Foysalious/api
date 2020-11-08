@@ -12,8 +12,17 @@ use Illuminate\Contracts\Support\Arrayable;
 use Sheba\Loan\DS\ReflectionArray;
 
 class Item implements Arrayable {
+
     use ReflectionArray;
-    protected $id, $customer_name, $customer_mobile, $created_at, $amount, $date, $entry_at, $party, $head, $interest, $bank_transaction_charge, $source_type, $source_id, $payment_id, $payment_method, $source, $amount_cleared, $customer, $partner;
+
+    private $partner;
+    protected $id, $customer_name, $customer_mobile, $created_at, $amount, $date, $entry_at, $party, $head, $interest, $bank_transaction_charge, $source_type, $source_id, $payment_id, $payment_method, $source, $amount_cleared, $customer;
+
+    public function setPartner($partner)
+    {
+        $this->partner = $partner;
+        return $this;
+    }
 
     /**
      * Get the instance as an array.
@@ -55,7 +64,8 @@ class Item implements Arrayable {
     private function setSource() {
         if (!empty($this->source_type) && !empty($this->source_id)) {
             try {
-                $this->source = "App\\Models\\" . pamelCase($this->source_type)::find($this->source_id);
+                $model="App\\Models\\" . pamelCase($this->source_type);
+                $this->source = $model::find($this->source_id);
             } catch (\Throwable $e) {
                 app('sentry')->captureException($e);
             }
