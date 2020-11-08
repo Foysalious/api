@@ -791,6 +791,7 @@ return [
                 'title'         => 'ট্রেড লাইসেন্স',
                 'hint'          => 'ট্রেড লাইসেন্স',
                 'name'          => 'trade_licence_document',
+                'id'            => 'trade_licence_document',
                 'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -800,6 +801,7 @@ return [
                 'title'         => 'কোম্পানির লেটার-হেড প্যাড',
                 'hint'          => 'কোম্পানির লেটার-হেড প্যাড',
                 'name'          => 'company_letter_head',
+                'id'            => 'company_letter_head',
                 'error_message' => 'কোম্পানির লেটার-হেড প্যাড এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -809,6 +811,7 @@ return [
                 'title'         => 'ট্রেড সিল',
                 'hint'          => 'ট্রেড সিল',
                 'name'          => 'trade_seal_document',
+                'id'            => 'trade_seal_document',
                 'error_message' => 'ট্রেড সিল এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -818,6 +821,7 @@ return [
                 'title'         => 'ই-টিন',
                 'hint'          => 'ই-টিন',
                 'name'          => 'e_tin_document',
+                'id'            => 'e_tin_document',
                 'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -827,6 +831,7 @@ return [
                 'title'         => 'ভ্যাট রেজিস্ট্রেশন',
                 'hint'          => 'ভ্যাট রেজিস্ট্রেশন',
                 'name'          => 'vat_registration_document',
+                'id'            => 'vat_registration_document',
                 'error_message' => 'ভ্যাট রেজিস্ট্রেশন এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -836,6 +841,7 @@ return [
                 'title'         => 'রেন্টাল এগ্রিমেন্ট (যদি থাকে)',
                 'hint'          => 'রেন্টাল এগ্রিমেন্ট',
                 'name'          => 'rental_agreement_document',
+                'id'            => 'rental_agreement_document',
                 'error_message' => 'রেন্টাল এগ্রিমেন্ট এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -845,6 +851,7 @@ return [
                 'title'         => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
                 'hint'          => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
                 'name'          => 'bill_document',
+                'id'            => 'bill_document',
                 'error_message' => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ]
