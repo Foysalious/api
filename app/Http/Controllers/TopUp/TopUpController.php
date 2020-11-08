@@ -93,7 +93,6 @@ class TopUpController extends Controller
                 ->setType($request->connection_type)
                 ->setAgent($agent)
                 ->setVendorId($request->vendor_id)
-                ->setIp($userAgentInformation->getIp())
                 ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($agent instanceof Business) {

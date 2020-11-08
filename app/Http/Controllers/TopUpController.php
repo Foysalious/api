@@ -95,7 +95,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
-                ->setIp($userAgentInformation->getIp())->setUserAgent($userAgentInformation->getUserAgent());
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
@@ -172,7 +172,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
             $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
-                ->setIp($userAgentInformation->getIp())->setUserAgent($userAgentInformation->getUserAgent());
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
