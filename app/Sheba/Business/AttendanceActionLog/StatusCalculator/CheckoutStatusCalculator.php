@@ -26,7 +26,9 @@ class CheckoutStatusCalculator extends StatusCalculator
 
         $todays_checkout_date = Carbon::now();
         $last_checkout_time = Carbon::parse($todays_checkout_date->toDateString() . ' ' . $checkout_time);
-        if ($todays_checkout_date->lt($last_checkout_time)) return Statuses::LEFT_EARLY;
+
+        $todays_checkout_date_without_second = Carbon::parse($todays_checkout_date->format('Y-m-d H:i'));
+        if ($todays_checkout_date_without_second->lt($last_checkout_time)) return Statuses::LEFT_EARLY;
         return Statuses::LEFT_TIMELY;
     }
 }
