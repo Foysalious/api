@@ -1,4 +1,5 @@
 <?php
+
 if (!function_exists('addressViews')) {
     function addressViews($type)
     {
@@ -49,6 +50,7 @@ if (!function_exists('addressViews')) {
         ];
     }
 }
+
 if (!function_exists('booleanView')) {
     function booleanView($type)
     {
@@ -72,6 +74,7 @@ if (!function_exists('booleanView')) {
         ];
     }
 }
+
 return [
     'prime_bank_sbs_url'                 => env('PRIME_BANK_SBS_URL'),
     'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
