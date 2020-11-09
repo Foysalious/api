@@ -79,7 +79,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function newOrders($partner, Request $request, TimeFrame $time_frame)
+    public function newOrders($partner, Request $request)
     {
         try {
             $this->validate($request, [
@@ -97,6 +97,7 @@ class PartnerOrderController extends Controller
                             }]);
                         }]);
                 }]);
+                $time_frame = new TimeFrame();
                 $start_end_date = $time_frame->forTodayAndYesterday();
                 $order_request_count = PartnerOrderRequest::openRequest()->whereDoesntHave('partnerOrder', function ($q) {
                     $q->new();
