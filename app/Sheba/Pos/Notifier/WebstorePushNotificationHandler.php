@@ -30,7 +30,7 @@ class WebstorePushNotificationHandler
             "message" => "অর্ডার # $this->order->id: নতুন অর্ডার দেওয়া হয়েছে। মোট টাকার পরিমাণ: $net_bill ($payment_status)",
             "sound" => "notification_sound",
             "event_type" => $class,
-            "event_id" => $this->order->partner_id
+            "event_id" => $this->order->id
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
