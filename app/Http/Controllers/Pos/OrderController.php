@@ -160,7 +160,7 @@ class OrderController extends Controller
              *
              * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
              */
-            $this->sendOrderPlaceSmsToCustomer($order);
+            if ($partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) $this->sendOrderPlaceSmsToCustomer($order);
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
