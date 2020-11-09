@@ -310,11 +310,11 @@ class PartnerSubscriptionBilling
         switch ($grade) {
             case PartnerSubscriptionChange::UPGRADE:
                 $title = "সাবস্ক্রিপশন সম্পন্ন";
-                $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভাট অন্তর্ভুক্ত ";
+                $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভ্যাট অন্তর্ভুক্ত ";
                 break;
             case PartnerSubscriptionChange::RENEWED:
                 $title = "সাবস্ক্রিপশন  নবায়ন";
-                $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভাট অন্তর্ভুক্ত ";
+                $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভ্যাট অন্তর্ভুক্ত ";
                 break;
             case PartnerSubscriptionChange::DOWNGRADE:
                 return;
