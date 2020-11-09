@@ -156,7 +156,7 @@ return [
                 'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
                 'name'          => 'husband_or_wife_name',
                 'id'            => 'husband_or_wife_name',
-                'hint'          => 'BUILLA AZAD',
+                'hint'          => 'MR. AZAD',
                 'mandatory'     => false,
                 'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
             ],
