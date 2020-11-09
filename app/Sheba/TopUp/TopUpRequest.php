@@ -9,7 +9,6 @@ use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Event;
 
 class TopUpRequest
 {
@@ -193,6 +192,19 @@ class TopUpRequest
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        }
+        else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        }
+        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
+            return 1;
+        }
+
         return 0;
     }
 
