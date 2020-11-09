@@ -9,21 +9,15 @@ use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Exception;
 
-class StatusUpdateSmsHandler
+class WebstoreOrderSmsHandler
 {
     /**
      * @var PosOrder
      */
     private $order;
-    protected $status;
 
     public function setOrder(PosOrder $order) {
         $this->order = $order->calculate();
-        return $this;
-    }
-
-    public function setStatus($status) {
-        $this->status = $status;
         return $this;
     }
 
@@ -50,14 +44,20 @@ class StatusUpdateSmsHandler
      * @throws Exception
      */
     private function getSms() {
-        if ($this->status == OrderStatuses::PROCESSING) {
+        if ($this->order->status == OrderStatuses::PROCESSING) {
             $sms = (new SmsHandlerRepo('pos-order-accept-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
-        } elseif ($this->status == OrderStatuses::CANCELLED || $this->status == OrderStatuses::DECLINED) {
+        } elseif ($this->order->status == OrderStatuses::CANCELLED || $this->order->status == OrderStatuses::DECLINED) {
             $sms = (new SmsHandlerRepo('pos-order-cancelled-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
-        } elseif ($this->status == OrderStatuses::SHIPPED) {
+        } elseif ($this->order->status == OrderStatuses::SHIPPED) {
             $sms = (new SmsHandlerRepo('pos-order-shipped-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
-        } else {
+        } elseif ($this->order->status == OrderStatuses::COMPLETED) {
             $sms = (new SmsHandlerRepo('pos-order-delivered-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
+        } else {
+            $sms = (new SmsHandlerRepo('pos-order-place-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
+                'order_id' => $this->order->id,
+                'net_bill' => $this->order->getNetBill(),
+                'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
+            ]);
         }
         return $sms;
     }

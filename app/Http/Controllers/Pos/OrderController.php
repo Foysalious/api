@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -25,7 +26,7 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
-use Sheba\Pos\Jobs\OrderStatusUpdateSMS;
+use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
@@ -159,6 +160,7 @@ class OrderController extends Controller
              *
              * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
              */
+            $this->sendOrderPlaceSmsToCustomer($order);
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
@@ -309,7 +311,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
-        if ($order->partner->wallet >= 1) dispatch(new OrderStatusUpdateSMS($order, $request->status));
+        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) dispatch(new WebstoreOrderSms($order));
         return api_response($request, null, 200, ['message'   => 'Status Updated Successfully']);
     }
 
@@ -542,6 +544,12 @@ class OrderController extends Controller
     {
         if ($order->customer && $order->customer->profile->mobile)
             dispatch(new OrderBillSms($order));
+    }
+
+    private function sendOrderPlaceSmsToCustomer(PosOrder $order)
+    {
+        if ($order->customer && $order->customer->profile->mobile)
+            dispatch(new WebstoreOrderSms($order));
     }
 
     /**
