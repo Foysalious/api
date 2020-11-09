@@ -7,9 +7,9 @@ use Exception;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Sheba\Pos\Notifier\StatusUpdateSmsHandler;
+use Sheba\Pos\Notifier\WebstoreOrderSmsHandler;
 
-class OrderStatusUpdateSMS extends Job implements ShouldQueue
+class WebstoreOrderSms extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
@@ -25,21 +25,20 @@ class OrderStatusUpdateSMS extends Job implements ShouldQueue
      * @param PosOrder $order
      * @param $status
      */
-    public function __construct(PosOrder $order, $status)
+    public function __construct(PosOrder $order)
     {
         $this->order = $order;
-        $this->status = $status;
     }
 
     /**
      * Execute the job.
-     * @param StatusUpdateSmsHandler $handler
+     * @param WebstoreOrderSmsHandler $handler
      * @throws Exception
      */
-    public function handle(StatusUpdateSmsHandler $handler)
+    public function handle(WebstoreOrderSmsHandler $handler)
     {
         if ($this->attempts() > 2) return;
-        $handler->setOrder($this->order)->setStatus($this->status)->handle();
+        $handler->setOrder($this->order)->handle();
     }
 
 
