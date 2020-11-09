@@ -34,7 +34,7 @@ abstract class ReturnPosItem extends RefundNature
             'unit_price'
         ], 'service_id', true)->toArray();;
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
-        $this->refundPayment();
+        if ($this->order->calculate()->getPaid()) $this->refundPayment();
         $this->generateDetails();
         $this->saveLog();
         try {
