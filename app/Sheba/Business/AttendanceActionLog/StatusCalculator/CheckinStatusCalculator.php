@@ -24,7 +24,8 @@ class CheckinStatusCalculator extends StatusCalculator
         }
 
         $todays_checkin_time = Carbon::parse($this->attendance->date . ' ' . $this->attendance->checkin_time);
-        if ($todays_checkin_time->greaterThan($todays_last_checkin_time)) return Statuses::LATE;
+        $todays_checkin_time_without_second = Carbon::parse($todays_checkin_time->format('Y-m-d H:i'));
+        if ($todays_checkin_time_without_second->greaterThan($todays_last_checkin_time)) return Statuses::LATE;
         return Statuses::ON_TIME;
     }
 }
