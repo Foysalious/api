@@ -8,6 +8,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
+use Sheba\NeoBanking\Exceptions\UnauthorizedRequestFromSBSException;
 use Sheba\NeoBanking\NeoBanking;
 use Sheba\PushNotificationHandler;
 
@@ -248,11 +249,15 @@ class NeoBankingController extends Controller
     public function sendNotification(Request $request)
     {
         try {
+            if(($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
+                throw new UnauthorizedRequestFromSBSException();
             $partner = Partner::find($request->user_id);
             notify()->partner($partner)->send($this->populateData($request));
             if(isset($partner))
                 $this->sendPushNotification($partner, $request);
             return api_response($request, null, 200, ['data' => "Notification stored"]);
+        } catch (UnauthorizedRequestFromSBSException $exception) {
+            return api_response($request, null, 403);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
