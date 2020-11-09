@@ -26,6 +26,7 @@ use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
+use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
 use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
@@ -160,7 +161,10 @@ class OrderController extends Controller
              *
              * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
              */
-            if ($partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) $this->sendOrderPlaceSmsToCustomer($order);
+            if ($order->sales_channel == SalesChannels::WEBSTORE) {
+                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                $this->sendOrderPlacePushNotificationToPartner($order);
+            }
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
             $order->client_pos_order_id = $request->client_pos_order_id;
@@ -553,6 +557,11 @@ class OrderController extends Controller
     {
         if ($order->customer && $order->customer->profile->mobile)
             dispatch(new WebstoreOrderSms($order));
+    }
+
+    private function sendOrderPlacePushNotificationToPartner(PosOrder $order)
+    {
+        dispatch(new WebstoreOrderPushNotification($order));
     }
 
     /**
