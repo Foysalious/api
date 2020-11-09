@@ -119,22 +119,6 @@ class PrimeBankClient
                         'contents' => $request->id_back_name,
                     ],
                     [
-                        'name' => 'gender',
-                        'contents' => $request->gender,
-                    ],
-                    [
-                        'name' => 'nominee',
-                        'contents' => $request->nominee,
-                    ],
-                    [
-                        'name' => 'profession',
-                        'contents' => $request->profession,
-                    ],
-                    [
-                        'name' => 'nominee_relation',
-                        'contents' => $request->nominee_relation,
-                    ],
-                    [
                         'name' => 'is_kyc_store',
                         'contents' => true,
                     ]
