@@ -36,7 +36,7 @@ class ShebaUser
         return ($this->user instanceof Customer || $this->user instanceof Affiliate) ? $this->user->profile->mobile : ($this->user instanceof Partner) ? $this->user->getContactNumber() : $this->user->mobile;
     }
 
-    public function getTopupPrepaidMaxLimit()
+    public function getTopUpPrepaidMaxLimit()
     {
         return (double)$this->user->topup_prepaid_max_limit;
     }
