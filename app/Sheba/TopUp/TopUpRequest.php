@@ -205,6 +205,11 @@ class TopUpRequest
             return 1;
         }
 
+        if ($this->agent instanceof Business && $this->isAmountLimitExceed($this->agent)) {
+            $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
+            return 1;
+        }
+
         return 0;
     }
 
@@ -220,6 +225,12 @@ class TopUpRequest
         if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
         if ($this->vendorId == VendorFactory::TELETALK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
 
+        return false;
+    }
+
+    private function isAmountLimitExceed(Business $business)
+    {
+        if ($this->amount > $business->topup_prepaid_max_limit) return true;
         return false;
     }
 
