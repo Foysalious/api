@@ -205,7 +205,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Business && $this->isAmountLimitExceed($this->agent)) {
+        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
             $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
             return 1;
         }
@@ -228,9 +228,15 @@ class TopUpRequest
         return false;
     }
 
-    private function isAmountLimitExceed(Business $business)
+    /**
+     * @param Business $business
+     * @param $amount
+     * @param $connection_type
+     * @return bool
+     */
+    private function isPrepaidAmountLimitExceed(Business $business)
     {
-        if ($this->amount > $business->topup_prepaid_max_limit) return true;
+        if ($this->type  == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
