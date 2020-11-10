@@ -215,6 +215,7 @@ class NeoBankingController extends Controller
                 'nid_no' => 'required|string',
                 'dob' => 'required',
                 'applicant_name_ben' => 'required|string',
+                'mobile_number' => 'required|string',
                 'applicant_name_eng' => 'required|string',
                 'father_name' => 'required|string',
                 'mother_name' => 'required|string',
