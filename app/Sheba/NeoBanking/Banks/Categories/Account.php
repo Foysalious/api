@@ -33,6 +33,7 @@ class Account extends BankFormCategory
 
     public function getLastUpdated()
     {
+        $this->setLastUpdated();
         return $this->last_updated;
     }
 
