@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Checkout;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\InvalidAddressException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
 use Sheba\Dal\Category\Category;
@@ -100,6 +101,9 @@ class Checkout
                 $new_address->name = trim($request->name);
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
+        }
+        if(!empty($address->geo_informations)) {
+            throw new InvalidAddressException();;
         }
         if (!$request->has('location')) {
             if ((int)$request->is_on_premise) $geo = json_decode((Partner::find((int)$request->partner))->geo_informations); else $geo = json_decode($address->geo_informations);
