@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\TopUp\ConnectionType;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\TopUp\Vendor\Vendor;
@@ -157,6 +158,7 @@ class TopUpController extends Controller
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+                $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
 
                 if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
@@ -170,7 +172,7 @@ class TopUpController extends Controller
                 } elseif ($agent instanceof Business && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'The recharge amount is blocked due to OTF activation issue';
-                } elseif ($agent instanceof Business && $this->isAmountLimitExceed($agent, $value->$amount_field)) {
+                } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
                     $halt_top_up = true;
                     $excel_error = 'The amount exceeded your topUp prepaid limit';
                 } else {
@@ -260,11 +262,12 @@ class TopUpController extends Controller
     /**
      * @param Business $business
      * @param $amount
+     * @param $connection_type
      * @return bool
      */
-    private function isAmountLimitExceed(Business $business, $amount)
+    private function isPrepaidAmountLimitExceed(Business $business, $amount, $connection_type)
     {
-        if ($amount > $business->topup_prepaid_max_limit) return true;
+        if ($connection_type == ConnectionType::PREPAID && ($amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
