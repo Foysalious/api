@@ -78,22 +78,26 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount)
     {
-        //dd($request);
         try {
-            $this->validate($request, [
+            $agent = $request->user;
+
+            $validation_data = [
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-            $agent = $request->user;
+                'vendor_id' => 'required|exists:topup_vendors,id'
+            ];
+
+            $validation_data['amount'] = $this->isBusiness($agent) ? 'required|min:10|numeric' : 'required|min:10|max:1000|numeric';
+
+            $this->validate($request, $validation_data);
+
             $top_up_request->setAmount($request->amount)
                 ->setMobile($request->mobile)
                 ->setType($request->connection_type)
                 ->setAgent($agent)
                 ->setVendorId($request->vendor_id);
 
-            if ($agent instanceof Business) {
+            if ($this->isBusiness($agent)) {
                 $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
                 $top_up_request->setBlockedAmount($blocked_amount_by_operator);
             }
@@ -492,5 +496,12 @@ class TopUpController extends Controller
     {
         $special_amount = $topUp_special_amount->get();
         return api_response($request, null, 200, ['data' => $special_amount]);
+    }
+
+    private function isBusiness($agent)
+    {
+        if ($agent instanceof Business) return true;
+
+        return false;
     }
 }
