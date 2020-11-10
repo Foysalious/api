@@ -78,6 +78,7 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount)
     {
+        //dd($request);
         try {
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',
