@@ -102,7 +102,7 @@ class Checkout
                 $address = $this->customer->delivery_addresses()->save($new_address);
             }
         }
-        if(!empty($address->geo_informations)) {
+        if(empty($address->geo_informations)) {
             throw new InvalidAddressException();;
         }
         if (!$request->has('location')) {
