@@ -16,7 +16,7 @@ class UserController extends Controller
                 'image' => $sheba_user->getImage(),
                 'balance' => $sheba_user->getWallet(),
                 'mobile' => $sheba_user->getMobile(),
-                'topup_prepaid_max_limit' => $sheba_user->getTopupPrepaidMaxLimit(),
+                'topup_prepaid_max_limit' => $sheba_user->getTopUpPrepaidMaxLimit(),
                 'type' => strtolower(class_basename($request->user)),
                 'type_id' => $request->user->id,
             ];
