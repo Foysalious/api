@@ -124,7 +124,7 @@ class ServiceController extends Controller
                 'category_id' => 'required_without:master_category_id|in:' . implode(',', $sub_categories),
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
-                'end_date' => 'required_with:discount_amount|date'
+                /*'end_date' => 'required_with:discount_amount|date'*/ //need to fix in app end
             ]);
             $this->setModifier($request->manager_resource);
 
