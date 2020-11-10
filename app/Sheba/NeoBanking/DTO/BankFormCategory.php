@@ -21,7 +21,7 @@ abstract class BankFormCategory
     /** @var Bank $bank */
     protected $bank;
     protected $bankInfoRepo;
-    protected $last_updated = 'today';
+    protected $last_updated;
     /** @var PartnerNeoBankingInfo */
     protected $bankAccountData;
 
@@ -57,6 +57,13 @@ abstract class BankFormCategory
         return $this;
     }
 
+    public function setLastUpdated()
+    {
+        $this->bank->loadInfo();
+        $this->setBankAccountData($this->bank->getBankInfo());
+        $category_data = $this->bankAccountData->getByCode($this->code);
+        $this->last_updated = $category_data ? $category_data->updated_at : '';
+    }
 
     /**
      * @param mixed $title
