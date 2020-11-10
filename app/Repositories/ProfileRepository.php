@@ -182,6 +182,7 @@ class ProfileRepository
         $profile        = new Profile();
         $profile->fb_id = $info['fb_id'];
         $profile->name  = $info['fb_name'];
+        $profile->portal_name  = $info['portal_name'];
         $profile->email = $info['fb_email'] != 'undefined' ? $info['fb_email'] : null;
         if ($profile->email != null) {
             $profile->email_verified = 1;
@@ -274,6 +275,7 @@ class ProfileRepository
     {
         $data = [
             'mobile'          => $info['mobile'],
+            'portal_name'          => $info['portal_name'],
             'mobile_verified' => 1,
             "remember_token"  => str_random(255)
         ];

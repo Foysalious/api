@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Models\Procurement;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 use App\Http\Controllers\Controller;
@@ -19,21 +20,19 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param Updater $updater
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function updateStatus($partner, $procurement, Request $request, Updater $updater)
     {
-        $this->validate($request, [
-            'status' => 'required|string',
-        ]);
+        $this->validate($request, ['status' => 'required|string']);
         $this->setModifier($request->manager_resource);
+
         $procurement = Procurement::find((int)$procurement);
-        if (!$procurement) {
-            return api_response($request, null, 404);
-        } else {
-            $updater->setProcurement($procurement)->setStatus($request->status)->updateStatus();
-            return api_response($request, null, 200);
-        }
+
+        if (!$procurement) return api_response($request, null, 404);
+
+        $updater->setProcurement($procurement)->setStatus($request->status)->updateStatus();
+        return api_response($request, null, 200);
     }
 
     /**
@@ -41,7 +40,7 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param ProcurementOrder $procurement_order
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function orderTimeline($partner, $procurement, Request $request, ProcurementOrder $procurement_order)
     {
@@ -56,7 +55,7 @@ class ProcurementController extends Controller
      * @param Request $request
      * @param ProcurementOrder $procurement_order
      * @param BidRepositoryInterface $bid_repository
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function showProcurementOrder($partner, $procurement, $bid, Request $request, ProcurementOrder $procurement_order, BidRepositoryInterface $bid_repository)
     {
@@ -71,7 +70,7 @@ class ProcurementController extends Controller
      * @param $procurement
      * @param Request $request
      * @param Creator $creator
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function orderBill($partner, $procurement, Request $request, Creator $creator)
     {

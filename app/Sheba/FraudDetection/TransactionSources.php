@@ -20,4 +20,6 @@ class TransactionSources
     const BONUS            = 'bonus';
     const PAYMENT_LINK     = 'payment_link';
     const LOAN_FEE         = 'loan_fee';
+    const LOAN             = 'loan';
+    const LOAN_REPAYMENT   = 'loan_repayment';
 }

@@ -80,6 +80,7 @@ class GoogleController extends Controller
                     $col = $email_profile ? 'Email' : 'Mobile';
                     return api_response($request, null, 400, ['message' => $col . ' already exists! Please login']);
                 }
+                if($request->hasHeader('portal-name')) array_add($profile_info, 'portal_name', $request->header('portal-name'));
                 $profile = $this->profileRepository->store($profile_info);
                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $profile_info['pro_pic'], 'images/profiles/');
                 $profile->update();

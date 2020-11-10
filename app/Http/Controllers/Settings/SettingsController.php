@@ -50,7 +50,8 @@ class SettingsController extends Controller
             }
             $settings = Redis::get('customer-review-settings');
             $settings = $settings ? json_decode($settings) : null;
-            return api_response($request, $info, 200, ['job' => $info, 'customer' => ['rating' => round($customer->customerReviews->avg('rating'), 2)], 'settings' => $settings]);
+            $rating = $customer->customerReviews->avg('rating') <= 5 ? $customer->customerReviews->avg('rating') : 5;
+            return api_response($request, $info, 200, ['job' => $info, 'customer' => ['rating' => round($rating, 2)], 'settings' => $settings]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

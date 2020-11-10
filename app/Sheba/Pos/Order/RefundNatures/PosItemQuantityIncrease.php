@@ -19,7 +19,7 @@ class PosItemQuantityIncrease extends ReturnPosItem
         ], 'service_id')->toArray();
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
         $this->refundPayment();
-        $this->generateDetails();
+        $this->generateDetails($this->order);
         $this->saveLog();
         try {
             $this->updateIncome($this->order);

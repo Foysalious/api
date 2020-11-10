@@ -1,6 +1,7 @@
 <?php namespace Sheba\Reports\Pos\Sales;
 
 use App\Models\Partner;
+use App\Models\PartnerPosCustomer;
 use App\Models\PosOrder;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\Paginator;
@@ -41,12 +42,14 @@ class CustomerWise extends PosReport
         $customer_sales = [];
         $this->query->get()->each(function (PosOrder $pos_order) use (&$customer_sales) {
             $customer_id = $pos_order->customer_id;
+            $partner_id  = $pos_order->partner_id;
             $pos_order->calculate();
             $is_customer_already_exist = (array_key_exists($customer_id, $customer_sales));
             if (!$is_customer_already_exist) {
+                $posProfile = PartnerPosCustomer::byPartner($partner_id)->where('customer_id', $customer_id)->first();
                 $customer_sales[$customer_id] = [
                     'customer_id'   => $customer_id,
-                    'customer_name' => $pos_order->customer->profile->name,
+                    'customer_name' => $posProfile ? $posProfile->nick_name ? $posProfile->nick_name : $pos_order->customer->profile->name : $pos_order->customer->profile->name,
                     'order_count'   => 0,
                     'sales_amount'  => 0.00
                 ];

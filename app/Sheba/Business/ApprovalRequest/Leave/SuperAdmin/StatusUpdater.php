@@ -18,6 +18,7 @@ class StatusUpdater
     private $member;
     private $leaveLogRepo;
     private $previousStatus;
+    private $isLeaveAdjustment;
     /**@var BusinessMember $businessMember */
     private $businessMember;
 
@@ -26,6 +27,7 @@ class StatusUpdater
     {
         $this->leaveRepository = $leave_repository;
         $this->leaveLogRepo = $leave_log_repo;
+        $this->isLeaveAdjustment = false;
     }
 
     public function setLeave(Leave $leave)
@@ -37,6 +39,12 @@ class StatusUpdater
     public function setStatus($status)
     {
         $this->status = $status;
+        return $this;
+    }
+
+    public function setIsLeaveAdjustment($is_leave_adjustment)
+    {
+        $this->isLeaveAdjustment = $is_leave_adjustment;
         return $this;
     }
 
@@ -63,7 +71,7 @@ class StatusUpdater
     {
         $data = $this->withCreateModificationField([
             'leave_id' => $this->leave->id,
-            'type' => EditType::STATUS,
+            'type' => $this->isLeaveAdjustment ? EditType::LEAVE_ADJUSTMENT : EditType::STATUS,
             'from' => $this->previousStatus,
             'to' => $this->status,
             'log' => 'Super Admin changed this leave status from ' . $this->formatText($this->previousStatus) . ' to ' . $this->formatText($this->status),
@@ -75,9 +83,9 @@ class StatusUpdater
 
     private function formatText($value)
     {
-       if ($value === Status::ACCEPTED) {
-           return 'Approved';
-       }
-       return ucfirst($value);
+        if ($value === Status::ACCEPTED) {
+            return 'Approved';
+        }
+        return ucfirst($value);
     }
 }

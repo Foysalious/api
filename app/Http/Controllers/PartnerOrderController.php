@@ -9,6 +9,7 @@ use App\Repositories\ResourceJobRepository;
 use App\Sheba\Checkout\PartnerList;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Jobs\Discount;
 use Sheba\Logistics\Exceptions\LogisticServerError;
 use Sheba\Logistics\Repository\OrderRepository;
@@ -96,9 +97,11 @@ class PartnerOrderController extends Controller
                             }]);
                         }]);
                 }]);
+                $time_frame = new TimeFrame();
+                $start_end_date = $time_frame->forTodayAndYesterday();
                 $order_request_count = PartnerOrderRequest::openRequest()->whereDoesntHave('partnerOrder', function ($q) {
-                    $q->cancelled();
-                })->where('partner_id', $partner->id)->count();
+                    $q->new();
+                })->where('partner_id', $partner->id)->whereBetween('created_at', $start_end_date->getArray())->count();
                 $total_new_orders = $partner->jobs->pluck('partnerOrder')->unique()->pluck('order')
                         ->groupBy('subscription_order_id')
                         ->map(function ($order, $key) {

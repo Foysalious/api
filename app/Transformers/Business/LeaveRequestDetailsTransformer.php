@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
@@ -15,14 +16,16 @@ use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
+    private $business;
     /** @var Profile Profile */
     private $profile;
     private $role;
     private $leaveLogRepo;
     protected $defaultIncludes = ['attachments'];
 
-    public function __construct(Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo)
+    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo)
     {
+        $this->business = $business;
         $this->profile = $profile;
         $this->role = $role;
         $this->leaveLogRepo = $leave_log_repo;
@@ -68,6 +71,12 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'end_date' => $requestable->end_date->format('Y-m-d'),
                 'note' => $requestable->note,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
+                'is_half_day' => $requestable->is_half_day,
+                'half_day_configuration' => $requestable->is_half_day ? [
+                    'half_day' => $requestable->half_day_configuration,
+                    'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
+                ] : null,
+                'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
                 'substitute' => $substitute_business_member ? [
                     'id' => $substitute_business_member->id,
                     'name' => $leave_substitute->name,
@@ -102,7 +111,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
 
     private function getLeaveLogDetails($requestable)
     {
-        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->get()->map(function ($log) {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->where('type', '<>', 'leave_adjustment')->select('log', 'created_at')->get()->map(function ($log) {
             return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
         })->toArray();
         return $logs ? $logs : null;
