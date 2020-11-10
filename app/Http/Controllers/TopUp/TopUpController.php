@@ -12,6 +12,7 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\TopUp\ConnectionType;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\TopUp\Vendor\Vendor;
@@ -79,16 +80,19 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
     {
-        //dd($request);
         try {
-            $this->validate($request, [
+            $agent = $request->user;
+
+            $validation_data = [
                 'mobile' => 'required|string|mobile:bd',
                 'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-            $agent = $request->user;
-            $userAgentInformation->setRequest($request);
+                'vendor_id' => 'required|exists:topup_vendors,id'
+            ];
+
+            $validation_data['amount'] = $this->isBusiness($agent) ? 'required|min:10|numeric' : 'required|min:10|max:1000|numeric';
+
+            $this->validate($request, $validation_data);
+
             $top_up_request->setAmount($request->amount)
                 ->setMobile($request->mobile)
                 ->setType($request->connection_type)
@@ -96,7 +100,7 @@ class TopUpController extends Controller
                 ->setVendorId($request->vendor_id)
                 ->setUserAgent($userAgentInformation->getUserAgent());
 
-            if ($agent instanceof Business) {
+            if ($this->isBusiness($agent)) {
                 $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
                 $top_up_request->setBlockedAmount($blocked_amount_by_operator);
             }
@@ -136,13 +140,9 @@ class TopUpController extends Controller
     {
         try {
             $this->validate($request, ['file' => 'required|file']);
-
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) {
-                return api_response($request, null, 400, ['message' => 'File type not support']);
-            }
             if (!in_array($extension, $valid_extensions))
                 return api_response($request, null, 400, ['message' => 'File type not support']);
 
@@ -166,6 +166,7 @@ class TopUpController extends Controller
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+                $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
 
                 if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
@@ -179,7 +180,7 @@ class TopUpController extends Controller
                 } elseif ($agent instanceof Business && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'The recharge amount is blocked due to OTF activation issue';
-                } elseif ($agent instanceof Business && $this->isAmountLimitExceed($agent, $value->$amount_field)) {
+                } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
                     $halt_top_up = true;
                     $excel_error = 'The amount exceeded your topUp prepaid limit';
                 } else {
@@ -269,11 +270,12 @@ class TopUpController extends Controller
     /**
      * @param Business $business
      * @param $amount
+     * @param $connection_type
      * @return bool
      */
-    private function isAmountLimitExceed(Business $business, $amount)
+    private function isPrepaidAmountLimitExceed(Business $business, $amount, $connection_type)
     {
-        if ($amount > $business->topup_prepaid_max_limit) return true;
+        if ($connection_type == ConnectionType::PREPAID && ($amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
@@ -497,5 +499,12 @@ class TopUpController extends Controller
     {
         $special_amount = $topUp_special_amount->get();
         return api_response($request, null, 200, ['data' => $special_amount]);
+    }
+
+    private function isBusiness($agent)
+    {
+        if ($agent instanceof Business) return true;
+
+        return false;
     }
 }
