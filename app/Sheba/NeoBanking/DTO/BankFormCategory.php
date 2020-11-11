@@ -24,6 +24,7 @@ abstract class BankFormCategory
     protected $last_updated;
     /** @var PartnerNeoBankingInfo */
     protected $bankAccountData;
+    protected $percentage;
 
     public function __construct()
     {
@@ -133,5 +134,10 @@ abstract class BankFormCategory
     {
         $this->bankAccountData = $bankAccountData;
         return $this;
+    }
+
+    public function getBengaliPercentage()
+    {
+        return convertNumbersToBangla($this->percentage, false);
     }
 }
