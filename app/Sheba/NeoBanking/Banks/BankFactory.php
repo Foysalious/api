@@ -12,6 +12,7 @@ class BankFactory
     private $bank;
     /** @var Partner $partner */
     private $partner;
+    private $mobile;
 
     /**
      * @param NeoBank $bank
@@ -33,6 +34,12 @@ class BankFactory
         return $this;
     }
 
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
+        return $this;
+    }
+
     /**
      * @param NeoBank $neoBank
      * @param Partner $partner
@@ -48,7 +55,7 @@ class BankFactory
             $class=$classMap[$code];
             /** @var Bank $bank */
             $bank = app("$bankClassPath$class\\$class");
-            $bank->setBank($this->bank)->setPartner($this->partner);
+            $bank->setBank($this->bank)->setMobile($this->mobile)->setPartner($this->partner);
             return $bank;
         }
         throw new InvalidBankCode();

@@ -32,6 +32,7 @@ abstract class Bank
     protected $partner;
     /** @var PartnerNeoBankingInfo $bankInfo */
     protected $bankInfo;
+    protected $mobile;
 
     /**
      * @param Partner $partner
@@ -40,6 +41,12 @@ abstract class Bank
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
         return $this;
     }
 

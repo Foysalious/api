@@ -14,6 +14,7 @@ class Completion
     private $partner;
     /** @var Bank $bank */
     private $bank;
+    private $mobile;
 
     /**
      * @param Partner $partner
@@ -35,6 +36,12 @@ class Completion
         return $this;
     }
 
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
+        return $this;
+    }
+
     /**
      * @throws InvalidBankCode
      * @throws InvalidListInsertion|ReflectionException
@@ -50,7 +57,12 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        return (new BankCompletion())->setCompletion($completion)->setCanApply(1)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage('প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।')->setMessageType('info');
+        return (new BankCompletion())->setGigaTechStatusInfo($this->getGigaTechData())->setCompletion($completion)->setCanApply(1)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage('প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।')->setMessageType('info');
+    }
+
+    private function getGigaTechData()
+    {
+        return $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
     }
 
 }

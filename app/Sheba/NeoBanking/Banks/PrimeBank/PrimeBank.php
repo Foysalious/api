@@ -57,7 +57,7 @@ class PrimeBank extends Bank
      */
     public function completion(): BankCompletion
     {
-        return (new Completion())->setBank($this)->setPartner($this->partner)->getAll();
+        return (new Completion())->setBank($this)->setPartner($this->partner)->setMobile($this->mobile)->getAll();
     }
 
     public function accountDetailInfo(): BankAccountInfoWithTransaction
