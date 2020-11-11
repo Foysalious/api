@@ -71,8 +71,9 @@ class NeoBankingController extends Controller
             ]);
             $partner  = $request->partner;
             $resource = $request->manager_resource;
+            $mobile   = $request->mobile;
 
-            $completion = $neoBanking->setPartner($partner)->setResource($resource)->setBank($request->bank_code)->getCompletion()->toArray();
+            $completion = $neoBanking->setPartner($partner)->setResource($resource)->setMobile($mobile)->setBank($request->bank_code)->getCompletion()->toArray();
             return api_response($request, $completion, 200, ['data' => $completion]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
