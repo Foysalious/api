@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use Aws\S3\Exception\S3Exception;
 use Storage;
@@ -14,15 +12,17 @@ class FileRepository
     {
         $this->s3 = new S3Client([
             'version' => 'latest',
-            'region' => config('s3.region','ap-south-1'),
+            'region' => config('s3.region'),
             'credentials' => [
                 'key' => config('s3.key'),
-                'secret' => config('s3.secret'),
+                'secret' => config('s3.secret')
             ],
         ]);
-
     }
 
+    /**
+     * @param $filename
+     */
     public function deleteFileFromCDN($filename)
     {
         if ($filename != '') {
@@ -30,6 +30,12 @@ class FileRepository
         }
     }
 
+    /**
+     * @param $filename
+     * @param $file
+     * @param $folder
+     * @return false|string
+     */
     public function uploadToCDN($filename, $file, $folder)
     {
         $s3 = new S3Client([
@@ -37,9 +43,10 @@ class FileRepository
             'region' => config('s3.region'),
             'credentials' => [
                 'key' => config('s3.key'),
-                'secret' => config('s3.secret'),
+                'secret' => config('s3.secret')
             ],
         ]);
+
         try {
             $s3->putObject([
                 'Bucket' => config('s3.bucket'),
@@ -52,9 +59,16 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
+
         return config('s3.url') . $folder . $filename;
     }
 
+    /**
+     * @param $folder
+     * @param $filename
+     * @param $image
+     * @return false|string
+     */
     public function uploadImageToCDN($folder, $filename, $image)
     {
         try {
@@ -64,11 +78,12 @@ class FileRepository
                 'Body' => $image,
                 'ACL' => 'public-read',
                 'ContentType' => $image->mime(),
-                'CacheControl' => 'max-age=2628000, public',
+                'CacheControl' => 'max-age=2628000, public'
             ]);
         } catch (S3Exception $e) {
             return false;
         }
+
         return config('s3.url') . $folder . '/' . $filename;
     }
 }
