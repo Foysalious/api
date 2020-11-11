@@ -10,9 +10,9 @@ return [
     'weights' => [
         'impression' => 50,
         'quality' => [
-            'ita' => 25,
+            'ita' => 15,
             'spro_app_usage' => 20,
-            'ota' => 15,
+            'ota' => 25,
             'complain' => 10,
             'max_revenue' => 15,
             'package' => 5,
