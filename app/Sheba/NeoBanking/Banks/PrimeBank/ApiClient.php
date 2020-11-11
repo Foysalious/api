@@ -14,7 +14,7 @@ class ApiClient extends BankApiClient
 
     function getAccountInfo(): BankAccountInfo
     {
-        return (new BankAccountInfo())->setHasAccount(1)->setAccountNo('2441139')->setAccountStatus('ঠিকানা ভেরিফিকেশন প্রক্রিয়াধিন')->setStatusMessage('এই মুহূর্তে আপনার অ্যাকাউন্ট এ শুধু মাত্র টাকা জমা দেয়া যাবে। সম্পুর্ণরুপে অ্যাকাউন্ট সচল করতে আপনার নির্ধারিত শাখায় গিয়ে স্বাক্ষর করুন এবং আপনার ঠিকানা ভেরিফিকেশন এর জন্য অপেক্ষা করুন।')->setStatusMessageType('warning');
+        return (new BankAccountInfo())->setHasAccount(0)->setAccountNo(null)->setAccountStatus(null)->setStatusMessage(null)->setStatusMessageType(null);
     }
 
     function getAccountDetailInfo(): BankAccountInfoWithTransaction

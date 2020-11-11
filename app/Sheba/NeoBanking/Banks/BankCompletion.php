@@ -14,6 +14,7 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $bank_detail_link;
     protected $bank_detail_title;
     protected $message      = '';
+     protected $gigatech_status_info;
     protected $message_type = 'info';
 
     /**
