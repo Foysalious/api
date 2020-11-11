@@ -307,7 +307,7 @@
             ORDER NUMBER : {{ $partner_order->order->code() }}
         </div>
         <div class="text-right">
-            VENDOR :  {{ $partner_order->partner?$partner_order->partner->name :"N\A"}}
+            VENDOR :  {{ $job->resource?$job->resource->profile->name :"N\A"}}
         </div>
     </div>
     <table border="0" cellspacing="0" cellpadding="0">
