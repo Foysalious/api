@@ -14,10 +14,10 @@ class FileRepository
     {
         $this->s3 = new S3Client([
             'version' => 'latest',
-            'region' => config('sheba.AWS_REGION','ap-south-1'),
+            'region' => config('s3.region','ap-south-1'),
             'credentials' => [
-                'key' => config('sheba.AWS_KEY'),
-                'secret' => config('sheba.AWS_SECRET'),
+                'key' => config('s3.key'),
+                'secret' => config('s3.secret'),
             ],
         ]);
 
@@ -34,15 +34,15 @@ class FileRepository
     {
         $s3 = new S3Client([
             'version' => 'latest',
-            'region' => config('sheba.AWS_REGION'),
+            'region' => config('s3.region'),
             'credentials' => [
-                'key' => config('sheba.AWS_KEY'),
-                'secret' => config('sheba.AWS_SECRET'),
+                'key' => config('s3.key'),
+                'secret' => config('s3.secret'),
             ],
         ]);
         try {
             $s3->putObject([
-                'Bucket' => config('sheba.AWS_BUCKET'),
+                'Bucket' => config('s3.bucket'),
                 'Key' => $folder . $filename,
                 'Body' => file_get_contents($file),
                 'ACL' => 'public-read',
@@ -52,14 +52,14 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return config('sheba.s3_url') . $folder . $filename;
+        return config('s3.url') . $folder . $filename;
     }
 
     public function uploadImageToCDN($folder, $filename, $image)
     {
         try {
             $this->s3->putObject([
-                'Bucket' => config('sheba.AWS_BUCKET'),
+                'Bucket' => config('s3.bucket'),
                 'Key' => $folder . '/' . $filename,
                 'Body' => $image,
                 'ACL' => 'public-read',
@@ -69,6 +69,6 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return config('sheba.s3_url') . $folder . '/' . $filename;
+        return config('s3.url') . $folder . '/' . $filename;
     }
 }
