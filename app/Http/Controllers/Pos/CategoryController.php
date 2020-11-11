@@ -87,6 +87,7 @@ class CategoryController extends Controller
 
             $master_categories->each(function ($category) use (&$category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
                 $category_id = $category->id;
+                $category->total_services = count($category->services);
                 $category->services->each(function ($service) use ($category_id, &$total_items, &$total_buying_price, &$items_with_buying_price) {
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
