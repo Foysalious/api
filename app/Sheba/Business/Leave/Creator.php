@@ -218,7 +218,6 @@ class Creator
      */
     public function create()
     {
-        dd('here');
         $data = [
             'title' => $this->title,
             'note' => $this->note,
@@ -228,7 +227,7 @@ class Creator
             'start_date' => $this->startDate,
             'end_date' => $this->endDate,
             'is_half_day' => $this->isHalfDay,
-            'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure :null,
+            'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure : null,
             'total_days' => $this->setTotalDays(),
             'left_days' => $this->getLeftDays()
         ];
@@ -329,9 +328,7 @@ class Creator
 
     private function getLeftDays()
     {
-        $business_total_leave_days_by_types = collect(array_filter($this->businessMember->getAllLeaveTypesWithBreakDown(), function ($leave_type){
-            return $leave_type['id'] == $this->leaveTypeId;
-        }))->first()['total_days'];
+        $business_total_leave_days_by_types = $this->businessMember->getTotalLeaveDaysByLeaveTypes($this->leaveTypeId);
         $used_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
         return $business_total_leave_days_by_types - $used_days;
     }

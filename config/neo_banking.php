@@ -1,80 +1,86 @@
 <?php
-function addressViews($type)
-{
-    return [
-        [
-            'field_type'    => 'editText',
-            'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
-            'name'          => 'street_village_' . $type . '_address',
-            'id'            => 'street_village_' . $type . '_address',
-            'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
-            'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
-        ],
-        [
-            'field_type'    => 'editText',
-            'title'         => 'পোস্ট কোড *',
-            'name'          => 'postcode_' . $type . '_address',
-            'id'            => 'postcode_' . $type . '_address',
-            'hint'          => 'পোস্ট কোড',
-            'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
-            'input_type'    => 'number',
-        ],
-        [
-            'field_type'    => 'dropdown',
-            'title'         => 'জেলা *',
-            'name'          => 'district_' . $type . '_address',
-            'id'            => 'district_' . $type . '_address',
-            'hint'          => 'জেলা',
-            'list_type'     => 'new_page_radio',
-            'error_message' => 'জেলার নাম পূরণ আবশ্যক'
-        ],
-        [
-            'field_type'    => 'dropdown',
-            'title'         => 'থানা / উপজেলা *',
-            'list_type'     => 'new_page_radio',
-            'name'          => 'sub_district_' . $type . '_address',
-            'id'            => 'sub_district_' . $type . '_address',
-            'hint'          => 'থানা / উপজেলা',
-            'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
-        ],
-        [
-            'field_type'    => 'editText',
-            'title'         => 'দেশ *',
-            'name'          => 'country_' . $type . '_address',
-            'id'            => 'country_' . $type . '_address',
-            'hint'          => 'দেশ',
-            'error_message' => 'দেশের নাম পূরণ আবশ্যক'
-        ]
-    ];
+
+if (!function_exists('addressViews')) {
+    function addressViews($type)
+    {
+        return [
+            [
+                'field_type'    => 'editText',
+                'title'         => 'স্ট্রিট নং / গ্রামের নাম *',
+                'name'          => 'street_village_' . $type . '_address',
+                'id'            => 'street_village_' . $type . '_address',
+                'hint'          => 'স্ট্রিট নং / গ্রামের নাম',
+                'error_message' => 'স্ট্রিট নং / গ্রামের নাম  পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'পোস্ট কোড *',
+                'name'          => 'postcode_' . $type . '_address',
+                'id'            => 'postcode_' . $type . '_address',
+                'hint'          => 'পোস্ট কোড',
+                'error_message' => 'পোস্ট কোড  পূরণ আবশ্যক',
+                'input_type'    => 'number',
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'জেলা *',
+                'name'          => 'district_' . $type . '_address',
+                'id'            => 'district_' . $type . '_address',
+                'hint'          => 'জেলা',
+                'list_type'     => 'new_page_radio',
+                'error_message' => 'জেলার নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'dropdown',
+                'title'         => 'থানা / উপজেলা *',
+                'list_type'     => 'new_page_radio',
+                'name'          => 'sub_district_' . $type . '_address',
+                'id'            => 'sub_district_' . $type . '_address',
+                'hint'          => 'থানা / উপজেলা',
+                'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'দেশ *',
+                'name'          => 'country_' . $type . '_address',
+                'id'            => 'country_' . $type . '_address',
+                'hint'          => 'দেশ',
+                'error_message' => 'দেশের নাম পূরণ আবশ্যক'
+            ]
+        ];
+    }
 }
 
-function booleanView($type){
-    return [
-        [
-            'field_type' => 'radioButton',
-            'name'       => $type.'_yes',
-            'id'         => $type.'_yes',
-            'title'      => 'Yes',
-            'mandatory'  => false,
-            'value'      => "1"
-        ],
-        [
-            'field_type' => 'radioButton',
-            'name'       => $type.'_no',
-            'id'         => $type.'_no',
-            'title'      => 'No',
-            'mandatory'  => false,
-            'value'      => "0"
-        ]
-    ];
+if (!function_exists('booleanView')) {
+    function booleanView($type)
+    {
+        return [
+            [
+                'field_type' => 'radioButton',
+                'name'       => $type . '_yes',
+                'id'         => $type . '_yes',
+                'title'      => 'Yes',
+                'mandatory'  => false,
+                'value'      => "1"
+            ],
+            [
+                'field_type' => 'radioButton',
+                'name'       => $type . '_no',
+                'id'         => $type . '_no',
+                'title'      => 'No',
+                'mandatory'  => false,
+                'value'      => "0"
+            ]
+        ];
+    }
 }
 
 return [
-    'prime_bank_sbs_url' => env('PRIME_BANK_SBS_URL'),
-    'account_details_url'   => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
-    'account_details_title' => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
-    'sbs_access_token'      => env('SBS_ACCESS_TOKEN', '1234567890'),
-    'category_list'         => [
+    'prime_bank_sbs_url'                 => env('PRIME_BANK_NEO_BANKING_URL'),
+    'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
+    'account_details_title'              => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
+    'sbs_access_token'                   => env('SBS_ACCESS_TOKEN', '1234567890'),
+    'category_list'                      => [
         'NEO_1' => [
             'nid_selfie'  => 'NIDSelfie',
             'institution' => 'Institution',
@@ -84,7 +90,7 @@ return [
             'account'     => 'Account'
         ]
     ],
-    'category_titles'       => [
+    'category_titles'                    => [
         'nid_selfie'  => [
             'en' => 'NID and Selfie',
             'bn' => 'জাতীয় পরিচয়পত্র ও সেলফি'
@@ -111,7 +117,7 @@ return [
         ]
 
     ],
-    'category_form_items'   => [
+    'category_form_items'                => [
         'personal'    => [
             [
                 'field_type' => 'header',
@@ -156,7 +162,7 @@ return [
                 'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
                 'name'          => 'husband_or_wife_name',
                 'id'            => 'husband_or_wife_name',
-                'hint'          => 'BUILLA AZAD',
+                'hint'          => 'MR. AZAD',
                 'mandatory'     => false,
                 'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
             ],
@@ -506,21 +512,21 @@ return [
                 'mandatory'  => false
             ],
             [
-                'field_type'    => 'editText',
-                'title'         => 'অভিভাবক (নমিনি যদি ১৮ বছরের নিচে হয়) ',
-                'name'          => 'nominee_guardian',
-                'id'            => 'nominee_guardian',
-                'hint'          => 'এখানে লিখুন',
-                'mandatory'     => false
+                'field_type' => 'editText',
+                'title'      => 'অভিভাবক (নমিনি যদি ১৮ বছরের নিচে হয়) ',
+                'name'       => 'nominee_guardian',
+                'id'         => 'nominee_guardian',
+                'hint'       => 'এখানে লিখুন',
+                'mandatory'  => false
             ],
             [
-                'field_type'    => 'editText',
-                'title'         => 'অভিভাবকের জাতীয় পরিচয়পত্রের নাম্বার ',
-                'name'          => 'nominee_guardian_nid',
-                'id'            => 'nominee_guardian_nid',
-                'hint'          => 'এখানে লিখুন',
-                'mandatory'     => false,
-                'input_type'    => 'number'
+                'field_type' => 'editText',
+                'title'      => 'অভিভাবকের জাতীয় পরিচয়পত্রের নাম্বার ',
+                'name'       => 'nominee_guardian_nid',
+                'id'         => 'nominee_guardian_nid',
+                'hint'       => 'এখানে লিখুন',
+                'mandatory'  => false,
+                'input_type' => 'number'
             ],
             [
                 'field_type' => 'header',
@@ -785,13 +791,14 @@ return [
                 'views'      => booleanView('internet_banking')
             ]
         ],
-        'documents'    => [
+        'documents'   => [
             [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
                 'title'         => 'ট্রেড লাইসেন্স',
                 'hint'          => 'ট্রেড লাইসেন্স',
                 'name'          => 'trade_licence_document',
+                'id'            => 'trade_licence_document',
                 'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -801,6 +808,7 @@ return [
                 'title'         => 'কোম্পানির লেটার-হেড প্যাড',
                 'hint'          => 'কোম্পানির লেটার-হেড প্যাড',
                 'name'          => 'company_letter_head',
+                'id'            => 'company_letter_head',
                 'error_message' => 'কোম্পানির লেটার-হেড প্যাড এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -810,6 +818,7 @@ return [
                 'title'         => 'ট্রেড সিল',
                 'hint'          => 'ট্রেড সিল',
                 'name'          => 'trade_seal_document',
+                'id'            => 'trade_seal_document',
                 'error_message' => 'ট্রেড সিল এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -819,6 +828,7 @@ return [
                 'title'         => 'ই-টিন',
                 'hint'          => 'ই-টিন',
                 'name'          => 'e_tin_document',
+                'id'            => 'e_tin_document',
                 'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -828,6 +838,7 @@ return [
                 'title'         => 'ভ্যাট রেজিস্ট্রেশন',
                 'hint'          => 'ভ্যাট রেজিস্ট্রেশন',
                 'name'          => 'vat_registration_document',
+                'id'            => 'vat_registration_document',
                 'error_message' => 'ভ্যাট রেজিস্ট্রেশন এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -837,6 +848,7 @@ return [
                 'title'         => 'রেন্টাল এগ্রিমেন্ট (যদি থাকে)',
                 'hint'          => 'রেন্টাল এগ্রিমেন্ট',
                 'name'          => 'rental_agreement_document',
+                'id'            => 'rental_agreement_document',
                 'error_message' => 'রেন্টাল এগ্রিমেন্ট এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ],
@@ -846,11 +858,12 @@ return [
                 'title'         => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
                 'hint'          => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
                 'name'          => 'bill_document',
+                'id'            => 'bill_document',
                 'error_message' => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল এর ছবি দেয়া আবশ্যক',
                 "mandatory"     => false
             ]
         ],
-        'nid_selfie'    => []
+        'nid_selfie'  => []
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
 ];

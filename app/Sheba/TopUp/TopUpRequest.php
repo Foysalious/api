@@ -9,7 +9,6 @@ use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Event;
 
 class TopUpRequest
 {
@@ -33,7 +32,6 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    protected $ip;
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -194,6 +192,24 @@ class TopUpRequest
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        }
+        else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        }
+        if ($this->agent instanceof Business && $this->isAmountBlocked()) {
+            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
+            return 1;
+        }
+
+        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
+            $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
+            return 1;
+        }
+
         return 0;
     }
 
@@ -207,7 +223,20 @@ class TopUpRequest
         if ($this->vendorId == VendorFactory::BANGLALINK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
         if ($this->vendorId == VendorFactory::ROBI) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
         if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
+        if ($this->vendorId == VendorFactory::TELETALK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
 
+        return false;
+    }
+
+    /**
+     * @param Business $business
+     * @param $amount
+     * @param $connection_type
+     * @return bool
+     */
+    private function isPrepaidAmountLimitExceed(Business $business)
+    {
+        if ($this->type  == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
@@ -264,12 +293,6 @@ class TopUpRequest
         return $this;
     }
 
-    public function setIp($ip)
-    {
-        $this->ip = $ip;
-        return $this;
-    }
-
     public function getUserAgent()
     {
         return $this->userAgent;
@@ -277,6 +300,18 @@ class TopUpRequest
 
     public function getIp()
     {
-        return $this->ip;
+        $ip_methods = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+        foreach ($ip_methods as $key) {
+            if (array_key_exists($key, $_SERVER) === true) {
+                foreach (explode(',', $_SERVER[$key]) as $ip) {
+                    $ip = trim($ip); //just to be safe
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip;
+                    }
+                }
+            }
+        }
+
+        return request()->ip();
     }
 }

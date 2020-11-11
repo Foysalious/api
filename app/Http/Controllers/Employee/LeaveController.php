@@ -168,16 +168,11 @@ class LeaveController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $leave_types = $leave_types_repo->getAllLeaveTypesByBusinessMember($business_member);
-        $all_leave_type = [];
+
         foreach ($leave_types as $leave_type) {
-            $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type['id']);
-            array_push($all_leave_type, [
-                "id" => $leave_type['id'],
-                "title" => $leave_type['title'],
-                "total_days" => $leave_type['total_days'],
-                "is_half_day_enable" => $leave_type['is_half_day_enable'],
-                "available_days" => $leave_type['total_days'] - $leaves_taken,
-            ]);
+            /** @var LeaveType $leaves_taken */
+            $leaves_taken = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
+            $leave_type->available_days = $leave_type->total_days - $leaves_taken;
         }
 
         $half_day_configuration = null;
@@ -189,7 +184,7 @@ class LeaveController extends Controller
             }
         }
 
-        return api_response($request, null, 200, ['leave_types' => $all_leave_type, 'half_day_configuration' => $half_day_configuration]);
+        return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
     }
 
     /**

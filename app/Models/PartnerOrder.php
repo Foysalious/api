@@ -375,6 +375,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         ]);
     }
 
+    public function scopeNew($query)
+    {
+        $query->where('cancelled_at', '<>', null)->orWhere('closed_and_paid_at', '<>', null);
+    }
+
     public function scopeNotBadDebt($q)
     {
         return $q->where('payment_method', '<>', 'bad-debt');
