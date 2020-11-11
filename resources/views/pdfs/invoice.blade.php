@@ -277,7 +277,6 @@
     </div>
     <div id="company">
         <h2 class="name">Sheba.xyz</h2>
-        <div>DevoTech Technology Park Level 1, House 11, Road 113/A Gulshan 2, Dhaka.</div>
         <div>16516</div>
         <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>
     </div>
