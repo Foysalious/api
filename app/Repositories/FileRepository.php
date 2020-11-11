@@ -14,7 +14,7 @@ class FileRepository
     {
         $this->s3 = new S3Client([
             'version' => 'latest',
-            'region' => config('sheba.AWS_REGION'),
+            'region' => config('sheba.AWS_REGION','ap-south-1'),
             'credentials' => [
                 'key' => config('sheba.AWS_KEY'),
                 'secret' => config('sheba.AWS_SECRET'),
