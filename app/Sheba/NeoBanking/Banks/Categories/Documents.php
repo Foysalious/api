@@ -2,6 +2,7 @@
 
 use App\Repositories\FileRepository;
 use Sheba\NeoBanking\Banks\CategoryGetter;
+use Sheba\NeoBanking\Banks\CompletionCalculation;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\Statics\FormStatics;
 
@@ -12,8 +13,8 @@ class Documents extends BankFormCategory
     public function completion()
     {
         return [
-            'en' => 75,
-            'bn' => '৭৫'
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
@@ -67,4 +68,18 @@ class Documents extends BankFormCategory
         $fileRepository = app(FileRepository::class);
         $fileRepository->deleteFileFromCDN($filename);
     }
+
+    public function percentageCalculation()
+    {
+        if (!isset($this->data)) {
+            $formItems = FormStatics::documents();
+            $this->bank->loadInfo();
+            $this->setBankAccountData($this->bank->getBankInfo());
+            $this->getFormData($formItems);
+        }
+        $this->percentage = (new CompletionCalculation())->get($this->data);
+        $this->percentage = round($this->percentage);
+        return $this->percentage;
+    }
+
 }
