@@ -10,6 +10,7 @@ use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,7 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use Sheba\Business\Leave\Breakdown\LeaveBreakdown;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
@@ -185,6 +187,26 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
+    }
+
+    public function getLeaveDates(Request $request, LeaveRepoInterface $leave_repo, LeaveBreakdown $leave_breakdown)
+    {
+        /**@var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        $leaves = $leave_repo->builder()->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration')->where('business_member_id', $business_member->id)->where('start_date', '>=', Carbon::now()->toDateString())->get();
+
+        list($leaves, $leaves_date_with_half_and_full_days) = $leave_breakdown->formatLeaveAsDateArray($leaves);
+
+        $full_day_leaves = [];
+        $half_day_leaves = [];
+        foreach ($leaves_date_with_half_and_full_days as $date => $leaves_date_with_half_and_full_day) {
+            !$leaves_date_with_half_and_full_day['is_half_day_leave'] ? $full_day_leaves[] = $leaves_date_with_half_and_full_day['date'] :
+                array_push($half_day_leaves, [
+                    'date' => $leaves_date_with_half_and_full_day['date'],
+                    'which_half_day' => $leaves_date_with_half_and_full_day['which_half_day'],
+                ]);
+        }
+        return api_response($request, null, 200, ['full_day_leaves' => $full_day_leaves, 'half_day_leaves' => $half_day_leaves]);
     }
 
     /**
