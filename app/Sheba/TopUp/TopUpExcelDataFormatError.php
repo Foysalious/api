@@ -35,12 +35,6 @@ class TopUpExcelDataFormatError
         return $this;
     }
 
-    public function setTotalRow($total_row)
-    {
-        $this->totalRow = $total_row;
-        return $this;
-    }
-    
     private function getExcel()
     {
         if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET)->load($this->file);
@@ -57,12 +51,11 @@ class TopUpExcelDataFormatError
 
     public function takeCompletedAction()
     {
-        if ($this->row == $this->totalRow + 1) {
-            $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
-            $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
-            $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
-            unlink($this->file);
-            return $file_path;
-        }
+        $name = strtolower(class_basename($this->agent)) . '_' . dechex($this->agent->id);
+        $file_name = $this->uniqueFileName($this->file, $name, $this->getExcel()->ext);
+        $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
+        unlink($this->file);
+
+        return $file_path;
     }
 }
