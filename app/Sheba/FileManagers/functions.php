@@ -295,6 +295,23 @@ if (!function_exists('getPartnerLogoFolder')) {
     }
 }
 
+if (!function_exists('getPartnerChequeBookImageFolder')) {
+
+    /**
+     * Get Partner Logo Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getPartnerChequeBookImageFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'images/partners/cheque_receipt/';
+    }
+}
+
 if (!function_exists('getEmiBankIconsFolder')) {
 
     /**
@@ -876,6 +893,57 @@ if (!function_exists('getBulkTopUpFolder')) {
     }
 }
 
+if (!function_exists('getLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'Leave_adjustment/';
+    }
+}
+
+if (!function_exists('getBulkLeaveAdjustmentFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkLeaveAdjustmentFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_Leave_adjustment/';
+    }
+}
+
+if (!function_exists('getBulkVendorStoreFolder')) {
+
+    /**
+     * Get Profile's Avatar Folder.
+     *
+     * @param bool $with_base_url
+     * @return string
+     */
+    function getBulkVendorStoreFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'bulk_vendors_store/';
+    }
+}
+
 if (!function_exists('getPosCategoryDefaultThumb')) {
 
     /**
@@ -1046,7 +1114,7 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
 }
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
     {
         $url = '';
         if ($with_base_url)

@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Sheba\Dal\LoanClaimRequest\Model as LoanClaimModel;
 use Sheba\Dal\LoanClaimRequest\EloquentImplementation as LoanClaimRepo;
 use Sheba\Dal\LoanClaimRequest\Statuses;
+use Sheba\Loan\AffiliateWalletTransfer;
 use Sheba\Loan\Notifications;
 use Sheba\Loan\RobiTopUpWalletTransfer;
 use Sheba\Loan\Statics\GeneralStatics;
@@ -52,6 +53,7 @@ class LoanClaim
     /**
      * @param $from
      * @param $to
+     * @param $user
      * @return bool
      * @throws \Exception
      */
@@ -67,10 +69,13 @@ class LoanClaim
                 $this->setDefaulterDate($claim);
                 $claim_amount = $claim->amount;
                 $affiliate = $claim->resource->profile->affiliate;
-                if (isset($affiliate) && $claim_amount > 0)
-                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
+                if (isset($affiliate) && $claim_amount > 0) {
+//                    (new RobiTopUpWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->setType("credit")->process();
+                    (new AffiliateWalletTransfer())->setAffiliate($affiliate)->setLoanId($this->loanId)->setAmount($claim_amount)->process();
+                }
                 $this->deductClaimApprovalFee();
                 $this->checkAndDeductAnnualFee($claim);
+                $this->calculateAndDeductShebaInterest($claim->amount);
 
             }
             $this->sendNotificationToBank($to,$claim->amount);
@@ -92,12 +97,12 @@ class LoanClaim
         $type = null;
         $partner_bank_loan = PartnerBankLoan::find($loan_id);
         if ($to == Statuses::APPROVED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', অভিনন্দন! আপনার ' . $claim_amount . ' টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', অভিনন্দন! আপনার ' . $claim_amount . ' টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে। আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Claim Approved';
         }
 
         if ($to == Statuses::DECLINED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type = 'Claim Declined';
         }
 
@@ -117,12 +122,12 @@ class LoanClaim
 
         if ($to == Statuses::APPROVED) {
             $title      = "অভিনন্দন! আপনার $claim_amount টাকার ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়েছে।";
-            $body       = "প্রিয় " . $partner_bank_loan->partner->getContactPerson() . ", আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে রবি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
+            $body       = "প্রিয় " . $partner_bank_loan->partner->getContactPerson() . ", আপনি এই টাকা দিয়ে বন্ধু অ্যাপ-এর মাধ্যমে সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ ব্যবসা পরিচালনা করতে বন্ধু অ্যাপ ওপেন করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।";
             $event_type = "LoanClaimApproved";
         }
         if ($to == Statuses::DECLINED) {
-            $title      = "দুঃখিত! আপনার রবি লোন ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
-            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার রবি লোন ক্লেইম রিকুয়েস্টটি  অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $title      = "দুঃখিত! আপনার সেবা টপ-আপ ফ্যাসিলিটি ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি।";
+            $body       = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি  ক্লেইম রিকুয়েস্টটি অনুমোদিত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $event_type = "LoanClaimRejected";
         }
         $notification_data = [
@@ -159,6 +164,15 @@ class LoanClaim
     }
 
     /**
+     * @param $claim_amount
+     */
+    private function calculateAndDeductShebaInterest($claim_amount)
+    {
+        $amount = round(($claim_amount * (GeneralStatics::getMicroLoanShebaInterest() / 100)) * GeneralStatics::getRepaymentDefaultDuration(),0,PHP_ROUND_HALF_DOWN);
+        (new Repayment())->setLoan($this->loanId)->setClaim($this->claimId)->setAmount($amount)->storeCreditShebaInterestFee();
+    }
+
+    /**
      * @param $claim
      */
     private function deductClaimApprovalFee()
@@ -176,9 +190,9 @@ class LoanClaim
     {
 
         $log = [
-            'approved' => '৳' . convertNumbersToBangla($amount,true,0) . ' লোন দাবি গৃহীত হয়েছে',
-            'declined' => '৳' . convertNumbersToBangla($amount,true, 0) . ' লোন দাবি বাতিল করা হয়েছে',
-            'pending' => '৳' . convertNumbersToBangla($amount, true, 0) . ' লোন দাবি করা হয়েছে'
+            'approved' => '৳' . convertNumbersToBangla($amount,true,0) . ' টাকা দাবি গৃহীত হয়েছে',
+            'declined' => '৳' . convertNumbersToBangla($amount,true, 0) . ' টাকা দাবি বাতিল করা হয়েছে',
+            'pending' => '৳' . convertNumbersToBangla($amount, true, 0) . ' টাকা দাবি করা হয়েছে'
         ];
 
         return $log[$to];

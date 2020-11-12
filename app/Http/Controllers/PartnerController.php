@@ -812,8 +812,8 @@ class PartnerController extends Controller
                 $locations->push([
                     'id'   => $location->id,
                     'name' => $location->name,
-                    'lat' => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
-                    'lng' => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
+                    'lat'  => $location->geo_informations ? json_decode($location->geo_informations)->lat : null,
+                    'lng'  => $location->geo_informations ? json_decode($location->geo_informations)->lng : null,
                 ]);
             });
             if ($locations->count() == 0)
@@ -1351,6 +1351,7 @@ class PartnerController extends Controller
                     'category' => 'Pos Category'
                 ]);
             });
+            $served_customers = $served_customers->unique('mobile')->values();
             return api_response($request, $served_customers, 200, ['customers' => $served_customers]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -1386,12 +1387,6 @@ class PartnerController extends Controller
             return api_response($request, null, 200, ['msg' => 'Vat Registration Number Update Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context([
-                'request' => $request->all(),
-                'message' => $message
-            ]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -1431,6 +1426,20 @@ class PartnerController extends Controller
                 array_push($resource_types, $unit);
             }
             return api_response($request, null, 200, ['resource_types' => $resource_types]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBusinessTypes(Request $request)
+    {
+        try {
+            return api_response($request, null, 200, ['partner_business_types' => constants('PARTNER_BUSINESS_TYPE')]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

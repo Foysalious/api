@@ -5,7 +5,7 @@ class ResourceAppUsage extends Parameter
 {
     protected function getWeight()
     {
-        return 20;
+        return config('auto_sp.weights.quality.spro_app_usage');
     }
 
     protected function getValueForPartner()

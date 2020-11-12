@@ -1,6 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Jobs\Business\SendTenderBillInvoiceEmailToBusiness;
 use App\Models\Bid;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\App;
@@ -91,6 +94,7 @@ class ProcurementPaymentRequestController extends Controller
      * @param Request $request
      * @param BillInvoiceDataGenerator $data_generator
      * @return mixed
+     * @throws Exception
      */
     public function downloadPdf($business, $procurement, $bid, $payment_request, Request $request, BillInvoiceDataGenerator $data_generator)
     {
@@ -103,7 +107,8 @@ class ProcurementPaymentRequestController extends Controller
             ->setPaymentRequest($payment_request)
             ->setBid($bid)
             ->get();
-        #return view('pdfs.procurement_invoice', compact('procurement_info'));
+
+        # return view('pdfs.procurement_invoice', compact('procurement_info'));
         return App::make('dompdf.wrapper')->loadView('pdfs.procurement_invoice', compact('procurement_info'))->download('invoice.pdf');
     }
 }

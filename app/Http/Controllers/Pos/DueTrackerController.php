@@ -26,26 +26,29 @@ class DueTrackerController extends Controller
      */
     public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
             if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save();
+                $pdf_link = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
                 return api_response($request, null, 200, ['message' => 'PDF download successful','pdf_link' => $pdf_link]);
             }
 
             if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save();
+                $data['pdf_link'] = (new PdfHandler())->setName("due tracker")->setData($data)->setViewFile('due_tracker_due_list')->save(true);
             }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            dd($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -59,27 +62,28 @@ class DueTrackerController extends Controller
      */
     public function dueListByProfile(Request $request, DueTrackerRepository $dueTrackerRepository, $partner, $customer_id)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
         try {
             $request->merge(['customer_id' => $customer_id]);
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueListByProfile($request->partner, $request);
             if (($request->has('download_pdf')) && ($request->download_pdf == 1)) {
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $pdf_link = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save();
+                $pdf_link = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
                 return api_response($request, null, 200, ['message' => 'PDF download successful','link'  => $pdf_link]);
             }
             if (($request->has('share_pdf')) && ($request->share_pdf == 1)){
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
                 $data['end_date'] = $request->has("end_date") ? $request->end_date : null;
-                $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save();
+                $data['pdf_link'] = (new PdfHandler())->setName("due tracker by customer")->setData($data)->setViewFile('due_tracker_due_list_by_customer')->save(true);
             }
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (InvalidPartnerPosCustomer $e) {
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -110,7 +114,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -142,7 +146,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -170,7 +174,7 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -190,7 +194,7 @@ class DueTrackerController extends Controller
             $response = $dueTrackerRepository->generateDueReminders($dueList, $request->partner);
             return api_response($request, null, 200, ['data' => $response]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -213,7 +217,7 @@ class DueTrackerController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
 
@@ -232,10 +236,10 @@ class DueTrackerController extends Controller
             $dueTrackerRepository->setPartner($request->partner)->removeEntry($entry_id);
             return api_response($request, true, 200);
         } catch (ExpenseTrackingServerError $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -265,7 +269,7 @@ class DueTrackerController extends Controller
             $message = "Insufficient Balance";
             return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -282,7 +286,7 @@ class DueTrackerController extends Controller
             $faqs = $dueTrackerRepository->getFaqs();
             return api_response($request, $faqs, 200, ['faqs' => $faqs]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -307,7 +311,31 @@ class DueTrackerController extends Controller
             $message = "Unauthorized Request";
             return api_response($request, $message, 401, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function removePosOrderPayment(Request $request, DueTrackerRepository $dueTrackerRepository, $pos_order_id) {
+        try {
+            $this->validate($request, [
+                'api_key' => 'required'
+            ]);
+            if($request->api_key != config('expense_tracker.api_key'))
+                throw new UnauthorizedRequestFromExpenseTrackerException();
+            $result = $dueTrackerRepository->removePosOrderPayment($pos_order_id, $request->amount);
+            $message = null;
+            if($result) $message = 'Pos Order Payment remove successfully';
+            else $message = 'There is no Pos Order Payment';
+            return api_response($request, true, 200, ['message' => $message]);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (UnauthorizedRequestFromExpenseTrackerException $e) {
+            $message = "Unauthorized Request";
+            return api_response($request, $message, 401, ['message' => $message]);
+        } catch (\Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }

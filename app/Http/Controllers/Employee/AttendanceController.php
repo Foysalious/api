@@ -148,5 +148,4 @@ class AttendanceController extends Controller
         if (!isset($business_member['business_id'])) return null;
         return Business::findOrFail($business_member['business_id']);
     }
-
 }

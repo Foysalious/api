@@ -237,7 +237,11 @@ class Loan
             'banner'            => GeneralStatics::banner(),
             'robi_retailer'     => $robi_retailer,
             'exception_message' => $robi_retailer ? "" : GeneralStatics::NOT_ROBI_RETAILER_MESSAGE,
-            'is_bkash_agent'    => $this->isBkashAgent()
+            'is_bkash_agent'    => $this->isBkashAgent(),
+            'application_fee'   => [
+                'term_loan' => GeneralStatics::getFee(LoanTypes::TERM),
+                'micro_loan' => GeneralStatics::getFee(LoanTypes::MICRO)
+            ]
         ];
         $data          = array_merge($data, GeneralStatics::webViews(), ['running_loan' => $this->getRunningLoan()], ['loan_list' => $this->getApplyLoanList()], ['details' => GeneralStatics::homepage()]);
         return $data;
@@ -404,7 +408,7 @@ class Loan
             'resource_id' => $request->manager_resource->id,
             'amount'      => $request->amount,
             'status'      => Statuses::PENDING,
-            'log'         => '৳' . convertNumbersToBangla($request->amount, true, 0) . ' লোন দাবি করা হয়েছে',
+            'log'         => '৳' . convertNumbersToBangla($request->amount, true, 0) . ' টাকা দাবি করা হয়েছে',
         ];
 
         return (new LoanClaim())->createRequest($data);

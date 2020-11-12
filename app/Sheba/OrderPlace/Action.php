@@ -53,8 +53,8 @@ class Action
 
     public function isLateNightOrder()
     {
-        $start = Carbon::parse('2:00 AM');
-        $end = Carbon::parse('6:00 AM');
+        $start = Carbon::parse('12:00 AM');
+        $end = Carbon::parse('7:00 AM');
         return Carbon::now()->gte($start) && Carbon::now()->lte($end);
     }
 }

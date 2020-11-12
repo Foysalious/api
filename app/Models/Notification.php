@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Helpers\TimeFrame;
 
 class Notification extends Model
 {
@@ -46,5 +47,10 @@ class Notification extends Model
         elseif (stripos($type, 'businesstriprequest')) return 'businesstriprequest';
         elseif (stripos($type, 'leave')) return 'leave';
         elseif (stripos($type, 'approvalRequest')) return 'approval_request';
+    }
+
+    public function scopeDateBetween($query, $field, TimeFrame $time_frame)
+    {
+        $query->whereBetween($field, $time_frame->getArray());
     }
 }

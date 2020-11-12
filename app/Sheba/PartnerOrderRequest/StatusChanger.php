@@ -88,23 +88,32 @@ class StatusChanger
             $this->setError($this->jobStatusChanger->getErrorCode(), $this->jobStatusChanger->getErrorMessage());
             return;
         }
-        DB::transaction(function () use ($request, $partner_order, $job) {
-            $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
-            $partner_order->update(['partner_id' => $request->partner->id]);
+        try {
+            DB::transaction(function () use ($request, $partner_order, $job) {
+                $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::ACCEPTED]);
+                $partner_order->update(['partner_id' => $request->partner->id]);
 
-            $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
-            $job->update([
-                'commission_rate' => $commissions->getServiceCommission(),
-                'material_commission_rate' => $commissions->getMaterialCommission()
-            ]);
+                $commissions = (new CommissionCalculator())->setCategory($job->category)->setPartner($request->partner);
+                $job->update([
+                    'commission_rate' => $commissions->getServiceCommission(),
+                    'material_commission_rate' => $commissions->getMaterialCommission()
+                ]);
 
-            $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
-        });
+                $this->repo->updatePendingRequestsOfOrder($partner_order, ['status' => Statuses::MISSED]);
+            });
+        } catch (\Exception $e) {
+            $this->jobStatusChanger->unacceptJobAndUnAssignResource($request);
+        }
+
     }
 
     public function decline(Request $request)
     {
         $this->repo->update($this->partnerOrderRequest, ['status' => Statuses::DECLINED]);
+
+        $partner_order = $this->partnerOrderRequest->partnerOrder;
+        if ($partner_order->partner_id) return;
+
         if ($partner_ids = $this->orderRequestStore->setPartnerOrderId($this->partnerOrderRequest->partnerOrder->id)->get()) {
             foreach ($partner_ids as $partner_id) {
                 $order_request = $this->partnerOrderRequest->partnerOrder->partnerOrderRequests->where('partner_id', $partner_id)->first();

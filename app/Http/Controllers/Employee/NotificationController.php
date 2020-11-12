@@ -1,8 +1,12 @@
 <?php namespace App\Http\Controllers\Employee;
 
 use App\Http\Controllers\Controller;
+use App\Models\Member;
+use App\Models\Notification;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Notification\SeenBy;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
@@ -13,17 +17,28 @@ class NotificationController extends Controller
     /**
      * @param Request $request
      * @param MemberRepositoryInterface $member_repository
+     * @param TimeFrame $time_frame
      * @return JsonResponse
      */
-    public function index(Request $request, MemberRepositoryInterface $member_repository)
+    public function index(Request $request, MemberRepositoryInterface $member_repository, TimeFrame $time_frame)
     {
         $this->validate($request, ['limit' => 'numeric', 'offset' => 'numeric']);
         $auth_info = $request->auth_info;
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
+
         list($offset, $limit) = calculatePagination($request);
+        /** @var Member $member */
         $member = $member_repository->find($business_member['member_id']);
-        $notifications = $member->notifications()->orderBy('id', 'desc')->skip($offset)->limit($limit)->get();
+        $time_frame = $time_frame->forTwoDates(Carbon::now()->subDays(30)->toDateString(), Carbon::now()->toDateString());
+
+        $notifications = $member->notifications()
+            ->sortLatest()
+            ->dateBetween('created_at', $time_frame)
+            ->skip($offset)
+            ->limit($limit)
+            ->get();
+
         $final = [];
         $notifications->each(function ($notification) use (&$final) {
             array_push($final, [
@@ -35,8 +50,29 @@ class NotificationController extends Controller
                 'created_at' => $notification->created_at->toDateTimeString()
             ]);
         });
+
         if (count($final) == 0) return api_response($request, null, 404);
         return api_response($request, null, 200, ['notifications' => $final]);
+    }
+
+    public function lastNotificationCount(Request $request, MemberRepositoryInterface $member_repository)
+    {
+        $this->validate($request, [
+            'time' => 'required',
+        ]);
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!$business_member) return api_response($request, null, 401);
+        $member = $member_repository->find($business_member['member_id']);
+
+        $notifications_count = $member->notifications()->whereIn('event_type', [
+            'Sheba\Dal\Announcement\Announcement',
+            'Sheba\Dal\ApprovalRequest\Model',
+            'Sheba\Dal\Leave\Model',
+            'Sheba\Dal\Support\Model'
+        ])->where('created_at', '>=', $request->time)->where('is_seen', 0)->count();
+
+        return api_response($request, null, 200, ['notifications' => $notifications_count]);
     }
 
     public function seen(Request $request, SeenBy $seenBy, MemberRepositoryInterface $member_repository)
@@ -83,7 +119,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New announcement arrived',
@@ -95,7 +130,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('attendance')) {
             $pushNotificationHandler->send([
                 "title" => 'Attendance Alert',
@@ -106,7 +140,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('leave_request_id')) {
             $pushNotificationHandler->send([
                 "title" => 'New Leave Request Arrived',

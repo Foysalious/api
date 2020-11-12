@@ -13,8 +13,8 @@ class GeneralStatics
     const RUNNING_MICRO_LOAN_ICON   = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_robi_topup.png";
     const RUNNING_TERM_LOAN_ICON    = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/running_term_loan.png";
     const TERM_TITLE_BD             = "টার্ম লোন";
-    const MICRO_TITLE_BD            = "ডানা ক্লাসিক লোন";
-    const NOT_ROBI_RETAILER_MESSAGE = "প্রিয় গ্রাহক, আপনি রবি রিটেইলার নন। ডানা ক্লাসিক লোনের জন্য অ্যাপ্লিকেশন করতে আপনাকে অবশ্যই রবি রিটেইলার হতে হবে।";
+    const MICRO_TITLE_BD            = "টপ-আপ ফ্যাসিলিটি";
+    const NOT_ROBI_RETAILER_MESSAGE = "প্রিয় গ্রাহক, আপনি সেবা টপ-আপ ফ্যাসিলিটির আওতাভুক্ত নন। সেবা টপ-আপ ফ্যাসিলিটির জন্য অ্যাপ্লিকেশন করতে আপনাকে অবশ্যই আয়তাভুক্ত রিটেইলার হতে হবে।";
 
     public static function validator($version)
     {
@@ -49,7 +49,7 @@ class GeneralStatics
     public static function microLoanData()
     {
         return [
-            'title'     => 'Dana Classic Loan',
+            'title'     => 'Sheba TopUp Facility',
             'title_bn'  => self::MICRO_TITLE_BD,
             'loan_type' => LoanTypes::MICRO,
             'loan_icon' => "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner/loans/robi_topup.png"
@@ -117,6 +117,16 @@ class GeneralStatics
         return config('loan.micro_loan_claim_transaction_fee');
     }
 
+    public static function getMicroLoanShebaInterest()
+    {
+        return config('loan.micro_loan_sheba_interest');
+    }
+
+    public static function getRepaymentDefaultDuration()
+    {
+        return config('loan.repayment_defaulter_default_duration');
+    }
+
     public static function getMinimumDay($type)
     {
         $day = config('loan.minimum_day');
@@ -126,13 +136,13 @@ class GeneralStatics
     public static function getMaximumAmount($type)
     {
         $amount = config('loan.maximum_amount');
-        return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
+        return doubleval($type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM]);
     }
 
     public static function getMinimumAmount($type)
     {
         $amount = config('loan.minimum_amount');
-        return $type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM];
+        return doubleval($type == LoanTypes::MICRO ? $amount[LoanTypes::MICRO] : $amount[LoanTypes::TERM]);
     }
 
     public static function getMinimumRepaymentAmount()
