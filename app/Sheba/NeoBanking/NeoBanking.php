@@ -20,6 +20,7 @@ class NeoBanking
     private $post_data;
     private $gigatechKycData;
     private $uploadFolder;
+    private $mobile;
 
     public function __construct()
     {
@@ -58,6 +59,12 @@ class NeoBanking
     public function setResource($resource)
     {
         $this->resource = $resource;
+        return $this;
+    }
+
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
         return $this;
     }
 
@@ -162,7 +169,7 @@ class NeoBanking
      */
     public function getCompletion()
     {
-        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->completion();
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->setMobile($this->mobile)->get()->completion();
 
     }
 

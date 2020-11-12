@@ -795,7 +795,7 @@ return [
             [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
-                'title'         => 'ট্রেড লাইসেন্স',
+                'title'         => 'ট্রেড লাইসেন্স *',
                 'hint'          => 'ট্রেড লাইসেন্স',
                 'name'          => 'trade_licence_document',
                 'id'            => 'trade_licence_document',
@@ -825,7 +825,7 @@ return [
             [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
-                'title'         => 'ই-টিন',
+                'title'         => 'ই-টিন *',
                 'hint'          => 'ই-টিন',
                 'name'          => 'e_tin_document',
                 'id'            => 'e_tin_document',
@@ -855,7 +855,7 @@ return [
             [
                 'field_type'    => 'imageDocument',
                 "input_type"    => "image",
-                'title'         => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
+                'title'         => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল *',
                 'hint'          => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল',
                 'name'          => 'bill_document',
                 'id'            => 'bill_document',

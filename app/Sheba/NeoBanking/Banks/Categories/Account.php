@@ -5,6 +5,7 @@ namespace Sheba\NeoBanking\Banks\Categories;
 
 
 use Sheba\NeoBanking\Banks\CategoryGetter;
+use Sheba\NeoBanking\Banks\CompletionCalculation;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\Statics\FormStatics;
 
@@ -15,8 +16,8 @@ class Account extends BankFormCategory
     public function completion()
     {
         return [
-            'en' => 75,
-            'bn' => '৭৫'
+            'en' => $this->percentageCalculation(),
+            'bn' => $this->getBengaliPercentage()
         ];
     }
 
@@ -33,11 +34,25 @@ class Account extends BankFormCategory
 
     public function getLastUpdated()
     {
+        $this->setLastUpdated();
         return $this->last_updated;
     }
 
     public function getDummy()
     {
         return [];
+    }
+
+    public function percentageCalculation()
+    {
+        if (!isset($this->data)) {
+            $formItems = FormStatics::account();
+            $this->bank->loadInfo();
+            $this->setBankAccountData($this->bank->getBankInfo());
+            $this->getFormData($formItems);
+        }
+        $this->percentage = (new CompletionCalculation())->get($this->data);
+        $this->percentage = round($this->percentage);
+        return $this->percentage;
     }
 }

@@ -21,9 +21,10 @@ abstract class BankFormCategory
     /** @var Bank $bank */
     protected $bank;
     protected $bankInfoRepo;
-    protected $last_updated = 'today';
+    protected $last_updated;
     /** @var PartnerNeoBankingInfo */
     protected $bankAccountData;
+    protected $percentage;
 
     public function __construct()
     {
@@ -57,6 +58,13 @@ abstract class BankFormCategory
         return $this;
     }
 
+    public function setLastUpdated()
+    {
+        $this->bank->loadInfo();
+        $this->setBankAccountData($this->bank->getBankInfo());
+        $category_data = $this->bankAccountData->getByCode($this->code);
+        $this->last_updated = $category_data ? $category_data->updated_at : '';
+    }
 
     /**
      * @param mixed $title
@@ -126,5 +134,10 @@ abstract class BankFormCategory
     {
         $this->bankAccountData = $bankAccountData;
         return $this;
+    }
+
+    public function getBengaliPercentage()
+    {
+        return convertNumbersToBangla($this->percentage, false);
     }
 }

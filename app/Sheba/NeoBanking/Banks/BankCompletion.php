@@ -14,6 +14,7 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     protected $bank_detail_link;
     protected $bank_detail_title;
     protected $message      = '';
+    protected $gigatech_status_info;
     protected $message_type = 'info';
 
     /**
@@ -23,6 +24,12 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
     public function setCompletion($completion)
     {
         $this->completion = $completion;
+        return $this;
+    }
+
+    public function setGigaTechStatusInfo($gigatech_status_info)
+    {
+        $this->gigatech_status_info = $gigatech_status_info;
         return $this;
     }
 

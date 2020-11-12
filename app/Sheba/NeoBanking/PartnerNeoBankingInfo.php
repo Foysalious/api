@@ -49,7 +49,11 @@ class PartnerNeoBankingInfo
         return [];
     }
 
-    public function nid_selfie() { }
+    public function nid_selfie()
+    {
+        if (!empty($this->information_for_bank_account) && isset($this->information_for_bank_account['nid_selfie'])) return $this->information_for_bank_account['nid_selfie'];
+        return [];
+    }
 
     public function nominee()
     {
