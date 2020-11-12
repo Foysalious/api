@@ -14,6 +14,30 @@ class LeaveBreakdown
             $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
             foreach ($leave_period as $date) {
                 array_push($business_member_leaves_date, $date->toDateString());
+                $business_member_leaves_date_with_half_and_full_day[] = [
+                    'date' => $date->toDateString(),
+                    'is_half_day_leave' => $leave->is_half_day,
+                    'which_half_day' => $leave->half_day_configuration,
+                ];
+            }
+        });
+        
+        return [array_unique($business_member_leaves_date), $business_member_leaves_date_with_half_and_full_day];
+    }
+
+
+    /**
+     * @param $leaves
+     * @return array
+     */
+    private function formatLeaveAsDateArrayOld($leaves)
+    {
+        $business_member_leaves_date = [];
+        $business_member_leaves_date_with_half_and_full_day = [];
+        $leaves->each(function ($leave) use (&$business_member_leaves_date, &$business_member_leaves_date_with_half_and_full_day) {
+            $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
+            foreach ($leave_period as $date) {
+                array_push($business_member_leaves_date, $date->toDateString());
                 $business_member_leaves_date_with_half_and_full_day[$date->toDateString()] = [
                     'is_half_day_leave' => $leave->is_half_day,
                     'which_half_day' => $leave->half_day_configuration,
@@ -23,7 +47,6 @@ class LeaveBreakdown
 
         return [array_unique($business_member_leaves_date), $business_member_leaves_date_with_half_and_full_day];
     }
-
     /**
      * @param Carbon $date
      * @param array $leaves_date_with_half_and_full_day
