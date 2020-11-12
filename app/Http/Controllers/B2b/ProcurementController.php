@@ -60,6 +60,7 @@ use Sheba\Repositories\Interfaces\BidRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
+use Sheba\Resource\Creator\ResourceCreateRequest;
 use Sheba\Resource\ResourceCreator;
 use Sheba\Sms\Sms;
 use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator;
@@ -89,6 +90,8 @@ class ProcurementController extends Controller
     private $procurementOrder;
     /** @var RequestHandler $procurementRequestHandler */
     private $procurementRequestHandler;
+    /** @var ResourceCreateRequest $resourceCreateRequest */
+    private $resourceCreateRequest;
 
     /**
      * ProcurementController constructor.
@@ -101,6 +104,7 @@ class ProcurementController extends Controller
      * @param ProcurementFilterRequest $procurement_filter_request
      * @param ProcurementOrder $procurement_order
      * @param RequestHandler $procurement_request_handler
+     * @param ResourceCreateRequest $resource_create_request
      */
     public function __construct(ProcurementRepositoryInterface $procurement_repository,
                                 ProfileRepository $profile_repo,
@@ -109,7 +113,8 @@ class ProcurementController extends Controller
                                 PartnerCreateRequest $partner_create_request,
                                 ProcurementFilterRequest $procurement_filter_request,
                                 ProcurementOrder $procurement_order,
-                                RequestHandler $procurement_request_handler)
+                                RequestHandler $procurement_request_handler,
+                                ResourceCreateRequest $resource_create_request)
     {
         $this->procurementRepository = $procurement_repository;
         $this->profileRepository = $profile_repo;
@@ -119,6 +124,7 @@ class ProcurementController extends Controller
         $this->procurementFilterRequest = $procurement_filter_request;
         $this->procurementOrder = $procurement_order;
         $this->procurementRequestHandler = $procurement_request_handler;
+        $this->resourceCreateRequest = $resource_create_request;
     }
 
     public function create(Request $request)
@@ -470,8 +476,11 @@ class ProcurementController extends Controller
      */
     public function show($business, $procurement, Request $request)
     {
+        /** @var Procurement $procurement */
         $procurement = $this->procurementRepository->find($procurement);
         if (!$procurement) return api_response($request, null, 404, ["message" => "Not found."]);
+        if ($procurement->owner instanceof Business && ($procurement->owner->id != $request->business->id))
+            return api_response($request, null, 404, ["message" => "Not found."]);
 
         $share = $this->getShareInformation($procurement);
         $number_of_participants = config('b2b.NUMBER_OF_PARTICIPANTS');
@@ -975,17 +984,14 @@ class ProcurementController extends Controller
      * @param $tender
      * @param Request $request
      * @param BidCreator $creator
-     * @param BidUpdater $updater
      * @param BidRepositoryInterface $bid_repository
-     * @param ProfileRepositoryInterface $profile_repository
      * @param ProcurementInvitationRepositoryInterface $procurement_invitation_repo
      * @return JsonResponse
      * @throws Exception
      */
     public function tenderProposalStore($tender, Request $request,
-                                        BidCreator $creator, BidUpdater $updater,
+                                        BidCreator $creator,
                                         BidRepositoryInterface $bid_repository,
-                                        ProfileRepositoryInterface $profile_repository,
                                         ProcurementInvitationRepositoryInterface $procurement_invitation_repo)
     {
         $this->validate($request, [
@@ -1050,7 +1056,7 @@ class ProcurementController extends Controller
         $profile = $this->profileRepository->checkExistingProfile($request->company_phone, $request->email);
 
         if (!$profile || !$profile->resource) {
-            $this->resourceCreator->setData($this->formatProfileSpecificData($request));
+            $this->resourceCreator->setResourceCreateRequest($this->resourceCreateRequest)->setData($this->formatProfileSpecificData($request));
             $this->resource = $this->resourceCreator->create();
         } else {
             $this->resource = $profile->resource;

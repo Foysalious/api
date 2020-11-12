@@ -111,6 +111,8 @@ class ApproximatePriceCalculator extends Discount
     {
         if ($this->subscription->is_weekly)
             return 'weekly';
+        else if ($this->subscription->is_yearly)
+            return 'yearly';
         else
             return 'monthly';
     }
@@ -119,6 +121,8 @@ class ApproximatePriceCalculator extends Discount
     {
         if ($subscription_type === 'weekly')
             return $this->subscription->min_weekly_qty;
+        else if ($subscription_type === 'yearly')
+            return $this->subscription->min_yearly_qty;
         else
             return $this->subscription->min_monthly_qty;
     }

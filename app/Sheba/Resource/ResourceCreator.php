@@ -23,6 +23,11 @@ class ResourceCreator
     /** @var ResourceCreateRequest */
     private $resourceCreateRequest;
 
+    /**
+     * ResourceCreator constructor.
+     * @param ProfileRepository $profile_repo
+     * @param ResourceRepository $resource_repo
+     */
     public function __construct(ProfileRepository $profile_repo, ResourceRepository $resource_repo)
     {
         $this->profiles = $profile_repo;
@@ -73,16 +78,21 @@ class ResourceCreator
     public function create()
     {
         $this->data['mobile'] = formatMobile($this->data['mobile']);
-        $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobile($this->data['alternate_contact']) : null;
         $this->data['dob'] = $this->resourceCreateRequest->getBirthDate();
+
         $this->format();
         $profile = $this->attachProfile();
+
+        $this->data['alternate_contact'] = $this->data['alternate_contact'] ? formatMobile($this->data['alternate_contact']) : null;
+        $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
+        $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
+
         return $this->resources->save([
             "spouse_name" => $this->data['spouse_name'],
             "is_trained" => $this->data['is_trained'],
             "profile_id" => $profile->id,
             "remember_token" => str_random(255),
-            "alternate_contact" => $this->data['alternate_contact'],
+            "alternate_contact" => $this->data['alternate_contact']
         ]);
     }
 
@@ -116,16 +126,15 @@ class ResourceCreator
      */
     private function saveNIdImageFront()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidFrontImage(), $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidFrontImage(), $this->data['name']."_nid_front");
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
 
     private function saveNIdImageBack()
     {
-        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidBackImage(), $this->data['name']);
+        list($nid, $nid_filename) = $this->makeBanner($this->resourceCreateRequest->getNidBackImage(), $this->data['name']."_nid_back");
         return $this->saveImageToCDN($nid, getResourceNIDFolder(), $nid_filename);
     }
-
 
     /**
      * @return Profile
@@ -133,9 +142,12 @@ class ResourceCreator
     private function attachProfile()
     {
         $profile = $this->profiles->checkExistingProfile($this->data['mobile'], isset($this->data['email']) ? $this->data['email'] : null);
+
         if (!$profile) $profile = $this->profiles->store($this->data);
         else $this->profiles->update($profile, $this->data);
+
         $this->data['profile_id'] = $profile->id;
+
         return $profile;
     }
 
@@ -143,8 +155,6 @@ class ResourceCreator
     {
         $this->formatProfilePicture();
         $this->formatNidInformation();
-        $this->data['spouse_name'] = isset($this->data['spouse_name']) ? $this->data['spouse_name'] : null;
-        $this->data['is_trained'] = isset($this->data['is_trained']) ? $this->data['is_trained'] : 0;
     }
 
     private function hasFile($filename)

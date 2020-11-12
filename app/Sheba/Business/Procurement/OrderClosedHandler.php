@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Procurement;
 
-
 use App\Models\Bid;
 use App\Models\Partner;
 use App\Models\Procurement;
@@ -19,12 +18,16 @@ class OrderClosedHandler
     /** @var ProcurementRepositoryInterface */
     private $procurementRepository;
 
+    /**
+     * OrderClosedHandler constructor.
+     * @param WalletTransactionHandler $wallet_transaction_handler
+     * @param ProcurementRepositoryInterface $procurement_repository
+     */
     public function __construct(WalletTransactionHandler $wallet_transaction_handler, ProcurementRepositoryInterface $procurement_repository)
     {
         $this->walletTransactionHandler = $wallet_transaction_handler;
         $this->procurementRepository = $procurement_repository;
     }
-
 
     public function setProcurement(Procurement $procurement)
     {
@@ -54,5 +57,4 @@ class OrderClosedHandler
         if ($bid->commission_percentage) return $bid->commission_percentage;
         return $bid->bidder->commission;
     }
-
 }

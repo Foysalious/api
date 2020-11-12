@@ -40,6 +40,24 @@ class HolidayList
         return $business_holidays;
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     */
+    public function getAllHolidayDates(Request $request)
+    {
+        $holiday_list = [];
+        $business_holidays = $this->business_holidays_repo->getAllByBusiness($this->business);
+
+        foreach ($business_holidays as $holiday) {
+            for ($d = $holiday->start_date; $d->lte($holiday->end_date); $d->addDay()) {
+                $holiday_list[] = $d->format('Y-m-d');
+            }
+        }
+
+        return array_unique($holiday_list);
+    }
+
     private function searchWithHolidayName($business_holidays, Request $request)
     {
         return $business_holidays->filter(function ($business_holiday) use ($request){

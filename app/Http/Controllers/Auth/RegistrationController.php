@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers\Auth;
+<?php namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Controllers\FacebookAccountKit;
@@ -10,12 +8,14 @@ use App\Models\CustomerMobile;
 use App\Models\Profile;
 use App\Repositories\CustomerRepository;
 use App\Repositories\ProfileRepository;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use JWTAuth;
 use JWTFactory;
 use Session;
+use Throwable;
 
 class RegistrationController extends Controller
 {
@@ -57,7 +57,7 @@ class RegistrationController extends Controller
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e){
+        } catch (Throwable $e){
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -65,7 +65,7 @@ class RegistrationController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function registerWithMobile(Request $request)
     {
@@ -98,10 +98,9 @@ class RegistrationController extends Controller
         }
     }
 
-
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function registerWithEmail(Request $request)
     {
@@ -167,7 +166,7 @@ class RegistrationController extends Controller
                 }
             }
             return api_response($request, null, 409, ['msg' => 'Already registered!', 'message' => 'Already registered!']);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -183,5 +182,4 @@ class RegistrationController extends Controller
         ]);
         return $validator->fails() ? $validator->errors()->all()[0] : false;
     }
-
 }

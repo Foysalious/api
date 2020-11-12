@@ -17,7 +17,12 @@ class Creator
     private $member;
     private $title;
     private $total_days;
+    private $isHalfDayEnable;
 
+    /**
+     * Creator constructor.
+     * @param LeaveTypesRepoInterface $leave_type_repo
+     */
     public function __construct(LeaveTypesRepoInterface $leave_type_repo)
     {
         $this->leaveTypeRepository = $leave_type_repo;
@@ -63,13 +68,20 @@ class Creator
         return $this;
     }
 
+    public function setIsLeaveHalfDayEnable($is_half_day_enable)
+    {
+        $this->isHalfDayEnable = $is_half_day_enable;
+        return $this;
+    }
+
     public function create()
     {
         $this->setModifier($this->member);
         $data = [
             'business_id' => $this->business->id,
             'title' => $this->title,
-            'total_days' => $this->total_days
+            'total_days' => $this->total_days,
+            'is_half_day_enable' => $this->isHalfDayEnable
         ];
 
         return $this->leaveTypeRepository->create($this->withCreateModificationField($data));

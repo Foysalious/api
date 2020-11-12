@@ -241,12 +241,11 @@ class Updater
     private function getBusinessRole()
     {
         $business_role = $this->businessRoleRepository
-            ->whereLike('name', $this->basicRequest->getRole())
+            ->where(DB::raw('BINARY `name`'), $this->basicRequest->getRole())
             ->where('business_department_id', $this->basicRequest->getDepartment())
             ->first();
-
+        
         if ($business_role) return $business_role;
-
         return $this->businessRoleCreate();
     }
 
@@ -356,8 +355,8 @@ class Updater
             }
 
             $profile_data = [];
-            $profile_data['mobile'] = ($this->personalRequest->getPhone() == 'null')  ? null : $this->personalRequest->getPhone();
-            $profile_data['address'] = ($this->personalRequest->getAddress() == 'null') ? null: $this->personalRequest->getAddress();
+            $profile_data['mobile'] = ($this->personalRequest->getPhone() == 'null') ? null : $this->personalRequest->getPhone();
+            $profile_data['address'] = ($this->personalRequest->getAddress() == 'null') ? null : $this->personalRequest->getAddress();
             $profile_data['nationality'] = ($this->personalRequest->getNationality() == 'null') ? null : $this->personalRequest->getNationality();
             $profile_data['nid_no'] = ($this->personalRequest->getNidNumber() == 'null') ? null : $this->personalRequest->getNidNumber();
             $profile_data['nid_image_front'] = ($nid_front == 'null') ? null : $nid_image_front;

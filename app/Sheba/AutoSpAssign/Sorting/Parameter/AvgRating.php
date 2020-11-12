@@ -5,7 +5,7 @@ class AvgRating extends Parameter
 {
     protected function getWeight()
     {
-        return 10;
+        return config('auto_sp.weights.quality.avg_rating');
     }
 
     protected function getValueForPartner()
