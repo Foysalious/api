@@ -16,10 +16,10 @@ class NeoBankingRoute
                     $api->get('/category', 'NeoBanking\\NeoBankingController@getCategoryWiseDetails');
                     $api->post('/category', 'NeoBanking\\NeoBankingController@submitCategoryWistDetails');
                     $api->post('/category/document-upload', 'NeoBanking\\NeoBankingController@uploadCategoryWiseDocument');
-                    $api->post('/nid-verification', 'NeoBanking\\NeoBankingController@nidVerification');
-                    $api->get('/gigatech-liveliness-auth-token', 'NeoBanking\\NeoBankingController@gigatechLivelinessAuthToken');
-                    $api->get('/gigatech-kyc-status', 'NeoBanking\\NeoBankingController@getGigatechKycStatus');
-                    $api->post('/gigatech-kyc-submit', 'NeoBanking\\NeoBankingController@storeGigatechKyc');
+                    $api->post('/nid-verification', 'NeoBanking\\NeoBankingGigatechController@nidVerification');
+                    $api->get('/gigatech-liveliness-auth-token', 'NeoBanking\\NeoBankingGigatechController@gigatechLivelinessAuthToken');
+                    $api->get('/gigatech-kyc-status', 'NeoBanking\\NeoBankingGigatechController@getGigatechKycStatus');
+                    $api->post('/gigatech-kyc-submit', 'NeoBanking\\NeoBankingGigatechController@storeGigatechKyc');
                 });
             });
         });

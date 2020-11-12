@@ -11,7 +11,6 @@ use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 class NeoBanking
 {
-    use FileManager, CdnFileManager;
 
     /** @var NeoBank $bank */
     private $bank;
@@ -19,7 +18,6 @@ class NeoBanking
     private $resource;
     private $post_data;
     private $gigatechKycData;
-    private $uploadFolder;
     private $mobile;
 
     public function __construct()
@@ -68,79 +66,12 @@ class NeoBanking
         return $this;
     }
 
-    private function setUploadFolder()
-    {
-        $this->uploadFolder   = getNeoBankingFolder(). $this->partner->id . '/';
-        return $this;
-    }
-
-    public function uploadDocument($file, $key)
-    {
-        $this->setUploadFolder();
-        list($file, $filename) = $this->makeNeoBankingFile($file, $key);
-        $url = $this->saveFileToCDN($file, $this->uploadFolder, $filename);
-        $this->setPostData(json_encode([$key => $url]));
-        return $this;
-    }
-
-    public function getImageUrl($file, $key) {
-        $this->setUploadFolder();
-        list($file, $filename) = $this->makeNeoBankingFile($file, $key);
-        return $this->saveFileToCDN($file, $this->uploadFolder, $filename);
-    }
-
     /**
      * @return BankAccountInfoWithTransaction
      * @throws Exceptions\InvalidBankCode
      */
     public function accountDetails(): BankAccountInfoWithTransaction
     {
-//        return [
-//            'account_info' => [
-//                'account_name'               => 'AL Amin Rahman',
-//                'account_no'                 => '2441139',
-//                'balance'                    => '4000',
-//                'minimum_transaction_amount' => 1000,
-//                'transaction_error_msg'      => 'ট্রান্সেকশন সফল হয়েছে'
-//            ],
-//            'transactions' => [
-//                [
-//                    'date'   => '2020-12-01 20:10:33',
-//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-//                    'mobile' => '01748712884',
-//                    'amount' => '60000',
-//                    'type'   => 'credit'
-//                ],
-//                [
-//                    'date'   => '2020-12-01 20:10:33',
-//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-//                    'mobile' => '01748712884',
-//                    'amount' => '30000',
-//                    'type'   => 'debit'
-//                ],
-//                [
-//                    'date'   => '2020-12-01 20:10:33',
-//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-//                    'mobile' => '01748712884',
-//                    'amount' => '60000',
-//                    'type'   => 'debit'
-//                ],
-//                [
-//                    'date'   => '2020-12-01 20:10:33',
-//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-//                    'mobile' => '01748712884',
-//                    'amount' => '20000',
-//                    'type'   => 'credit'
-//                ],
-//                [
-//                    'date'   => '2020-12-01 20:10:33',
-//                    'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
-//                    'mobile' => '01748712884',
-//                    'amount' => '10000',
-//                    'type'   => 'credit'
-//                ],
-//            ]
-//        ];
         return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->accountDetailInfo();
     }
 
@@ -186,30 +117,56 @@ class NeoBanking
 
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     * @throws Exceptions\InvalidBankCode
+     */
     public function getNidInfo($data)
     {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getNidInfo($data);
     }
 
+    /**
+     * @return mixed
+     * @throws Exceptions\InvalidBankCode
+     */
     public function getSDKLivelinessToken()
     {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getSDKLivelinessToken();
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     * @throws Exceptions\InvalidBankCode
+     */
     public function getGigatechKycStatus($data) {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         return $bank->getGigatechKycStatus($data);
     }
+    public function uploadDocument($file, $key){
+        $doc=(new NeoBankingFileHandler())->setPartner($this->partner)->uploadDocument($file,$key);
+        $this->setPostData(json_encode([$key => $doc->getUploadedUrl()]));
+        return $this;
+    }
 
+    /**
+     * @return mixed
+     * @throws Exceptions\CategoryPostDataInvalidException
+     * @throws Exceptions\InvalidBankCode
+     * @throws Exceptions\InvalidBankFormCategoryCode
+     */
     public function storeGigatechKyc() {
         $bank = (new BankFactory())->setBank($this->bank)->get();
         $response = $bank->storeGigatechKyc($this->gigatechKycData);
+        $handler= (new NeoBankingFileHandler());
         if(4002 === $response['data']["status_code"]) {
-            $nid_front = $this->getImageUrl($this->gigatechKycData['id_front'], "nid_front");
-            $nid_back = $this->getImageUrl($this->gigatechKycData['id_back'], "nid_back");
-            $applicant_photo = $this->getImageUrl($this->gigatechKycData['applicant_photo'], "applicant_photo");
+            $nid_front =$handler->getImageUrl($this->gigatechKycData['id_front'], "nid_front");
+            $nid_back = $handler->getImageUrl($this->gigatechKycData['id_back'], "nid_back");
+            $applicant_photo = $handler->getImageUrl($this->gigatechKycData['applicant_photo'], "applicant_photo");
             $data = array_except($this->gigatechKycData, ["is_kyc_store","remember_token","applicant_photo","id_front","id_back"]);
             $data = array_merge($data, ['nid_front'=>$nid_front, 'nid_back'=>$nid_back, 'applicant_photo' =>$applicant_photo]);
             $this->setPostData( json_encode($data))->postCategoryDetail('nid_selfie');
