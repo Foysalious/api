@@ -15,6 +15,7 @@ class Completion
     /** @var Bank $bank */
     private $bank;
     private $mobile;
+    private $can_apply = 1;
 
     /**
      * @param Partner $partner
@@ -57,12 +58,19 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        return (new BankCompletion())->setGigaTechStatusInfo($this->getGigaTechData())->setCompletion($completion)->setCanApply(1)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage('প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।')->setMessageType('info');
+        $this->setCanApply($completion);
+        return (new BankCompletion())->setGigaTechStatusInfo($this->getGigaTechData())->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
     private function getGigaTechData()
     {
         return $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+    }
+
+    public function setCanApply($completion)
+    {
+        foreach ($completion as $single)
+            if($single['completion_percentage']['en'] != 100) $this->can_apply = 0;
     }
 
 }
