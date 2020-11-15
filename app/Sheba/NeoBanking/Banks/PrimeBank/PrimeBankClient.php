@@ -57,7 +57,7 @@ class PrimeBankClient
         if (!isset($options['json'])) {
             return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
         }
-        return $client->call((new TPRequest())->setInput($options['json'])->setUrl($this->makeUrl($uri))->setHeaders(['Content-Type:application/json']));
+        return $client->call((new TPRequest())->setMethod($method)->setInput($options['json'])->setUrl($this->makeUrl($uri))->setHeaders(['Content-Type:application/json']));
     }
 
     private function makeUrl($uri)
