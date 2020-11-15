@@ -15,6 +15,7 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\ConnectionType;
 use Sheba\TopUp\TopUpFailedReason;
+use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TPProxy\TPProxyClient;
@@ -48,11 +49,11 @@ class TopUpController extends Controller
             elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
             elseif ($request->type == 'business') $agent = "App\\Models\\Business";
             else $agent = "App\\Models\\Affiliate";
-            $vendors       = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
             $error_message = "Currently, we’re supporting";
             foreach ($vendors as $vendor) {
                 $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-                $asset_name        = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
+                $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
                 array_add($vendor, 'asset', $asset_name);
                 array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
                 array_add($vendor, 'is_prepaid_available', 1);
@@ -60,8 +61,8 @@ class TopUpController extends Controller
                 if ($vendor->is_published) $error_message .= ',' . $vendor->name;
             }
             $regular_expression = array(
-                'typing'        => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-                'from_contact'  => "^(?:\+?88)?01[16|8]\d{8}$",
+                'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
+                'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
                 'error_message' => $error_message . '.'
             );
             return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
@@ -194,7 +195,7 @@ class TopUpController extends Controller
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
                 $agent_email = $agent->email;
-                if($agent_email) $this->dispatch(new SendTopUpFailMail($agent_email, $top_up_excel_data_format_errors));
+                if ($agent_email) $this->dispatch(new SendTopUpFailMail($agent_email, $top_up_excel_data_format_errors));
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
@@ -315,23 +316,23 @@ class TopUpController extends Controller
     public function activeBulkTopUps(Request $request)
     {
         try {
-            $model               = "App\\Models\\" . ucfirst(camel_case($request->type));
-            $agent_id            = $request->user->id;
+            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            $agent_id = $request->user->id;
             $topup_bulk_requests = TopUpBulkRequest::where([
                 ['status', 'pending'],
                 ['agent_id', $agent_id],
                 ['agent_type', $model]
             ])->with('numbers')->where('status', 'pending')->orderBy('id', 'desc')->get();
-            $final               = [];
+            $final = [];
             $topup_bulk_requests->filter(function ($topup_bulk_request) {
                 return $topup_bulk_request->numbers->count() > 0;
             })->map(function ($topup_bulk_request) use (&$final) {
                 array_push($final, [
-                    'id'              => $topup_bulk_request->id,
-                    'agent_id'        => $topup_bulk_request->agent_id,
-                    'agent_type'      => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
-                    'status'          => $topup_bulk_request->status,
-                    'total_numbers'   => $topup_bulk_request->numbers->count(),
+                    'id' => $topup_bulk_request->id,
+                    'agent_id' => $topup_bulk_request->agent_id,
+                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
+                    'status' => $topup_bulk_request->status,
+                    'total_numbers' => $topup_bulk_request->numbers->count(),
                     'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
                         return in_array(strtolower($number->status), ['successful', 'failed']);
                     })->count(),
@@ -351,10 +352,10 @@ class TopUpController extends Controller
 
     public function storeBulkRequest($agent)
     {
-        $topup_bulk_request             = new TopUpBulkRequest();
-        $topup_bulk_request->agent_id   = $agent->id;
+        $topup_bulk_request = new TopUpBulkRequest();
+        $topup_bulk_request->agent_id = $agent->id;
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
-        $topup_bulk_request->status     = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
+        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
         $topup_bulk_request->save();
 
         return $topup_bulk_request;
@@ -362,10 +363,10 @@ class TopUpController extends Controller
 
     public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
     {
-        $topup_bulk_request                        = new TopUpBulkRequestNumber();
+        $topup_bulk_request = new TopUpBulkRequestNumber();
         $topup_bulk_request->topup_bulk_request_id = $request_id;
-        $topup_bulk_request->mobile                = $mobile;
-        $topup_bulk_request->vendor_id             = $vendor_id;
+        $topup_bulk_request->mobile = $mobile;
+        $topup_bulk_request->vendor_id = $vendor_id;
         $topup_bulk_request->save();
 
         return $topup_bulk_request->id;
@@ -386,16 +387,17 @@ class TopUpController extends Controller
     /**
      * @param Request $request
      * @param TopUpFailedReason $topUp_failed_reason
+     * @param TopUpHistoryExcel $history_excel
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason)
+    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason, TopUpHistoryExcel $history_excel)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 180);
 
-        $rules     = [
+        $rules = [
             'from' => 'date_format:Y-m-d',
-            'to'   => 'date_format:Y-m-d|required_with:from'
+            'to' => 'date_format:Y-m-d|required_with:from'
         ];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -405,9 +407,9 @@ class TopUpController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
         $model = "App\\Models\\" . ucfirst(camel_case($request->type));
-        $user  = $request->user;
+        $user = $request->user;
         if ($request->has('partner')) {
-            $user  = $request->partner;
+            $user = $request->partner;
             $model = "App\\Models\\Partner";
         }
         $topups = $model::find($user->id)->topups();
@@ -422,7 +424,7 @@ class TopUpController extends Controller
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;
-            $limit  = 100000;
+            $limit = 100000;
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
@@ -430,24 +432,36 @@ class TopUpController extends Controller
         $topup_data = [];
         foreach ($topups as $topup) {
             $topup = [
-                'payee_mobile'   => $topup->payee_mobile,
-                'payee_name'     => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount'         => $topup->amount,
-                'operator'       => $topup->vendor->name,
-                'status'         => $topup->status,
-                'failed_reason'  => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
-                'created_at'     => $topup->created_at->format('jS M, Y h:i A'),
+                'payee_mobile' => $topup->payee_mobile,
+                'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
+                'amount' => $topup->amount,
+                'operator' => $topup->vendor->name,
+                'payee_mobile_type' => $topup->payee_mobile_type,
+                'status' => $topup->status,
+                'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
+                'created_at' => $topup->created_at->format('jS M, Y h:i A'),
                 'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
             ];
             array_push($topup_data, $topup);
         }
 
         if ($is_excel_report) {
-            $excel = app(ExcelHandler::class);
-            $excel->setName('Topup History');
-            $excel->setViewFile('topup_history');
-            $excel->pushData('topup_data', $topup_data);
-            $excel->download();
+            $url = 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/bulk_top_ups/top_up_format_file.xlsx';
+            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+            file_put_contents($file_path, file_get_contents($url));
+            foreach ($topup_data as $key => $topup_history) {
+                $history_excel->setFile($file_path)
+                    ->setRow($key + 2)
+                    ->updateMobile($topup_history['payee_mobile'])
+                    ->updateOperator($topup_history['operator'])
+                    ->updateConnectionType($topup_history['payee_mobile_type'])
+                    ->updateAmount($topup_history['amount'])
+                    ->updateStatus($topup_history['status'])
+                    ->updateName($topup_history['payee_name'])
+                    ->updateCreatedDate($topup_history['created_at_raw']);
+            }
+            $history_excel->takeCompletedAction();
+            return api_response($request, null, 200);
         }
 
         return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
