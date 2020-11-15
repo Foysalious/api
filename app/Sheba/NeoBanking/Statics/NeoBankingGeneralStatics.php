@@ -13,25 +13,25 @@ class NeoBankingGeneralStatics
     public static function populateData($data)
     {
         return [
-            "title"      => $data->title,
-            "link"       => $data->link,
-            "type"       => $data->type,
+            "title" => $data->title,
+            "link" => $data->link,
+            "type" => $data->type,
             "event_type" => $data->event_type,
-            "event_id"   => $data->event_id
+            "event_id" => $data->event_id
         ];
     }
 
     public static function sendPushNotification($partner, $data)
     {
-        $topic             = config('sheba.push_notification_topic_name.manager') . $partner->id;
-        $channel           = config('sheba.push_notification_channel_name.manager');
-        $sound             = config('sheba.push_notification_sound.manager');
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
         $notification_data = [
-            "title"      => $data->title,
-            "message"    => $data->title,
-            "sound"      => "notification_sound",
+            "title" => $data->title,
+            "message" => $data->title,
+            "sound" => "notification_sound",
             "event_type" => $data->event_type,
-            "event_id"   => $data->event_id
+            "event_id" => $data->event_id
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
@@ -58,5 +58,15 @@ class NeoBankingGeneralStatics
             'id_front' => 'required|mimes:jpeg,png,jpg',
             'id_back' => 'required|mimes:jpeg,png,jpg',
         ];
+    }
+
+    public static function types($type)
+    {
+        $data = ['organization_type_list' => array_column(constants('PARTNER_OWNER_TYPES'),'bn'), 'business_type_list' => constants('PARTNER_BUSINESS_TYPE')];
+        try {
+            return $data[$type];
+        } catch (\Throwable $e) {
+            return [];
+        }
     }
 }
