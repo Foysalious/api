@@ -178,7 +178,7 @@ class TopUpController extends Controller
                     $excel_error = null;
                 }
 
-                $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->setTotalRow($total)->updateExcel($excel_error);
+                $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
             });
 
             if ($halt_top_up) {
