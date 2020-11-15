@@ -165,9 +165,11 @@ class Creator
 
     public function save()
     {
+
         $this->makeData();
-        $this->paymentLinkCreated = $this->paymentLinkRepo->create($this->data);
+        $this->paymentLinkCreated = $this->paymentLinkRepo->create([]);
         return $this->paymentLinkCreated;
+
     }
 
     private function makeData()
