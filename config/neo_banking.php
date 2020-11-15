@@ -177,7 +177,7 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'প্রতিষ্ঠান এর নাম লিখুন',
+                'title'         => 'প্রতিষ্ঠান এর নাম লিখুন *',
                 'name'          => 'company_name',
                 'id'            => 'company_name',
                 'hint'          => 'Sheba.xyz',
