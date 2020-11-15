@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 use DB;
 use Sheba\Helpers\TimeFrame;
 
-class PartnerOrderRepository
+class PartnerOrderRepository extends BaseRepository
 {
     public function getTodayClosedOrders(Partner $partner = null)
     {
@@ -106,4 +106,10 @@ class PartnerOrderRepository
             return $order->calculate($price_only = true);
         });
     }
+
+//    public function update(PartnerOrder $partner_order, $data)
+//    {
+//        $partner_order->update($this->withUpdateModificationField($data));
+//        return $partner_order;
+//    }
 }
