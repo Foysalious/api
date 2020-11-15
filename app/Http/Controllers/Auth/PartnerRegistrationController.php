@@ -31,6 +31,8 @@ use Sheba\Referral\Referrals;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
+use Sheba\Subscription\Partner\BillingType;
+use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Voucher\Creator\Referral;
 use Throwable;
 
@@ -355,7 +357,12 @@ class PartnerRegistrationController extends Controller
                 $profile->update(['gender' => $request->gender]);
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);
-                $this->createPartner($resource, $data);
+                $partner = $this->createPartner($resource, $data);
+                $requestedPackage = PartnerSubscriptionPackage::find(config('sheba.partner_basic_packages_id'));
+                if($upgradeRequest = (new PartnerSubscription())->createBasicSubscriptionRequest($requestedPackage, $partner, $resource))
+                    if($hasCredit = $partner->hasCreditForSubscription($requestedPackage, BillingType::MONTHLY))
+                        $partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
+
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
