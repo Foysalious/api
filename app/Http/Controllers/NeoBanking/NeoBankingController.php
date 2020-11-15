@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\NeoBanking;
 
 use App\Models\Partner;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\Exceptions\UnauthorizedRequestFromSBSException;
 use Sheba\NeoBanking\NeoBanking;
@@ -34,8 +36,8 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $bank             = $request->bank_code;
-            $partner          = $request->partner;
+            $bank = $request->bank_code;
+            $partner = $request->partner;
             $manager_resource = $request->manager_resource;
 
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails()->toArray();
@@ -52,9 +54,9 @@ class NeoBankingController extends Controller
             $this->validate($request, [
                 'amount' => 'required|numeric'
             ]);
-            $bank                 = $request->bank;
-            $partner              = $request->partner;
-            $manager_resource     = $request->manager_resource;
+            $bank = $request->bank;
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
             $transaction_response = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->createTransaction();
             return api_response($request, $transaction_response, 200, ['data' => $transaction_response]);
         } catch (\Throwable $e) {
@@ -70,9 +72,9 @@ class NeoBankingController extends Controller
             $this->validate($request, [
                 'bank_code' => 'required|string'
             ]);
-            $partner  = $request->partner;
+            $partner = $request->partner;
             $resource = $request->manager_resource;
-            $mobile   = $request->mobile;
+            $mobile = $request->mobile;
 
             $completion = $neoBanking->setPartner($partner)->setResource($resource)->setMobile($mobile)->setBank($request->bank_code)->getCompletion()->toArray();
             return api_response($request, $completion, 200, ['data' => $completion]);
@@ -123,7 +125,7 @@ class NeoBankingController extends Controller
     /**
      * @param Request $request
      * @param NeoBanking $neoBanking
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function uploadCategoryWiseDocument(Request $request, NeoBanking $neoBanking)
     {
@@ -144,20 +146,32 @@ class NeoBankingController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function sendNotification(Request $request)
     {
         try {
-            if(($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
+            if (($request->header('access-key')) !== config('neo_banking.sbs_access_token'))
                 throw new UnauthorizedRequestFromSBSException();
             $partner = Partner::find($request->user_id);
             notify()->partner($partner)->send(NeoBankingGeneralStatics::populateData($request));
-            if(isset($partner))
+            if (isset($partner))
                 NeoBankingGeneralStatics::sendPushNotification($partner, $request);
             return api_response($request, null, 200, ['data' => "Notification stored"]);
         } catch (UnauthorizedRequestFromSBSException $exception) {
             return api_response($request, null, 403);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function selectTypes(Request $request)
+    {
+        try {
+            $type=$request->type?:'organization_type_list';
+            $data = NeoBankingGeneralStatics::types($type);
+            return api_response($request, $data, 200, ['data' => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
