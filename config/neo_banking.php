@@ -316,7 +316,7 @@ return [
                 'name'          => 'grantor_organization',
                 'id'            => 'grantor_organization',
                 'hint'          => 'Sheba.xyz',
-                'error_message' => 'পঅনুমোদনকারী প্রতিষ্ঠানের নাম পূরণ আবশ্যক '
+                'error_message' => 'অনুমোদনকারী প্রতিষ্ঠানের নাম পূরণ আবশ্যক '
             ],
             [
                 'field_type'  => 'header',
