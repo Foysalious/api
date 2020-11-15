@@ -179,11 +179,24 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $manager_business_member = BusinessMember::findOrFail($manager_id);
         $manager_member = $manager_business_member->member;
         $manager_profile = $manager_member->profile;
+        $role = $manager_business_member->role;
 
         return [
             'id' => $manager_member->id,
             'business_member' => $manager_business_member->id,
-            'name' => $manager_profile->name
+            'name' => $manager_profile->name,
+            'employee_id' => $manager_business_member->employee_id,
+            'profile' => [
+                'id' => $manager_profile->id,
+                'name' => $manager_profile->name,
+                'pro_pic' => $manager_profile->pro_pic,
+                'mobile' => $manager_profile->mobile,
+                'email' => $manager_profile->email
+            ],
+            'status' => $manager_business_member->status,
+            'department_id' => $role ? $role->businessDepartment->id : null,
+            'department' => $role ? $role->businessDepartment->name : null,
+            'designation' => $role ? $role->name : null
         ];
     }
 }
