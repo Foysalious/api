@@ -13,6 +13,7 @@ use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
+use Sheba\TPProxy\TPProxyServerError;
 
 class PrimeBank extends Bank
 {
@@ -65,21 +66,40 @@ class PrimeBank extends Bank
         return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function getNidInfo($data)
     {
         return (new PrimeBankClient())->post('api/v1/nid-verification',$data);
     }
 
+    /**
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function getSDKLivelinessToken()
     {
         return (new PrimeBankClient())->get('api/v1/liveliness-auth-token');
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function getGigatechKycStatus($data)
     {
         return (new PrimeBankClient())->post('api/v1/kyc-status', $data);
     }
 
+    /**
+     * @param $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function storeGigatechKyc($data)
     {
         return (new PrimeBankClient())->post('api/v1/kyc-submit', $data);

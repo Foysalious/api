@@ -4,11 +4,12 @@
 namespace App\Sheba\NeoBanking\Banks\PrimeBank;
 
 
-use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
+use Sheba\TPProxy\TPRequest;
 
 class PrimeBankClient
 {
@@ -17,33 +18,46 @@ class PrimeBankClient
 
     public function __construct()
     {
-        $this->client  = (new Client());
+        $this->client = (new Client());
         $this->baseUrl = rtrim(config('neo_banking.prime_bank_sbs_url'));
     }
 
+    /**
+     * @param $user
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function generateToken($user)
     {
         return $this->get("/");
     }
 
+    /**
+     * @param $uri
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function get($uri)
     {
         return $this->call('get', $uri);
     }
 
+    /**
+     * @param $method
+     * @param $uri
+     * @param null $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     private function call($method, $uri, $data = null)
     {
         $options = $data ? $this->getOptions($data) : [];
-
-        try {
-            $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
-            $res = json_decode($res->getBody()->getContents(), true);
-            if ($res['code'] != 200) throw new Exception($res['message'],$res['code']);
-            unset($res['code'], $res['message']);
-            return $res;
-        } catch (GuzzleException $e) {
-            dd($e->getMessage());
+        /** @var TPProxyClient $client */
+        $client = app(TPProxyClient::class);
+        if (!isset($options['json'])) {
+            return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
         }
+        return $client->call((new TPRequest())->setInput($options['json'])->setUrl($this->makeUrl($uri))->setHeaders(['Content-Type:application/json']));
     }
 
     private function makeUrl($uri)
@@ -53,16 +67,15 @@ class PrimeBankClient
 
     private function getOptions($data = null)
     {
-        $options =[];
+        $options = [];
 
-        if($data){
+        if ($data) {
             $request = request();
             /** @var UploadedFile $id_front */
             /** @var UploadedFile $id_back */
             $id_front = $request->file('id_front');
             $id_back = $request->file('id_back');
             $applicant_photo = $request->file('applicant_photo');
-
             if ($request->is_kyc_store) {
                 $options['multipart'] = [
                     [
@@ -124,7 +137,7 @@ class PrimeBankClient
                     ]
                 ];
             } else {
-                if($id_front && $id_back) {
+                if ($id_front && $id_back) {
                     $options['multipart'] = [
                         [
                             'name' => 'id_front',
@@ -138,13 +151,19 @@ class PrimeBankClient
                         ]
                     ];
                 } else {
-                    $options['json']        = $data;
+                    $options['json'] = $data;
                 }
             }
         }
         return $options;
     }
 
+    /**
+     * @param $uri
+     * @param $data
+     * @return mixed
+     * @throws TPProxyServerError
+     */
     public function post($uri, $data)
     {
         return $this->call('post', $uri, $data);
