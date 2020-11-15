@@ -43,4 +43,14 @@ class BankStatics
         if (isset($titles[$code])) return $titles[$code];
         return ['en' => '', 'bn' => ''];
     }
+
+    public static function completionType($complete = 0)
+    {
+        return $complete ? "success" : "info";
+    }
+
+    public static function completionMessage($complete = 0)
+    {
+        return $complete ? config('neo_banking.completion_success_message') : config('neo_banking.completion_info_message');
+    }
 }
