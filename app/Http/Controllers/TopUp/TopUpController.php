@@ -9,6 +9,7 @@ use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
+use App\Sheba\TopUp\Vendor\Vendors;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
@@ -453,7 +454,7 @@ class TopUpController extends Controller
                 $history_excel->setFile($file_path)
                     ->setRow($key + 2)
                     ->updateMobile($topup_history['payee_mobile'])
-                    ->updateOperator($topup_history['operator'])
+                    ->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])
                     ->updateConnectionType($topup_history['payee_mobile_type'])
                     ->updateAmount($topup_history['amount'])
                     ->updateStatus($topup_history['status'])
