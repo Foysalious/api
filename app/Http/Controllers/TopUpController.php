@@ -119,7 +119,7 @@ class TopUpController extends Controller
     {
         $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
     }
-    
+
     public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo, UserAgentInformation $userAgentInformation)
     {
         try {
@@ -136,32 +136,32 @@ class TopUpController extends Controller
             $profile = $profileRepository->where('id', $profileid)->first();
             $userAgentInformation->setRequest($request);
 
-            if(!Hash::check($request->password, $profile->password)){
+            if (!Hash::check($request->password, $profile->password)) {
                 $data = [
-                    'profile_id' => $profileid,
-                    'affiliate_id' => $affiliate,
+                    'type_id' => $affiliate,
+                    'type' => 'affiliate',
                     'topup_number' => $request->mobile,
                     'topup_amount' => $request->amount,
                     'password' => $request->password,
                     'ip_address' => $request->ip(),
                 ];
-        
-                $dd= $wrongPINCountRepo->create($this->withBothModificationFields($data));
 
-                $wrongPinCount = $wrongPINCountRepo->where('affiliate_id', $affiliate)->get()->count();
+                $dd = $wrongPINCountRepo->create($this->withBothModificationFields($data));
 
-                if($wrongPinCount >=3){
+                $wrongPinCount = $wrongPINCountRepo->where('type_id', $affiliate)->where('type', 'affiliate')->get()->count();
+
+                if ($wrongPinCount >= 3) {
                     $this->affiliateLogout($aff);
-                    $wrongPINCountRepo->where('affiliate_id', $affiliate)->delete();
+                    $wrongPINCountRepo->where('type_id', $affiliate)->where('type', 'affiliate')->delete();
                     return api_response($request, null, 404, ['message' => "User logged out due to wrong PIN count reached 3."]);
                 }
 
                 return api_response($request, null, 403, ['message' => "Credential Mismatch."]);
 
             } else {
-                $wp_count = $wrongPINCountRepo->where('affiliate_id', $affiliate)->get()->count();
-                if($wp_count > 0){
-                    $countFreshed = $wrongPINCountRepo->where('affiliate_id', $affiliate)->delete();
+                $wp_count = $wrongPINCountRepo->where('type_id', $affiliate)->where('type', 'affiliate')->get()->count();
+                if ($wp_count > 0) {
+                    $countFreshed = $wrongPINCountRepo->where('type_id', $affiliate)->where('type', 'affiliate')->delete();
                 }
             }
 
