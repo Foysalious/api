@@ -122,7 +122,7 @@ class PartnerNotificationEventGetter
             'button_text'       => 'View Order Details',
             'type'              => $this->notification->type ?: $notification['description'],
             'target_link' => $this->notification->link,
-            'target_type' => constants('PARTNER_ORDER_TARGET_TYPE'),
+            'target_type' => str_replace('App\Models\\', "", $this->eventType) ?: $notification['target_type'],
             'target_id' => $this->notification->event_id];
     }
 }
