@@ -2,6 +2,7 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
+use App\Jobs\Business\SendTopUpFailMail;
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
@@ -189,6 +190,9 @@ class TopUpController extends Controller
 
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
+                $agent_email = $agent->email;
+                if($agent_email) $this->dispatch(new SendTopUpFailMail($agent_email, $top_up_excel_data_format_errors));
+
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
 
