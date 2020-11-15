@@ -171,7 +171,7 @@ class PaymentLinkController extends Controller
     {
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
-            if ($default_payment_link) {
+            if (0) {
                 $default_payment_link = [
                     'link_id' => $default_payment_link[0]['linkId'],
                     'link'    => $default_payment_link[0]['link'],
@@ -191,6 +191,7 @@ class PaymentLinkController extends Controller
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             }
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

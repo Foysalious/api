@@ -165,13 +165,11 @@ class Creator
 
     public function save()
     {
-        try {
-            $this->makeData();
-            $this->paymentLinkCreated = $this->paymentLinkRepo->create($this->data);
-            return $this->paymentLinkCreated;
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-        }
+
+        $this->makeData();
+        $this->paymentLinkCreated = $this->paymentLinkRepo->create([]);
+        return $this->paymentLinkCreated;
+
     }
 
     private function makeData()
