@@ -88,14 +88,15 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-
             $agent = $this->getAgent($request);
             $userAgentInformation->setRequest($request);
 
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+            $top_up_request->setAmount($request->amount)
+                ->setMobile($request->mobile)->setType($request->connection_type)
+                ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
                 ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
@@ -114,7 +115,6 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     private function affiliateLogout(Affiliate $affiliate)

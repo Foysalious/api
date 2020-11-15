@@ -32,6 +32,7 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
+    private $blockedPartnerId = [233];
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -179,10 +180,12 @@ class TopUpRequest
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
+
         if ($this->from_robi_topup_wallet != 1 && $this->agent->wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
+
         if (!$this->vendor->isPublished()) {
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
@@ -195,13 +198,18 @@ class TopUpRequest
         if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
-        }
-        else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
+
         if ($this->agent instanceof Business && $this->isAmountBlocked()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
+            return 1;
+        }
+
+        if ($this->agent instanceof Partner && in_array($this->agent->id, $this->blockedPartnerId)) {
+            $this->errorMessage = "Your topup is temporary off.";
             return 1;
         }
 
