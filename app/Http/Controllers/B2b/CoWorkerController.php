@@ -435,6 +435,7 @@ class CoWorkerController extends Controller
         if ($request->has('sort_by_department')) $employees = $this->sortByDepartment($employees, $request->sort_by_department)->values();
         if ($request->has('sort_by_status')) $employees = $this->sortByStatus($employees, $request->sort_by_status)->values();
         if ($request->has('search')) $employees = $this->searchEmployee($employees, $request);
+        if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
 
         $total_employees = count($employees);
         $employees = collect($employees)->splice($offset, $limit);
@@ -822,5 +823,12 @@ class CoWorkerController extends Controller
             ]);
         }
         return $department_info;
+    }
+
+    private function filterByEmployeeType($employees, Request $request) {
+        $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
+        return collect($employees)->filter(function ($employee) use ($is_super) {
+            return $employee['is_super'] == $is_super;
+        });
     }
 }
