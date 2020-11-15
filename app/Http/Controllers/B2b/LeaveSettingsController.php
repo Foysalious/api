@@ -91,7 +91,9 @@ class LeaveSettingsController extends Controller
 
         if(!$request->is_published) {
             if(!$leave_setting->deleted_at) {
-                $leave_setting->delete();
+                $data += [
+                    'deleted_at' => Carbon::now()
+                ];
             }
         }
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
