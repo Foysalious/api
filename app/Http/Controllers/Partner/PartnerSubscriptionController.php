@@ -382,6 +382,7 @@ class PartnerSubscriptionController extends Controller
                 $package['is_subscribed'] = (int)($partner->package_id == $package->id);
                 $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
             }
+            $package['web_view'] = config('sheba.partners_url')."/api/packages/".$package['id'];
             removeRelationsAndFields($package);
         }
 
