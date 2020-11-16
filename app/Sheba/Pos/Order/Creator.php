@@ -81,6 +81,7 @@ class Creator
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
+        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
         return $this;
     }
 
