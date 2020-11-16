@@ -49,6 +49,7 @@ class PrimeBankClient extends ApiClient
      * @param $method
      * @param $uri
      * @param null $data
+     * @param array $headers
      * @return mixed
      * @throws TPProxyServerError
      */
