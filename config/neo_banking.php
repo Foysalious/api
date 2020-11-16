@@ -80,8 +80,8 @@ return [
     'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title'              => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
     'sbs_access_token'                   => env('SBS_ACCESS_TOKEN', '1234567890'),
-    'sbs_client_id'                      => env('SBS_CLIENT_ID', '123456'),
-    'sbs_client_secret'                  => env('SBS_CLIENT_SECRET', 'abcd'),
+    'sbs_client_id'                      => env('PRIME_BANK_NEO_BANKING_CLIENT_ID', '123456'),
+    'sbs_client_secret'                  => env('PRIME_BANK_NEO_BANKING_CLIENT_SECRET', 'abcd'),
     'completion_success_message'         => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।",
     'completion_info_message'            => "ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে হলে নিচের তথ্যাবলি অবশ্যই প্রদান করতে হবে।",
     'category_list'                      => [
