@@ -54,7 +54,7 @@ class PrimeBankClient extends ApiClient
      */
     private function call($method, $uri, $data = null,$headers=[])
     {
-        $options = $data ? $this->getOptions($data) : [];
+        $options = $data ? $this->getOptions($data) : ['json'=>[]];
         /** @var TPProxyClient $client */
         $client = app(TPProxyClient::class);
         if (!isset($options['json'])) {
