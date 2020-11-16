@@ -23,7 +23,7 @@ return [
     'material_commission_rate' => 5.0,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal', 'digigo-portal'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
-    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'partner-portal'],
+    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
@@ -152,5 +152,6 @@ return [
     'address' => 'House #63 (1st Floor), Road #04, Block-C, Banani, Dhaka 1213',
     'email' => 'info@sheba.xyz',
     'lpg_service_id' => env('LPG_SERVICE_ID'),
-    'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID')
+    'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
+    'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
 ];

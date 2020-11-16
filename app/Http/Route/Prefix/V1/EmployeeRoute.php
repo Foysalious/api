@@ -67,6 +67,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'departments'], function ($api) {
                 $api->get('/', 'Employee\DepartmentController@index');
             });
+            $api->group(['prefix' => 'designations'], function ($api) {
+                $api->get('/', 'Employee\DesignationController@index');
+            });
             $api->get('managers','Employee\EmployeeController@getManagersList');
             $api->get('/','Employee\EmployeeController@index');
             $api->get('/{employee}','Employee\EmployeeController@show');
