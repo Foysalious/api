@@ -76,7 +76,6 @@ class VerifyPin
         if (!Hash::check($this->request->password, $this->profile->password)) {
 
             $data = [
-                'profile_id' => $this->profile,
                 'type_id' => $this->agent->id,
                 'type' => $this->getType(),
                 'topup_number' => BDMobileFormatter::format($this->request->mobile),
