@@ -63,7 +63,7 @@ abstract class BankFormCategory
         $this->bank->loadInfo();
         $this->setBankAccountData($this->bank->getBankInfo());
         $category_data = $this->bankAccountData->getByCode($this->code);
-        $this->last_updated = $category_data ? $category_data->updated_at : '';
+        $this->last_updated = empty($category_data) ? '' : $category_data;
     }
 
     /**
