@@ -1,4 +1,5 @@
 <?php namespace App\Http\Controllers;
+
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
@@ -150,15 +151,17 @@ class TopUpController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        }catch (TopUpExceptions $e){
-            return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
+        } catch (TopUpExceptions $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
 
     }
-    public function topUpWithPinV2(Request $request,TopUpRequest $top_up_request,Creator $creator,ProfileRepositoryInterface $profileRepository,WrongPINCountRepo $wrongPINCountRepo,UserAgentInformation $userAgentInformation){
+
+    public function topUpWithPinV2(Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo, UserAgentInformation $userAgentInformation)
+    {
         try {
             $this->validate($request, [
                 'mobile' => 'required|string|mobile:bd',
@@ -166,7 +169,7 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id',
                 'amount' => 'required|min:10|max:1000|numeric',
                 'is_robi_topup' => 'sometimes|in:0,1',
-                'password'=>'required',
+                'password' => 'required',
             ]);
             $agent = $this->getAgent($request);
             $profile = $request->manager_resource->profile;
@@ -189,14 +192,18 @@ class TopUpController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        }catch (TopUpExceptions $e){
-            return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
-        } catch (Throwable $e){
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (TopUpExceptions $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
 
     }
+
     /**
      * @param Request $request
      * @param VendorFactory $vendor
