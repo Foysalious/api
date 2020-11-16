@@ -121,15 +121,20 @@ class ServiceController extends Controller
             $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
                 'name'        => 'required',
-                'category_id' => 'required_without:master_category_id|in:' . implode(',', $sub_categories),
+                'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
 
             ]);
             $this->setModifier($request->manager_resource);
 
-            if(!$request->category_id)
+            $is_valid_sub_category = (in_array($request->category_id,$sub_categories)) ? 1 : 0 ;
+            if(!$request->has('master_category_id') && !$is_valid_sub_category)
+                return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+            if($request->has('master_category_id') && !$is_valid_sub_category){
+                $request->request->remove('category_id');
                 $request->merge($this->resolveSubcategory($request->master_category_id));
+            }
 
             $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
 
@@ -164,6 +169,7 @@ class ServiceController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
