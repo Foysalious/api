@@ -4,12 +4,12 @@
 namespace Sheba\TopUp\Verification;
 
 
+use App\Models\Partner;
 use Illuminate\Support\Facades\Hash;
 use ReflectionException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
-use Sheba\TopUp\Commission\Partner;
 use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\Exception\ResetRememberTokenException;
 
