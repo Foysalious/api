@@ -126,8 +126,7 @@ class DefaultSettingV3
             "name_bn" => "টপ-আপ",
             "is_on_homepage" => 0
         ];
-
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $digital_banking, $topup];
+        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi,$topup, $digital_banking];
     }
     public static function getLastUpdatedAt()
     {
