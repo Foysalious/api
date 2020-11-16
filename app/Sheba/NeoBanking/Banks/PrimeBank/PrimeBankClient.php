@@ -171,7 +171,7 @@ class PrimeBankClient extends ApiClient
      */
     public function create($method, $uri, $data = null)
     {
-        $headers=['CLIENT-ID' => config('neo_banking.sbs_client_id'), 'CLIENT-SECRET' => config('neo_banking.sbs_client_secret')];
+        $headers=['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
         return $this->call($method,$uri,$data,$headers);
     }
 
