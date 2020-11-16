@@ -114,7 +114,15 @@ class NeoBanking
     {
         $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
         return $bank->categoryDetails((new BankFormCategoryFactory())->setBank($bank)->getCategoryByCode($category_code))->toArray();
+    }
 
+    /**
+     * @throws Exceptions\InvalidBankCode
+     */
+    public function storeAccount()
+    {
+        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        return $bank->accountCreate();
     }
 
     /**

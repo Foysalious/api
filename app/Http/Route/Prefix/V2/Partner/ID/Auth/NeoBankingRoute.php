@@ -21,6 +21,7 @@ class NeoBankingRoute
                     $api->get('/gigatech-kyc-status', 'NeoBanking\\NeoBankingGigatechController@getGigatechKycStatus');
                     $api->post('/gigatech-kyc-submit', 'NeoBanking\\NeoBankingGigatechController@storeGigatechKyc');
                     $api->get('/select-types', 'NeoBanking\\NeoBankingController@selectTypes');
+                    $api->post('/account-apply', 'NeoBanking\\NeoBankingController@accountApply');
                 });
             });
         });
