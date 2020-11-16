@@ -5,6 +5,7 @@ namespace Sheba\TopUp\Verification;
 
 
 use Illuminate\Support\Facades\Hash;
+use ReflectionException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
@@ -68,7 +69,7 @@ class VerifyPin
 
     /**
      * @throws PinMismatchException
-     * @throws ResetRememberTokenException
+     * @throws ResetRememberTokenException|ReflectionException
      */
     public function verify()
     {
@@ -77,7 +78,7 @@ class VerifyPin
             $data = [
                 'profile_id' => $this->profile,
                 'type_id' => $this->agent->id,
-                'type' => class_basename($this->agent),
+                'type' => $this->getType(),
                 'topup_number' => BDMobileFormatter::format($this->request->mobile),
                 'topup_amount' => $this->request->amount,
                 'password' => $this->request->password,
@@ -117,5 +118,14 @@ class VerifyPin
     {
         if ($this->agent instanceof Partner) $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
         $this->agent->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
+    }
+
+    /**
+     * @throws ReflectionException
+     */
+    private function getType()
+    {
+        $class=(new \ReflectionClass($this->agent))->getShortName();;
+        return strtolower($class);
     }
 }
