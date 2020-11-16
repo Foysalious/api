@@ -4,6 +4,7 @@ namespace Sheba\NeoBanking\Banks\PrimeBank;
 
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Exception;
+use Sheba\NeoBanking\Exceptions\AccountCreateException;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
 class AccountCreate
@@ -44,6 +45,9 @@ class AccountCreate
      */
     public function create()
     {
-        return (new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
+        $res= (array)(new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
+        if ($res['code']!==200) throw new AccountCreateException($res['message']);
+        return $res;
+
     }
 }
