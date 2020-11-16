@@ -82,10 +82,7 @@ class AccountServer
      */
     public function getTokenByEmailAndPasswordV2($email, $password)
     {
-        $data = $this->client->post("api/v3/profile/login", [
-            'email' => $email,
-            'password' => $password
-        ]);
+        $data = $this->client->post("api/v3/profile/login", ['email' => $email, 'password' => $password]);
         return $data['token'];
     }
 
