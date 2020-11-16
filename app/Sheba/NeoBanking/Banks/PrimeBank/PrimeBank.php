@@ -2,6 +2,7 @@
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use ReflectionException;
 use Sheba\NeoBanking\Banks\Bank;
@@ -53,7 +54,7 @@ class PrimeBank extends Bank
 
     /**
      * @return mixed
-     * @throws GuzzleException
+     * @throws Exception
      */
     public function accountCreate()
     {
@@ -83,7 +84,7 @@ class PrimeBank extends Bank
      */
     public function getNidInfo($data)
     {
-        return (new PrimeBankClient())->post('api/v1/nid-verification',$data);
+        return (new PrimeBankClient())->setPartner($this->partner)->post('api/v1/nid-verification',$data);
     }
 
     /**
@@ -92,7 +93,7 @@ class PrimeBank extends Bank
      */
     public function getSDKLivelinessToken()
     {
-        return (new PrimeBankClient())->get('api/v1/liveliness-auth-token');
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/liveliness-auth-token');
     }
 
     /**
@@ -102,7 +103,7 @@ class PrimeBank extends Bank
      */
     public function getGigatechKycStatus($data)
     {
-        return (new PrimeBankClient())->post('api/v1/kyc-status', $data);
+        return (new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-status', $data);
     }
 
     /**
@@ -112,7 +113,7 @@ class PrimeBank extends Bank
      */
     public function storeGigatechKyc($data)
     {
-        return (new PrimeBankClient())->post('api/v1/kyc-submit', $data);
+        return (new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data);
     }
 
 }

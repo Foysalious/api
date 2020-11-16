@@ -3,6 +3,7 @@
 namespace Sheba\NeoBanking\Banks\PrimeBank;
 
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use Exception;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
 class AccountCreate
@@ -39,10 +40,10 @@ class AccountCreate
 
     /**
      * @return mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Exception
      */
     public function create()
     {
-        return (new PrimeBankClient())->createAccount('api/v1/client/accounts/store-application', $this->data);
+        return (new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
     }
 }

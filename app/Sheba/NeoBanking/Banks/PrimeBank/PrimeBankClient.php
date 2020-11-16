@@ -6,20 +6,21 @@ namespace App\Sheba\NeoBanking\Banks\PrimeBank;
 
 use Exception;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
+use Sheba\NeoBanking\Banks\PrimeBank\ApiClient;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
 
-class PrimeBankClient
+class PrimeBankClient extends ApiClient
 {
     protected $client;
     protected $baseUrl;
 
     public function __construct()
     {
+        parent::__construct();
         $this->client = (new Client());
         $this->baseUrl = rtrim(config('neo_banking.prime_bank_sbs_url'));
     }
@@ -51,7 +52,7 @@ class PrimeBankClient
      * @return mixed
      * @throws TPProxyServerError
      */
-    private function call($method, $uri, $data = null)
+    private function call($method, $uri, $data = null,$headers=[])
     {
         $options = $data ? $this->getOptions($data) : [];
         /** @var TPProxyClient $client */
@@ -59,7 +60,7 @@ class PrimeBankClient
         if (!isset($options['json'])) {
             return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
         }
-        return $client->call((new TPRequest())->setMethod($method)->setInput($options['json'])->setUrl($this->makeUrl($uri))->setHeaders(['Content-Type:application/json']));
+        return $client->call((new TPRequest())->setMethod($method)->setInput($options['json'])->setUrl($this->makeUrl($uri))->setHeaders(array_merge(['Content-Type:application/json'],$headers)));
     }
 
     private function makeUrl($uri)
@@ -165,18 +166,12 @@ class PrimeBankClient
      * @param $uri
      * @param null $data
      * @return mixed
-     * @throws GuzzleException
      * @throws Exception
      */
     public function create($method, $uri, $data = null)
     {
-        $options = $data ? $this->getOptions($data) : [];
-        $options["headers"] = ['CLIENT-ID' => config('neo_banking.sbs_client_id'), 'CLIENT-SECRET' => config('neo_banking.sbs_client_secret')];
-        $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
-        $res = json_decode($res->getBody()->getContents(), true);
-        if ($res['code'] != 200) throw new Exception($res['message'], $res['code']);
-        unset($res['code'], $res['message']);
-        return $res;
+        $headers=['CLIENT-ID' => config('neo_banking.sbs_client_id'), 'CLIENT-SECRET' => config('neo_banking.sbs_client_secret')];
+        return $this->call($method,$uri,$data,$headers);
     }
 
     /**
@@ -194,7 +189,7 @@ class PrimeBankClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws GuzzleException
+     * @throws Exception
      */
     public function createAccount($uri, $data)
     {
