@@ -35,7 +35,11 @@ class NeoBankingGeneralStatics
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
 
+    public static function primeBankDefaultAccountData()
+    {
+        return config('neo_banking.default_prime_bank_account');
     }
 
     public static function gigatechKycValidationData()

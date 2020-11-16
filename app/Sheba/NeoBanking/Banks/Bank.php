@@ -95,6 +95,8 @@ abstract class Bank
 
     abstract public function homeInfo(): array;
 
+    abstract public function accountCreate();
+
     abstract public function completion(): BankCompletion;
 
     abstract public function accountDetailInfo(): BankAccountInfoWithTransaction;

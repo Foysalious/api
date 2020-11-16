@@ -51,6 +51,15 @@ class PrimeBank extends Bank
     }
 
     /**
+     * @return mixed
+     * @throws TPProxyServerError
+     */
+    public function accountCreate()
+    {
+        return (new AccountCreate())->setNaoBankingData($this->partner->neoBankInfo)->setPartner($this->partner)->makeData()->create();
+    }
+
+    /**
      * @return BankCompletion
      * @throws InvalidBankCode
      * @throws InvalidListInsertion

@@ -159,6 +159,25 @@ class PrimeBankClient
     }
 
     /**
+     * @param $method
+     * @param $uri
+     * @param null $data
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws \Exception
+     */
+    public function create($method, $uri, $data = null)
+    {
+        $options = $data ? $this->getOptions($data) : [];
+        $options["headers"] = ['CLIENT-ID' => config('neo_banking.sbs_client_id'), 'CLIENT-SECRET' => config('neo_banking.sbs_client_secret')];
+        $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
+        $res = json_decode($res->getBody()->getContents(), true);
+        if ($res['code'] != 200) throw new \Exception($res['message'], $res['code']);
+        unset($res['code'], $res['message']);
+        return $res;
+    }
+
+    /**
      * @param $uri
      * @param $data
      * @return mixed
@@ -168,5 +187,18 @@ class PrimeBankClient
     {
         return $this->call('post', $uri, $data);
     }
+
+    /**
+     * @param $uri
+     * @param $data
+     * @return mixed
+     * @throws \GuzzleHttp\Exception\GuzzleException
+     */
+    public function createAccount($uri, $data)
+    {
+        return $this->create('post', $uri, $data);
+    }
+
+
 
 }
