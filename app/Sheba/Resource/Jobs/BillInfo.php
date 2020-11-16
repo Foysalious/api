@@ -2,6 +2,7 @@
 
 
 use App\Models\Job;
+use App\Models\PartnerOrder;
 use Sheba\Services\FormatServices;
 
 class BillInfo
@@ -45,6 +46,7 @@ class BillInfo
                 ));
             }
         }
+        /** @var PartnerOrder $partnerOrder */
         $partnerOrder = $job->partnerOrder;
         $partnerOrder->calculate(true);
         $bill = collect();
@@ -63,8 +65,8 @@ class BillInfo
         $bill['closed_and_paid_at_timestamp'] = $partnerOrder->closed_and_paid_at != null ? $partnerOrder->closed_and_paid_at->timestamp : null;
         $bill['status'] = $job->status;
         $bill['materials'] = $job->usedMaterials;
-        $bill['isPaid'] = $job->partnerOrder->closed_and_paid_at ? 1 : 0;
-        $bill['isDue'] = $job->partnerOrder->closed_and_paid_at == null ? 1 : 0;
+        $bill['isPaid'] = $partnerOrder->isPaid() ? 1 : 0;
+        $bill['isDue'] = $partnerOrder->isDue() ? 1 : 0;
         $bill['job_code'] = $job->fullcode();
         return $bill;
     }
