@@ -127,7 +127,7 @@ class OrderController extends Controller
     private function setModifierFromRequest(Request $request)
     {
         if ($request->has('created_by_type')) {
-            if ($request->created_by_type === 'App\Models\Resource') {
+            if ($request->created_by_type === Resource::class) {
                 $this->setModifier(Resource::find((int)$request->created_by));
                 return;
             };
