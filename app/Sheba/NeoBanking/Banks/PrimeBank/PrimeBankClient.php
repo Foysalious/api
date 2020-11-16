@@ -4,7 +4,9 @@
 namespace App\Sheba\NeoBanking\Banks\PrimeBank;
 
 
+use Exception;
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Sheba\TPProxy\TPProxyClient;
@@ -163,8 +165,8 @@ class PrimeBankClient
      * @param $uri
      * @param null $data
      * @return mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
-     * @throws \Exception
+     * @throws GuzzleException
+     * @throws Exception
      */
     public function create($method, $uri, $data = null)
     {
@@ -172,7 +174,7 @@ class PrimeBankClient
         $options["headers"] = ['CLIENT-ID' => config('neo_banking.sbs_client_id'), 'CLIENT-SECRET' => config('neo_banking.sbs_client_secret')];
         $res = $this->client->request(strtoupper($method), $this->makeUrl($uri), $options);
         $res = json_decode($res->getBody()->getContents(), true);
-        if ($res['code'] != 200) throw new \Exception($res['message'], $res['code']);
+        if ($res['code'] != 200) throw new Exception($res['message'], $res['code']);
         unset($res['code'], $res['message']);
         return $res;
     }
@@ -192,7 +194,7 @@ class PrimeBankClient
      * @param $uri
      * @param $data
      * @return mixed
-     * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws GuzzleException
      */
     public function createAccount($uri, $data)
     {
