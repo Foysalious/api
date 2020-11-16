@@ -80,6 +80,8 @@ return [
     'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
     'account_details_title'              => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
     'sbs_access_token'                   => env('SBS_ACCESS_TOKEN', '1234567890'),
+    'sbs_client_id'                      => env('PRIME_BANK_NEO_BANKING_CLIENT_ID', '123456'),
+    'sbs_client_secret'                  => env('PRIME_BANK_NEO_BANKING_CLIENT_SECRET', 'abcd'),
     'completion_success_message'         => "প্রয়োজনীয় তথ্য দেয়া সম্পন্ন হয়েছ, আপনি ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে পারবেন।",
     'completion_info_message'            => "ব্যাংক অ্যাকাউন্ট জন্য আবেদন করতে হলে নিচের তথ্যাবলি অবশ্যই প্রদান করতে হবে।",
     'category_list'                      => [
@@ -866,5 +868,39 @@ return [
         ],
         'nid_selfie'  => []
     ],
-    'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN')
+    'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN'),
+    'default_prime_bank_account' => [
+        "type_of_account" => [
+            "account_savings" => "1",
+            "account_current" => "0",
+            "account_snd"     => "0",
+            "account_fc"      => "0",
+            "account_erq"     => "0",
+            "account_others"  => "0"
+        ],
+        "money_type" => [
+            "money_taka"   => "1",
+            "money_dollar" => "0",
+            "money_euro"   => "0",
+            "money_pound"  => "0",
+            "money_others" => "0"
+        ],
+        "type_of_operation" => [
+            "operation_individual" => "1",
+            "operation_joint"      => "0",
+            "operation_others"     => "0"
+        ],
+        "check_book" => [
+            "check_book_yes" => "1",
+            "check_book_no"  => "0"
+        ],
+        "e_payment" => [
+            "e_payment_yes" => "1",
+            "e_payment_no"  => "0"
+        ],
+        "internet_banking" => [
+            "internet_banking_yes" => "1",
+            "internet_banking_no"  => "0"
+        ]
+    ]
 ];
