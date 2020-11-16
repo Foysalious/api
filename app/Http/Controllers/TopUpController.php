@@ -24,6 +24,7 @@ use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
 use Throwable;
@@ -72,10 +73,10 @@ class TopUpController extends Controller
      * @param Request $request
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
+     * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
-     * @throws Exception
      */
-    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
+    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation)
     {
         try {
             $this->validate($request, [
@@ -86,13 +87,16 @@ class TopUpController extends Controller
                 'is_robi_topup' => 'sometimes|in:0,1'
             ]);
 
-
             $agent = $this->getAgent($request);
+            $userAgentInformation->setRequest($request);
 
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+            $top_up_request->setAmount($request->amount)
+                ->setMobile($request->mobile)->setType($request->connection_type)
+                ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
@@ -109,7 +113,6 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
-
     }
 
     private function affiliateLogout(Affiliate $affiliate)
@@ -117,7 +120,7 @@ class TopUpController extends Controller
         $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
     }
     
-    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo)
+    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo, UserAgentInformation $userAgentInformation)
     {
         try {
             $this->validate($request, [
@@ -131,6 +134,7 @@ class TopUpController extends Controller
             $aff = Affiliate::where('id', $affiliate)->first();
             $profileid = $aff->profile_id;
             $profile = $profileRepository->where('id', $profileid)->first();
+            $userAgentInformation->setRequest($request);
 
             if(!Hash::check($request->password, $profile->password)){
                 $data = [
@@ -167,7 +171,8 @@ class TopUpController extends Controller
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
