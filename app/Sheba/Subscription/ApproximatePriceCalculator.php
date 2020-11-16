@@ -77,8 +77,8 @@ class ApproximatePriceCalculator extends Discount
         $min_subscription_quantity = $this->getMinSubscriptionQuantity($subscription_type);
         $discounted_subscription_price = $this->calculateServiceDiscount();
         return [
-            'min_price' => (($partner_price_range_for_service[1] - $discounted_subscription_price) * $min_subscription_quantity * $this->service->min_quantity),
-            'max_price' => (($partner_price_range_for_service[0] - $discounted_subscription_price) * $min_subscription_quantity * $this->service->min_quantity),
+            'min_price' => ($partner_price_range_for_service[1] - $discounted_subscription_price),
+            'max_price' => ($partner_price_range_for_service[0] - $discounted_subscription_price),
             'price_applicable_for' => $subscription_type
         ];
     }
@@ -111,6 +111,8 @@ class ApproximatePriceCalculator extends Discount
     {
         if ($this->subscription->is_weekly)
             return 'weekly';
+        else if ($this->subscription->is_yearly)
+            return 'yearly';
         else
             return 'monthly';
     }
@@ -119,6 +121,8 @@ class ApproximatePriceCalculator extends Discount
     {
         if ($subscription_type === 'weekly')
             return $this->subscription->min_weekly_qty;
+        else if ($subscription_type === 'yearly')
+            return $this->subscription->min_yearly_qty;
         else
             return $this->subscription->min_monthly_qty;
     }

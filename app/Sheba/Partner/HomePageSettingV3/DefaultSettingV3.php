@@ -105,6 +105,7 @@ class DefaultSettingV3
             "name_bn" => "গিফট শপ",
             "is_on_homepage" => 0
         ];
+
         $emi= [
             "key" => "emi",
             "name_en" => "EMI",
@@ -118,10 +119,16 @@ class DefaultSettingV3
             "is_on_homepage" => 0
         ];
 
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $digital_banking];
+        $topup = [
+            "key" => "topup",
+            "name_en" => "Top Up",
+            "name_bn" => "টপ-আপ",
+            "is_on_homepage" => 0
+        ];
+        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi,$topup, $digital_banking];
     }
     public static function getLastUpdatedAt()
     {
-        return '2020-08-23';
+        return '2020-10-22';
     }
 }

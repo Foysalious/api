@@ -84,11 +84,15 @@ class RegistrationController extends Controller
         ]);
         $token = $this->accounts->createProfileAndAvatarAndGetTokenByEmailAndPassword('member', $request->name, $request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
+        /** @var Member $member */
         $member = Member::find($auth_user->getMemberId());
         $this->setModifier($member);
-        $business_creator_request = $business_creator_request->setName($request->company_name)
+
+        $business_creator_request = $business_creator_request
+            ->setName($request->company_name)
             ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
-        if (count($member->businesses) > 0) {
+
+        if (count($member->businesses) > 0 && $member->businessMember) {
             $business = $member->businesses->first();
             $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
             $business_member = $member->businessMember;
@@ -97,6 +101,7 @@ class RegistrationController extends Controller
             $common_info_creator->setBusiness($business)->setMember($member)->create();
             $business_member = $this->createBusinessMember($business, $member);
         }
+
         $info = [
             'token' => $token,
             'email_verified' => $auth_user->isEmailVerified(),

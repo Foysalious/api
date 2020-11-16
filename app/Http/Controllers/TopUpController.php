@@ -1,20 +1,16 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Business;
-use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
-use App\Repositories\NotificationRepository;
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
+use Sheba\TopUp\Exception\TopUpExceptions;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
@@ -24,13 +20,22 @@ use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
 use Throwable;
 
+use Hash;
+use App\Models\Affiliate;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
+use Sheba\ModificationFields;
+
 class TopUpController extends Controller
 {
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+    use ModificationFields;
 
     public function getVendor(Request $request)
     {
@@ -65,10 +70,10 @@ class TopUpController extends Controller
      * @param Request $request
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
+     * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
-     * @throws Exception
      */
-    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator)
+    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation)
     {
         try {
             $this->validate($request, [
@@ -79,13 +84,16 @@ class TopUpController extends Controller
                 'is_robi_topup' => 'sometimes|in:0,1'
             ]);
 
-
             $agent = $this->getAgent($request);
+            $userAgentInformation->setRequest($request);
 
             if ($this->hasLastTopupWithinIntervalTime($agent))
                 return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup);
+            $top_up_request->setAmount($request->amount)
+                ->setMobile($request->mobile)->setType($request->connection_type)
+                ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+                ->setUserAgent($userAgentInformation->getUserAgent());
 
             if ($top_up_request->hasError())
                 return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
@@ -102,7 +110,95 @@ class TopUpController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
 
+    private function affiliateLogout(Affiliate $affiliate)
+    {
+        $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
+    }
+
+    public function topUpWithPin($affiliate, Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo, UserAgentInformation $userAgentInformation)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'amount' => 'required|min:10|max:1000|numeric',
+                'is_robi_topup' => 'sometimes|in:0,1'
+            ]);
+            $agent = $this->getAgent($request);
+            $aff = $agent;
+            $profile = $aff->profile;
+            $userAgentInformation->setRequest($request);
+            (new VerifyPin())->setAgent($agent)->setProfile($profile)->setRequest($request)->verify();
+            if ($this->hasLastTopupWithinIntervalTime($agent))
+                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+                ->setUserAgent($userAgentInformation->getUserAgent());
+
+            if ($top_up_request->hasError())
+                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+            if ($topup_order) {
+                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (TopUpExceptions $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+    }
+
+    public function topUpWithPinV2(Request $request, TopUpRequest $top_up_request, Creator $creator, ProfileRepositoryInterface $profileRepository, WrongPINCountRepo $wrongPINCountRepo, UserAgentInformation $userAgentInformation)
+    {
+        try {
+            $this->validate($request, [
+                'mobile' => 'required|string|mobile:bd',
+                'connection_type' => 'required|in:prepaid,postpaid',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'amount' => 'required|min:10|max:1000|numeric',
+                'is_robi_topup' => 'sometimes|in:0,1',
+                'password' => 'required',
+            ]);
+            $agent = $this->getAgent($request);
+            $profile = $request->manager_resource->profile;
+            $userAgentInformation->setRequest($request);
+            (new VerifyPin())->setAgent($agent)->setProfile($profile)->setManagerResource($request->manager_resource)->setRequest($request)->verify();
+            if ($this->hasLastTopupWithinIntervalTime($agent))
+                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+
+            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+                ->setUserAgent($userAgentInformation->getUserAgent());
+
+            if ($top_up_request->hasError())
+                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+
+            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+
+            if ($topup_order) {
+                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $msg = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, null, 400, ['message' => $msg]);
+        } catch (TopUpExceptions $e) {
+            return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     /**

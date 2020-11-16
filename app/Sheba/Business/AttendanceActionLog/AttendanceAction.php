@@ -1,7 +1,10 @@
 <?php namespace Sheba\Business\AttendanceActionLog;
 
+use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
+use Carbon\CarbonPeriod;
 use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Business\Leave\HalfDay\HalfDayLeaveCheck;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Business\Attendance\Creator as AttendanceCreator;
 use Sheba\Dal\Attendance\EloquentImplementation;
@@ -10,6 +13,7 @@ use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Dal\Attendance\Statuses;
 use App\Models\BusinessMember;
 use App\Models\Business;
+use Sheba\Helpers\TimeFrame;
 use Sheba\Location\Geo;
 use Carbon\Carbon;
 use DB;
@@ -142,7 +146,7 @@ class AttendanceAction
     {
         $processor = new ActionProcessor();
         $action = $processor->setActionName($this->action)->getAction();
-        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business);
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business)->setBusinessMember($this->businessMember);
         $action->check();
         $this->isRemote = $action->getIsRemote();
         return $action;
@@ -158,13 +162,16 @@ class AttendanceAction
                 ->setIp($this->getIp())
                 ->setDeviceId($this->deviceId)
                 ->setUserAgent($this->userAgent)
-                ->setIsRemote($this->isRemote);
+                ->setIsRemote($this->isRemote)
+                ->setBusiness($this->business)
+                ->setWhichHalfDay($this->checkHalfDayLeave());
             if ($geo = $this->getGeo()) $this->attendanceActionLogCreator->setGeo($geo);
             if ($this->action == Actions::CHECKOUT) $this->attendanceActionLogCreator->setNote($this->note);
             $attendance_action_log = $this->attendanceActionLogCreator->create();
             $this->updateAttendance($attendance_action_log);
         });
     }
+
 
     private function createAttendance()
     {
@@ -199,5 +206,13 @@ class AttendanceAction
         if (!$this->lat || !$this->lng) return null;
         $geo = new Geo();
         return $geo->setLat($this->lat)->setLng($this->lng);
+    }
+
+    /**
+     * @return string|null
+     */
+    private function checkHalfDayLeave()
+    {
+        return (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
     }
 }

@@ -3,7 +3,6 @@
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
-use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\Attendance\Model as Attendance;
 use App\Models\BusinessMember;
 use App\Models\Business;
@@ -18,8 +17,10 @@ abstract class ActionChecker
     protected $attendanceOfToday;
     /** @var AttendanceActionLog[] */
     protected $attendanceLogsOfToday;
-    /** @var Business */
+    /** @var Business $business */
     protected $business;
+    /** @var BusinessMember $businessMember */
+    protected $businessMember;
     protected $ip;
     protected $deviceId;
     protected $resultCode;
@@ -34,6 +35,16 @@ abstract class ActionChecker
     public function setBusiness($business)
     {
         $this->business = $business;
+        return $this;
+    }
+
+    /**
+     * @param $business_member
+     * @return $this
+     */
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = $business_member;
         return $this;
     }
 
@@ -202,6 +213,7 @@ abstract class ActionChecker
         $time = new TimeByBusiness();
         $weekendHoliday = new WeekendHolidayByBusiness();
         $checkout_time = $time->getOfficeEndTimeByBusiness();
+
         if (is_null($checkout_time)) return 0;
         if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
             return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;
