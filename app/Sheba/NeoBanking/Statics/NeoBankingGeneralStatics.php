@@ -66,9 +66,9 @@ class NeoBankingGeneralStatics
 
     public static function types($type)
     {
-        $data = ['organization_type_list' => array_column(constants('PARTNER_OWNER_TYPES'),'bn'), 'business_type_list' => constants('PARTNER_BUSINESS_TYPE')];
+        $data = ['organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'], 'business_type_list' => ['list' => constants('PARTNER_BUSINESS_TYPE'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন']];
         try {
-            return $data[$type];
+            return  $data[$type];
         } catch (\Throwable $e) {
             return [];
         }

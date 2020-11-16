@@ -2,6 +2,7 @@
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use GuzzleHttp\Exception\GuzzleException;
 use ReflectionException;
 use Sheba\NeoBanking\Banks\Bank;
 use Sheba\NeoBanking\Banks\BankAccountInfo;
@@ -52,7 +53,7 @@ class PrimeBank extends Bank
 
     /**
      * @return mixed
-     * @throws TPProxyServerError
+     * @throws GuzzleException
      */
     public function accountCreate()
     {
