@@ -6,6 +6,7 @@ use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Exception;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\NeoBanking\Exceptions\AccountCreateException;
+use Sheba\NeoBanking\Exceptions\InvalidPartnerInformationException;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
 class AccountCreate
@@ -31,9 +32,15 @@ class AccountCreate
         return $this;
     }
 
+    /**
+     * @return $this
+     * @throws InvalidPartnerInformationException
+     */
     public function makeData()
     {
+        if (!isset($this->neoBankingData->information_for_bank_account)) throw new InvalidPartnerInformationException();
         $application = json_decode($this->neoBankingData->information_for_bank_account, 1);
+        if (!isset($application['personal']) || !isset($application['institution'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $this->data = [
             "application_data" => json_encode($application),
