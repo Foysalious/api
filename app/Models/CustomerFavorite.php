@@ -1,6 +1,8 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class CustomerFavorite extends Model
 {

@@ -1,6 +1,6 @@
 <?php namespace App\GraphQL\Query;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use GraphQL;
 use GraphQL\Type\Definition\ResolveInfo;
 use GraphQL\Type\Definition\Type;

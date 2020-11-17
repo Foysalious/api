@@ -47,6 +47,11 @@ abstract class Handler
         return response()->json($response);
     }
 
+    public function report()
+    {
+        logError($this->exception);
+    }
+
     /**
      * @return string
      */

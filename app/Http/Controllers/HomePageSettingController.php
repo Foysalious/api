@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HyperLocal;
 use App\Models\Location;
@@ -168,6 +168,16 @@ class HomePageSettingController extends Controller
     {
         try {
             $settings = json_decode(Redis::get('car_settings'));
+            return api_response($request, $settings, 200, ['settings' => $settings]);
+        } catch (Throwable $e) {
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getCarV3(Request $request)
+    {
+        try {
+            $settings = json_decode(Redis::get('car_settings_v3'));
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
             return api_response($request, null, 500);

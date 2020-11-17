@@ -43,7 +43,6 @@ class SubscriptionOrderAdapter implements PayableAdapter
         return $payable;
     }
 
-
     /**
      * @return float
      */
@@ -75,10 +74,15 @@ class SubscriptionOrderAdapter implements PayableAdapter
     private function resolveRedirectUrl()
     {
         if ($this->user instanceof Business) {
-            return config('sheba.business_url') . '/dashboard/subscriptions/' . $this->subscriptionOrder->id;
+            return config('sheba.business_url') . '/dashboard/orders/subscription/' . $this->subscriptionOrder->id;
         } else {
             return config('sheba.front_url') . '/subscription-orders/' . $this->subscriptionOrder->id;
         }
 
+    }
+
+    public function canInit(): bool
+    {
+        return true;
     }
 }

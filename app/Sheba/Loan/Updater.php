@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use RecursiveArrayIterator;
 use RecursiveIteratorIterator;
 use Sheba\Loan\DS\PartnerLoanRequest;
+use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\ModificationFields;
 
 class Updater
@@ -96,13 +97,7 @@ class Updater
 
     public static function updateFields()
     {
-        return [
-            'credit_score',
-            'duration',
-            'purpose',
-            'interest_rate',
-            'loan_amount'
-        ];
+        return GeneralStatics::getUpdateFields();
     }
 
     private function loanRequestUpdate(PartnerBankLoan $loan, $field)

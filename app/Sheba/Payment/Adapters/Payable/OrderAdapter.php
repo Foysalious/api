@@ -4,11 +4,14 @@ use App\Models\Job;
 use App\Models\PartnerOrder;
 use App\Models\Payable;
 use Carbon\Carbon;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\JobDiscount\JobDiscountCheckingParams;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobStatuses;
+use Sheba\Payment\Adapters\Error\PayableInitiateErrorException;
 
-class OrderAdapter extends BaseAdapter implements PayableAdapter
+class OrderAdapter implements PayableAdapter
 {
     /** @var PartnerOrder $partnerOrder */
     private $partnerOrder;
@@ -18,6 +21,7 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     /** @var Job $job */
     private $job;
     private $emiMonth;
+    private $paymentMethod;
 
     public function __construct()
     {
@@ -33,6 +37,7 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
     {
         $this->partnerOrder = $partnerOrder;
         $this->partnerOrder->calculate(true);
+        $this->setJob($this->partnerOrder->getActiveJob());
         $this->setUser();
         return $this;
     }
@@ -47,7 +52,6 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         return $this;
     }
 
-
     /**
      * @param $month |int
      * @return $this
@@ -58,9 +62,21 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         return $this;
     }
 
+    public function setPaymentMethod($method)
+    {
+        $this->paymentMethod = $method;
+        return $this;
+    }
+
+    private function setJob($job)
+    {
+        $this->job = $job;
+        return $this;
+    }
+
     public function getPayable(): Payable
     {
-        $this->job = $this->partnerOrder->getActiveJob();
+        if (!$this->canInit()) throw new PayableInitiateErrorException('Payable can not be initiated');
         $payable = new Payable();
         $payable->type = 'partner_order';
         $payable->type_id = $this->partnerOrder->id;
@@ -120,13 +136,13 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
 
     private function getSuccessUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/" . $this->partnerOrder->id;
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/quick-purchase/" . $this->partnerOrder->id;
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
     private function getFailUrl()
     {
-        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url');
+        if ($this->userType == "App\\Models\\Business") return config('sheba.business_url') . "/dashboard/orders/quick-purchase/" . $this->partnerOrder->id;
         else return config('sheba.front_url') . '/orders/' . $this->partnerOrder->getActiveJob()->id . '/payment';
     }
 
@@ -140,4 +156,11 @@ class OrderAdapter extends BaseAdapter implements PayableAdapter
         // TODO: Implement setModelForPayable() method.
     }
 
+    public function canInit(): bool
+    {
+        if ((double)$this->partnerOrder->getCustomerPayable() <= 0) return false;
+        if ($this->partnerOrder->isCancelled()) return false;
+        if (in_array($this->job->status, [JobStatuses::DECLINED]) || $this->job->hasPendingCancelRequest()) return false;
+        return true;
+    }
 }

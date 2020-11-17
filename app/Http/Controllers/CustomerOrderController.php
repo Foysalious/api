@@ -5,9 +5,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Job;
 use App\Models\PartnerOrder;
+use App\Repositories\ReviewRepository;
+use App\Transformers\Customer\CustomerDueOrdersTransformer;
+use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use Sheba\Logs\Customer\JobLogs;
 use Throwable;
 
@@ -148,6 +153,7 @@ class CustomerOrderController extends Controller
             }
             if ($job != null) $all_jobs->push($this->getJobInformation($job, $partnerOrder));
         }
+
         return $all_jobs;
     }
 
@@ -187,6 +193,7 @@ class CustomerOrderController extends Controller
             'category_name' => $category ? $category->name : null,
             'category_thumb' => $category ? $category->thumb : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
+            'schedule_date_for_b2b' => $job->schedule_date ? (Carbon::parse($job->schedule_date))->format('d/m/y') : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
             'cancelled_date' => $partnerOrder->cancelled_at,
@@ -200,8 +207,14 @@ class CustomerOrderController extends Controller
             'status_color' => constants('JOB_STATUSES_COLOR')[$job->status]['customer'],
             'partner_name' => $partnerOrder->partner ? $partnerOrder->partner->name : null,
             'partner_logo' => $partnerOrder->partner ? $partnerOrder->partner->logo : null,
+            'partner_mobile_number' => $partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null,
+            'partner_total_rating'=> $partnerOrder->partner ?  $partnerOrder->partner->reviews->count():null,
+            'partner_avg_rating' => $partnerOrder->partner ?  (new ReviewRepository)->getAvgRating($partnerOrder->partner->reviews):null,
             'resource_name' => $job->resource ? $job->resource->profile->name : null,
             'resource_pic' => $job->resource ? $job->resource->profile->pro_pic : null,
+            'resource_mobile_number' => $job->resource ? $job->resource->profile->mobile : null,
+            'resource_total_rating' => $job->resource ? $job->resource->reviews->count(): null,
+            'resource_avg_rating' => $job->resource ? (new ReviewRepository)->getAvgRating($job->resource->reviews): null,
             'contact_number' => $show_expert ? ($job->resource ? $job->resource->profile->mobile : null) : ($partnerOrder->partner ? $partnerOrder->partner->getManagerMobile() : null),
             'contact_person' => $show_expert ? 'expert' : 'partner',
             'rating' => $job->review != null ? $job->review->rating : null,
@@ -217,4 +230,17 @@ class CustomerOrderController extends Controller
             'message' => (new JobLogs($job))->getOrderMessage(),
         ));
     }
+
+    public function dueOrders($customer, Request $request)
+    {
+        $orders = $request->customer->partnerOrders();
+        $due_orders = $orders->where('closed_at', '<>', null)->where('closed_and_paid_at', null)->orderBy('closed_at', 'ASC')->limit(1)->get();
+        if ($due_orders->isEmpty()) return api_response($request, null, 404, ['message' => 'No Due Order Found.']);
+        $fractal = new Manager();
+        $fractal->setSerializer(new CustomSerializer());
+        $resource = new Collection($due_orders, new CustomerDueOrdersTransformer());
+        $dueOrders = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, $dueOrders, 200, ['due_orders' => $dueOrders]);
+    }
+
 }

@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\PaymentDetail\AvailableMethods;
 
 class PaymentDetail extends Model
 {
@@ -24,15 +25,6 @@ class PaymentDetail extends Model
 
     public function getReadableMethodAttribute()
     {
-        if ($this->method == 'ssl')
-            return 'Online';
-        elseif ($this->method == 'wallet' || $this->method == 'bonus')
-            return 'Wallet';
-        elseif ($this->method == 'bkash')
-            return 'Bkash';
-        elseif ($this->method == 'cbl')
-            return 'Cbl';
-        elseif ($this->method=='ssl_donation')
-            return 'SSL Commerz';
+        return AvailableMethods::getReadableName($this->method);
     }
 }

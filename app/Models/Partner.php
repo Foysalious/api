@@ -8,11 +8,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
+use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\FraudDetection\TransactionSources;
-use Sheba\HasWallet;
+use Sheba\Payment\PayableUser;
+use Sheba\Transactions\Types;
+use Sheba\Wallet\HasWallet;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
@@ -21,7 +25,7 @@ use Sheba\MovieTicket\MovieTicketTrait;
 use Sheba\MovieTicket\MovieTicketTransaction;
 use Sheba\Partner\BadgeResolver;
 use Sheba\Partner\PartnerStatuses;
-use Sheba\Payment\Wallet;
+use Sheba\Wallet\Wallet;
 use Sheba\Referral\HasReferrals;
 use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
@@ -37,88 +41,85 @@ use Sheba\Transport\TransportAgent;
 use Sheba\Transport\TransportTicketTransaction;
 use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
-class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals
+class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
     use Wallet, TopUpTrait, MovieTicketTrait;
 
-    public    $totalCreditForSubscription;
-    public    $totalPriceRequiredForSubscription;
-    public    $creditBreakdown;
+    public $totalCreditForSubscription;
+    public $totalPriceRequiredForSubscription;
+    public $creditBreakdown;
     protected $guarded = ['id'];
-    protected $dates
-                       = [
-            'last_billed_date',
-            'billing_start_date'
-        ];
-    protected $casts
-                       = [
-            'wallet'              => 'double',
-            'last_billed_amount'  => 'double',
-            'reward_point'        => 'int',
-            'current_impression'  => 'double',
-            'impression_limit'    => 'double',
-            'uses_sheba_logistic' => 'int'
-        ];
-    protected $resourcePivotColumns
-                       = [
-            'id',
-            'designation',
-            'department',
-            'resource_type',
-            'is_verified',
-            'verification_note',
-            'created_by',
-            'created_by_name',
-            'created_at',
-            'updated_by',
-            'updated_by_name',
-            'updated_at'
-        ];
-    protected $categoryPivotColumns
-                       = [
-            'id',
-            'experience',
-            'preparation_time_minutes',
-            'response_time_min',
-            'response_time_max',
-            'commission',
-            'is_verified',
-            'uses_sheba_logistic',
-            'verification_note',
-            'created_by',
-            'created_by_name',
-            'created_at',
-            'updated_by',
-            'updated_by_name',
-            'updated_at',
-            'is_home_delivery_applied',
-            'is_partner_premise_applied',
-            'delivery_charge'
-        ];
-    protected $servicePivotColumns
-                       = [
-            'id',
-            'description',
-            'options',
-            'prices',
-            'min_prices',
-            'base_prices',
-            'base_quantity',
-            'is_published',
-            'discount',
-            'discount_start_date',
-            'discount_start_date',
-            'is_verified',
-            'verification_note',
-            'created_by',
-            'created_by_name',
-            'created_at',
-            'updated_by',
-            'updated_by_name',
-            'updated_at'
-        ];
-    private   $resourceTypes;
+    protected $dates = [
+        'last_billed_date',
+        'billing_start_date'
+    ];
+    protected $casts = [
+        'wallet' => 'double',
+        'last_billed_amount' => 'double',
+        'reward_point' => 'int',
+        'current_impression' => 'double',
+        'impression_limit' => 'double',
+        'uses_sheba_logistic' => 'int'
+    ];
+    protected $resourcePivotColumns = [
+        'id',
+        'designation',
+        'department',
+        'resource_type',
+        'is_verified',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at'
+    ];
+    protected $categoryPivotColumns = [
+        'id',
+        'experience',
+        'preparation_time_minutes',
+        'response_time_min',
+        'response_time_max',
+        'commission',
+        'is_verified',
+        'uses_sheba_logistic',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at',
+        'is_home_delivery_applied',
+        'is_partner_premise_applied',
+        'delivery_charge'
+    ];
+    protected $servicePivotColumns = [
+        'id',
+        'description',
+        'options',
+        'prices',
+        'min_prices',
+        'base_prices',
+        'base_quantity',
+        'is_published',
+        'discount',
+        'discount_start_date',
+        'discount_start_date',
+        'is_verified',
+        'verification_note',
+        'created_by',
+        'created_by_name',
+        'created_at',
+        'updated_by',
+        'updated_by_name',
+        'updated_at'
+    ];
+    private $resourceTypes;
 
     public function __construct($attributes = [])
     {
@@ -228,8 +229,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function commission($service_id)
     {
-        $service_category = Service::find($service_id)->category->id;
-        return $this->categories()->find($service_category)->pivot->commission;
+        $service_category = Service::find($service_id)->category;
+        $commissions = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
+        return $commissions->getServiceCommission();
     }
 
     public function categories()
@@ -360,6 +362,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $resource->profile->pro_pic;
     }
 
+    public function getContactEmail()
+    {
+        $resource = $this->getContactResource();
+        if (!$resource) return null;
+        return $resource->profile->email;
+    }
+
     public function isNIDVerified()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -455,7 +464,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function resourcesInCategory($category)
     {
-        $category             = $category instanceof Category ? $category->id : $category;
+        $category = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
         $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
@@ -482,9 +491,19 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
     }
 
+    public function bankInfos()
+    {
+        return $this->hasMany(PartnerBankInformation::class);
+    }
+
     public function bankInformations()
     {
-        return $this->hasOne(PartnerBankInformation::class);
+        return $this->bankInfos()->where('purpose',Purposes::GENERAL);
+    }
+
+    public function withdrawalBankInformations()
+    {
+        return $this->bankInfos()->where('purpose',Purposes::PARTNER_WALLET_WITHDRAWAL);
     }
 
     public function affiliation()
@@ -534,8 +553,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function subscribe($package, $billing_type)
     {
-        $package     = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $discount    = $package->runningDiscount($billing_type);
+        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $discount = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
@@ -559,6 +578,20 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function runSubscriptionBilling()
     {
         $this->subscriber()->getBilling()->runSubscriptionBilling();
+    }
+
+<<<<<<< Updated upstream
+
+    public function retailers()
+    {
+        return $this->getFirstAdminResource()->retailers();
+    }
+=======
+>>>>>>> Stashed changes
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 
     public function getCommissionAttribute()
@@ -607,7 +640,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType('debit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function todayJobs($jobs = null)
@@ -697,9 +730,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasCoverageOn(Coords $coords)
     {
-        $geo           = json_decode($this->geo_informations);
+        $geo = json_decode($this->geo_informations);
         $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
-        $distance      = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 
@@ -812,7 +845,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function transportTicketTransaction(TransportTicketTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType('credit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TRANSPORT)->setType(Types::credit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function transportTicketOrders()
@@ -822,12 +855,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function movieTicketTransaction(MovieTicketTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('debit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType(Types::debit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function movieTicketTransactionNew(MovieTicketTransaction $transaction)
     {
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType('credit')->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::MOVIE)->setType(Types::credit())->setLog($transaction->getLog())->dispatch();
     }
 
     public function getMovieTicketCommission()
@@ -845,7 +878,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
-        $this->totalCreditForSubscription        = $this->getTotalCreditExistsForSubscription();
+        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
@@ -869,9 +902,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
-            'wallet'                        => $wallet,
-            'threshold'                     => $threshold,
-            'bonus_wallet'                  => $bonus_wallet
+            'wallet' => $wallet,
+            'threshold' => $threshold,
+            'bonus_wallet' => $bonus_wallet
         ];
         return [
             $remaining,
@@ -885,7 +918,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         $last_advance_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
         if (empty($last_advance_subscription_package_charge)) return false;
-        return true;
+        return $this->isValidAdvancePayment($last_advance_subscription_package_charge);
     }
 
     public function invalidateAdvanceSubscriptionFee()
@@ -902,7 +935,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->subscriptionPackageCharges()->where('advance_subscription_fee', 1)->where('is_valid_advance_payment')->orderBy('id', 'desc')->first();
     }
 
-    public function checkValidityOfAdvancePayment($last_subscription_package_charge)
+    public function isValidAdvancePayment($last_subscription_package_charge)
     {
         return $last_subscription_package_charge->advance_subscription_fee && $last_subscription_package_charge->is_valid_advance_payment;
     }
@@ -911,8 +944,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
         $last_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
-        if (!empty($last_subscription_package_charge)) return (double)$last_subscription_package_charge->package_price;
-        else return 0;
+        if (empty($last_subscription_package_charge) || !$this->isValidAdvancePayment($last_subscription_package_charge)) return 0;
+        return (double)$last_subscription_package_charge->package_price;
     }
 
     public function subscriptionPackageCharges()
@@ -959,4 +992,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     {
         return $this->id . str_random(8 - (strlen($this->id)));
     }
+
+    public function isMissionSaveBangladesh()
+    {
+        return $this->id == config('sheba.mission_save_bangladesh_partner_id');
+    }
+
 }

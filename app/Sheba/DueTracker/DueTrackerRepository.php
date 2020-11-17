@@ -8,6 +8,7 @@ use App\Models\Partner;
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Models\PosOrderPayment;
 use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
@@ -24,12 +25,15 @@ use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
-class DueTrackerRepository extends BaseRepository {
+class DueTrackerRepository extends BaseRepository
+{
     use ModificationFields, CdnFileManager, FileManager;
 
-    public function getDueList(Request $request, $paginate = true) {
+    public function getDueList(Request $request, $paginate = true)
+    {
         $url      = "accounts/$this->accountId/entries/due-list?";
         $url      = $this->updateRequestParam($request, $url);
         $order_by = $request->order_by;
@@ -44,9 +48,9 @@ class DueTrackerRepository extends BaseRepository {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
         if ($request->has('q') && !empty($request->q)) {
-            $query = preg_replace("/\+/", "", $request->q);
+            $query = strtolower(preg_replace("/\+/", "", $request->q));
             $list  = $list->filter(function ($item) use ($query) {
-                return preg_match("%$query%i", $item['customer_name']) || preg_match("%$query%i", $item['customer_mobile']);
+                return strpos(strtolower($item['customer_name']), "$query") !== false || strpos(strtolower($item['customer_mobile']), "$query") !== false;
             })->values();
         }
         if (!empty($order_by) && $order_by == "name") {
@@ -54,7 +58,7 @@ class DueTrackerRepository extends BaseRepository {
             $list  = $list->$order('customer_name', SORT_NATURAL | SORT_FLAG_CASE)->values();
         }
         $total = $list->count();
-        if ($paginate) {
+        if ($paginate && isset($request['offset']) && isset($request['limit'])) {
             list($offset, $limit) = calculatePagination($request);
             $list = $list->slice($offset)->take($limit)->values();
         }
@@ -67,7 +71,8 @@ class DueTrackerRepository extends BaseRepository {
         ];
     }
 
-    private function updateRequestParam(Request $request, $url) {
+    private function updateRequestParam(Request $request, $url)
+    {
         $order_by = $request->order_by;
         if (!empty($order_by) && $order_by != "name") {
             $order = !empty($request->order) ? strtolower($request->order) : 'desc';
@@ -79,14 +84,26 @@ class DueTrackerRepository extends BaseRepository {
         return $url;
     }
 
-    private function attachProfile(Collection $list) {
+    private function attachProfile(Collection $list)
+    {
         $list = $list->map(function ($item) {
             /** @var Profile $profile */
             $profile                 = Profile::select('name', 'mobile', 'id', 'pro_pic')->find($item['profile_id']);
-            $item['customer_name']   = $profile ? $profile->name : "Unknown";
+            $customerId              = $profile && isset($profile->posCustomer) ? $profile->posCustomer->id : null;
+
+            if(isset($customerId)) {
+                $posProfile = PartnerPosCustomer::byPartner($this->partnerId)->where('customer_id', $customerId)->first();
+            }
+
+            if (isset($posProfile) && isset($posProfile->nick_name)) {
+                $item['customer_name'] = $posProfile->nick_name;
+            } else {
+                $item['customer_name'] = $profile ? $profile->name : "Unknown";
+            }
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
-            $item['customer_id']     = $profile ? $profile->posCustomer ? $profile->posCustomer->id : null : null;
+            $item['customer_id']     = $customerId;
             return $item;
         });
         return $list;
@@ -95,27 +112,34 @@ class DueTrackerRepository extends BaseRepository {
     /**
      * @param Partner $partner
      * @param Request $request
-     * @param bool $paginate
+     * @param bool    $paginate
      * @return array
      * @throws ExpenseTrackingServerError
      * @throws InvalidPartnerPosCustomer
      */
-    public function getDueListByProfile(Partner $partner, Request $request) {
+    public function getDueListByProfile(Partner $partner, Request $request)
+    {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
-        /** @var PosCustomer $customer */
-        $customer = $partner_pos_customer->customer;
-        $url      = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
-        $url      = $this->updateRequestParam($request, $url);
-        $result   = $this->client->get($url);
-        $list     = collect($result['data']['list'])->map(function ($item) {
+        $customer             = PosCustomer::find($request->customer_id);
+        if (!empty($partner_pos_customer)) {
+            $customer = $partner_pos_customer->customer;
+        }
+        if (empty($customer)) throw new InvalidPartnerPosCustomer();
+        $url    = "accounts/$this->accountId/entries/due-list/$customer->profile_id?";
+        $url    = $this->updateRequestParam($request, $url);
+        $result = $this->client->get($url);
+        $due_list = collect($result['data']['list']);
+        if(isset($request['offset']) && isset($request['limit'])) {
+            list($offset, $limit) = calculatePagination($request);
+            $due_list               = $due_list->slice($offset)->take($limit)->values();
+        }
+        $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
+            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
             return $item;
         });
-        list($offset, $limit) = calculatePagination($request);
-        $list               = $list->slice($offset)->take($limit)->values();
+
         $total_credit       = 0;
         $total_debit        = 0;
         $total_transactions = count($list);
@@ -131,16 +155,22 @@ class DueTrackerRepository extends BaseRepository {
             'stats'      => $result['data']['totals'],
             'customer'   => [
                 'id'                => $customer->id,
-                'name'              => $customer->profile->name,
+                'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => $partner_pos_customer->due_date_reminder
+                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
             ],
             'partner'    => $this->getPartnerInfo($partner),
             'other_info' => [
                 'total_transactions' => $total_transactions,
                 'total_credit'       => $total_credit,
                 'total_debit'        => $total_debit,
+            ],
+            'balance' => [
+                'amount' => abs($total_debit - $total_credit),
+                'type' => $total_debit > $total_credit ? 'Advance' : 'Due',
+                'color' => $total_debit > $total_credit ? '#219653' : '#DC1E1E'
+
             ]
         ];
     }
@@ -149,7 +179,8 @@ class DueTrackerRepository extends BaseRepository {
      * @param $partner
      * @return array
      */
-    private function getPartnerInfo($partner) {
+    private function getPartnerInfo($partner)
+    {
         return [
             'name'   => $partner->name,
             'avatar' => $partner->logo,
@@ -162,14 +193,14 @@ class DueTrackerRepository extends BaseRepository {
      * @param Partner $partner
      * @param Request $request
      * @return array
-     * @throws InvalidPartnerPosCustomer
      * @throws ExpenseTrackingServerError
      */
-    public function store(Partner $partner, Request $request) {
+    public function store(Partner $partner, Request $request)
+    {
 
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $this->setModifier($partner);
@@ -186,10 +217,11 @@ class DueTrackerRepository extends BaseRepository {
      * @throws ExpenseTrackingServerError
      * @throws InvalidPartnerPosCustomer
      */
-    public function update(Partner $partner, Request $request) {
+    public function update(Partner $partner, Request $request)
+    {
         $partner_pos_customer = PartnerPosCustomer::byPartner($partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
-            throw new InvalidPartnerPosCustomer();
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $partner->id, 'customer_id' => $request->customer_id]);
         $this->setModifier($partner);
         if ($request->has('amount'))
             $data['amount'] = $request->amount;
@@ -212,7 +244,8 @@ class DueTrackerRepository extends BaseRepository {
         return $response['data'];
     }
 
-    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method) {
+    public function createPosOrderPayment($amount_cleared, $pos_order_id, $payment_method)
+    {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
         $order->calculate();
@@ -224,7 +257,16 @@ class DueTrackerRepository extends BaseRepository {
         }
     }
 
-    private function createStoreData(Request $request) {
+    public function removePosOrderPayment($pos_order_id, $amount){
+       return PosOrderPayment::where('pos_order_id', $pos_order_id)
+           ->where('amount', $amount)
+           ->where('transaction_type', 'Credit')
+           ->first()
+           ->delete();
+    }
+
+    private function createStoreData(Request $request)
+    {
         $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
         $data['amount']         = (double)$request->amount;
         $data['note']           = $request->note;
@@ -237,7 +279,8 @@ class DueTrackerRepository extends BaseRepository {
         return $data;
     }
 
-    private function uploadAttachments(Request $request) {
+    private function uploadAttachments(Request $request)
+    {
         $attachments = [];
         if ($request->hasFile('attachments')) {
             foreach ($request->file('attachments') as $key => $file) {
@@ -254,7 +297,8 @@ class DueTrackerRepository extends BaseRepository {
      * @param Request $request
      * @return false|string
      */
-    private function updateAttachments(Request $request) {
+    private function updateAttachments(Request $request)
+    {
         $attachments = [];
         foreach ($request->file('attachments') as $key => $file) {
             list($file, $filename) = $this->makeAttachment($file, '_' . getFileName($file) . '_attachments');
@@ -275,7 +319,8 @@ class DueTrackerRepository extends BaseRepository {
     /**
      * @param $files
      */
-    private function deleteFromCDN($files) {
+    private function deleteFromCDN($files)
+    {
         foreach ($files as $file) {
             $filename = substr($file, strlen(env('S3_URL')));
             (new FileRepository())->deleteFileFromCDN($filename);
@@ -283,11 +328,12 @@ class DueTrackerRepository extends BaseRepository {
     }
 
     /**
-     * @param array $list
+     * @param array   $list
      * @param Partner $partner
      * @return mixed
      */
-    public function generateDueReminders(array $list, Partner $partner) {
+    public function generateDueReminders(array $list, Partner $partner)
+    {
         $response['today']    = [];
         $response['previous'] = [];
         $response['next']     = [];
@@ -317,11 +363,12 @@ class DueTrackerRepository extends BaseRepository {
 
 
     /**
-     * @param array $dueList
+     * @param array   $dueList
      * @param Request $request
      * @return array
      */
-    public function generateDueCalender(array $dueList, Request $request) {
+    public function generateDueCalender(array $dueList, Request $request)
+    {
         $calender = [];
 
         foreach ($dueList['list'] as $item) {
@@ -359,7 +406,8 @@ class DueTrackerRepository extends BaseRepository {
      * @return mixed
      * @throws ExpenseTrackingServerError
      */
-    public function removeEntry($entry_id) {
+    public function removeEntry($entry_id)
+    {
         return $this->client->delete("accounts/$this->accountId/entries/$entry_id");
     }
 
@@ -367,7 +415,8 @@ class DueTrackerRepository extends BaseRepository {
      * @param $profile_id
      * @throws ExpenseTrackingServerError
      */
-    public function removeCustomer($profile_id) {
+    public function removeCustomer($profile_id)
+    {
         $url = "accounts/$this->accountId/remove/$profile_id";
         $this->client->delete($url);
 
@@ -379,7 +428,8 @@ class DueTrackerRepository extends BaseRepository {
      * @return mixed
      * @throws InvalidPartnerPosCustomer|InsufficientBalance
      */
-    public function sendSMS(Request $request) {
+    public function sendSMS(Request $request)
+    {
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             throw new InvalidPartnerPosCustomer();
@@ -403,7 +453,7 @@ class DueTrackerRepository extends BaseRepository {
             throw new InsufficientBalance();
         }
         $sms->shoot();
-        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType('debit')->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
+        (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }
 
@@ -412,16 +462,16 @@ class DueTrackerRepository extends BaseRepository {
         if ($data['type'] == 'due') {
             $sms = (new SmsHandlerRepo('inform-due'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
                 'customer_name' => $data['customer_name'],
-                'partner_name' => $data['partner_name'],
-                'amount' => $data['amount'],
-                'payment_link' => $data['payment_link']
+                'partner_name'  => $data['partner_name'],
+                'amount'        => $data['amount'],
+                'payment_link'  => $data['payment_link']
             ]);
             $log = " BDT has been deducted for sending due details";
         } else {
             $sms = (new SmsHandlerRepo('inform-deposit'))->setVendor('infobip')->setMobile($data['mobile'])->setMessage([
                 'customer_name' => $data['customer_name'],
-                'partner_name' => $data['partner_name'],
-                'amount' => $data['amount'],
+                'partner_name'  => $data['partner_name'],
+                'amount'        => $data['amount'],
             ]);
             $log = " BDT has been deducted for sending deposit details";
         }
@@ -433,7 +483,8 @@ class DueTrackerRepository extends BaseRepository {
     /**
      * @return array
      */
-    public function getFaqs() {
+    public function getFaqs()
+    {
         return [
             [
                 'question' => 'বাকির খাতা কি?',

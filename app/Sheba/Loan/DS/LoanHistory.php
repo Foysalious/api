@@ -4,6 +4,7 @@ namespace Sheba\Loan\DS;
 
 use App\Models\PartnerBankLoan;
 use Carbon\Carbon;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 
 class LoanHistory
 {
@@ -19,15 +20,19 @@ class LoanHistory
 
     public function toArray()
     {
-        $data = [
+        $isMicro = $this->isMicro();
+        $data    = [
             $this->id(),
             $this->status(),
-            $this->loanAmount(),
-            $this->duration()
+            $this->loanAmount()
         ];
-        if ($this->partnerBankLoan->status == constants('LOAN_STATUS')['approved']) {
+        if (!$isMicro) {
+            $data[] = $this->duration();
+        }
+        if (!empty($this->partnerBankLoan->bank_id)) {
             $data[] = $this->bankName();
-        } else {
+        }
+        if ($this->partnerBankLoan->status !== constants('LOAN_STATUS')['approved'] && !$isMicro) {
             $data[] = $this->installment_count();
         }
         $data[] = $this->created_at();
@@ -37,13 +42,18 @@ class LoanHistory
         return $data;
     }
 
+    private function isMicro()
+    {
+        return $this->partnerBankLoan->type == LoanTypes::MICRO;
+    }
+
     private function id()
     {
         return [
             'field' => 'id',
             'key'   => [
                 'en' => 'ID',
-                'bn' => 'লোনের আইডি'
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'ফ্যাসিলিটি আইডি' : 'লোনের আইডি'
             ],
             'value' => [
                 'en' => $this->partnerBankLoan->id,
@@ -73,10 +83,10 @@ class LoanHistory
     {
         if ($this->partnerBankLoan->status != constants('LOAN_STATUSES')['approved']) {
             $en = 'Loan Amount';
-            $bn = 'লোনের পরিমাণ';
+            $bn = $this->partnerBankLoan->type == LoanTypes::MICRO ? 'টাকার পরিমাণ' : 'লোনের পরিমাণ';
         } else {
             $en = 'Given Loan Amount';
-            $bn = 'বরাদ্দ লোনের পরিমাণ';
+            $bn = $this->partnerBankLoan->type == LoanTypes::MICRO ? 'বরাদ্দ টাকার পরিমাণ' : 'বরাদ্দ লোনের পরিমাণ';
         }
         return [
             'field' => 'loan_amount',
@@ -108,15 +118,16 @@ class LoanHistory
 
     private function bankName()
     {
+        $name = $this->partnerBankLoan->bank ? $this->partnerBankLoan->bank->name : $this->partnerBankLoan->bank_name;
         return [
             'field' => 'bank_name',
             'key'   => [
                 'en' => 'Bank Name',
-                'bn' => 'ব্যাংকের নাম',
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'প্রদানকারীর নাম' : 'ব্যাংকের নাম',
             ],
             'value' => [
-                'en' => $this->partnerBankLoan->bank_name,
-                'bn' => $this->partnerBankLoan->bank_name
+                'en' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'Sheba Platform Limited' : $name,
+                'bn' => $this->partnerBankLoan->type == LoanTypes::MICRO ? 'Sheba Platform Limited' : $name
             ]
         ];
     }

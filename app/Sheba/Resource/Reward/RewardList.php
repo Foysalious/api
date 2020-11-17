@@ -65,7 +65,7 @@ class RewardList
 
     private function getByType($type)
     {
-        $rewards = $this->resource_reward->setOffset($this->offset)->setLimit($this->limit)->setType($type)->upcoming();
+        $rewards = $this->resource_reward->setResource($this->resource)->setOffset($this->offset)->setLimit($this->limit)->setType($type)->upcoming();
         $data = [];
         foreach ($rewards as $reward) {
             $type = $this->typeFactory->setReward($reward)->getType();

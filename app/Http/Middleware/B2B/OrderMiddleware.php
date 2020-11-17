@@ -1,7 +1,4 @@
-<?php
-
-
-namespace App\Http\Middleware\B2B;
+<?php namespace App\Http\Middleware\B2B;
 
 use App\Models\PartnerOrder;
 use Closure;
@@ -21,6 +18,7 @@ class OrderMiddleware
             return api_response($request, null, 403, ["message" => "You're not authorized to access this order."]);
         }
         $request->merge(['job' => $job, 'partner_order' => $partner_order]);
+
         return $next($request);
     }
 }

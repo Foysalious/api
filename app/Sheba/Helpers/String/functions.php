@@ -13,20 +13,23 @@ if (!function_exists('randomString')) {
      */
     function randomString($len, $num = 0, $alpha = 0, $spec_char = 0)
     {
-        $alphabets          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        $numbers            = "0123456789";
+        $alphabets = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        $numbers = "0123456789";
         $special_characters = "!@#$%^&*()_-+=}{][|:;.,/?";
 
-        $characters         = "";
+        $characters = "";
         if ($num) $characters .= $numbers;
         if ($alpha) $characters .= $alphabets;
         if ($spec_char) $characters .= $special_characters;
-        if (!$num && !$alpha && !$spec_char)  $characters .= $numbers . $alphabets . $special_characters;
+        if (!$num && !$alpha && !$spec_char) $characters .= $numbers . $alphabets . $special_characters;
 
         $rand_string = '';
         for ($i = 0; $i < $len; $i++) {
-            $rand_string .= $characters[random_int(0, strlen($characters) - 1)];
+            $character = $characters[random_int(0, strlen($characters) - 1)];
+            if ($i == 0 && $character === "0") $character = '1';
+            $rand_string .= $character;
         }
+
         return $rand_string;
     }
 }
@@ -84,12 +87,12 @@ if (!function_exists('scramble_string')) {
     }
 }
 
-if (!function_exists('normalizeCases')) {
+if (!function_exists('normalizeStringCases')) {
     /**
      * @param $value
      * @return string
      */
-    function normalizeCases($value)
+    function normalizeStringCases($value)
     {
         $value = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $value));
         return ucwords(str_replace(['_','-'], ' ', $value));

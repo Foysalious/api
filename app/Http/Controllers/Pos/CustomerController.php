@@ -52,10 +52,11 @@ class CustomerController extends Controller
     }
 
     /**
-     * @param $partner
-     * @param $customer
-     * @param Request $request
-     * @param EntryRepository $entry_repo
+     * @param                      $partner
+     * @param                      $customer
+     * @param Request              $request
+     * @param EntryRepository      $entry_repo
+     * @param DueTrackerRepository $dueTrackerRepository
      * @return JsonResponse
      */
     public function show($partner, $customer, Request $request, EntryRepository $entry_repo,DueTrackerRepository $dueTrackerRepository)
@@ -73,6 +74,7 @@ class CustomerController extends Controller
             $data                             = $customer->details();
             $data['customer_since']           = $customer->created_at->format('Y-m-d');
             $data['customer_since_formatted'] = $customer->created_at->diffForHumans();
+            $data['name'] = PartnerPosCustomer::getPartnerPosCustomerName($request->partner->id, $customer->id);
             $total_purchase_amount            = 0.00;
             $total_used_promo                 = 0;
             PosOrder::byPartner($partner)->byCustomer($customer->id)->get()->each(function ($order) use (&$total_purchase_amount, &$total_used_promo) {
@@ -85,7 +87,8 @@ class CustomerController extends Controller
             $data['total_due_amount']      = $this->getDueAmountFromDueTracker($dueTrackerRepository,$request->partner,$customer);
             $data['total_used_promo']      = $total_used_promo;
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
-            $data['is_customer_editable']  = $customer->isEditable();
+//            $data['is_customer_editable']  = $customer->isEditable();
+            $data['is_customer_editable']  = true;
             $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
             return api_response($request, $customer, 200, ['customer' => $data]);
         } catch (Throwable $e) {
@@ -147,7 +150,9 @@ class CustomerController extends Controller
             if ($error = $updater->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
             $customer = $updater->update();
-            return api_response($request, $customer, 200, ['customer' => $customer->details()]);
+            $customerDetails = $customer->details();
+            $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
+            return api_response($request, $customer, 200, ['customer' => $customerDetails]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
@@ -231,7 +236,8 @@ class CustomerController extends Controller
                 throw new InvalidPartnerPosCustomer();
             $customer = $partner_pos_customer->customer;
             $dueTrackerRepository->setPartner($request->partner)->removeCustomer($customer->profile_id);
-            $customer->delete();
+            $this->deletePosOrder($request->partner->id,$customer->id);
+            $partner_pos_customer->delete();
             return api_response($request, true, 200);
         } catch (InvalidPartnerPosCustomer $e) {
             return api_response($request, null, 500, ['message' => $e->getMessage()]);
@@ -239,6 +245,13 @@ class CustomerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    private function deletePosOrder($partner_id,$customer)
+    {
+        $pos_orders = PosOrder::byPartnerAndCustomer($partner_id,$customer)->get();
+        foreach ($pos_orders as $pos_order)
+            $pos_order->delete();
     }
 
     /**

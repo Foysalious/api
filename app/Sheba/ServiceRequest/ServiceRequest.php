@@ -1,11 +1,17 @@
 <?php namespace Sheba\ServiceRequest;
 
 
+use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use App\Exceptions\Service\OptionIsNotAvailableException;
+use App\Exceptions\ServiceRequest\MultipleCategoryServiceRequestException;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Location\Geo;
+use Sheba\LocationService\CorruptedPriceStructureException;
+use Sheba\Map\MapClientNoResultException;
 use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 
 class ServiceRequest
@@ -26,12 +32,17 @@ class ServiceRequest
 
 
     /**
-     * @return  ServiceRequestObject[]
+     * @return array
+     * @throws DestinationCitySameAsPickupException
+     * @throws GuzzleException
+     * @throws HyperLocationNotFoundException
+     * @throws InsideCityPickUpAddressNotFoundException
+     * @throws MapClientNoResultException
+     * @throws MultipleCategoryServiceRequestException
+     * @throws OptionIsNotAvailableException
+     * @throws OutsideCityPickUpAddressNotFoundException
      * @throws ServiceIsUnpublishedException
      * @throws ValidationException
-     * @throws DestinationCitySameAsPickupException
-     * @throws InsideCityPickUpAddressNotFoundException
-     * @throws OutsideCityPickUpAddressNotFoundException
      */
     public function get()
     {
@@ -58,6 +69,7 @@ class ServiceRequest
             $serviceRequestObject->build();
             array_push($final, $serviceRequestObject);
         }
+        $this->checkForServiceValidation($final);
         return $final;
     }
 
@@ -68,6 +80,37 @@ class ServiceRequest
     {
         $this->validator->setServices($this->services)->validate();
         if ($this->validator->hasError()) throw new ValidationException($this->validator->getErrors());
+    }
+
+
+    /**
+     * @param ServiceRequestObject[] $services
+     * @throws MultipleCategoryServiceRequestException
+     * @throws OptionIsNotAvailableException
+     */
+    private function checkForServiceValidation($services)
+    {
+        $category_ids = [];
+        foreach ($services as $service) {
+            if ($service->getService()->isOptions()) {
+                $option_prices = json_decode($service->getService()->variables)->prices;
+                if (!$this->hasThisOption($option_prices, implode(',', $service->getOption()))) {
+                    throw new OptionIsNotAvailableException("This service #" . $service->getServiceId() . " is not available.");
+                }
+            }
+            array_push($category_ids, $service->getCategory()->id);
+        }
+        if (count(array_unique($category_ids)) > 1) throw new MultipleCategoryServiceRequestException();
+    }
+
+    private function hasThisOption($prices, $option)
+    {
+        foreach ($prices as $key => $price) {
+            if ($key == $option) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

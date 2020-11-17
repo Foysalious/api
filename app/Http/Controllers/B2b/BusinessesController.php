@@ -1,68 +1,91 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
 use App\Models\BusinessJoinRequest;
 use App\Models\Notification;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
+use App\Sheba\BankingInfo\GeneralBanking;
+use App\Transformers\Business\VendorDetailsTransformer;
+use App\Transformers\Business\VendorListTransformer;
+use App\Transformers\CustomSerializer;
+use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\TransactionReportData;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
-use Carbon\Carbon;
 use DB;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
+use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Sms\Sms;
+use Throwable;
 
 class BusinessesController extends Controller
 {
     use ModificationFields;
+
+    const DIGIGO_PORTAL = 'digigo-portal';
+    private $digigo_management_emails = ['one' => 'b2b@sheba.xyz'];
     private $sms;
 
+    /**
+     * BusinessesController constructor.
+     * @param Sms $sms
+     */
     public function __construct(Sms $sms)
     {
         $this->sms = $sms;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function inviteVendors($business, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'numbers' => 'required|json'
-            ]);
+        $this->validate($request, ['numbers' => 'required|json']);
+        $business = $request->business;
+        $this->setModifier($business);
+        $invited_vendor = 0;
+        $added_vendor = 0;
 
-            $business = $request->business;
-            $this->setModifier($business);
-
-            foreach (json_decode($request->numbers) as $number) {
-
-                $mobile = formatMobile($number);
-                if ($partner = $this->hasPartner($mobile)) {
-                    $partner->businesses()->sync(['business_id' => $business->id]);
-                } else {
-                    $data = [
-                        'business_id' => $business->id,
-                        'mobile' => $mobile
-                    ];
-                    BusinessJoinRequest::create($data);
-                    $this->sms->shoot($number, "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp . sheba.xyz will help you to grow and manage your business. by $business->name");
-                }
+        foreach (json_decode($request->numbers) as $number) {
+            $mobile = formatMobile($number);
+            if ($partner = $this->hasPartner($mobile)) {
+                $partner->businesses()->sync(['business_id' => $business->id]);
+                $added_vendor++;
+            } else {
+                $data = ['business_id' => $business->id, 'mobile' => $mobile];
+                BusinessJoinRequest::create($data);
+                $invited_vendor++;
+                $this->sms->shoot(
+                    $number,
+                    "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
+                    sheba.xyz will help you to grow and manage your business. by $business->name"
+                );
             }
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
         }
+
+        return api_response($request, null, 200);
     }
 
+    /**
+     * @param $mobile
+     * @return false|mixed
+     */
     private function hasPartner($mobile)
     {
         $profile = Profile::where('mobile', $mobile)->first();
@@ -71,99 +94,97 @@ class BusinessesController extends Controller
         $resource = $profile->resource;
         if (!$resource) return false;
         $partner = $resource->firstPartner();
+
         return $partner ? $partner : false;
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorsList($business, Request $request)
     {
-        try {
-            $business = $request->business;
-            $partners = $business->partners()->with('categories')->select('id', 'name', 'mobile', 'logo', 'address')->get();
-            $vendors = collect();
-            if ($business) {
-                foreach ($partners as $partner) {
-                    $master_categories = collect();
-                    $partner->categories->map(function ($category) use ($master_categories) {
-                        $parent_category = $category->parent()->select('id', 'name')->first();
-                        $master_categories->push($parent_category);
-                    });
-                    $master_categories = $master_categories->unique()->pluck('name');
-                    $vendor = [
-                        "id" => $partner->id,
-                        "name" => $partner->name,
-                        "logo" => $partner->logo,
-                        "address" => $partner->address,
-                        "mobile" => $partner->getContactNumber(),
-                        'type' => $master_categories
-                    ];
-                    $vendors->push($vendor);
-                }
-                return api_response($request, $vendors, 200, ['vendors' => $vendors]);
-            } else {
-                return api_response($request, 1, 404);
-            }
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 404);
+
+        list($offset, $limit) = calculatePagination($request);
+        $partners = $business->partners()->select('id', 'name', 'mobile', 'logo', 'address', 'is_active_for_b2b')->with([
+            'categories' => function ($q) {
+                $q->select('categories.id', 'parent_id', 'name')->with([
+                    'parent' => function ($q) {
+                        $q->select('id', 'parent_id', 'name');
+                    }
+                ]);
+            }, 'resources.profile'
+        ]);
+        $is_business_has_vendors = $partners->count() ? 1 : 0;
+
+        if ($request->has('status')) $partners = $partners->where('is_active_for_b2b', $request->status);
+
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $vendors = new Collection($partners->get(), new VendorListTransformer());
+        $vendors = $manager->createData($vendors)->toArray()['data'];
+
+        $vendors = collect($vendors);
+        if ($request->has('search')) $vendors = $this->searchWithName($vendors, $request);
+        $total_vendors = $vendors->count();
+        if ($request->has('limit')) $vendors = $vendors->splice($offset, $limit);
+
+        return api_response($request, $vendors, 200, [
+            'vendors' => $vendors,
+            'total_vendors' => $total_vendors,
+            'is_business_has_vendors' => $is_business_has_vendors
+        ]);
     }
 
+    /**
+     * @param $vendors
+     * @param Request $request
+     * @return mixed
+     */
+    private function searchWithName($vendors, Request $request)
+    {
+        return $vendors->filter(function ($vendor) use ($request) {
+            return str_contains(strtoupper($vendor['name']), strtoupper($request->search));
+        });
+    }
+
+    /**
+     * @param $business
+     * @param $vendor
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getVendorInfo($business, $vendor, Request $request)
     {
-        try {
-            $business = $request->business;
-            /** @var Partner $partner */
-            $partner = Partner::find((int)$vendor);
-            $basic_informations = $partner->basicInformations;
-            $resources = $partner->resources->count();
-            $type = $partner->businesses->pluck('type')->unique();
+        $business = $request->business;
+        /** @var Partner $partner */
+        $partner = Partner::find((int)$vendor);
 
-            $master_categories = collect();
-            $partner->categories->map(function ($category) use ($master_categories) {
-                $parent_category = $category->parent()->select('id', 'name')->first();
-                $master_categories->push($parent_category);
-            });
-            $master_categories = $master_categories->unique()->pluck('name');
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $vendor = new Item($partner, new VendorDetailsTransformer());
+        $vendor = $manager->createData($vendor)->toArray()['data'];
 
-            $vendor = [
-                "id" => $partner->id,
-                "name" => $partner->name,
-                "logo" => $partner->logo,
-                "mobile" => $partner->getContactNumber(),
-                "company_type" => $type,
-                "service_type" => $master_categories,
-                "no_of_resource" => $resources,
-                "trade_license" => $basic_informations->trade_license,
-                "trade_license_attachment" => $basic_informations->trade_license_attachment,
-                "vat_registration_number" => $basic_informations->vat_registration_number,
-                "vat_registration_attachment" => $basic_informations->vat_registration_attachment,
-                "establishment_year" => $basic_informations->establishment_year ? Carbon::parse($basic_informations->establishment_year)->format('M, Y') : null,
-            ];
-            return api_response($request, $vendor, 200, ['vendor' => $vendor]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $vendor, 200, ['vendor' => $vendor]);
     }
 
     public function getVendorAdminInfo($business, $vendor, Request $request)
     {
-        try {
-            $partner = Partner::find((int)$vendor);
-            $resource = $partner->admins->first();
-            $resource = [
-                "id" => $resource->id,
-                "name" => $resource->profile->name,
-                "mobile" => $resource->profile->mobile,
-                "nid" => $resource->profile->nid_no,
-                "nid_image_front" => $resource->profile->nid_image_front ? : $resource->nid_image,
-                "nid_image_back" => $resource->profile->nid_image_back
-            ];
-            return api_response($request, $resource, 200, ['vendor' => $resource]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $partner = Partner::find((int)$vendor);
+        $resource = $partner->admins->first();
+        $resource = [
+            "id" => $resource->id,
+            "name" => $resource->profile->name,
+            "mobile" => $resource->profile->mobile,
+            "email" => $resource->profile->email,
+            "nid" => $resource->profile->nid_no,
+            "nid_image_front" => $resource->profile->nid_image_front ?: $resource->nid_image,
+            "nid_image_back" => $resource->profile->nid_image_back
+        ];
+        return api_response($request, $resource, 200, ['vendor' => $resource]);
     }
 
     public function getNotifications($business, Request $request)
@@ -227,7 +248,7 @@ class BusinessesController extends Controller
             $business = $request->business;
             $this->setModifier($business);
             return api_response($request, null, 200);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -239,7 +260,7 @@ class BusinessesController extends Controller
      * @param ExcelHandler $excel
      * @param TransactionReportData $data
      * @throws NotAssociativeArray
-     * @throws \Exception
+     * @throws Exception
      */
     public function downloadTransactionReport($business, TimeFrameReportRequest $request, ExcelHandler $excel, TransactionReportData $data)
     {
@@ -253,12 +274,124 @@ class BusinessesController extends Controller
 
     public function contactUs(Request $request)
     {
-        $this->validate($request, ['name' => 'required|string', 'email' => 'required|email', 'message' => 'required|string']);
-        Mail::raw($request->message, function ($m) use ($request) {
-            $m->from($request->email, $request->name);
-            $m->to('b2b@sheba.xyz');
+        $this->validate($request, [
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'message' => 'required|string',
+            'portal' => 'sometimes|required|in:' . self::DIGIGO_PORTAL
+        ]);
+
+        if ($request->portal == self::DIGIGO_PORTAL) {
+            foreach ($this->digigo_management_emails as $management_email) {
+                $this->sendMail($request->message, $request->email, $request->name, $management_email);
+            }
+        } else {
+            $this->sendMail($request->message, $request->email, $request->name);
+        }
+        return api_response($request, null, 200);
+    }
+
+    public function getBanks(Request $request)
+    {
+        $banks = [];
+        foreach (array_values(GeneralBanking::getWithKeys()) as $key => $bank) {
+            array_push($banks, [
+                'key' => $bank,
+                'value' => ucwords(str_replace('_', ' ', $bank)),
+            ]);
+        }
+        return api_response($request, null, 200, ['banks' => $banks]);
+    }
+
+    private function sendMail($message, $email, $name, $to = 'b2b@sheba.xyz')
+    {
+        Mail::raw($message, function ($m) use ($email, $name, $to) {
+            $m->from($email, $name);
+            $m->to($to);
             $m->subject('Contact Us');
         });
-        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repository
+     * @return JsonResponse
+     */
+    public function getVendorsListV3($business, Request $request, ProfileRepositoryInterface $profile_repository)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 404);
+
+        $vendors = collect();
+        $sheba_verified_vendors = collect();
+
+        $business->activePartners()
+            ->with('resources.profile')
+            ->select('id', 'name', 'logo', 'address')
+            ->get()
+            ->each(function ($partner) use ($vendors) {
+                $vendor = [
+                    "id" => $partner->id,
+                    "name" => $partner->name,
+                    "logo" => $partner->logo,
+                    "mobile" => $partner->getContactNumber()
+                ];
+
+                $vendors->push($vendor);
+            });
+
+        if ($request->has('q')) {
+            $needle = $request->q;
+            $vendors = $vendors->filter(function ($vendor) use ($needle) {
+                return (stripos($vendor['mobile'], $needle) !== false) ||
+                    (stripos($vendor['name'], $needle) !== false);
+            })->values();
+
+            if ($vendors->isEmpty()) {
+                $mobile_validator = BangladeshiMobileValidator::validate($request->q);
+                if (!$mobile_validator)
+                    return api_response($request, null, 400, [
+                        'own_vendors' => $vendors,
+                        'sheba_verified_vendors' => $sheba_verified_vendors,
+                        'message' => 'Mobile number not proper bangladeshi number. Give a proper bangladeshi number, like 01678242973'
+                    ]);
+
+                $mobile = formatMobile($request->q);
+                /** @var Partner $partner */
+                $partner = $this->getPartner($profile_repository, $mobile);
+                if ($partner)
+                    $sheba_verified_vendors->push([
+                        'id' => $partner->id,
+                        'name' => $partner->name,
+                        'logo' => $partner->logo,
+                        'mobile' => $partner->getContactNumber()
+                    ]);
+            }
+        }
+
+        return api_response($request, null, 200, ['own_vendors' => $vendors, 'sheba_verified_vendors' => $sheba_verified_vendors]);
+    }
+
+    /**
+     * @param ProfileRepositoryInterface $profile_repository
+     * @param $mobile
+     * @return mixed|null
+     */
+    private function getPartner(ProfileRepositoryInterface $profile_repository, $mobile)
+    {
+        /** @var Profile $profile */
+        $profile = $profile_repository->findByMobile($mobile)->first();
+        if (!$profile || !$profile->resource) return null;
+
+        /** @var Resource $resource */
+        $resource = $profile->resource;
+        if (!$resource->firstPartner()) return null;
+
+        $partner = $resource->firstPartner();
+        if ($partner->status != PartnerStatuses::VERIFIED) return null;
+
+        return $partner;
     }
 }

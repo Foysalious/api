@@ -2,6 +2,10 @@
 
 use Jenssegers\Mongodb\Eloquent\Model as Eloquent;
 
+/**
+ * @method static insidePolygon(float $lat, float $lng)
+ * @method static insideCircle($geo_info)
+ */
 class HyperLocal extends Eloquent
 {
     protected $connection = 'mongodb';

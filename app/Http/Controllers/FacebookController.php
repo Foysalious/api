@@ -11,6 +11,7 @@ use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Sheba\Authentication\AuthUser;
+use Sheba\Portals\Portals;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
@@ -81,7 +82,8 @@ class FacebookController extends Controller
                     if (!$profile) {
                         $profile = $this->profileRepository->getIfExist($fb_profile_info['email'], 'email');
                         if (!$profile) {
-                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile) {
+                            DB::transaction(function () use ($fb_profile_info, $kit_data, &$profile, $request) {
+                                if($request->hasHeader('portal-name')) array_add($fb_profile_info, 'portal_name', $request->header('portal-name'));
                                 $profile = $this->profileRepository->store(array_merge($fb_profile_info, ['mobile' => formatMobile($kit_data['mobile']), 'mobile_verified' => 1]));
                                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_info['pro_pic'], 'images/profiles/');
                                 $profile->update();
@@ -95,10 +97,13 @@ class FacebookController extends Controller
                 } else {
                     return api_response($request, null, 400, ['message' => 'Facebook already exists! Please login']);
                 }
+                $is_new = 0;
                 if ($profile->$from == null) {
+                    $is_new = 1;
                     $this->profileRepository->registerAvatar($from, $request, $profile);
                 }
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                $info['is_new'] = $is_new;
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403);
@@ -139,7 +144,8 @@ class FacebookController extends Controller
             ($version > 30211 && $portal_name == 'customer-app') ||
             ($version > 12003 && $portal_name == 'bondhu-app') ||
             ($version > 2145 && $portal_name == 'resource-app') ||
-            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios');
+            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios') ||
+            $portal_name == Portals::BUSINESS_WEB;
     }
 
     private function getFacebookProfileInfo($token)
@@ -147,8 +153,8 @@ class FacebookController extends Controller
         try {
             $client = new Client();
             $res = $client->request('GET', 'https://graph.facebook.com/me?fields=id,name,email,gender,picture.height(400).width(400)&access_token=' . $token);
-            $data = json_decode($res->getBody(), true);
-            return $data;
+
+            return json_decode($res->getBody(), true);
         } catch (RequestException $e) {
             return false;
         }
@@ -167,17 +173,21 @@ class FacebookController extends Controller
         if ($profile && $profile->isBlackListed()) return api_response($request, null, 403, ['message' => "Your account is blocked."]);
         $from = $this->profileRepository->getAvatar($request->from);
         if ($profile == false) {
+            if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
             array_add($request, 'mobile', $code_data['mobile']);
             $profile = $this->profileRepository->registerMobile($request->all());
             $this->profileRepository->registerAvatarByKit($from, $profile);
         }
+        $is_new = 0;
         if ($profile->$from == null) {
+            $is_new = 1;
             $this->profileRepository->registerAvatarByKit($from, $profile);
             $profile = Profile::find($profile->id);
         }
         $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
         if (!$info) return api_response($request, null, 404);
         $info['jwt']['token'] = $authUser->setProfile($profile)->generateToken();
+        $info['is_new'] = $is_new;
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
@@ -194,6 +204,7 @@ class FacebookController extends Controller
                 if ($profile == false) {
                     $email_profile = $this->profileRepository->ifExist($request->fb_email, 'email');
                     if ($email_profile == false) {
+                        if($request->hasHeader('portal-name')) array_add($request, 'portal_name', $request->header('portal-name'));
                         $profile = $this->profileRepository->registerFacebook($request->all());
                         $profile->pro_pic = $this->profileRepository->uploadImage($profile, $fb_profile_image_url, 'images/profiles/');
                         $profile->update();

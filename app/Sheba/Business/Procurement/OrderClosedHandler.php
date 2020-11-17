@@ -7,6 +7,7 @@ use App\Models\Procurement;
 use Carbon\Carbon;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Repositories\Interfaces\ProcurementRepositoryInterface;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class OrderClosedHandler
@@ -44,7 +45,7 @@ class OrderClosedHandler
         if ($price_after_commission > 0) {
             $this->walletTransactionHandler->setModel($bid->bidder)->setAmount($price_after_commission)
                 ->setSource(TransactionSources::SERVICE_PURCHASE)
-                ->setType('credit')->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
+                ->setType(Types::credit())->setLog("Credited for RFQ ID:" . $this->procurement->id)->dispatch();
         }
     }
 

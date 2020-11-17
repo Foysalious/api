@@ -4,6 +4,8 @@ namespace App\Http;
 
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\CheckForMaintenanceMode;
+use App\Http\Middleware\DLSApiVersioning;
+use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\TopUpAuthMiddleware;
@@ -77,6 +79,8 @@ class Kernel extends HttpKernel
         'business_order.auth' => OrderMiddleware::class,
         'topUp.auth' => TopUpAuthMiddleware::class,
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
-        'geo.auth' => GeoAuthMiddleware::class
+        'geo.auth' => GeoAuthMiddleware::class,
+        'loan.version'=>DLSApiVersioning::class,
+        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class
     ];
 }

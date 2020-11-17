@@ -5,11 +5,15 @@ class EmployeeRoute
     public function set($api)
     {
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
-            $api->get('me', 'Employee\EmployeeController@me');
-            $api->post('me', 'Employee\EmployeeController@updateMe');
+            $api->group(['prefix' => 'me'], function ($api) {
+                $api->get('/', 'Employee\EmployeeController@me');
+                $api->post('/', 'Employee\EmployeeController@updateMe');
+                $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
+            });
             $api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
+            $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
             $api->get('test-notification', 'Employee\NotificationController@test');
             $api->post('notifications/seen', 'Employee\NotificationController@seen');
             $api->group(['prefix' => 'supports'], function ($api) {
@@ -45,6 +49,7 @@ class EmployeeRoute
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
+                $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
@@ -59,6 +64,10 @@ class EmployeeRoute
             $api->group(['prefix' => 'holidays'], function ($api) {
                 $api->get('/', 'Employee\HolidayController@getHolidays');
             });
+            $api->group(['prefix' => 'departments'], function ($api) {
+                $api->get('/', 'Employee\DepartmentController@index');
+            });
+            $api->get('managers','Employee\EmployeeController@getManagersList');
             $api->get('/','Employee\EmployeeController@index');
             $api->get('/{employee}','Employee\EmployeeController@show');
         });

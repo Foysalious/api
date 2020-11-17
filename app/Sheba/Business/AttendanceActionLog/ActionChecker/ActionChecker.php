@@ -157,10 +157,18 @@ abstract class ActionChecker
     {
         if (!$this->isSuccess()) return;
         if ($this->business->isIpBasedAttendanceEnable()) {
-            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) $this->remoteAttendance();
-            $this->setSuccessfulResponseMessage();
+            if ($this->business->offices()->count() > 0 && !$this->isInWifiArea()) {
+                if ($this->business->isRemoteAttendanceEnable()) {
+                    $this->remoteAttendance();
+                } else {
+                    $this->setResult(ActionResultCodes::OUT_OF_WIFI_AREA, ActionResultCodeMessages::OUT_OF_WIFI_AREA);
+                }
+            } else {
+                $this->setSuccessfulResponseMessage();
+            }
+        } else {
+            $this->remoteAttendance();
         }
-        $this->remoteAttendance();
     }
 
     private function remoteAttendance()
@@ -194,6 +202,7 @@ abstract class ActionChecker
         $time = new TimeByBusiness();
         $weekendHoliday = new WeekendHolidayByBusiness();
         $checkout_time = $time->getOfficeEndTimeByBusiness();
+
         if (is_null($checkout_time)) return 0;
         if (!$weekendHoliday->isWeekendByBusiness($date) && !$weekendHoliday->isHolidayByBusiness($date)) {
             return Carbon::now()->lt(Carbon::parse($checkout_time)) ? 1 : 0;

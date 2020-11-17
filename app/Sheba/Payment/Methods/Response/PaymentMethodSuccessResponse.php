@@ -1,6 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Response;
+<?php namespace Sheba\Payment\Methods\Response;
 
 
 class PaymentMethodSuccessResponse
@@ -8,6 +6,7 @@ class PaymentMethodSuccessResponse
     private $id;
     private $details;
     private $redirect_url;
+    private $refund_id;
 
     public function __get($name)
     {
@@ -17,5 +16,16 @@ class PaymentMethodSuccessResponse
     public function __set($name, $value)
     {
         $this->$name = $value;
+    }
+
+    /**
+     * @return array
+     */
+    public function getGatewayResponse()
+    {
+        return [
+            'id' => $this->id,
+            'details' => $this->details,
+        ];
     }
 }

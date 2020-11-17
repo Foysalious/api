@@ -297,6 +297,7 @@ class PartnerSubscriptionController extends Controller
                 try {
                     $grade = $handler->getGrade();
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
+                        DB::commit();
                         return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
                     }
                     $hasCredit = $handler->hasCredit();

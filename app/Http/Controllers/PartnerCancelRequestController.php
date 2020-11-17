@@ -1,51 +1,45 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\JobCancelReason;
+use Sheba\Dal\JobCancelReason\JobCancelReason;
 
+use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
 use Sheba\CancelRequest\PartnerRequestor;
-use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
+use Sheba\CancelRequest\RequestedByType;
+use Sheba\CancelRequest\SendCancelRequest;
+use Sheba\CancelRequest\SendCancelRequestJob;
+use Sheba\UserAgentInformation;
 
 class PartnerCancelRequestController extends Controller
 {
-    use ModificationFields;
+    use  DispatchesJobs;
 
-    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor)
+    public function store($partner, $job, Request $request, PartnerRequestor $partner_requestor, UserAgentInformation $userAgentInformation, SendCancelRequest $send_cancel_request)
     {
-        try {
-            $this->setModifier($request->manager_resource);
-            $job = $request->job;
-            $reasons = JobCancelReason::where('is_published_for_sp', 1)->pluck('id');
-            $reasons = implode(',', array_flatten($reasons));
-            $this->validate($request, ['cancel_reason' => "in:$reasons"]);
-            $partner_requestor->setJob($job)->setReason(JobCancelReason::find($request->cancel_reason)->key)->setEscalatedStatus(0);
-
-            $error = $partner_requestor->hasError($request);
-            if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
-
-            $partner_requestor->request();
-            return api_response($request, 1, 200, ['message' => "Cancel Request create successfully"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $job = $request->job;
+        $reasons = JobCancelReason::where('is_published_for_sp', 1)->pluck('id');
+        $reasons = implode(',', array_flatten($reasons));
+        $this->validate($request, ['cancel_reason' => "in:$reasons"]);
+        $cancel_reason = JobCancelReason::find($request->cancel_reason)->key;
+        $partner_requestor->setJob($job);
+        $error = $partner_requestor->hasError();
+        if ($error) return api_response($request, $error['msg'], $error['code'], ['message' => $error['msg']]);
+        $userAgentInformation->setRequest($request);
+        $send_cancel_request
+            ->setJobId($job->id)
+            ->setIsEscalated(false)->setCancelReason($cancel_reason)
+            ->setUserAgent($userAgentInformation->getUserAgent())->setPortalName($userAgentInformation->getPortalName())
+            ->setIp($userAgentInformation->getIp())
+            ->setRequestedById($request->manager_resource->id)
+            ->setRequestedByType(RequestedByType::RESOURCE);
+        dispatch(new SendCancelRequestJob($send_cancel_request));
+        sleep(5);
+        return api_response($request, 1, 200, ['message' => "You've successfully submitted the request. Please give some time to process."]);
     }
 
     public function cancelReasons(Request $request)
     {
-        try {
-            $reasons = JobCancelReason::select('id', 'key', 'name')->where('is_published_for_sp', 1)->get();
-            return api_response($request, $reasons, 200, ['reasons' => $reasons]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $reasons = JobCancelReason::select('id', 'key', 'name')->where('is_published_for_sp', 1)->get();
+        return api_response($request, $reasons, 200, ['reasons' => $reasons]);
     }
 }

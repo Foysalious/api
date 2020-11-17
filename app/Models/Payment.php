@@ -23,6 +23,11 @@ class Payment extends Model
         return $this->hasMany(PaymentDetail::class);
     }
 
+    public function externalPayments()
+    {
+        return $this->hasOne(\Sheba\Dal\ExternalPayment\Model::class);
+    }
+
     /**
      *
      * Scope functions
@@ -35,6 +40,11 @@ class Payment extends Model
     public function scopeInitiated($query)
     {
         return $query->where('status', Statuses::INITIATED);
+    }
+
+    public function scopeInitiationFailed($query)
+    {
+        return $query->where('status', Statuses::INITIATION_FAILED);
     }
 
     public function scopeStillValidityLeft($query)
@@ -76,20 +86,25 @@ class Payment extends Model
         return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
     }
 
-
     public function canComplete()
     {
         return $this->status == Statuses::VALIDATED || $this->status == Statuses::FAILED;
+    }
+
+    public function isReturnedFrom()
+    {
+        return true;
     }
 
     public function getFormattedPayment()
     {
         return [
             'transaction_id' => $this->transaction_id,
-            'id' => (int)$this->payable->type_id,
-            'type' => $this->payable->readable_type,
-            'link' => $this->redirect_url,
-            'success_url' => $this->payable->success_url
+            'id'             => (int)$this->payable->type_id,
+            'type'           => $this->payable->readable_type,
+            'link'           => $this->redirect_url,
+            'success_url'    => $this->payable->success_url,
+            'fail_url'       => $this->payable->fail_url
         ];
     }
 
@@ -98,12 +113,28 @@ class Payment extends Model
      */
     public function getShebaTransaction()
     {
-        $detail = $this->paymentDetails->first();
+        $detail      = $this->paymentDetails->first();
         $transaction = new ShebaTransaction();
         $transaction->setTransactionId($this->transaction_id)
-            ->setGateway($detail ? $detail->method : null)
-            ->setDetails(json_decode($this->transaction_details));
+                    ->setGateway($detail ? $detail->method : null)
+                    ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
+    }
+
+    public function getValidityInSeconds()
+    {
+        return Carbon::now()->diffInSeconds($this->valid_till);
+    }
+
+    public function getTransactionDetails()
+    {
+        return json_decode($this->transaction_details);
+    }
+
+    public function getErrorMessage()
+    {
+        $details = $this->getTransactionDetails();
+        return $details && property_exists($details, 'errorMessage') ? $details->errorMessage : null;
     }
 }

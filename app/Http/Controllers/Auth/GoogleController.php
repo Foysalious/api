@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
+use Throwable;
 
 class GoogleController extends Controller
 {
@@ -57,7 +58,7 @@ class GoogleController extends Controller
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -79,14 +80,18 @@ class GoogleController extends Controller
                     $col = $email_profile ? 'Email' : 'Mobile';
                     return api_response($request, null, 400, ['message' => $col . ' already exists! Please login']);
                 }
+                if($request->hasHeader('portal-name')) array_add($profile_info, 'portal_name', $request->header('portal-name'));
                 $profile = $this->profileRepository->store($profile_info);
                 $profile->pro_pic = $this->profileRepository->uploadImage($profile, $profile_info['pro_pic'], 'images/profiles/');
                 $profile->update();
                 $from = $this->profileRepository->getAvatar($request->from);
+                $is_new = 0;
                 if ($profile->$from == null) {
+                    $is_new = 1;
                     $this->profileRepository->registerAvatar($from, $request, $profile);
                 }
                 $info = $this->profileRepository->getProfileInfo($from, Profile::find($profile->id), $request);
+                $info['is_new'] = $is_new;
                 return $info ? api_response($request, $info, 200, ['info' => $info]) : api_response($request, null, 404);
             }
             return api_response($request, null, 403, ['message' => 'Authentication failed. Please try again.']);
@@ -96,7 +101,7 @@ class GoogleController extends Controller
             $sentry->captureException($e);
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
@@ -127,7 +132,7 @@ class GoogleController extends Controller
         try {
             $payload = $client->verifyIdToken($id_token);
             return $payload ? $payload : null;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             return null;
         }
     }

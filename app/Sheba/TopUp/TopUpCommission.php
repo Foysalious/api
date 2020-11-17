@@ -4,8 +4,10 @@ use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
@@ -30,7 +32,7 @@ abstract class TopUpCommission
     public function setTopUpOrder(TopUpOrder $top_up_order)
     {
         $this->topUpOrder = $top_up_order;
-        $this->amount     = $this->topUpOrder->amount;
+        $this->amount = $this->topUpOrder->amount;
 
         $this->setAgent($top_up_order->agent)->setTopUpVendor($top_up_order->vendor)->setVendorCommission();
 
@@ -45,10 +47,10 @@ abstract class TopUpCommission
      */
     protected function setVendorCommission()
     {
-        $commissions              = $this->vendor->commissions()->where('type', get_class($this->agent));
-        $commissions_copy         = clone $commissions;
+        $commissions = $this->vendor->commissions()->where('type', get_class($this->agent));
+        $commissions_copy = clone $commissions;
         $commission_of_individual = $commissions_copy->where('type_id', $this->agent->id)->first();
-        $this->vendorCommission   = $commission_of_individual ?: $commissions->whereNull('type_id')->first();
+        $this->vendorCommission = $commission_of_individual ?: $commissions->whereNull('type_id')->first();
         return $this;
     }
 
@@ -87,7 +89,8 @@ abstract class TopUpCommission
         $transaction = (new TopUpTransaction())
             ->setAmount($this->amount - $this->topUpOrder->agent_commission)
             ->setLog($this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile)
-            ->setTopUpOrder($this->topUpOrder);
+            ->setTopUpOrder($this->topUpOrder)
+            ->setIsRobiTopUp($this->topUpOrder->isRobiWalletTopUp());
         $this->agent->topUpTransaction($transaction);
     }
 
@@ -138,21 +141,26 @@ abstract class TopUpCommission
     protected function refundAgentsCommission()
     {
         $this->setModifier($this->agent);
-        $amount                  = $this->topUpOrder->amount;
+        $amount = $this->topUpOrder->amount;
         $amount_after_commission = round($amount - $this->calculateCommission($amount), 2);
-        $log                     = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
-        $this->refundUser($amount_after_commission, $log);
+        $log = "Your recharge TK $amount to {$this->topUpOrder->payee_mobile} has failed, TK $amount_after_commission is refunded in your account.";
+        $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
 
-    private function refundUser($amount, $log)
+    private function refundUser($amount, $log,$isRobiTopUp=false)
     {
+        if ($amount == 0) return;
         /*
          * WALLET TRANSACTION NEED TO REMOVE
          *  $this->agent->creditWallet($amount);
          $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType('credit')
+        if(!$isRobiTopUp)
+        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::credit())
             ->setAmount($amount)->setLog($log)->dispatch();
+        if($isRobiTopUp)
+            (new RobiTopupWalletTransactionHandler())->setModel($model)->setAmount($amount)->setLog($log)->setType(Types::credit())->store();
+
     }
 }

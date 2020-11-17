@@ -18,6 +18,6 @@ class SslSuccessResponse extends SuccessResponse
 
     public function getTopUpOrder(): TopUpOrder
     {
-        return TopUpOrder::where('transaction_details', 'like', '%' . $this->response['vr_guid'] . '%')->first();
+        return TopUpOrder::where('transaction_id', $this->response['guid'])->first();
     }
 }

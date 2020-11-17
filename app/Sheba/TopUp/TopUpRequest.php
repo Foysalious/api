@@ -1,14 +1,19 @@
 <?php namespace Sheba\TopUp;
 
-use Sheba\Affiliate\VerificationStatus;
+use App\Models\Affiliate;
+use App\Models\Partner;
+use Carbon\Carbon;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpRequest
 {
+    const MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
+
     private $mobile;
     private $amount;
     private $type;
+    /** @var TopUpAgent */
     private $agent;
     private $vendorId;
     /** @var Vendor */
@@ -17,6 +22,8 @@ class TopUpRequest
     private $errorMessage;
     private $name;
     private $bulk_id;
+    private $from_robi_topup_wallet;
+    private $walletType;
 
     public function __construct(VendorFactory $vendor_factory)
     {
@@ -52,10 +59,15 @@ class TopUpRequest
         return $this;
     }
 
+    /**
+     * @param $vendor_id
+     * @return $this
+     * @throws \Exception
+     */
     public function setVendorId($vendor_id)
     {
         $this->vendorId = $vendor_id;
-        $this->vendor = $this->vendorFactory->getById($this->vendorId);
+        $this->vendor   = $this->vendorFactory->getById($this->vendorId);
         return $this;
     }
 
@@ -96,6 +108,24 @@ class TopUpRequest
     }
 
     /**
+     * @param $from_robi_topup_wallet
+     * @return TopUpRequest
+     */
+    public function setRobiTopupWallet($from_robi_topup_wallet)
+    {
+        $this->from_robi_topup_wallet = $from_robi_topup_wallet;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRobiTopupWallet()
+    {
+        return $this->from_robi_topup_wallet;
+    }
+
+    /**
      * @return Vendor
      */
     public function getVendor()
@@ -113,7 +143,12 @@ class TopUpRequest
 
     public function hasError()
     {
-        if ($this->agent->wallet < $this->amount) {
+
+        if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
+            $this->errorMessage = "You don't have sufficient balance to recharge.";
+            return 1;
+        }
+        if ($this->from_robi_topup_wallet != 1 && $this->agent->wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
@@ -121,11 +156,14 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
-        if (get_class($this->agent) == "App\Models\Partner") {
-            $this->errorMessage = "Temporary turned off.";
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
+            return 1;
+        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+            $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
-        
+
         return 0;
     }
 
@@ -168,5 +206,11 @@ class TopUpRequest
     {
         $this->bulk_id = $bulk_id;
         return $this;
+    }
+
+    private function hasLastTopupWithinIntervalTime()
+    {
+        $last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
+        return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
 }

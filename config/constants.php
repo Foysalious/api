@@ -1,5 +1,6 @@
 <?php
 return [
+    "BLOG_URL"                                    => env('BLOG_URL'),
     'BANK_LOAN_PDF_TYPES'                         => [
         'SanctionLetter' => 'sanctionLetter',
         'Application'    => 'application',
@@ -482,9 +483,12 @@ return [
         'banner'            => 'https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/partner_assets/assets/images/home_v3/slider-img3.jpg',
         'title'             => 'Notification',
         'short_description' => "Its a simple notification",
+        'description'       => "Its a simple notification",
         'button_text'       => 'OK',
         'type'              => 'Info',
-        'target_link'       => "HOME"
+        'target_link'       => "HOME",
+        'target_type'       => '',
+        'target_id'         => ''
     ],
     'SALES_CHANNELS'                              => [
         'Call-Center' => [
@@ -576,6 +580,12 @@ return [
             'short_name' => 'TEL',
             'prefix'     => 'T',
             'department' => 'TEL'
+        ],
+        'DDN'         => [
+            'name'       => 'DDN',
+            'short_name' => 'DDN',
+            'prefix'     => 'D',
+            'department' => 'AC'
         ]
     ],
     'SERVICE_UNITS'                               => [
@@ -643,10 +653,11 @@ return [
         env('SHEBA_CUSTOMER_APP')    => 'customer',
         'customer-portal'            => 'customer',
         env('SHEBA_AFFILIATION_APP') => 'affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'resource',
-        env('SHEBA_MANGER_APP')      => 'resource',
-        'user'                       => 'user',
-        'bank-loan-portal'           => 'bankUser'
+        env('SHEBA_RESOURCE_APP') => 'resource',
+        env('SHEBA_MANGER_APP') => 'resource',
+        'user' => 'user',
+        'bank-loan-portal' => 'bankUser',
+        'retailer-portal' => 'strategicPartnerMember'
     ],
     'MANAGER'                                     => [
         'Owner',
@@ -666,7 +677,8 @@ return [
         'bank-loan-portal',
         'customer-portal',
         'bank-loan-portal',
-        'employee-app'
+        'employee-app',
+        'retailer-portal'
     ],
     'PARTNER_ACQUISITION_CHANNEL'                 => [
         'PM'  => 'PM',
@@ -684,6 +696,10 @@ return [
         202 => [
             'message' => 'Successful',
             'code'    => 202
+        ],
+        303 => [
+            'message' => 'Partial Updates Successful',
+            'code' => 303
         ],
         400 => [
             'message' => 'Bad request',
@@ -802,7 +818,7 @@ return [
         'Recurring' => 'Recurring'
     ],
     'REWARD_CONSTRAINTS'                          => [
-        'category'        => 'App\Models\Category',
+        'category'        => 'Sheba\Dal\Category\Category',
         'partner_package' => 'App\Models\PartnerSubscriptionPackage'
     ],
     'PARTNER_PACKAGE_UPDATE_STATUSES'             => [
@@ -821,7 +837,7 @@ return [
     ],
     'WITHDRAW_LIMIT'                              => [
         'bkash' => [
-            'min' => 500,
+            'min' => 200,
             'max' => 15000
         ],
         'bank'  => [
@@ -1063,10 +1079,11 @@ return [
     'AVATAR_FROM_CLASS'                           => [
         env('SHEBA_CUSTOMER_APP')    => 'Customer',
         env('SHEBA_AFFILIATION_APP') => 'Affiliate',
-        env('SHEBA_RESOURCE_APP')    => 'Resource',
-        env('SHEBA_MANGER_APP')      => 'Partner',
-        'user'                       => 'Profile',
-        'bank-loan-portal'           => 'BankUser'
+        env('SHEBA_RESOURCE_APP') => 'Resource',
+        env('SHEBA_MANGER_APP') => 'Partner',
+        'user' => 'Profile',
+        'bank-loan-portal' => 'BankUser',
+        'retailer-portal'            => 'StrategicPartnerMember'
     ],
     'PARTNER_PACKAGE_CHARGE_TYPES'                => [
         'Upgrade'   => 'upgrade',
@@ -1196,8 +1213,8 @@ return [
                 'cap'        => 200
             ],
             'AMBASSADOR' => [
-                'percentage' => 2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TOP_UP'        => [
@@ -1206,8 +1223,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.02,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'MOVIE'         => [
@@ -1216,8 +1233,8 @@ return [
                 'cap'        => 50
             ],
             'AMBASSADOR' => [
-                'percentage' => 0.2,
-                'cap'        => 20
+                'percentage' => 0,
+                'cap'        => 0
             ]
         ],
         'TRANSPORT'     => [
@@ -1230,6 +1247,16 @@ return [
                 'cap'        => 0
             ]
         ],
+        'DDN'           => [
+            'AGENT'      => [
+                'percentage' => 5,
+                'cap'        => 200,
+            ],
+            'AMBASSADOR' => [
+                'percentage' => 0,
+                'cap'        => 0
+            ]
+        ]
     ],
     'PARTNER_BUSINESS_TYPES'                      => [
         [
@@ -1282,9 +1309,9 @@ return [
             'bn'  => 'প্রোপ্রাইটরশিপ'
         ],
     ],
-    'ownership_type_en' => [
-        'লিমিটেড' => 'Limited',
-        'পার্টনারশিপ' => 'Partnership',
+    'ownership_type_en'                           => [
+        'লিমিটেড'        => 'Limited',
+        'পার্টনারশিপ'    => 'Partnership',
         'প্রোপ্রাইটরশিপ' => 'Proprietorship'
     ],
     'PARTNER_BUSINESS_CATEGORIES'                 => [
@@ -1295,5 +1322,41 @@ return [
     'PARTNER_BUSINESS_SECTORS'                    => [
         'Service',
         'Non Service'
+    ],
+    'LOAN_GROUP'                                       => [
+        'G1',
+        'G2',
+        'G3'
+    ],
+    'PARTNER_BUSINESS_TYPE' => [
+        'মুদি ব্যবসা',
+        'কাপড়ের ব্যবসা',
+        'ইলেক্ট্রনিক্স',
+        'ই-কমার্স',
+        'এফ-কমার্স বা ফেসবুক ব্যবসা',
+        'এম-কমার্স বা মোবাইল টপআপ ব্যবসা',
+        'ঔষধের দোকান',
+        'মোবাইল এবং গ্যাজেট',
+        'কনফেকশনারি এন্ড ফুডস',
+        'গৃহস্থালি জিনিসপত্র',
+        'কাঁচামালের ব্যবসায়',
+        'হার্ডওয়্যার',
+        'কসমেটিক্স',
+        'ফার্নিচার',
+        'খেলনার দোকান',
+        'চশমার দোকান',
+        'মোটর যন্ত্রাংশের ব্যবসায়',
+        'রেস্টুরেন্ট ও ক্যাটারিং ব্যবসায়',
+        'পোলট্রি এন্ড এগ্রো ব্যবসায়',
+        'হ্যান্ডি ক্রাফট ব্যবসায়',
+        'রেন্ট-এ-কার বা গাড়ি ভাড়া ব্যবসায়',
+        'ক্লিনিং ও পেস্ট কন্ট্রোল',
+        'বিউটি ও সেলুন',
+        'টিকেট ও ট্রাভেলস ব্যবসায়',
+        'লন্ড্রি',
+        'বাসা বদল ব্যবসা',
+        'পেইন্টিং ও রেনোভেশন',
+        'সার্ভিস ও রিপেয়ারিং',
+        'অন্যান্য'
     ]
 ];

@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Jobs;
+<?php namespace App\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -29,6 +27,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
             $template = $this->template ?: 'emails.profile-creation';
             $subject = $this->subject ?: 'Profile Creation';
             $email = $this->email;
+
             Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
                 $m->from('mail@sheba.xyz', 'Sheba.xyz');
                 $m->to($email)->subject($subject);

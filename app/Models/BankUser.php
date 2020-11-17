@@ -10,8 +10,14 @@ class BankUser extends Model
     {
         return $this->belongsTo(Profile::class);
     }
+
     public function bank()
     {
         return $this->belongsTo(Bank::class);
+    }
+
+    public function notifications()
+    {
+        return $this->morphMany(Notification::class, 'notifiable');
     }
 }

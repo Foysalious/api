@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
@@ -9,7 +10,8 @@ use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
 use Sheba\Payment\PayableUser;
-use Sheba\Payment\Wallet;
+use Sheba\Transactions\Types;
+use Sheba\Wallet\Wallet;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
 use Sheba\TopUp\TopUpTransaction;
@@ -19,6 +21,8 @@ use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
 
 use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
+use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
+use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -37,6 +41,44 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         return $this->belongsToMany(Member::class)->withTimestamps();
     }
 
+    public function membersWithProfileAndAccessibleBusinessMember()
+    {
+        return $this->members()->select('members.id', 'profile_id')->with([
+            'profile' => function ($q) {
+                $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+            }, 'businessMember' => function ($q) {
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'status')->with([
+                    'role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }
+                ]);
+            }
+        ])->wherePivot('status', '<>', Statuses::INACTIVE);
+    }
+
+    public function getAccessibleBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', '<>', Statuses::INACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
     public function businessSms()
     {
         return $this->hasMany(BusinessSmsTemplate::class);
@@ -45,6 +87,16 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function partners()
     {
         return $this->belongsToMany(Partner::class, 'business_partners');
+    }
+
+    public function officeHour()
+    {
+        return $this->hasOne(BusinessOfficeHour::class);
+    }
+
+    public function activePartners()
+    {
+        return $this->partners()->where('is_active_for_b2b', 1);
     }
 
     public function deliveryAddresses()
@@ -85,6 +137,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function topups()
     {
         return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Business');
+    }
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 
     public function shebaCredit()
@@ -143,7 +200,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
          * WALLET TRANSACTION NEED TO REMOVE
          * $this->debitWallet($transaction->getAmount());
         $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType('debit')->setLog($transaction->getLog())
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType(Types::debit())->setLog($transaction->getLog())
             ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
 
@@ -161,6 +218,12 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function getContactNumber()
     {
         if ($super_admin = $this->getAdmin()) return $super_admin->profile->mobile;
+        return null;
+    }
+
+    public function getContactEmail()
+    {
+        if ($super_admin = $this->getAdmin()) return $super_admin->profile->email;
         return null;
     }
 
@@ -197,14 +260,51 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function getBusinessFiscalPeriod()
     {
+        $business_fiscal_start_month = $this->fiscal_year ?: Business::BUSINESS_FISCAL_START_MONTH;
         $time_frame = new TimeFrame();
-        return $time_frame->forAFiscalYear(Carbon::now(), Business::BUSINESS_FISCAL_START_MONTH);
+        return $time_frame->forAFiscalYear(Carbon::now(), $business_fiscal_start_month);
     }
 
     public function isRemoteAttendanceEnable()
     {
         if (in_array(AttendanceTypes::REMOTE, $this->attendanceTypes->pluck('attendance_type')->toArray())) return true;
         return false;
+    }
+
+    public function getBusinessHalfDayConfiguration()
+    {
+        return json_decode($this->half_day_configuration, 1);
+    }
+
+    public function halfDayStartEnd($which_half)
+    {
+        return $this->getBusinessHalfDayConfiguration()[$which_half];
+    }
+
+    public function halfDayStartTimeUsingWhichHalf($which_half)
+    {
+        return $this->getBusinessHalfDayConfiguration()[$which_half]['start_time'];
+    }
+
+    public function halfDayEndTimeUsingWhichHalf($which_half)
+    {
+        return $this->getBusinessHalfDayConfiguration()[$which_half]['end_time'];
+    }
+
+    public function halfDayStartEndTime($which_half)
+    {
+        $half_day_configuration = $this->halfDayStartEnd($which_half);
+        $start_time = Carbon::parse($half_day_configuration['start_time'])->format('h:i');
+        $end_time = Carbon::parse($half_day_configuration['end_time'])->format('h:i');
+        return $start_time . '-' . $end_time;
+    }
+
+    public function fullDayStartEndTime()
+    {
+        $full_day_configuration = $this->officeHour;
+        $start_time = Carbon::parse($full_day_configuration->start_time)->format('h:i');
+        $end_time = Carbon::parse($full_day_configuration->end_time)->format('h:i');
+        return $start_time . '-' . $end_time;
     }
 
     public function isIpBasedAttendanceEnable()

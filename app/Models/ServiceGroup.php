@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\Service\Service;
 
 class ServiceGroup extends Model
 {

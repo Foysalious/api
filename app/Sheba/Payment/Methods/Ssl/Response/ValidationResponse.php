@@ -1,7 +1,4 @@
-<?php
-
-namespace Sheba\Payment\Methods\Ssl\Response;
-
+<?php namespace Sheba\Payment\Methods\Ssl\Response;
 
 use Sheba\Payment\Methods\Response\PaymentMethodErrorResponse;
 use Sheba\Payment\Methods\Response\PaymentMethodResponse;
@@ -11,7 +8,8 @@ class ValidationResponse extends PaymentMethodResponse
 {
     public function hasSuccess()
     {
-        return $this->response && $this->response->tran_id == $this->payment->transaction_id && ($this->response->status == 'VALID' || $this->response->status == 'VALIDATED');
+        return $this->response && $this->response->tran_id == $this->payment->transaction_id &&
+            ($this->response->status == 'VALID' || $this->response->status == 'VALIDATED');
     }
 
     public function getSuccess(): PaymentMethodSuccessResponse

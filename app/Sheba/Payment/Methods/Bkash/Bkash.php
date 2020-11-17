@@ -5,13 +5,18 @@ use App\Models\Payment;
 use App\Models\PaymentDetail;
 use Carbon\Carbon;
 use DB;
+use Exception;
+use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Support\Facades\Redis;
+use InvalidArgumentException;
 use Sheba\Bkash\Modules\BkashAuthBuilder;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
 use Sheba\ModificationFields;
 use Sheba\Payment\Methods\Bkash\Response\ExecuteResponse;
 use Sheba\Payment\Methods\PaymentMethod;
+use Sheba\Payment\Methods\Response\PaymentMethodResponse;
+use Sheba\Payment\Methods\Response\PaymentMethodSuccessResponse;
 use Sheba\Payment\Statuses;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\InvalidTransaction;
@@ -29,11 +34,20 @@ class Bkash extends PaymentMethod
     private $url;
     private $merchantNumber;
 
-    public function __construct()
+    /** @var Registrar $registrar */
+    private $registrar;
+
+    public function __construct(Registrar $registrar)
     {
         parent::__construct();
+        $this->registrar = $registrar;
     }
 
+    /**
+     * @param Payable $payable
+     * @return Payment
+     * @throws Exception
+     */
     public function init(Payable $payable): Payment
     {
         $this->setCredentials($payable->user);
@@ -107,7 +121,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash create API error.');
+            throw new InvalidArgumentException('Bkash create API error.');
         curl_close($url);
         return json_decode($result_data);
     }
@@ -132,7 +146,7 @@ class Bkash extends PaymentMethod
         curl_setopt($url, CURLOPT_FAILONERROR, true);
         $result_data = curl_exec($url);
         if (curl_errno($url) > 0)
-            throw new \InvalidArgumentException('Bkash grant token API error.');
+            throw new InvalidArgumentException('Bkash grant token API error.');
         curl_close($url);
         $data = json_decode($result_data, true);
         $token = $data['id_token'];
@@ -141,7 +155,12 @@ class Bkash extends PaymentMethod
         return $token;
     }
 
-    public function validate(Payment $payment)
+    /**
+     * @param Payment $payment
+     * @return Payment|mixed
+     * @throws GuzzleException
+     */
+    public function validate(Payment $payment): Payment
     {
         $this->setCredentials($payment->payable->user);
         $execute_response = new ExecuteResponse();
@@ -154,23 +173,27 @@ class Bkash extends PaymentMethod
             $res = $this->execute($payment);
         }
         $execute_response->setResponse($res);
-        $this->paymentRepository->setPayment($payment);
+        $this->paymentLogRepo->setPayment($payment);
         if ($execute_response->hasSuccess()) {
             $success = $execute_response->getSuccess();
             try {
-                (new Registrar())->setAmount($payment->payable->amount)->setDetails(json_encode($success->details))->setTime(Carbon::now()->format('Y-m-d H:s:i'))->setIsValidated(1)->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
+                $this->registrar->setAmount($payment->payable->amount)
+                    ->setDetails(json_encode($success->details))
+                    ->setTime(Carbon::now()->format('Y-m-d H:s:i'))
+                    ->setIsValidated(1)
+                    ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status = Statuses::VALIDATED;
                 $transaction_details = json_encode($success->details);
             } catch (InvalidTransaction $e) {
                 $status = Statuses::VALIDATION_FAILED;
-                $transaction_details = json_encode(['errorMessage' => $e->getMessage()]);
+                $transaction_details = json_encode(['errorMessage' => $e->getMessage(), 'gateway_response' => $success->getGatewayResponse()]);
             }
         } else {
             $error = $execute_response->getError();
             $status = Statuses::VALIDATION_FAILED;
             $transaction_details = json_encode($error->details);
         }
-        $this->paymentRepository->changeStatus([
+        $this->paymentLogRepo->create([
             'to' => $status,
             'from' => $payment->status,
             'transaction_details' => $transaction_details
@@ -197,11 +220,16 @@ class Bkash extends PaymentMethod
         $result_data = curl_exec($url);
         $result_data = json_decode($result_data);
         if (curl_errno($url) > 0) {
-            $error = new \InvalidArgumentException('Bkash execute API error.');
+            $error = new InvalidArgumentException('Bkash execute API error.');
             $error->paymentId = $payment->gateway_transaction_id;
             throw  $error;
-        };
+        }
         curl_close($url);
         return $result_data;
+    }
+
+    public function getMethodName()
+    {
+        return self::NAME;
     }
 }

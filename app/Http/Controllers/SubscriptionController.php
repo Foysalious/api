@@ -1,16 +1,18 @@
 <?php namespace App\Http\Controllers;
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
-use App\Models\LocationService;
-use App\Models\Service;
-use App\Models\ServiceSubscription;
-use App\Models\ServiceSubscriptionDiscount;
+use Sheba\Dal\LocationService\LocationService;
+use Sheba\Dal\Service\Service;
+use Sheba\Dal\ServiceSubscription\ServiceSubscription;
+use Sheba\Dal\ServiceSubscriptionDiscount\ServiceSubscriptionDiscount;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Location\LocationSetter;
 use Sheba\LocationService\PriceCalculation;
+use Sheba\ServiceSubscription\ServiceSubscriptionInfo;
 use Sheba\Subscription\ApproximatePriceCalculator;
+use Sheba\Services\ServiceSubscriptionDiscount as SubscriptionDiscount;
 use Throwable;
 
 class SubscriptionController extends Controller
@@ -125,10 +127,12 @@ class SubscriptionController extends Controller
         }
     }
 
-    public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator)
+    public function all(Request $request, ApproximatePriceCalculator $approximatePriceCalculator, SubscriptionDiscount $subscriptionDiscount)
     {
-        $subscriptions = ServiceSubscription::active()->get();
+        $subscriptions = ServiceSubscription::active()->validDiscountsOrderByAmount()->get();
+        $final_subscriptions = collect([]);
         foreach ($subscriptions as $index => $subscription) {
+            if($subscription->service->publication_status !== 1) continue;
             if (!in_array($this->location, $subscription->service->locations->pluck('id')->toArray())) {
                 array_forget($subscriptions, $index);
                 continue;
@@ -136,6 +140,14 @@ class SubscriptionController extends Controller
             $location_service = LocationService::where([['location_id', $this->location], ['service_id', $subscription->service->id]])->first();
             $service = removeRelationsAndFields($subscription->service);
             $subscription['offers'] = $subscription->getDiscountOffers();
+            $lowest_service_subscription_discount = $subscription->discounts->first();
+            $subscription['discount'] = $lowest_service_subscription_discount ? [
+                'discount_amount' => $lowest_service_subscription_discount->discount_amount,
+                'is_discount_amount_percentage' => $lowest_service_subscription_discount->isPercentage(),
+                'cap' => $lowest_service_subscription_discount->cap,
+                'min_discount_qty' => $lowest_service_subscription_discount->min_discount_qty,
+                'text' => $subscriptionDiscount->setServiceSubscriptionDiscount($lowest_service_subscription_discount)->getDiscountText()
+            ] : null;
             $price_range = $approximatePriceCalculator->setLocationService($location_service)->setSubscription($subscription)->getPriceRange();
             $subscription = removeRelationsAndFields($subscription);
             $subscription['max_price'] = $price_range['max_price'] > 0 ? $price_range['max_price'] : 0;
@@ -144,10 +156,10 @@ class SubscriptionController extends Controller
             $subscription['thumb'] = $service['thumb'];
             $subscription['banner'] = $service['banner'];
             $subscription['unit'] = $service['unit'];
-
+            $final_subscriptions->push($subscription);
         }
-        if (count($subscriptions) > 0)
-            return api_response($request, $subscriptions, 200, ['subscriptions' => $subscriptions->values()->all()]);
+        if (count($final_subscriptions) > 0)
+            return api_response($request, $final_subscriptions, 200, ['subscriptions' => $final_subscriptions->sortBy('discount.discount_amount')->values()->all()]);
         else
             return api_response($request, null, 404);
     }
@@ -365,5 +377,15 @@ class SubscriptionController extends Controller
         }
 
         return $result;
+    }
+
+    public function details($serviceSubscription, Request $request, ServiceSubscriptionInfo $serviceSubscriptionInfo)
+    {
+        /** @var ServiceSubscription $serviceSubscription */
+        $serviceSubscription = ServiceSubscription::validDiscountsOrderByAmount()->find((int)$serviceSubscription);
+        $location_service = LocationService::where('location_id', $this->location)->where('service_id', $serviceSubscription->service_id)->first();
+        if (!$location_service) return api_response($request, null, 404);
+        $serviceSubscription = $serviceSubscriptionInfo->setServiceSubscription($serviceSubscription)->setLocationService($location_service)->getServiceSubscriptionInfo();
+        return api_response($request, $serviceSubscription, 200, ['details' => $serviceSubscription]);
     }
 }

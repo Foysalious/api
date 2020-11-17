@@ -7,15 +7,15 @@ use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Bkash\Modules\Tokenized\TokenizedPayment;
 use Sheba\Bkash\ShebaBkash;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Factory\PaymentStrategy;
+use Sheba\Payment\PaymentManager;
 use Sheba\Settings\Payment\PaymentSetting;
 use Sheba\Transactions\InvalidTransaction;
-use Sheba\Transactions\Registrar;
 use Throwable;
 
 class BkashTokenizedController extends Controller
 {
-    public function validatePayment(Request $request, ShebaPayment $sheba_payment)
+    public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         $this->validate($request, ['paymentID' => 'required']);
         /** @var Payment $payment */
@@ -25,19 +25,17 @@ class BkashTokenizedController extends Controller
         $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
 
         try {
-            $sheba_payment->setMethod('bkash')->complete($payment);
+            $payment_manager->setMethodName(PaymentStrategy::BKASH)->setPayment($payment)->complete();
             return redirect($redirect_url);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
+            logError($e, $request, $message);
             return redirect($redirect_url);
         } catch (InvalidTransaction $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return redirect($redirect_url);
         }
     }
@@ -58,7 +56,7 @@ class BkashTokenizedController extends Controller
             $payment->update();
             return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -71,7 +69,7 @@ class BkashTokenizedController extends Controller
             $order = Redis::get($key);
             return $order ? redirect(config('sheba.front_url') . '/bkash?paymentID=' . (json_decode($order))->gateway_transaction_id) : redirect(config('sheba.front_url') . '/profile/me');
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

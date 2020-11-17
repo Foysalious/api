@@ -3,11 +3,14 @@
 use App\Models\GiftCard;
 use App\Models\GiftCardPurchase;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\GiftCardPurchaseAdapter;
-use Sheba\Payment\ShebaPayment;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Payment\Exceptions\InvalidPaymentMethod;
+use Sheba\Payment\PaymentManager;
 use Throwable;
 
 class GiftCardController extends Controller
@@ -42,17 +45,25 @@ class GiftCardController extends Controller
             $data = ['gift_cards' => $gift_cards, 'instructions' => $instructions];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function purchaseGiftCard(Request $request, ShebaPayment $payment)
+    /**
+     * @param Request $request
+     * @param PaymentManager $payment_manager
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     */
+    public function purchaseGiftCard(Request $request, PaymentManager $payment_manager)
     {
         $this->validate($request, [
             'payment_method' => 'required|string|in:online,bkash,wallet,cbl',
             'gift_card_id' => 'required'
         ]);
+        /** @var GiftCard $gift_card */
         $gift_card = GiftCard::find((int)$request->gift_card_id);
         if (!$gift_card)
             return api_response($request, null, 404, ['message' => 'Gift Card Not found.']);
@@ -74,16 +85,16 @@ class GiftCardController extends Controller
         );
         $gift_card_purchase_adapter = new GiftCardPurchaseAdapter();
         $payable = $gift_card_purchase_adapter->setModelForPayable($gift_card_purchased_order)->getPayable();
-        $payment = $payment->setMethod($request->payment_method)->init($payable);
+        $payment = $payment_manager->setMethodName($request->payment_method)->setPayable($payable)->init();
         return api_response($request, $payment, 200, ['payment' => $payment->getFormattedPayment()]);
 
     }
 
     protected function getMonthDiff($start_date, $end_date)
     {
-        $diffInMonths = Carbon::parse($start_date)->diffInMonths(Carbon::parse($end_date));
-        if ($diffInMonths % 12 === 0)
-            return ($diffInMonths / 12) . ' year';
-        return $diffInMonths . ' month';
+        $diff_in_months = Carbon::parse($start_date)->diffInMonths(Carbon::parse($end_date));
+        if ($diff_in_months % 12 === 0)
+            return ($diff_in_months / 12) . ' year';
+        return $diff_in_months . ' month';
     }
 }

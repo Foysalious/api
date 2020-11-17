@@ -26,6 +26,14 @@ use Sheba\Logistics\Literals\OneWayInitEvents as OneWayLogisticInitEvents;
 use Sheba\Logistics\OrderManager;
 use Sheba\Logistics\Repository\ParcelRepository;
 use Sheba\Order\Code\Builder as CodeBuilder;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
+use Sheba\Dal\JobMaterialLog\JobMaterialLog;
+use Sheba\Dal\JobScheduleDueLog\JobScheduleDueLog;
+use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\JobPartnerChangeLog\JobPartnerChangeLog;
+use Sheba\Dal\JobStatusChangeLog\JobStatusChangeLog;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 class Job extends BaseModel implements MorphCommentable
 {
@@ -37,6 +45,7 @@ class Job extends BaseModel implements MorphCommentable
     protected $dates = ['delivered_date', 'estimated_delivery_date', 'estimated_visiting_date'];
 
     public $servicePrice;
+    public $totalServiceSurcharge;
     public $serviceCost;
     public $serviceCostRate;
     public $materialPrice;
@@ -351,10 +360,16 @@ class Job extends BaseModel implements MorphCommentable
     private function getServicePrice()
     {
         $total_service_price = 0;
+        $total_service_surcharge = 0;
         foreach ($this->jobServices as $jobService) {
-            $total_service_price += ($jobService->min_price > ($jobService->unit_price * $jobService->quantity) ?
-                $jobService->min_price : ($jobService->unit_price * $jobService->quantity));
+            $surcharge_amount = $jobService->surcharge_percentage ? ($jobService->unit_price * $jobService->surcharge_percentage) / 100 : 0;
+            $unit_price_with_surcharge = $jobService->unit_price + $surcharge_amount;
+            $total_service_price += ($jobService->min_price > ($unit_price_with_surcharge * $jobService->quantity) ?
+                $jobService->min_price : ($unit_price_with_surcharge * $jobService->quantity));
+
+            $total_service_surcharge += ($surcharge_amount * $jobService->quantity);
         }
+        $this->totalServiceSurcharge = $total_service_surcharge;
         return $total_service_price;
     }
 
@@ -1125,5 +1140,10 @@ class Job extends BaseModel implements MorphCommentable
     public function getNotificationHandlerClass()
     {
         return JobNotificationHandler::class;
+    }
+
+    public function hasPendingCancelRequest()
+    {
+        return $this->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->count() > 0;
     }
 }

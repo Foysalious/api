@@ -1,7 +1,7 @@
 <?php namespace Sheba\Cache\Schema\DataBuilder;
 
 
-use App\Models\Category;
+use Sheba\Dal\Category\Category;
 use App\Models\City;
 use App\Models\ReviewQuestionAnswer;
 use Sheba\Dal\MetaTag\MetaTagRepositoryInterface;
@@ -155,6 +155,8 @@ class CategorySchema
             ->whereRaw("CHAR_LENGTH(rate_answer_text)>20")
             ->whereIn('reviews.rating', [5])
             ->where('reviews.category_id', $this->category->id)
+            ->whereNotNull('profiles.name')
+            ->where('profiles.name', '!=', '')
             ->take(10)
             ->orderBy('id', 'desc')
             ->groupBy('customer_id')
