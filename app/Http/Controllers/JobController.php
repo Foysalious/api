@@ -327,6 +327,7 @@ class JobController extends Controller
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;
+        $bill['category_disclaimer'] = $job->category->disclaimer;
         $bill['delivered_date'] = $job->delivered_date != null ? $job->delivered_date->format('Y-m-d') : null;
         $bill['delivered_date_timestamp'] = $job->delivered_date != null ? $job->delivered_date->timestamp : null;
         $bill['closed_and_paid_at'] = $partnerOrder->closed_and_paid_at ? $partnerOrder->closed_and_paid_at->format('Y-m-d') : null;
