@@ -32,6 +32,7 @@ class WebstoreSettingsController extends Controller
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
         if ($request->has('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
+        if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
         return api_response($request, null,200, ['message' => 'Webstore Settings Updated Successfully']);
 
