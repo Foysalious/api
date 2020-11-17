@@ -169,8 +169,8 @@ class NeoBanking
      */
     public function storeGigatechKyc() {
         $bank = (new BankFactory())->setBank($this->bank)->get();
-        $response = $bank->storeGigatechKyc($this->gigatechKycData);
-        $handler= (new NeoBankingFileHandler());
+        $response = (array)$bank->storeGigatechKyc($this->gigatechKycData);
+        $handler= (new NeoBankingFileHandler())->setPartner($this->partner);
         if(4002 === $response['data']["status_code"]) {
             $nid_front =$handler->getImageUrl($this->gigatechKycData['id_front'], "nid_front");
             $nid_back = $handler->getImageUrl($this->gigatechKycData['id_back'], "nid_back");
