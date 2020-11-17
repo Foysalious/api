@@ -9,12 +9,14 @@ use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
+use App\Sheba\TopUp\Vendor\Vendors;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\ConnectionType;
 use Sheba\TopUp\TopUpFailedReason;
+use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TPProxy\TPProxyClient;
@@ -193,8 +195,9 @@ class TopUpController extends Controller
 
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-                $agent_email = $agent->email;
-                if($agent_email) $this->dispatch(new SendTopUpFailMail($agent_email, $top_up_excel_data_format_errors));
+                //$agent_email = $agent->email;
+                $agent_email = 'nawtabassum@gmail.com';
+                if ($agent_email) $this->dispatch(new SendTopUpFailMail($agent_email, $top_up_excel_data_format_errors));
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
@@ -386,9 +389,10 @@ class TopUpController extends Controller
     /**
      * @param Request $request
      * @param TopUpFailedReason $topUp_failed_reason
+     * @param TopUpHistoryExcel $history_excel
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason)
+    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason, TopUpHistoryExcel $history_excel)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 180);
@@ -434,6 +438,7 @@ class TopUpController extends Controller
                 'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                 'amount' => $topup->amount,
                 'operator' => $topup->vendor->name,
+                'payee_mobile_type' => $topup->payee_mobile_type,
                 'status' => $topup->status,
                 'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
@@ -443,11 +448,22 @@ class TopUpController extends Controller
         }
 
         if ($is_excel_report) {
-            $excel = app(ExcelHandler::class);
-            $excel->setName('Topup History');
-            $excel->setViewFile('topup_history');
-            $excel->pushData('topup_data', $topup_data);
-            $excel->download();
+            $url = 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/bulk_top_ups/top_up_format_file.xlsx';
+            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+            file_put_contents($file_path, file_get_contents($url));
+            foreach ($topup_data as $key => $topup_history) {
+                $history_excel->setFile($file_path)
+                    ->setRow($key + 2)
+                    ->updateMobile($topup_history['payee_mobile'])
+                    ->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])
+                    ->updateConnectionType($topup_history['payee_mobile_type'])
+                    ->updateAmount($topup_history['amount'])
+                    ->updateStatus($topup_history['status'])
+                    ->updateName($topup_history['payee_name'])
+                    ->updateCreatedDate($topup_history['created_at_raw']);
+            }
+            $history_excel->takeCompletedAction();
+            return api_response($request, null, 200);
         }
 
         return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
@@ -508,7 +524,6 @@ class TopUpController extends Controller
     private function isBusiness($agent)
     {
         if ($agent instanceof Business) return true;
-
         return false;
     }
 }
