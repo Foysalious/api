@@ -70,10 +70,10 @@ class WebstoreSettingsUpdateRequest
     private function makeData()
     {
         $data = [];
-        if ($this->isWebstorePublished) $data['is_webstore_published'] = $this->isWebstorePublished;
-        if ($this->name) $data['name'] = $this->name;
-        if ($this->subDomain) $data['sub_domain'] = $this->subDomain;
-        if ($this->deliveryCharge) $data['delivery_charge'] = (double) $this->deliveryCharge;
+        if (isset($this->isWebstorePublished)) $data['is_webstore_published'] = $this->isWebstorePublished;
+        if (isset($this->name)) $data['name'] = $this->name;
+        if (isset($this->subDomain)) $data['sub_domain'] = $this->subDomain;
+        if (isset($this->deliveryCharge)) $data['delivery_charge'] = (double) $this->deliveryCharge;
         return $data;
     }
 
