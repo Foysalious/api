@@ -25,7 +25,7 @@ class WebstoreSettingsController extends Controller
     {
         $this->validate($request, [
                 'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
-                'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
+                'sub_domain' => 'sometimes|string|unique:partners,sub_domain', 'delivery_charge' => 'sometimes|numeric'
         ]);
         $webstoreSettingsUpdateRequest->setPartner($partner);
         if ($request->has('is_webstore_published')) $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
