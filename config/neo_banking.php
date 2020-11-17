@@ -490,7 +490,7 @@ return [
                         'field_type' => 'radioButton',
                         'name'       => 'nid_number',
                         'id'         => 'nid_number',
-                        'title'      => 'পাসপোর্ট',
+                        'title'      => 'জাতীয় পরিচয়পত্র',
                         'mandatory'  => false,
                         'value'      => 0
                     ]
