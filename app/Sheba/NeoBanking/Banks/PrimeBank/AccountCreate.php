@@ -66,7 +66,7 @@ class AccountCreate
 
     public function store()
     {
-        dd($this->response);
+        dd($this->response["data"]->info->account_no);
         if($this->response['code'] === 200){
             PartnerNeoBankingAccount::create([
                 "partner_id" => $this->partner->id,
