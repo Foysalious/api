@@ -16,6 +16,7 @@ class WebstoreSettingsUpdateRequest
     /** @var Partner */
     protected $partner;
     protected $data;
+    protected $hasWebstore;
 
     /**
      * @param Partner $partner
@@ -34,6 +35,16 @@ class WebstoreSettingsUpdateRequest
     public function setIsWebstorePublished($isWebstorePublished)
     {
         $this->isWebstorePublished = $isWebstorePublished;
+        return $this;
+    }
+
+    /**
+     * @param $hasWebstore
+     * @return WebstoreSettingsUpdateRequest
+     */
+    public function setHasWebstore($hasWebstore)
+    {
+        $this->hasWebstore = $hasWebstore;
         return $this;
     }
 
@@ -74,6 +85,7 @@ class WebstoreSettingsUpdateRequest
         if (isset($this->name)) $data['name'] = $this->name;
         if (isset($this->subDomain)) $data['sub_domain'] = $this->subDomain;
         if (isset($this->deliveryCharge)) $data['delivery_charge'] = (double) $this->deliveryCharge;
+        if (isset($this->hasWebstore)) $data['has_webstore'] = $this->hasWebstore;
         return $data;
     }
 
