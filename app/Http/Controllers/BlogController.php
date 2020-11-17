@@ -37,7 +37,6 @@ class BlogController extends Controller
             if (count($blogs) > 0) return api_response($request, $data, 200, ['data' => $data]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
