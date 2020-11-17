@@ -58,7 +58,7 @@ class PrimeBank extends Bank
      */
     public function accountCreate()
     {
-        return (new AccountCreate())->setNaoBankingData($this->partner->neoBankInfo)->setPartner($this->partner)->makeData()->create();
+        return (new AccountCreate())->setBank($this)->setNaoBankingData($this->partner->neoBankInfo)->setPartner($this->partner)->makeData()->create()->store();
     }
 
     /**
