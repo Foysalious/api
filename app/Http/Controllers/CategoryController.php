@@ -396,9 +396,7 @@ class CategoryController extends Controller
         } else {
             $category = $cat->published()->first();
         }
-
-
-
+        $disclaimer = $category->disclaimer;
         if ($category != null) {
             $category_slug = $category->getSlug();
             $cross_sale_service = $category->crossSaleService;
@@ -584,6 +582,7 @@ class CategoryController extends Controller
                 ] : null;
                 $category['slug'] = $category_slug;
                 $category['max_order_amount'] = $category['max_order_amount'] ? (double)$category['max_order_amount'] : null;
+                $category['disclaimer'] = $disclaimer;
 
                 if ($subscriptions->count()) {
                     $category['subscription_faq'] = $subscription_faq;
