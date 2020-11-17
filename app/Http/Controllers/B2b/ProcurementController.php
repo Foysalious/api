@@ -244,16 +244,16 @@ class ProcurementController extends Controller
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
 
-        $bid_counts = Bid::where('status', '<>', 'pending')->select('procurement_id', DB::raw("count(bidder_id) as total"))->groupBy('procurement_id')->orderBy('procurement_id', 'DESC')->get()->toArray();
-        $bidCounts = [];
-
-        foreach ($bid_counts as $bid_count){
-            $bidCounts[$bid_count['procurement_id']] = $bid_count['total'];
-        }
+        $bid_counts = Bid::where('status', '<>', BidStatuses::PENDING)
+            ->select('procurement_id', DB::raw("count(procurement_id) as total"))
+            ->groupBy('procurement_id')
+            ->orderBy('procurement_id', 'DESC')
+            ->pluck('total', 'procurement_id')
+            ->toArray();
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($procurements->get(), new ProcurementListTransformer($bidCounts));
+        $resource = new Collection($procurements->get(), new ProcurementListTransformer($bid_counts));
         $procurements = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
