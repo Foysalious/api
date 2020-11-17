@@ -77,7 +77,7 @@ if (!function_exists('booleanView')) {
 
 return [
     'prime_bank_sbs_url'                 => env('PRIME_BANK_NEO_BANKING_URL'),
-    'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'neo-banking-account-details',
+    'account_details_url'                => env('SHEBA_PARTNER_END_URL') . '/' . 'api/bank-info',
     'account_details_title'              => 'প্রাইম ব্যাংক অ্যাকাউন্ট সম্পর্কিত তথ্য',
     'sbs_access_token'                   => env('SBS_ACCESS_TOKEN', '1234567890'),
     'sbs_client_id'                      => env('PRIME_BANK_NEO_BANKING_CLIENT_ID', '123456'),
