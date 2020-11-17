@@ -164,7 +164,7 @@ class OrderController extends Controller
 
     private function sendSmsToCustomer($customer, $order) {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
     }
