@@ -15,7 +15,7 @@ class PeriodicBillingHandler
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
-        $this->today   = Carbon::today();
+        $this->today = Carbon::today();
     }
 
     public function run()
@@ -24,9 +24,10 @@ class PeriodicBillingHandler
             $this->partner->runSubscriptionBilling();
         }
     }
+
     private function migrateToLite($reason = '')
     {
-        $new_package      = PartnerSubscriptionPackage::find(self::FREE_PACKAGE_ID);
+        $new_package = PartnerSubscriptionPackage::find(self::FREE_PACKAGE_ID);
         $new_billing_type = BillingType::MONTHLY;
         $this->partner->subscriber()->upgradeNew($new_package, $new_billing_type);
         (new AutoBillingLog($this->partner))->shootLite($reason);
@@ -35,11 +36,13 @@ class PeriodicBillingHandler
     private function checkPackageChangeRequest(&$new_package, &$new_billing_type)
     {
         $request = null;
-        $this->partner->load(['subscriptionUpdateRequest' => function ($q) { $q->where('status', 'Pending'); }]);
+        $this->partner->load(['subscriptionUpdateRequest' => function ($q) {
+            $q->where('status', 'Pending');
+        }]);
         if (!$this->partner->subscriptionUpdateRequest->isEmpty()) {
-            $requests         = $this->partner->subscriptionUpdateRequest;
-            $request          = $requests->last();
-            $new_package      = $request->newPackage;
+            $requests = $this->partner->subscriptionUpdateRequest;
+            $request = $requests->last();
+            $new_package = $request->newPackage;
             $new_billing_type = $request->new_billing_type;
             foreach ($requests as $req) {
                 /** @var PartnerSubscriptionUpdateRequest $req */
@@ -49,6 +52,7 @@ class PeriodicBillingHandler
         }
         return $request;
     }
+
     public function hasBillingCycleEnded()
     {
         return $this->nextBillingDate()->isSameDay($this->today);
@@ -61,13 +65,13 @@ class PeriodicBillingHandler
      */
     public function nextBillingDate()
     {
-        $new_bill_date    = '';
+        $new_bill_date = '';
         $last_billed_date = $this->partner->last_billed_date;
 
         if ($this->partner->billing_type == BillingType::MONTHLY) {
             $next_billed_date_month = (($last_billed_date->month + 1) % 12) ?: 12;
-            $next_billed_date_year  = $last_billed_date->year + ($last_billed_date->month == 12);
-            $new_bill_date          = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
+            $next_billed_date_year = $last_billed_date->year + ($last_billed_date->month == 12);
+            $new_bill_date = Carbon::createFromDate($next_billed_date_year, $next_billed_date_month, 1);
 
             if ($this->partner->billing_start_date->day <= $new_bill_date->daysInMonth) {
                 $new_bill_date->day($this->partner->billing_start_date->day);
@@ -93,9 +97,9 @@ class PeriodicBillingHandler
      */
     public function remainingDay()
     {
-        $next  = $this->nextBillingDate();
+        $next = $this->nextBillingDate();
         $today = Carbon::today();
-        $diff  = $today->diffInDays($next, false);
+        $diff = $today->diffInDays($next, false);
         return $diff > 0 ? $diff : 0;
     }
 
@@ -122,7 +126,7 @@ class PeriodicBillingHandler
     private function usageLeft()
     {
         $remainingDay = $this->remainingDay();
-        $perDayPrice  = $this->currentPackagePerDayPrice();
+        $perDayPrice = $this->currentPackagePerDayPrice();
         return round($remainingDay * $perDayPrice, 2);
 
     }
@@ -134,12 +138,13 @@ class PeriodicBillingHandler
     private function currentPackagePerDayPrice()
     {
         $subscriptionRules = $this->partner->subscription_rules;
-        $billing_type      = $this->partner->billing_type;
+        if (is_string($subscriptionRules)) $subscriptionRules = json_decode($subscriptionRules);
+        $billing_type = $this->partner->billing_type;
         if (!isset($subscriptionRules->fee->$billing_type->value)) {
             throw new InvalidPreviousSubscriptionRules();
         }
         $total = $this->totalDaysOfUsage();
-        return round($subscriptionRules->fee->$billing_type->value / $total, 2);
+        return round(doubleval($subscriptionRules->fee->$billing_type->value) / $total, 2);
     }
 
 
