@@ -67,18 +67,10 @@
                                                             <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt style="display:block" width="180"></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:0.8;font-family:Lato;font-size:14px">Download file from below link.</p></td>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:0.8;font-family:Lato;font-size:14px">Download the attached file.</p></td>
                                                         </tr>
                                                         <tr>
                                                             <td align="left"></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td align="left"></td>
-                                                        </tr>
-                                                        <tr>
-                                                            <td class="padding-side pt-30 pb-30" align="left" style="padding:0 60px;padding-bottom:30px;padding-top:30px">
-                                                                <a href="{{ $report_file }}" target="_blank" style="width:200px;height:50px;border-radius:3px;background-color:#437FF5;text-align:center;border:0;padding: 18px 50px;text-decoration: none !important;"class="btn btn-info" role="button"><span class="button-link" style="color:white;font-family:Poppins, sans-serif;font-size:16px;font-weight:600">Download</span></a>
-                                                            </td>
                                                         </tr>
                                                     </table></td>
                                             </tr>
