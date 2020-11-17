@@ -5,11 +5,11 @@ use Sheba\Business\Procurement\StatusCalculator;
 
 class ProcurementListTransformer extends TransformerAbstract
 {
-    private $bidCount;
+    private $bidCounts;
 
-    public function __construct($bidCounts)
+    public function __construct($bid_counts)
     {
-        $this->bidCount =  $bidCounts;
+        $this->bidCounts =  $bid_counts;
     }
 
     /**
@@ -24,7 +24,7 @@ class ProcurementListTransformer extends TransformerAbstract
             'status' => StatusCalculator::resolveStatus($procurement),
             "created_at" => $procurement->created_at->format('d/m/y'),
             "last_date_of_submission" => $procurement->last_date_of_submission->format('d/m/y'),
-            "bid_count" => (array_key_exists($procurement->id, $this->bidCount)) ? $this->bidCount[$procurement->id] : 0
+            "bid_count" => (array_key_exists($procurement->id, $this->bidCounts)) ? $this->bidCounts[$procurement->id] : 0
         ];
     }
 }
