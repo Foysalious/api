@@ -332,15 +332,18 @@ class AttendanceController extends Controller
         ],[
             'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
+        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                  ->setMember($business_member->member)
-                                  ->setOfficeHourType($request->office_hour_type)
-                                  ->setStartTime($request->start_time)
-                                  ->setEndTime($request->end_time)
-                                  ->setWeekends($request->weekends)
-                                  ->setHalfDayTimings($request)
-                                  ->update();
+                                ->setMember($business_member->member)
+                                ->setOfficeHourType($request->office_hour_type)
+                                ->setStartTime($start_time)
+                                ->setEndTime($end_time)
+                                ->setWeekends($request->weekends)
+                                ->setHalfDayTimings($request)
+                                ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
