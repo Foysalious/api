@@ -113,7 +113,7 @@ class PrimeBank extends Bank
      */
     public function storeGigatechKyc($data)
     {
-        return (new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data);
+        return json_decode(json_encode((new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data)),1);
     }
 
 }
