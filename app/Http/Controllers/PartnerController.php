@@ -171,6 +171,7 @@ class PartnerController extends Controller
                 'status',
                 'logo',
                 'address',
+                'delivery_charge',
                 'created_at'
             ]);
             $working_info = [];
