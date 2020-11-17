@@ -356,9 +356,9 @@ class PartnerRegistrationController extends Controller
                 $data = $this->makePartnerCreateData($request);
                 $partner = $this->createPartner($resource, $data);
                 $requestedPackage = PartnerSubscriptionPackage::find(config('sheba.partner_basic_packages_id'));
-                if($upgradeRequest = (new PartnerSubscription())->createBasicSubscriptionRequest($requestedPackage, $partner, $resource))
-                    if($hasCredit = $partner->hasCreditForSubscription($requestedPackage, BillingType::MONTHLY))
-                        $partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
+//                if($upgradeRequest = (new PartnerSubscription())->createBasicSubscriptionRequest($requestedPackage, $partner, $resource))
+//                    if($hasCredit = $partner->hasCreditForSubscription($requestedPackage, BillingType::MONTHLY))
+//                        $partner->subscriptionUpgrade($requestedPackage, $upgradeRequest);
 
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
                 return api_response($request, null, 200, ['info' => $info]);
