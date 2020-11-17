@@ -4,13 +4,14 @@ namespace Sheba\NeoBanking\Banks\PrimeBank;
 
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Exception;
+use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\NeoBanking\Exceptions\AccountCreateException;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
 class AccountCreate
 {
-    private $partner, $neoBankingData;
-    private $data;
+    private $partner, $neoBankingData, $bank;
+    private $data, $response;
 
     public function setNaoBankingData($neoBankingData)
     {
@@ -21,6 +22,12 @@ class AccountCreate
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setBank($bank)
+    {
+        $this->bank = $bank;
         return $this;
     }
 
@@ -45,9 +52,20 @@ class AccountCreate
      */
     public function create()
     {
-        $res= (array)(new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
-        if ($res['code']!==200) throw new AccountCreateException($res['message']);
-        return $res;
+        $this->response = (array)(new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
+        if ($this->response['code']!==200) throw new AccountCreateException($this->response['message']);
+        return $this;
+    }
 
+    public function store()
+    {
+        if($this->response['code'] === 200){
+            PartnerNeoBankingAccount::create([
+                "partner_id" => $this->partner->id,
+                "account_no" => $this->response["data"]["info"]["account_no"],
+                "bank_id"    => $this->bank->id
+            ]);
+        }
+        return $this->response;
     }
 }
