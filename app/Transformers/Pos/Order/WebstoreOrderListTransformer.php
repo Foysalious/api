@@ -14,7 +14,8 @@ class WebstoreOrderListTransformer extends TransformerAbstract
             'customer_name' => $order->customer && $order->customer->profile ? $order->customer->profile->name : null,
             'created_at' => $order->created_at->format('Y-m-d h:i A'),
             'price' => (double)$order->getNetBill(),
-            'status' => $order->status
+            'status' => $order->status,
+            'partner_wise_order_id' => $order->partner_wise_order_id
         ];
     }
 
