@@ -53,7 +53,7 @@ class NeoBankingGigatechController extends Controller
             $this->validate($request, ['mobile' => 'required|mobile:bd','bank_code' => 'required|string']);
             $bank             = $request->bank_code;
             $data['mobile'] = $request->mobile;
-            $result             = (new NeoBanking())->setBank($bank)->getGigatechKycStatus($data);
+            $result             = (array)(new NeoBanking())->setBank($bank)->getGigatechKycStatus($data);
             return api_response($request, $result, 200, ['data' => $result['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
