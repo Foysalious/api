@@ -12,7 +12,7 @@ use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 class AccountCreate
 {
     private $partner, $neoBankingData, $bank;
-    private $data, $response;
+    private $data, $mobile, $response;
 
     public function setNaoBankingData($neoBankingData)
     {
@@ -23,6 +23,12 @@ class AccountCreate
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setMobile($mobile)
+    {
+        $this->mobile = $mobile;
         return $this;
     }
 
@@ -47,7 +53,7 @@ class AccountCreate
             "user_type"        => get_class($this->partner),
             "user_id"          => $this->partner->id,
             "name"             => $application['personal']['applicant_name'] ? : null,
-            "mobile"           => $application['institution']['mobile'] ? : null,
+            "mobile"           => $this->mobile,
             "company_name"     => $this->partner->name
         ];
         return $this;

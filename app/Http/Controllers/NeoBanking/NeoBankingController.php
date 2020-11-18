@@ -182,7 +182,8 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
-            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->storeAccount();
+            $mobile = ($request->manager_resource->profile->mobile);
+            $data = $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setMobile($mobile)->setBank($request->bank_code)->storeAccount();
             return api_response($request, $data, 200, ['data' => ["message" => "Account has been created."]]);
         }catch (NeoBankingException $e){
             return api_response($request,null,$e->getCode(),['message'=>$e->getMessage()]);
