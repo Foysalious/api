@@ -12,6 +12,7 @@ class TopUpAuthMiddleware extends AccessTokenMiddleware
     {
         $auth_user = AuthUser::create();
         $user = $auth_user->getAvatar();
+        if (!$user) return;
         $type = strtolower(class_basename($user));
         $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
     }
