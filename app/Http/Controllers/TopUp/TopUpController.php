@@ -530,7 +530,6 @@ class TopUpController extends Controller
     public function isPrepaid($connection_type)
     {
         if ($connection_type == ConnectionType::PREPAID) return true;
-
         return false;
     }
 }
