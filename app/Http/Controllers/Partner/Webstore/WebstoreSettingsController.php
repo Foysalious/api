@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
+use App\Models\Partner;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
 use Illuminate\Http\Request;
@@ -25,16 +26,25 @@ class WebstoreSettingsController extends Controller
     {
         $this->validate($request, [
                 'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
-                'sub_domain' => 'sometimes|string|unique:partners,sub_domain', 'delivery_charge' => 'sometimes|numeric'
+                'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
         ]);
         $webstoreSettingsUpdateRequest->setPartner($partner);
         if ($request->has('is_webstore_published')) $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
-        if ($request->has('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
+        if ($request->has('sub_domain')) {
+            if ($this->subDomainAlreadyExist($request->sub_domain)) return api_response($request, null,400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
+            $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
+        }
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
         if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
         return api_response($request, null,200, ['message' => 'Webstore Settings Updated Successfully']);
 
+    }
+
+    private function subDomainAlreadyExist($sub_domain)
+    {
+        if (Partner::where('sub_domain', $sub_domain)->exists()) return true;
+        return false;
     }
 }
