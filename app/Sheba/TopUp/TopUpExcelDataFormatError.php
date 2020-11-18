@@ -37,7 +37,7 @@ class TopUpExcelDataFormatError
 
     private function getExcel()
     {
-        if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET)->load($this->file);
+        if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET, 'suggestion')->load($this->file);
         return $this->excel;
     }
 
