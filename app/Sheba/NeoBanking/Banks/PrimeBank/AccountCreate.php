@@ -46,7 +46,7 @@ class AccountCreate
     {
         if (!isset($this->neoBankingData->information_for_bank_account)) throw new InvalidPartnerInformationException();
         $application = json_decode($this->neoBankingData->information_for_bank_account, 1);
-        if (!isset($application['personal']) || !isset($application['institution'])) throw new InvalidPartnerInformationException();
+        if (!isset($application['personal']) || !isset($application['institution']) || !isset($application['nid_selfie'])) throw new InvalidPartnerInformationException();
         $application['account'] = NeoBankingGeneralStatics::primeBankDefaultAccountData();
         $this->data = [
             "application_data" => json_encode($application),
