@@ -99,7 +99,9 @@ abstract class Bank
 
     abstract public function completion(): BankCompletion;
 
-    abstract public function accountDetailInfo(): BankAccountInfoWithTransaction;
+    abstract public function accountDetailInfo();
+
+    abstract public function transactionList();
 
     public function postCategoryDetail(BankFormCategory $category, $data)
     {

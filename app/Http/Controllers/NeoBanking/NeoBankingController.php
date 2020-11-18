@@ -40,7 +40,23 @@ class NeoBankingController extends Controller
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
 
-            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails()->toArray();
+            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails();
+            return api_response($request, $account_details, 200, ['data' => $account_details]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getTransactionList($partner, Request $request)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $bank = $request->bank_code;
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+
+            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->transactionList();
             return api_response($request, $account_details, 200, ['data' => $account_details]);
         } catch (\Throwable $e) {
             logError($e);
