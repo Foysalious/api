@@ -156,11 +156,11 @@ class AuthUser
 
     /**
      * @param array $payload
-     * @return AuthUser
-
-
-    /**
      * @param $portal_name
+     * @return AuthUser
+     *
+     *
+     * /**
      * @return $this
      */
     public function setPortal($portal_name)
@@ -228,6 +228,11 @@ class AuthUser
     {
         if (!$this->profile || !$this->profile->resource) return null;
         return $this->profile->resource->partners->first();
+    }
+
+    public function getAttributes()
+    {
+        return $this->attributes;
     }
 
 }

@@ -2,25 +2,16 @@
 
 use App\Models\Profile;
 use Closure;
+use Sheba\OAuth2\AuthUser;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class JWTAuthentication
+class JWTAuthentication extends AccessTokenMiddleware
 {
-    public function handle($request, Closure $next)
+    protected function setExtraDataToRequest($request)
     {
-        try {
-            $token = JWTAuth::getToken();
-            $payload = JWTAuth::getPayload($token)->toArray();
-        } catch (JWTException $e) {
-            return api_response($request, null, 401);
-        }
-        if ($payload) {
-            if (isset($payload['profile'])) {
-                $profile = Profile::find($payload['profile']['id']);
-                if ($profile) $request->merge(['profile' => $profile, 'auth_info' => $payload]);
-            }
-            return $next($request);
-        } else return api_response($request, null, 403);
+        if (!$this->accessToken->accessTokenRequest->profile) return;
+        $auth_user = AuthUser::create();
+        $request->merge(['profile' => $this->accessToken->accessTokenRequest->profile, 'auth_info' => $auth_user->getAttributes()]);
     }
 }
