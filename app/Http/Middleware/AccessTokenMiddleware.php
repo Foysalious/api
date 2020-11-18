@@ -8,9 +8,9 @@ use Sheba\OAuth2\AuthUser;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 
-abstract class AccessTokenMiddleware
+class AccessTokenMiddleware
 {
-    /** @var AccessTokenRepository  */
+    /** @var AccessTokenRepository */
     private $accessTokenRepository;
     /** @var AccessToken */
     protected $accessToken;
@@ -61,5 +61,8 @@ abstract class AccessTokenMiddleware
         return $this->accessTokenRepository->where('token', $token)->first();
     }
 
-    abstract protected function setExtraDataToRequest($request);
+    protected function setExtraDataToRequest($request)
+    {
+
+    }
 }
