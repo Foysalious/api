@@ -2,6 +2,8 @@
 
 use App\Models\Partner;
 use App\Models\Profile;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -24,9 +26,18 @@ class AuthUser
     public static function create()
     {
         try {
-            $token = JWTAuth::getToken();
+            $token = self::getToken();
             if (!$token) throw new SomethingWrongWithToken("Token is missing.");
             return self::createFromToken($token);
+        } catch (JWTException $e) {
+            throw new SomethingWrongWithToken($e->getMessage());
+        }
+    }
+
+    public static function getToken()
+    {
+        try {
+            return JWTAuth::getToken();
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
         }
@@ -128,5 +139,15 @@ class AuthUser
     {
         if (!$this->profile || !$this->profile->resource) return null;
         return $this->profile->resource->partners->first();
+    }
+
+    /**
+     * @return Model|null
+     */
+    public function getAvatar()
+    {
+        if (!$this->attributes['avatar']) return null;
+        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
+        return $avatar::find($this->attributes['avatar']['type_id']);
     }
 }
