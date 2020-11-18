@@ -34,7 +34,7 @@ abstract class AccessTokenMiddleware
 
     protected function getToken()
     {
-        return AuthUser::getToken();
+        return AuthUser::getToken()->get();
     }
 
     /**
