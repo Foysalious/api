@@ -92,7 +92,7 @@ class TopUpController extends Controller
                 'vendor_id' => 'required|exists:topup_vendors,id'
             ];
 
-            $validation_data['amount'] = $this->isBusiness($agent) ? 'required|min:10|numeric' : 'required|min:10|max:1000|numeric';
+            $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ? 'required|numeric|min:10|max:'.$agent->topup_prepaid_max_limit : 'required|min:10|max:1000|numeric';
 
             $this->validate($request, $validation_data);
 
@@ -521,9 +521,16 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['data' => $special_amount]);
     }
 
-    private function isBusiness($agent)
+    public function isBusiness($agent)
     {
         if ($agent instanceof Business) return true;
+        return false;
+    }
+
+    public function isPrepaid($connection_type)
+    {
+        if ($connection_type == ConnectionType::PREPAID) return true;
+
         return false;
     }
 }
