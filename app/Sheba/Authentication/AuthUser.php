@@ -72,16 +72,6 @@ class AuthUser
         return $this;
     }
 
-    /**
-     * @param $portal_name
-     * @return $this
-     */
-    public function setPortal($portal_name)
-    {
-        $this->portal = $portal_name;
-        return $this;
-    }
-
 
     public function getAuthUser()
     {

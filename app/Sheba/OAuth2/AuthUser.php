@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Token;
 
 class AuthUser
 {
@@ -44,6 +45,10 @@ class AuthUser
         }
     }
 
+    /**
+     * @return Token
+     * @throws SomethingWrongWithToken
+     */
     public static function getToken()
     {
         try {
