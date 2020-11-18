@@ -81,8 +81,6 @@ class RegistrationController extends Controller
         ]);
         /** @var Profile $profile */
         $profile = $request->profile;
-        $auth_user = AuthUser::createFromToken($request->profile);
-        #$profile = $this->profileRepository->find(1);
 
         /** @var Member $member */
         $member = $this->createMember($profile);
@@ -103,9 +101,8 @@ class RegistrationController extends Controller
         }
 
         $info = [
-            'token' => $request->token,
-            'email_verified' => $auth_user->isEmailVerified(),
-            'member_id' => $auth_user->getMemberId(),
+            'email_verified' => $profile->email_verified,
+            'member_id' => $member->id,
             'business_id' => $business->id,
             'is_super' => $business_member->is_super
         ];
