@@ -19,15 +19,16 @@ abstract class Response
 
     public function __construct($data, NagadStore $store)
     {
-        $this->data = (array)$data;
         $this->store = $store;
-        if ($this->shouldDecode) {
-            if (!isset($this->data[$this->decode])) {
-                $this->error = $this->data[$this->msg];
-            } else {
+        $this->data  = (array)$data;
+        if (!array_key_exists($this->decode, $this->data) && !array_key_exists('callBackUrl', $this->data)) {
+            $this->error = $this->data[$this->msg];
+        } else {
+            if ($this->shouldDecode) {
                 $this->decodeOutput();
             }
         }
+
     }
 
     private function decodeOutput()
