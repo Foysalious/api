@@ -13,6 +13,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
+use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Usage\Usage;
 
 class DueTrackerController extends Controller
@@ -22,13 +23,20 @@ class DueTrackerController extends Controller
     /**
      * @param Request $request
      * @param DueTrackerRepository $dueTrackerRepository
+     * @param PartnerRepositoryInterface $partner_repo
      * @return JsonResponse
      */
-    public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository)
+    public function dueList(Request $request, DueTrackerRepository $dueTrackerRepository,PartnerRepositoryInterface $partner_repo)
     {
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 420);
         try {
+            if (!$request->partner->expense_account_id) {
+                $account = $this->entryRepo->createExpenseUser($request->partner);
+                $this->setModifier($request->partner);
+                $data = ['expense_account_id' => $account['id']];
+                $partner_repo->update($request->partner, $data);
+            }
             $data = $dueTrackerRepository->setPartner($request->partner)->getDueList($request);
             if (($request->has('download_pdf')) && ($request->download_pdf == 1)){
                 $data['start_date'] = $request->has("start_date") ? $request->start_date : null;
@@ -47,7 +55,6 @@ class DueTrackerController extends Controller
             $message = "Invalid pos customer for this partner";
             return api_response($request, $message, 403, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
