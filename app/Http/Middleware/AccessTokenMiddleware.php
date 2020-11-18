@@ -46,6 +46,5 @@ abstract class AccessTokenMiddleware
         return $this->accessTokenRepository->where('token', $token)->first();
     }
 
-
     abstract protected function setExtraDataToRequest($request);
 }
