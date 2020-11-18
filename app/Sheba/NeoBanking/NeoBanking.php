@@ -121,7 +121,7 @@ class NeoBanking
      */
     public function storeAccount()
     {
-        $bank = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
+        $bank = (new BankFactory())->setPartner($this->partner)->setMobile($this->mobile)->setBank($this->bank)->get();
         return $bank->accountCreate();
     }
 
