@@ -2,6 +2,7 @@
 
 namespace App\Http;
 
+use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
@@ -90,7 +91,7 @@ class Kernel extends HttpKernel
         'profile.auth' => ProfileAuthMiddleware::class,
         'affiliate.auth' => AffiliateAuthMiddleware::class,
         'member.auth' => MemberAuthMiddleware::class,
-        'resource.auth' => \App\Http\Middleware\ResourceAuthMiddleware::class,
+        'resource.auth' => Middleware\ResourceAuthMiddleware::class,
         'manager.auth' => ManagerAuthMiddleware::class,
         'business.auth' => BusinessManagerAuthMiddleware::class,
         'partner_job.auth' => PartnerJobAuthMiddleware::class,
@@ -102,12 +103,11 @@ class Kernel extends HttpKernel
         'geo.auth' => GeoAuthMiddleware::class,
         'loan.version' => DLSApiVersioning::class,
         'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class,
-        'jwtAuth' => JWTAuthentication::class,
-        'jwtGlobalAuth' => JWTAuthMiddleware::class,
-        'topUp.auth' => TopUpAuthMiddleware::class,
-        'jwt.auth' => 'Tymon\JWTAuth\Middleware\GetUserFromToken',
-        'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken',
-        'resource.jwt.auth' => ResourceAuthMiddleware::class,
-        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
+        'jwtAuth' => JWTAuthentication::class,//10
+        'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
+        'topUp.auth' => TopUpAuthMiddleware::class,//1
+        'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
+        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
+        'accessToken' => AccessTokenMiddleware::class,
     ];
 }
