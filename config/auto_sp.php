@@ -18,5 +18,6 @@ return [
             'package' => 5,
             'avg_rating' => 10,
         ]
-    ]
+    ],
+    'new_customer_order_count' => 2
 ];
