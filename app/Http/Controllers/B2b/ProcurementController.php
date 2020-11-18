@@ -581,13 +581,13 @@ class ProcurementController extends Controller
 
         if ($request->added_documents && is_array($request->added_documents)) {
             $updater->setAttachmentsForAdd($request->added_documents)->setProcurement($procurement)
-                     ->setCreatedBy($request->manager_member)->addAttachments();
+                ->setCreatedBy($request->manager_member)->addAttachments();
         }
         if (!is_null($request->deleted_documents)) {
             $deleted_documents = json_decode($request->deleted_documents);
             $updater->setAttachmentsForDelete($deleted_documents)->deleteAttachments();
         }
-        
+
         return api_response($request, null, 200, ["message" => "Successful"]);
     }
 
@@ -766,9 +766,15 @@ class ProcurementController extends Controller
     {
         $procurement_orders = Procurement::order()->with([
             'bids' => function ($q) {
-                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price');
+                $q->select('id', 'procurement_id', 'bidder_id', 'bidder_type', 'status', 'price')->with([
+                    'bidder' => function ($q) {
+                        $q->with(['resources' => function ($q) {
+                            $q->select('resources.id', 'profile_id')->with('profile');
+                        }]);
+                    }]);
             }
         ])->where('owner_id', (int)$business)->orderBy('id', 'DESC');
+
         $is_order_available = $procurement_orders->count() > 0 ? 1 : 0;
 
         $start_date = $request->has('start_date') ? $request->start_date : null;
