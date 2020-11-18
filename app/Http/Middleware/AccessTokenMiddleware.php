@@ -10,7 +10,10 @@ use Closure;
 
 abstract class AccessTokenMiddleware
 {
+    /** @var AccessTokenRepository  */
     private $accessTokenRepository;
+    /** @var AccessToken */
+    protected $accessToken;
 
     public function __construct(AccessTokenRepository $access_token_repository)
     {
@@ -23,6 +26,7 @@ abstract class AccessTokenMiddleware
             $access_token = $this->findAccessToken($this->getToken());
             if (!$access_token) throw new AccessTokenDoesNotExist();
             if (!$access_token->isValid()) throw new AccessTokenNotValidException();
+            $this->setAccessToken($access_token);
             $request->merge(['access_token' => $access_token]);
             if ($access_token->accessTokenRequest->profile) $request->merge(['profile' => $access_token->accessTokenRequest->profile]);
         } catch (JWTException $e) {
@@ -35,6 +39,17 @@ abstract class AccessTokenMiddleware
     protected function getToken()
     {
         return AuthUser::getToken()->get();
+    }
+
+    private function setAccessToken(AccessToken $access_token)
+    {
+        $this->accessToken = $access_token;
+        return $this;
+    }
+
+    protected function getAccessToken()
+    {
+        return $this->accessToken;
     }
 
     /**
