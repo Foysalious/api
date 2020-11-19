@@ -91,10 +91,8 @@ class Kernel extends HttpKernel
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
         'affiliate.auth' => AffiliateAuthMiddleware::class,
-        'member.auth' => MemberAuthMiddleware::class,
         'resource.auth' => Middleware\ResourceAuthMiddleware::class,
         'manager.auth' => ManagerAuthMiddleware::class,
-        'business.auth' => BusinessManagerAuthMiddleware::class,
         'partner_job.auth' => PartnerJobAuthMiddleware::class,
         'partner_order.auth' => PartnerOrderAuthMiddleware::class,
         'partner_resource.auth' => PartnerResourceAuthMiddleware::class,
@@ -104,6 +102,8 @@ class Kernel extends HttpKernel
         'geo.auth' => GeoAuthMiddleware::class,
         'loan.version' => DLSApiVersioning::class,
         'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class,
+        'business.auth' => BusinessManagerAuthMiddleware::class,
+        'member.auth' => MemberAuthMiddleware::class,
         'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
         'topUp.auth' => TopUpAuthMiddleware::class,//1
