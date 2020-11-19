@@ -22,15 +22,10 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, NeoBanking $neoBanking)
+    public function getHomepage($partner, Request $request, Home $home)
     {
         try {
-//            $this->validate($request, ['bank_code' => 'required|string']);
-//            $bank = $request->bank_code;
-//            $partner = $request->partner;
-//            $manager_resource = $request->manager_resource;
-//            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->homepage();
-            $homepage = (new Home())->setPartner($request->partner)->get();
+            $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
         } catch (\Throwable $e) {
             logError($e);
