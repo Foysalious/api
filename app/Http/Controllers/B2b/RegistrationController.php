@@ -67,7 +67,6 @@ class RegistrationController extends Controller
      * @param BusinessUpdater $business_updater
      * @param BusinessCommonInformationCreator $common_info_creator
      * @return JsonResponse
-     * @throws SomethingWrongWithToken
      */
     public function registerV3(Request $request, BusinessCreatorRequest $business_creator_request,
                                BusinessCreator $business_creator,
@@ -90,7 +89,7 @@ class RegistrationController extends Controller
             ->setName($request->company_name)
             ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
 
-        if ($member->businessMember) return api_response($request, null, 409, ['message' => "This person is already added"]);
+        if ($member->businessMember) return api_response($request, null, 409, ['message' => "This business is already added"]);
 
         $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
         $common_info_creator->setBusiness($business)->setMember($member)->create();
