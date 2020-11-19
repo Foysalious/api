@@ -34,7 +34,6 @@ class TPProxyClient
                 'read_timeout' => 300,
                 'connect_timeout' => 120
             ]);
-
             $proxy_response = $response->getBody()->getContents();
             if (!$proxy_response) throw new TPProxyServerError();
             $proxy_response = json_decode($proxy_response);

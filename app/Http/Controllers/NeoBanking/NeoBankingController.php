@@ -24,10 +24,14 @@ class NeoBankingController extends Controller
     public function getHomepage($partner, Request $request, NeoBanking $neoBanking)
     {
         try {
-            $homepage = $neoBanking->setPartner($request->partner)->homepage();
-            return api_response($request, $homepage, 200, ['data' => $homepage]);
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $bank = $request->bank_code;
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->homepage();
+            return api_response($request, $account_details, 200, ['data' => $account_details]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -39,9 +43,12 @@ class NeoBankingController extends Controller
             $bank = $request->bank_code;
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails();
-            return api_response($request, $account_details, 200, ['data' => $account_details]);
+
+            if (isset($account_details->code) && $account_details->code != 200) {
+                return api_response($request, $account_details, $account_details->code, ['message' => $account_details->message]);
+            }
+            return api_response($request, $account_details, 200, ['data' => $account_details->data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
@@ -55,9 +62,12 @@ class NeoBankingController extends Controller
             $bank = $request->bank_code;
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
-
             $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->transactionList();
-            return api_response($request, $account_details, 200, ['data' => $account_details]);
+
+            if (isset($account_details->code) && $account_details->code != 200) {
+                return api_response($request, $account_details, $account_details->code, ['message' => $account_details->message]);
+            }
+            return api_response($request, $account_details, 200, ['data' => $account_details->data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

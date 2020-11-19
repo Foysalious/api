@@ -89,11 +89,11 @@ abstract class Bank
 
     abstract public function categories(): BankFormCategoryList;
 
-    abstract public function accountInfo(): BankAccountInfo;
+    abstract public function accountInfo();
 
     abstract public function categoryDetails(BankFormCategory $category): CategoryGetter;
 
-    abstract public function homeInfo(): array;
+    abstract public function homeInfo();
 
     abstract public function accountCreate();
 
