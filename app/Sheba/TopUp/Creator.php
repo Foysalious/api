@@ -1,7 +1,11 @@
 <?php namespace Sheba\TopUp;
 
+use App\Exceptions\ApiValidationException;
+use App\Models\Affiliate;
+use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
+use Carbon\Carbon;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Gateway\GatewayFactory;
@@ -28,6 +32,7 @@ class Creator
         if ($this->topUpRequest->hasError()) return null;
         $top_up_order = new TopUpOrder();
         $agent = $this->topUpRequest->getAgent();
+        if ($this->checkIfAgentDidTopup($agent)) throw new ApiValidationException("You' are not authorized to do topup");
         /** @var Vendor $vendor */
         $vendor = $this->topUpRequest->getVendor();
         /** @var TopUpVendor $model */
@@ -53,5 +58,14 @@ class Creator
         $this->withCreateModificationField($top_up_order);
         $top_up_order->save();
         return $top_up_order;
+    }
+
+    private function checkIfAgentDidTopup(TopUpAgent $agent)
+    {
+        if (!($agent instanceof Partner || $agent instanceof Affiliate)) return false;
+        if ($agent instanceof Partner && !in_array($agent->id, [233])) return false;
+        if ($agent instanceof Affiliate && !in_array($agent->id, [3695, 41])) return false;
+        if ($agent->topUpOrders()->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->count() == 0) return false;
+        return true;
     }
 }
