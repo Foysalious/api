@@ -158,6 +158,8 @@ class ServiceController extends Controller
             $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
             $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
             $partner_pos_service->discounts = $partner_pos_service_model->discounts;
+            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
@@ -263,6 +265,8 @@ class ServiceController extends Controller
 
             $partner_pos_service->unit            = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit   = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+            $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
+            $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
             $partner_pos_service_arr              = $partner_pos_service->toArray();
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [
