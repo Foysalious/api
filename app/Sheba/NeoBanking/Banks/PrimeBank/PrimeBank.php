@@ -173,6 +173,8 @@ class PrimeBank extends Bank
         $data['account_status'] = null;
         $data['status_message'] = null;
         $data['status_message_type'] = null;
+
+        return $data;
     }
 
 }
