@@ -29,7 +29,7 @@ abstract class BankApiClient
         return $this;
     }
 
-    abstract function getAccountInfo(): BankAccountInfo;
+    abstract function getAccountInfo();
 
     abstract function getAccountDetailInfo(): BankAccountInfoWithTransaction;
 }
