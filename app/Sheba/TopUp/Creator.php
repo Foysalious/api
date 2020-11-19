@@ -49,8 +49,7 @@ class Creator
         $top_up_order->vendor_id = $model->id;
         $top_up_order->gateway = $model->gateway;
         $gateway_factory = new GatewayFactory();
-        $gateway_factory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
-        $gateway = $gateway_factory->get();
+        $gateway = $gateway_factory->setGatewayName($top_up_order->gateway)->get();
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
         $top_up_order->ip = getIp();
         $top_up_order->user_agent = $this->topUpRequest->getUserAgent();
@@ -65,7 +64,7 @@ class Creator
         if (!($agent instanceof Partner || $agent instanceof Affiliate)) return false;
         if ($agent instanceof Partner && !in_array($agent->id, [233])) return false;
         if ($agent instanceof Affiliate && !in_array($agent->id, [3695, 41])) return false;
-        if ($agent->topUpOrders()->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->count() == 0) return false;
+        if (TopUpOrder::where([["agent_type", get_class($agent)], ['agent_id', $agent->id], ['created_at', '>=', Carbon::now()->subDay()->toDateTimeString()]])->count() == 0) return false;
         return true;
     }
 }
