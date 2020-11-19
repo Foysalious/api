@@ -134,7 +134,7 @@ return [
                 'name'          => 'applicant_name',
                 'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
-                'is_editable'   => false
+                'is_editable'   => true
             ],
             [
                 'field_type'    => 'date',
