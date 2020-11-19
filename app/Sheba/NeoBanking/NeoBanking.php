@@ -70,9 +70,14 @@ class NeoBanking
      * @return BankAccountInfoWithTransaction
      * @throws Exceptions\InvalidBankCode
      */
-    public function accountDetails(): BankAccountInfoWithTransaction
+    public function accountDetails()
     {
         return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->accountDetailInfo();
+    }
+
+    public function transactionList()
+    {
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->transactionList();
     }
 
     public function createTransaction()

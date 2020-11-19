@@ -11,6 +11,7 @@ class NeoBankingRoute
                     $api->get('/business-information', 'NeoBanking\\NeoBankingController@getBusinessInformation');
                     $api->get('/homepage', 'NeoBanking\\NeoBankingController@getHomePage');
                     $api->get('/account-details', 'NeoBanking\\NeoBankingController@getAccountDetails');
+                    $api->get('/transaction-list', 'NeoBanking\\NeoBankingController@getTransactionList');
                     $api->post('/create-transaction', 'NeoBanking\\NeoBankingController@createTransaction');
                     $api->get('/account-information', 'NeoBanking\\NeoBankingController@getAccountInformation');
                     $api->get('/category', 'NeoBanking\\NeoBankingController@getCategoryWiseDetails');

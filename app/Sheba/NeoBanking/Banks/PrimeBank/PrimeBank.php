@@ -72,9 +72,22 @@ class PrimeBank extends Bank
         return (new Completion())->setBank($this)->setPartner($this->partner)->setMobile($this->mobile)->getAll();
     }
 
-    public function accountDetailInfo(): BankAccountInfoWithTransaction
+    private function getAccount()
     {
-        return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
+        $account = $this->partner->neoBankAccount;
+        return $account[0]['account_no'];
+    }
+
+    public function accountDetailInfo()
+    {
+        $response = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/balance/'.$this->getAccount());
+        return $response->data;
+    }
+
+    public function transactionList()
+    {
+        $response = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/transaction-list/'.$this->getAccount());
+        return $response->data;
     }
 
     /**
