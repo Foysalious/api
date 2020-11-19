@@ -90,15 +90,11 @@ class RegistrationController extends Controller
             ->setName($request->company_name)
             ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]));
 
-        if (count($member->businesses) > 0 && $member->businessMember) {
-            $business = $member->businesses->first();
-            $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
-            $business_member = $member->businessMember;
-        } else {
-            $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
-            $common_info_creator->setBusiness($business)->setMember($member)->create();
-            $business_member = $this->createBusinessMember($business, $member);
-        }
+        if ($member->businessMember) return api_response($request, null, 200, ['message' => "This person is already added"]);
+        
+        $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
+        $common_info_creator->setBusiness($business)->setMember($member)->create();
+        $business_member = $this->createBusinessMember($business, $member);
 
         $info = [
             'email_verified' => $profile->email_verified,
