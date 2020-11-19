@@ -24,13 +24,15 @@ class NeoBankingController extends Controller
     public function getHomepage($partner, Request $request, NeoBanking $neoBanking)
     {
         try {
-            $this->validate($request, ['bank_code' => 'required|string']);
-            $bank = $request->bank_code;
-            $partner = $request->partner;
-            $manager_resource = $request->manager_resource;
-            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->homepage();
-            return api_response($request, $account_details, 200, ['data' => $account_details]);
+//            $this->validate($request, ['bank_code' => 'required|string']);
+//            $bank = $request->bank_code;
+//            $partner = $request->partner;
+//            $manager_resource = $request->manager_resource;
+//            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->homepage();
+            $homepage = $neoBanking->setPartner($request->partner)->homepage();
+            return api_response($request, $homepage, 200, ['data' => $homepage]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
