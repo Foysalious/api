@@ -83,7 +83,7 @@ class RegistrationController extends Controller
         $profile = $request->profile;
 
         /** @var Member $member */
-        $member = $this->createMember($profile);
+        $profile->member ? $member = $profile->member : $member = $this->createMember($profile);
         $this->setModifier($member);
 
         $business_creator_request = $business_creator_request
