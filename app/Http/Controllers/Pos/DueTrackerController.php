@@ -10,6 +10,7 @@ use Sheba\DueTracker\DueTrackerRepository;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
+use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
@@ -19,6 +20,10 @@ use Sheba\Usage\Usage;
 class DueTrackerController extends Controller
 {
     use ModificationFields;
+    private $entryRepo;
+    public function __construct(EntryRepository $entry_repo) {
+        $this->entryRepo=$entry_repo;
+    }
 
     /**
      * @param Request $request
