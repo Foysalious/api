@@ -12,7 +12,7 @@ use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 class AccountCreate
 {
     private $partner, $neoBankingData, $bank;
-    private $data, $mobile, $response;
+    private $data, $mobile, $response, $account_no;
 
     public function setNaoBankingData($neoBankingData)
     {
@@ -70,6 +70,10 @@ class AccountCreate
         return $this;
     }
 
+    /**
+     * @return mixed
+     * @throws Exception
+     */
     public function store()
     {
         if($this->response['code'] === 200){
@@ -77,6 +81,17 @@ class AccountCreate
                 "partner_id" => $this->partner->id,
                 "account_no" => $this->response["data"]->info->account_no,
                 "bank_id"    => $this->bank->id
+            ]);
+            $this->account_no = $this->response["data"]->info->account_no;
+            $data["title"]      = "New bank account created";
+            $data["message"]    = "অভিনন্দন! প্রাইম ব্যাংক এ আপনার নামে একটি ব্যাবসায়িক ব্যাংক অ্যাকাউন্ট খোলা হয়েছে। ব্যাংক অ্যাকাউন্ট নাম্বার $this->account_no";
+            $data["event_type"] = "NeoBanking";
+            NeoBankingGeneralStatics::sendCreatePushNotification($this->partner, $data);
+            notify()->partner($this->partner)->send([
+                "title"       => $data["title"],
+                "description" => $data["message"],
+                "type"        => "Info",
+                "event_type"  => "NeoBanking"
             ]);
         }
         return $this->response;

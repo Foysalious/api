@@ -73,4 +73,19 @@ class NeoBankingGeneralStatics
             return [];
         }
     }
+
+    public static function sendCreatePushNotification($partner, $data)
+    {
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $notification_data = [
+            "title" => $data["title"],
+            "message" => $data["message"],
+            "sound" => "notification_sound",
+            "event_type" => $data["event_type"]
+        ];
+
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
 }
