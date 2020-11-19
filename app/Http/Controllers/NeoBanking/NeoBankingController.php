@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\Exceptions\UnauthorizedRequestFromSBSException;
+use Sheba\NeoBanking\Home;
 use Sheba\NeoBanking\NeoBanking;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\PushNotificationHandler;
@@ -29,10 +30,9 @@ class NeoBankingController extends Controller
 //            $partner = $request->partner;
 //            $manager_resource = $request->manager_resource;
 //            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->homepage();
-            $homepage = $neoBanking->setPartner($request->partner)->homepage();
+            $homepage = (new Home())->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
