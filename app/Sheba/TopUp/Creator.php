@@ -64,7 +64,7 @@ class Creator
         if (!($agent instanceof Partner || $agent instanceof Affiliate)) return false;
         if ($agent instanceof Partner && !in_array($agent->id, [233])) return false;
         if ($agent instanceof Affiliate && !in_array($agent->id, [3695, 41])) return false;
-        if ($agent->topUpOrders()->where('created_at', '>=', Carbon::now()->subDay()->toDateTimeString())->count() == 0) return false;
+        if (TopUpOrder::where([["agent_type", get_class($agent)], ['agent_id', $agent->id], ['created_at', '>=', Carbon::now()->subDay()->toDateTimeString()]])->count() == 0) return false;
         return true;
     }
 }
