@@ -902,5 +902,9 @@ return [
             "internet_banking_yes" => "1",
             "internet_banking_no"  => "0"
         ]
-    ]
+    ],
+    'cpv_pending_message'    => 'ঠিকানা ভেরিফিকেশন প্রক্রিয়াধিন',
+    'cpv_unverified_message' => 'ঠিকানা ভেরিফিকেশন ব্যর্থ হয়েছে',
+    'cpv_verified_message'   => '',
+    'unsigned_message'       => 'স্বাক্ষর প্রদান করা হয়নি'
 ];

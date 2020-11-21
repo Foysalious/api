@@ -149,17 +149,17 @@ class PrimeBank extends Bank
     public function formatStatus($status) {
         $data = [];
         if($status->cpv === 'cpv_pending') {
-            $data['message'] = 'CPV Pending';
+            $data['message'] = config('neo_banking.cpv_pending_message');
             $data['type'] = 'Warning';
         } else if($status->cpv === 'cpv_unverified') {
-            $data['message'] = 'CPV Not Verified';
+            $data['message'] = config('neo_banking.cpv_unverified_message');
             $data['type'] = 'Warning';
         } else if($status->cpv === 'cpv_verified') {
             if($status->sign === 'signed') {
-                $data['message'] = 'Account Open';
+                $data['message'] = config('neo_banking.cpv_verified_message');
                 $data['type'] = 'Success';
             } else {
-                $data['message'] = 'Not Signed';
+                $data['message'] = config('neo_banking.unsigned_message');
                 $data['type'] = 'Primary';
             }
         }

@@ -14,6 +14,7 @@ class NeoBankingGeneralStatics
     {
         return [
             "title" => $data->title,
+            "description" => $data->description,
             "link" => $data->link,
             "type" => $data->type,
             "event_type" => $data->event_type,
@@ -28,7 +29,7 @@ class NeoBankingGeneralStatics
         $sound = config('sheba.push_notification_sound.manager');
         $notification_data = [
             "title" => $data->title,
-            "message" => $data->title,
+            "message" => $data->description,
             "sound" => "notification_sound",
             "event_type" => $data->event_type,
             "event_id" => $data->event_id
