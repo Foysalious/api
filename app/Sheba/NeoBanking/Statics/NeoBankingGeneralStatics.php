@@ -54,12 +54,13 @@ class NeoBankingGeneralStatics
             'father_name' => 'required|string',
             'mother_name' => 'required|string',
             'spouse_name' => 'required|string',
-            'perm_address' => 'required|string',
+            'pres_address' => 'required|string',
             'id_front_name' => 'required|string',
             'id_back_name' => 'required|string',
             'applicant_photo' => 'required|mimes:jpeg,png,jpg',
             'id_front' => 'required|mimes:jpeg,png,jpg',
             'id_back' => 'required|mimes:jpeg,png,jpg',
+            'is_kyc_store' => 'required',
         ];
     }
 
