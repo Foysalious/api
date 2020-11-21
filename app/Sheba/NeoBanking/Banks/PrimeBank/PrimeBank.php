@@ -33,9 +33,16 @@ class PrimeBank extends Bank
         // TODO: Implement categories() method.
     }
 
-    public function accountInfo(): BankAccountInfo
+    public function accountInfo()
     {
-        return $this->apiClient->setPartner($this->partner)->getAccountInfo();
+        $account = $this->getAccount();
+        if ($account) {
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/status/'.$account);
+            return $this->formatAccountData($status, $account);
+        } else {
+            return $this->formatEmptyData();
+        }
+
     }
 
     public function categoryDetails(BankFormCategory $category): CategoryGetter
@@ -47,7 +54,7 @@ class PrimeBank extends Bank
      * @return array
      * @throws ReflectionException
      */
-    public function homeInfo(): array
+    public function homeInfo()
     {
         return (new BankHomeInfo())->setBank($this)->setPartner($this->partner)->toArray();
     }
@@ -75,19 +82,17 @@ class PrimeBank extends Bank
     private function getAccount()
     {
         $account = $this->partner->neoBankAccount;
-        return $account[0]['account_no'];
+        return $account && count($account) > 0 ? $account[0]['account_no'] : null;
     }
 
     public function accountDetailInfo()
     {
-        $response = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/balance/'.$this->getAccount());
-        return $response->data;
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/balance/'.$this->getAccount());
     }
 
     public function transactionList()
     {
-        $response = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/transaction-list/'.$this->getAccount());
-        return $response->data;
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/transaction-list/'.$this->getAccount());
     }
 
     /**
@@ -127,6 +132,49 @@ class PrimeBank extends Bank
     public function storeGigatechKyc($data)
     {
         return json_decode(json_encode((new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data)),1);
+    }
+
+    public function formatAccountData($status, $account) {
+        $data['has_account'] = 1;
+        $data['account_no'] = $account;
+        $accountStatus = $status->data->account_status;
+        $data['account_status'] = $accountStatus;
+        $formattedStatus = $this->formatStatus($accountStatus);
+        $data['status_message'] = $formattedStatus['message'];
+        $data['status_message_type'] = $formattedStatus['type'];
+
+        return $data;
+    }
+
+    public function formatStatus($status) {
+        $data = [];
+        if($status->cpv === 'cpv_pending') {
+            $data['message'] = 'CPV Pending';
+            $data['type'] = 'Warning';
+        } else if($status->cpv === 'cpv_unverified') {
+            $data['message'] = 'CPV Not Verified';
+            $data['type'] = 'Warning';
+        } else if($status->cpv === 'cpv_verified') {
+            if($status->sign === 'signed') {
+                $data['message'] = 'Account Open';
+                $data['type'] = 'Success';
+            } else {
+                $data['message'] = 'Not Signed';
+                $data['type'] = 'Primary';
+            }
+        }
+        return $data;
+    }
+
+    public function formatEmptyData()
+    {
+        $data['has_account'] = 0;
+        $data['account_no'] = null;
+        $data['account_status'] = null;
+        $data['status_message'] = null;
+        $data['status_message_type'] = null;
+
+        return $data;
     }
 
 }
