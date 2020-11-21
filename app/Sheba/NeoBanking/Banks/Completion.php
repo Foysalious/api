@@ -59,7 +59,8 @@ class Completion
             $iterator->next();
         }
         $this->setCanApply($completion);
-        return (new BankCompletion())->setGigaTechStatusInfo($this->getGigaTechData())->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+        //TODO remove default gigatech value
+        return (new BankCompletion())->setGigaTechStatusInfo([])->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
     private function getGigaTechData()
