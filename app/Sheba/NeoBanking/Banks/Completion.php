@@ -15,6 +15,7 @@ class Completion
     /** @var Bank $bank */
     private $bank;
     private $mobile;
+    private $gigatech_data;
     private $can_apply = 1;
 
     /**
@@ -58,19 +59,22 @@ class Completion
             $completion[] = $current->getCompletionDetails()->toArray();
             $iterator->next();
         }
-        $this->setCanApply($completion);
-        return (new BankCompletion())->setGigaTechStatusInfo($this->getGigaTechData())->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
+        $this->setGigaTechData()->setApply($completion);
+        return (new BankCompletion())->setGigaTechStatusInfo($this->gigatech_data)->setCompletion($completion)->setCanApply($this->can_apply)->setBankDetailTitle(BankStatics::AccountDetailsTitle())->setBankDetailLink(BankStatics::AccountDetailsURL())->setMessage(BankStatics::completionMessage($this->can_apply))->setMessageType(BankStatics::completionType($this->can_apply));
     }
 
-    private function getGigaTechData()
+    private function setGigaTechData()
     {
-        return $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+        $this->gigatech_data = $this->bank->getGigatechKycStatus(["mobile" => $this->mobile]);
+        return $this;
     }
 
-    public function setCanApply($completion)
+    public function setApply($completion)
     {
         foreach ($completion as $single)
-            if($single['completion_percentage']['en'] != 100) $this->can_apply = 0;
+            if ($single['completion_percentage']['en'] != 100) $this->can_apply = 0;
+        if ($this->can_apply === 1)
+            if ($this->gigatech_data->data->data->status !== "passed") $this->can_apply = 0;
     }
 
 }
