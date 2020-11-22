@@ -565,10 +565,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return new PartnerSubscriber($this);
     }
 
-    public function subscriptionUpgrade($package, $upgradeRequest = null)
+    /**
+     * @param $package
+     * @param null $upgradeRequest
+     * @param int $sms
+     * @throws \Exception
+     */
+    public function subscriptionUpgrade($package, $upgradeRequest = null, $sms = 1)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $this->subscriber()->upgrade($package, $upgradeRequest);
+        $this->subscriber()->setSMSNotification($sms)->upgrade($package, $upgradeRequest);
     }
 
     public function getBonusCreditAttribute()

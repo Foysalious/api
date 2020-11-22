@@ -44,9 +44,12 @@ class PartnerSubscription
         return $this;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function updateSubscription()
     {
         if($hasCredit = $this->partner->hasCreditForSubscription($this->requested_package, BillingType::MONTHLY) && $this->upgrade_request)
-            $this->partner->subscriptionUpgrade($this->requested_package, $this->upgrade_request);
+            $this->partner->subscriptionUpgrade($this->requested_package, $this->upgrade_request, 0);
     }
 }
