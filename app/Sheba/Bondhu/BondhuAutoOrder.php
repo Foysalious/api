@@ -110,7 +110,7 @@ class BondhuAutoOrder
         $services = json_decode($this->request->services);
         if (isset($services[0]->id)){
             if($services[0]->id !=676){
-                $order->setPayerId(39169);
+                $order->setPayerId($this->affiliate->id);
                 $order->setPayerType('affiliate');
             }
         }
