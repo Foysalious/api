@@ -37,8 +37,11 @@ class NeoBankingGigatechController extends Controller
         try {
             $this->validate($request, ['bank_code' => 'required|string']);
             $bank             = $request->bank_code;
-            $token           = (new NeoBanking())->setBank($bank)->getSDKLivelinessToken();
-            return api_response($request, $token, 200, ["data" => $token]);
+            $response         = (new NeoBanking())->setBank($bank)->getSDKLivelinessToken();
+            if (isset($response->code) && $response->code != 200) {
+                return api_response($request, null, $response->code, ['message' => $response->message]);
+            }
+            return api_response($request, null, 200, ['data' => $response->data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
