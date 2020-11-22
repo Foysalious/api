@@ -7,6 +7,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\NeoBanking\Banks\BankFactory;
 use Sheba\NeoBanking\Banks\BankFormCategoryFactory;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Exceptions\InvalidPartnerInformationException;
 use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 class NeoBanking
@@ -122,11 +123,15 @@ class NeoBanking
     }
 
     /**
+     * @return mixed
      * @throws Exceptions\InvalidBankCode
+     * @throws InvalidPartnerInformationException
      */
     public function storeAccount()
     {
         $bank = (new BankFactory())->setPartner($this->partner)->setMobile($this->mobile)->setBank($this->bank)->get();
+        $data = ($bank->setMobile($this->mobile)->completion());
+        if ($data->getCanApply() === 0) throw new InvalidPartnerInformationException();
         return $bank->accountCreate();
     }
 
