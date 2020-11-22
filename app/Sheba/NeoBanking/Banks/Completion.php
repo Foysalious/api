@@ -74,7 +74,8 @@ class Completion
         foreach ($completion as $single)
             if ($single['completion_percentage']['en'] != 100) $this->can_apply = 0;
         if ($this->can_apply === 1)
-            if ( isset($this->gigatech_data->data->data->status) && $this->gigatech_data->data->data->status !== "passed") $this->can_apply = 0;
+            if (isset($this->gigatech_data->data->data->status) && $this->gigatech_data->data->data->status !== "passed") $this->can_apply = 0;
+        if (!isset($this->gigatech_data->data->data->status)) $this->can_apply = 0;
     }
 
 }
