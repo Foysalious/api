@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
+use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Gateway\GatewayFactory;
@@ -32,7 +33,7 @@ class Creator
         if ($this->topUpRequest->hasError()) return null;
         $top_up_order = new TopUpOrder();
         $agent = $this->topUpRequest->getAgent();
-        if ($this->checkIfAgentDidTopup($agent)) throw new ApiValidationException("You' are not authorized to do topup");
+        if ($this->checkIfAgentDidTopup($agent)) throw new Exception("You' are not authorized to do topup", 403);
         /** @var Vendor $vendor */
         $vendor = $this->topUpRequest->getVendor();
         /** @var TopUpVendor $model */

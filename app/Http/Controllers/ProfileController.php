@@ -340,7 +340,7 @@ class ProfileController extends Controller
             $profile = $request->profile;
             if (!$profile) return api_response($request, null, 404, ['data' => null]);
 
-            $input = $request->except('profile', 'remember_token');
+            $input = $request->only(['name', 'bn_name', 'dob', 'nid_no']);
             $profile_repo->update($profile, $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
