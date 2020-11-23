@@ -34,6 +34,7 @@ use Sheba\Payment\PaymentManager;
 use Sheba\Portals\Portals;
 use Sheba\Sms\Sms;
 use Throwable;
+use Sheba\Dal\Service\Service;
 
 class OrderController extends Controller
 {
@@ -137,10 +138,11 @@ class OrderController extends Controller
 
                     $services = json_decode($request->services);
                     if (isset($services[0]->id)){
-                        if($services[0]->id == 676){
-                            $request->payment_method = 'cod';
-                        } else {
+                        $getServiceInfo = Service::where('id', $services[0]->id)->first();
+                        if( $getServiceInfo->is_published_for_ddn == 1 &&  $services[0]->id != 676){
                             $request->payment_method = 'bondhu_balance';
+                        } else {
+                            $request->payment_method = 'cod';
                         }
                     }
 
