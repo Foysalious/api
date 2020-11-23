@@ -215,4 +215,21 @@ class LeaveController extends Controller
 
         return api_response($request, null, 200, ['settings' => $settings]);
     }
+
+    public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
+    {
+        $this->validate($request, [
+            'note' => 'required',
+        ]);
+        $member = $this->getMember($request);
+        $business_member = $this->getBusinessMember($request);
+        $this->setModifier($member);
+        $leave = $leave_repo->find((int)$leave);
+        $leave_updater->setLeave($leave)->setBusinessMember($business_member)
+            ->setSubstitute($request->substitute_id)
+            ->setNote($request->note)->setAttachments($request->attachments)->setCreatedBy($member);
+        if ($leave_updater->hasError()) return api_response($request, null, $leave_updater->getErrorCode(), ['message' => $leave_updater->getErrorMessage()]);
+        $leave_updater->update();
+        return api_response($request, null, 200);
+    }
 }
