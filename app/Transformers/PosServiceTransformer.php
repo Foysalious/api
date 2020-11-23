@@ -19,6 +19,7 @@ class PosServiceTransformer extends TransformerAbstract
             'wholesale_price' => $service->wholesale_price,
             'cost' => $service->cost,
             'category_id' => $service->subCategory->parent->id,
+            'master_category_id' => $service->subCategory->parent->id,
             'category_name' => $service->subCategory->parent->name,
             'sub_category_id' => $service->subCategory->id,
             'sub_category_name' => $service->subCategory->name,
