@@ -260,6 +260,7 @@ class AutomaticEntryRepository extends BaseRepository
             $this->result = $this->client->post('accounts/' . $this->accountId . '/entries/from-type', $data)['data'];
             return $this->result;
         } catch (Throwable $e) {
+            dd($e);
             $this->notifyBug($e);
             return false;
         }
