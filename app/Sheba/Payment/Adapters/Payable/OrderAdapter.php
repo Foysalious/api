@@ -122,7 +122,10 @@ class OrderAdapter implements PayableAdapter
     {
         $order = $this->partnerOrder->order;
 
-        if ($order->partner_id) {
+        if ($order->payer_type == 'affiliate' && $order->payer_id > 0) {
+            $this->userId = $order->payer_id;
+            $this->userType = "App\\Models\\Affiliate";
+        } elseif ($order->partner_id) {
             $this->userId = $order->partner_id;
             $this->userType = "App\\Models\\Partner";
         } elseif ($order->business_id) {

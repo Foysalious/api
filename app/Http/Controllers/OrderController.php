@@ -80,7 +80,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
+                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address',
                 'resource' => 'sometimes|numeric',
@@ -121,8 +121,7 @@ class OrderController extends Controller
         }
     }
 
-    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order,
-                                         OrderPlace $order_place, OrderAdapter $order_adapter)
+    public function placeOrderFromBondhu(BondhuOrderRequest $request, $affiliate, BondhuAutoOrder $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
     {
         try {
             if (Affiliate::find($affiliate)->is_suspended) {
@@ -135,8 +134,19 @@ class OrderController extends Controller
                 $order = $bondhu_auto_order->place();
                 if ($order) {
                     if ($order->voucher_id) $this->updateVouchers($order, $bondhu_auto_order->customer);
+
+                    $services = json_decode($request->services);
+                    if (isset($services[0]->id)){
+                        if($services[0]->id == 676){
+                            $request->payment_method = 'cod';
+                        } else {
+                            $request->payment_method = 'bondhu_balance';
+                        }
+                    }
+
                     if ($request->payment_method !== 'cod') {
                         /** @var Payment $payment */
+
                         $payment = $this->getPayment($request->payment_method, $order, $order_adapter);
                         if ($payment) {
                             $link = $payment->redirect_url;
@@ -165,7 +175,6 @@ class OrderController extends Controller
             return api_response($request, null, 500);
 
         } catch (Throwable $e) {
-
             DB::rollback();
             logError($e);
             return api_response($request, null, 500);

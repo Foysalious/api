@@ -106,8 +106,9 @@ class CustomerController extends Controller
     {
         try {
             $this->validate($request, [
-                'mobile' => 'required|mobile:bd',
-                'name'   => 'required'
+                'mobile'        => 'required|mobile:bd',
+                'name'          => 'required',
+                'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg'
             ]);
             $this->setModifier($request->manager_resource);
             $creator = $creator->setData($request->except([

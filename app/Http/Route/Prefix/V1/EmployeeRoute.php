@@ -10,7 +10,7 @@ class EmployeeRoute
                 $api->post('/', 'Employee\EmployeeController@updateMe');
                 $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
             });
-            $api->post('password', 'Employee\EmployeeController@updateMyPassword');
+            //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
