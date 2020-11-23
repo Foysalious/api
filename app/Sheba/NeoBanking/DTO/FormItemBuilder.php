@@ -148,5 +148,20 @@ class FormItemBuilder
         return $item->toArray();
     }
 
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    public function radioGroup(){
+        return $this->multipleView();
+    }
+    /**
+     * @return array
+     * @throws ReflectionException
+     */
+    private function text()
+    {
+        return $this->initItem()->toArray();
+    }
 
 }
