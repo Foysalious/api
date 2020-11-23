@@ -118,6 +118,7 @@ class Updater
             $profile = $this->profileRepo->store($profile_data);
             $this->setProfile($profile);
         } else {
+            unset($profile_data['email']);
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;
@@ -161,7 +162,7 @@ class Updater
     private function format()
     {
         $this->data['mobile'] = formatMobileAux($this->data['mobile']);
-//        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
+        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
         $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
     }
 
