@@ -1,8 +1,5 @@
 pipeline {
     agent any
-    /*environment {
-        CONTAINER_NAME = "${sh(script: './bin/parse_env.sh | echo $CONTAINER_NAME', returnStdout: true)}"
-    }*/
     stages {
         stage('Make ENV File') {
             steps {
