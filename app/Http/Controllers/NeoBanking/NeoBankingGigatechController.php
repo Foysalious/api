@@ -7,6 +7,7 @@ namespace App\Http\Controllers\NeoBanking;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\NeoBanking;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
@@ -76,7 +77,10 @@ class NeoBankingGigatechController extends Controller
             $data = NeoBankingGeneralStatics::kycData($request->all());
             $result             = (array)(new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->setGigatechKycData($data)->storeGigatechKyc();
             return api_response($request, $result, 200, ['data' => $result['data']]);
-        } catch (ValidationException $e) {
+        } catch (NeoBankingException $e) {
+            return api_response($request, $e, $e->getCode(), ['message' => $e->getMessage()]);
+        }
+        catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
