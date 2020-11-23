@@ -161,7 +161,7 @@ class Updater
     private function format()
     {
         $this->data['mobile'] = formatMobileAux($this->data['mobile']);
-        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
+//        $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
         $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
     }
 
