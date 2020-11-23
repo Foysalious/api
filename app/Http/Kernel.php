@@ -1,7 +1,5 @@
 <?php namespace App\Http;
 
-namespace App\Http;
-
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
