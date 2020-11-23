@@ -146,7 +146,8 @@ class CustomerController extends Controller
             $this->setModifier($request->manager_resource);
             $updater->setCustomer($customer)->setProfile($customer->profile)->setData($request->except([
                 'partner_id',
-                'remember_token'
+                'remember_token',
+                'email'
             ]));
             if ($error = $updater->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
