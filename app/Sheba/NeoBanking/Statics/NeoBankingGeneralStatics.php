@@ -14,6 +14,7 @@ class NeoBankingGeneralStatics
     {
         return [
             "title" => $data->title,
+            "description" => $data->description,
             "link" => $data->link,
             "type" => $data->type,
             "event_type" => $data->event_type,
@@ -28,7 +29,7 @@ class NeoBankingGeneralStatics
         $sound = config('sheba.push_notification_sound.manager');
         $notification_data = [
             "title" => $data->title,
-            "message" => $data->title,
+            "message" => $data->description,
             "sound" => "notification_sound",
             "event_type" => $data->event_type,
             "event_id" => $data->event_id
@@ -47,20 +48,20 @@ class NeoBankingGeneralStatics
         return [
             'bank_code' => 'required|string',
             'nid_no' => 'required|string',
-            'dob' => 'required',
+            'dob' => 'required|date',
             'applicant_name_ben' => 'required|string',
-            'mobile_number' => 'required|string',
+            'mobile_number' => 'required|string|mobile:bd',
             'applicant_name_eng' => 'required|string',
             'father_name' => 'required|string',
             'mother_name' => 'required|string',
             'spouse_name' => 'required|string',
             'pres_address' => 'required|string',
-            'perm_address' => 'required|string',
             'id_front_name' => 'required|string',
             'id_back_name' => 'required|string',
             'applicant_photo' => 'required|mimes:jpeg,png,jpg',
             'id_front' => 'required|mimes:jpeg,png,jpg',
             'id_back' => 'required|mimes:jpeg,png,jpg',
+            'is_kyc_store' => 'required',
         ];
     }
 
@@ -72,5 +73,20 @@ class NeoBankingGeneralStatics
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    public static function sendCreatePushNotification($partner, $data)
+    {
+        $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound = config('sheba.push_notification_sound.manager');
+        $notification_data = [
+            "title" => $data["title"],
+            "message" => $data["message"],
+            "sound" => "notification_sound",
+            "event_type" => $data["event_type"]
+        ];
+
+        (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
     }
 }

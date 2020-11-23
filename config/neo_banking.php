@@ -134,7 +134,7 @@ return [
                 'name'          => 'applicant_name',
                 'id'            => 'applicant_name',
                 'error_message' => 'আবেদনকারীর নাম পূরণ আবশ্যক',
-                'is_editable'   => false
+                'is_editable'   => true
             ],
             [
                 'field_type'    => 'date',
@@ -216,28 +216,15 @@ return [
                 'mandatory'  => false
             ],
             [
-                'field_type' => 'multipleView',
-                'title'      => '',
-                'name'       => 'present_permanent_address_check',
-                'id'         => 'present_permanent_address_check',
-                'mandatory'  => false,
-                'views'      => [
-                    [
-                        'field_type'    => 'checkbox',
-                        'name'          => 'present_permanent_same_address_checked',
-                        'id'            => 'present_permanent_same_address_checked',
-                        "error_message" => "",
-                        'value'         => 0,
-                        'mandatory'     => false
-                    ],
-                    [
-                        'field_type' => 'textView',
-                        'title'      => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
-                        'name'       => 'present_permanent_same_address_text',
-                        'id'         => 'present_permanent_same_address_text',
-                        'mandatory'  => false
-                    ]
-                ]
+
+
+                'field_type'    => 'checkbox',
+                'name'          => 'present_permanent_same_address_checked',
+                'id'            => 'present_permanent_same_address_checked',
+                "error_message" => "",
+                "title"         => 'বর্তমান ঠিকানা এবং স্থায়ী ঠিকানা একই',
+                'value'         => 0,
+                'mandatory'     => false
             ],
             [
                 'field_type' => 'header',
@@ -464,7 +451,7 @@ return [
                 'error_message' => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার পূরণ আবশ্যক'
             ],
             [
-                'field_type' => 'multipleView',
+                'field_type' => 'radioGroup',
                 'title'      => '',
                 'name'       => 'identification_number_type',
                 'id'         => 'identification_number_type',
@@ -606,7 +593,7 @@ return [
                 'is_editable'   => false
             ],
             [
-                'field_type' => 'multipleView',
+                'field_type' => 'radioGroup',
                 'title'      => 'অ্যাকাউন্টের ধরণ *',
                 'name'       => 'type_of_account',
                 'value'      => 'অ্যাকাউন্টের ধরণ *',
@@ -673,7 +660,7 @@ return [
                 'mandatory'     => false
             ],
             [
-                'field_type' => 'multipleView',
+                'field_type' => 'radioGroup',
                 'title'      => 'মূদ্রা ',
                 'name'       => 'money_type',
                 'id'         => 'money_type',
@@ -723,7 +710,7 @@ return [
                 ]
             ],
             [
-                'field_type' => 'multipleView',
+                'field_type' => 'radioGroup',
                 'title'      => 'অপারেশনের ধরণ ',
                 'name'       => 'type_of_operation',
                 'id'         => 'type_of_operation',
@@ -866,11 +853,54 @@ return [
                 "mandatory"     => false
             ]
         ],
-        'nid_selfie'  => []
+        'nid_selfie'  => [
+            [
+                'field_type'  => 'header',
+                'is_editable' => false,
+                'title'       => 'যাচাইকৃত NID তথ্য'
+            ],
+            [
+                'field_type'  => 'text',
+                'name'        => 'nid_no',
+                'is_editable' => false,
+                'title'       => 'NID নাম্বার'
+            ],
+            [
+                'field_type'  => 'text',
+                'name'        => 'applicant_name_ben',
+                'is_editable' => false,
+                'title'       => 'নাম'
+            ],
+            [
+                'field_type'  => 'text',
+                'name'        => 'father_name',
+                'is_editable' => false,
+                'title'       => 'পিতার নাম'
+            ],
+            [
+                'field_type'  => 'text',
+                'name'        => 'mother_name',
+                'is_editable' => false,
+                'title'       => 'মাতার নাম'
+            ],
+            [
+                'field_type'  => 'text',
+                'input_name'  => 'dob',
+                'name'        => 'dob',
+                'is_editable' => false,
+                'title'       => 'জন্ম তারিখ'
+            ],
+            [
+                'field_type'  => 'text',
+                'name'        => 'pres_address',
+                'is_editable' => false,
+                'title'       => 'ঠিকানা'
+            ]
+        ]
     ],
     'gigatech_liveliness_sdk_auth_token' => env('GIGATECH_LIVELINESS_SDK_AUTH_TOKEN'),
-    'default_prime_bank_account' => [
-        "type_of_account" => [
+    'default_prime_bank_account'         => [
+        "type_of_account"   => [
             "account_savings" => "1",
             "account_current" => "0",
             "account_snd"     => "0",
@@ -878,7 +908,7 @@ return [
             "account_erq"     => "0",
             "account_others"  => "0"
         ],
-        "money_type" => [
+        "money_type"        => [
             "money_taka"   => "1",
             "money_dollar" => "0",
             "money_euro"   => "0",
@@ -890,17 +920,27 @@ return [
             "operation_joint"      => "0",
             "operation_others"     => "0"
         ],
-        "check_book" => [
+        "check_book"        => [
             "check_book_yes" => "1",
             "check_book_no"  => "0"
         ],
-        "e_payment" => [
+        "e_payment"         => [
             "e_payment_yes" => "1",
             "e_payment_no"  => "0"
         ],
-        "internet_banking" => [
+        "internet_banking"  => [
             "internet_banking_yes" => "1",
             "internet_banking_no"  => "0"
         ]
+    ],
+    'cpv_pending_message'                => 'এই মুহূর্তে আপনার অ্যাকাউন্টে শুধু মাত্র টাকা জমা দেয়া যাবে। সম্পূর্ণরূপে অ্যাকাউন্ট সচল করতে আপনার নির্ধারিত শাখায় গিয়ে স্বাক্ষর করুন এবং আপনার ঠিকানা ভেরিফিকেশন এর জন্য অপেক্ষা করুন। ',
+    'cpv_unverified_message'             => 'আপনার প্রদত্ত ঠিকানা ভেরিফিকেশন করা সম্ভব হয়নি। পূর্ণাঙ্গ ব্যাংক অ্যাকাউন্ট সচল করতে ১৬৫১৬ এ কল করে সঠিন তথ্য দিয়ে পুনরায় ঠিকানা ভেরিফিকেশন এর জন্য অনুরোধ করুন।',
+    'signed_verified_message'            => 'আভিনন্দন! প্রাইম ব্যঙ্ক এ সফল ভাবে আপনার অ্যাকাউন্ট খোলা হয়েছে। এখন থেকে আপনি সকল ধরনের লেনদেন করতে পারবেন।',
+    'unsigned_message'                   => 'পূর্ণাঙ্গ ব্যাংক অ্যাকাউন্ট সচল করতে আপনার নির্ধারিত প্রাইম ব্যাংক এর ব্রাঞ্চ এ গিয়ে স্বাক্ষর করুন',
+    'message_type'                       => [
+        'cpv_pending'      => 'Warning',
+        'cpv_unverified'   => 'Error',
+        'cpv_verified'     => 'Success',
+        'unsigned_message' => 'Info'
     ]
 ];

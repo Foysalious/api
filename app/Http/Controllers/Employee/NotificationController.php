@@ -137,6 +137,8 @@ class NotificationController extends Controller
                 "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
                 "event_type" => 'attendance',
                 "sound" => "notification_sound",
+                "attendance_action_type" => 'checkin',
+                "time" => Carbon::now(),
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);

@@ -33,9 +33,16 @@ class PrimeBank extends Bank
         // TODO: Implement categories() method.
     }
 
-    public function accountInfo(): BankAccountInfo
+    public function accountInfo()
     {
-        return $this->apiClient->setPartner($this->partner)->getAccountInfo();
+        $account = $this->getAccount();
+        if ($account) {
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/status/'.$account);
+            return $this->formatAccountData($status, $account);
+        } else {
+            return $this->formatEmptyData();
+        }
+
     }
 
     public function categoryDetails(BankFormCategory $category): CategoryGetter
@@ -47,7 +54,7 @@ class PrimeBank extends Bank
      * @return array
      * @throws ReflectionException
      */
-    public function homeInfo(): array
+    public function homeInfo()
     {
         return (new BankHomeInfo())->setBank($this)->setPartner($this->partner)->toArray();
     }
@@ -72,9 +79,20 @@ class PrimeBank extends Bank
         return (new Completion())->setBank($this)->setPartner($this->partner)->setMobile($this->mobile)->getAll();
     }
 
-    public function accountDetailInfo(): BankAccountInfoWithTransaction
+    private function getAccount()
     {
-        return $this->apiClient->setPartner($this->partner)->getAccountDetailInfo();
+        $account = $this->partner->neoBankAccount;
+        return $account && count($account) > 0 ? $account[0]['account_no'] : null;
+    }
+
+    public function accountDetailInfo()
+    {
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/balance/'.$this->getAccount());
+    }
+
+    public function transactionList()
+    {
+        return (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/transaction-list/'.$this->getAccount());
     }
 
     /**
@@ -114,6 +132,49 @@ class PrimeBank extends Bank
     public function storeGigatechKyc($data)
     {
         return json_decode(json_encode((new PrimeBankClient())->setPartner($this->partner)->post('api/v1/kyc-submit', $data)),1);
+    }
+
+    public function formatAccountData($status, $account) {
+        $data['has_account'] = 1;
+        $data['account_no'] = $account;
+        $accountStatus = $status->data->account_status;
+        $data['account_status'] = $accountStatus;
+        $formattedStatus = $this->formatStatus($accountStatus);
+        $data['status_message'] = $formattedStatus['message'];
+        $data['status_message_type'] = $formattedStatus['type'];
+
+        return $data;
+    }
+
+    public function formatStatus($status) {
+        $data = [];
+        if($status->cpv === 'cpv_pending') {
+            $data['message'] = config('neo_banking.cpv_pending_message');
+            $data['type'] = config('neo_banking.message_type.cpv_pending');
+        } else if($status->cpv === 'cpv_unverified') {
+            $data['message'] = config('neo_banking.cpv_unverified_message');
+            $data['type'] = config('neo_banking.message_type.cpv_unverified');
+        } else if($status->cpv === 'cpv_verified') {
+            if($status->sign === 'signed') {
+                $data['message'] = config('neo_banking.signed_verified_message');
+                $data['type'] = config('neo_banking.message_type.cpv_verified');;
+            } else {
+                $data['message'] = config('neo_banking.unsigned_message');
+                $data['type'] = config('neo_banking.message_type.cpv_unsigned');
+            }
+        }
+        return $data;
+    }
+
+    public function formatEmptyData()
+    {
+        $data['has_account'] = 0;
+        $data['account_no'] = null;
+        $data['account_status'] = null;
+        $data['status_message'] = null;
+        $data['status_message_type'] = null;
+
+        return $data;
     }
 
 }

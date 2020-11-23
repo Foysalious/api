@@ -7,6 +7,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\NeoBanking\Banks\BankFactory;
 use Sheba\NeoBanking\Banks\BankFormCategoryFactory;
 use Sheba\NeoBanking\DTO\BankFormCategory;
+use Sheba\NeoBanking\Exceptions\InvalidPartnerInformationException;
 use Sheba\NeoBanking\Repositories\NeoBankRepository;
 
 class NeoBanking
@@ -70,9 +71,14 @@ class NeoBanking
      * @return BankAccountInfoWithTransaction
      * @throws Exceptions\InvalidBankCode
      */
-    public function accountDetails(): BankAccountInfoWithTransaction
+    public function accountDetails()
     {
         return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->accountDetailInfo();
+    }
+
+    public function transactionList()
+    {
+        return (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get()->transactionList();
     }
 
     public function createTransaction()
@@ -117,11 +123,15 @@ class NeoBanking
     }
 
     /**
+     * @return mixed
      * @throws Exceptions\InvalidBankCode
+     * @throws InvalidPartnerInformationException
      */
     public function storeAccount()
     {
         $bank = (new BankFactory())->setPartner($this->partner)->setMobile($this->mobile)->setBank($this->bank)->get();
+        $data = ($bank->setMobile($this->mobile)->completion());
+        if ($data->getCanApply() === 0) throw new InvalidPartnerInformationException();
         return $bank->accountCreate();
     }
 
@@ -171,7 +181,7 @@ class NeoBanking
         $bank = (new BankFactory())->setBank($this->bank)->get();
         $response = (array)$bank->storeGigatechKyc($this->gigatechKycData);
         $handler= (new NeoBankingFileHandler())->setPartner($this->partner);
-        if(4002 === $response['data']["status_code"]) {
+        if( in_array($response['data']["status_code"], [4002, 4003])) {
             $nid_front =$handler->getImageUrl($this->gigatechKycData['id_front'], "nid_front");
             $nid_back = $handler->getImageUrl($this->gigatechKycData['id_back'], "nid_back");
             $applicant_photo = $handler->getImageUrl($this->gigatechKycData['applicant_photo'], "applicant_photo");

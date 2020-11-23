@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Loan\Statics\GeneralStatics;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\Exceptions\UnauthorizedRequestFromSBSException;
+use Sheba\NeoBanking\Home;
 use Sheba\NeoBanking\NeoBanking;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 use Sheba\PushNotificationHandler;
@@ -21,13 +22,13 @@ class NeoBankingController extends Controller
     {
     }
 
-    public function getHomepage($partner, Request $request, NeoBanking $neoBanking)
+    public function getHomepage($partner, Request $request, Home $home)
     {
         try {
-            $homepage = $neoBanking->setPartner($request->partner)->homepage();
+            $homepage = $home->setPartner($request->partner)->get();
             return api_response($request, $homepage, 200, ['data' => $homepage]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -39,9 +40,31 @@ class NeoBankingController extends Controller
             $bank = $request->bank_code;
             $partner = $request->partner;
             $manager_resource = $request->manager_resource;
+            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails();
 
-            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->accountDetails()->toArray();
-            return api_response($request, $account_details, 200, ['data' => $account_details]);
+            if (isset($account_details->code) && $account_details->code != 200) {
+                return api_response($request, $account_details, $account_details->code, ['message' => $account_details->message]);
+            }
+            return api_response($request, $account_details, 200, ['data' => $account_details->data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getTransactionList($partner, Request $request)
+    {
+        try {
+            $this->validate($request, ['bank_code' => 'required|string']);
+            $bank = $request->bank_code;
+            $partner = $request->partner;
+            $manager_resource = $request->manager_resource;
+            $account_details = (new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->transactionList();
+
+            if (isset($account_details->code) && $account_details->code != 200) {
+                return api_response($request, $account_details, $account_details->code, ['message' => $account_details->message]);
+            }
+            return api_response($request, $account_details, 200, ['data' => $account_details->data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

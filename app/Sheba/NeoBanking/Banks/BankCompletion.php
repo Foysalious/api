@@ -92,4 +92,12 @@ use Sheba\NeoBanking\Traits\ProtectedGetterTrait;
         return $this;
     }
 
+     /**
+      * @return mixed
+      */
+     public function getCanApply()
+    {
+        return $this->can_apply;
+    }
+
 }
