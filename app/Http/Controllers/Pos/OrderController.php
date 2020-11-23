@@ -41,6 +41,7 @@ use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -401,13 +402,13 @@ class OrderController extends Controller
             $partner = $request->partner;
             $this->setModifier($request->manager_resource);
             /** @var PosOrder $order */
-            $order = PosOrder::with('items')->find($request->order)->calculate();
+            $order = PosOrder::with('items')->find($request->order);
+            if (empty($order)) return api_response($request, null, 404, ['msg' => 'Order not found']);
+            $order=$order->calculate();
             if ($request->has('customer_id') && is_null($order->customer_id)) {
                 $requested_customer = PosCustomer::find($request->customer_id);
                 $order              = $updater->setOrder($order)->setData(['customer_id' => $requested_customer->id])->update();
             }
-            if (!$order)
-                return api_response($request, null, 404, ['msg' => 'Order not found']);
             if (!$order->customer)
                 return api_response($request, null, 404, ['msg' => 'Customer not found']);
             if (!$order->customer->profile->mobile)
@@ -559,6 +560,8 @@ class OrderController extends Controller
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
             ]);
+        } catch (AccessRestrictedExceptionForPackage $exception) {
+            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

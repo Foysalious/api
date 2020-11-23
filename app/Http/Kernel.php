@@ -2,7 +2,6 @@
 
 namespace App\Http;
 
-use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
@@ -15,7 +14,6 @@ use App\Http\Middleware\DLSApiVersioning;
 use App\Http\Middleware\EncryptCookies;
 use App\Http\Middleware\ExternalPaymentLinkAuthMiddleware;
 use App\Http\Middleware\GeoAuthMiddleware;
-use App\Http\Middleware\JWT\PartnerAuthMiddleware;
 use App\Http\Middleware\JWT\ResourceAuthMiddleware;
 use App\Http\Middleware\JWTAuthentication;
 use App\Http\Middleware\JWTAuthMiddleware;
@@ -28,6 +26,7 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
+use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -87,13 +86,13 @@ class Kernel extends HttpKernel
         'jwt.auth' => 'Tymon\JWTAuth\Middleware\GetUserFromToken',
         'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken',
         'cors2' => Cors2MiddleWare::class,
-        'admin.auth' => AdminAuthMiddleware::class,
+        'sheba_network' => ShebaNetworkMiddleware::class,
         'customer.auth' => CustomerAuthMiddleware::class,
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
         'affiliate.auth' => AffiliateAuthMiddleware::class,
         'member.auth' => MemberAuthMiddleware::class,
-        'resource.auth' => \App\Http\Middleware\ResourceAuthMiddleware::class,
+        'resource.auth' => Middleware\ResourceAuthMiddleware::class,
         'resource.jwt.auth' => ResourceAuthMiddleware::class,
         'manager.auth' => ManagerAuthMiddleware::class,
         'business.auth' => BusinessManagerAuthMiddleware::class,
@@ -109,7 +108,6 @@ class Kernel extends HttpKernel
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
         'geo.auth' => GeoAuthMiddleware::class,
         'loan.version' => DLSApiVersioning::class,
-        'jwt.partner.auth' => PartnerAuthMiddleware::class,
         'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class
     ];
 }

@@ -106,6 +106,15 @@ class BondhuAutoOrder
         $this->setAddress();
         $this->setExtras();
         $order = new Checkout($this->customer);
+
+        $services = json_decode($this->request->services);
+        if (isset($services[0]->id)){
+            if($services[0]->id !=676){
+                $order->setPayerId($this->affiliate->id);
+                $order->setPayerType('affiliate');
+            }
+        }
+
         $order = $order->placeOrder($this->request);
         $this->order = $order;
         return $order;

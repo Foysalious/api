@@ -49,7 +49,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
+                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address|numeric',
                 'partner' => 'sometimes|required',
@@ -111,8 +111,11 @@ class OrderController extends Controller
             ];
             if ($partner_order->partner_id) {
                 $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
+                $this->sendNotifications($customer, $order);
             }
-            $this->sendNotifications($customer, $order);
+
+            $this->sendSmsToCustomer($customer, $order);
+
             return api_response($request, null, 200, $order_with_response_data);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -124,7 +127,7 @@ class OrderController extends Controller
     private function setModifierFromRequest(Request $request)
     {
         if ($request->has('created_by_type')) {
-            if ($request->created_by_type === 'App\Models\Resource') {
+            if ($request->created_by_type === Resource::class) {
                 $this->setModifier(Resource::find((int)$request->created_by));
                 return;
             };
@@ -144,17 +147,10 @@ class OrderController extends Controller
     private function sendNotifications($customer, $order)
     {
         try {
-            $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             /** @var Partner $partner */
             $partner = $order->partnerOrders->first()->partner;
-
             (new NotificationRepository())->send($order);
-
             if (!(bool)config('sheba.send_order_create_sms')) return;
-
-            (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
-                'order_code' => $order->code()
-            ]);
 
             if (!$order->jobs->first()->resource_id) {
                 (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
@@ -164,6 +160,13 @@ class OrderController extends Controller
         } catch (Throwable $e) {
             logError($e);
         }
+    }
+
+    private function sendSmsToCustomer($customer, $order) {
+        $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
+        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+            'order_code' => $order->code()
+        ]);
     }
 
     public function storeFromBondhu(OrderCreateFromBondhuRequest $request, $affiliate, BondhuAutoOrderV3 $bondhu_auto_order, OrderPlace $order_place, OrderAdapter $order_adapter)
@@ -264,7 +267,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->setVendor('infobip')->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }

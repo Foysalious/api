@@ -1,6 +1,7 @@
 <?php namespace Sheba\OrderPlace;
 
 use App\Exceptions\HyperLocationNotFoundException;
+use App\Exceptions\InvalidAddressException;
 use App\Exceptions\LocationService\LocationServiceNotFoundException;
 use App\Exceptions\NotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
@@ -331,6 +332,7 @@ class OrderPlace
     {
         $this->deliveryAddress = $this->customer->delivery_addresses()->withTrashed()->where('id', $this->deliveryAddressId)->first();
         if (!$this->deliveryAddress) throw new NotFoundException('Customer delivery address does not exists', 404);
+        if(empty($this->deliveryAddress->geo_informations)) throw new InvalidAddressException();
         if ($this->deliveryAddress->mobile != $this->deliveryMobile) {
             $new_address = $this->deliveryAddress->replicate();
             $new_address->mobile = $this->deliveryMobile;
