@@ -6,11 +6,15 @@ Route::get('/', function () {
 
 Route::get('/check-instance', function () {
     $instance_id = 'demo_instance_id';
+    $ip = request()->ip();
     try {
         $instance_id = file_get_contents("http://instance-data/latest/meta-data/instance-id");
     } catch (Exception $e) {};
 
-    return ['code' => 200, 'message' => "Success. This project will hold the api's. Instance ID: " . $instance_id];
+    return [
+        'code' => 200,
+        'message' => "Success. Instance ID: $instance_id & From IP: $ip"
+    ];
 });
 
 Route::get('/health', function () {
