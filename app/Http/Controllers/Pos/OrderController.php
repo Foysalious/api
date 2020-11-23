@@ -310,11 +310,17 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param StatusChanger $statusChanger
+     * @return JsonResponse
+     * @throws ExpenseTrackingServerError
+     */
     public function updateStatus(Request $request, StatusChanger $statusChanger)
     {
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
-        $statusChanger->setOrder($order)->setStatus($request->status)->changeStatus();
+        $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
         if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) dispatch(new WebstoreOrderSms($order));
         return api_response($request, null, 200, ['message'   => 'Status Updated Successfully']);
     }
