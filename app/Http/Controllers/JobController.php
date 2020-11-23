@@ -11,7 +11,7 @@ use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
 use App\Models\Payment;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 use App\Transformers\ServiceV2DeliveryChargeTransformer;
 use App\Transformers\ServiceV2MinimalTransformer;
 use App\Transformers\ServiceV2Transformer;
@@ -543,7 +543,7 @@ class JobController extends Controller
             $client = new Client();
             $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
                 [
-                    'form_params' => array_merge((new UserRequestInformationOld($request))->getInformationArray(), [
+                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'customer_id' => $customer,
                         'remember_token' => $request->remember_token,
                         'status' => constants('JOB_STATUSES')['Cancelled'],

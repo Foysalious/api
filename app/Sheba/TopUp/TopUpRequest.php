@@ -9,6 +9,7 @@ use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Event;
 
 class TopUpRequest
 {
@@ -33,6 +34,7 @@ class TopUpRequest
     private $blockedAmountByOperator = [];
     protected $userAgent;
     private $blockedPartnerId = [233];
+
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -163,19 +165,6 @@ class TopUpRequest
 
     public function hasError()
     {
-        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
-            $this->errorMessage = "You are not verified to do this operation.";
-            return 1;
-        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
-            $this->errorMessage = "You are not verified to do this operation.";
-            return 1;
-        } else if ($this->agent instanceof Business && $this->isAmountBlocked()) {
-            $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
-            return 1;
-        } else if ($this->agent->profile && $this->agent->profile->isBlackListed()) {
-            $this->errorMessage = "You are blacklisted.";
-            return 1;
-        }
         if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
@@ -190,11 +179,7 @@ class TopUpRequest
             $this->errorMessage = "Sorry, we don't support this operator at this moment.";
             return 1;
         }
-        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
-            Event::fire(new TopUpRequestOfBlockedNumber($this));
-            $this->errorMessage = "You can't recharge to a blocked number.";
-            return 1;
-        }
+
         if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
@@ -212,12 +197,11 @@ class TopUpRequest
             $this->errorMessage = "Your topup is temporary off.";
             return 1;
         }
-
-        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
-            $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
+        if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
+            Event::fire(new TopUpRequestOfBlockedNumber($this));
+            $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }
-
         return 0;
     }
 
@@ -231,10 +215,10 @@ class TopUpRequest
         if ($this->vendorId == VendorFactory::BANGLALINK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
         if ($this->vendorId == VendorFactory::ROBI) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
         if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
-        if ($this->vendorId == VendorFactory::TELETALK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
 
         return false;
     }
+
 
     /**
      * @param Business $business

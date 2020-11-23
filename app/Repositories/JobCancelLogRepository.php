@@ -3,7 +3,7 @@
 
 use App\Models\Job;
 use Sheba\Dal\JobCancelLog\JobCancelLog;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 
 class JobCancelLogRepository
 {
@@ -22,7 +22,7 @@ class JobCancelLogRepository
 
     public function store($previous_status, $reason)
     {
-        $job_cancel = new JobCancelLog((new UserRequestInformationOld(\request()))->getInformationArray());
+        $job_cancel = new JobCancelLog((new UserRequestInformation(\request()))->getInformationArray());
         $job_cancel->job_id = $this->job->id;
         $job_cancel->from_status = $previous_status;
         $job_cancel->cancel_reason_details = $reason;
