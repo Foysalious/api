@@ -1,78 +1,14 @@
-<?php namespace Sheba;
-
+<?php namespace App\Sheba;
 
 use Illuminate\Http\Request;
 
 class UserRequestInformation
 {
-    /** @var Request */
-    private $request;
-    private $ip;
-    private $versionCode;
-    private $portalName;
-    private $userAgent;
+    public $request;
 
-    public function setRequest(Request $request)
+    public function __construct(Request $request)
     {
         $this->request = $request;
-        $this->resolve();
-        return $this;
-    }
-
-    /**
-     *  request set to null because it can't be serialized in Laravel
-     */
-    private function resolve()
-    {
-        $this->setPortalName($this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal');
-        $this->setIp($this->request->ip());
-        $this->setVersionCode($this->request->header('Version-Code'));
-        $this->setUserAgent($this->request->header('User-Agent'));
-        $this->request = null;
-    }
-
-    private function setIp($ip)
-    {
-        $this->ip = $ip;
-        return $this;
-    }
-
-    private function setVersionCode($versionCode)
-    {
-        $this->versionCode = $versionCode;
-        return $this;
-    }
-
-    private function setPortalName($portalName)
-    {
-        $this->portalName = $portalName;
-        return $this;
-    }
-
-    private function setUserAgent($userAgent)
-    {
-        $this->userAgent = $userAgent;
-        return $this;
-    }
-
-    public function getPortalName()
-    {
-        return $this->portalName;
-    }
-
-    public function getIp()
-    {
-        return $this->ip;
-    }
-
-    public function getVersionCode()
-    {
-        return $this->versionCode;
-    }
-
-    public function getUserAgent()
-    {
-        return $this->userAgent;
     }
 
     public function getInformationArray()
@@ -80,7 +16,7 @@ class UserRequestInformation
         return array(
             'portal_name' => $this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal',
             'user_agent' => $this->request->header('User-Agent'),
-            'ip' => getIp()
+            'ip' => $this->request->ip()
         );
     }
 }

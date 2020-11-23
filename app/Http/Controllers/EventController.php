@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Models\Event;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -27,7 +27,7 @@ class EventController extends Controller
             $event->tag = $request->tag;
             $event->value = $request->value;
             $event = $this->setCreatedInformation($request, $event);
-            $event->fill((new UserRequestInformationOld($request))->getInformationArray());
+            $event->fill((new UserRequestInformation($request))->getInformationArray());
             $event->save();
             return api_response($request, $event, 200);
         } catch (ValidationException $e) {

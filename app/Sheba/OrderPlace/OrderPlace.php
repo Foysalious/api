@@ -52,7 +52,7 @@ use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\ServiceRequest\ServiceRequestObject;
 use Sheba\JobUpdateLog\Creator as JobUpdateLogCreator;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 
 class OrderPlace
 {
@@ -61,7 +61,7 @@ class OrderPlace
     private $deliveryAddressId;
     /** @var CustomerDeliveryAddress */
     private $deliveryAddress;
-    /** @var UserRequestInformation */
+    /** @var UserAgentInformation */
     private $userAgentInformation;
     /** @var Collection */
     private $services;

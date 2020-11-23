@@ -3,7 +3,7 @@
 
 use App\Models\Resource;
 use App\Models\WithdrawalRequest;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 
 class Creator

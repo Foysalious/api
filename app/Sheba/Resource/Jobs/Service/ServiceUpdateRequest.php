@@ -12,7 +12,7 @@ use Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\Resource\Jobs\Material\Creator as MaterialCreator;
 use DB;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 use Sheba\Resource\Jobs\Material\Updater as MaterialUpdater;
 
 class ServiceUpdateRequest
@@ -46,7 +46,7 @@ class ServiceUpdateRequest
     }
 
 
-    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

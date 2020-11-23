@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Resource;
 
 use App\Models\WithdrawalRequest;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
@@ -41,7 +41,7 @@ class ResourceWithdrawalRequestController extends Controller
             else $message = "You don't have sufficient balance";
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $userRequestInformation = (new UserRequestInformationOld($request))->getInformationArray();
+        $userRequestInformation = (new UserRequestInformation($request))->getInformationArray();
         $new_withdrawal = $creator->setResource($resource)
             ->setRequesterType(RequesterTypes::RESOURCE)
             ->setAmount($request->amount)

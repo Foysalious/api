@@ -24,7 +24,7 @@ use Sheba\ModificationFields;
 use Sheba\Resource\Jobs\Collection\CollectMoney;
 use Sheba\Resource\Jobs\Service\ServiceUpdateRequest;
 use Sheba\Services\FormatServices;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 use Throwable;
 use Validator;
 
@@ -339,7 +339,7 @@ class PartnerOrderController extends Controller
         }
     }
 
-    public function addService($partner, Request $request, ServiceUpdateRequest $updateRequest, UserRequestInformation $user_agent_information)
+    public function addService($partner, Request $request, ServiceUpdateRequest $updateRequest, UserAgentInformation $user_agent_information)
     {
         $this->validate($request, [
             'services' => 'required|string',
@@ -358,7 +358,7 @@ class PartnerOrderController extends Controller
         return api_response($request, null, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
-    public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserRequestInformation $user_agent_information)
+    public function collectMoney($partner, Request $request, CollectMoney $collect_money, UserAgentInformation $user_agent_information)
     {
         $this->validate($request, ['amount' => 'required|numeric']);
         $user_agent_information->setRequest($request);

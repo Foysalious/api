@@ -7,7 +7,7 @@ use Carbon\Carbon;
 use Sheba\Dal\JobMaterial\JobMaterial;
 use Sheba\Dal\JobMaterial\JobMaterialRepositoryInterface;
 use Sheba\Dal\JobMaterialLog\JobMaterialLogRepositoryInterface;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 
 class Updater
 {
@@ -20,7 +20,7 @@ class Updater
     private $materialPrice;
     private $jobMaterialRepository;
     private $jobMaterialLogRepository;
-    /** @var UserRequestInformation */
+    /** @var UserAgentInformation */
     private $userAgentInformation;
 
     public function __construct(JobMaterialRepositoryInterface $jobMaterialRepository, JobMaterialLogRepositoryInterface $jobMaterialLogRepository)
@@ -29,7 +29,7 @@ class Updater
         $this->jobMaterialLogRepository = $jobMaterialLogRepository;
     }
 
-    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

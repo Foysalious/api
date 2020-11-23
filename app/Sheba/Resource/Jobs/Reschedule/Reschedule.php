@@ -6,7 +6,7 @@ use App\Models\Resource;
 use GuzzleHttp\Client;
 use Sheba\Jobs\JobTime;
 use Sheba\Jobs\PreferredTime;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 
 class Reschedule
 {
@@ -14,14 +14,14 @@ class Reschedule
     private $resource;
     /** @var Job */
     private $job;
-    /** @var UserRequestInformation */
+    /** @var UserAgentInformation */
     private $userAgentInformation;
 
     private $scheduleDate;
     private $scheduleTimeSlot;
 
 
-    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

@@ -6,7 +6,7 @@ use App\Models\Resource;
 use Carbon\Carbon;
 use Sheba\Dal\JobMaterial\JobMaterialRepositoryInterface;
 use Sheba\Dal\JobMaterialLog\JobMaterialLogRepositoryInterface;
-use Sheba\UserRequestInformation;
+use Sheba\UserAgentInformation;
 
 class Creator
 {
@@ -16,7 +16,7 @@ class Creator
     private $materials;
     private $jobMaterialRepository;
     private $jobMaterialLogRepository;
-    /** @var UserRequestInformation */
+    /** @var UserAgentInformation */
     private $userAgentInformation;
 
     public function __construct(JobMaterialRepositoryInterface $jobMaterialRepository, JobMaterialLogRepositoryInterface $jobMaterialLogRepository)
@@ -25,7 +25,7 @@ class Creator
         $this->jobMaterialLogRepository = $jobMaterialLogRepository;
     }
 
-    public function setUserAgentInformation(UserRequestInformation $userAgentInformation)
+    public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
         $this->userAgentInformation = $userAgentInformation;
         return $this;

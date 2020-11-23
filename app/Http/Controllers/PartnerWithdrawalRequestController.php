@@ -2,7 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\WithdrawalRequest;
-use App\Sheba\UserRequestInformationOld;
+use App\Sheba\UserRequestInformation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -93,7 +93,7 @@ class PartnerWithdrawalRequestController extends Controller
             else $message = "You don't have sufficient balance";
             return api_response($request, null, 403, ['message' => $message]);
         }
-        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformationOld($request))->getInformationArray(), [
+        $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
             'requester_id'    => $partner->id,
             'requester_type'  => RequesterTypes::PARTNER,
             'amount'          => $request->amount,

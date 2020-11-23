@@ -66,13 +66,7 @@ class TopUpController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param TopUpRequest $top_up_request
-     * @param Creator $creator
-     * @param UserAgentInformation $userAgentInformation
-     * @return JsonResponse
-     */
+
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation)
     {
         try {
