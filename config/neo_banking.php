@@ -857,7 +857,8 @@ return [
             [
                 'field_type'  => 'header',
                 'is_editable' => false,
-                'title'       => 'যাচাইকৃত NID তথ্য'
+                'title'       => 'যাচাইকৃত NID তথ্য',
+                'mandatory'  => false,
             ],
             [
                 'field_type'  => 'text',
