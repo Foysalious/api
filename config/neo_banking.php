@@ -551,21 +551,23 @@ return [
                     ],
                     [
                         'field_type'    => 'dropdown',
-                        'title'         => 'জেলা *',
+                        'title'         => 'জেলা ',
                         'name'          => 'district_nominee_guardian_address',
                         'id'            => 'district_nominee_guardian_address',
                         'hint'          => 'জেলা',
                         'list_type'     => 'new_page_radio',
-                        'error_message' => 'জেলার নাম পূরণ আবশ্যক'
+                        'error_message' => 'জেলার নাম পূরণ আবশ্যক',
+                        'mandatory'     => false
                     ],
                     [
                         'field_type'    => 'dropdown',
-                        'title'         => 'থানা / উপজেলা *',
+                        'title'         => 'থানা / উপজেলা',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'sub_district_nominee_guardian_address',
                         'id'            => 'sub_district_nominee_guardian_address',
                         'hint'          => 'থানা / উপজেলা',
-                        'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+                        'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক',
+                        'mandatory'     => false
                     ],
                     [
                         'field_type'    => 'editText',
