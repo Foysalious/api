@@ -137,7 +137,7 @@ class ProfileController extends Controller
             if (!$profile) return api_response($request, null, 404, ['message' => 'Profile no found']);
             $rules = ['pro_pic' => 'sometimes|string', 'nid_image_back' => 'sometimes', 'nid_image_front' => 'sometimes'];
             $this->validate($request, $rules);
-            $data = $request->only(['email', 'name', 'password', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
+            $data = $request->only(['email', 'name', 'pro_pic', 'nid_image_front', 'email', 'gender', 'dob', 'mobile', 'nid_no', 'address']);
             $data = array_filter($data, function ($item) {
                 return $item != null;
             });
@@ -337,7 +337,7 @@ class ProfileController extends Controller
             $profile = $request->profile;
             if (!$profile) return api_response($request, null, 404, ['data' => null]);
 
-            $input = $request->except('profile', 'remember_token');
+            $input = $request->only(['name', 'bn_name', 'dob', 'nid_no']);
             $profile_repo->update($profile, $input);
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());

@@ -71,7 +71,7 @@ class PaymentLinkClient
         $response = json_decode($response->getBody());
         if ($response->code == 200)
             return $response->link;
-        throw new Exception($response);
+        throw new Exception(json_encode($response));
     }
 
     public function paymentLinkStatusChange($link, $status)
