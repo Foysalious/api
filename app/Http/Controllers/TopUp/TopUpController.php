@@ -3,7 +3,9 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
 use App\Jobs\Business\SendTopUpFailMail;
+use App\Models\Affiliate;
 use App\Models\Business;
+use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
@@ -17,7 +19,13 @@ use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
+use Sheba\TopUp\Vendor\Vendor;
+use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
+use Sheba\TPProxy\TPRequest;
 use Sheba\UserAgentInformation;
+use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
 use Illuminate\Http\Request;
@@ -79,6 +87,7 @@ class TopUpController extends Controller
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
         else return api_response($request, null, 400);
+        (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
             ->setMobile($request->mobile)
@@ -153,13 +162,15 @@ class TopUpController extends Controller
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
         try {
-            $this->validate($request, ['file' => 'required|file']);
+            $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
+            if (!in_array($extension, $valid_extensions))
+                return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
+            (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 

@@ -28,6 +28,7 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $from_robi_topup_wallet;
+    private $walletType;
     private $topUpBlockNumberRepository;
     private $walletType;
     /** @var array $blockedAmountByOperator */
