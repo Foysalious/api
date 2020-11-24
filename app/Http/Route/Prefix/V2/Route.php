@@ -39,9 +39,9 @@ class Route
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
-            $api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
+            //$api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
-            $api->post('password/reset', 'Auth\PasswordController@reset');
+            //$api->post('password/reset', 'Auth\PasswordController@reset');
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');
@@ -157,6 +157,7 @@ class Route
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
                 $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
+                $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');
@@ -178,27 +179,27 @@ class Route
             $api->get('updates', 'UpdateController@getUpdates');
             $api->get('ek-sheba/authenticate', 'EkshebaController@authenticate');
             /** PROFILE EXISTENCE CHECK. PUBLIC API */
-            $api->get('get-profile-info', 'ProfileController@getProfile');
-            $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
-            $api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
-            $api->post('profile-update/by/{id}', 'ProfileController@update')->middleware('profile.auth');
-            $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
-            $api->get('{id}/refresh-token', 'ProfileController@refresh');
+            //$api->get('get-profile-info', 'ProfileController@getProfile')->middleware('sheba_network');
+            // $api->get('get-profile-info-by-mobile', 'ProfileController@getProfileInfoByMobile');
+            //$api->post('profile/{id}/update-profile-document', 'ProfileController@updateProfileDocument')->middleware('profile.auth');
+            //$api->post('profile-update/by/{id}', 'ProfileController@update')->middleware('profile.auth');
+//            $api->get('{id}/get-jwt', 'ProfileController@getJWT')->middleware('profile.auth');
+//            $api->get('{id}/refresh-token', 'ProfileController@refresh');
             $api->post('admin/payout', 'Bkash\\BkashPayoutController@pay');
             $api->post('admin/payout-balance', 'Bkash\\BkashPayoutController@queryPayoutBalance');
             $api->post('admin/bkash-balance', 'Bkash\\BkashPayoutController@queryBalance');
-            $api->post('forget-password', 'ProfileController@forgetPassword');
+            //$api->post('forget-password', 'ProfileController@forgetPassword');
             /** EMI INFO */
             $api->get('emi-info', 'ShebaController@getEmiInfo');
             $api->get('emi-info/manager', 'ShebaController@emiInfoForManager');
 
             $api->group(['prefix' => 'tickets', 'middleware' => 'jwtGlobalAuth'], function ($api) {
-                $api->get('validate-token', 'ProfileController@validateJWT');
+//                $api->get('validate-token', 'ProfileController@validateJWT');
                 $api->get('payments', 'ShebaController@getPayments');
                 (new TransportRoute())->set($api);
                 (new MovieTicketRoute())->set($api);
             });
-            $api->get('refresh-token', 'ProfileController@refresh');
+//            $api->get('refresh-token', 'ProfileController@refresh');
             $api->get('service-price-calculate', 'Service\ServicePricingController@getCalculatedPrice');
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
