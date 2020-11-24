@@ -3,9 +3,7 @@
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
 use App\Jobs\Business\SendTopUpFailMail;
-use App\Models\Affiliate;
 use App\Models\Business;
-use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
@@ -19,12 +17,7 @@ use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Vendor\Vendor;
-use Sheba\TPProxy\TPProxyClient;
-use Sheba\TPProxy\TPProxyServerError;
-use Sheba\TPProxy\TPRequest;
 use Sheba\UserAgentInformation;
-use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
 use Illuminate\Http\Request;
@@ -93,11 +86,10 @@ class TopUpController extends Controller
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
             ->setUserAgent($userAgentInformation->getUserAgent());
-
-            if ($this->isBusiness($agent)) {
-                $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-                $top_up_request->setBlockedAmount($blocked_amount_by_operator);
-            }
+        if ($this->isBusiness($agent)) {
+            $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
+            $top_up_request->setBlockedAmount($blocked_amount_by_operator);
+        }
 
         if ($top_up_request->hasError())
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
