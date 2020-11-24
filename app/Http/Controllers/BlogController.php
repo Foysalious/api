@@ -7,6 +7,7 @@ use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use Illuminate\Support\Facades\Redis;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
@@ -17,6 +18,9 @@ class BlogController extends Controller
 {
     public function index(Request $request) {
         try {
+            $key_name = 'smanager_blogs';
+            $cache_blogs = json_decode(Redis::get($key_name));
+            if ($cache_blogs) return api_response($request, $cache_blogs, 200, ['data' => $cache_blogs]);
             $limit = 3;
             if ($request->has("limit")) $limit = $request->limit;
             $url = constants('BLOG_URL') . "/wp-json/wp/v2/posts?orderby=date&order=desc&per_page=".$limit;
@@ -26,6 +30,10 @@ class BlogController extends Controller
             $blogs = $this->getBlogsWithFormation($response);
             $data["blogs"] = $this->getBlogsWithFormation($response);
             $data["blog_url"] = constants('BLOG_URL');
+
+            Redis::set($key_name, json_encode($data));
+            Redis::expire($key_name, 3600);
+
             if (count($blogs) > 0) return api_response($request, $data, 200, ['data' => $data]);
             else return api_response($request, null, 404);
         } catch (Throwable $e) {
