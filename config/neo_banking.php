@@ -852,7 +852,7 @@ return [
                 'name'          => 'bill_document',
                 'id'            => 'bill_document',
                 'error_message' => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল এর ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ]
         ],
         'nid_selfie'  => [
