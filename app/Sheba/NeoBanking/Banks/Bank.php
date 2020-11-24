@@ -169,7 +169,8 @@ abstract class Bank
             }
             if ($item['field_type'] == 'date') {
                 try {
-                    Carbon::parse($data[$item['name']]);
+                    if(isset($data[$item['name']]))
+                        Carbon::parse($data[$item['name']]);
                 } catch (\Throwable $e) {
                     throw new CategoryPostDataInvalidException("Date is Invalid");
                 }
