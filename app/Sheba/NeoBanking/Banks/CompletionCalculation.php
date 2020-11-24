@@ -30,7 +30,7 @@ class CompletionCalculation
 
     private function calculate($data)
     {
-        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView' && $data['mandatory'] !== false)
+        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView')
         {
             if (!in_array($data['id'], $this->skipFields))
             {
