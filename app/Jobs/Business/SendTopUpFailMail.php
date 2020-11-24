@@ -38,7 +38,7 @@ class SendTopUpFailMail extends Job implements ShouldQueue
     public function handle()
     {
         if ($this->attempts() <= 1) {
-            $subject = 'Fail Mail';
+            $subject = 'Error in Bulk CSV upload for Bulk Top-Up request';
             Mail::send('emails.topup-fail-email', [
                 'report_file' => $this->file, 'business_name' => $this->business->name
             ], function ($m) use ($subject) {
