@@ -29,7 +29,7 @@ class CompletionCalculation
 
             $this->calculate($data);
         }
-        return ($this->filled / $this->count) * 100;
+        return $this->count ? ($this->filled / $this->count) * 100 : 0;
     }
 
     /**
