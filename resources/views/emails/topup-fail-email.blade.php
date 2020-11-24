@@ -67,7 +67,9 @@
                                                             <td align="left" class="padding-side pb-60 pt-60" style="padding:0 60px;padding-bottom:60px;padding-top:60px;font-size:0px"><img class="adapt-img" src="https://business.sheba.xyz/assets/img/statics/sBusiness.png" alt style="display:block" width="180"></td>
                                                         </tr>
                                                         <tr>
-                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:0.8;font-family:Lato;font-size:14px">Download the attached file.</p></td>
+                                                            <td class="padding-side" align="left" style="padding:0 60px"><p class="message" style="opacity:1;font-family: Lato;font-size: 15px;font-weight: normal;line-height: 2;text-align: justify;">Dear {{$business_name}},<br>
+                                                                    Your CSV upload has failed due to some errors. Please download the error report from the attachment to correct the errors and please retry uploading the corrected CSV to complete the Top-Up.<br>
+                                                                    Thank you</p></td>
                                                         </tr>
                                                         <tr>
                                                             <td align="left"></td>
