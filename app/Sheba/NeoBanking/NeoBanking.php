@@ -194,14 +194,18 @@ class NeoBanking
 
     /**
      * @param $category_code
+     * @param bool $single_document
+     * @throws Exceptions\CategoryPostDataInvalidException
      * @throws Exceptions\InvalidBankCode
      * @throws Exceptions\InvalidBankFormCategoryCode
-     * @throws Exceptions\CategoryPostDataInvalidException
      */
-    public function postCategoryDetail($category_code)
+    public function postCategoryDetail($category_code, $single_document = false)
     {
         $bank     = (new BankFactory())->setPartner($this->partner)->setBank($this->bank)->get();
         $category = (new BankFormCategoryFactory())->setBank($bank)->setPartner($this->partner)->getCategoryByCode($category_code);
+        if ($single_document === true)
+            return $bank->loadInfo()->postCategoryDetail($category, $this->post_data);
+
         return $bank->loadInfo()->validateCategoryDetail($category, $this->post_data)->postCategoryDetail($category, $this->post_data);
     }
 
