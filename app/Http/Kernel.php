@@ -3,6 +3,7 @@
 namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
+use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
@@ -23,12 +24,10 @@ use App\Http\Middleware\MemberAuthMiddleware;
 use App\Http\Middleware\PartnerJobAuthMiddleware;
 use App\Http\Middleware\PartnerOrderAuthMiddleware;
 use App\Http\Middleware\PartnerResourceAuthMiddleware;
-use App\Http\Middleware\JWT\PartnerAuthMiddleware;
 use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
-use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -86,7 +85,7 @@ class Kernel extends HttpKernel
         'guest' => RedirectIfAuthenticated::class,
         'throttle' => ThrottleRequests::class,
         'cors2' => Cors2MiddleWare::class,
-        'sheba_network' => ShebaNetworkMiddleware::class,
+        'admin.auth' => AdminAuthMiddleware::class,
         'customer.auth' => CustomerAuthMiddleware::class,
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
