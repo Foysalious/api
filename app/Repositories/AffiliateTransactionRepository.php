@@ -105,6 +105,7 @@ class AffiliateTransactionRepository
         $refunds                   = $this->affiliate->transactions()->credit()->refunds()->between($this->start_date, $this->end_date);
         $manual_disbursement       = $this->affiliate->transactions()->credit()->manualDisbursement()->between($this->start_date, $this->end_date);
         $sheba_facilitated         = $this->affiliate->transactions()->credit()->shebaFacilitated()->between($this->start_date, $this->end_date);
+        $service_purchase          = $this->affiliate->transactions()->debit()->servicePurchase()->between($this->start_date, $this->end_date);
 
         if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচার্জ", "balance_recharge");
         if($count = $topUp->count()) $category_wise_transaction[] = $this->makeData($topUp->sum('amount'), $count, "Top Up", "টপ আপ", "topup", "-");
@@ -115,6 +116,7 @@ class AffiliateTransactionRepository
         if($count = $movie_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($movie_ticket_commission->sum('amount'), $count, "Movie Ticket Commission", "সিনেমা টিকেট কমিশন", "movie_ticket_commission");
         if($count = $refunds->count()) $category_wise_transaction[] = $this->makeData($refunds->sum('amount'), $count, "Refunds", "রিফান্ড", "refunds");
         if($count = $sheba_facilitated->count()) $category_wise_transaction[] = $this->makeData($sheba_facilitated->sum('amount'), $count, "Facilitated Amount", "ফ্যাসিলিটি অ্যামাউন্ট", "facilitated_amount");
+        if($count = $service_purchase->count()) $category_wise_transaction[] = $this->makeData($service_purchase->sum('amount'), $count, "Service Purchase", "সার্ভিস ক্রয়", "service_purchase",'-');
 
         return $category_wise_transaction;
     }

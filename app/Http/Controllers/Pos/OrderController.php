@@ -41,6 +41,7 @@ use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -554,6 +555,8 @@ class OrderController extends Controller
                 'message' => 'Successfully Download receipt',
                 'link'    => $link
             ]);
+        } catch (AccessRestrictedExceptionForPackage $exception) {
+            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
