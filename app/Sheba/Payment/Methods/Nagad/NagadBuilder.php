@@ -4,10 +4,12 @@
 namespace App\Sheba\Payment\Methods\Nagad;
 
 use App\Models\Affiliate;
+use App\Models\Customer;
 use App\Models\Payable;
 use Sheba\Payment\Methods\Nagad\Stores\AffiliateStore;
 use Sheba\Payment\Methods\Nagad\Stores\DefaultStore;
 use Sheba\Payment\Methods\Nagad\Nagad;
+use Sheba\Payment\Methods\Nagad\Stores\MarketplaceStore;
 use Sheba\Payment\PayableUser;
 
 class NagadBuilder
@@ -27,7 +29,7 @@ class NagadBuilder
 
     /**
      * @param Payable $payable
-     * @return AffiliateStore|DefaultStore
+     * @return AffiliateStore|MarketplaceStore|DefaultStore
      */
     public static function getStore(Payable $payable)
     {
@@ -35,6 +37,7 @@ class NagadBuilder
         $user = $payable->user;
 
         if ($user instanceof Affiliate) return new AffiliateStore();
+        if ($user instanceof Customer) return new MarketplaceStore();
         return new DefaultStore();
     }
 

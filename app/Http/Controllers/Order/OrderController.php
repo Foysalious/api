@@ -49,7 +49,7 @@ class OrderController extends Controller
                 'email' => 'sometimes|email',
                 'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
                 'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet',
+                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
                 'address' => 'required_without:address_id',
                 'address_id' => 'required_without:address|numeric',
                 'partner' => 'sometimes|required',
@@ -127,7 +127,7 @@ class OrderController extends Controller
     private function setModifierFromRequest(Request $request)
     {
         if ($request->has('created_by_type')) {
-            if ($request->created_by_type === 'App\Models\Resource') {
+            if ($request->created_by_type === Resource::class) {
                 $this->setModifier(Resource::find((int)$request->created_by));
                 return;
             };
@@ -164,7 +164,7 @@ class OrderController extends Controller
 
     private function sendSmsToCustomer($customer, $order) {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
     }
