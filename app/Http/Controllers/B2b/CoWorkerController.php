@@ -780,6 +780,13 @@ class CoWorkerController extends Controller
         });
     }
 
+    private function filterByEmployeeType($employees, Request $request) {
+        $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
+        return collect($employees)->filter(function ($employee) use ($is_super) {
+            return $employee['is_super'] == $is_super;
+        });
+    }
+
     /**
      * @param $business
      * @return array
@@ -825,10 +832,5 @@ class CoWorkerController extends Controller
         return $department_info;
     }
 
-    private function filterByEmployeeType($employees, Request $request) {
-        $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
-        return collect($employees)->filter(function ($employee) use ($is_super) {
-            return $employee['is_super'] == $is_super;
-        });
-    }
+
 }

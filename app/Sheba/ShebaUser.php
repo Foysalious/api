@@ -1,7 +1,7 @@
 <?php namespace Sheba;
 
-
 use App\Models\Affiliate;
+use App\Models\Business;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\MovieTicket\Commission\Partner;
@@ -38,6 +38,7 @@ class ShebaUser
 
     public function getTopUpPrepaidMaxLimit()
     {
-        return (double)$this->user->topup_prepaid_max_limit;
+        $topup_prepaid_max_limit = $this->user instanceof Business ? $this->user->topup_prepaid_max_limit : 1000;
+        return (double)$topup_prepaid_max_limit;
     }
 }
