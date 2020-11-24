@@ -30,7 +30,6 @@ class TopUpRequest
     private $from_robi_topup_wallet;
     private $walletType;
     private $topUpBlockNumberRepository;
-    private $walletType;
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
@@ -234,7 +233,7 @@ class TopUpRequest
      */
     private function isPrepaidAmountLimitExceed(Business $business)
     {
-        if ($this->type  == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
+        if ($this->type == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
