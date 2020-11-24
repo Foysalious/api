@@ -15,6 +15,10 @@ class CompletionCalculation
         $this->skipFields = $skipFields;
     }
 
+    /**
+     * @param $allData
+     * @return float|int
+     */
     public function get($allData)
     {
         foreach ($allData as $data)
@@ -25,9 +29,12 @@ class CompletionCalculation
 
             $this->calculate($data);
         }
-        return ($this->filled / $this->count) * 100;
+        return $this->count ? ($this->filled / $this->count) * 100 : 0;
     }
 
+    /**
+     * @param $data
+     */
     private function calculate($data)
     {
         if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView')
