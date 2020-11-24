@@ -81,6 +81,24 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ]);
     }
 
+    /**
+     * @return array
+     */
+    public function getBusinessMemberProrate()
+    {
+        $business_member_leave_types = [];
+        $this->getAccessibleBusinessMember()->get()->each(function ($business_member) use (&$business_member_leave_types) {
+            $leave_types = [];
+            if (!$business_member->leaveTypes->isEmpty()) {
+                $business_member->leaveTypes->each(function ($leave_type) use (&$leave_types) {
+                    $leave_types[$leave_type->leave_type_id] = ['total_days' => $leave_type->total_days];
+                });
+                $business_member_leave_types[$business_member->id] = ['leave_types' => $leave_types];
+            }
+        });
+        return $business_member_leave_types;
+    }
+
     public function businessSms()
     {
         return $this->hasMany(BusinessSmsTemplate::class);
