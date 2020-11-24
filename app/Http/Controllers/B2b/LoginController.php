@@ -74,9 +74,7 @@ class LoginController extends Controller
             'business_id' => $auth_user->getMemberAssociatedBusinessId(),
             'is_super' => $auth_user->isMemberSuper()
         ];
-        if (!$auth_user->isEmailVerified()) {
-            $this->sendVerificationCode($auth_user->getProfileId());
-        }
+        
         return api_response($request, $info, 200, ['info' => $info]);
     }
 
