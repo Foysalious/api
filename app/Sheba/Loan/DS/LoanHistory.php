@@ -110,8 +110,8 @@ class LoanHistory
                 'bn' => 'পরিশোধের সময়'
             ],
             'value' => [
-                'en' => $this->partnerBankLoan->duration . ' Years',
-                'bn' => convertNumbersToBangla((double)$this->partnerBankLoan->duration, false) . ' বছর'
+                'en' => $this->partnerBankLoan->duration . ' Months',
+                'bn' => convertNumbersToBangla((double)$this->partnerBankLoan->duration, false) . ' মাস'
             ]
         ];
     }
