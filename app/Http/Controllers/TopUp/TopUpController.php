@@ -426,7 +426,7 @@ class TopUpController extends Controller
         }
 
         if ($is_excel_report) {
-            $url = 'https://cdn-shebadev.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
+            $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
             $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
             file_put_contents($file_path, file_get_contents($url));
             $history_excel->setFile($file_path);
