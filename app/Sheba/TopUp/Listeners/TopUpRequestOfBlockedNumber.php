@@ -14,12 +14,10 @@ use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumbe
 class TopUpRequestOfBlockedNumber
 {
     private $sms;
-    private $statusChanger;
 
-    public function __construct(Sms $sms, StatusChanger $status_changer)
+    public function __construct(Sms $sms)
     {
         $this->sms = $sms;
-        $this->statusChanger = $status_changer;
     }
 
 
