@@ -29,7 +29,7 @@ class CompletionCalculation
 
             $this->calculate($data);
         }
-        return $this->count ? ($this->filled / $this->count) * 100 : 0;
+        return $this->count ? ($this->filled / $this->count) * 100 : 100;
     }
 
     /**
@@ -37,7 +37,7 @@ class CompletionCalculation
      */
     private function calculate($data)
     {
-        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView')
+        if ($data['field_type'] !== 'header' && $data['field_type'] !== 'multipleView' && $data['field_type'] !== 'textView' && $data['mandatory'] !== false)
         {
             if (!in_array($data['id'], $this->skipFields))
             {

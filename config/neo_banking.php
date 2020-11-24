@@ -790,7 +790,7 @@ return [
                 'name'          => 'trade_licence_document',
                 'id'            => 'trade_licence_document',
                 'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ],
             [
                 'field_type'    => 'imageDocument',
@@ -820,7 +820,7 @@ return [
                 'name'          => 'e_tin_document',
                 'id'            => 'e_tin_document',
                 'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ],
             [
                 'field_type'    => 'imageDocument',
