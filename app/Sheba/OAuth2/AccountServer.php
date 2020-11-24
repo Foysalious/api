@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
 
+use GuzzleHttp\Client;
+
 class AccountServer
 {
     /** @var AccountServerClient */
@@ -20,7 +22,7 @@ class AccountServer
      */
     public function getTokenByAvatar($avatar, $type)
     {
-        return $this->getTokenByIdAndRememberToken($avatar->id,$avatar->remember_token, $type);
+        return $this->getTokenByIdAndRememberToken($avatar->id, $avatar->remember_token, $type);
     }
 
     /**
@@ -190,6 +192,15 @@ class AccountServer
      */
     public function sendEmailVerificationLink($token)
     {
-         return $this->client->get("api/v3/send-verification-link?token=$token");
+        return $this->client->get("api/v3/send-verification-link?token=$token");
+    }
+
+    public function logout($token)
+    {
+        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/logout", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+        ]);
     }
 }
