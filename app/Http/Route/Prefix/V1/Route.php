@@ -152,7 +152,7 @@ class Route
                 $api->group(['prefix' => 'edit'], function ($api) {
                     $api->put('/', 'CustomerController@update');
                     $api->put('email', 'CustomerController@updateEmail');
-                    $api->put('password', 'CustomerController@updatePassword');
+                    //$api->put('password', 'CustomerController@updatePassword');
                     $api->post('picture', 'CustomerController@updatePicture');
                     $api->put('mobile', 'CustomerController@updateMobile');
                 });

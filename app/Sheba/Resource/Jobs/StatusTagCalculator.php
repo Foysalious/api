@@ -3,7 +3,7 @@
 
 use App\Models\Job;
 use Carbon\Carbon;
-use Sheba\BanglaConverter;
+use Sheba\NumberLanguageConverter;
 use Sheba\Jobs\JobStatuses;
 
 class StatusTagCalculator
@@ -37,7 +37,7 @@ class StatusTagCalculator
             } else {
                 $message = ['message' => "লেট", 'tag' => 'late'];
             }
-            return ['message' => BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
+            return ['message' => NumberLanguageConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
         }
     }
 
