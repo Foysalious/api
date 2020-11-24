@@ -67,6 +67,7 @@ use Sheba\Business\ProcurementInvitation\Creator as ProcurementInvitationCreator
 use Sheba\Business\Procurement\BasicInfoUpdater as BasicInfoUpdater;
 use Sheba\Business\Procurement\AttachmentUpdater;
 use Sheba\Business\Procurement\DescriptionUpdater;
+use Sheba\Dal\Bid\Contract as BidRepository;
 
 class ProcurementController extends Controller
 {
@@ -92,6 +93,8 @@ class ProcurementController extends Controller
     private $procurementRequestHandler;
     /** @var ResourceCreateRequest $resourceCreateRequest */
     private $resourceCreateRequest;
+
+    private $bid_repository;
 
     /**
      * ProcurementController constructor.
@@ -220,9 +223,10 @@ class ProcurementController extends Controller
      * @param $business
      * @param Request $request
      * @param AccessControl $access_control
+     * @param BidRepository $bid_repository
      * @return JsonResponse
      */
-    public function index($business, Request $request, AccessControl $access_control)
+    public function index($business, Request $request, AccessControl $access_control, BidRepository $bid_repository)
     {
         $this->validate($request, [
             'status' => 'sometimes|string',
@@ -236,6 +240,7 @@ class ProcurementController extends Controller
         $procurements = $this->procurementRepository->ofBusiness($business->id)
             ->select(['id', 'title', 'long_description', 'status', 'last_date_of_submission', 'created_at', 'is_published', 'publication_status'])
             ->orderBy('id', 'desc');
+
         $is_procurement_available = $procurements->count() > 0 ? 1 : 0;
 
         #if ($request->has('status') && $request->status != 'all') $procurements = $this->procurementRepository->filterWithStatus($request->status);
@@ -243,9 +248,11 @@ class ProcurementController extends Controller
         $end_date = $request->has('end_date') ? $request->end_date : null;
         if ($start_date && $end_date) $procurements = $this->procurementRepository->filterWithCreatedAt($start_date, $end_date);
 
+        $bid_counts = $bid_repository->getActiveProcurementBidderCount();
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($procurements->get(), new ProcurementListTransformer());
+        $resource = new Collection($procurements->get(), new ProcurementListTransformer($bid_counts));
         $procurements = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('status') && $request->status != 'all') $procurements = $this->filterWithStatus($procurements, $request->status);
