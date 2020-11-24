@@ -88,6 +88,7 @@ class AvailableMethods
             PaymentStrategy::BKASH,
             PaymentStrategy::CBL,
             PaymentStrategy::ONLINE,
+            PaymentStrategy::NAGAD,
         ];
     }
 
