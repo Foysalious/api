@@ -68,6 +68,11 @@ class BusinessMember extends Model
         return $this->belongsTo(BusinessMember::class, 'manager_id');
     }
 
+    public function scopeActive($query)
+    {
+        return $query->whereIn('status', ['active', 'invited']);
+    }
+
     /**
      * @param Carbon $date
      * @return bool
@@ -164,6 +169,22 @@ class BusinessMember extends Model
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
     }
 
+    public function leaveTypes()
+    {
+        return $this->hasMany(BusinessMemberLeaveType::class);
+    }
+
+    /**
+     * @param $leave_type_id
+     * @return mixed
+     */
+    public function getTotalLeaveDaysByLeaveTypes($leave_type_id)
+    {
+        $business_member_leave_type = $this->leaveTypes()->where('leave_type_id', $leave_type_id)->first();
+        if ($business_member_leave_type) return $business_member_leave_type->total_days;
+        return $this->business->leaveTypes()->withTrashed()->where('id', $leave_type_id)->first()->total_days;
+    }
+
     /**
      * @param Carbon $date
      * @return bool
@@ -173,16 +194,4 @@ class BusinessMember extends Model
         $date = $date->toDateString();
         return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
     }
-
-    public function leaveTypes()
-    {
-        return $this->hasMany(BusinessMemberLeaveType::class);
-    }
-
-    public function getLeaveTypes()
-    {
-        if ($this->leaveTypes->get()) return $this->leaveTypes;
-        return $this->business->leaveTypes;
-    }
-
 }

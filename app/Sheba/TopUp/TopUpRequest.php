@@ -28,6 +28,7 @@ class TopUpRequest
     private $name;
     private $bulk_id;
     private $from_robi_topup_wallet;
+    private $walletType;
     private $topUpBlockNumberRepository;
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
@@ -196,6 +197,11 @@ class TopUpRequest
             $this->errorMessage = "Your topup is temporary off.";
             return 1;
         }
+
+        if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
+            $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
+            return 1;
+        }
         if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
             Event::fire(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
@@ -214,7 +220,20 @@ class TopUpRequest
         if ($this->vendorId == VendorFactory::BANGLALINK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::BANGLALINK]);
         if ($this->vendorId == VendorFactory::ROBI) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::ROBI]);
         if ($this->vendorId == VendorFactory::AIRTEL) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::AIRTEL]);
+        if ($this->vendorId == VendorFactory::TELETALK) return in_array($this->amount, $this->blockedAmountByOperator[TopUpSpecialAmount::TELETALK]);
 
+        return false;
+    }
+
+    /**
+     * @param Business $business
+     * @param $amount
+     * @param $connection_type
+     * @return bool
+     */
+    private function isPrepaidAmountLimitExceed(Business $business)
+    {
+        if ($this->type  == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
