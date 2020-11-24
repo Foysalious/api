@@ -74,6 +74,19 @@ class AccountServer
     }
 
     /**
+     * @param $email
+     * @param $password
+     * @return string
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function getTokenByEmailAndPasswordV2($email, $password)
+    {
+        $data = $this->client->post("api/v3/profile/login", ['email' => $email, 'password' => $password]);
+        return $data['token'];
+    }
+
+    /**
      * @param $identity
      * @param $password
      * @return mixed

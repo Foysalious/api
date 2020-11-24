@@ -1,20 +1,33 @@
 <?php namespace Sheba\OAuth2;
 
+
 use App\Models\Partner;
 use App\Models\Profile;
+use App\Models\Resource;
+use App\Models\User;
+use Illuminate\Database\Eloquent\Model;
+use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Tymon\JWTAuth\Token;
 
 class AuthUser
 {
     private $attributes = [];
     /** @var Profile */
     private $profile;
+    /** @var Resource */
+    private $resource;
+    /** @var User */
+    private $user;
+    /** @var Model|null */
+    private $avatar;
+
 
     public function __construct($attributes = [])
     {
         $this->attributes = $attributes;
-        $this->setProfile();
+        $this->resolveAuthUser();
     }
 
     /**
@@ -24,9 +37,22 @@ class AuthUser
     public static function create()
     {
         try {
-            $token = JWTAuth::getToken();
+            $token = self::getToken();
             if (!$token) throw new SomethingWrongWithToken("Token is missing.");
             return self::createFromToken($token);
+        } catch (JWTException $e) {
+            throw new SomethingWrongWithToken($e->getMessage());
+        }
+    }
+
+    /**
+     * @return Token
+     * @throws SomethingWrongWithToken
+     */
+    public static function getToken()
+    {
+        try {
+            return JWTAuth::getToken();
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
         }
@@ -106,10 +132,84 @@ class AuthUser
         return json_encode($this->attributes);
     }
 
-    private function setProfile()
+    public function setProfile(Profile $profile)
     {
-        $this->profile = Profile::find($this->attributes['profile']['id']);
+        $this->profile = $profile;
         return $this;
+    }
+
+    /**
+     * @param Model $user
+     * @return $this
+     */
+    public function setAvatar(Model $user)
+    {
+        $this->avatar = $user;
+        return $this;
+    }
+
+    public function setUser(User $user)
+    {
+        $this->user = $user;
+        return $this;
+    }
+
+    /**
+     * @param array $payload
+     * @param $portal_name
+     * @return AuthUser
+     *
+     *
+     * /**
+     * @return $this
+     */
+    public function setPortal($portal_name)
+    {
+        $this->portal = $portal_name;
+        return $this;
+    }
+
+    public function getAuthUser()
+    {
+        return $this->profile ? $this->profile : $this->avatar;
+    }
+
+    public function resolveAuthUser()
+    {
+        $this->resolveProfile();
+        $this->resolveAvatar();
+    }
+
+    public function resolveAvatar()
+    {
+        if (!$this->attributes['avatar']) return;
+
+        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
+        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
+        if ($avatar) $this->setAvatar($avatar);
+    }
+
+    public function resolveProfile()
+    {
+        if (!isset($this->attributes['profile'])) return null;
+        $profile = Profile::find($this->attributes['profile']['id']);
+        if ($profile) $this->setProfile($profile);
+    }
+
+    /**
+     * @return Profile|null
+     */
+    public function getProfile()
+    {
+        return $this->profile;
+    }
+
+    /**
+     * @return Model|null
+     */
+    public function getAvatar()
+    {
+        return $this->avatar;
     }
 
     /**
@@ -129,4 +229,10 @@ class AuthUser
         if (!$this->profile || !$this->profile->resource) return null;
         return $this->profile->resource->partners->first();
     }
+
+    public function getAttributes()
+    {
+        return $this->attributes;
+    }
+
 }
