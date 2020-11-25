@@ -1,8 +1,10 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Presenters\PresentableDTOPresenter;
+use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
 use App\Models\AppVersion;
+use Sheba\AppVersion\AppVersionManager;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -68,7 +70,8 @@ class ShebaController extends Controller {
         ]);
     }
 
-    public function sendFaq(Request $request) {
+    public function sendFaq(Request $request)
+    {
         try {
             $validator = Validator::make($request->all(), [
                 'name'    => 'required|string',
@@ -86,7 +89,8 @@ class ShebaController extends Controller {
         }
     }
 
-    public function getImages(Request $request) {
+    public function getImages(Request $request)
+    {
         try {
             if ($request->has('is_business') && (int)$request->is_business) {
                 $portal_name = 'manager-app';
@@ -144,7 +148,8 @@ class ShebaController extends Controller {
      * @param $screen
      * @return Slider
      */
-    private function getSliderWithSlides($location, $portal_name, $screen) {
+    private function getSliderWithSlides($location, $portal_name, $screen)
+    {
         $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
             $query->where('is_published', 1);
         })->where('portal_name', $portal_name)->where('screen', $screen)->first();
@@ -167,80 +172,31 @@ class ShebaController extends Controller {
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
-    public function getLeadRewardAmount() {
+    public function getLeadRewardAmount()
+    {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
 
-    public function getVersions(Request $request) {
-        try {
-            if ($request->has('version') && $request->has('app')) {
-                $version  = (int)$request->version;
-                $app      = $request->app;
-                $versions = AppVersion::where('tag', $app)
-                    ->where('version_code', '>', $version)
-                    ->where(function ($query) use ($version) {
-                        $query->where('lowest_upgradable_version_code', '<', $version)
-                            ->orWhereNull('lowest_upgradable_version_code');
-                    })
-                    ->get();
-
-                $data = [
-                    'title'       => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body'        => !$versions->isEmpty() ? $versions->last()->body : null,
-                    'height'      => !$versions->isEmpty() ? $versions->last()->height : null,
-                    'width'       => !$versions->isEmpty() ? $versions->last()->width : null,
-                    'image_link'  => !$versions->isEmpty() ? $versions->last()->image_link : null,
-                    'has_update'  => count($versions) > 0 ? 1 : 0,
-                    'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
-                ];
-
-                return api_response($request, $data, 200, ['data' => $data]);
-            }
-
-            $apps = json_decode(Redis::get('app_versions'));
-            if ($apps == null) {
-                $apps = $this->scrapeAppVersionsAndStoreInRedis();
-            }
-
-            return api_response($request, $apps, 200, ['apps' => $apps]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+    public function getVersions(AppVersionRequest $request, AppVersionManager $app_version_manager)
+    {
+        if ($request->wantsSingleApp()) {
+            $data = $app_version_manager->getVersionForApp($request->app, (int)$request->version)->toArray();
+            return api_response($request, $data, 200, ['data' => $data]);
         }
+
+        $apps = $app_version_manager->getAllAppVersions();
+        return api_response($request, $apps, 200, ['apps' => $apps]);
     }
 
-    private function scrapeAppVersionsAndStoreInRedis() {
-        $version_string = 'itemprop="softwareVersion">';
-        $apps           = constants('APPS');
-        $final          = [];
-        foreach ($apps as $key => $value) {
-            $headers      = get_headers($value);
-            $version_code = 0;
-            if (substr($headers[0], 9, 3) == "200") {
-                $dom           = file_get_contents($value);
-                $version       = strpos($dom, $version_string);
-                $result_string = trim(substr($dom, $version + strlen($version_string), 15));
-                $final_string  = explode(' ', $result_string);
-                $version_code  = (int)str_replace('.', '', $final_string[0]);
-            }
-            array_push($final, ['name' => $key, 'version_code' => $version_code, 'is_critical' => 0]);
-        }
-        Redis::set('app_versions', json_encode($final));
-        return $final;
+    public function sendCarRentalInfo(Request $request)
+    {
+        $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
+        return api_response($request, $categories, 200, ['info' => $categories]);
     }
 
-    public function sendCarRentalInfo(Request $request) {
-        try {
-            $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-            $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
-            return api_response($request, $categories, 200, ['info' => $categories]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function sendButcherInfo(Request $request) {
+    public function sendButcherInfo(Request $request)
+    {
         try {
             $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
             if ($butcher_service) {
