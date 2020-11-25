@@ -41,6 +41,16 @@ class Creator
     }
 
     /**
+     * @param $member
+     * @return $this
+     */
+    public function setMember($member)
+    {
+        $this->profile = $member;
+        return $this;
+    }
+
+    /**
      * @param BusinessMember $business_member
      * @return $this
      */
@@ -56,7 +66,7 @@ class Creator
         $this->data['leave_id'] = $this->leave->id;
         $this->data['from_status'] = $this->previousStatus;
         $this->data['to_status'] = $this->status;
-        $this->data['log'] = "Leave status change from $this->previousStatus to $this->status";
+        $this->data['log'] = $this->profile ? "$this->profile $this->status this leave" : "Leave status change from $this->previousStatus to $this->status";
         $this->withCreateModificationField($this->data);
     }
 

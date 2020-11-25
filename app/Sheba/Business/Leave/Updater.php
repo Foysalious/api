@@ -74,7 +74,6 @@ class Updater
     public function setLeave(Leave $leave)
     {
         $this->leave = $leave;
-        $this->previous_substitute = $this->leave->substitute_id;
         return $this;
     }
 
@@ -158,6 +157,7 @@ class Updater
 
     public function updateStatus()
     {
+        dd($this->businessMember);
         $this->setModifier($this->member);
         DB::transaction(function () {
             $previous_status = $this->leave->status;
@@ -245,7 +245,7 @@ class Updater
         $data['log'] = $this->member->profile->name . ' changed the leave note';
         $this->leaveLogRepo->create($this->withCreateModificationField($data));
 
-        $previous_substitute = $this->previous_substitute;
+        $previous_substitute = $this->leave->substitute_id;;
         if ($this->substitute) {
             $data['log'] = $this->member->profile->name . ' changed from ' . $this->getSubstituteName($previous_substitute) . ' to ' . $this->getSubstituteName($this->substitute);
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
@@ -265,5 +265,21 @@ class Updater
     private function sendPushToSubstitute(Leave $leave)
     {
         dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
+    }
+
+    public function statusUpdate()
+    {
+        DB::transaction(function () {
+            $previous_status = $this->leave->status;
+            $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
+            $this->leaveStatusLogCreator->setMember($this->member->profile->name)->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
+                ->setBusinessMember($this->businessMember)
+                ->create();
+        });
+
+        try {
+            $this->sendNotification($this->status);
+        } catch (Exception $e) {
+        }
     }
 }

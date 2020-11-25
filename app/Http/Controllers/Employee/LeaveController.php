@@ -144,12 +144,12 @@ class LeaveController extends Controller
      */
     public function updateStatus($leave, Request $request, AccessControl $accessControl, LeaveUpdater $leaveUpdater)
     {
+
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($business_member->member);
         $accessControl->setBusinessMember($business_member);
         if (!$accessControl->hasAccess('leave.rw')) return api_response($request, null, 403);
         $leave = Leave::findOrFail((int)$leave);
-
         $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
         return api_response($request, null, 200);
     }
@@ -230,6 +230,27 @@ class LeaveController extends Controller
             ->setNote($request->note)->setAttachments($request->attachments)->setCreatedBy($member);
         if ($leave_updater->hasError()) return api_response($request, null, $leave_updater->getErrorCode(), ['message' => $leave_updater->getErrorMessage()]);
         $leave_updater->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $leave
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveUpdater $leave_updater
+     * @return JsonResponse
+     */
+    public function statusUpdate($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
+    {
+        $this->validate($request, [
+            'status' => 'required',
+        ]);
+        $member = $this->getMember($request);
+        $business_member = $this->getBusinessMember($request);
+        $this->setModifier($member);
+        $leave = $leave_repo->find((int)$leave);
+        $leave_updater->setLeave($leave)->setBusinessMember($business_member)->setStatus($request->status)->statusUpdate();
+
         return api_response($request, null, 200);
     }
 }
