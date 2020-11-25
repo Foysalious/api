@@ -10,7 +10,7 @@ class TopUpAuthMiddleware extends AccessTokenMiddleware
 {
     public function setExtraDataToRequest($request)
     {
-        $auth_user = AuthUser::create();
+        $auth_user = $request->auth_user;
         $user = $auth_user->getAvatar();
         if (!$user) return;
         $type = strtolower(class_basename($user));
