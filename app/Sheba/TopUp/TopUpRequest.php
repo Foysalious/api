@@ -29,7 +29,7 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    private $blockedPartnerId = [233];
+    private $blockedPartnerId = [233, 137528];
 
     /**
      * TopUpRequest constructor.
