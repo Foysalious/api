@@ -95,7 +95,8 @@ class TopUpController extends Controller
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
             ->setUserAgent($userAgentInformation->getUserAgent());
-        if ($this->isBusiness($agent)) {
+
+        if ($agent instanceof Business) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }

@@ -1026,4 +1026,5 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->can_topup == 1;
     }
 
+
 }
