@@ -23,7 +23,9 @@ class AccessTokenMiddleware
     public function handle($request, Closure $next)
     {
         try {
-            $access_token = $this->findAccessToken($this->getToken());
+            $token = $this->getToken();
+            if (!$token) throw new AccessTokenDoesNotExist();
+            $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
             if (!$access_token->isValid()) throw new AccessTokenNotValidException();
             $this->setAccessToken($access_token);
@@ -38,7 +40,8 @@ class AccessTokenMiddleware
 
     protected function getToken()
     {
-        return AuthUser::getToken()->get();
+        $token = AuthUser::getToken();
+        return $token ? AuthUser::getToken()->get() : null;
     }
 
     private function setAccessToken(AccessToken $access_token)
@@ -58,6 +61,7 @@ class AccessTokenMiddleware
      */
     private function findAccessToken($token)
     {
+        dd($token);
         return $this->accessTokenRepository->where('token', $token)->first();
     }
 
