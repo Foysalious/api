@@ -157,7 +157,6 @@ class Updater
 
     public function updateStatus()
     {
-        dd($this->businessMember);
         $this->setModifier($this->member);
         DB::transaction(function () {
             $previous_status = $this->leave->status;
