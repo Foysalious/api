@@ -133,10 +133,7 @@ class VerifyPin
 
     private function resetRememberToken()
     {
-        if ($this->managerResource && $this->agent instanceof Partner) {
-            $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
-            $this->agent->update($this->withUpdateModificationField(['can_topup' => 0]));
-        }
+        if ($this->managerResource && $this->agent instanceof Partner) $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
         if ($this->agent instanceof Affiliate) $this->agent->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
     }
 
