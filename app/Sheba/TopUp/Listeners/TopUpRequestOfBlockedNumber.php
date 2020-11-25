@@ -6,8 +6,6 @@ use App\Repositories\SmsHandler;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Dal\TopUpTransactionBlockNotificationReceiver\TopUpTransactionBlockNotificationReceiver;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
-use Sheba\Partner\PartnerStatuses;
-use Sheba\Partner\StatusChanger;
 use Sheba\Sms\Sms;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
 
@@ -30,10 +28,7 @@ class TopUpRequestOfBlockedNumber
     private function blockUser(TopUpRequestOfBlockedNumberEvent $event)
     {
         if ($event->topupRequest->getAgent() instanceof Affiliate) $event->topupRequest->getAgent()->update(['verification_status' => 'rejected', 'reject_reason' => "Unusual / Suspicious account activity"]);
-        elseif ($event->topupRequest->getAgent() instanceof Partner) {
-            $status_changer = new StatusChanger($event->topupRequest->getAgent(), ['status' => PartnerStatuses::UNVERIFIED, 'reason' => 'Blocked number topup request']);
-            $status_changer->change();
-        }
+        elseif ($event->topupRequest->getAgent() instanceof Partner) $event->topupRequest->getAgent()->update(['can_topup' => 0]);
     }
 
     private function notifyConcerningPersons(TopUpRequestOfBlockedNumberEvent $event)
