@@ -8,7 +8,7 @@ class ResourceAuthMiddleware extends AccessTokenMiddleware
 {
     public function setExtraDataToRequest($request)
     {
-        $auth_user = AuthUser::create();
+        $auth_user = $request->auth_user;
         $request->merge(['auth_user' => $auth_user]);
     }
 }

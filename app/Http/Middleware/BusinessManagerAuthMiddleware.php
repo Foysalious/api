@@ -4,7 +4,6 @@ use App\Exceptions\NotFoundException;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
-use Sheba\OAuth2\AuthUser;
 
 class BusinessManagerAuthMiddleware extends AccessTokenMiddleware
 {
@@ -12,7 +11,7 @@ class BusinessManagerAuthMiddleware extends AccessTokenMiddleware
     {
         if (!$this->accessToken->accessTokenRequest->profile) return;
 
-        $auth_user = AuthUser::create();
+        $auth_user = $request->auth_user;
         $member = Member::find($auth_user->getMemberId());
         if (!$member) throw new NotFoundException('Member not found.', 404);
         $business = Business::find((int)$request->business);
