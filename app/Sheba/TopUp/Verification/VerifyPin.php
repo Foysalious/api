@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\TopUp\Verification;
-
+<?php namespace Sheba\TopUp\Verification;
 
 use App\Models\Affiliate;
 use App\Models\Partner;
@@ -91,14 +87,13 @@ class VerifyPin
     public function verify()
     {
         if (!Hash::check($this->request->password, $this->profile->password)) {
-
             $data = [
                 'type_id' => $this->agent->id,
                 'type' => $this->getType(),
                 'topup_number' => BDMobileFormatter::format($this->request->mobile),
-                'topup_amount' => $this->request->amount,
+                'topup_amount' => $this->request->amount ?: 10,
                 'password' => $this->request->password,
-                'ip_address' => $this->request->ip(),
+                'ip_address' => $this->request->ip()
             ];
             $this->wrongPinCountRepo->create($this->withBothModificationFields($data));
             $wrongPinCount = $this->wrongPinQuery()->get()->count();
@@ -111,14 +106,12 @@ class VerifyPin
             }
 
             throw new PinMismatchException();
-
         } else {
             $wp_count = $this->wrongPinQuery()->get()->count();
             if ($wp_count > 0) {
                 $this->wrongPinQuery()->delete();
             }
         }
-
     }
 
     /**
