@@ -11,6 +11,8 @@ class PartnerSubscription
 
     private $requested_package, $upgrade_request;
 
+    private $notification = 0;
+
     /**
      * @var Partner
      */
@@ -26,6 +28,12 @@ class PartnerSubscription
     public function setPartner($partner)
     {
         $this->partner = $partner;
+        return $this;
+    }
+
+    public function setNotification($notification)
+    {
+        $this->notification = $notification;
         return $this;
     }
 
@@ -50,6 +58,6 @@ class PartnerSubscription
     public function updateSubscription()
     {
         if($hasCredit = $this->partner->hasCreditForSubscription($this->requested_package, BillingType::MONTHLY) && $this->upgrade_request)
-            $this->partner->subscriptionUpgrade($this->requested_package, $this->upgrade_request, 0);
+            $this->partner->subscriptionUpgrade($this->requested_package, $this->upgrade_request, $this->notification);
     }
 }
