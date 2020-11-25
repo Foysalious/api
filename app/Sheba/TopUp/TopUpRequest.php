@@ -24,12 +24,12 @@ class TopUpRequest
     private $errorMessage;
     private $name;
     private $bulk_id;
-    private $from_robi_topup_wallet;
+    private $isFromRobiTopUpWallet;
     private $walletType;
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    private $blockedPartnerId = [233, 137528, 73581, 140660];
+    private $blockedPartnerId = [233, 137528, 73581, 140660, 137528, 144636, 153476, 149526, 150703, 154663, 216023, 203466, 126763];
 
     /**
      * TopUpRequest constructor.
@@ -123,16 +123,16 @@ class TopUpRequest
      */
     public function setRobiTopupWallet($from_robi_topup_wallet)
     {
-        $this->from_robi_topup_wallet = $from_robi_topup_wallet;
+        $this->isFromRobiTopUpWallet = $from_robi_topup_wallet;
         return $this;
     }
 
     /**
      * @return mixed
      */
-    public function getRobiTopupWallet()
+    public function idRobiTopUpWallet()
     {
-        return $this->from_robi_topup_wallet;
+        return $this->isFromRobiTopUpWallet;
     }
 
     /**
@@ -163,12 +163,12 @@ class TopUpRequest
 
     public function hasError()
     {
-        if ($this->from_robi_topup_wallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
+        if ($this->isFromRobiTopUpWallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
 
-        if ($this->from_robi_topup_wallet != 1 && $this->agent->wallet < $this->amount) {
+        if ($this->isFromRobiTopUpWallet != 1 && $this->agent->wallet < $this->amount) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
