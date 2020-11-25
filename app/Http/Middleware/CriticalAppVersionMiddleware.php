@@ -6,6 +6,10 @@ use Sheba\UserAgentInformation;
 
 class CriticalAppVersionMiddleware
 {
+    protected $except = [
+        'v1/versions'
+    ];
+
     /** @var UserAgentInformation  */
     private $userAgentInfo;
     /** @var AppVersionManager */
@@ -26,6 +30,8 @@ class CriticalAppVersionMiddleware
      */
     public function handle($request, Closure $next)
     {
+        if (in_array($request->path(), $this->except)) return $next($request);
+
         $this->userAgentInfo->setRequest($request);
         $app = $this->userAgentInfo->getApp();
         $version = $this->userAgentInfo->getVersionCode();
