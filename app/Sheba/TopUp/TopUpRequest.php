@@ -33,7 +33,7 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    private $blockedPartnerId = [233];
+    private $blockedPartnerId = [233, 137528, 73581, 140660];
 
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
