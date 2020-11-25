@@ -61,7 +61,6 @@ class AccessTokenMiddleware
      */
     private function findAccessToken($token)
     {
-        dd($token);
         return $this->accessTokenRepository->where('token', $token)->first();
     }
 
