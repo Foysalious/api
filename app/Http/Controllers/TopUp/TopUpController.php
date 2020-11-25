@@ -15,10 +15,12 @@ use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\ConnectionType;
+use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
 use Sheba\TopUp\Vendor\Vendor;
+use Sheba\TopUp\Verification\VerifyPin;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
@@ -70,50 +72,44 @@ class TopUpController extends Controller
         }
     }
 
-    /**
-     * @param Request $request
-     * @param TopUpRequest $top_up_request
-     * @param Creator $creator
-     * @param TopUpSpecialAmount $special_amount
-     * @param UserAgentInformation $userAgentInformation
-     * @return JsonResponse
-     */
-    public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
+    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
     {
-        try {
-            $agent = $request->user;
+        $this->validate($request, [
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric',
+            'password' => 'required',
+        ]);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else return api_response($request, null, 400);
+        (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+        $userAgentInformation->setRequest($request);
+        $top_up_request->setAmount($request->amount)
+            ->setMobile($request->mobile)
+            ->setType($request->connection_type)
+            ->setAgent($agent)
+            ->setVendorId($request->vendor_id)
+            ->setUserAgent($userAgentInformation->getUserAgent());
 
-            $validation_data = [
-                'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id'
-            ];
+        if ($agent instanceof Business) {
+            $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
+            $top_up_request->setBlockedAmount($blocked_amount_by_operator);
+        }
 
-            $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ? 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit : 'required|min:10|max:1000|numeric';
+        if ($top_up_request->hasError())
+            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
-            $this->validate($request, $validation_data);
+        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setUserAgent($userAgentInformation->getUserAgent());
-
-            if ($this->isBusiness($agent)) {
-                $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-                $top_up_request->setBlockedAmount($blocked_amount_by_operator);
-            }
-
-            if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
-
-            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-
-            if ($topup_order) {
-                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
-                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+        if ($topup_order) {
+            dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+            return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
+        } else {
             return api_response($request, null, 500);
         }
     }
@@ -167,13 +163,15 @@ class TopUpController extends Controller
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
         try {
-            $this->validate($request, ['file' => 'required|file']);
+            $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
+            if (!in_array($extension, $valid_extensions))
+                return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
+            (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
