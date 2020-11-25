@@ -10,7 +10,6 @@ class AffiliateRoute
             $api->get('partner-affiliates', 'PartnerAffiliationController@index');
             $api->get('services', 'AffiliateController@getServicesInfo');
             $api->post('partner-affiliates', 'PartnerAffiliationController@store');
-            // $api->post('top-up', 'TopUpController@topUp');
             $api->post('bulk-top-up', 'TopUpController@bulkTopUp');
             $api->post('recharge', 'AffiliateController@rechargeWallet');
             $api->get('service-lead-status', 'AffiliateController@leadInfo');
