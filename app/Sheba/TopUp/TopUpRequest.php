@@ -180,7 +180,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified() && $this->agent->canTopUp()) {
+        if ($this->agent instanceof Partner && (!$this->agent->isNIDVerified() || !$this->agent->canTopUp())) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
