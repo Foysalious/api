@@ -180,7 +180,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified()) {
+        if ($this->agent instanceof Partner && !$this->agent->isNIDVerified() && $this->agent->canTopUp()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
@@ -233,7 +233,7 @@ class TopUpRequest
      */
     private function isPrepaidAmountLimitExceed(Business $business)
     {
-        if ($this->type  == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
+        if ($this->type == ConnectionType::PREPAID && ($this->amount > $business->topup_prepaid_max_limit)) return true;
         return false;
     }
 
