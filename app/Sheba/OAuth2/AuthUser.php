@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
 
+use App\Models\Affiliate;
+use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -222,6 +224,15 @@ class AuthUser
     }
 
     /**
+     * @return Affiliate|null
+     */
+    public function getAffiliate()
+    {
+        if (!$this->profile) return null;
+        return $this->profile->affiliate;
+    }
+
+    /**
      * @return Partner|null
      */
     public function getPartner()
@@ -233,6 +244,18 @@ class AuthUser
     public function getAttributes()
     {
         return $this->attributes;
+    }
+
+    /**
+     * @return Business|null
+     */
+    public function getBusiness()
+    {
+        if (!$this->profile || !$this->profile->member) return null;
+        $member = $this->profile->member;
+        $business_member = $member ? $member->businessMember : null;
+        if (!$business_member) return null;
+        return $business_member->business;
     }
 
 }
