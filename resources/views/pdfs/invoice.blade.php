@@ -273,7 +273,7 @@
 <header class="clearfix">
     <div>
     <div id="logo">
-        <img src="{{asset('assets/images/login-logo.png')}}" class="img-responsive">
+        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
     </div>
     <div id="company">
         <h2 class="name">Sheba.xyz</h2>
