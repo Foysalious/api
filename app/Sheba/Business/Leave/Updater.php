@@ -1,6 +1,6 @@
 <?php namespace App\Sheba\Business\Leave;
 
-use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
+use App\Jobs\Business\SendCancelPushNotificationToApprovers;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -8,12 +8,12 @@ use App\Sheba\Attachments\Attachments;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
-use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
 use App\Sheba\Business\LeaveStatusChangeLog\Creator as LeaveStatusChangeLogCreator;
+use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\ModificationFields;
@@ -36,19 +36,15 @@ class Updater
     /**@var BusinessMember $businessMember */
     private $businessMember;
     private $createdBy;
-
     /** @var UploadedFile[] */
     private $attachments = [];
     private $data = [];
     /** @var Attachments $attachmentManager */
     private $attachmentManager;
-
     private $leaveLogRepo;
-    /**
-     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
-     */
     private $previous_substitute;
     private $businessMemberRepo;
+    private $approvalRequests;
 
     /**
      * Updater constructor.
@@ -74,7 +70,6 @@ class Updater
     public function setLeave(Leave $leave)
     {
         $this->leave = $leave;
-        $this->previous_substitute = $this->leave->substitute_id;
         return $this;
     }
 
@@ -144,6 +139,16 @@ class Updater
     }
 
     /**
+     * @param $approval_requests
+     * @return $this
+     */
+    public function setApprovalRequests($approval_requests)
+    {
+        $this->approvalRequests = $approval_requests;
+        return $this;
+    }
+
+    /**
      * @param Leave $leave
      */
     private function createAttachments(Leave $leave)
@@ -168,7 +173,8 @@ class Updater
         });
 
         try {
-            $this->sendNotification($this->status);
+            if ($this->status != Status::CANCELED) $this->sendApprovedOrRejectNotificationToLeaveCreator($this->status);
+            if ($this->status == Status::CANCELED) $this->sendLeaveCancelNotificationToApprovers();
         } catch (Exception $e) {
         }
     }
@@ -177,7 +183,7 @@ class Updater
      * @param $status
      * @throws Exception
      */
-    public function sendNotification($status)
+    private function sendApprovedOrRejectNotificationToLeaveCreator($status)
     {
         $status = LeaveStatusPresenter::statuses()[$status];
         $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
@@ -203,6 +209,19 @@ class Updater
         ];
 
         $this->pushNotification->send($push_notification_data, $topic, $channel);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function sendLeaveCancelNotificationToApprovers()
+    {
+        foreach ($this->approvalRequests as $approval_request) {
+            /**@var BusinessMember $approver */
+            $approver = $approval_request->approver;
+            (new SendCancelPushNotificationToApprovers($approver, $this->leave, $this->member->profile))->handle();
+            // dispatch(new SendCancelPushNotificationToApprovers($approver, $this->leave,  $this->member->profile));
+        }
     }
 
     public function update()
@@ -245,7 +264,7 @@ class Updater
         $data['log'] = $this->member->profile->name . ' changed the leave note';
         $this->leaveLogRepo->create($this->withCreateModificationField($data));
 
-        $previous_substitute = $this->previous_substitute;
+        $previous_substitute = $this->leave->substitute_id;
         if ($this->substitute) {
             $data['log'] = $this->member->profile->name . ' changed from ' . $this->getSubstituteName($previous_substitute) . ' to ' . $this->getSubstituteName($this->substitute);
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
@@ -255,15 +274,5 @@ class Updater
             $data['log'] = $this->member->profile->name . ' added attachment(s)';
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
         }
-
-
-    }
-
-    /**
-     * @param Leave $leave
-     */
-    private function sendPushToSubstitute(Leave $leave)
-    {
-        dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
     }
 }
