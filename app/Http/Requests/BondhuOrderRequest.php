@@ -18,7 +18,7 @@ class BondhuOrderRequest extends ApiRequest
     {
         $all = parent::all();
         $all['mobile'] = $this->has('mobile') ? formatMobile($this->input('mobile')) : null;
-        // $all['payment_method'] = 'bondhu_balance';
+        $all['payment_method'] = 'cod';
         $all['sales_channel'] = $this->has('sales_channel')?$this->input('sales_channel'):constants('SALES_CHANNELS')['Bondhu']['name'];
 
         return $all;

@@ -273,11 +273,10 @@
 <header class="clearfix">
     <div>
     <div id="logo">
-        <img src="{{asset('assets/images/login-logo.png')}}" class="img-responsive">
+        <img src="https://s3.ap-south-1.amazonaws.com/cdn-shebadev/admin_assets/assets/images/login-logo.png" class="img-responsive">
     </div>
     <div id="company">
         <h2 class="name">Sheba.xyz</h2>
-        <div>DevoTech Technology Park Level 1, House 11, Road 113/A Gulshan 2, Dhaka.</div>
         <div>16516</div>
         <div><a href="mailto:info@sheba.xyz">info@sheba.xyz</a></div>
     </div>
@@ -308,7 +307,7 @@
             ORDER NUMBER : {{ $partner_order->order->code() }}
         </div>
         <div class="text-right">
-            VENDOR :  {{ $partner_order->partner?$partner_order->partner->name :"N\A"}}
+            RESOURCE :  {{ $job->resource?$job->resource->profile->name :"N\A"}}
         </div>
     </div>
     <table border="0" cellspacing="0" cellpadding="0">

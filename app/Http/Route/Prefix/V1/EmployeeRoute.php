@@ -4,6 +4,7 @@ class EmployeeRoute
 {
     public function set($api)
     {
+        $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
             $api->group(['prefix' => 'me'], function ($api) {
                 $api->get('/', 'Employee\EmployeeController@me');
@@ -72,9 +73,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'designations'], function ($api) {
                 $api->get('/', 'Employee\DesignationController@index');
             });
-            $api->get('managers','Employee\EmployeeController@getManagersList');
-            $api->get('/','Employee\EmployeeController@index');
-            $api->get('/{employee}','Employee\EmployeeController@show');
+            $api->get('managers', 'Employee\EmployeeController@getManagersList');
+            $api->get('/', 'Employee\EmployeeController@index');
+            $api->get('/{employee}', 'Employee\EmployeeController@show');
         });
     }
 }
