@@ -22,7 +22,7 @@ class ExternalPaymentLinkAuthMiddleware
             $client = PaymentClientAuthentication::where('client_id', $client_id)->where('client_secret', $client_secret)->first();
             if ($client) {
                 if ($client->status != 'published') return api_response($request, null, 501, ['message' => 'This client is not published']);
-                $ip = $request->getClientIp();
+                $ip = getIp();
                 if (in_array($ip, explode(',', $client->whitelisted_ips))) {
                     $request->merge(['client' => $client]);
                     return $next($request);

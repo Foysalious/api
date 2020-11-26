@@ -35,7 +35,6 @@ class Route
             $api->get('categories', ['uses' => 'CategoryController@index']);
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
             $api->get('categories/{category}/services', ['uses' => 'CategoryController@getServices']);
-            $api->post('login', 'Auth\LoginController@login');
             $api->post('register', 'Auth\RegistrationController@register');
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('facebook', 'FacebookController@login');
@@ -152,7 +151,7 @@ class Route
                 $api->group(['prefix' => 'edit'], function ($api) {
                     $api->put('/', 'CustomerController@update');
                     $api->put('email', 'CustomerController@updateEmail');
-                    $api->put('password', 'CustomerController@updatePassword');
+                    //$api->put('password', 'CustomerController@updatePassword');
                     $api->post('picture', 'CustomerController@updatePicture');
                     $api->put('mobile', 'CustomerController@updateMobile');
                 });
@@ -308,8 +307,8 @@ class Route
                 $api->get('/notifications', 'BankUser\NotificationController@index');
                 $api->get('/notification-seen/{id}', 'BankUser\NotificationController@notificationSeen');
             });
-            $api->group(['prefix'=>'nagad'],function($api){
-                $api->get('validate','NagadController@validatePayment');
+            $api->group(['prefix' => 'nagad'], function ($api) {
+                $api->get('validate', 'NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
         });
