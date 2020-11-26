@@ -1,11 +1,13 @@
 <?php namespace App\Http;
 
+use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\Cors2MiddleWare;
+use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
 use App\Http\Middleware\CustomerJobAuthMiddleware;
 use App\Http\Middleware\DLSApiVersioning;
@@ -24,7 +26,6 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
-use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -48,6 +49,7 @@ class Kernel extends HttpKernel
      */
     protected $middleware = [
         Middleware\CheckForMaintenanceMode::class,
+        CriticalAppVersionMiddleware::class,
         TrustProxies::class
     ];
 
@@ -82,31 +84,29 @@ class Kernel extends HttpKernel
         'can' => Authorize::class,
         'guest' => RedirectIfAuthenticated::class,
         'throttle' => ThrottleRequests::class,
-        'jwt.auth' => 'Tymon\JWTAuth\Middleware\GetUserFromToken',
-        'jwt.refresh' => 'Tymon\JWTAuth\Middleware\RefreshToken',
         'cors2' => Cors2MiddleWare::class,
-        'sheba_network' => ShebaNetworkMiddleware::class,
         'customer.auth' => CustomerAuthMiddleware::class,
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
         'affiliate.auth' => AffiliateAuthMiddleware::class,
-        'member.auth' => MemberAuthMiddleware::class,
         'resource.auth' => Middleware\ResourceAuthMiddleware::class,
-        'resource.jwt.auth' => ResourceAuthMiddleware::class,
         'manager.auth' => ManagerAuthMiddleware::class,
-        'business.auth' => BusinessManagerAuthMiddleware::class,
         'partner_job.auth' => PartnerJobAuthMiddleware::class,
         'partner_order.auth' => PartnerOrderAuthMiddleware::class,
         'partner_resource.auth' => PartnerResourceAuthMiddleware::class,
         'resource_job.auth' => ResourceJobAuthMiddleware::class,
         'vendor.auth' => VendorMiddleware::class,
-        'jwtAuth' => JWTAuthentication::class,
-        'jwtGlobalAuth' => JWTAuthMiddleware::class,
         'business_order.auth' => OrderMiddleware::class,
-        'topUp.auth' => TopUpAuthMiddleware::class,
-        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,
         'geo.auth' => GeoAuthMiddleware::class,
         'loan.version' => DLSApiVersioning::class,
-        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class
+        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class,
+        'business.auth' => BusinessManagerAuthMiddleware::class,
+        'member.auth' => MemberAuthMiddleware::class,
+        'jwtAuth' => JWTAuthentication::class,//10
+        'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
+        'topUp.auth' => TopUpAuthMiddleware::class,//1
+        'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
+        'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
+        'accessToken' => AccessTokenMiddleware::class,
     ];
 }

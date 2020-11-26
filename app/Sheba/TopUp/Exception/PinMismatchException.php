@@ -4,9 +4,10 @@
 namespace Sheba\TopUp\Exception;
 
 
+use App\Exceptions\ApiValidationException;
 use Throwable;
 
-class PinMismatchException extends TopUpExceptions
+class PinMismatchException extends ApiValidationException
 {
     public function __construct($message = "Pin Mismatch", $code = 403, Throwable $previous = null)
     {
