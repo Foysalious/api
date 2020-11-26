@@ -165,9 +165,13 @@ class OrderController extends Controller
              *
              * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
              */
-            if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
-                $this->sendOrderPlacePushNotificationToPartner($order);
+            try {
+                if ($order->sales_channel == SalesChannels::WEBSTORE) {
+                    if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                    $this->sendOrderPlacePushNotificationToPartner($order);
+                }
+            } catch (Throwable $e) {
+                app('sentry')->captureException($e);
             }
             $this->sendCustomerEmail($order);
             $order->payment_status      = $order->getPaymentStatus();
