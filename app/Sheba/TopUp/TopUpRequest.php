@@ -33,7 +33,6 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-    private $blockedPartnerId = [233, 137528, 73581, 140660, 137528, 144636, 153476, 149526, 150703, 154663, 216023, 203466, 126763];
 
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
@@ -132,7 +131,7 @@ class TopUpRequest
     /**
      * @return mixed
      */
-    public function idRobiTopUpWallet()
+    public function isRobiTopUpWallet()
     {
         return $this->isFromRobiTopUpWallet;
     }
@@ -165,12 +164,7 @@ class TopUpRequest
 
     public function hasError()
     {
-        if ($this->isFromRobiTopUpWallet == 1 && $this->agent->robi_topup_wallet < $this->amount) {
-            $this->errorMessage = "You don't have sufficient balance to recharge.";
-            return 1;
-        }
-
-        if ($this->isFromRobiTopUpWallet != 1 && $this->agent->wallet < $this->amount) {
+        if ($this->doesAgentNotHaveBalance()) {
             $this->errorMessage = "You don't have sufficient balance to recharge.";
             return 1;
         }
@@ -180,10 +174,7 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Partner && (!$this->agent->isNIDVerified() || !$this->agent->canTopUp())) {
-            $this->errorMessage = "You are not verified to do this operation.";
-            return 1;
-        } else if ($this->agent instanceof Affiliate && $this->agent->isNotVerified()) {
+        if ($this->isAgentNotVerified()) {
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
@@ -193,21 +184,30 @@ class TopUpRequest
             return 1;
         }
 
-        if ($this->agent instanceof Partner && in_array($this->agent->id, $this->blockedPartnerId)) {
-            $this->errorMessage = "Your topup is temporary off.";
-            return 1;
-        }
-
         if ($this->agent instanceof Business && $this->isPrepaidAmountLimitExceed($this->agent)) {
             $this->errorMessage = "The amount exceeded your topUp prepaid limit.";
             return 1;
         }
+
         if ($this->topUpBlockNumberRepository->findByMobile($this->mobile)) {
             Event::fire(new TopUpRequestOfBlockedNumber($this));
             $this->errorMessage = "You can't recharge to a blocked number.";
             return 1;
         }
+
         return 0;
+    }
+
+    private function doesAgentNotHaveBalance()
+    {
+        return ($this->isFromRobiTopUpWallet == 1 && $this->agent->robi_topup_wallet < $this->amount) ||
+            ($this->isFromRobiTopUpWallet != 1 && $this->agent->wallet < $this->amount);
+    }
+
+    private function isAgentNotVerified()
+    {
+        return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified() || !$this->agent->canTopUp())) ||
+            ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
     }
 
     /**
@@ -276,12 +276,6 @@ class TopUpRequest
     {
         $this->bulk_id = $bulk_id;
         return $this;
-    }
-
-    private function hasLastTopupWithinIntervalTime()
-    {
-        $last_topup = $this->agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
-        return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
 
     public function setUserAgent($userAgent)
