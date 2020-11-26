@@ -10,6 +10,7 @@ use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\Cors2MiddleWare;
+use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
 use App\Http\Middleware\CustomerJobAuthMiddleware;
 use App\Http\Middleware\DLSApiVersioning;
@@ -49,7 +50,8 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        Middleware\CheckForMaintenanceMode::class
+        Middleware\CheckForMaintenanceMode::class,
+        CriticalAppVersionMiddleware::class
     ];
 
     /**
