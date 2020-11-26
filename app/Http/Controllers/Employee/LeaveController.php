@@ -169,12 +169,12 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMember($request);
 
         if ($leave->business_member_id != $business_member->id)
-            return api_response($request, null, 404, ['message'=> "You are not authorised to cancel the request."]);
+            return api_response($request, null, 404, ['message' => "You are not authorised to cancel the request."]);
 
         $this->setModifier($business_member->member);
-        $approvers = $leave->requests;
+        $approval_requests = $leave->requests;
 
-        $leave_updater->setLeave($leave)->setApprovers($approvers)->setBusinessMember($business_member)->setStatus($request->status)->updateStatus();
+        $leave_updater->setLeave($leave)->setApprovalRequests($approval_requests)->setBusinessMember($business_member)->setStatus($request->status)->updateStatus();
 
         return api_response($request, null, 200);
     }

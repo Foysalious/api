@@ -44,7 +44,7 @@ class Updater
     private $leaveLogRepo;
     private $previous_substitute;
     private $businessMemberRepo;
-    private $approvers;
+    private $approvalRequests;
 
     /**
      * Updater constructor.
@@ -139,12 +139,12 @@ class Updater
     }
 
     /**
-     * @param $approvers
+     * @param $approval_requests
      * @return $this
      */
-    public function setApprovers($approvers)
+    public function setApprovalRequests($approval_requests)
     {
-        $this->approvers = $approvers;
+        $this->approvalRequests = $approval_requests;
         return $this;
     }
 
@@ -216,9 +216,11 @@ class Updater
      */
     private function sendLeaveCancelNotificationToApprovers()
     {
-        foreach ($this->approvers as $approver) {
-            (new SendCancelPushNotificationToApprovers($approver))->handle();
-            // dispatch(new SendCancelPushNotificationToApprovers($approver));
+        foreach ($this->approvalRequests as $approval_request) {
+            /**@var BusinessMember $approver */
+            $approver = $approval_request->approver;
+            (new SendCancelPushNotificationToApprovers($approver, $this->leave, $this->member->profile))->handle();
+            // dispatch(new SendCancelPushNotificationToApprovers($approver, $this->leave,  $this->member->profile));
         }
     }
 
