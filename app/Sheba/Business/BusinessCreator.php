@@ -26,8 +26,7 @@ class BusinessCreator
      */
     public function create()
     {
-        $business = Business::create($this->withCreateModificationField($this->getBusinessData()));
-        return $business;
+        return Business::create($this->withCreateModificationField($this->getBusinessData()));
     }
 
     /**

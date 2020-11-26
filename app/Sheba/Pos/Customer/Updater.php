@@ -118,6 +118,7 @@ class Updater
             $profile = $this->profileRepo->store($profile_data);
             $this->setProfile($profile);
         } else {
+            unset($profile_data['email']);
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;

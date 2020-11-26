@@ -4,37 +4,16 @@ use Closure;
 use Illuminate\Http\Request;
 use Sheba\Auth\Auth;
 use Sheba\Auth\JWTAuth;
+use Sheba\OAuth2\AuthUser;
 
-class PaymentLinkAuthMiddleware
+class PaymentLinkAuthMiddleware extends AccessTokenMiddleware
 {
-    public $auth;
-    public $request;
-    public $JWTAuth;
-
-    public function __construct(Auth $auth, JWTAuth $jwt_auth)
+    public function setExtraDataToRequest($request)
     {
-        $this->auth = $auth;
-        $this->JWTAuth = $jwt_auth;
-        $this->auth->setStrategy($this->JWTAuth)->setRequest(\request());
-    }
-
-    /**
-     * Handle an incoming request.
-     *
-     * @param Request $request
-     * @param Closure $next
-     * @return mixed
-     */
-    public function handle($request, Closure $next)
-    {
-
-        if ($auth_user = $this->auth->authenticate()) {
-            $user = $auth_user->getAvatar();
-            $type = strtolower(class_basename($user));
-            $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
-            return $next($request);
-        } else {
-            return api_response($request, null, 403, ["message" => "You're not authorized to access this user."]);
-        }
+        $auth_user = $request->auth_user;
+        $user = $auth_user->getAvatar();
+        if (!$user) return;
+        $type = strtolower(class_basename($user));
+        $request->merge([$type => $user, 'type' => $type, 'user' => $user]);
     }
 }

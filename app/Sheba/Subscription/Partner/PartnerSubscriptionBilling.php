@@ -42,6 +42,7 @@ class PartnerSubscriptionBilling
     public  $newBillingType;
     public  $oldBillingType;
     public  $discountId;
+    private $notification = 1;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -58,6 +59,11 @@ class PartnerSubscriptionBilling
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
     }
 
+    public function setNotification($key)
+    {
+        $this->notification = $key;
+        return $this;
+    }
 
     public function runSubscriptionBilling()
     {
@@ -95,7 +101,8 @@ class PartnerSubscriptionBilling
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->setPackage($old_package, $new_package, $old_billing_type, $new_billing_type)->shootLog($grade);
         }
-        $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
+        if(isset($this->notification) && $this->notification === 1)
+            $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
     }
 
@@ -310,11 +317,11 @@ class PartnerSubscriptionBilling
         switch ($grade) {
             case PartnerSubscriptionChange::UPGRADE:
                 $title   = "সাবস্ক্রিপশন সম্পন্ন";
-                $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে।";
+                $message = " আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন সম্পন্ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee  টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভ্যাট অন্তর্ভুক্ত ";
                 break;
             case PartnerSubscriptionChange::RENEWED:
                 $title   = "সাবস্ক্রিপশন  নবায়ন";
-                $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে।";
+                $message = "আপনি এসম্যানেজার এর $type_text $new_package->show_name_bn প্যকেজ এ সফল ভাবে সাবস্ক্রিপশন নবায়ন করেছেন। সাবস্ক্রিপশন ফি বাবদ $fee টাকা চার্জ করা হয়েছে। **সাবক্রিপশন এর সাথে 5% ভ্যাট অন্তর্ভুক্ত ";
                 break;
             case PartnerSubscriptionChange::DOWNGRADE:
                 return;

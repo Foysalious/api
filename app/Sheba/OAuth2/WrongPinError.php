@@ -1,0 +1,38 @@
+<?php namespace Sheba\OAuth2;
+
+use Throwable;
+
+class WrongPinError extends AccountServerAuthenticationError
+{
+
+    private $wrongPinCount;
+    private $remainingHours;
+
+    public function __construct($wrong_pin_count, $remaining_hours, $message = "", $code = 403, Throwable $previous = null)
+    {
+        $this->wrongPinCount = $wrong_pin_count;
+        $this->remainingHours = $remaining_hours;
+
+        if (!$message || $message == "") {
+            $message = 'Accounts server could not authenticate request.';
+        }
+        parent::__construct($message, $code, $previous);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWrongPinCount()
+    {
+        return $this->wrongPinCount;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getRemainingHours()
+    {
+        return $this->remainingHours;
+    }
+
+}

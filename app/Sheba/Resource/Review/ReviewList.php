@@ -55,14 +55,22 @@ class ReviewList
     {
         $reviews = $this->reviewRepository->getReviews($this->resource->id);
         $reviews = $this->filterReviews($reviews);
-        return $reviews->get();
+        $reviews = $reviews->get();
+        $reviews = $reviews->each(function ($review) {
+            $review->review = $review->calculated_review;
+            unset($review->rates);
+        })->filter(function ($review) {
+            return !empty($review->review);
+        })->sortByDesc('created_at');
+        $reviews = $reviews->values();
+        if ($this->limit) $reviews = $reviews->splice($this->offset, $this->limit);
+        return $reviews;
     }
 
     private function filterReviews($reviews)
     {
         if ($this->rating) $reviews = $reviews->where('rating', $this->rating);
         if ($this->categoryId) $reviews = $reviews->where('category_id', $this->categoryId);
-        if ($this->limit) $reviews = $reviews->skip($this->offset)->take($this->limit);
         return $reviews;
     }
 }

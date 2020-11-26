@@ -31,6 +31,8 @@ use Sheba\Referral\Referrals;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
+use Sheba\Subscription\Partner\BillingType;
+use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Voucher\Creator\Referral;
 use Throwable;
 
@@ -121,6 +123,7 @@ class PartnerRegistrationController extends Controller
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
+                (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info               = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 $business_join_reqs = BusinessJoinRequest::where('mobile', $mobile)->first();
                 if ($business_join_reqs) {
@@ -352,7 +355,8 @@ class PartnerRegistrationController extends Controller
                 $profile->update(['gender' => $request->gender]);
             if ($resource->partnerResources->count() == 0) {
                 $data = $this->makePartnerCreateData($request);
-                $this->createPartner($resource, $data);
+                $partner = $this->createPartner($resource, $data);
+                (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
@@ -396,6 +400,7 @@ class PartnerRegistrationController extends Controller
             $request['billing_type'] = 'monthly';
             $data                    = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
+                (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 return api_response($request, null, 200, ['info' => $info]);
             } else {
@@ -458,6 +463,7 @@ class PartnerRegistrationController extends Controller
             $data                      = $this->makePartnerCreateData($request);
             $data['moderation_status'] = 'pending';
             if ($partner = $this->createPartner($resource, $data)) {
+                (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 /**
                  * LOGIC CHANGE - PARTNER REWARD MOVE TO WAITING STATUS
