@@ -136,6 +136,7 @@ class PrimeBank extends Bank
 
     public function formatAccountData($status, $account) {
         $data['has_account'] = 1;
+        $data['applicant_name'] = $status->data->applicant_name;
         $data['account_no'] = $account;
         $accountStatus = $status->data->account_status;
         $data['account_status'] = $accountStatus;

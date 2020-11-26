@@ -154,7 +154,7 @@ class NeoBankingController extends Controller
     {
         try {
             $this->validate($request, ['bank_code' => 'required|string', 'category_code' => 'required|string', 'file' => 'required', 'key' => 'required']);
-            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code);
+            $neoBanking->setPartner($request->partner)->setResource($request->manager_resource)->setBank($request->bank_code)->uploadDocument($request->file, $request->key)->postCategoryDetail($request->category_code, true);
             return api_response($request, null, 200);
         } catch (NeoBankingException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);

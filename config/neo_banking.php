@@ -149,7 +149,7 @@ return [
                 'title'         => 'বাবার নাম  *',
                 'name'          => 'father_name',
                 'id'            => 'father_name',
-                'hint'          => 'ABUL KALAM',
+                'hint'          => 'উদাহরণ: Abdul Kader',
                 'error_message' => 'বাবার নাম পূরণ আবশ্যক'
             ],
             [
@@ -157,7 +157,7 @@ return [
                 'title'         => 'মায়ের নাম  *',
                 'name'          => 'mother_name',
                 'id'            => 'mother_name',
-                'hint'          => 'Mrs. ABUL',
+                'hint'          => 'উদাহরণ: Salma Begum',
                 'error_message' => 'মায়ের নাম পূরণ আবশ্যক'
             ],
             [
@@ -165,7 +165,7 @@ return [
                 'title'         => 'স্বামী/ স্ত্রীর নাম (যদি থাকে)',
                 'name'          => 'husband_or_wife_name',
                 'id'            => 'husband_or_wife_name',
-                'hint'          => 'MR. AZAD',
+                'hint'          => 'উদাহরণ: Salma Begum',
                 'mandatory'     => false,
                 'error_message' => 'স্বামী/ স্ত্রীর নাম পূরণ আবশ্যক'
             ],
@@ -174,7 +174,7 @@ return [
                 'title'         => 'পেশা *',
                 'name'          => 'occupation_name',
                 'id'            => 'occupation_name',
-                'hint'          => 'Farmer',
+                'hint'          => 'উদাহরণ: ব্যবসা',
                 'error_message' => 'পেশার ধরণ পূরণ আবশ্যক'
             ],
             [
@@ -286,7 +286,7 @@ return [
                 'title'         => 'ট্রেড লাইসেন্স নং *',
                 'name'          => 'trade_licence_number',
                 'id'            => 'trade_licence_number',
-                'hint'          => 'উদাহরণ: AHMED TELECOM',
+                'hint'          => 'এখানে লিখুন',
                 'error_message' => 'ট্রেড লাইসেন্স নং পূরণ আবশ্যক',
                 'input_type'    => 'number',
 
@@ -551,21 +551,23 @@ return [
                     ],
                     [
                         'field_type'    => 'dropdown',
-                        'title'         => 'জেলা *',
+                        'title'         => 'জেলা ',
                         'name'          => 'district_nominee_guardian_address',
                         'id'            => 'district_nominee_guardian_address',
                         'hint'          => 'জেলা',
                         'list_type'     => 'new_page_radio',
-                        'error_message' => 'জেলার নাম পূরণ আবশ্যক'
+                        'error_message' => 'জেলার নাম পূরণ আবশ্যক',
+                        'mandatory'     => false
                     ],
                     [
                         'field_type'    => 'dropdown',
-                        'title'         => 'থানা / উপজেলা *',
+                        'title'         => 'থানা / উপজেলা',
                         'list_type'     => 'new_page_radio',
                         'name'          => 'sub_district_nominee_guardian_address',
                         'id'            => 'sub_district_nominee_guardian_address',
                         'hint'          => 'থানা / উপজেলা',
-                        'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক'
+                        'error_message' => 'থানা / উপজেলা নাম পূরণ আবশ্যক',
+                        'mandatory'     => false
                     ],
                     [
                         'field_type'    => 'editText',
@@ -790,7 +792,7 @@ return [
                 'name'          => 'trade_licence_document',
                 'id'            => 'trade_licence_document',
                 'error_message' => 'ট্রেড লাইসেন্সের ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ],
             [
                 'field_type'    => 'imageDocument',
@@ -820,7 +822,7 @@ return [
                 'name'          => 'e_tin_document',
                 'id'            => 'e_tin_document',
                 'error_message' => 'ই-টিন এর ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ],
             [
                 'field_type'    => 'imageDocument',
@@ -850,14 +852,15 @@ return [
                 'name'          => 'bill_document',
                 'id'            => 'bill_document',
                 'error_message' => 'পানি / বিদ্যুৎ / গ্যাস / টেলিফোন বিল এর ছবি দেয়া আবশ্যক',
-                "mandatory"     => false
+                "mandatory"     => true
             ]
         ],
         'nid_selfie'  => [
             [
                 'field_type'  => 'header',
                 'is_editable' => false,
-                'title'       => 'যাচাইকৃত NID তথ্য'
+                'title'       => 'যাচাইকৃত NID তথ্য',
+                'mandatory'  => false,
             ],
             [
                 'field_type'  => 'text',
