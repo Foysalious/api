@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -131,6 +132,7 @@ class OrderController extends Controller
                 $modifier = $request->manager_resource;
                 $usage_type = Usage::Partner()::POS_ORDER_CREATE;
                 $this->setModifier($modifier);
+                $creator->setStatus(OrderStatuses::COMPLETED);
             } else {
                 /** @var Partner $partner */
                 $partner              = $partnerRepository->find((int)$partner);
@@ -144,6 +146,7 @@ class OrderController extends Controller
                 $usage_type = Usage::Partner()::PRODUCT_LINK;
                 $this->setModifier($modifier);
                 $creator->setCustomer($pos_customer);
+                $creator->setStatus(OrderStatuses::PENDING);
             }
             $creator->setPartner($partner)->setData($request->all());
             if($error=$creator->hasDueError())
