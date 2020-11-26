@@ -161,7 +161,7 @@ class LeaveController extends Controller
      * @param LeaveUpdater $leave_updater
      * @return JsonResponse
      */
-    public function cancelStatusUpdateByEmployee($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
+    public function cancel($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
     {
         $this->validate($request, ['status' => 'required']);
         /** @var Leave $leave */

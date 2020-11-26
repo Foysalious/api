@@ -1,11 +1,10 @@
-<?php namespace App\Jobs;
+<?php namespace App\Jobs\Business;
 
-
-use App\Models\BusinessMember;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\PushNotificationHandler;
+
 class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
@@ -20,14 +19,12 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
     /**
      * SendCancelPushNotificationToApprovers constructor.
      * @param $approver
-     * @param $profile
      */
-    public function __construct($approver, $profile)
+    public function __construct($approver)
     {
         $this->approver = $approver;
-        $this->profile = $profile;
+        $this->profile = $this->approver->profile;
         $this->pushNotification = new PushNotificationHandler();
-
     }
 
     public function handle()
@@ -44,8 +41,8 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ];
+
             $this->pushNotification->send($data, $topic, $channel);
         }
     }
-
 }

@@ -1,7 +1,6 @@
 <?php namespace App\Sheba\Business\Leave;
 
-use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
-use App\Jobs\Business\SendSupportPushNotificationToSuperAdminEmployee;
+use App\Jobs\Business\SendCancelPushNotificationToApprovers;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -9,12 +8,12 @@ use App\Sheba\Attachments\Attachments;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
-use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
 use DB;
 use App\Sheba\Business\LeaveStatusChangeLog\Creator as LeaveStatusChangeLogCreator;
+use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 use Sheba\ModificationFields;
@@ -37,17 +36,12 @@ class Updater
     /**@var BusinessMember $businessMember */
     private $businessMember;
     private $createdBy;
-
     /** @var UploadedFile[] */
     private $attachments = [];
     private $data = [];
     /** @var Attachments $attachmentManager */
     private $attachmentManager;
-
     private $leaveLogRepo;
-    /**
-     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
-     */
     private $previous_substitute;
     private $businessMemberRepo;
     private $approvers;
@@ -173,16 +167,14 @@ class Updater
         DB::transaction(function () {
             $previous_status = $this->leave->status;
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
-
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
         });
 
         try {
-            if ($this->approvers) $this->sendCancelNotificationDataToApprovers();
-
-            $this->sendNotification($this->status);
+            if ($this->status != Status::CANCELED) $this->sendApprovedOrRejectNotificationToLeaveCreator($this->status);
+            if ($this->status == Status::CANCELED) $this->sendLeaveCancelNotificationToApprovers();
         } catch (Exception $e) {
         }
     }
@@ -191,9 +183,8 @@ class Updater
      * @param $status
      * @throws Exception
      */
-    public function sendNotification($status)
+    private function sendApprovedOrRejectNotificationToLeaveCreator($status)
     {
-
         $status = LeaveStatusPresenter::statuses()[$status];
         $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
         $sheba_notification_data = [
@@ -218,6 +209,17 @@ class Updater
         ];
 
         $this->pushNotification->send($push_notification_data, $topic, $channel);
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function sendLeaveCancelNotificationToApprovers()
+    {
+        foreach ($this->approvers as $approver) {
+            (new SendCancelPushNotificationToApprovers($approver))->handle();
+            // dispatch(new SendCancelPushNotificationToApprovers($approver));
+        }
     }
 
     public function update()
@@ -260,7 +262,7 @@ class Updater
         $data['log'] = $this->member->profile->name . ' changed the leave note';
         $this->leaveLogRepo->create($this->withCreateModificationField($data));
 
-        $previous_substitute = $this->leave->substitute_id;;
+        $previous_substitute = $this->leave->substitute_id;
         if ($this->substitute) {
             $data['log'] = $this->member->profile->name . ' changed from ' . $this->getSubstituteName($previous_substitute) . ' to ' . $this->getSubstituteName($this->substitute);
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
