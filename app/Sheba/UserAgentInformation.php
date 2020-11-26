@@ -103,9 +103,13 @@ class UserAgentInformation
             return Apps::EMPLOYEE_APP_ANDROID;
         }
 
+        if ($this->portalName == Portals::RESOURCE_APP) {
+            if ($this->platformName == 'ios') return Apps::RESOURCE_APP_IOS;
+            return Apps::RESOURCE_APP_ANDROID;
+        }
+
         if ($this->portalName == Portals::BONDHU_APP) return Apps::BONDHU_APP_ANDROID;
         if ($this->portalName == Portals::PARTNER_APP) return Apps::MANAGER_APP_ANDROID;
-        if ($this->portalName == Portals::RESOURCE_APP) return Apps::RESOURCE_APP_ANDROID;
 
         return null;
     }
