@@ -61,7 +61,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         'reward_point' => 'int',
         'current_impression' => 'double',
         'impression_limit' => 'double',
-        'uses_sheba_logistic' => 'int'
+        'uses_sheba_logistic' => 'int',
+        'can_topup' => 'int'
     ];
     protected $resourcePivotColumns = [
         'id',
@@ -497,14 +498,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function bankInformations()
     {
-        return $this->bankInfos()->where('purpose',Purposes::GENERAL);
+        return $this->bankInfos()->where('purpose', Purposes::GENERAL);
     }
 
     public function withdrawalBankInformations()
     {
-        return $this->bankInfos()->where('purpose',Purposes::PARTNER_WALLET_WITHDRAWAL);
+        return $this->bankInfos()->where('purpose', Purposes::PARTNER_WALLET_WITHDRAWAL);
     }
-
 
 
     public function affiliation()
@@ -985,6 +985,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function isMissionSaveBangladesh()
     {
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
+    }
+
+    public function canTopup()
+    {
+        return $this->can_topup == 1;
     }
 
 }

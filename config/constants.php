@@ -1358,5 +1358,6 @@ return [
         'পেইন্টিং ও রেনোভেশন',
         'সার্ভিস ও রিপেয়ারিং',
         'অন্যান্য'
-    ]
+    ],
+    "PARTNER_ORDER_TARGET_TYPE"                   => 'PARTNER_ORDER_DETAILS',
 ];

@@ -10,6 +10,7 @@ class Statuses
     const AWARDED   = "awarded";
     const ACCEPTED  = "accepted";
     const REJECTED  = "rejected";
+    const PENDING   = "pending";
 
     public static function isAcceptOrRejectable($from)
     {

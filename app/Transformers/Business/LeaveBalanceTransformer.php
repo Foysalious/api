@@ -18,6 +18,9 @@ class LeaveBalanceTransformer extends TransformerAbstract
     private $businessMember;
     private $businessHoliday;
     private $businessWeekend;
+    /** Business $business */
+    private $business;
+    private $business_member_leave_prorate = [];
 
     /**
      * LeaveBalanceTransformer constructor.
@@ -29,6 +32,8 @@ class LeaveBalanceTransformer extends TransformerAbstract
         $this->leave_types = $leave_types;
         $this->businessHoliday = app(BusinessHolidayRepoInterface::class)->getAllDateArrayByBusiness($business);
         $this->businessWeekend = app(BusinessWeekendRepoInterface::class)->getAllByBusiness($business)->pluck('weekday_name')->toArray();
+        $this->business = $business;
+        $this->business_member_leave_prorate = $this->business->getBusinessMemberProrate();
     }
 
     /**
@@ -59,15 +64,26 @@ class LeaveBalanceTransformer extends TransformerAbstract
         foreach ($this->leave_types as $leave_type) {
             $leaves_filtered_by_type = $this->businessMember->leaves->where('leave_type_id', $leave_type['id'])->where('status', Status::ACCEPTED);
             $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByFiscalYear($leaves_filtered_by_type, $this->businessHoliday, $this->businessWeekend);
-
+            $total_days = $this->getTotalDays($leave_type);
             array_push($single_employee_leave_balance, [
+                'id' => $leave_type['id'],
                 'title' => $leave_type['title'],
-                'allowed_leaves' => (int)$leave_type['total_days'],
+                'allowed_leaves' => (int)$total_days,
                 'used_leaves' => $used_leave_days,
-                'is_leave_days_exceeded' => ($used_leave_days > (int)$leave_type['total_days'])
+                'is_leave_days_exceeded' => ($used_leave_days > (int)$total_days)
             ]);
         }
 
         return $single_employee_leave_balance;
+    }
+
+    private function getTotalDays($leave_type)
+    {
+        if (array_key_exists($this->businessMember->id, $this->business_member_leave_prorate)) {
+            if (array_key_exists($leave_type['id'], $this->business_member_leave_prorate[$this->businessMember->id]['leave_types'])) {
+                return $this->business_member_leave_prorate[$this->businessMember->id]['leave_types'][$leave_type['id']]['total_days'];
+            }
+        }
+        return $leave_type['total_days'];
     }
 }
