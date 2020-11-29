@@ -313,7 +313,7 @@ class PartnerSubscriptionBilling
     {
         $title     = '';
         $message   = '';
-        $type_text = BillingType::BN()[$new_billing_type];
+        $type_text = $new_package->titleTypeBn($new_billing_type);
         $fee       = convertNumbersToBangla(floatval($price));
         switch ($grade) {
             case PartnerSubscriptionChange::UPGRADE:

@@ -46,6 +46,15 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
         return 1;
     }
 
+    public function titleTypeBn($billing_type = 'monthly')
+    {
+        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        foreach ($types as $type)
+            if ($type['title'] == $billing_type) return $type['title_bn'];
+
+        return '';
+    }
+
     public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
     {
         if ($running_discount = $this->runningDiscount($billing_type)) {

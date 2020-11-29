@@ -280,7 +280,7 @@ class PartnerSubscriptionController extends Controller
         try {
             $this->validate($request, [
                 'package_id'   => 'required|numeric|exists:partner_subscription_packages,id',
-                'billing_type' => 'required|string|in:' . implode(',', [BillingType::MONTHLY, BillingType::YEARLY, BillingType::HALF_YEARLY])
+                'billing_type' => 'required|string'
             ]);
             DB::beginTransaction();
             /** @var Partner $partner */
@@ -327,9 +327,6 @@ class PartnerSubscriptionController extends Controller
             return api_response($request, null, 400, ['message' => $e->getMessage()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             DB::rollback();
