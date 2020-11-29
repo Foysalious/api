@@ -72,7 +72,12 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
+    public function topUp(Request $request,
+                          $user,
+                          TopUpRequest $top_up_request,
+                          Creator $creator,
+                          TopUpSpecialAmount $special_amount,
+                          UserAgentInformation $userAgentInformation)
     {
         $this->validate($request, [
             'mobile' => 'required|string|mobile:bd',
@@ -83,10 +88,16 @@ class TopUpController extends Controller
         ]);
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
+        if ($user == 'business') {
+            $agent = $auth_user->getBusiness();
+            $agent_wallet = $agent->wallet;
+            if ($request->amount > $agent_wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
+        }
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
         else return api_response($request, null, 400);
+
         (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -186,8 +197,8 @@ class TopUpController extends Controller
             $excel_error = null;
             $halt_top_up = false;
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-
-            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator) {
+            $total_recharge_amount = 0;
+            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, $total_recharge_amount) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
