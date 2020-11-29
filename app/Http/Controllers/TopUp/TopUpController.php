@@ -425,6 +425,8 @@ class TopUpController extends Controller
                 'status' => $topup->status,
                 'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
+                'created_date' => $topup->created_at->format('jS M, Y'),
+                'created_time' => $topup->created_at->format('h:i A'),
                 'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
             ];
             array_push($topup_data, $topup);
