@@ -543,6 +543,54 @@ class OrderController extends Controller
         }
     }
 
+    public function downloadInvoiceFromWebStore(Request $request, $partner, PosOrder $order)
+    {
+        try {
+            $pdf_handler = new PdfHandler();
+            $pos_order   = $order->calculate();
+            $partner     = $pos_order->partner;
+            $info        = [
+                'amount'           => $pos_order->getNetBill(),
+                'created_at'       => $pos_order->created_at->format('jS M, Y, h:i A'),
+                'payment_receiver' => [
+                    'name'                    => $partner->name,
+                    'image'                   => $partner->logo,
+                    'mobile'                  => $partner->getContactNumber(),
+                    'address'                 => $partner->address,
+                    'vat_registration_number' => $partner->vat_registration_number
+                ],
+                'pos_order'        => $pos_order ? [
+                    'items'       => $pos_order->items,
+                    'discount'    => $pos_order->getTotalDiscount(),
+                    'total'       => $pos_order->getTotalPrice(),
+                    'grand_total' => $pos_order->getTotalBill(),
+                    'paid'        => $pos_order->getPaid(),
+                    'due'         => $pos_order->getDue(),
+                    'status'      => $pos_order->getPaymentStatus(),
+                    'vat'         => $pos_order->getTotalVat()
+                ] : null
+            ];
+            if ($pos_order->customer) {
+                $customer     = $pos_order->customer->profile;
+                $info['user'] = [
+                    'name'   => $customer->name,
+                    'mobile' => $customer->mobile
+                ];
+            }
+            $invoice_name = 'pos_order_invoice_' . $pos_order->id;
+            $link         = $pdf_handler->setData($info)->setName($invoice_name)->setViewFile('transaction_invoice')->save();
+            return api_response($request, null, 200, [
+                'message' => 'Successfully Download receipt',
+                'link'    => $link
+            ]);
+        } catch (AccessRestrictedExceptionForPackage $exception) {
+            return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     /**
      * @param Request $request
      * @param $partner

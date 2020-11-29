@@ -10,6 +10,7 @@ class PosRoute
             $api->get('products', 'Partner\PartnerPosController@getProducts');
             $api->get('products/{product}', 'Pos\ServiceController@show');
             $api->post('products/orders', 'Pos\OrderController@store');
+            $api->get('orders/{order}/download-invoice-from-webstore', 'Pos\OrderController@downloadInvoiceFromWebStore');
         });
     }
 }
