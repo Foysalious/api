@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers;
 
+use App\Exceptions\ApiValidationException;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
@@ -151,7 +152,7 @@ class TopUpController extends Controller
             } else {
                 return api_response($request, null, 500);
             }
-        } catch (TopUpExceptions $e) {
+        } catch (ApiValidationException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -195,7 +196,7 @@ class TopUpController extends Controller
         } catch (ValidationException $e) {
             $msg = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, null, 400, ['message' => $msg]);
-        } catch (TopUpExceptions $e) {
+        } catch (ApiValidationException $e) {
             return api_response($request, null, $e->getCode(), ['message' => $e->getMessage()]);
         } catch (Throwable $e) {
             logError($e);
