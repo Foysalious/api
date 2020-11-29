@@ -44,7 +44,9 @@ class Formatter
 
     public function makeData()
     {
-        $this->data = array_merge($this->getLeaveCancelLogDetails(), $this->getLeaveLogDetails());
+        $cancel_log = $this->getLeaveCancelLogDetails() ? $this->getLeaveCancelLogDetails() : [];
+        $update_log = $this->getLeaveLogDetails() ? $this->getLeaveLogDetails() : [];
+        $this->data = array_merge($cancel_log, $update_log);
 
         return $this->data;
     }
