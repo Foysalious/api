@@ -93,8 +93,7 @@ class TopUpController extends Controller
             $agent_wallet = $agent->wallet;
             if ($request->amount > $agent_wallet)
                 return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
-        }
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') $agent = $auth_user->getPartner();
         else return api_response($request, null, 400);
 
@@ -198,7 +197,8 @@ class TopUpController extends Controller
             $halt_top_up = false;
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $total_recharge_amount = 0;
-            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, $total_recharge_amount) {
+            
+            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
@@ -223,6 +223,8 @@ class TopUpController extends Controller
                     $excel_error = null;
                 }
 
+                $total_recharge_amount += $value->$amount_field;
+
                 $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
             });
 
@@ -234,6 +236,9 @@ class TopUpController extends Controller
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
+
+            if ($total_recharge_amount > $agent->wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
