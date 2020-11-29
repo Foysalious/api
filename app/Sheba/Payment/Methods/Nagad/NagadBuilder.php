@@ -35,9 +35,9 @@ class NagadBuilder
     {
         /** @var PayableUser $user */
         $user = $payable->user;
-
+        $type=$payable->readable_type;
         if ($user instanceof Affiliate) return new AffiliateStore();
-        if ($user instanceof Customer) return new MarketplaceStore();
+        if ($user instanceof Customer&&$type!='payment_link') return new MarketplaceStore();
         return new DefaultStore();
     }
 
