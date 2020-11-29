@@ -30,7 +30,20 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPrice($billing_type = 'monthly')
     {
-        return (double)json_decode($this->rules, 1)['fee'][$billing_type]['value'];
+        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        foreach ($types as $type)
+            if ($type['title'] == $billing_type) return (double)$type['price'];
+
+        return 0;
+    }
+
+    public function originalDuration($billing_type = 'monthly')
+    {
+        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        foreach ($types as $type)
+            if ($type['title'] == $billing_type) return $type['duration'];
+
+        return 1;
     }
 
     public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
@@ -62,20 +75,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPricePerDay($billing_type = 'monthly')
     {
-        switch ($billing_type) {
-            case BillingType::MONTHLY:
-                $day = 30;
-                break;
-            case BillingType::HALF_YEARLY:
-                $day = 365 / 2;
-                break;
-            case BillingType::YEARLY:
-                $day = 365;
-                break;
-            default:
-                $day = 1;
-        }
-
+        $day = $this->originalDuration($billing_type);
         return $this->originalPrice($billing_type) / $day;
     }
 
