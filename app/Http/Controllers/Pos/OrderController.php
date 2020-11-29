@@ -583,7 +583,6 @@ class OrderController extends Controller
         } catch (AccessRestrictedExceptionForPackage $exception) {
             return api_response($request, $exception, 403, ['message' => $exception->getMessage()]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
