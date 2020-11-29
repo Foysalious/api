@@ -329,7 +329,13 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
-        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) dispatch(new WebstoreOrderSms($order));
+        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
+            try {
+                dispatch(new WebstoreOrderSms($order));
+            } catch (Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
         return api_response($request, null, 200, ['message'   => 'Status Updated Successfully']);
     }
 
