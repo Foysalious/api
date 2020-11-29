@@ -110,6 +110,6 @@ class ArticleController extends Controller
 
         if ($data->id != $request->type_id) return api_response($request, null, 401);
 
-        return api_response($request, null, 200, ['data' => $data]);
+        return api_response($request, null, 200, ['user' => $data]);
     }
 }
