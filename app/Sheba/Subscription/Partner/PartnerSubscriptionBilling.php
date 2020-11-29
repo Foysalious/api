@@ -274,25 +274,26 @@ class PartnerSubscriptionBilling
     }
 
     /**
-     * @param $new
-     * @param $old
+     * @param PartnerSubscriptionPackage $new
+     * @param PartnerSubscriptionPackage $old
      * @param $new_billing_type
      * @param $old_billing_type
      * @return string
      */
     public function findGrade($new, $old, $new_billing_type, $old_billing_type)
     {
-        if ($old->id < $new->id) {
+        $new_price    = $new->originalPrice();
+        $old_price    = $old->originalPrice();
+        if ($old_price < $new_price) {
             return PartnerSubscriptionChange::UPGRADE;
-        } else if ($old->id > $new->id) {
+        } else if ($old_price > $new_price) {
             return PartnerSubscriptionChange::DOWNGRADE;
         } else {
-            $types          = [BillingType::MONTHLY, BillingType::HALF_YEARLY, BillingType::YEARLY];
-            $old_type_index = array_search($old_billing_type, $types);
-            $new_type_index = array_search($new_billing_type, $types);
-            if ($old_type_index < $new_type_index) {
+            $old_type_duration = $old->originalDuration($old_billing_type);
+            $new_type_duration = $new->originalDuration($new_billing_type);
+            if ($old_type_duration < $new_type_duration) {
                 return PartnerSubscriptionChange::UPGRADE;
-            } elseif ($old_type_index > $new_type_index) {
+            } elseif ($old_type_duration > $new_type_duration) {
                 return PartnerSubscriptionChange::DOWNGRADE;
             } else {
                 return PartnerSubscriptionChange::RENEWED;
