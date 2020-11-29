@@ -26,6 +26,7 @@ use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveType\Model as LeaveType;
+use App\Sheba\Business\Leave\Logs\Formatter as LogFormatter;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
@@ -70,9 +71,13 @@ class LeaveController extends Controller
      * @param $leave
      * @param Request $request
      * @param LeaveRepoInterface $leave_repo
+     * @param LogFormatter $log_formatter
      * @return JsonResponse
      */
-    public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
+    public function show($leave,
+                         Request $request,
+                         LeaveRepoInterface $leave_repo,
+                         LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
         /** @var Business $business */
@@ -84,9 +89,11 @@ class LeaveController extends Controller
             return $q->withTrashed();
         }]);
 
+        $leave_log_details = $log_formatter->setLeave($leave)->format();
+
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($leave, new LeaveTransformer($business));
+        $resource = new Item($leave, new LeaveTransformer($business, $leave_log_details));
         $leave = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, $leave, 200, ['leave' => $leave]);
