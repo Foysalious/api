@@ -8,6 +8,7 @@ use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+use Illuminate\Support\Facades\Redis;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
@@ -86,17 +87,29 @@ class ArticleController extends Controller
                                        ArticleLikeDislikeCreator $articleLikeDislikeCreator,
                                        Request $request)
     {
-        try {
-            $this->validate($request, ['is_like' => 'required|integer|between:0,1']);
-            $article = $article_repository->find($article);
-            if (!$article) return api_response($request, null, 404, ["message" => "Article not found."]);
+        $this->validate($request, ['is_like' => 'required|integer|between:0,1']);
+        $article = $article_repository->find($article);
+        if (!$article) return api_response($request, null, 404, ["message" => "Article not found."]);
 
-            $articleLikeDislikeCreator->setArticleId($article->id)->setUserType($request->user_type)->setUserId($request->user_id)->setIsLike($request->is_like)->create();
-            return api_response($request, null, 200, ['message' => 'success']);
+        $articleLikeDislikeCreator->setArticleId($article->id)->setUserType($request->user_type)->setUserId($request->user_id)->setIsLike($request->is_like)->create();
+        
+        return api_response($request, null, 200, ['message' => 'success']);
+    }
 
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function checkAuthentication(Request $request)
+    {
+        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get()), 'type_id' => 'required|integer']);
+        $redis_name_space = "HelpUsers:$request->type" . '_' . $request->type_id;
+        $data = Redis::get($redis_name_space);
+        if (!$data) return api_response($request, null, 401);
+        $data = json_decode($data);
+
+        if ($data->id != $request->type_id) return api_response($request, null, 401);
+
+        return api_response($request, null, 200, ['data' => $data]);
     }
 }
