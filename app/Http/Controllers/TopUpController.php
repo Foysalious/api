@@ -408,7 +408,7 @@ class TopUpController extends Controller
 
                 if($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true){
                     $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
-                    $otf_list = $this->topupvendorotf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', $request->sim_type)->where('status', 'Active')->get();
+                    $otf_list = $this->topupvendorotf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
 
                     foreach ($otf_list as $otf){
                         array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount , 50), 2));
