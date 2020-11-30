@@ -369,13 +369,6 @@ class CoWorkerController extends Controller
      */
     public function index($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
-        if (1){
-            $procurement = Procurement::find(1);
-            (new SendEmailForPublishTenderToBusiness($procurement))->handle();
-
-            return api_response($request, null, 200);
-        }
-
         /** @var Business $business */
         $business = $request->business;
         $manager_member = $request->manager_member;
