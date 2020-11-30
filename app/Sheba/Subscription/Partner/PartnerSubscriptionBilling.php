@@ -349,7 +349,7 @@ class PartnerSubscriptionBilling
             'old_package_type'       => $old_billing_type,
             'new_package_type'       => $new_billing_type,
             'package_name'           => $new_package->show_name_bn,
-            'formatted_package_type' => $new_billing_type == BillingType::MONTHLY ? 'মাসের' : $new_billing_type == BillingType::YEARLY ? 'বছরের' : 'আর্ধবছরের',
+            'formatted_package_type' => $new_package->titleTypeBn($new_billing_type),
             'package_type'           => $new_billing_type
         ]);
     }
