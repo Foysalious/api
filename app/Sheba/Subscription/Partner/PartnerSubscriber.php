@@ -59,7 +59,6 @@ class PartnerSubscriber extends ShebaSubscriber
         $discount_id      = $new_package->runningDiscount($new_billing_type);
         $old_package      = $this->partner->subscription;
         $old_billing_type = $this->partner->billing_type;
-
         DB::transaction(function () use ($old_package, $old_billing_type, $new_package, $new_billing_type, $discount_id) {
             $this->getBilling()->setNotification($this->sms_notification)->runUpgradeBilling($old_package, $new_package, $old_billing_type, $new_billing_type, $discount_id);
             $this->getPackage($new_package)->subscribe($new_billing_type, $discount_id);
