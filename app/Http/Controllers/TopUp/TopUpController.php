@@ -8,8 +8,10 @@ use App\Models\Business;
 use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\TopUp\TopUpBulkRequest\Formatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
+use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
@@ -107,12 +109,14 @@ class TopUpController extends Controller
         } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
+            $token = $request->topup_token;
+
             try {
-                $credentials = JWT::decode($request->get('topup_token'), env('JWT_SECRET'), ['HS256']);
+                $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
             } catch(ExpiredException $e) {
-                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+                return api_response($request, null, 409, ['message' => $e->getMessage()]);
             } catch(Exception $e) {
-                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+                return api_response($request, null, 409, ['message' => $e->getMessage()]);
             }
 
             if ($credentials->sub != $agent->id) {
@@ -197,7 +201,12 @@ class TopUpController extends Controller
      * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
      */
-    public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
+    public function bulkTopUp(Request $request,
+                              VendorFactory $vendor,
+                              TopUpRequest $top_up_request,
+                              Creator $creator,
+                              TopUpExcelDataFormatError $top_up_excel_data_format_error,
+                              TopUpSpecialAmount $special_amount)
     {
         try {
             $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
@@ -208,6 +217,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
+
             (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
@@ -449,6 +459,7 @@ class TopUpController extends Controller
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
         if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=' , null);
+        if (isset($request->bulk_id) && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=' , $request->bulk_id);
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
@@ -541,6 +552,16 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['data' => $special_amount]);
     }
 
+    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
+    {
+        $auth_user = $request->auth_user;
+        $agent = $auth_user->getBusiness();
+        $agent_type = $this->getFullAgentType($agent->type);
+        $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
+
+        return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
     public function generateJwt(Request $request)
     {
         $user = $request->auth_user;
@@ -551,11 +572,11 @@ class TopUpController extends Controller
             'iss' => "topup-jwt",
             'sub' => $user->getPartner()->id,
             'iat' => time(),
-            'exp' => $remainingTime
+            'exp' => time() + $remainingTime
         ];
 
         return api_response($request, null, 200, [
-            'topup_token' => JWT::encode($payload, env('JWT_SECRET'))
+            'topup_token' => JWT::encode($payload, config('jwt.secret'))
         ]);
     }
 }
