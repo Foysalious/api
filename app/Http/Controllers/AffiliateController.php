@@ -869,7 +869,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             ]);
 
             $this->setModifier($affiliate);
-            $profile_repo->update($affiliate->profile, $request->only(['name', 'bn_name', 'dob', 'nid_no']));
+            $profile_repo->update($affiliate->profile, $request->only(['name', 'bn_name', 'dob', 'nid_no', 'gender']));
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
