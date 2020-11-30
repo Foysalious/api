@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 use Sheba\Subscription\Partner\BillingType;
@@ -86,6 +87,11 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     {
         $day = $this->originalDuration($billing_type);
         return $this->originalPrice($billing_type) / $day;
+    }
+
+    public function calculateNextBillingDate($billing_type = 'monthly')
+    {
+        return Carbon::now()->addDays($this->originalDuration($billing_type));
     }
 
     public function runningDiscount($billing_type = 'monthly')

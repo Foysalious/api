@@ -21,6 +21,7 @@ class PartnerPackage implements Package
         $this->partner->billing_type = $billing_type;
         $this->partner->discount_id = $discount_id;
         $this->partner->subscription_rules = $this->package->new_rules;
+        $this->partner->next_billing_date = $this->package->calculateNextBillingDate($billing_type);
         $this->partner->update();
         $this->upgradeCommission($this->package->commission);
     }
