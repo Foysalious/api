@@ -869,7 +869,30 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             ]);
 
             $this->setModifier($affiliate);
-            $profile_repo->update($affiliate->profile, $request->only(['name', 'bn_name', 'dob', 'nid_no', 'gender']));
+
+            $updatable_data = [];
+
+            if($request->name != null){
+                $updatable_data['name'] = $request->name;
+            }
+
+            if($request->bn_name != null){
+                $updatable_data['bn_name'] = $request->bn_name;
+            }
+
+            if($request->dob != null){
+                $updatable_data['dob'] = $request->dob;
+            }
+
+            if($request->nid_no != null){
+                $updatable_data['nid_no'] = $request->nid_no;
+            }
+
+            if($request->gender != null){
+                $updatable_data['gender'] = $request->gender;
+            }
+
+            $profile_repo->update($affiliate->profile, $updatable_data);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
