@@ -88,7 +88,6 @@ class TopUpController extends Controller
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
             'password' => 'required',
-            'topup_token' => 'required',
 //            'lat' => ['required','regex:/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?)$/'],
 //            'long' => ['required','regex:/^[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/']
         ];
@@ -555,6 +554,8 @@ class TopUpController extends Controller
             'exp' => $remainingTime
         ];
 
-        return api_response($request, null, 200, ['jwt' => JWT::encode($payload, env('JWT_SECRET'))]);
+        return api_response($request, null, 200, [
+            'topup_token' => JWT::encode($payload, env('JWT_SECRET'))
+        ]);
     }
 }
