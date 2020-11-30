@@ -153,6 +153,9 @@ class PurchaseHandler
         return $this->partner->totalPriceRequiredForSubscription - $this->partner->totalCreditForSubscription;
     }
 
+    /**
+     * @throws \Exception
+     */
     public function purchase()
     {
         $this->partner->subscriptionUpgrade($this->newPackage, $this->newSubscriptionRequest);

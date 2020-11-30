@@ -282,7 +282,6 @@ class PartnerSubscriptionController extends Controller
                 'package_id'   => 'required|numeric|exists:partner_subscription_packages,id',
                 'billing_type' => 'required|string'
             ]);
-            DB::beginTransaction();
             /** @var Partner $partner */
             $partner = $request->partner;
             /** @var PartnerSubscriptionPackage $requestedPackage */
@@ -292,6 +291,7 @@ class PartnerSubscriptionController extends Controller
             }
             $handler = (new PurchaseHandler($partner))->setConsumer($request->manager_resource)->setNewBillingType($request->billing_type)->setNewPackage($requestedPackage);
             $handler->checkIfRunningAndAlreadyCollected();
+            DB::beginTransaction();
             $upgradeRequest = $handler->getSubscriptionRequest();
             if (!empty($upgradeRequest)) {
                 try {
