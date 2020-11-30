@@ -228,9 +228,9 @@ class TopUpController extends Controller
 
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-                if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
+                /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
                     $this->dispatch(new SendTopUpFailMail($agent, $agent_email, $top_up_excel_data_format_errors));
-                }
+                }*/
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
