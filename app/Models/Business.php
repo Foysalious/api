@@ -156,7 +156,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function topups()
     {
-        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Business');
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', self::class);
     }
 
     public function movieTicketOrders()
