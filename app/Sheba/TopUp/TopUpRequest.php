@@ -227,8 +227,6 @@ class TopUpRequest
 
     /**
      * @param Business $business
-     * @param $amount
-     * @param $connection_type
      * @return bool
      */
     private function isPrepaidAmountLimitExceed(Business $business)
