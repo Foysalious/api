@@ -13,6 +13,9 @@ use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Exception;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -86,7 +89,9 @@ class TopUpController extends Controller
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
-            'password' => 'required'
+            'password' => 'required',
+//            'lat' => ['required','regex:/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?)$/'],
+//            'long' => ['required','regex:/^[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/']
         ];
         $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
             'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
@@ -102,7 +107,20 @@ class TopUpController extends Controller
             if ($request->amount > $agent_wallet)
                 return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
         } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        elseif ($user == 'partner') {
+            $agent = $auth_user->getPartner();
+            try {
+                $credentials = JWT::decode($request->get('topup_token'), env('JWT_SECRET'), ['HS256']);
+            } catch(ExpiredException $e) {
+                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+            } catch(Exception $e) {
+                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+            }
+
+            if ($credentials->sub != $agent->id) {
+                return api_response($request, null, 404, ['message' => 'Now a valid partner request']);
+            }
+        }
         else return api_response($request, null, 400);
 
         (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
@@ -113,6 +131,8 @@ class TopUpController extends Controller
             ->setType($request->connection_type)
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
+            ->setLat($request->lat ? $request->lat : null)
+            ->setLong($request->long ? $request->long : null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business) {
@@ -538,5 +558,23 @@ class TopUpController extends Controller
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    public function generateJwt(Request $request)
+    {
+        $user = $request->auth_user;
+        $timeSinceMidnight = time() - strtotime("midnight");
+        $remainingTime = (24 * 3600) - $timeSinceMidnight;
+
+        $payload = [
+            'iss' => "topup-jwt",
+            'sub' => $user->getPartner()->id,
+            'iat' => time(),
+            'exp' => $remainingTime
+        ];
+
+        return api_response($request, null, 200, [
+            'topup_token' => JWT::encode($payload, env('JWT_SECRET'))
+        ]);
     }
 }

@@ -5,6 +5,8 @@ use App\Models\Business;
 use App\Models\Partner;
 use Carbon\Carbon;
 use Exception;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
 use Sheba\Dal\TopUpBlacklistNumber\Contract;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber;
 use Sheba\TopUp\Vendor\Vendor;
@@ -33,6 +35,8 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
+    private $lat;
+    private $long;
 
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
@@ -285,5 +289,27 @@ class TopUpRequest
     public function getUserAgent()
     {
         return $this->userAgent;
+    }
+
+    public function setLat($lat)
+    {
+        $this->lat = $lat;
+        return $this;
+    }
+
+    public function setLong($long)
+    {
+        $this->long = $long;
+        return $this;
+    }
+
+    public function getLat()
+    {
+        return $this->lat;
+    }
+
+    public function getLong()
+    {
+        return $this->long;
     }
 }
