@@ -41,4 +41,9 @@ class ShebaUser
         $topup_prepaid_max_limit = $this->user instanceof Business ? $this->user->topup_prepaid_max_limit : 1000;
         return (double)$topup_prepaid_max_limit;
     }
+
+    public function getEmail()
+    {
+        return ($this->user instanceof Customer || $this->user instanceof Affiliate) ? $this->user->profile->email : $this->user->email;
+    }
 }
