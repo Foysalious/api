@@ -417,7 +417,7 @@ class TopUpController extends Controller
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;
-            $limit = 10000;
+            $limit = 1000;
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
