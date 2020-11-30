@@ -109,12 +109,14 @@ class TopUpController extends Controller
         } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
+            $token = $request->topup_token;
+
             try {
-                $credentials = JWT::decode($request->get('topup_token'), env('JWT_SECRET'), ['HS256']);
+                $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
             } catch(ExpiredException $e) {
-                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+                return api_response($request, null, 409, ['message' => $e->getMessage()]);
             } catch(Exception $e) {
-                return api_response($request, null, 409, ['message' => 'JWT token expired']);
+                return api_response($request, null, 409, ['message' => $e->getMessage()]);
             }
 
             if ($credentials->sub != $agent->id) {
@@ -570,11 +572,11 @@ class TopUpController extends Controller
             'iss' => "topup-jwt",
             'sub' => $user->getPartner()->id,
             'iat' => time(),
-            'exp' => $remainingTime
+            'exp' => time() + $remainingTime
         ];
 
         return api_response($request, null, 200, [
-            'topup_token' => JWT::encode($payload, env('JWT_SECRET'))
+            'topup_token' => JWT::encode($payload, config('jwt.secret'))
         ]);
     }
 }
