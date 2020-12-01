@@ -575,15 +575,12 @@ class TopUpController extends Controller
     {
         $authorizationCode = $request->authorization_code;
         $access_token_request->setAuthorizationCode($authorizationCode);
-        $mobile = $sheba_accountKit->getMobile($access_token_request);
+        $otpNumber = $sheba_accountKit->getMobile($access_token_request);
 
         /** @var AuthUser $user */
         $user = $request->auth_user;
-        $profile = $user->getPartner();
-        \Log::info(json_encode($profile));
-        \Log::info(json_encode($mobile));
-        \Log::info(json_encode($user->getPartner()->getContactNumber()));
-        if ($profile['mobile'] == $mobile) {
+        $resourceNumber = $user->getPartner()->getContactNumber();
+        if ($otpNumber == $resourceNumber) {
             $timeSinceMidnight = time() - strtotime("midnight");
             $remainingTime = (24 * 3600) - $timeSinceMidnight;
 
