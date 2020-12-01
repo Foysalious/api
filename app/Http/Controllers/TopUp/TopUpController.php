@@ -407,7 +407,7 @@ class TopUpController extends Controller
         }
         $topups = $model::find($user->id)->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
-
+        
         if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
@@ -425,6 +425,7 @@ class TopUpController extends Controller
         $topup_data = [];
         foreach ($topups as $topup) {
             $topup = [
+                'id' => $topup->id,
                 'payee_mobile' => $topup->payee_mobile,
                 'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                 'amount' => $topup->amount,
@@ -440,20 +441,21 @@ class TopUpController extends Controller
 
         if ($is_excel_report) {
             $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
-            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . Carbon::now()->timestamp . '_' . $user->id . '_' . class_basename($user) . '_' . basename($url);
+            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . Carbon::now()->timestamp . '_' . $user->id . '_' . strtolower(class_basename($user)) . '_' . basename($url);
             file_put_contents($file_path, file_get_contents($url));
 
             $history_excel->setFile($file_path);
             foreach ($topup_data as $key => $topup_history) {
                 $history_excel
                     ->setRow($key + 2)
-                    ->updateMobile($topup_history['payee_mobile'])
-                    ->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])
-                    ->updateConnectionType($topup_history['payee_mobile_type'])
-                    ->updateAmount($topup_history['amount'])
-                    ->updateStatus($topup_history['status'])
-                    ->updateName($topup_history['payee_name'])
-                    ->updateCreatedDate($topup_history['created_at_raw']);
+                    ->updateRow(
+                        $topup_history['payee_mobile'],
+                        $topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'],
+                        $topup_history['payee_mobile_type'],
+                        $topup_history['amount'],
+                        $topup_history['status'],
+                        $topup_history['payee_name'],
+                        $topup_history['created_at_raw']);
             }
             $history_excel->takeCompletedAction();
 
