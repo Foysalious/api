@@ -349,11 +349,16 @@ class ServiceController extends Controller
      */
     public function togglePublishForShopStatus(Request $request, $partner, $service)
     {
+        $rules = $request->partner->subscription_rules;
+        if (is_string($rules)) $rules = json_decode($rules, true);
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
         if (empty($posService)) {
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
         }
-        if (!$posService->is_published_for_shop && ($posService->stock == null || $posService->stock < 0)) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
+        if (!$posService->is_published_for_shop) {
+            if (!isset($rules->access_rules->pos->ecom) || !$rules->access_rules->pos->ecom->product_publish) return api_response($request, null, 403, ['message' => 'You are not authorized to proceed with this request']);
+            if ($posService->stock == null || $posService->stock < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
+        }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();
         return api_response($request, null, 200, ['message' => 'Service successfully ' . ($posService->is_published_for_shop ? 'published' : 'unpublished')]);
