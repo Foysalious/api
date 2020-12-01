@@ -58,6 +58,7 @@ class Updater
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
+        else $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
     }
 
     private function hasFile($filename)
