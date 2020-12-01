@@ -1,8 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Exceptions\ApiValidationException;
 use Throwable;
 
-class WrongPinError extends AccountServerAuthenticationError
+class WrongPinError extends ApiValidationException
 {
     private $wrongPinCount;
     private $remainingHours;
