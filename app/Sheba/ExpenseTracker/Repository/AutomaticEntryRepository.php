@@ -26,6 +26,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $paymentId;
     private $interest;
     private $bankTransactionCharge;
+    private $isWebstoreOrder = 0;
 
     /**
      * @param mixed $paymentMethod
@@ -121,6 +122,16 @@ class AutomaticEntryRepository extends BaseRepository
             $this->notifyBug($e);
             return $this;
         }
+    }
+
+    /**
+     * @param $isWebstoreOrder
+     * @return AutomaticEntryRepository
+     */
+    public function setIsWebstoreOrder($isWebstoreOrder)
+    {
+        $this->isWebstoreOrder = $isWebstoreOrder;
+        return $this;
     }
 
     /**
@@ -237,7 +248,8 @@ class AutomaticEntryRepository extends BaseRepository
             'payment_id'              => $this->paymentId,
             'emi_month'               => $this->emiMonth,
             'interest'                => $this->interest,
-            'bank_transaction_charge' => $this->bankTransactionCharge
+            'bank_transaction_charge' => $this->bankTransactionCharge,
+            'is_webstore_order'       => $this->isWebstoreOrder
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
