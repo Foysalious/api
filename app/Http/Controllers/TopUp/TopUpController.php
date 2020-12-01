@@ -103,9 +103,6 @@ class TopUpController extends Controller
         $auth_user = $request->auth_user;
         if ($user == 'business') {
             $agent = $auth_user->getBusiness();
-            $agent_wallet = $agent->wallet;
-            if ($request->amount > $agent_wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
         } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
@@ -275,7 +272,7 @@ class TopUpController extends Controller
             }
 
             if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient money on your wallet.']);
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => $agent->wallet]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
