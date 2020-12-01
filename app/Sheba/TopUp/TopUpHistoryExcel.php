@@ -1,112 +1,59 @@
 <?php namespace Sheba\TopUp;
 
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Carbon\Carbon;
 use Excel;
 
 class TopUpHistoryExcel
 {
-    private $file;
-    private $row;
-    /** @var LaravelExcelReader $excel */
-    private $excel = null;
-    private $activeSheet;
+    private $suggestions;
+    private $topups;
+    private $agent;
 
-    public function setFile($file)
+    public function setData($topup_data)
     {
-        $this->file = $file;
-        $this->getExcel();
-        return $this;
-    }
+        $this->suggestions = [['operator', 'connection_type'], ['ROBI', 'Postpaid'], ['GP', 'Prepaid'], ['AIRTEL'], ['BANGLALINK'], ['TELETALK']];
+        $this->topups = $topup_data;
 
-    public function setRow($row)
-    {
-        $this->row = $row;
-        return $this;
-    }
-
-    private function getExcel()
-    {
-        $this->excel = Excel::selectSheets(TopUpExcel::SHEET, 'suggestion')->load($this->file);
-        $this->activeSheet = $this->excel->getActiveSheet();
-        return $this->excel;
-    }
-
-    public function updateMobile($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::MOBILE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateOperator($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::VENDOR_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateConnectionType($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::TYPE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateAmount($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::AMOUNT_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateStatus($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateName($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::NAME_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateCreatedDate($message)
-    {
-        $this->activeSheet->setCellValue(TopUpExcel::CREATED_DATE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
         return $this;
     }
 
     /**
-     * @param $mobile
-     * @param $vendor
-     * @param $type
-     * @param $amount
-     * @param $status
-     * @param $name
-     * @param $created_date
+     * @param $agent
      * @return $this
      */
-    public function updateRow($mobile, $vendor, $type, $amount, $status, $name, $created_date)
+    public function setAgent($agent)
     {
-        $this->activeSheet->setCellValue(TopUpExcel::MOBILE_COLUMN . $this->row, $mobile);
-        $this->activeSheet->setCellValue(TopUpExcel::VENDOR_COLUMN . $this->row, $vendor);
-        $this->activeSheet->setCellValue(TopUpExcel::TYPE_COLUMN . $this->row, $type);
-        $this->activeSheet->setCellValue(TopUpExcel::AMOUNT_COLUMN . $this->row, $amount);
-        $this->activeSheet->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $status);
-        $this->activeSheet->setCellValue(TopUpExcel::NAME_COLUMN . $this->row, $name);
-        $this->activeSheet->setCellValue(TopUpExcel::CREATED_DATE_COLUMN . $this->row, $created_date);
-
-        $this->excel->save('xlsx');
+        $this->agent = $agent;
         return $this;
     }
 
     public function takeCompletedAction()
     {
-        unlink($this->file);
-        $this->excel->download('xlsx');
+        $file_name = Carbon::now()->timestamp . '_' . $this->agent->id . '_' . strtolower(class_basename($this->agent)) . '_' . 'topup_history_format_file';
+
+        Excel::create($file_name, function ($excel) {
+            $excel->sheet('data', function ($sheet) {
+                $sheet->fromArray($this->topups);
+                foreach ($this->topups as $index => $topup) {
+                    $row = "B" . ($index + 2);
+                    $objValidation = $sheet->getCell($row)->getDataValidation();
+                    $objValidation->setType(\PHPExcel_Cell_DataValidation::TYPE_LIST);
+                    $objValidation->setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION);
+                    $objValidation->setAllowBlank(false);
+                    $objValidation->setShowInputMessage(true);
+                    $objValidation->setShowErrorMessage(true);
+                    $objValidation->setShowDropDown(true);
+                    $objValidation->setErrorTitle('Input error');
+                    $objValidation->setError('Value is not in list.');
+                    $objValidation->setPromptTitle('Pick from list');
+                    $objValidation->setPrompt('Please pick a value from the drop-down list.');
+                    $objValidation->setFormula1('suggestion!$B$2:$B$6');
+                }
+            });
+
+            $excel->sheet('suggestion', function ($sheet) {
+                $sheet->fromArray($this->suggestions, null, 'B1', false, false);
+            });
+        })->export('xlsx');
     }
 }
