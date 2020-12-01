@@ -1,13 +1,18 @@
-<?php
-
-
-namespace Sheba\Helpers\Http;
-
+<?php namespace Sheba\Helpers\Http;
 
 use Throwable;
 
 class ShebaResponse
 {
+    public function __get($name)
+    {
+        return ['code' => (int)$name, 'message' => self::getMessage((int)$name)];
+    }
+
+    /**
+     * @param $name
+     * @return string
+     */
     private static function getMessage($name)
     {
         $preserve_response = [
@@ -23,18 +28,13 @@ class ShebaResponse
             421 => 'Misdirected.',
             422 => 'Unprocessable Entity',
             500 => 'Internal Server Error',
-            0   => 'Internal Server Error',
+            0   => 'Internal Server Error'
         ];
+
         try {
             return $preserve_response[$name];
         } catch (Throwable $e) {
             return 'Something Went Wrong';
         }
     }
-
-    public function __get($name)
-    {
-        return ['code' => (int)$name, 'message' => self::getMessage((int)$name)];
-    }
-
 }

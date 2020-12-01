@@ -4,7 +4,7 @@ class BusinessRoute
 {
     public function set($api)
     {
-        $api->post('business/register', 'B2b\RegistrationController@registerV3');
+        $api->post('business/register', 'B2b\RegistrationController@registerV3')->middleware('jwtAuth');
         $api->post('business/email-verify', 'Profile\ProfileController@verifyEmailWithVerificationCode')->middleware('jwtAuth');
         $api->get('business/send-verification-code', 'Profile\ProfileController@sendEmailVerificationCode')->middleware('jwtAuth');
         $api->get('business/send-verification-link', 'Profile\ProfileController@sendEmailVerificationlink')->middleware('jwtAuth');

@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Mail;
+use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Sms\Sms;
 use Throwable;
 
@@ -123,6 +124,7 @@ class PasswordController extends Controller
                 $profile = Profile::find((int)$data->profile_id);
                 $profile->password = bcrypt($request->password);
                 $profile->update();
+                event(new ProfilePasswordUpdated($profile));
                 Redis::del('password_reset_code_' . (int)$request->code);
                 return api_response($request, $profile, 200);
             } else {
