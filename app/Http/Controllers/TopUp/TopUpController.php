@@ -12,6 +12,7 @@ use App\Sheba\TopUp\TopUpBulkRequest\Formatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
+use Carbon\Carbon;
 use Exception;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
@@ -234,7 +235,7 @@ class TopUpController extends Controller
             $halt_top_up = false;
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $total_recharge_amount = 0;
-            
+
             $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
@@ -432,12 +433,10 @@ class TopUpController extends Controller
      */
     public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason, TopUpHistoryExcel $history_excel)
     {
-        ini_set('memory_limit', '4096M');
-        ini_set('max_execution_time', 180);
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
 
-        $rules = [
-            'from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'
-        ];
+        $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             $error = $validator->errors()->all()[0];
@@ -466,7 +465,7 @@ class TopUpController extends Controller
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;
-            $limit = 100000;
+            $limit = 1000;
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
@@ -476,25 +475,32 @@ class TopUpController extends Controller
             $topup = [
                 'payee_mobile' => $topup->payee_mobile,
                 'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount' => $topup->amount, 'operator' => $topup->vendor->name,
+                'amount' => $topup->amount,
+                'operator' => $topup->vendor->name,
                 'payee_mobile_type' => $topup->payee_mobile_type,
                 'status' => $topup->status,
                 'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_date' => $topup->created_at->format('jS M, Y'),
-                'created_time' => $topup->created_at->format('h:i A'),
                 'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-            ];
+                ];
             array_push($topup_data, $topup);
         }
 
         if ($is_excel_report) {
             $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
-            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
+            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . Carbon::now()->timestamp . '_' . $user->id . '_' . class_basename($user) . '_' . basename($url);
             file_put_contents($file_path, file_get_contents($url));
             $history_excel->setFile($file_path);
             foreach ($topup_data as $key => $topup_history) {
-                $history_excel->setRow($key + 2)->updateMobile($topup_history['payee_mobile'])->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])->updateConnectionType($topup_history['payee_mobile_type'])->updateAmount($topup_history['amount'])->updateStatus($topup_history['status'])->updateName($topup_history['payee_name'])->updateCreatedDate($topup_history['created_at_raw']);
+                $history_excel
+                    ->setRow($key + 2)
+                    ->updateMobile($topup_history['payee_mobile'])
+                    ->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])
+                    ->updateConnectionType($topup_history['payee_mobile_type'])
+                    ->updateAmount($topup_history['amount'])
+                    ->updateStatus($topup_history['status'])
+                    ->updateName($topup_history['payee_name'])
+                    ->updateCreatedDate($topup_history['created_at_raw']);
             }
             $history_excel->takeCompletedAction();
             return api_response($request, null, 200);
