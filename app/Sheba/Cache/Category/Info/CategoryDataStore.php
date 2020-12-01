@@ -48,6 +48,7 @@ class CategoryDataStore implements DataStoreObject
             ] : null,
             'master_category' => count($master_category) > 0 ? $master_category : null,
             'service_title' => $category->service_title,
+            'disclaimer' => $category->disclaimer,
             'popular_service_description' => $category->popular_service_description,
             'other_service_description' => $category->other_service_description,
             'is_auto_sp_enabled' => $category->is_auto_sp_enabled,
