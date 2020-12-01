@@ -1,7 +1,9 @@
 <?php namespace App\Sheba\Payment\Adapters\Payable;
 
 use App\Models\Payable;
+use App\Models\PosOrder;
 use Carbon\Carbon;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Payment\Adapters\Payable\PayableAdapter;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 
@@ -56,7 +58,7 @@ class PaymentLinkOrderAdapter implements PayableAdapter
         $payable->amount = $this->getAmount();
         $payable->description = $this->description;
         $payable->completion_type = "payment_link";
-        $payable->success_url = config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
+        $payable->success_url = $this->resolveSuccessUrl();
         $payable->created_at = Carbon::now();
         $payable->emi_month = $this->paymentLink->getEmiMonth();
         $payable->save();
@@ -88,5 +90,15 @@ class PaymentLinkOrderAdapter implements PayableAdapter
     public function canInit(): bool
     {
         return true;
+    }
+
+    private function resolveSuccessUrl()
+    {
+        $target = $this->paymentLink->getTarget();
+        if ($target && $target instanceof PosOrder && $target->sales_channel == SalesChannels::WEBSTORE) {
+            return config('sheba.webstore_url') . '/' . $target->partner->sub_domain .'/redirect-after-payment/' . $target->id;
+        } else {
+            return config('sheba.payment_link_web_url') . '/' . $this->paymentLink->getLinkIdentifier() . '/success';
+        }
     }
 }
