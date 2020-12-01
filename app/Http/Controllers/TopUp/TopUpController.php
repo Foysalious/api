@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\TopUp;
 
 use App\Helper\BangladeshiMobileValidator;
+use App\Http\Controllers\AccountKit\AccountKitController;
 use App\Http\Controllers\Controller;
 use App\Jobs\Business\SendTopUpFailMail;
 use App\Models\Affiliate;
@@ -19,6 +20,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpFailedReason;
@@ -47,6 +49,7 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 
 class TopUpController extends Controller
 {
@@ -562,21 +565,36 @@ class TopUpController extends Controller
         return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
     }
 
-    public function generateJwt(Request $request)
+    public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
+        $authorizationCode = $request->authorization_code;
+        $access_token_request->setAuthorizationCode($authorizationCode);
+        $mobile = $sheba_accountKit->getMobile($access_token_request);
+
+        /** @var AuthUser $user */
         $user = $request->auth_user;
-        $timeSinceMidnight = time() - strtotime("midnight");
-        $remainingTime = (24 * 3600) - $timeSinceMidnight;
+        $profile = $user->getProfile();
+        \Log::info(json_encode($profile));
+        \Log::info(json_encode($mobile));
+        if ($profile['mobile'] == $mobile) {
+            $timeSinceMidnight = time() - strtotime("midnight");
+            $remainingTime = (24 * 3600) - $timeSinceMidnight;
 
-        $payload = [
-            'iss' => "topup-jwt",
-            'sub' => $user->getPartner()->id,
-            'iat' => time(),
-            'exp' => time() + $remainingTime
-        ];
+            $payload = [
+                'iss' => "topup-jwt",
+                'sub' => $user->getPartner()->id,
+                'iat' => time(),
+                'exp' => time() + $remainingTime
+            ];
 
-        return api_response($request, null, 200, [
-            'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            return api_response($request, null, 200, [
+                'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            ]);
+        }
+
+        return api_response($request, null, 403, [
+            'message' => 'Invalid Request'
         ]);
+
     }
 }
