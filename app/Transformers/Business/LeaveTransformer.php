@@ -58,6 +58,7 @@ class LeaveTransformer extends TransformerAbstract
             'requested_on' => $leave->created_at,
             'note' => $leave->note,
             'substitute' => $substitute_business_member ? [
+                'id' => $leave_substitute->id,
                 'name' => $leave_substitute->name
             ] : null,
             'approvers' => $this->getApprover($leave),
