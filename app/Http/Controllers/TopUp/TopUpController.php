@@ -579,9 +579,10 @@ class TopUpController extends Controller
 
         /** @var AuthUser $user */
         $user = $request->auth_user;
-        $profile = $user->getProfile();
+        $profile = $user->getPartner();
         \Log::info(json_encode($profile));
         \Log::info(json_encode($mobile));
+        \Log::info(json_encode($user->getPartner()));
         if ($profile['mobile'] == $mobile) {
             $timeSinceMidnight = time() - strtotime("midnight");
             $remainingTime = (24 * 3600) - $timeSinceMidnight;
