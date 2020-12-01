@@ -250,7 +250,7 @@ class TopUpController extends Controller
             }
 
             if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => $agent->wallet]);
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
