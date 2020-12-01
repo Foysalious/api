@@ -478,6 +478,8 @@ class TopUpController extends Controller
                 'payee_mobile_type' => $topup->payee_mobile_type,
                 'status' => $topup->status,
                 'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
+                'created_date' => $topup->created_at->format('jS M, Y'),
+                'created_time' => $topup->created_at->format('h:i A'),
                 'created_at' => $topup->created_at->format('jS M, Y h:i A'),
                 'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
                 ];
