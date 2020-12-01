@@ -229,11 +229,25 @@ class JobList
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
-            $formatted_job->put('due', 0);
+            $formatted_job->put('due', $job->partnerOrder->due);
+            $formatted_job->put('has_pending_due', $this->hasDueJob());
+            $formatted_job->put('is_b2b', $this->isB2BJob($job));
             if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
+    }
+
+    private function isB2BJob($job)
+    {
+        return $job->partnerOrder->order->business_id !== null;
+    }
+
+    private function hasDueJob()
+    {
+        return Job::where('resource_id', $this->resource->id)->served()->whereHas('partnerOrder', function($partner_order_query) {
+                $partner_order_query->where('closed_at', '<>', 'null')->where('closed_and_paid_at', 'null');
+            })->count() > 0;
     }
 
 
