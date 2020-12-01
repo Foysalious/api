@@ -533,7 +533,6 @@ class TopUpController extends Controller
         $agent = $auth_user->getBusiness();
         $agent_type = $this->getFullAgentType($agent->type);
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
-
         return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
     }
 }
