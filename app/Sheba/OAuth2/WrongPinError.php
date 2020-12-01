@@ -4,10 +4,17 @@ use Throwable;
 
 class WrongPinError extends AccountServerAuthenticationError
 {
-
     private $wrongPinCount;
     private $remainingHours;
 
+    /**
+     * WrongPinError constructor.
+     * @param $wrong_pin_count
+     * @param $remaining_hours
+     * @param string $message
+     * @param int $code
+     * @param Throwable|null $previous
+     */
     public function __construct($wrong_pin_count, $remaining_hours, $message = "", $code = 403, Throwable $previous = null)
     {
         $this->wrongPinCount = $wrong_pin_count;
@@ -34,5 +41,4 @@ class WrongPinError extends AccountServerAuthenticationError
     {
         return $this->remainingHours;
     }
-
 }
