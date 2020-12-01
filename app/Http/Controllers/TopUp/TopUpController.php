@@ -46,6 +46,8 @@ use Validator;
 
 class TopUpController extends Controller
 {
+    private $escape_otf_business = ['1334'];
+
     public function getVendor(Request $request)
     {
         try {
@@ -211,7 +213,7 @@ class TopUpController extends Controller
                 } elseif (!$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'Amount Should be Integer';
-                } elseif ($agent instanceof Business && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+                } elseif ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'The recharge amount is blocked due to OTF activation issue';
                 } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
@@ -407,7 +409,7 @@ class TopUpController extends Controller
         }
         $topups = $model::find($user->id)->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
-        
+
         if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
