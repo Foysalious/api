@@ -444,7 +444,7 @@ class OrderController extends Controller
         } catch (MapClientNoResultException $e) {
             $message = $e->getMessage();
             logError($e, $request, $message);
-            return response()->json(['data' => null, 'message' => 'Invalid delivery address, Please check']);
+            return response()->json(['data' => null, 'message' => 'Invalid delivery address. Please check.']);
         } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
