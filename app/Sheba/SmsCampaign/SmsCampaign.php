@@ -1,8 +1,8 @@
 <?php namespace Sheba\SmsCampaign;
 
 use App\Models\Partner;
-use App\Models\SmsCampaignOrder;
-use App\Models\SmsCampaignOrderReceiver;
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrder;
+use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
 use App\Models\Tag;
 use App\Sheba\SmsCampaign\SmsHandler;
 use Sheba\ExpenseTracker\AutomaticExpense;

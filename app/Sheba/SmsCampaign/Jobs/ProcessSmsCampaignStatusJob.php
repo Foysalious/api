@@ -1,7 +1,7 @@
 <?php namespace Sheba\SmsCampaign\Jobs;
 
 use App\Jobs\Job;
-use App\Models\SmsCampaignOrderReceiver;
+use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
 use App\Sheba\SmsCampaign\SmsHandler;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -30,8 +30,8 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     {
         $this->campaignOrderReceiver = $campaign_order_receiver;
         $this->refund                = new Refund();
-        $this->connection = 'sms_campaign';
-        $this->queue      = 'sms_campaign';
+        $this->connection            = 'sms_campaign';
+        $this->queue                 = 'sms_campaign';
     }
 
     /**
@@ -44,52 +44,48 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
     public function handle(SmsHandler $handler)
     {
         $this->campaignOrderReceiver->reload();
-        if ($this->attempts() < 2) {
-            if ($this->isSuccessfullySent($handler)) {
-                $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful');
+        if ($this->attempts() >= 2) return;
+
+        if ($this->isSuccessfullySent($handler)) {
+            $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.successful');
+            $this->campaignOrderReceiver->save();
+        } else {
+            if ($this->isPending($handler)) {
+                $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending');
                 $this->campaignOrderReceiver->save();
-            } else {
-                if ($this->isPending($handler)) {
-                    $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.pending');
-                    $this->campaignOrderReceiver->save();
-                } elseif ($this->campaignOrderReceiver->status !== constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed')) {
-                    $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
-                    $this->campaignOrderReceiver->save();
-                    $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
-                    $sms_count       = $this->campaignOrderReceiver->sms_count;
-                    $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
-                    $this->deductLog($sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
-                }
+            } elseif ($this->campaignOrderReceiver->isNotFailed()) {
+                $this->campaignOrderReceiver->status = constants('SMS_CAMPAIGN_RECEIVER_STATUSES.failed');
+                $this->campaignOrderReceiver->save();
+                $refund_receiver = $this->campaignOrderReceiver->smsCampaignOrder->partner;
+                $sms_count       = $this->campaignOrderReceiver->sms_count;
+                $this->refund->setRefundReceiver($refund_receiver)->setNumberOfSms($sms_count)->adjustWallet();
+                $this->deductLog($sms_count * constants('SMS_CAMPAIGN.rate_per_sms'));
             }
         }
     }
 
     private function isSuccessfullySent(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'DELIVERED') !== false)
-            return true;
-        return false;
+        return (bool)(strpos($this->getOrderStatus($handler), 'DELIVERED') !== false);
     }
 
     private function getOrderStatus(SmsHandler $sms_handler)
     {
         $response = $sms_handler->getSingleMessage($this->campaignOrderReceiver->message_id);
-        if ($response)
-            return $response->status->name;
-        return 'PENDING';
+        return $response ? $response->status->name : 'PENDING';
     }
 
     private function isPending(SmsHandler $handler)
     {
-        if (strpos($this->getOrderStatus($handler), 'PENDING') !== false)
-            return true;
-        return false;
+        return (bool)(strpos($this->getOrderStatus($handler), 'PENDING') !== false);
     }
 
     private function deductLog($amount)
     {
         /** @var AutomaticEntryRepository $entry */
         $entry = app(AutomaticEntryRepository::class);
-        $entry->setAmount($amount)->setPartner($this->campaignOrderReceiver->smsCampaignOrder->partner)->setHead(AutomaticExpense::SMS)->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)->deduct();
+        $entry->setAmount($amount)->setPartner($this->campaignOrderReceiver->smsCampaignOrder->partner)
+            ->setHead(AutomaticExpense::SMS)->setSourceType(class_basename($this->campaignOrderReceiver->smsCampaignOrder))
+            ->setSourceId($this->campaignOrderReceiver->smsCampaignOrder->id)->deduct();
     }
 }
