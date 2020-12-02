@@ -161,7 +161,6 @@ class PartnerController extends Controller
                 'id',
                 'name',
                 'sub_domain',
-                'mobile',
                 'description',
                 'email',
                 'verified_at',
@@ -170,6 +169,7 @@ class PartnerController extends Controller
                 'address',
                 'created_at'
             ]);
+            $info->put('mobile', $partner->getContactNumber());
             $working_info = [];
             //$partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
             foreach ($this->days as $day) {
