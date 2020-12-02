@@ -14,9 +14,8 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\ArticleType\Contract as ArticleTypeRepositoryInterface;
 use Sheba\Dal\Article\Contract as ArticleRepositoryInterface;
-use Sheba\Help\Accessor;
 use Sheba\Help\UserPortalMapper;
-use Throwable;
+use Sheba\Portals\ArticlePortals;
 
 class ArticleController extends Controller
 {
@@ -27,8 +26,9 @@ class ArticleController extends Controller
      */
     public function getArticleTypes(Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
-        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
-        $user_type = UserPortalMapper::getPortalByUser($request->type);
+        $this->validate($request, ['type' => 'required|in:' . implode(',', ArticlePortals::get())]);
+        // $user_type = UserPortalMapper::getPortalByUser($request->type);
+        $user_type = $request->type;
 
         $article_types = $article_type_repository->getAllPublishedArticleTypesByUserType($user_type);
         return api_response($request, null, 200, ['article_types' => $article_types]);
@@ -42,7 +42,7 @@ class ArticleController extends Controller
      */
     public function getArticles($type, Request $request, ArticleTypeRepositoryInterface $article_type_repository)
     {
-        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
+        $this->validate($request, ['type' => 'required|in:' . implode(',', ArticlePortals::get())]);
 
         $articles = $article_type_repository->getAllPublishedArticlesFilteredByArticleType($type);
 
@@ -62,7 +62,7 @@ class ArticleController extends Controller
      */
     public function show($article, ArticleRepositoryInterface $article_repository, Request $request)
     {
-        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get())]);
+        $this->validate($request, ['type' => 'required|in:' . implode(',', ArticlePortals::get())]);
         $user_type = UserPortalMapper::getPortalByUser($request->type);
 
         $article = $article_repository->findByUserType($article, $user_type);
@@ -102,7 +102,7 @@ class ArticleController extends Controller
      */
     public function checkAuthentication(Request $request)
     {
-        $this->validate($request, ['type' => 'required|in:' . implode(',', Accessor::get()), 'type_id' => 'required|integer']);
+        $this->validate($request, ['type' => 'required|in:' . implode(',', ArticlePortals::get()), 'type_id' => 'required|integer']);
         $redis_name_space = "HelpUsers:$request->type" . '_' . $request->type_id;
         $data = Redis::get($redis_name_space);
         if (!$data) return api_response($request, null, 401);
