@@ -410,15 +410,6 @@ class TopUpController extends Controller
         ini_set('memory_limit', '4096M');
         ini_set('max_execution_time', 180);
 
-        $rules = [
-            'from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'
-        ];
-        $validator = Validator::make($request->all(), $rules);
-        if ($validator->fails()) {
-            $error = $validator->errors()->all()[0];
-            return api_response($request, $error, 400, ['msg' => $error]);
-        }
-
         list($offset, $limit) = calculatePagination($request);
         $model = "App\\Models\\" . ucfirst(camel_case($request->type));
         $user = $request->user;
