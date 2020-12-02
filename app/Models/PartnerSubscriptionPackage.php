@@ -31,27 +31,27 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPrice($billing_type = 'monthly')
     {
-        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        $types = $this->getSubscriptionFee();
         foreach ($types as $type)
-            if ($type['title'] == $billing_type) return (double)$type['price'];
+            if ($type->title == $billing_type) return (double) $type->price;
 
         return 0;
     }
 
     public function originalDuration($billing_type = 'monthly')
     {
-        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        $types = $this->getSubscriptionFee();
         foreach ($types as $type)
-            if ($type['title'] == $billing_type) return $type['duration'];
+            if ($type->title == $billing_type) return $type->duration ? $type->duration : 1;
 
         return 1;
     }
 
     public function titleTypeBn($billing_type = 'monthly')
     {
-        $types =  json_decode($this->rules, 1)['subscription_fee'];
+        $types = $this->getSubscriptionFee();
         foreach ($types as $type)
-            if ($type['title'] == $billing_type) return $type['title_bn'];
+            if ($type->title == $billing_type) return  $type->title_bn;
 
         return '';
     }
@@ -120,5 +120,10 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
     public function getAccessRules()
     {
         return json_decode($this->new_rules, 1)['access_rules'];
+    }
+
+    public function getSubscriptionFee()
+    {
+        return $this->rules()->subscription_fee;
     }
 }

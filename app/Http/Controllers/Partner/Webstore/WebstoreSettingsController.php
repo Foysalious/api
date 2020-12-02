@@ -3,12 +3,15 @@
 use App\Models\Partner;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
+use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 
 class WebstoreSettingsController extends Controller
 {
@@ -22,6 +25,13 @@ class WebstoreSettingsController extends Controller
         return api_response($request, $settings, 200, ['webstore_settings' => $settings]);
     }
 
+    /**
+     * @param $partner
+     * @param Request $request
+     * @param WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest
+     * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
+     */
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $this->validate($request, [
@@ -30,7 +40,7 @@ class WebstoreSettingsController extends Controller
         ]);
         $webstoreSettingsUpdateRequest->setPartner($partner);
         if ($request->has('is_webstore_published')) {
-            if (!$this->canPublishWebstore($request->partner)) return api_response($request, null,400, ['message' => 'You are not authorized to proceed with this request']);
+            AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
@@ -51,11 +61,4 @@ class WebstoreSettingsController extends Controller
         return false;
     }
 
-    private function canPublishWebstore($partner)
-    {
-        $rules = $partner->subscription_rules;
-        if (is_string($rules)) $rules = json_decode($rules, true);
-        if (!$partner->is_webstore_published && (!isset($rules->access_rules->pos->ecom) || !$rules->access_rules->pos->ecom->webstore_publish)) return false;
-        return true;
-    }
 }
