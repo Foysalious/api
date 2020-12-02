@@ -465,7 +465,6 @@ class TopUpController extends Controller
             $history_excel->takeCompletedAction();
             return api_response($request, null, 200);
         }
-
         return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
     }
 
