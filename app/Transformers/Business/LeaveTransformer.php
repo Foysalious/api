@@ -18,17 +18,19 @@ class LeaveTransformer extends TransformerAbstract
     private $business;
     private $leaveLogDetails;
     private $leaveCancelLogDetails;
+    private $isSubstituteRequired;
 
     /**
      * LeaveTransformer constructor.
      * @param Business $business
      * @param $leave_log_details
-     * @param $leave_cancel_log_details
+     * @param $is_substitute_required
      */
-    public function __construct(Business $business, $leave_log_details)
+    public function __construct(Business $business, $leave_log_details, $is_substitute_required)
     {
         $this->business = $business;
         $this->leaveLogDetails = $leave_log_details;
+        $this->isSubstituteRequired = $is_substitute_required;
     }
 
     public function transform(Leave $leave)
@@ -65,6 +67,7 @@ class LeaveTransformer extends TransformerAbstract
             ] : null,
             'approvers' => $this->getApprover($leave),
             'leave_log_details' => $this->leaveLogDetails,
+            'is_substitute_required' => $this->isSubstituteRequired,
             'is_cancelable_request' => $this->isCancelableRequest($leave->status, $leave->start_date)
         ];
     }

@@ -84,6 +84,7 @@ class LeaveController extends Controller
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
+        $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
         if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
         $leave = $leave->load(['leaveType' => function ($q) {
             return $q->withTrashed();
@@ -93,7 +94,7 @@ class LeaveController extends Controller
 
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($leave, new LeaveTransformer($business, $leave_log_details));
+        $resource = new Item($leave, new LeaveTransformer($business, $leave_log_details, $is_substitute_required));
         $leave = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, $leave, 200, ['leave' => $leave]);
