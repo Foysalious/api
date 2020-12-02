@@ -68,8 +68,10 @@ class StatusChanger
     public function changeStatus()
     {
         $this->orderRepo->update($this->order, ['status' => $this->status]);
-        if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
-        if ($this->status == OrderStatuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
+        if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
+            if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
+            if ($this->status == OrderStatuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
+        }
     }
 
     private function getData()

@@ -43,11 +43,11 @@ class HandlerFactory
     private static function getHandler(BaseException $e)
     {
         if ($e instanceof ValidationException) return app(ValidationExceptionHandler::class);
+        if ($e instanceof WrongPinError) return app(WrongPinErrorHandler::class);
         if ($e instanceof ApiValidationException) return app(ApiValidationExceptionHandler::class);
         if ($e instanceof MethodNotAllowedHttpException) return app(MethodNotAllowedHttpExceptionHandler::class);
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
-        if ($e instanceof WrongPinError) return app(WrongPinErrorHandler::class);
         if ($e instanceof ExceptionForClient) return app(ExceptionForClientHandler::class);
         if ($e instanceof Throwable) return app(ThrowableHandler::class);
         return null;
