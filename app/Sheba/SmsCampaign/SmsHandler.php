@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\SmsCampaign;
+<?php namespace Sheba\SmsCampaign;
 
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Sms\Sms;
@@ -32,6 +32,7 @@ class SmsHandler
     public function getSingleMessage($message_id)
     {
         $response = $this->sms->get(['messageId' => $message_id]);
+        if (empty($response->results)) return null;
         return $response->results[0];
     }
 

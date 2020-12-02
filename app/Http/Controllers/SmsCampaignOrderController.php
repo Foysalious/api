@@ -33,10 +33,10 @@ class SmsCampaignOrderController extends Controller
             $request['customers'] = $customers;
         }
 
-        $data = ['title' => 'required', 'message' => 'required'];
-        if ($request->has('customers')) $data += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
-        if ($request->hasFile('file')) $data += ['file' => 'required|file'];
-        $this->validate($request, $data);
+        $rules = ['title' => 'required', 'message' => 'required'];
+        if ($request->has('customers')) $rules += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
+        if ($request->hasFile('file')) $rules += ['file' => 'required|file'];
+        $this->validate($request, $rules);
 
         $requests = $request->all();
         if ($request->hasFile('file')) {
