@@ -34,6 +34,7 @@ class PartnerSubscriptionBilling
     public $packageFrom;
     public $packageTo;
     private $isCollectAdvanceSubscriptionFee = false;
+    private $notification = 1;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -47,6 +48,12 @@ class PartnerSubscriptionBilling
         $this->today = Carbon::today();
         $this->refundAmount = 0;
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
+    }
+
+    public function setNotification($key)
+    {
+        $this->notification = $key;
+        return $this;
     }
 
     public function runUpfrontBilling()
@@ -101,7 +108,8 @@ class PartnerSubscriptionBilling
         if (!$this->isCollectAdvanceSubscriptionFee) {
             (new PartnerSubscriptionCharges($this))->shootLog(PartnerSubscriptionChange::all()[$grade]);
         }
-        $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
+        if(isset($this->notification) && $this->notification === 1)
+            $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
     }
 
