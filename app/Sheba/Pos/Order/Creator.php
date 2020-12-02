@@ -253,6 +253,7 @@ class Creator
               ->setInterest($order->interest)
               ->setBankTransactionCharge($order->bank_transaction_charge)
               ->setPaymentMethod($this->paymentMethod)
+              ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
               ->store();
     }
 

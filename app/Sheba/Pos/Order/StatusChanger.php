@@ -3,6 +3,7 @@
 
 use App\Models\PosOrder;
 use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\EntryType;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -67,8 +68,10 @@ class StatusChanger
     public function changeStatus()
     {
         $this->orderRepo->update($this->order, ['status' => $this->status]);
-        if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
-        if ($this->status == OrderStatuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
+        if ($this->order->sales_channel == SalesChannels::WEBSTORE) {
+            if ($this->status == OrderStatuses::DECLINED || $this->status == OrderStatuses::CANCELLED) $this->refund();
+            if ($this->status == OrderStatuses::COMPLETED && $this->order->getDue()) $this->collectPayment($this->order);
+        }
     }
 
     private function getData()
@@ -127,6 +130,6 @@ class StatusChanger
         /** @var AutomaticEntryRepository $entry */
         $entry  = app(AutomaticEntryRepository::class);
         $amount = (double)$order->getNetBill();
-        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->setEmiMonth($emi_month)->updateFromSrc();
+        $entry->setPartner($order->partner)->setAmount($amount)->setAmountCleared($paid_amount)->setFor(EntryType::INCOME)->setSourceType(class_basename($order))->setSourceId($order->id)->setCreatedAt($order->created_at)->setEmiMonth($emi_month)->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)->updateFromSrc();
     }
 }

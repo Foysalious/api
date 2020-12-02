@@ -29,7 +29,10 @@ class WebstoreSettingsController extends Controller
                 'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
         ]);
         $webstoreSettingsUpdateRequest->setPartner($partner);
-        if ($request->has('is_webstore_published')) $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
+        if ($request->has('is_webstore_published')) {
+            if (!$this->canPublishWebstore($request->partner)) return api_response($request, null,400, ['message' => 'You are not authorized to proceed with this request']);
+            $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
+        }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
         if ($request->has('sub_domain')) {
             if ($this->subDomainAlreadyExist($request->sub_domain)) return api_response($request, null,400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
@@ -46,5 +49,13 @@ class WebstoreSettingsController extends Controller
     {
         if (Partner::where('sub_domain', $sub_domain)->exists()) return true;
         return false;
+    }
+
+    private function canPublishWebstore($partner)
+    {
+        $rules = $partner->subscription_rules;
+        if (is_string($rules)) $rules = json_decode($rules, true);
+        if (!$partner->is_webstore_published && (!isset($rules->access_rules->pos->ecom) || !$rules->access_rules->pos->ecom->webstore_publish)) return false;
+        return true;
     }
 }
