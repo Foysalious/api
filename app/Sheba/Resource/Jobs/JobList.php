@@ -229,7 +229,7 @@ class JobList
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
-            $formatted_job->put('due', $job->partnerOrder->due);
+            $formatted_job->put('due', (double) $job->partnerOrder->due);
             $formatted_job->put('has_pending_due', $this->hasDueJob() ? 1 : 0);
             $formatted_job->put('pending_due', [
                 'resource_id' => 18631,
