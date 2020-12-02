@@ -588,7 +588,8 @@ class TopUpController extends Controller
                 'iss' => "topup-jwt",
                 'sub' => $user->getPartner()->id,
                 'iat' => time(),
-                'exp' => time() + $remainingTime
+//                'exp' => time() + $remainingTime
+                'exp' => time() + (60 * 10)
             ];
 
             return api_response($request, null, 200, [
