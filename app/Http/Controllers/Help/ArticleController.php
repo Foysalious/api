@@ -63,7 +63,7 @@ class ArticleController extends Controller
     public function show($article, ArticleRepositoryInterface $article_repository, Request $request)
     {
         $this->validate($request, ['type' => 'required|in:' . implode(',', ArticlePortals::get())]);
-        $user_type = UserPortalMapper::getPortalByUser($request->type);
+        $user_type = $request->type;
 
         $article = $article_repository->findByUserType($article, $user_type);
         if (!$article) return api_response($request, null, 404, ["message" => "Article not found."]);
