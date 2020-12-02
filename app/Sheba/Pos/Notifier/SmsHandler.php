@@ -37,7 +37,12 @@ class SmsHandler {
         $sms_cost           = $sms->getCost();
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
-            $sms->shoot();
+            try{
+                $sms->shoot();
+            }catch(\Throwable $e)
+            {
+            }
+
             (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         }
 
