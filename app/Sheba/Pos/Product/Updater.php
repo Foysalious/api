@@ -58,7 +58,7 @@ class Updater
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
-        else if (array_key_exists('app_thumb',$this->data) && is_null($this->data['app_thumb'])) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
+        else if (array_key_exists('app_thumb',$this->data) && (is_null($this->data['app_thumb']) || $this->data['app_thumb'] == "null" )) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
     }
 
     private function hasFile($filename)
