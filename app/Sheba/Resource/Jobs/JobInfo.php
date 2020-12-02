@@ -111,6 +111,10 @@ class JobInfo
         $formatted_job->put('can_collect', 0);
         $formatted_job->put('due', $job->partnerOrder->due);
         $formatted_job->put('has_pending_due', $this->hasDueJob() ? 1 : 0);
+        $formatted_job->put('pending_due', [
+            'resource_id' => 18631,
+            'job_id' => 123
+        ]);
         $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
 
         if ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
