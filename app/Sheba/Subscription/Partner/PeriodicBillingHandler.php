@@ -55,7 +55,7 @@ class PeriodicBillingHandler
 
     public function hasBillingCycleEnded()
     {
-        return $this->nextBillingDate()->isSameDay($this->today);
+        return $this->nextBillingDate() ? $this->nextBillingDate()->isSameDay($this->today) : true;
     }
 
     /**
@@ -76,16 +76,22 @@ class PeriodicBillingHandler
     public function remainingDay()
     {
         $next = $this->nextBillingDate();
-        $today = Carbon::today();
-        $diff = $today->diffInDays($next, false);
-        return $diff > 0 ? $diff : 0;
+        if ($next) {
+            $today = Carbon::today();
+            $diff = $today->diffInDays($next, false);
+            return $diff > 0 ? $diff : 0;
+        }
+        return 0;
     }
 
     public function totalDaysOfUsage()
     {
         $next = $this->nextBillingDate();
-        $last = Carbon::parse($this->partner->last_billed_date);
-        return abs($last->diffInDays($next));
+        if ($next) {
+            $last = Carbon::parse($this->partner->last_billed_date);
+            return abs($last->diffInDays($next));
+        }
+        return 1;
     }
 
     /**
