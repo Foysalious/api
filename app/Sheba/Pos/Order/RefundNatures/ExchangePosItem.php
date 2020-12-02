@@ -3,6 +3,7 @@
 use App\Models\PartnerPosService;
 use App\Models\PosOrder;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\Pos\Log\Creator as LogCreator;
 use Sheba\Pos\Log\Supported\Types;
@@ -44,7 +45,7 @@ class ExchangePosItem extends RefundNature
         $creator = app(Creator::class);
         $this->stockRefill();
         $this->data['previous_order_id'] = $this->order->id;
-        $this->newOrder                  = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->create();
+        $this->newOrder = $creator->setPartner($this->order->partner)->setData($this->prepareCreateData())->setStatus(OrderStatuses::COMPLETED)->create();
         $this->generateDetails();
         $this->saveLog();
         $this->transferPaidAmount();
