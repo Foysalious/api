@@ -17,6 +17,7 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -46,7 +47,7 @@ use Validator;
 
 class TopUpController extends Controller
 {
-    private $escape_otf_business = ['1334'];
+    private $escape_otf_business = [1334];
 
     public function getVendor(Request $request)
     {
@@ -107,7 +108,7 @@ class TopUpController extends Controller
             ->setVendorId($request->vendor_id)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($agent instanceof Business) {
+        if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }
@@ -384,11 +385,11 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpFailedReason $topUp_failed_reason
      * @param TopUpHistoryExcel $history_excel
+     * @param TopUpDataFormat $topUp_data_format
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason, TopUpHistoryExcel $history_excel)
+    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -416,51 +417,18 @@ class TopUpController extends Controller
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
+
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;
-            $limit = 1000;
+            $limit = 10000;
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
-
-        $topup_data = [];
-        foreach ($topups as $topup) {
-            $topup = [
-                'id' => $topup->id,
-                'payee_mobile' => $topup->payee_mobile,
-                'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                'amount' => $topup->amount,
-                'operator' => $topup->vendor->name,
-                'payee_mobile_type' => $topup->payee_mobile_type,
-                'status' => $topup->status,
-                'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(),
-                'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-            ];
-            array_push($topup_data, $topup);
-        }
+        list($topup_data, $topup_data_for_excel) = $topUp_data_format->topUpHistoryDataFormat($topups);
 
         if ($is_excel_report) {
-            $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
-            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . Carbon::now()->timestamp . '_' . $user->id . '_' . strtolower(class_basename($user)) . '_' . basename($url);
-            file_put_contents($file_path, file_get_contents($url));
-
-            $history_excel->setFile($file_path);
-            foreach ($topup_data as $key => $topup_history) {
-                $history_excel
-                    ->setRow($key + 2)
-                    ->updateRow(
-                        $topup_history['payee_mobile'],
-                        $topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'],
-                        $topup_history['payee_mobile_type'],
-                        $topup_history['amount'],
-                        $topup_history['status'],
-                        $topup_history['payee_name'],
-                        $topup_history['created_at_raw']);
-            }
-            $history_excel->takeCompletedAction();
-
+            $history_excel->setAgent($user)->setData($topup_data_for_excel)->takeCompletedAction();
             return api_response($request, null, 200);
         }
 
