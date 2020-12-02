@@ -88,7 +88,7 @@ class SmsCampaign
         }
 
         $this->createTransactions($campaign_order, $amount_to_be_deducted);
-        (new SmsLogs())->processLogs();
+        (new CampaignSmsStatusChanger())->processPendingSms();
 
         return true;
     }

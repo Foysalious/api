@@ -27,13 +27,16 @@ class SmsHandler
 
     /**
      * @param $message_id
-     * @return mixed
+     * @return VendorSmsDTO
      */
     public function getSingleMessage($message_id)
     {
         $response = $this->sms->get(['messageId' => $message_id]);
-        if (empty($response->results)) return null;
-        return $response->results[0];
+        $single_sms = new VendorSmsDTO();
+        if ($response && is_array($response->results) && !empty($response->results)) {
+            $single_sms->setResponse($response->results[0]);
+        }
+        return $single_sms;
     }
 
     /**

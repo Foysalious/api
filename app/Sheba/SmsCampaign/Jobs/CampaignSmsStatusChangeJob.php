@@ -13,9 +13,11 @@ use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\SmsCampaign\Refund;
 
-class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
+class CampaignSmsStatusChangeJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
+
+    const PENDING_THRESHOLD_DAYS = 7;
 
     /** @var SmsCampaignOrderReceiver $campaignOrderReceiver */
     private $campaignOrderReceiver;
@@ -51,41 +53,29 @@ class ProcessSmsCampaignStatusJob extends Job implements ShouldQueue
         $this->smsHandler = $handler;
         $this->campaignOrderReceiver->reload();
 
-        if ($this->isSuccessfullySent()) {
-            $this->campaignOrderReceiver->status = Status::SUCCESSFUL;
-            $this->campaignOrderReceiver->save();
-            return;
+        $status = $this->resolveNewStatus();
+        if (!$status) return;
+
+        $this->campaignOrderReceiver->status = $status;
+        $this->campaignOrderReceiver->save();
+        if ($status == Status::FAILED) $this->refund();
+    }
+
+    private function resolveNewStatus()
+    {
+        $sms = $this->smsHandler->getSingleMessage($this->campaignOrderReceiver->message_id);
+
+        if ($sms->isSuccessful()) return Status::SUCCESSFUL;
+
+        if ($sms->isPending()) {
+            return $this->campaignOrderReceiver->isPendingForDays(self::PENDING_THRESHOLD_DAYS) ?
+                Status::DELIVERED :
+                Status::PENDING;
         }
 
-        if ($this->isPending()) {
-            $this->campaignOrderReceiver->status = Status::PENDING;
-            $this->campaignOrderReceiver->save();
-        } elseif ($this->campaignOrderReceiver->isNotFailed()) {
-            $this->campaignOrderReceiver->status = Status::FAILED;
-            $this->campaignOrderReceiver->save();
-            $this->refund();
-        }
-    }
+        if ($this->campaignOrderReceiver->isNotFailed()) return Status::FAILED;
 
-    private function isSuccessfullySent()
-    {
-        return $this->checkStatus('DELIVERED');
-    }
-
-    private function getOrderStatus()
-    {
-        $response = $this->smsHandler->getSingleMessage($this->campaignOrderReceiver->message_id);
-        return $response ? $response->status->name : 'PENDING';
-    }
-
-    private function isPending()
-    {
-        return $this->checkStatus('PENDING');
-    }
-
-    private function checkStatus($status)
-    {
-        return (bool)(strpos($this->getOrderStatus(), $status) !== false);
+        return null;
     }
 
     /**

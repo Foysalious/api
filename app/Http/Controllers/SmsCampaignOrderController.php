@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\SmsCampaign\SmsCampaign;
 use Sheba\SmsCampaign\SmsExcel;
-use Sheba\SmsCampaign\SmsLogs;
+use Sheba\SmsCampaign\CampaignSmsStatusChanger;
 use Sheba\UrlShortener\ShortenUrl;
 use DB;
 use Excel;
@@ -132,8 +132,8 @@ class SmsCampaignOrderController extends Controller
         return api_response($request, null, 200, ['details' => $data]);
     }
 
-    public function processQueue(SmsLogs $smsLogs)
+    public function processQueue(CampaignSmsStatusChanger $smsLogs)
     {
-        $smsLogs->processLogs();
+        $smsLogs->processPendingSms();
     }
 }

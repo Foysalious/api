@@ -1,14 +1,14 @@
 <?php namespace Sheba\SmsCampaign;
 
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
-use Sheba\SmsCampaign\Jobs\ProcessSmsCampaignStatusJob;
+use Sheba\SmsCampaign\Jobs\CampaignSmsStatusChangeJob;
 
-class SmsLogs
+class CampaignSmsStatusChanger
 {
-    public function processLogs()
+    public function processPendingSms()
     {
         foreach (SmsCampaignOrderReceiver::pending()->get() as $log) {
-            dispatch(new ProcessSmsCampaignStatusJob($log));
+            dispatch(new CampaignSmsStatusChangeJob($log));
         }
     }
 }
