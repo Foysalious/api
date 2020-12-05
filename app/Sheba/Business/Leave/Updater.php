@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Leave;
 
 use App\Jobs\Business\SendCancelPushNotificationToApprovers;
+use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -230,9 +231,9 @@ class Updater
         DB::transaction(function () {
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField($this->data));
             if ($this->attachments) $this->createAttachments($this->leave);
-            if ($this->substitute) $this->sendPushToSubstitute($this->leave);
             $this->createLog();
         });
+        if ($this->substitute) $this->sendPushToSubstitute($this->leave);
     }
 
     private function makeData()
@@ -274,5 +275,13 @@ class Updater
             $data['log'] = $this->member->profile->name . ' added attachment(s)';
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
         }
+    }
+
+    /**
+     * @param Leave $leave
+     */
+    private function sendPushToSubstitute(Leave $leave)
+    {
+        dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
     }
 }
