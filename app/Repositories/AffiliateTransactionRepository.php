@@ -66,7 +66,7 @@ class AffiliateTransactionRepository
      */
     private function earning()
     {
-        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') + $this->topUps()->sum('agent_commission');
+        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') + $this->topUps()->sum('agent_commission') + $this->topUps()->sum('otf_agent_commission');
         return $amount == null ? 0 : $amount;
     }
 
