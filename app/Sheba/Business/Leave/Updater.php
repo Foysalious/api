@@ -220,8 +220,7 @@ class Updater
         foreach ($this->approvalRequests as $approval_request) {
             /**@var BusinessMember $approver */
             $approver = $approval_request->approver;
-            (new SendCancelPushNotificationToApprovers($approver, $this->leave, $this->member->profile))->handle();
-            // dispatch(new SendCancelPushNotificationToApprovers($approver, $this->leave,  $this->member->profile));
+            dispatch(new SendCancelPushNotificationToApprovers($approver, $this->leave,  $this->member->profile));
         }
     }
 
