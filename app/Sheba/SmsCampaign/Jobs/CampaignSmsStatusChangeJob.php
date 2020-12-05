@@ -3,6 +3,7 @@
 use App\Jobs\Job;
 use App\Models\Partner;
 use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiver;
+use Sheba\Dal\SmsCampaignOrderReceiver\SmsCampaignOrderReceiverRepository;
 use Sheba\Dal\SmsCampaignOrderReceiver\Status;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\SmsCampaign\SmsHandler;
@@ -43,10 +44,11 @@ class CampaignSmsStatusChangeJob extends Job implements ShouldQueue
      * Execute the job.
      *
      * @param SmsHandler $handler
+     * @param SmsCampaignOrderReceiverRepository $receiver_repo
      * @return void
-     * @throws \Exception
+     * @throws ExpenseTrackingServerError
      */
-    public function handle(SmsHandler $handler)
+    public function handle(SmsHandler $handler, SmsCampaignOrderReceiverRepository $receiver_repo)
     {
         if ($this->attempts() >= 2) return;
 
@@ -56,8 +58,7 @@ class CampaignSmsStatusChangeJob extends Job implements ShouldQueue
         $status = $this->resolveNewStatus();
         if (!$status) return;
 
-        $this->campaignOrderReceiver->status = $status;
-        $this->campaignOrderReceiver->save();
+        $receiver_repo->update($this->campaignOrderReceiver, ['status' => $status]);
         if ($status == Status::FAILED) $this->refund();
     }
 
