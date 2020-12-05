@@ -766,8 +766,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
                 if($topup->otf_id > 0){
                     $topupotf = $topupvendorotf->builder()->where('id', $topup->otf_id)->first();
-                    $otf_name_en = $topupotf->name_en;
-                    $otf_name_bn = $topupotf->name_bn;
+                    $otf_name_en = isset($topupotf->name_en) ? $topupotf->name_en : "";
+                    $otf_name_bn = isset($topupotf->name_bn) ? $topupotf->name_bn : "";
                 }else{
                     $otf_name_en = '';
                     $otf_name_bn = '';
@@ -797,6 +797,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
             return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
         } catch (Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
