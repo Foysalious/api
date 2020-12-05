@@ -33,4 +33,31 @@ class Geo
     {
         return $this->lng ? (double)$this->lng : null;
     }
+
+    /**
+     * @return float[]|null[]
+     */
+    public function toArray()
+    {
+        return [
+            'lat' => $this->getLat(),
+            'lng' => $this->getLng()
+        ];
+    }
+
+    /**
+     * @return false|string
+     */
+    public function toJson()
+    {
+        return json_encode($this->toArray());
+    }
+
+    /**
+     * @return \stdClass
+     */
+    public function toStdObject()
+    {
+        return json_decode($this->toJson());
+    }
 }

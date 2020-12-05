@@ -1,20 +1,28 @@
 <?php namespace App\Repositories;
 
-use App\Models\SmsTemplate;
 use Exception;
+use Sheba\Dal\SmsTemplate\Contract as SmsTemplateRepo;
+use Sheba\Dal\SmsTemplate\Model as SmsTemplate;
 use Sheba\Sms\Sms;
 
-class SmsHandler {
+class SmsHandler
+{
+    /** @var SmsTemplate  */
     private $template;
+    /** @var Sms  */
     private $sms;
 
     /** @var Sms */
-    public function __construct($event_name) {
-        $this->template = SmsTemplate::where('event_name', $event_name)->first();
-        $this->sms      = new Sms(); //app(Sms::class);
+    public function __construct($event_name)
+    {
+        /** @var SmsTemplateRepo $sms_templates */
+        $sms_templates  = app(SmsTemplateRepo::class);
+        $this->template = $sms_templates->findByEventName($event_name);
+        $this->sms      = app(Sms::class);
     }
 
-    public function setVendor($vendor) {
+    public function setVendor($vendor)
+    {
         $this->sms->setVendor($vendor);
         return $this;
     }
@@ -25,7 +33,8 @@ class SmsHandler {
      * @return Sms
      * @throws Exception
      */
-    public function send($mobile, $variables) {
+    public function send($mobile, $variables)
+    {
         if (!$this->template->is_on) return $this->sms;
 
         $this->checkVariables($variables);
@@ -45,7 +54,8 @@ class SmsHandler {
      * @return SmsHandler
      * @throws Exception
      */
-    public function setMessage($variables) {
+    public function setMessage($variables)
+    {
         $this->checkVariables($variables);
 
         $message = $this->template->template;
@@ -56,23 +66,27 @@ class SmsHandler {
         return $this;
     }
 
-    public function getCost() {
+    public function getCost()
+    {
         return $this->sms->getCost();
     }
 
-    public function setMobile($mobile) {
+    public function setMobile($mobile)
+    {
         $this->sms->to($mobile);
         return $this;
     }
 
-    public function shoot() {
+    public function shoot()
+    {
         $this->sms->shoot();
         return $this->sms;
     }
 
-    private function checkVariables($variables) {
-        if (count(array_diff(explode(';', $this->template->variables), array_keys($variables)))) {
-            throw new Exception("Variable doesn't match");
-        }
+    private function checkVariables($variables)
+    {
+        if ($this->template->doesVariablesMatch($variables)) return;
+
+        throw new Exception("Variable doesn't match");
     }
 }
