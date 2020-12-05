@@ -3265,7 +3265,11 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+<<<<<<< HEAD
                 "reference": "775aff8f52752c9656909885c1743f2eef610fdd"
+=======
+                "reference": "9786b1f06ff410c26417bda3cc539f5181029ba7"
+>>>>>>> sms-campaign-status
             },
             "require": {
                 "php": ">=5.4"
@@ -3292,7 +3296,11 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
+<<<<<<< HEAD
             "time": "2020-12-01T12:07:18+00:00"
+=======
+            "time": "2020-12-05T12:55:13+00:00"
+>>>>>>> sms-campaign-status
         },
         {
             "name": "sheba/notification",

@@ -1,11 +1,14 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Partner;
-use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\ModificationFields;
 use Sheba\SmsCampaign\SmsCampaign;
+use Sheba\SmsCampaign\DTO\SmsCampaignOrderDTO;
+use Sheba\SmsCampaign\DTO\SmsCampaignOrderListDTO;
 use Sheba\SmsCampaign\SmsExcel;
 use Sheba\SmsCampaign\CampaignSmsStatusChanger;
 use Sheba\UrlShortener\ShortenUrl;
@@ -15,6 +18,16 @@ use Sheba\Usage\Usage;
 
 class SmsCampaignOrderController extends Controller
 {
+    use ModificationFields;
+
+    /** @var SmsCampaignOrderRepository */
+    private $orderRepo;
+
+    public function __construct(SmsCampaignOrderRepository $order_repo)
+    {
+        $this->orderRepo = $order_repo;
+    }
+
     public function getSettings(Request $request)
     {
         return api_response($request, null, 200, ['settings' => constants('SMS_CAMPAIGN')]);
@@ -32,6 +45,8 @@ class SmsCampaignOrderController extends Controller
             $customers = json_decode(request()->customers, true);
             $request['customers'] = $customers;
         }
+
+        $this->setModifier($request['manager_resource']);
 
         $rules = ['title' => 'required', 'message' => 'required'];
         if ($request->has('customers')) $rules += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
@@ -99,41 +114,22 @@ class SmsCampaignOrderController extends Controller
 
     public function getHistory($partner, Request $request)
     {
-        $history = SmsCampaignOrder::where('partner_id', $partner)->with('orderReceivers')->orderBy('created_at', 'desc')->get();
-        $total_history = [];
-        foreach ($history as $item) {
-            $current_history = [
-                'id' => $item->id,
-                'name' => $item->title,
-                'cost' => $item->total_cost,
-                'created_at' => $item->created_at->format('Y-m-d H:i:s')
-            ];
-            array_push($total_history, $current_history);
-        }
-        return api_response($request, null, 200, ['history' => $total_history]);
+        $orders = $this->orderRepo->getLatestByPartnerWithReceivers($partner);
+        return api_response($request, null, 200, [
+            'history' => (new SmsCampaignOrderListDTO($orders))->toArray()
+        ]);
     }
 
     public function getHistoryDetails($partner, $history, Request $request)
     {
-        $details = SmsCampaignOrder::find($history);
-        $data = [
-            'id' => $details->id,
-            'total_cost' => $details->total_cost,
-            'title' => $details->title,
-            'message' => $details->message,
-            'total_messages_requested' => $details->total_messages,
-            'successfully_sent' => $details->successful_messages,
-            'messages_pending' => $details->pending_messages,
-            'messages_failed' => $details->failed_messages,
-            'sms_count' => $details->order_receivers[0]->sms_count,
-            'sms_rate' => $details->rate_per_sms,
-            'created_at' => $details->created_at->format('Y-m-d H:i:s')
-        ];
-        return api_response($request, null, 200, ['details' => $data]);
+        $order = $this->orderRepo->find($history);
+        return api_response($request, null, 200, [
+            'details' => (new SmsCampaignOrderDTO($order))->toArray()
+        ]);
     }
 
-    public function processQueue(CampaignSmsStatusChanger $smsLogs)
+    public function processQueue(CampaignSmsStatusChanger $sms_status_changer)
     {
-        $smsLogs->processPendingSms();
+        $sms_status_changer->processPendingSms();
     }
 }

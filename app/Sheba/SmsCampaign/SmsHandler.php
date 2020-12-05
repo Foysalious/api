@@ -2,6 +2,7 @@
 
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Sms\Sms;
+use Sheba\SmsCampaign\DTO\VendorSmsDTO;
 
 class SmsHandler
 {

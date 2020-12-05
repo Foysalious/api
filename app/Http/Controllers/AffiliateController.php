@@ -872,6 +872,12 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
     public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
     {
         try {
@@ -886,6 +892,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             $this->setModifier($affiliate);
 
             $updatable_data = [];
+<<<<<<< HEAD
 
             if($request->name != null){
                 $updatable_data['name'] = $request->name;
@@ -906,6 +913,13 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             if($request->gender != null){
                 $updatable_data['gender'] = $request->gender;
             }
+=======
+            if ($request->name != null) $updatable_data['name'] = $request->name;
+            if ($request->bn_name != null) $updatable_data['bn_name'] = $request->bn_name;
+            if ($request->dob != null) $updatable_data['dob'] = $request->dob;
+            if ($request->nid_no != null) $updatable_data['nid_no'] = $request->nid_no;
+            if ($request->gender != null) $updatable_data['gender'] = $request->gender;
+>>>>>>> sms-campaign-status
 
             $profile_repo->update($affiliate->profile, $updatable_data);
 
@@ -916,9 +930,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

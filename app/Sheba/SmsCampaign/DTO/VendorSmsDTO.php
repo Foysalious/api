@@ -1,4 +1,4 @@
-<?php namespace Sheba\SmsCampaign;
+<?php namespace Sheba\SmsCampaign\DTO;
 
 
 class VendorSmsDTO
