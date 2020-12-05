@@ -240,7 +240,7 @@ class JobList
                 ]
                 : null
             );
-            
+
             $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
             if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
