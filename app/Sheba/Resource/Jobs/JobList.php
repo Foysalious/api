@@ -229,12 +229,18 @@ class JobList
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
-            $formatted_job->put('due', $job->partnerOrder->due);
+            $formatted_job->put('due', (double) $job->partnerOrder->due);
             $formatted_job->put('has_pending_due', $this->hasDueJob() ? 1 : 0);
-            $formatted_job->put('pending_due', [
-                'resource_id' => 18631,
-                'job_id' => 123
-            ]);
+
+            $latest_pending_due_of_partner = $this->latestDueJob($job);
+            $formatted_job->put('pending_due', $latest_pending_due_of_partner
+                ? [
+                    'resource_id' => $latest_pending_due_of_partner->resource_id,
+                    'job_id' => $latest_pending_due_of_partner->id
+                ]
+                : null
+            );
+
             $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
             if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
@@ -247,11 +253,16 @@ class JobList
         return $job->partnerOrder->order->business_id !== null;
     }
 
-    private function hasDueJob()
+    private function hasDueJob($job)
     {
-        return Job::where('resource_id', $this->resource->id)->served()->whereHas('partnerOrder', function($partner_order_query) {
-                $partner_order_query->where('closed_at', '<>', 'null')->where('closed_and_paid_at', 'null');
-            })->count() > 0;
+        $partner = $job->partnerOrder->partner;
+        return $partner->partnerOrders()->closedButNotPaid()->notCancelled()->count() > 0;
+    }
+
+    private function latestDueJob($job)
+    {
+        $partner = $job->partnerOrder->partner;
+        return $partner->partnerOrders()->closedButNotPaid()->notCancelled()->first()->getActiveJob();
     }
 
 
