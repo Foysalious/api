@@ -1,6 +1,5 @@
 <?php namespace Sheba\AccessToken\Exception;
 
-
 use App\Exceptions\ApiValidationException;
 use Throwable;
 
