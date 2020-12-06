@@ -18,7 +18,7 @@ class ActionCalculator
         $partner_order->calculate();
         if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
-        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
+        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE)) {
             $formatted_job->put('can_serve', 1);
         } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
