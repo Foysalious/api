@@ -255,8 +255,9 @@ class JobList
 
     private function hasDueJob($job)
     {
-        $partner = $job->partnerOrder->partner;
-        return $partner->partnerOrders()->closedButNotPaid()->notCancelled()->count() > 0;
+        return $job->partnerOrder->cancelled_at === null
+            && $job->partnerOrder->closed_at !== null
+            && $job->partnerOrder->closed_and_paid_at == null;
     }
 
     private function latestDueJob($job)
