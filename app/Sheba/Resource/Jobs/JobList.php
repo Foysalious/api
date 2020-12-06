@@ -178,7 +178,7 @@ class JobList
     {
         $jobs->load(['partnerOrder' => function ($q) {
             $q->with(['order' => function ($q) {
-                $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
+                $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile', 'business_id')->with(['deliveryAddress' => function ($q) {
                     $q->select('id', 'name', 'address', 'mobile', 'location_id')->with(['location' => function ($q) {
                         $q->select('id', 'name');
                     }]);
@@ -226,9 +226,7 @@ class JobList
             $formatted_job->put('schedule_date', $job->schedule_date);
             $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
             $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
-            $formatted_job->put('can_process', 0);
-            $formatted_job->put('can_serve', 0);
-            $formatted_job->put('can_collect', 0);
+
             $formatted_job->put('due', (double) $job->partnerOrder->due);
             $formatted_job->put('has_pending_due', $this->hasDueJob($job) ? 1 : 0);
 
@@ -243,6 +241,11 @@ class JobList
 
             $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
             if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            else {
+                $formatted_job->put('can_process', 0);
+                $formatted_job->put('can_serve', 0);
+                $formatted_job->put('can_collect', 0);
+            }
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
