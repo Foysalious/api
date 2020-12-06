@@ -229,7 +229,9 @@ class JobList
 
             $formatted_job->put('due', (double) $job->partnerOrder->due);
             $formatted_job->put('has_pending_due', $this->hasDueJob($job) ? 1 : 0);
-
+            $formatted_job->put('can_process', 0);
+            $formatted_job->put('can_serve', 0);
+            $formatted_job->put('can_collect', 0);
             $latest_pending_due_of_partner = $this->latestDueJob($job);
             $formatted_job->put('pending_due', $latest_pending_due_of_partner
                 ? [
@@ -241,11 +243,6 @@ class JobList
 
             $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
             if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
-            else {
-                $formatted_job->put('can_process', 0);
-                $formatted_job->put('can_serve', 0);
-                $formatted_job->put('can_collect', 0);
-            }
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
