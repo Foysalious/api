@@ -5,6 +5,7 @@ class HelpRoute
     public function set($api)
     {
         $api->group(['prefix' => 'help'], function ($api) {
+            $api->post('authenticate', 'Help\ArticleController@checkAuthentication');
             $api->get('article-types', 'Help\ArticleController@getArticleTypes');
             $api->get('article-types/{type}/list', 'Help\ArticleController@getArticles');
             $api->group(['prefix' => 'articles'], function ($api) {

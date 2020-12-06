@@ -73,8 +73,13 @@ class StatusUpdater
         $this->previousStatus = $this->leave->status;
         $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
         $this->createLog();
-        if ($this->status === 'canceled') {
-            $this->sendPushNotification();
+        try {
+            if ($this->status === Status::CANCELED) {
+                $this->sendPushNotification();
+            }
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return;
         }
     }
 
@@ -100,19 +105,21 @@ class StatusUpdater
         return ucfirst($value);
     }
 
-    private function sendPushNotification() {
+    private function sendPushNotification()
+    {
         $business_member = $this->leave->businessMember;
         $member = $business_member->member;
         $leave_applicant = $member->profile->name;
-        $this->sendNotification($business_member, $leave_applicant);
+        $this->sendNotification($business_member, $leave_applicant, 'leave', $this->leave->id);
         foreach ($this->leave->requests as $approval_request) {
             $business_member_id = $approval_request->approver_id;
             $approver_business_member = $this->businessMemberRepo->find($business_member_id);
-            $this->sendNotification($approver_business_member, $leave_applicant);
+            $this->sendNotification($approver_business_member, $leave_applicant, 'leave_request', $approval_request->id);
         }
     }
 
-    private function sendNotification($business_member, $applicant_name) {
+    private function sendNotification($business_member, $applicant_name, $event_type, $event_id)
+    {
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
         $start_date = $this->leave->start_date->format('d/m/Y');
@@ -120,12 +127,13 @@ class StatusUpdater
         $notification_data = [
             "title" => 'Leave Canceled',
             "message" => "$applicant_name's leave from $start_date to $end_date has been Cancelled",
-            "event_type" => 'leave_cancel',
-            "event_id" => $this->leave->id,
+            "event_type" => $event_type,
+            "event_id" => $event_id,
             "sound" => "notification_sound",
             "channel_id" => $channel,
             "click_action" => "FLUTTER_NOTIFICATION_CLICK"
         ];
+
         $this->pushNotificationHandler->send($notification_data, $topic, $channel);
     }
 }
