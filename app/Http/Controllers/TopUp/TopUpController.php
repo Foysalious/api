@@ -553,7 +553,7 @@ class TopUpController extends Controller
                 'sub' => $user->getPartner()->id,
                 'iat' => time(),
 //                'exp' => time() + $remainingTime
-                'exp' => time() + (60 * 10)
+                'exp' => time() + (60 * 60)
             ];
 
             return api_response($request, null, 200, [
