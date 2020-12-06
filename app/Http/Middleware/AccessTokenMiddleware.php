@@ -5,16 +5,21 @@ use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Dal\AccessToken\AccessToken;
 use Sheba\Dal\AccessToken\AccessTokenRepository;
 use Sheba\OAuth2\AuthUser;
+use Sheba\Portals\Portals;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 
 class AccessTokenMiddleware
 {
-    /** @var AccessTokenRepository */
-    private $accessTokenRepository;
     /** @var AccessToken */
     protected $accessToken;
+    /** @var AccessTokenRepository */
+    private $accessTokenRepository;
 
+    /**
+     * AccessTokenMiddleware constructor.
+     * @param AccessTokenRepository $access_token_repository
+     */
     public function __construct(AccessTokenRepository $access_token_repository)
     {
         $this->accessTokenRepository = $access_token_repository;
@@ -27,7 +32,11 @@ class AccessTokenMiddleware
             if (!$token) throw new AccessTokenDoesNotExist();
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
-            if (!$access_token->isValid()) throw new AccessTokenNotValidException();
+            if ($request->hasHeader('portal-name') && $request->header('portal-name') == Portals::EMPLOYEE_APP) {
+                if ($access_token->isBlacklisted()) throw new AccessTokenNotValidException();
+            } else {
+                if (!$access_token->isValid()) throw new AccessTokenNotValidException();
+            }
             $this->setAccessToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
             if ($access_token->accessTokenRequest && $access_token->accessTokenRequest->profile) $request->merge(['profile' => $access_token->accessTokenRequest->profile]);
@@ -44,17 +53,6 @@ class AccessTokenMiddleware
         return $token ? AuthUser::getToken()->get() : null;
     }
 
-    private function setAccessToken(AccessToken $access_token)
-    {
-        $this->accessToken = $access_token;
-        return $this;
-    }
-
-    protected function getAccessToken()
-    {
-        return $this->accessToken;
-    }
-
     /**
      * @param $token
      * @return AccessToken
@@ -64,8 +62,19 @@ class AccessTokenMiddleware
         return $this->accessTokenRepository->where('token', $token)->first();
     }
 
+    private function setAccessToken(AccessToken $access_token)
+    {
+        $this->accessToken = $access_token;
+        return $this;
+    }
+
     protected function setExtraDataToRequest($request)
     {
 
+    }
+
+    protected function getAccessToken()
+    {
+        return $this->accessToken;
     }
 }
