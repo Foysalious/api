@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
@@ -54,9 +55,10 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
+     * @param DailyExcel $daily_excel
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame, DailyExcel $daily_excel)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -78,9 +80,13 @@ class AttendanceController extends Controller
             ->get();
 
         $count = count($attendances);
-        if (!$count) return api_response($request, null, 404);
+        if ($count > 0) {
+            if ($request->file == 'excel') return $daily_excel->setData($attendances)->download();
 
-        return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+            return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+        } else {
+            return api_response($request, null, 404);
+        }
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
@@ -152,7 +158,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics']
             ]);
-            
+
         }
         $all_employee_attendance = collect($all_employee_attendance);
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
@@ -319,7 +325,7 @@ class AttendanceController extends Controller
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business)
         ];
-        
+
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
@@ -333,21 +339,21 @@ class AttendanceController extends Controller
         $this->validate($request, [
             'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
             'half_day' => 'required', 'half_day_config' => 'string'
-        ],[
-          'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
-        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                ->setMember($business_member->member)
-                                ->setOfficeHourType($request->office_hour_type)
-                                ->setStartTime($start_time)
-                                ->setEndTime($end_time)
-                                ->setWeekends($request->weekends)
-                                ->setHalfDayTimings($request)
-                                ->update();
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setEndTime($end_time)
+            ->setWeekends($request->weekends)
+            ->setHalfDayTimings($request)
+            ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
