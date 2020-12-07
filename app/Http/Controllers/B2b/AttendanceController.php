@@ -54,9 +54,10 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
+     * @param BusinessOfficeRepoInterface $business_office_repo
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame, BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -66,6 +67,11 @@ class AttendanceController extends Controller
 
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
+        
+        $checkin_location = $checkout_location = null;
+
+        if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
+        if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
 
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
@@ -75,6 +81,10 @@ class AttendanceController extends Controller
             ->setCheckoutStatus($request->checkout_status)
             ->setSortKey($request->sort)->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
+            ->setOfficeOrRemoteCheckin($request->checkin_office_or_remote)
+            ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
+            ->setCheckinLocation($checkin_location)
+            ->setCheckoutLocation($checkout_location)
             ->get();
 
         $count = count($attendances);
@@ -611,5 +621,15 @@ class AttendanceController extends Controller
         $holidays = $holiday_list->getAllHolidayDates($request);
 
         return api_response($request, null, 200, ['business_holidays' => array_values($holidays)]);
+    }
+
+    /**
+     * @param $location
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @return mixed
+     */
+    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo){
+        $business_office = $business_office_repo->find($location);
+        return  $business_office ? $business_office->ip : null;
     }
 }
