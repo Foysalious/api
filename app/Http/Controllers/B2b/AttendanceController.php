@@ -92,7 +92,7 @@ class AttendanceController extends Controller
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'employee_id')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
@@ -139,6 +139,7 @@ class AttendanceController extends Controller
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
+                'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
                 'member' => [
                     'id' => $member->id,
                     'name' => $member_name,
