@@ -209,7 +209,7 @@ class AttendanceList
 
     private function withMembers($query)
     {
-        return $query->select('id', 'member_id', 'business_role_id')
+        return $query->select('id', 'member_id', 'business_role_id', 'employee_id')
             ->with([
                 'member' => function ($q) {
                     $q->select('id', 'profile_id')
@@ -394,7 +394,7 @@ class AttendanceList
         $business_member_ids_who_give_attendance = $this->attendances->pluck('business_member_id')->toArray();
         $present_and_on_leave_business_member_ids = array_merge($present_and_on_leave_business_member_ids, $business_member_ids_who_give_attendance);
 
-        $business_members = $this->businessMemberRepository->builder()->select('id', 'member_id', 'business_role_id')
+        $business_members = $this->businessMemberRepository->builder()->select('id', 'member_id', 'business_role_id', 'employee_id')
             ->with([
                 'member' => function ($q) {
                     $q->select('id', 'profile_id')
@@ -458,7 +458,7 @@ class AttendanceList
             ->accepted()
             ->where('start_date', '<=', $this->startDate->toDateString())->where('end_date', '>=', $this->endDate->toDateString())
             ->with(['businessMember' => function ($q) {
-                $q->select('id', 'member_id', 'business_role_id')
+                $q->select('id', 'member_id', 'business_role_id', 'employee_id')
                     ->with([
                         'member' => function ($q) {
                             $q->select('id', 'profile_id')
@@ -525,6 +525,7 @@ class AttendanceList
     private function getBusinessMemberData(BusinessMember $business_member)
     {
         return [
+            'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
             'business_member_id' => $business_member->id,
             'member' => [
                 'id' => $business_member->member->id,
