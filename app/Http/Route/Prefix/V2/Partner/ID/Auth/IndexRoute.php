@@ -80,6 +80,9 @@ class IndexRoute
                         $api->post('/copy', 'Pos\ServiceController@copy');
                     });
                 });
+                $api->group(['prefix' => 'categories'], function ($api) {
+                    $api->post('/', 'Pos\CategoryController@store');
+                });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'Pos\OrderController@index');
                     $api->post('/', 'Pos\OrderController@store');
