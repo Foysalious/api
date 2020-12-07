@@ -80,7 +80,7 @@ class PartnerSubscriptionController extends Controller
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
-            $partner_subscription_package = $this->generateSubscriptionRelatedData(null, $partner->subscription->id);
+            $partner_subscription_package = $this->generateSubscriptionData(null, $partner->subscription->id);
             $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
             return api_response($request, null, 200, ["data" => $data]);
         } catch (Throwable $e) {
@@ -381,7 +381,7 @@ class PartnerSubscriptionController extends Controller
      * @param null $package
      * @return mixed
      */
-    private function generateSubscriptionRelatedData(Partner $partner = null, $package = null)
+    private function generateSubscriptionData(Partner $partner = null, $package = null)
     {
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
                                                                    ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
@@ -395,6 +395,31 @@ class PartnerSubscriptionController extends Controller
                 (new PartnerSubscription())->dataFormat($package, $partner);
 
         }
+        return $partner_subscription_packages;
+    }
+
+    private function generateSubscriptionRelatedData(Partner $partner = null)
+    {
+        $featured_package_id = config('partner.subscription_featured_package_id');
+        $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
+            ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
+            ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
+            ->get();
+
+        foreach ($partner_subscription_packages as $package) {
+            $package['rules'] = $this->calculateDiscount(json_decode($package->rules, 1), $package);
+            $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
+            $package['usps'] = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+            $package['features'] = $package->features ? json_decode($package->features) : [];
+            $package['is_featured'] = in_array($package->id, $featured_package_id);
+
+            if ($partner) {
+                $package['is_subscribed'] = (int)($partner->package_id == $package->id);
+                $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
+            }
+            removeRelationsAndFields($package);
+        }
+
         return $partner_subscription_packages;
     }
 
