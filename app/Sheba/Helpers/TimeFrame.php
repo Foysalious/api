@@ -41,6 +41,13 @@ class TimeFrame
         return $this;
     }
 
+    public function forDateRange($start_date, $end_date)
+    {
+        $this->start = Carbon::parse($start_date)->hour(0)->minute(0)->second(0);
+        $this->end = Carbon::parse($end_date)->hour(23)->minute(59)->second(59);
+        return $this;
+    }
+
     public function forLastMonth(Carbon $date)
     {
         $month = $date->month - 1;

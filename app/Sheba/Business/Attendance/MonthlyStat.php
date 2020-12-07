@@ -45,7 +45,7 @@ class MonthlyStat
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
-            'working_days' => $this->timeFrame->start->daysInMonth,
+            'working_days' => $this->timeFrame->start->diffInDays($this->timeFrame->end) + 1,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
@@ -69,6 +69,8 @@ class MonthlyStat
 
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
+
+//            dd($is_weekend_or_holiday);
 
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
@@ -115,16 +117,16 @@ class MonthlyStat
             if ($this->forOneEmployee) $daily_breakdown[] = $breakdown_data;
         }
 
-        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
-        foreach ($remain_days as $date) {
-            $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
-            $is_on_leave = $this->isLeave($date, $leaves);
-            if ($is_weekend_or_holiday || $is_on_leave) {
-                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
-                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
-                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
-            }
-        }
+//        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
+//        foreach ($remain_days as $date) {
+//            $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
+//            $is_on_leave = $this->isLeave($date, $leaves);
+//            if ($is_weekend_or_holiday || $is_on_leave) {
+//                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
+//                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
+//                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
+//            }
+//        }
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
 
