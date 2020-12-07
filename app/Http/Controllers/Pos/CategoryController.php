@@ -3,9 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCategory;
+use App\Sheba\Pos\Category\Category;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\ModificationFields;
 
 class CategoryController extends Controller
 {
@@ -209,4 +212,33 @@ class CategoryController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Category $category
+     * @return JsonResponse
+     */
+    public function store(Request $request, $partner, Category $category)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+            $partner = $request->partner;
+            $modifier = $request->manager_resource;
+            list($master_category,$sub_category) = $category->createCategory($modifier, $request->name);
+            $category->createPartnerCategory($partner->id, $master_category,$sub_category);
+            return api_response($request, null, 200, ['msg' => 'Category Created Successfully']);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
 }
