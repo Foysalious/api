@@ -84,7 +84,6 @@ class PartnerSubscriptionController extends Controller
             $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
             return api_response($request, null, 200, ["data" => $data]);
         } catch (Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }

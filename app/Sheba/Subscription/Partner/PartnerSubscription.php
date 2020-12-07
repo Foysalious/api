@@ -96,6 +96,7 @@ class PartnerSubscription
         $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
         $package['features']     = $package->features ? json_decode($package->features) : [];
         $package['is_featured']  = in_array($package->id, $featured_package_id);
+        $package['web_view']     = config('sheba.partners_url')."/api/packages/".$package->id;
 
         if ($partner) {
             $package['is_subscribed']     = (int)($partner->package_id == $package->id);
