@@ -141,6 +141,7 @@ class JobInfo
     private function latestDueJob($job)
     {
         $partner = $job->partnerOrder->partner;
+        if(empty($partner->partnerOrders()->closedButNotPaid()->notCancelled()->first())) return null;
         return $partner->partnerOrders()->closedButNotPaid()->notCancelled()->first()->getActiveJob();
     }
 
