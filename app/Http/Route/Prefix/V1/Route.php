@@ -36,6 +36,7 @@ class Route
             $api->get('categories/{category}/secondaries', ['uses' => 'CategoryController@get']);
             $api->get('categories/{category}/services', ['uses' => 'CategoryController@getServices']);
             $api->post('register', 'Auth\RegistrationController@register');
+            $api->post('login', 'Auth\LoginController@login');
             $api->group(['prefix' => 'login'], function ($api) {
                 $api->post('facebook', 'FacebookController@login');
             });
