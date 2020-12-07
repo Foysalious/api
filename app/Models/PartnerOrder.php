@@ -533,4 +533,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     {
         return (double)$this->dueWithLogistic;
     }
+
+    public function scopeNotB2bOrder($query)
+    {
+        return $query->whereHas('order', function ($q) {
+            $q->where('sales_channel', '<>', "B2B");
+        });
+    }
 }
