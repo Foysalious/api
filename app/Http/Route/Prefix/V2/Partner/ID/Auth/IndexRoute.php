@@ -15,6 +15,9 @@ class IndexRoute
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
+            $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
+            $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
+            $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
