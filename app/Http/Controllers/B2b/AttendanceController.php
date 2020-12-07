@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
@@ -55,9 +56,11 @@ class AttendanceController extends Controller
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
      * @param BusinessOfficeRepoInterface $business_office_repo
+     * @param DailyExcel $daily_excel
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame, BusinessOfficeRepoInterface $business_office_repo)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
+                                  BusinessOfficeRepoInterface $business_office_repo,  DailyExcel $daily_excel)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -88,9 +91,13 @@ class AttendanceController extends Controller
             ->get();
 
         $count = count($attendances);
-        if (!$count) return api_response($request, null, 404);
+        if ($count > 0) {
+            if ($request->file == 'excel') return $daily_excel->setData($attendances)->download();
 
-        return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+            return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+        } else {
+            return api_response($request, null, 404);
+        }
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
@@ -131,7 +138,14 @@ class AttendanceController extends Controller
 
         $year = (int)date('Y');
         $month = (int)date('m');
-        if ($request->has('month')) $month = $request->month;
+        // if ($request->has('month')) $month = $request->month;
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = $request->start_date;
+            $end_date = $request->end_date;
+        } else {
+            $start_date = Carbon::now()->startOfMonth()->toDateString();
+            $end_date = Carbon::now()->endOfMonth()->toDateString();
+        }
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
@@ -143,9 +157,9 @@ class AttendanceController extends Controller
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
 
-            $time_frame = $time_frame->forAMonth($month, $year);
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
+            // $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
@@ -162,7 +176,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics']
             ]);
-            
+
         }
         $all_employee_attendance = collect($all_employee_attendance);
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
@@ -188,7 +202,7 @@ class AttendanceController extends Controller
                 'all_employee_attendance' => $all_employee_attendance,
                 'total_members' => $total_members,
             ]);
-        } else  return api_response($request, null, 404);
+        } else return api_response($request, null, 404);
     }
 
     /**
@@ -329,7 +343,7 @@ class AttendanceController extends Controller
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business)
         ];
-        
+
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
@@ -343,21 +357,21 @@ class AttendanceController extends Controller
         $this->validate($request, [
             'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
             'half_day' => 'required', 'half_day_config' => 'string'
-        ],[
-          'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
-        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                ->setMember($business_member->member)
-                                ->setOfficeHourType($request->office_hour_type)
-                                ->setStartTime($start_time)
-                                ->setEndTime($end_time)
-                                ->setWeekends($request->weekends)
-                                ->setHalfDayTimings($request)
-                                ->update();
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setEndTime($end_time)
+            ->setWeekends($request->weekends)
+            ->setHalfDayTimings($request)
+            ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
