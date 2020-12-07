@@ -10,12 +10,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerSubscription\Status;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Partner\StatusChanger;
 use Sheba\Subscription\Exceptions\AlreadyRunningSubscriptionRequestException;
 use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
 use Sheba\Subscription\Partner\BillingType;
+use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Subscription\Partner\PurchaseHandler;
 use Throwable;
 
@@ -64,6 +66,25 @@ class PartnerSubscriptionController extends Controller
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param $partner
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function currentPackage($partner, Request $request)
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $partner_subscription_package = $this->generateSubscriptionRelatedData(null, $partner->subscription->id);
+            $data = (new PartnerSubscription())->formatCurrentPackageData($partner, $partner_subscription_package);
+            return api_response($request, null, 200, ["data" => $data]);
+        } catch (Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -357,31 +378,24 @@ class PartnerSubscriptionController extends Controller
 
     /**
      * @param Partner $partner | null
+     * @param null $package
      * @return mixed
      */
-    private function generateSubscriptionRelatedData(Partner $partner = null)
+    private function generateSubscriptionRelatedData(Partner $partner = null, $package = null)
     {
-        $featured_package_id           = config('partner.subscription_featured_package_id');
         $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
                                                                    ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
-                                                                   ->whereIn('id', constants('PARTNER_SHOWABLE_PACKAGE'))
-                                                                   ->get();
+                                                                   ->where('id', '>', 0);
+        if ($package) {
+            $partner_subscription_packages = $partner_subscription_packages->where('id', $package)->first();
+            (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner);
+        } else {
+            $partner_subscription_packages = $partner_subscription_packages->where('status', Status::PUBLISHED)->get();
+            foreach ($partner_subscription_packages as $package)
+                (new PartnerSubscription())->dataFormat($package, $partner);
 
-        foreach ($partner_subscription_packages as $package) {
-            $package['rules']        = $this->calculateDiscount(json_decode($package->rules, 1), $package);
-            $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
-            $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
-            $package['features']     = $package->features ? json_decode($package->features) : [];
-            $package['is_featured']  = in_array($package->id, $featured_package_id);
-
-            if ($partner) {
-                $package['is_subscribed']     = (int)($partner->package_id == $package->id);
-                $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
-            }
-            $package['web_view'] = config('sheba.partners_url')."/api/packages/".$package['id'];
-            removeRelationsAndFields($package);
         }
-
         return $partner_subscription_packages;
     }
+
 }
