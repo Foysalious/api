@@ -18,7 +18,6 @@ class WebstorePushNotificationHandler
 
     public function handle()
     {
-        $class   = class_basename($this->order);
         $topic   = config('sheba.push_notification_topic_name.manager') . $this->order->partner_id;
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound   = config('sheba.push_notification_sound.manager');
@@ -31,7 +30,7 @@ class WebstorePushNotificationHandler
             "title" => 'New Webstore Order',
             "message" => "অর্ডার # $order_id: নতুন অর্ডার দেওয়া হয়েছে। মোট টাকার পরিমাণ: $net_bill ($payment_status)\r\n চ্যানেল: $sales_channel",
             "sound" => "notification_sound",
-            "event_type" => $class,
+            "event_type" => 'WebstoreOrder',
             "event_id" => $order_id
         ];
 
