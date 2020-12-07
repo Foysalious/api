@@ -3,6 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosCategory;
 use Illuminate\Http\Request;
+use App\Sheba\Pos\Category\Category;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Validation\ValidationException;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\ModificationFields;
+
 
 class CategoryController extends Controller
 {
@@ -110,4 +116,71 @@ class CategoryController extends Controller
             return api_response($request, null, 500);
         }
     }
+
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @return JsonResponse
+     */
+    public function getMasterCategories(Request $request, $partner)
+    {
+        try {
+            $data = [];
+            $partner = $request->partner;
+            $master_categories = PartnerPosCategory::byMasterCategoryByPartner($partner->id)->get();
+
+            if (!$master_categories) return api_response($request, null, 404);
+
+            $data['total_category'] = count($master_categories);
+            $data['categories'] = [];
+            foreach ($master_categories as $master_category) {
+                $category = $master_category->category()->first();
+                $item['id'] = $category->id;
+                $item['name'] = $category->name;
+                $total_services = 0;
+                $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
+                    $total_services += $child->services()->where('partner_id', $partner->id)->where('publication_status', 1)->count();
+                });
+                $item['total_items'] = $total_services;
+                array_push($data['categories'], $item);
+            }
+
+            return api_response($request, null, 200, ['data' => $data]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Category $category
+     * @return JsonResponse
+     */
+    public function store(Request $request, $partner, Category $category)
+    {
+        try {
+            $this->validate($request, [
+                'name' => 'required|string',
+            ]);
+            $partner = $request->partner;
+            $modifier = $request->manager_resource;
+            list($master_category,$sub_category) = $category->createCategory($modifier, $request->name);
+            $category->createPartnerCategory($partner->id, $master_category,$sub_category);
+            return api_response($request, null, 200, ['msg' => 'Category Created Successfully']);
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
+
 }
