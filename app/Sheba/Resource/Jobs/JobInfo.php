@@ -122,7 +122,8 @@ class JobInfo
 
         $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
 
-        if ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+//        if ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job))
+        $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
     }
 
