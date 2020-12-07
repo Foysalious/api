@@ -60,10 +60,10 @@ class LeaveTransformer extends TransformerAbstract
             'requested_on' => $leave->created_at,
             'note' => $leave->note,
             'substitute' => $substitute_business_member ? [
-                'id' => $leave_substitute->id,
+                'id' => $substitute_business_member->id,
                 'name' => $leave_substitute->name,
                 'pro_pic' => $leave_substitute->pro_pic,
-                'designation' => $substitute_business_member->role->name
+                'designation' => $substitute_business_member->role ? $substitute_business_member->role->name : null
             ] : null,
             'approvers' => $this->getApprover($leave),
             'leave_log_details' => $this->leaveLogDetails,
