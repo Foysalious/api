@@ -3,6 +3,7 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
+use Carbon\Carbon;
 use Sheba\ModificationFields;
 use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
@@ -68,7 +69,7 @@ class PartnerSubscription
      * @return array
      * @throws InvalidPreviousSubscriptionRules
      */
-    public function formatCurrentPackageData(Partner $partner, $partner_subscription_package)
+    public function formatCurrentPackageData(Partner $partner, PartnerSubscriptionPackage $partner_subscription_package)
     {
         list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
         return [
@@ -78,8 +79,8 @@ class PartnerSubscription
             'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
-            'static_message'             => $partner_subscription_package->id === config('sheba.partner_lite_packages_id') ? 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!' : '',
-            'dynamic_message'            => "আপনি বর্তমানে বেসিক প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য ২২ নভেম্বের ৯০ টাকা বালান্স রাখুন।",
+            'static_message'             => $partner_subscription_package->id === config('sheba.partner_lite_packages_id') ? config('sheba.lite_package_message') : '',
+            'dynamic_message'            => self::getPackageMessage($partner),
             'balance'                    => [
                 'wallet'                 => $wallet + $bonus_wallet,
                 'refund'                 => $remaining,
@@ -103,5 +104,19 @@ class PartnerSubscription
             $package['subscription_type'] = ($partner->package_id == $package->id) ? $partner->billing_type : null;
         }
         removeRelationsAndFields($package);
+    }
+
+    /**
+     * @param Partner $partner
+     * @param $package_price
+     * @return string
+     */
+    public static function getPackageMessage(Partner $partner)
+    {
+        $date = Carbon::parse($partner->next_billing_date);
+        $month = banglaMonth($date->month);
+        $date  = convertNumbersToBangla($date->day, false);
+        $price = convertNumbersToBangla($partner->subscription->originalPrice($partner->billing_type));
+        return "আপনি বর্তমানে বেসিক প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা বালান্স রাখুন।";
     }
 }
