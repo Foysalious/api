@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
@@ -54,15 +55,17 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
+     * @param DailyExcel $daily_excel
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame, DailyExcel $daily_excel)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
             'department_id' => 'numeric',
             'date' => 'date|date_format:Y-m-d',
         ]);
+
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
@@ -70,15 +73,20 @@ class AttendanceController extends Controller
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
-            ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
+            ->setCheckinStatus($request->checkin_status)
+            ->setCheckoutStatus($request->checkout_status)
             ->setSortKey($request->sort)->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
             ->get();
 
         $count = count($attendances);
-        if (!$count) return api_response($request, null, 404);
+        if ($count > 0) {
+            if ($request->file == 'excel') return $daily_excel->setData($attendances)->download();
 
-        return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+            return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
+        } else {
+            return api_response($request, null, 404);
+        }
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
@@ -92,7 +100,7 @@ class AttendanceController extends Controller
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'employee_id')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
@@ -146,6 +154,7 @@ class AttendanceController extends Controller
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
+                'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
                 'member' => [
                     'id' => $member->id,
                     'name' => $member_name,
@@ -156,7 +165,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics']
             ]);
-            
+
         }
         $all_employee_attendance = collect($all_employee_attendance);
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
@@ -323,7 +332,7 @@ class AttendanceController extends Controller
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business)
         ];
-        
+
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
@@ -337,21 +346,21 @@ class AttendanceController extends Controller
         $this->validate($request, [
             'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
             'half_day' => 'required', 'half_day_config' => 'string'
-        ],[
-          'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
-        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                ->setMember($business_member->member)
-                                ->setOfficeHourType($request->office_hour_type)
-                                ->setStartTime($start_time)
-                                ->setEndTime($end_time)
-                                ->setWeekends($request->weekends)
-                                ->setHalfDayTimings($request)
-                                ->update();
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setEndTime($end_time)
+            ->setWeekends($request->weekends)
+            ->setHalfDayTimings($request)
+            ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
@@ -369,9 +378,11 @@ class AttendanceController extends Controller
                                          BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
-        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
+
+        if ($request->location) return api_response($request, null, 200, ['locations' => $attendance_setting_data["business_offices"]]);
 
         return api_response($request, null, 200, [
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
