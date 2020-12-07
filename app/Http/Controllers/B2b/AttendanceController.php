@@ -149,6 +149,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics']
             ]);
+            
         }
         $all_employee_attendance = collect($all_employee_attendance);
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
