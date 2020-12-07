@@ -63,6 +63,7 @@ class AttendanceController extends Controller
             'department_id' => 'numeric',
             'date' => 'date|date_format:Y-m-d',
         ]);
+
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
@@ -70,7 +71,8 @@ class AttendanceController extends Controller
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
-            ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
+            ->setCheckinStatus($request->checkin_status)
+            ->setCheckoutStatus($request->checkout_status)
             ->setSortKey($request->sort)->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
             ->get();
@@ -363,9 +365,11 @@ class AttendanceController extends Controller
                                          BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
-        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
+
+        if ($request->location) return api_response($request, null, 200, ['locations' => $attendance_setting_data["business_offices"]]);
 
         return api_response($request, null, 200, [
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
