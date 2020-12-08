@@ -126,7 +126,6 @@ class ServiceController extends Controller
                 'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
-                'image_gallery' => 'sometimes|file|image'
             ]);
             $this->setModifier($request->manager_resource);
 
