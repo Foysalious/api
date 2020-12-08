@@ -33,6 +33,11 @@ class Response
         return $this;
     }
 
+    public function getResponse()
+    {
+        return $this->response;
+    }
+
     public function getCode()
     {
         if ($this->code) return $this->code;
