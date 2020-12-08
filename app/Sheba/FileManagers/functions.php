@@ -1144,7 +1144,7 @@ if (!function_exists('getPosServiceImageGalleryFolder')) {
         $url = '';
         if ($with_base_url) $url = env('S3_URL');
 
-        return $url . 'partner/due-list-attachments/';
+        return $url . 'partner/pos-service-image-gallery/';
     }
 }
 
