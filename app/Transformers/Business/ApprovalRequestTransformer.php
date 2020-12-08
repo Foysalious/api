@@ -34,7 +34,6 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-        //dd($requestable);
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
         $business_member = $requestable->businessMember;
