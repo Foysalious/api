@@ -55,18 +55,19 @@ class Creator
         return $this->saveImageToCDN($avatar, getPosServiceThumbFolder(), $avatar_filename);
     }
 
+    /**
+     * @return false|string
+     */
     private function imageGallery()
     {
         $image_gallery = [];
-
-
-            foreach ($this->data['image_gallery'] as $key => $file) {
-                if (!empty($file)) {
-                    list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
-                    $image_gallery[] = $this->saveFileToCDN($file, getPosServiceThumbFolder(), $filename);
-                }
+        foreach ($this->data['image_gallery'] as $key => $file) {
+            if (!empty($file)) {
+                list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
             }
-            return json_encode($image_gallery);
+        }
+        return json_encode($image_gallery);
 
     }
 
