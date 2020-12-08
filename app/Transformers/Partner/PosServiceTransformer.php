@@ -20,13 +20,13 @@ class PosServiceTransformer extends TransformerAbstract
             'discount_applicable' => $pos_service->discount() ? 1 : 0,
             'discounted_amount' => $pos_service->discount() ? $pos_service->getDiscountedAmount() : 0,
             'discount_percentage' => $pos_service->discount() ? $pos_service->getDiscountPercentage() : 0,
+
             'image_gallery' => $pos_service->imageGallery ? $pos_service->imageGallery->map(function($image){
                 return [
                     'id' =>   $image->id,
                     'image_link' => $image->image_link
                 ];
             }) : []
-
         ];
     }
 }
