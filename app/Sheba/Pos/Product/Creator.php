@@ -41,6 +41,7 @@ class Creator
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
+        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->imageGallery();
     }
 
     /**
@@ -52,6 +53,23 @@ class Creator
     {
         list($avatar, $avatar_filename) = $this->makePosServiceAppThumb($this->data['app_thumb'], $this->data['name']);
         return $this->saveImageToCDN($avatar, getPosServiceThumbFolder(), $avatar_filename);
+    }
+
+    private function imageGallery()
+    {
+        $image_gallery = [];
+
+
+            foreach ($this->data['image_gallery'] as $key => $file) {
+                if (!empty($file)) {
+                    list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+                    $image_gallery[] = $this->saveFileToCDN($file, getPosServiceThumbFolder(), $filename);
+                }
+            }
+
+
+        return json_encode($image_gallery);
+
     }
 
     private function format()

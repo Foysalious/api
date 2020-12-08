@@ -147,6 +147,11 @@ class ServiceController extends Controller
             $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
             $partner_pos_service->discounts = $partner_pos_service_model->discounts;
 
+            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
+            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
+          //  $partner_pos_service->image_gallery = $partner_pos_service_model->image_gallery;
+
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
              * USAGE LOG
