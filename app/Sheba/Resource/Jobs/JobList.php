@@ -250,7 +250,7 @@ class JobList
 
     private function isB2BJob($job)
     {
-        return $job->partnerOrder->order->business_id !== null;
+        return $job->partnerOrder->order->sales_channel === 'B2B';
     }
 
     private function hasDueJob($job)
