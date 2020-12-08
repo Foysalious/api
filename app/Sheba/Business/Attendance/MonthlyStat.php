@@ -81,6 +81,7 @@ class MonthlyStat
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
+
             if ($attendance) {
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
@@ -272,7 +273,7 @@ class MonthlyStat
      */
     private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
     {
-        return !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
+        return !$attendance && !$is_weekend_or_holiday_or_leave && $date->lt(Carbon::today());
     }
 
     /**
