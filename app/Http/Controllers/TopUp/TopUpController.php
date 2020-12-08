@@ -114,7 +114,10 @@ class TopUpController extends Controller
         }
 
         if ($top_up_request->hasError())
+        {
+            logError(new Exception($top_up_request->getErrorMessage()));
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+        }
 
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
@@ -122,6 +125,7 @@ class TopUpController extends Controller
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
+            logError(new Exception("Topup Order Can not be created"));
             return api_response($request, null, 500);
         }
     }
