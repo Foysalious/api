@@ -68,6 +68,10 @@ class AttendanceList
     private $businessHoliday;
     /** @var BusinessWeekendRepoInterface $businessWeekend */
     private $businessWeekend;
+    private $checkoutLocation;
+    private $checkinLocation;
+    private $checkinOfficeOrRemote;
+    private $checkoutOfficeOrRemote;
 
     /**
      * AttendanceList constructor.
@@ -199,6 +203,45 @@ class AttendanceList
     }
 
     /**
+     * @param $checkin_office_or_remote
+     * @return $this
+     */
+    public function setOfficeOrRemoteCheckin($checkin_office_or_remote)
+    {
+        $this->checkinOfficeOrRemote = $checkin_office_or_remote;
+        return $this;
+    }
+
+    /**
+     * @param $checkout_office_or_remote
+     * @return $this
+     */
+    public function setOfficeOrRemoteCheckout($checkout_office_or_remote)
+    {
+        $this->checkoutOfficeOrRemote = $checkout_office_or_remote;
+        return $this;
+    }
+
+    /**
+     * @param $checkin_location
+     * @return $this
+     */
+    public function setCheckinLocation($checkin_location)
+    {
+        $this->checkinLocation = $checkin_location;
+        return $this;
+    }
+
+    /**
+     * @param $checkout_location
+     * @return $this
+     */
+    public function setCheckoutLocation($checkout_location)
+    {
+        $this->checkoutLocation = $checkout_location;
+        return $this;
+    }
+    /**
      * @return array
      */
     public function get()
@@ -222,6 +265,7 @@ class AttendanceList
 
     private function runAttendanceQueryV2()
     {
+
         $business_member_ids = [];
         if ($this->businessMemberId) $business_member_ids = [$this->businessMemberId];
         elseif ($this->business) $business_member_ids = $this->getBusinessMemberIds();
@@ -232,7 +276,7 @@ class AttendanceList
             ->where('date', '<=', $this->endDate->toDateString())
             ->with([
                 'actions' => function ($q) {
-                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'is_remote', 'location', 'created_at');
+                    $q->select('id', 'attendance_id', 'note', 'action', 'status', 'ip', 'is_remote', 'location', 'created_at');
                 },
                 'businessMember' => function ($q) {
                     $this->withMembers($q);
@@ -254,6 +298,30 @@ class AttendanceList
         if ($this->checkoutStatus) {
             $attendances = $attendances->whereHas('actions', function ($q) {
                 $q->where('status', $this->checkoutStatus);
+            });
+        }
+
+        if ($this->checkinOfficeOrRemote) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['is_remote', $this->checkinOfficeOrRemote == 'remote' ? 1 : 0],['action', Actions::CHECKIN]]);
+            });
+        }
+
+        if ($this->checkoutOfficeOrRemote) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['is_remote', $this->checkoutOfficeOrRemote == 'remote' ? 1 : 0],['action', Actions::CHECKOUT]]);
+            });
+        }
+
+        if ($this->checkinLocation) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['ip', $this->checkinLocation],['action', Actions::CHECKIN]]);
+            });
+        }
+
+        if ($this->checkoutLocation) {
+            $attendances = $attendances->whereHas('actions', function ($q) {
+                $q->where([['ip', $this->checkoutLocation],['action', Actions::CHECKOUT]]);
             });
         }
 

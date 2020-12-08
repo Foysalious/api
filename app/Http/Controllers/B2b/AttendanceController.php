@@ -55,10 +55,12 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
+     * @param BusinessOfficeRepoInterface $business_office_repo
      * @param DailyExcel $daily_excel
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame, DailyExcel $daily_excel)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
+                                  BusinessOfficeRepoInterface $business_office_repo,  DailyExcel $daily_excel)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -68,6 +70,11 @@ class AttendanceController extends Controller
 
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
+        
+        $checkin_location = $checkout_location = null;
+
+        if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
+        if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
 
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
@@ -77,6 +84,10 @@ class AttendanceController extends Controller
             ->setCheckoutStatus($request->checkout_status)
             ->setSortKey($request->sort)->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
+            ->setOfficeOrRemoteCheckin($request->checkin_office_or_remote)
+            ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
+            ->setCheckinLocation($checkin_location)
+            ->setCheckoutLocation($checkout_location)
             ->get();
 
         $count = count($attendances);
@@ -127,7 +138,7 @@ class AttendanceController extends Controller
 
         $year = (int)date('Y');
         $month = (int)date('m');
-//        if ($request->has('month')) $month = $request->month;
+        // if ($request->has('month')) $month = $request->month;
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->start_date;
             $end_date = $request->end_date;
@@ -148,7 +159,7 @@ class AttendanceController extends Controller
 
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-//            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
+            // $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
@@ -191,7 +202,7 @@ class AttendanceController extends Controller
                 'all_employee_attendance' => $all_employee_attendance,
                 'total_members' => $total_members,
             ]);
-        } else  return api_response($request, null, 404);
+        } else return api_response($request, null, 404);
     }
 
     /**
@@ -381,8 +392,6 @@ class AttendanceController extends Controller
         $business_offices = $business_office_repo->getAllByBusiness($business);
         $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
-
-        if ($request->location) return api_response($request, null, 200, ['locations' => $attendance_setting_data["business_offices"]]);
 
         return api_response($request, null, 200, [
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
@@ -624,5 +633,15 @@ class AttendanceController extends Controller
         $holidays = $holiday_list->getAllHolidayDates($request);
 
         return api_response($request, null, 200, ['business_holidays' => array_values($holidays)]);
+    }
+
+    /**
+     * @param $location
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @return mixed
+     */
+    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo){
+        $business_office = $business_office_repo->find($location);
+        return  $business_office ? $business_office->ip : null;
     }
 }
