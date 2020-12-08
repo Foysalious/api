@@ -67,8 +67,13 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
+
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
+
+        /*if ($request->has('department') || $request->has('employee') || $request->has('search')) {
+            $leave_approval_requests = $this->filterWithDepartmentOrEmployeeOrSearchWithEmployee($leave_approval_requests, $request);
+        }*/
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
