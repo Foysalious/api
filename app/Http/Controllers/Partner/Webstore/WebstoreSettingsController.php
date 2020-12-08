@@ -73,6 +73,24 @@ class WebstoreSettingsController extends Controller
      * @param WebstoreBannerSettings $webstoreBannerSettings
      * @return JsonResponse
      */
+    public function bannerList(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        try{
+            $list = $webstoreBannerSettings->getBannerList();
+            return api_response($request, null, 200, ['data' => $list]);
+
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param WebstoreBannerSettings $webstoreBannerSettings
+     * @return JsonResponse
+     */
     public function storeBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
         try {
