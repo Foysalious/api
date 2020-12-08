@@ -3,6 +3,7 @@
 
 use App\Models\Partner;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner ;
+use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
 use Sheba\ModificationFields;
 
 class WebstoreBannerSettings
@@ -28,6 +29,19 @@ class WebstoreBannerSettings
     public function store()
     {
         return PartnerWebstoreBanner::create($this->withCreateModificationField($this->data));
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBannerList()
+    {
+      return $banners = WebstoreBanner::get()->map(function($banner){
+            return [
+              'id' => $banner->id,
+              'image_link' => $banner->image_link
+            ];
+        });
     }
 
 }
