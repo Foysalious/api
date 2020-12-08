@@ -106,8 +106,8 @@ class AttendanceController extends Controller
     {
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
-        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with([
+        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->limit(5)->first();
+        $members = $business->members()->select('members.id', 'profile_id')->limit(5)->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
@@ -275,11 +275,11 @@ class AttendanceController extends Controller
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
-        $month = $request->has('month') ? $request->month : date('m');
 
-        $time_frame = $time_frame->forAMonth($month, date('Y'));
+        $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
-        $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
+
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
