@@ -27,7 +27,7 @@ class SubscriptionStatics
 
     public static function getLitePackageMessage()
     {
-        return config('sheba.partner_lite_packages_id');
+        return config('sheba.lite_package_message');
     }
 
     public static function getPackageStaticDiscount()
@@ -40,5 +40,10 @@ class SubscriptionStatics
                 'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
             ]
         ];
+    }
+
+    public static function getPartnerSubscriptionVat()
+    {
+        return config('sheba.partner_subscription_vat');
     }
 }
