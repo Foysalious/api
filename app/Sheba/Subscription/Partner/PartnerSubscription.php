@@ -133,7 +133,8 @@ class PartnerSubscription
                 'wallet'                 => $wallet + $bonus_wallet,
                 'refund'                 => $remaining,
                 'minimum_wallet_balance' => $threshold
-            ]
+            ],
+            'subscription_vat'           => SubscriptionStatics::getPartnerSubscriptionVat()
         ];
 
         return array_merge($data, SubscriptionStatics::getPackageStaticDiscount());
