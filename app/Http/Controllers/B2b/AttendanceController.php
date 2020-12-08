@@ -275,11 +275,11 @@ class AttendanceController extends Controller
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
-        $month = $request->has('month') ? $request->month : date('m');
 
-        $time_frame = $time_frame->forAMonth($month, date('Y'));
+        $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
-        $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
+
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
