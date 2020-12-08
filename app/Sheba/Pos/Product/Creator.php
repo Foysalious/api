@@ -66,9 +66,7 @@ class Creator
                     $image_gallery[] = $this->saveFileToCDN($file, getPosServiceThumbFolder(), $filename);
                 }
             }
-
-
-        return json_encode($image_gallery);
+            return json_encode($image_gallery);
 
     }
 
