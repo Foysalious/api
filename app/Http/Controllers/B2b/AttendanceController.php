@@ -393,8 +393,6 @@ class AttendanceController extends Controller
         $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
-        if ($request->location) return api_response($request, null, 200, ['locations' => $attendance_setting_data["business_offices"]]);
-
         return api_response($request, null, 200, [
             'sheba_attendance_types' => $attendance_setting_data["sheba_attendance_types"],
             'business_attendance_types' => $attendance_setting_data["attendance_types"],
