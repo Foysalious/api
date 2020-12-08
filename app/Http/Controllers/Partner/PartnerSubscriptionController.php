@@ -19,6 +19,7 @@ use Sheba\Subscription\Exceptions\HasAlreadyCollectedFeeException;
 use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Subscription\Partner\PurchaseHandler;
+use Sheba\Subscription\Partner\SubscriptionStatics;
 use Throwable;
 
 class PartnerSubscriptionController extends Controller
@@ -35,34 +36,8 @@ class PartnerSubscriptionController extends Controller
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
-
             $partner_subscription_packages = $this->generateSubscriptionRelatedData($partner);
-            $partner_subscription_package  = $partner->subscription;
-            list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
-            $data = [
-                'subscription_package'       => $partner_subscription_packages,
-                'monthly_tag'                => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
-                'tags'                       => [
-                    'monthly'     => ['en' => null, 'bn' => null],
-                    'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
-                ],
-                'billing_type'               => $partner->billing_type,
-                'current_package'            => [
-                    'en' => $partner_subscription_package->show_name,
-                    'bn' => $partner_subscription_package->show_name_bn
-                ],
-                'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
-                'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
-                'balance'                    => [
-                    'wallet'                 => $wallet + $bonus_wallet,
-                    'refund'                 => $remaining,
-                    'minimum_wallet_balance' => $threshold
-                ]
-            ];
-
+            $data = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -76,32 +51,7 @@ class PartnerSubscriptionController extends Controller
             /** @var Partner $partner */
             $partner = $request->partner;
             $partner_subscription_packages = $this->generateSubscriptionData($partner);
-            $partner_subscription_package  = $partner->subscription;
-            list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
-            $data = [
-                'subscription_package'       => $partner_subscription_packages,
-                'monthly_tag'                => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
-                'tags'                       => [
-                    'monthly'     => ['en' => null, 'bn' => null],
-                    'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
-                ],
-                'billing_type'               => $partner->billing_type,
-                'current_package'            => [
-                    'en' => $partner_subscription_package->show_name,
-                    'bn' => $partner_subscription_package->show_name_bn
-                ],
-                'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-                'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
-                'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
-                'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
-                'balance'                    => [
-                    'wallet'                 => $wallet + $bonus_wallet,
-                    'refund'                 => $remaining,
-                    'minimum_wallet_balance' => $threshold
-                ]
-            ];
-
+            $data = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
             return api_response($request, null, 200, [ "data" => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -135,16 +85,7 @@ class PartnerSubscriptionController extends Controller
     public function getAllPackages(Request $request)
     {
         try {
-            $data = [
-                'subscription_package' => $this->generateSubscriptionRelatedData(),
-                'monthly_tag'          => null, 'half_yearly_tag' => '১৯% ছাড়', 'yearly_tag' => '৫০% ছাড়',
-                'tags'                 => [
-                    'monthly'     => ['en' => null, 'bn' => null],
-                    'half_yearly' => ['en' => '19% discount', 'bn' => '১৯% ছাড়'],
-                    'yearly'      => ['en' => '50% discount', 'bn' => '৫০% ছাড়']
-                ]
-            ];
-
+            $data = array_merge(['subscription_package' => $this->generateSubscriptionRelatedData()], SubscriptionStatics::getPackageStaticDiscount());
             return api_response($request, null, 200, $data);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

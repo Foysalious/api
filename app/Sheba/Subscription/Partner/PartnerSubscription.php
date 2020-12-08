@@ -67,11 +67,9 @@ class PartnerSubscription
      * @param Partner $partner
      * @param $partner_subscription_package
      * @return array
-     * @throws InvalidPreviousSubscriptionRules
      */
     public function formatCurrentPackageData(Partner $partner, PartnerSubscriptionPackage $partner_subscription_package)
     {
-        list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
         $price_bn = convertNumbersToBangla($partner->subscription->originalPrice($partner->billing_type));
         $billing_type_bn = $partner->subscription->titleTypeBn($partner->billing_type);
         return [
@@ -81,8 +79,8 @@ class PartnerSubscription
             'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
-            'static_message'             => $partner_subscription_package->id === config('sheba.partner_lite_packages_id') ? config('sheba.lite_package_message') : '',
-            'dynamic_message'            => self::getPackageMessage($partner, $price_bn),
+            'static_message'             => $partner_subscription_package->id === SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
+            'dynamic_message'            => SubscriptionStatics::getPackageMessage($partner, $price_bn),
             'price_bn'                   => $price_bn,
             'billing_type_bn'            => $billing_type_bn
         ];
@@ -112,14 +110,33 @@ class PartnerSubscription
 
     /**
      * @param Partner $partner
-     * @param $price
-     * @return string
+     * @param $partner_subscription_packages
+     * @return array
+     * @throws InvalidPreviousSubscriptionRules
      */
-    public static function getPackageMessage(Partner $partner, $price)
+    public function allPackagesData(Partner $partner, $partner_subscription_packages)
     {
-        $date = Carbon::parse($partner->next_billing_date);
-        $month = banglaMonth($date->month);
-        $date  = convertNumbersToBangla($date->day, false);
-        return "আপনি বর্তমানে বেসিক প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা বালান্স রাখুন।";
+        $partner_subscription_package  = $partner->subscription;
+        list($remaining, $wallet, $bonus_wallet, $threshold) = $partner->getCreditBreakdown();
+        $data = [
+            'subscription_package'       => $partner_subscription_packages,
+            'billing_type'               => $partner->billing_type,
+            'current_package'            => [
+                'en' => $partner_subscription_package->show_name,
+                'bn' => $partner_subscription_package->show_name_bn
+            ],
+            'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
+            'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
+            'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
+            'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
+            'balance'                    => [
+                'wallet'                 => $wallet + $bonus_wallet,
+                'refund'                 => $remaining,
+                'minimum_wallet_balance' => $threshold
+            ],
+            'subscription_vat'           => SubscriptionStatics::getPartnerSubscriptionVat()
+        ];
+
+        return array_merge($data, SubscriptionStatics::getPackageStaticDiscount());
     }
 }

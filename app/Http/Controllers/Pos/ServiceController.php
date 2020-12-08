@@ -125,7 +125,7 @@ class ServiceController extends Controller
                 'name'        => 'required',
                 'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
-                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
+                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -162,7 +162,7 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-          //  $partner_pos_service->image_gallery = $partner_pos_service_model->image_gallery;
+            $partner_pos_service->image_gallery = json_decode($partner_pos_service_model->image_gallery,true);
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
@@ -174,7 +174,6 @@ class ServiceController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
