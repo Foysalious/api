@@ -1,18 +1,13 @@
 <?php namespace Sheba\Business\Attendance\Monthly;
 
-use Sheba\Reports\ExcelHandler;
+use Carbon\Carbon;
+use Excel as MonthlyExcel;
 
 class Excel
 {
     private $monthlyData;
-    private $excelHandler;
-    private $data;
+    private $data=[];
 
-    public function __construct(ExcelHandler $excelHandler)
-    {
-        $this->excelHandler = $excelHandler;
-        $this->data = [];
-    }
 
     public function setMonthlyData(array $monthly_data)
     {
@@ -23,13 +18,28 @@ class Excel
     public function get()
     {
         $this->makeData();
-        return $this->excelHandler->setName('Monthly Attendance')->createReport($this->data)->download();
+        $file_name = Carbon::now()->timestamp . '_' . 'monthly_attendance_report';
+        MonthlyExcel::create($file_name, function ($excel) {
+            $excel->sheet('data', function ($sheet) {
+                $sheet->fromArray($this->data, null, 'A1', false, false);
+                $sheet->prependRow($this->getHeaders());
+                $sheet->freezeFirstRow();
+                $sheet->cell('A1:K1', function ($cells) {
+                    $cells->setFontWeight('bold');
+                });
+                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
+                    array('horizontal' => 'left')
+                );
+                $sheet->setAutoSize(true);
+            });
+        })->export('xlsx');
     }
 
     private function makeData()
     {
         foreach ($this->monthlyData as $employee) {
             array_push($this->data, [
+                'employee_id'   => $employee['employee_id'],
                 'name'          => $employee['member']['name'],
                 'dept'          => $employee['department']['name'],
                 'working_days'  => $employee['attendance']['working_days'],
@@ -42,5 +52,10 @@ class Excel
                 'absent'        => $employee['attendance']['absent']
             ]);
         }
+    }
+
+    private function getHeaders()
+    {
+        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'On leave','Absent'];
     }
 }

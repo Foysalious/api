@@ -106,8 +106,8 @@ class AttendanceController extends Controller
     {
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
-        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with([
+        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->limit(5)->first();
+        $members = $business->members()->select('members.id', 'profile_id')->limit(5)->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
