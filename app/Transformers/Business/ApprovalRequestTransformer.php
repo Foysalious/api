@@ -34,9 +34,10 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
-
+        //dd($requestable);
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
+        $business_member = $requestable->businessMember;
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -44,6 +45,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
+                'employee_id' => $business_member->employee_id,
+                'depertment' => $business_member->role->businessDepartment->name,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $this->profile->name,
