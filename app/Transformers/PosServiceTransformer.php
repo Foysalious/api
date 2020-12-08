@@ -44,7 +44,9 @@ class PosServiceTransformer extends TransformerAbstract
             'product_link' => config('sheba.webstore_url') . '/' . $service->partner->sub_domain . '/store/' . $service->id,
             'show_image' => ($service->show_image) || is_null($service->show_image) ? 1 : 0,
             'shape' => $service->shape,
-            'color' => $service->color
+            'color' => $service->color,
+            'image_gallery' => $service->image_gallery ? json_decode($service->image_gallery,true) : []
+
         ];
     }
 }
