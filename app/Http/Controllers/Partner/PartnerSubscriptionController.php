@@ -102,7 +102,7 @@ class PartnerSubscriptionController extends Controller
                 ]
             ];
 
-            return api_response($request, null, 200, $data);
+            return api_response($request, null, 200, [ "data" => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -422,14 +422,12 @@ class PartnerSubscriptionController extends Controller
      */
     private function generateSubscriptionData(Partner $partner = null, $package = null)
     {
-        $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()
-                                                                   ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')
-                                                                   ->where('id', '>', 0);
+        $partner_subscription_packages = PartnerSubscriptionPackage::validDiscounts()->where('id', '>', 0);
         if ($package) {
-            $partner_subscription_packages = $partner_subscription_packages->where('id', $package)->first();
-            (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner);
+            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
+            (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner, true);
         } else {
-            $partner_subscription_packages = $partner_subscription_packages->where('status', Status::PUBLISHED)->get();
+            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->get();
             foreach ($partner_subscription_packages as $package)
                 (new PartnerSubscription())->dataFormat($package, $partner);
 

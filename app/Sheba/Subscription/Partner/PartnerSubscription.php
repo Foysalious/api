@@ -80,21 +80,21 @@ class PartnerSubscription
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
             'static_message'             => $partner_subscription_package->id === config('sheba.partner_lite_packages_id') ? config('sheba.lite_package_message') : '',
-            'dynamic_message'            => self::getPackageMessage($partner),
-            'balance'                    => [
-                'wallet'                 => $wallet + $bonus_wallet,
-                'refund'                 => $remaining,
-                'minimum_wallet_balance' => $threshold
-            ]
+            'dynamic_message'            => self::getPackageMessage($partner)
         ];
     }
 
-    public function dataFormat($package, Partner $partner = null)
+    /**
+     * @param $package
+     * @param Partner|null $partner
+     * @param false $single
+     */
+    public function dataFormat($package, Partner $partner = null, $single = false)
     {
         $featured_package_id     = config('partner.subscription_featured_package_id');
-        $package['rules']        = (json_decode($package->rules, 1));
+        if (!$single) $package['rules']        = (json_decode($package->rules, 1));
         $package['is_published'] = $package->name == 'LITE' ? 0 : 1;
-        $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
+        if (!$single) $package['usps']         = $package->usps ? json_decode($package->usps) : ['usp' => [], 'usp_bn' => []];
         $package['features']     = $package->features ? json_decode($package->features) : [];
         $package['is_featured']  = in_array($package->id, $featured_package_id);
         $package['web_view']     = config('sheba.partners_url')."/api/packages/".$package->id;
