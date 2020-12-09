@@ -39,6 +39,7 @@ class PartnerSubscriptionCharges
         $this->data['bonus_wallet_charge']                    = $this->partnerSubscriptionBilling->partnerBonusHandler->payFromBonus;
         $this->data['refunded']                               = $this->partnerSubscriptionBilling->refundAmount;
         $this->data['adjusted_amount_from_last_subscription'] = $this->partnerSubscriptionBilling->adjustedCreditFromLastSubscription;
+        $this->data['adjusted_days_from_last_subscription']   = $this->partnerSubscriptionBilling->exchangeDaysToBeAdded ? $this->partnerSubscriptionBilling->exchangeDaysToBeAdded : 0;
         return $this;
     }
 
