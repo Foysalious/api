@@ -138,7 +138,7 @@ class PartnerSubscriptionBilling
 //            $this->refundRemainingCredit(abs($this->packagePrice));
 //            $this->packagePrice = 0;
 //        }
-        if ($this->adjustedCreditFromLastSubscription > 0)
+        if ($this->adjustedCreditFromLastSubscription > 0 && $this->packageTo->originalPricePerDay($this->newBillingType) > 0)
             $this->exchangeDaysToBeAdded = ceil($this->adjustedCreditFromLastSubscription / $this->packageTo->originalPricePerDay($this->newBillingType));
 
     }
