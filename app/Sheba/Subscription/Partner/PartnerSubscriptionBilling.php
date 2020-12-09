@@ -34,7 +34,13 @@ class PartnerSubscriptionBilling
     public  $today;
     public  $refundAmount;
     public  $packagePrice;
+    /**
+     * @var PartnerSubscriptionPackage
+     */
     public  $packageFrom;
+    /**
+     * @var PartnerSubscriptionPackage
+     */
     public  $packageTo;
     private $isCollectAdvanceSubscriptionFee = false;
     public  $packageOriginalPrice;
@@ -43,6 +49,10 @@ class PartnerSubscriptionBilling
     public  $oldBillingType;
     public  $discountId;
     private $notification = 1;
+    /**
+     * @var int
+     */
+    public $exchangeDaysToBeAdded = 0;
 
     /**
      * PartnerSubscriptionBilling constructor.
@@ -57,6 +67,11 @@ class PartnerSubscriptionBilling
         $this->today                           = Carbon::today();
         $this->refundAmount                    = 0;
         $this->isCollectAdvanceSubscriptionFee = $this->partner->isAlreadyCollectedAdvanceSubscriptionFee();
+    }
+
+    public function getExchangedDays()
+    {
+        return $this->exchangeDaysToBeAdded;
     }
 
     public function setNotification($key)
@@ -83,6 +98,7 @@ class PartnerSubscriptionBilling
      * @param                                                $old_billing_type
      * @param                                                $new_billing_type
      * @param                                                $discount_id
+     * @return PartnerSubscriptionBilling
      * @throws Exception
      */
     public function runUpgradeBilling($old_package, $new_package, $old_billing_type, $new_billing_type, $discount_id)
@@ -105,6 +121,7 @@ class PartnerSubscriptionBilling
         if(isset($this->notification) && $this->notification === 1)
             $this->sendSmsForSubscriptionUpgrade($old_package, $new_package, $old_billing_type, $new_billing_type, $grade);
         $this->storeEntry();
+        return $this;
     }
 
     /**
@@ -117,11 +134,14 @@ class PartnerSubscriptionBilling
         if ($this->discountId) $discount = $this->packageTo->discountPriceFor($this->discountId);
         $this->adjustedCreditFromLastSubscription = $this->partner->periodicBillingHandler()->remainingCredit();
         $this->packageOriginalPrice               = !$this->isCollectAdvanceSubscriptionFee ? ($this->packageTo->originalPrice($this->newBillingType) - $discount) : $this->partner->alreadyCollectedSubscriptionFee();
-        $this->packagePrice                       = !$this->isCollectAdvanceSubscriptionFee ? $this->packageOriginalPrice - $this->adjustedCreditFromLastSubscription : $this->packageOriginalPrice;
-        if ($this->packagePrice < 0) {
-            $this->refundRemainingCredit(abs($this->packagePrice));
-            $this->packagePrice = 0;
-        }
+        $this->packagePrice                       = $this->packageOriginalPrice;
+//        if ($this->packagePrice < 0) {
+//            $this->refundRemainingCredit(abs($this->packagePrice));
+//            $this->packagePrice = 0;
+//        }
+        if ($this->adjustedCreditFromLastSubscription > 0)
+            $this->exchangeDaysToBeAdded = ceil($this->adjustedCreditFromLastSubscription / $this->packageTo->originalPricePerDay($this->newBillingType));
+
     }
 
 
@@ -150,7 +170,7 @@ class PartnerSubscriptionBilling
     }
 
     /**
-     * @param $package_price
+     * @throws Exception
      */
     private function billingDatabaseTransactions()
     {
