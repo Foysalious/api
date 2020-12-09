@@ -2,6 +2,7 @@
 
 
 use GuzzleHttp\Client;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
 {
@@ -201,6 +202,17 @@ class AccountServer
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
             ],
+        ]);
+    }
+
+    public function passwordAuthenticate($mobile, $password,$purpose)
+    {
+        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
+            'form_params' => [
+                'mobile' => $mobile,
+                'password' => $password,
+                'purpose' => $purpose
+            ]
         ]);
     }
 }
