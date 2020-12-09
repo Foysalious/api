@@ -2,27 +2,27 @@
 
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
-use Sheba\Dal\AccessToken\AccessToken;
-use Sheba\Dal\AccessToken\AccessTokenRepository;
+use Sheba\Dal\AuthorizationToken\AuthorizationToken;
+use Sheba\Dal\AuthorizationToken\AuthorizationTokenRepositoryInterface;
 use Sheba\OAuth2\AuthUser;
-use Sheba\Portals\Portals;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class AccessTokenMiddleware
 {
-    /** @var AccessToken */
-    protected $accessToken;
-    /** @var AccessTokenRepository */
-    private $accessTokenRepository;
+    /** @var AuthorizationToken */
+    protected $authorizationToken;
+    /** @var AuthorizationTokenRepositoryInterface */
+    private $authorizeTokenRepository;
 
     /**
      * AccessTokenMiddleware constructor.
-     * @param AccessTokenRepository $access_token_repository
+     * @param AuthorizationTokenRepositoryInterface $authorize_token_repository
      */
-    public function __construct(AccessTokenRepository $access_token_repository)
+    public function __construct(AuthorizationTokenRepositoryInterface $authorize_token_repository)
     {
-        $this->accessTokenRepository = $access_token_repository;
+        $this->authorizeTokenRepository = $authorize_token_repository;
     }
 
     public function handle($request, Closure $next)
@@ -30,16 +30,13 @@ class AccessTokenMiddleware
         try {
             $token = $this->getToken();
             if (!$token) throw new AccessTokenDoesNotExist();
+            if (!JWTAuth::authenticate($token)) return api_response($request, null, 401);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
-            if ($request->hasHeader('portal-name') && $request->header('portal-name') == Portals::EMPLOYEE_APP) {
-                if ($access_token->isBlacklisted()) throw new AccessTokenNotValidException();
-            } else {
-                if (!$access_token->isValid()) throw new AccessTokenNotValidException();
-            }
-            $this->setAccessToken($access_token);
+            if (!$access_token->isValid()) throw new AccessTokenNotValidException();
+            $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
-            if ($access_token->accessTokenRequest && $access_token->accessTokenRequest->profile) $request->merge(['profile' => $access_token->accessTokenRequest->profile]);
+            if ($access_token->authorizationRequest->profile) $request->merge(['profile' => $access_token->authorizationRequest->profile]);
         } catch (JWTException $e) {
             return api_response($request, null, 401);
         }
@@ -55,16 +52,16 @@ class AccessTokenMiddleware
 
     /**
      * @param $token
-     * @return AccessToken
+     * @return AuthorizationToken
      */
     private function findAccessToken($token)
     {
-        return $this->accessTokenRepository->where('token', $token)->first();
+        return $this->authorizeTokenRepository->where('token', $token)->first();
     }
 
-    private function setAccessToken(AccessToken $access_token)
+    private function setAuthorizationToken(AuthorizationToken $authorization_token)
     {
-        $this->accessToken = $access_token;
+        $this->authorizationToken = $authorization_token;
         return $this;
     }
 
@@ -73,8 +70,8 @@ class AccessTokenMiddleware
 
     }
 
-    protected function getAccessToken()
+    protected function getAuthorizationToken()
     {
-        return $this->accessToken;
+        return $this->authorizationToken;
     }
 }

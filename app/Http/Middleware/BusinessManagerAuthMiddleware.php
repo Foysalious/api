@@ -9,8 +9,7 @@ class BusinessManagerAuthMiddleware extends AccessTokenMiddleware
 {
     protected function setExtraDataToRequest($request)
     {
-        if (!$this->accessToken->accessTokenRequest->profile) return;
-
+        if (!$this->authorizationToken->authorizationRequest->profile) return;
         $auth_user = $request->auth_user;
         $member = Member::find($auth_user->getMemberId());
         if (!$member) throw new NotFoundException('Member not found.', 404);
