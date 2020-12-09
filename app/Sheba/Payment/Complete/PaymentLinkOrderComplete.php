@@ -8,6 +8,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -216,10 +217,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($payment_link->getAmount(), 2);
+        $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
             "message"    => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->name} by order link- {$payment_link->getLinkID()}",
-            "event_type" => class_basename($this->target),
+            "event_type" => $event_type,
             "event_id"   => $this->target->id,
             "sound"      => "notification_sound",
             "channel_id" => $channel
