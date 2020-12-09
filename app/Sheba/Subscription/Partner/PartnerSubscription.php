@@ -79,7 +79,7 @@ class PartnerSubscription
             'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
-            'static_message'             => $partner_subscription_package->id === SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
+            'static_message'             => $partner_subscription_package->id === (int)SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
             'dynamic_message'            => SubscriptionStatics::getPackageMessage($partner, $price_bn),
             'price_bn'                   => $price_bn,
             'billing_type_bn'            => $billing_type_bn
