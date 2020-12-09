@@ -35,6 +35,7 @@ use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
+use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -269,7 +270,7 @@ class AttendanceController extends Controller
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
-                             TimeFrame $time_frame, AttendanceList $list, MemberMonthlyExcel $member_monthly_excel)
+                             TimeFrame $time_frame, AttendanceList $list, DetailsExcel $details_excel)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
@@ -295,13 +296,11 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
-
         if ($request->file == 'excel') {
-            return $member_monthly_excel->setMonthlyData($daily_breakdowns->toArray())
-                ->setMember($business_member->member)
-                ->setDesignation($business_member->role ? $business_member->role->name : null)
+            return $details_excel->setBreakDownData($daily_breakdowns->toArray())
+                ->setBusinessMember($business_member)
                 ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
-                ->get();
+                ->download();
         }
 
         return api_response($request, $list, 200, [
