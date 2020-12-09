@@ -74,8 +74,7 @@ class Updater
             list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
             $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
         }
-
-        $old_images = isset($this->data['old_images'])? $this->data['old_images'] : [];
+        $old_images = isset($this->data['old_images']) ? $this->data['old_images'] : [];
         if (isset($this->data['deleted_image'])) {
             $this->deleteFromCDN($this->data['deleted_image']);
             $old_images = array_diff($old_images, $this->data['deleted_image']);
