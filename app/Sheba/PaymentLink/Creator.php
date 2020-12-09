@@ -218,12 +218,14 @@ class Creator
     {
         $link = $this->bitlyLink->shortUrl($this->paymentLinkCreated->link);
         $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে '.$this->amount. ' টাকা পে করুন। '. $link . ' Powered by sManager.';
-        $mobile = $this->getPayerInfo()['payer']['mobile'];
-
-        /** @var Sms $sms */
-        $sms = app(Sms::class);
-        $sms = $sms->to($mobile)->msg($message);
-        $sms->shoot();
+        if ($this->getPayerInfo())
+        {
+            $mobile = $this->getPayerInfo()['payer']['mobile'];
+            /** @var Sms $sms */
+            $sms = app(Sms::class);
+            $sms = $sms->to($mobile)->msg($message);
+            $sms->shoot();
+        }
     }
 
     private function getPayerInfo()
