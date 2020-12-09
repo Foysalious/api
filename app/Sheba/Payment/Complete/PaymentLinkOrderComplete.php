@@ -100,6 +100,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)->setPaymentId($this->payment->id);
         if ($this->target instanceof PosOrder) {
+            $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
         } else {
             $entry_repo->store();
