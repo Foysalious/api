@@ -174,6 +174,13 @@ class LeaveController extends Controller
         $this->validate($request, ['status' => 'required']);
         /** @var Leave $leave */
         $leave = $leave_repo->find((int)$leave);
+
+        $current_time = Carbon::now();
+        $leave_end_time = $leave->end_date;
+
+        if ($current_time > $leave_end_time)
+            return api_response($request, null, 404, ['message' => "You can't cancel this request anymore."]);
+        
         $business_member = $this->getBusinessMember($request);
 
         if ($leave->business_member_id != $business_member->id)
