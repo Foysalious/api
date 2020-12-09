@@ -513,6 +513,11 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
+        if(!$authorizationCode) {
+            return api_response($request, null, 400, [
+                'message' => 'Authorization code not provided'
+            ]);
+        }
         $access_token_request->setAuthorizationCode($authorizationCode);
         $otpNumber = $sheba_accountKit->getMobile($access_token_request);
 
