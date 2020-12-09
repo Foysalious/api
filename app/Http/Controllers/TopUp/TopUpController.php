@@ -44,6 +44,10 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
@@ -95,7 +99,24 @@ class TopUpController extends Controller
         $auth_user = $request->auth_user;
         if ($user == 'business') $agent = $auth_user->getBusiness();
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        elseif ($user == 'partner') {
+            $agent = $auth_user->getPartner();
+            $token = $request->topup_token;
+            if($token) {
+                try {
+                    $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
+                } catch(ExpiredException $e) {
+                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
+                } catch(Exception $e) {
+                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
+                }
+
+                if ($credentials->sub != $agent->id) {
+                    return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                }
+            }
+
+        }
         else return api_response($request, null, 400);
 
         (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
@@ -106,6 +127,8 @@ class TopUpController extends Controller
             ->setType($request->connection_type)
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
+            ->setLat($request->lat ? $request->lat : null)
+            ->setLong($request->long ? $request->long : null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
@@ -484,5 +507,38 @@ class TopUpController extends Controller
     {
         $special_amount = $topUp_special_amount->get();
         return api_response($request, null, 200, ['data' => $special_amount]);
+    }
+
+
+    public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
+    {
+        $authorizationCode = $request->authorization_code;
+        $access_token_request->setAuthorizationCode($authorizationCode);
+        $otpNumber = $sheba_accountKit->getMobile($access_token_request);
+
+        /** @var AuthUser $user */
+        $user = $request->auth_user;
+        $resourceNumber = $user->getPartner()->getContactNumber();
+        if ($otpNumber == $resourceNumber) {
+            $timeSinceMidnight = time() - strtotime("midnight");
+            $remainingTime = (24 * 3600) - $timeSinceMidnight;
+
+            $payload = [
+                'iss' => "topup-jwt",
+                'sub' => $user->getPartner()->id,
+                'iat' => time(),
+//                'exp' => time() + $remainingTime
+                'exp' => time() + (5 * 60)
+            ];
+
+            return api_response($request, null, 200, [
+                'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            ]);
+        }
+
+        return api_response($request, null, 403, [
+            'message' => 'Invalid Request'
+        ]);
+
     }
 }
