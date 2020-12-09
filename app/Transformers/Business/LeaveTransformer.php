@@ -43,7 +43,7 @@ class LeaveTransformer extends TransformerAbstract
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
         /** @var Profile $profile */
         $leave_substitute = $substitute_member ? $substitute_member->profile : null;
-
+        $approvers = $this->getApprover($leave);
         return [
             'title' => $leave->title,
             'leave_type' => $leave_type->title,
@@ -65,7 +65,8 @@ class LeaveTransformer extends TransformerAbstract
                 'pro_pic' => $leave_substitute->pro_pic,
                 'designation' => $substitute_business_member->role ? $substitute_business_member->role->name : null
             ] : null,
-            'approvers' => $this->getApprover($leave),
+            'approvers' => $approvers,
+            'approver_count' => count($approvers),
             'leave_log_details' => $this->leaveLogDetails,
             'is_substitute_required' => $this->isSubstituteRequired,
             'is_cancelable_request' => $this->isCancelableRequest($leave->status, $leave->start_date)
