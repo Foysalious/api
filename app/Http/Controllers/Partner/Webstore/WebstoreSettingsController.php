@@ -11,6 +11,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -94,6 +95,32 @@ class WebstoreSettingsController extends Controller
             $webstoreBannerSettings->setData($data)->store();
             return api_response($request, null, 200, ['msg' => 'Banner Settings Created Successfully']);
 
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param WebstoreBannerSettings $webstoreBannerSettings
+     * @return JsonResponse
+     */
+    public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
+    {
+        try {
+            $partner_id = $request->partner->id;
+            $this->setModifier($request->manager_resource);
+            $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
+            if (!$banner_settings)
+                return api_response($request, null, 400, ['msg' => 'Banner Settings not found']);
+            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+            return api_response($request, null, 200, ['msg' => 'Banner Settings Updated Successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
