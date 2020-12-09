@@ -1,5 +1,6 @@
 <?php namespace App\Http\Middleware;
 
+use App\Models\Profile;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
@@ -30,7 +31,8 @@ class AccessTokenMiddleware
         try {
             $token = $this->getToken();
             if (!$token) throw new AccessTokenDoesNotExist();
-            if (!JWTAuth::authenticate($token)) return api_response($request, null, 401);
+            $profile = Profile::find(JWTAuth::getPayload($token)->get('sub'));
+            if (!$profile) return api_response($request, null, 401);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
             if (!$access_token->isValid()) throw new AccessTokenNotValidException();
