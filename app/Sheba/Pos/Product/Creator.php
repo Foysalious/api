@@ -41,7 +41,7 @@ class Creator
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
-        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->imageGallery();
+        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
     }
 
     /**
@@ -58,7 +58,7 @@ class Creator
     /**
      * @return false|string
      */
-    private function imageGallery()
+    private function saveImageGallery()
     {
         $image_gallery = [];
         foreach ($this->data['image_gallery'] as $key => $file) {

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
+use App\Repositories\FileRepository;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
@@ -59,6 +60,37 @@ class Updater
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
         else if (array_key_exists('app_thumb',$this->data) && (is_null($this->data['app_thumb']) || $this->data['app_thumb'] == "null" )) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
+        if (isset($this->data['image_gallery'])) $this->updatedData['image_gallery'] = $this->updateImageGallery();
+    }
+
+    /**
+     * @return false|string
+     */
+    private function updateImageGallery()
+    {
+        $image_gallery = [];
+        foreach ($this->data['image_gallery'] as $key => $file) {
+            list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+            $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
+        }
+
+        $old_images = $this->data['old_images'] ?: [];
+        if (isset($this->data['deleted_image'])) {
+            $this->deleteFromCDN($this->data['deleted_image']);
+            $old_images = array_diff($old_images, $this->data['deleted_image']);
+        }
+
+        $image_gallery = array_filter(array_merge($image_gallery, $old_images));
+        return json_encode($image_gallery);
+
+    }
+
+    private function deleteFromCDN($files)
+    {
+        foreach ($files as $file) {
+            $filename = substr($file, strlen(env('S3_URL')));
+            (new FileRepository())->deleteFileFromCDN($filename);
+        }
     }
 
     private function hasFile($filename)
