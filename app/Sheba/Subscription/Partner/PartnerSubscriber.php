@@ -43,8 +43,8 @@ class PartnerSubscriber extends ShebaSubscriber
     {
         $old_package = $this->partner->subscription;
         DB::transaction(function () use ($old_package, $package, $update_request) {
-            $this->getBilling()->setNotification($this->sms_notification)->runUpgradeBilling($old_package, $package, $update_request->old_billing_type, $update_request->new_billing_type, $update_request->discount_id);
-            $this->getPackage($package)->subscribe($update_request->new_billing_type, $update_request->discount_id);
+            $additional_days = $this->getBilling()->setNotification($this->sms_notification)->runUpgradeBilling($old_package, $package, $update_request->old_billing_type, $update_request->new_billing_type, $update_request->discount_id)->getExchangedDays();
+            $this->getPackage($package)->subscribe($update_request->new_billing_type, $update_request->discount_id, $additional_days);
             $update_request->status = 'Approved';
             $update_request->update();
         });

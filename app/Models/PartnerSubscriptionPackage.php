@@ -89,9 +89,9 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
         return $this->originalPrice($billing_type) / $day;
     }
 
-    public function calculateNextBillingDate($billing_type = 'monthly')
+    public function calculateNextBillingDate($billing_type = 'monthly', $additional_days = 0)
     {
-        return Carbon::now()->addDays($this->originalDuration($billing_type));
+        return Carbon::now()->addDays($this->originalDuration($billing_type) + $additional_days);
     }
 
     public function runningDiscount($billing_type = 'monthly')
