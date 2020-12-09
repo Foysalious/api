@@ -236,7 +236,7 @@ class ResourceScheduleSlot
         }
         if ($this->partner) $current_time = $this->today->copy()->addMinutes($this->preparationTime);
         else if($this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
-        
+
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
             $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
