@@ -7,8 +7,8 @@ class BusinessRoute
         $api->post('business/login', 'B2b\LoginController@login');
         $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
         // $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
-        // $api->get('business/test-push-notification', 'PushSubscriptionController@send');
-        // $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
+        $api->get('business/test-push-notification', 'PushSubscriptionController@send');
+        $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
             $api->get('/', 'B2b\ProcurementController@tenders');
