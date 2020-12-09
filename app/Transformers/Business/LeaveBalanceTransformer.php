@@ -50,7 +50,7 @@ class LeaveBalanceTransformer extends TransformerAbstract
             array_push($employee_wise_leave_balance, [
                 'id' => $this->businessMember->id,
                 'employee_id' => $this->businessMember->employee_id,
-                'depertment' => $this->businessMember->role->businessDepartment->name,
+                'depertment' => $this->businessMember->role ? $this->businessMember->role->businessDepartment->name : null,
                 'employee_name' => $member->profile->name,
                 'leave_balance' => $this->calculate()
             ]);

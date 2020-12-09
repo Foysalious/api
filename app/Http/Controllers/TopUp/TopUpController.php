@@ -84,25 +84,14 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request,
-                          $user,
-                          TopUpRequest $top_up_request,
-                          Creator $creator,
-                          TopUpSpecialAmount $special_amount,
-                          UserAgentInformation $userAgentInformation,VerifyPin $verifyPin)
+    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
     {
         $agent = $request->user;
         $validation_data = [
-            'mobile' => 'required|string|mobile:bd',
-            'connection_type' => 'required|in:prepaid,postpaid',
-            'vendor_id' => 'required|exists:topup_vendors,id',
-            'password' => 'required',
-//            'lat' => ['required','regex:/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?)$/'],
-//            'long' => ['required','regex:/^[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/']
+            'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required', //            'lat' => ['required','regex:/^[-]?(([0-8]?[0-9])\.(\d+))|(90(\.0+)?)$/'],
+            //            'long' => ['required','regex:/^[-]?((((1[0-7][0-9])|([0-9]?[0-9]))\.(\d+))|180(\.0+)?)$/']
         ];
-        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
-            'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
-            'required|min:10|max:1000|numeric';
+        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ? 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit : 'required|min:10|max:1000|numeric';
 
         $this->validate($request, $validation_data);
 
@@ -114,12 +103,12 @@ class TopUpController extends Controller
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
-            if($token) {
+            if ($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch(ExpiredException $e) {
+                } catch (ExpiredException $e) {
                     return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch(Exception $e) {
+                } catch (Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
 
@@ -128,19 +117,11 @@ class TopUpController extends Controller
                 }
             }
 
-        }
-        else return api_response($request, null, 400);
+        } else return api_response($request, null, 400);
         $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
 
         $userAgentInformation->setRequest($request);
-        $top_up_request->setAmount($request->amount)
-            ->setMobile($request->mobile)
-            ->setType($request->connection_type)
-            ->setAgent($agent)
-            ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
-            ->setUserAgent($userAgentInformation->getUserAgent());
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
@@ -198,7 +179,6 @@ class TopUpController extends Controller
         return $blocked_amount_by_operator;
     }
 
-
     public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
         try {
@@ -206,8 +186,7 @@ class TopUpController extends Controller
             $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
             $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions))
-                return api_response($request, null, 400, ['message' => 'File type not support']);
+            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
             $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
@@ -266,8 +245,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
 
-            if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+            if ($total_recharge_amount > $agent->wallet) return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
@@ -441,8 +419,8 @@ class TopUpController extends Controller
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=' , null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=' , $request->bulk_id);
+        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
+        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
@@ -536,10 +514,7 @@ class TopUpController extends Controller
             $remainingTime = (24 * 3600) - $timeSinceMidnight;
 
             $payload = [
-                'iss' => "topup-jwt",
-                'sub' => $user->getPartner()->id,
-                'iat' => time(),
-//                'exp' => time() + $remainingTime
+                'iss' => "topup-jwt", 'sub' => $user->getPartner()->id, 'iat' => time(), //                'exp' => time() + $remainingTime
                 'exp' => time() + (5 * 60)
             ];
 
