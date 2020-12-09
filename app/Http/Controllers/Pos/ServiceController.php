@@ -237,7 +237,6 @@ class ServiceController extends Controller
             $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
-            $rules+= ['old_images' => 'required_with:image_gallery'];
             $this->validate($request, $rules);
             $this->setModifier($request->manager_resource);
             $partner_pos_service = PartnerPosService::find($request->service);
