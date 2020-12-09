@@ -185,8 +185,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
             $this->target->update();
+            $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
-        $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
     }
 
     private function createUsage($payment_receiver, $modifier)

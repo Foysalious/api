@@ -1,85 +1,66 @@
 <?php namespace Sheba\TopUp;
 
-use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Carbon\Carbon;
 use Excel;
 
 class TopUpHistoryExcel
 {
-    private $file;
-    private $row;
-    /** @var LaravelExcelReader $excel */
-    private $excel = null;
+    private $suggestions;
+    private $topups;
+    private $agent;
 
-    public function setFile($file)
+    public function setData($topup_data)
     {
-        $this->file = $file;
+        $this->suggestions = [['operator', 'connection_type'], ['ROBI', 'postpaid'], ['GP', 'prepaid'], ['AIRTEL'], ['BANGLALINK'], ['TELETALK']];
+        $this->topups = $topup_data;
+
         return $this;
     }
 
-    public function setRow($row)
+    /**
+     * @param $agent
+     * @return $this
+     */
+    public function setAgent($agent)
     {
-        $this->row = $row;
-        return $this;
-    }
-
-    private function getExcel()
-    {
-        if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET, 'suggestion')->load($this->file);
-        return $this->excel;
-    }
-
-    public function updateMobile($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::MOBILE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateOperator($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::VENDOR_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateConnectionType($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::TYPE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateAmount($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::AMOUNT_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateStatus($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::STATUS_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateName($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::NAME_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
-        return $this;
-    }
-
-    public function updateCreatedDate($message)
-    {
-        $this->getExcel()->getActiveSheet()->setCellValue(TopUpExcel::CREATED_DATE_COLUMN . $this->row, $message);
-        $this->excel->save('xlsx');
+        $this->agent = $agent;
         return $this;
     }
 
     public function takeCompletedAction()
     {
-        unlink($this->file);
-        $this->excel->download('xlsx');
+        $file_name = Carbon::now()->timestamp . '_' . $this->agent->id . '_' . strtolower(class_basename($this->agent)) . '_' . 'topup_history_format_file';
+
+        Excel::create($file_name, function ($excel) {
+            $excel->sheet('data', function ($sheet) {
+                $sheet->fromArray($this->topups);
+                foreach ($this->topups as $index => $topup) {
+                    $row1 = "B" . ($index + 2);
+                    $row2 = "C" . ($index + 2);
+                    $this->suggestionData($sheet, $row1, 'suggestion!$B$2:$B$6');
+                    $this->suggestionData($sheet, $row2, 'suggestion!$C$2:$C$3');
+                }
+            });
+
+            $excel->sheet('suggestion', function ($sheet) {
+                $sheet->fromArray($this->suggestions, null, 'B1', false, false);
+            });
+        })->export('xlsx');
+    }
+
+    private function suggestionData($sheet, $row, $formula)
+    {
+        $objValidation = $sheet->getCell($row)->getDataValidation();
+        $objValidation->setType(\PHPExcel_Cell_DataValidation::TYPE_LIST);
+        $objValidation->setErrorStyle(\PHPExcel_Cell_DataValidation::STYLE_INFORMATION);
+        $objValidation->setAllowBlank(false);
+        $objValidation->setShowInputMessage(true);
+        $objValidation->setShowErrorMessage(true);
+        $objValidation->setShowDropDown(true);
+        $objValidation->setErrorTitle('Input error');
+        $objValidation->setError('Value is not in list.');
+        $objValidation->setPromptTitle('Pick from list');
+        $objValidation->setPrompt('Please pick a value from the drop-down list.');
+        $objValidation->setFormula1($formula);
     }
 }

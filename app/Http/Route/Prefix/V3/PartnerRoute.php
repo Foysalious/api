@@ -10,7 +10,6 @@ class PartnerRoute
             $api->get('home-setting', 'Partner\DashboardController@getHomeSettingV3');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSettingV3');
             $api->get('is-updated-home-setting', 'Partner\DashboardController@isUpdatedHomeSetting');
-            $api->post('top-up','TopUpController@topUpWithPinV2');
         });
     }
 }
