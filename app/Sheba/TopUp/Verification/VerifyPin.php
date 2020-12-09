@@ -90,6 +90,7 @@ class VerifyPin
         if ($data['code'] == 200) return;
         if ($data['code'] == 500) throw new ApiValidationException("Something went wrong.", 500);
         for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
+            if (!isset($data['log_attempts'][$i])) break;
             if ($data['log_attempts'][$i]['status'] != Statuses::FAIL) {
                 throw new PinMismatchException();
             }
