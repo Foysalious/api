@@ -2,6 +2,7 @@
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
@@ -35,10 +36,11 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id']);
-        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
+        $image_gallery = $this->data['image_gallery'];
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
+        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery($image_gallery);
         $partner_pos_service =  $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
-        $this->storeImageGallery($partner_pos_service,$this->data['image_gallery']);
+        $this->storeImageGallery($partner_pos_service,json_decode($image_gallery,true));
         return $partner_pos_service;
     }
 
@@ -56,7 +58,7 @@ class Creator
                 'image_link' => $image
             ]);
         });
-        return $this->imageGalleryRepo->save($data);
+        return PartnerPosServiceImageGallery::insert($data);
     }
     /**
      * Save profile image for resource
@@ -70,18 +72,19 @@ class Creator
     }
 
     /**
+     * @param $image_gallery
      * @return false|string
      */
-    private function saveImageGallery()
+    private function saveImageGallery($image_gallery)
     {
-        $image_gallery = [];
-        foreach ($this->data['image_gallery'] as $key => $file) {
+        $image_gallery_link = [];
+        foreach ($image_gallery as $key => $file) {
             if (!empty($file)) {
                 list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
-                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
+                $image_gallery_link[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
             }
         }
-        return json_encode($image_gallery);
+        return json_encode($image_gallery_link);
 
     }
 
