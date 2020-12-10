@@ -7,9 +7,13 @@ namespace Sheba\Customer\Jobs\Reschedule;
 use App\Models\Customer;
 use App\Models\Job;
 use GuzzleHttp\Client;
+use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Jobs\JobTime;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Customer\Jobs\Reschedule\RescheduleResponse;
+use Sheba\Location\Geo;
+use Sheba\PartnerList\PartnerListBuilder;
+use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\UserAgentInformation;
 
 class Reschedule
@@ -22,6 +26,15 @@ class Reschedule
     private $scheduleDate;
     private $scheduleTimeSlot;
     private $customer;
+    private $partnerListBuilder;
+    private $serviceRequestObject;
+    private $serviceRequest;
+
+    public function __construct(ServiceRequest $serviceRequest, PartnerListBuilder $partnerListBuilder)
+    {
+        $this->partnerListBuilder = $partnerListBuilder;
+        $this->serviceRequest = $serviceRequest;
+    }
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
     {
@@ -91,8 +104,44 @@ class Reschedule
                     'ip' => $this->userAgentInformation->getIp()
                 ]
             ]);
-        $response->setResponse(json_decode($res->getBody(), 1));
+        $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
+
+        if($response['code'] === 421) {
+            $this->initialAutoSPAssignOnExistingJob();
+        }
+
         return $response;
+    }
+
+    private function initialAutoSPAssignOnExistingJob()
+    {
+        $partnerOrder = $this->job->partnerOrder;
+        $customer = $partnerOrder->order->customer;
+
+        $deliveryAddress = $customer->delivery_addresses()->withTrashed()->where('id', $partnerOrder->order->delivery_address_id)->first();
+        $geo = new Geo();
+        $geo->setLng($deliveryAddress->geo->lng)->setLat($deliveryAddress->geo->lat);
+        $services = [];
+        $this->job->jobServices->each(function ($service, $key) use (&$services){
+            array_push($services, [
+                'id' => $service->service_id,
+                'quantity' => $service->quantity,
+                'option' => json_decode($service->option),
+            ]);
+        });
+
+        $this->serviceRequestObject = $this->serviceRequest
+            ->setServices($services)->get();
+
+        $this->partnerListBuilder
+            ->setGeo($geo)
+            ->setServiceRequestObjectArray($this->serviceRequestObject)
+            ->setScheduleTime($this->scheduleTimeSlot)
+            ->setScheduleDate($this->scheduleDate);
+
+        $partnersFromList = $this->partnerListBuilder->get();
+
+        if($partnersFromList) dispatch(new InitiateAutoSpAssign($this->job->partnerOrder, $customer, $partnersFromList->pluck('id')->toArray()));
     }
 
 }
