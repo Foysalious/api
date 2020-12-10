@@ -5,6 +5,7 @@ namespace App\Http;
 use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
+use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
@@ -87,7 +88,6 @@ class Kernel extends HttpKernel
         'guest' => RedirectIfAuthenticated::class,
         'throttle' => ThrottleRequests::class,
         'cors2' => Cors2MiddleWare::class,
-        'admin.auth' => AdminAuthMiddleware::class,
         'customer.auth' => CustomerAuthMiddleware::class,
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
@@ -111,5 +111,6 @@ class Kernel extends HttpKernel
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
+        'apiRequestLog' => ApiRequestMiddleware::class
     ];
 }
