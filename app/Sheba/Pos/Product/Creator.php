@@ -57,7 +57,7 @@ class Creator
                 'image_link' => $image
             ]);
         });
-        return $this->imageGalleryRepo->save($data);
+        return $this->imageGalleryRepo->insert($data);
     }
     /**
      * Save profile image for resource
