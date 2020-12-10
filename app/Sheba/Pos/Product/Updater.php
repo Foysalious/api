@@ -177,7 +177,7 @@ class Updater
             $this->updatedData['color'] = $this->data['color'];
         }
         if ((isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] != $this->service->is_published_for_shop)) {
-            $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
+            $this->updatedData['is_published_for_shop'] = (int) $this->data['is_published_for_shop'];
         }
 
 
