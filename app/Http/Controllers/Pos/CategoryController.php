@@ -221,23 +221,14 @@ class CategoryController extends Controller
      */
     public function store(Request $request, $partner, Category $category)
     {
-        try {
-            $this->validate($request, [
-                'name' => 'required|string',
-            ]);
-            $partner = $request->partner;
-            $modifier = $request->manager_resource;
-            list($master_category,$sub_category) = $category->createCategory($modifier, $request->name);
-            $category->createPartnerCategory($partner->id, $master_category,$sub_category);
-            return api_response($request, null, 200, ['msg' => 'Category Created Successfully']);
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'name' => 'required|string',
+        ]);
+        $partner = $request->partner;
+        $modifier = $request->manager_resource;
+        list($master_category, $sub_category) = $category->createCategory($modifier, $request->name);
+        $category->createPartnerCategory($partner->id, $master_category, $sub_category);
+        return api_response($request, null, 200, ['message' => 'Category Created Successfully']);
     }
 
 
