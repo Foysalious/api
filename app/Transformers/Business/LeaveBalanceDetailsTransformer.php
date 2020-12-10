@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
@@ -40,6 +41,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
      */
     public function transform($business_member)
     {
+
         $this->businessMember = $business_member->load([
             'leaves' => function ($leave) {
                 return $leave->with([
@@ -57,6 +59,8 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         $role = $business_member->role;
         /** @var Leave $leaves */
         $leaves = $business_member->leaves;
+        /** @var Business $business */
+        $business = $this->businessMember->business;
 
         $leaves_approved_count = $leaves->where('status', Status::ACCEPTED)->count();
         $leaves_rejected_count = $leaves->where('status', Status::REJECTED)->count();
@@ -65,10 +69,12 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
             'employee_name' => $profile->name,
             'employee_pro_pic' => $profile->pro_pic,
             'employee_mobile' => $profile->mobile,
-            'employee_id' => $business_member->id,
+            'employee_id' => $business_member->employee_id,
             'join_date' => $business_member->join_date ? $business_member->join_date->format('F Y') : 'n/s',
             'designation' => $role ? $role->name : null,
             'department' => $role ? $role->businessDepartment->name : null,
+            'company' => $business->name,
+            'logo' => $business->logo,
             'approved_count' => $leaves_approved_count,
             'rejected_count' => $leaves_rejected_count,
             'leave_balance' => $this->calculate(),

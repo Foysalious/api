@@ -57,7 +57,7 @@ class Excel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($header);
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:Z1', function ($cells) {
+                $sheet->cell('A1:H1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(

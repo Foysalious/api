@@ -128,12 +128,7 @@
             Employee Leave Balance
         </td>
         <td style="text-align: right;">
-                <span style="height: 89px; width: 160px">
-                    <p style="margin-bottom: -10px;">
-                        <img src="https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/sheba_xyz/images/sheba_logo_150_84.png"
-                             alt="">
-                    </p>
-                </span>
+            <p style="margin-bottom:-2px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$leave_balance['company']}}</p>
         </td>
     </tr>
     <tr>
@@ -148,6 +143,18 @@
         <td style="width: 60%; border : none; vertical-align: top;">
             <table style="width: 100%; border : none">
                 <tr>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
+                        Employee ID
+                    </td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
+                        :
+                    </td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
+                        {{$leave_balance['employee_id']}}
+                    </td>
+                </tr>
+
+                <tr>
                     <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">
                         Employee Name
                     </td>
@@ -156,18 +163,6 @@
                     </td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">
                         {{$leave_balance['employee_name']}}
-                    </td>
-                </tr>
-
-                <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
-                        Designation
-                    </td>
-                    <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">
-                        :
-                    </td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
-                        {{$leave_balance['designation']}}
                     </td>
                 </tr>
 
@@ -183,7 +178,17 @@
                     </td>
                 </tr>
 
-
+                <tr>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
+                        Designation
+                    </td>
+                    <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">
+                        :
+                    </td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
+                        {{$leave_balance['designation']}}
+                    </td>
+                </tr>
                 {{--<tr>
                     <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
                         Mobile Number
@@ -193,17 +198,6 @@
                     </td>
                     <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">"01678016516"</td>
                 </tr>--}}
-                <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
-                        Employee ID
-                    </td>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">
-                        :
-                    </td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">
-                        {{$leave_balance['employee_id']}}
-                    </td>
-                </tr>
             </table>
         </td>
         <td style="width: 40%">
