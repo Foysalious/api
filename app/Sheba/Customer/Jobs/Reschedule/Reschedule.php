@@ -104,7 +104,8 @@ class Reschedule
                     'ip' => $this->userAgentInformation->getIp()
                 ]
             ]);
-        $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
+        
+        $response = $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
 
         if($response['code'] === 421) {
             $this->initialAutoSPAssignOnExistingJob();
