@@ -38,7 +38,7 @@ class AccessTokenMiddleware
             if (!$access_token->isValid()) throw new AccessTokenNotValidException();
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
-            if ($access_token->authorizationRequest->profile) $request->merge(['profile' => $access_token->authorizationRequest->profile]);
+            if ($access_token->accessTokenRequest && $access_token->accessTokenRequest->profile) $request->merge(['profile' => $access_token->accessTokenRequest->profile]);
         } catch (JWTException $e) {
             return api_response($request, null, 401);
         }

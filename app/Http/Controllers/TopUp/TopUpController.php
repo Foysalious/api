@@ -15,13 +15,10 @@ use App\Sheba\TopUp\Vendor\Vendors;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Carbon\Carbon;
 use Exception;
-use Firebase\JWT\ExpiredException;
-use Firebase\JWT\JWT;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
-use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpDataFormat;
@@ -52,6 +49,9 @@ use Storage;
 use Throwable;
 use Validator;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
@@ -97,18 +97,17 @@ class TopUpController extends Controller
 
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
-        if ($user == 'business') {
-            $agent = $auth_user->getBusiness();
-        } elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
-            if ($token) {
+            if($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch (ExpiredException $e) {
+                } catch(ExpiredException $e) {
                     return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch (Exception $e) {
+                } catch(Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
 
@@ -117,11 +116,20 @@ class TopUpController extends Controller
                 }
             }
 
-        } else return api_response($request, null, 400);
+        }
+        else return api_response($request, null, 400);
+
         $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
 
         $userAgentInformation->setRequest($request);
-        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
+        $top_up_request->setAmount($request->amount)
+            ->setMobile($request->mobile)
+            ->setType($request->connection_type)
+            ->setAgent($agent)
+            ->setVendorId($request->vendor_id)
+            ->setLat($request->lat ? $request->lat : null)
+            ->setLong($request->long ? $request->long : null)
+            ->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
@@ -415,7 +423,7 @@ class TopUpController extends Controller
         $topups = $model::find($user->id)->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
-        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
+        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
@@ -503,6 +511,11 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
+        if(!$authorizationCode) {
+            return api_response($request, null, 400, [
+                'message' => 'Authorization code not provided'
+            ]);
+        }
         $access_token_request->setAuthorizationCode($authorizationCode);
         $otpNumber = $sheba_accountKit->getMobile($access_token_request);
 
@@ -514,8 +527,11 @@ class TopUpController extends Controller
             $remainingTime = (24 * 3600) - $timeSinceMidnight;
 
             $payload = [
-                'iss' => "topup-jwt", 'sub' => $user->getPartner()->id, 'iat' => time(), //                'exp' => time() + $remainingTime
-                'exp' => time() + (5 * 60)
+                'iss' => "topup-jwt",
+                'sub' => $user->getPartner()->id,
+                'iat' => time(),
+//                'exp' => time() + $remainingTime
+                'exp' => time() + (60 * 60)
             ];
 
             return api_response($request, null, 200, [
