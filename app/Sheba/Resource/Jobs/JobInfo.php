@@ -67,6 +67,9 @@ class JobInfo
     private function getFirstJob()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $jobs->filter(function ($job) {
+            return $job->partnerOrder->order->sales_channel !== 'B2B';
+        });
         $jobs = $this->rearrange->rearrange($jobs);
         if (count($jobs) == 0) return null;
         return $jobs->first();
