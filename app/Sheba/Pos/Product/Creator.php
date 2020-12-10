@@ -38,7 +38,7 @@ class Creator
         $this->format();
         $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
-        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery();
+        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery($image_gallery);
         $partner_pos_service =  $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service,$image_gallery);
         return $partner_pos_service;
@@ -74,16 +74,16 @@ class Creator
     /**
      * @return false|string
      */
-    private function saveImageGallery()
+    private function saveImageGallery($image_gallery)
     {
-        $image_gallery = [];
-        foreach ($this->data['image_gallery'] as $key => $file) {
+        $image_gallery_link = [];
+        foreach ($image_gallery as $key => $file) {
             if (!empty($file)) {
                 list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
-                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
+                $image_gallery_link[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
             }
         }
-        return json_encode($image_gallery);
+        return json_encode($image_gallery_link);
 
     }
 
