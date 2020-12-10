@@ -79,7 +79,7 @@ class Creator
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
         $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
         $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
-        $this->data['is_published_for_shop']            = isset($this->data['is_published_for_shop'])  ?  $this->data['is_published_for_shop'] : 0;
+        $this->data['is_published_for_shop']            = isset($this->data['is_published_for_shop'])  ?  (int)$this->data['is_published_for_shop'] : 0;
     }
 
     private function hasFile($filename)
