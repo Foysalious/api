@@ -36,7 +36,7 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id']);
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
         if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
         $partner_pos_service =  $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service,$this->data['image_gallery']);
@@ -51,7 +51,7 @@ class Creator
     private function storeImageGallery($partner_pos_service,$image_gallery)
     {
         $data = [];
-        collect($image_gallery)->each(function($image) use($partner_pos_service, &$data){
+        collect($image_gallery)->each(function($image) use($partner_pos_service, $data){
             array_push($data, [
                 'partner_pos_service_id' => $partner_pos_service->id,
                 'image_link' => $image
