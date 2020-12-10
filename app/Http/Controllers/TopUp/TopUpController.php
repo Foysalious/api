@@ -102,12 +102,12 @@ class TopUpController extends Controller
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
-            if($token) {
+            if ($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch(ExpiredException $e) {
+                } catch (ExpiredException $e) {
                     return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch(Exception $e) {
+                } catch (Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
 
@@ -116,9 +116,8 @@ class TopUpController extends Controller
                 }
             }
 
-        }
-        else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+        } else return api_response($request, null, 400);
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -186,7 +185,7 @@ class TopUpController extends Controller
         return $blocked_amount_by_operator;
     }
 
-   
+
     public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
         try {
@@ -503,7 +502,7 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
-        if(!$authorizationCode) {
+        if (!$authorizationCode) {
             return api_response($request, null, 400, [
                 'message' => 'Authorization code not provided'
             ]);
