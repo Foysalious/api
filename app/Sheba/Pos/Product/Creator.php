@@ -52,7 +52,7 @@ class Creator
     private function storeImageGallery($partner_pos_service,$image_gallery)
     {
         $data = [];
-        collect($image_gallery)->each(function($image) use($partner_pos_service, $data){
+        collect($image_gallery)->each(function($image) use($partner_pos_service, &$data){
             array_push($data, [
                 'partner_pos_service_id' => $partner_pos_service->id,
                 'image_link' => $image
