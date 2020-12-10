@@ -30,7 +30,6 @@ class DailyExcel
         $this->employeeName = null;
         $this->department = null;
         $this->status = null;
-
         $this->checkInTime = '-';
         $this->checkInStatus = '-';
         $this->checkInLocation = '-';
@@ -40,12 +39,18 @@ class DailyExcel
         $this->checkOutLocation = '-';
         $this->checkOutAddress = '-';
         $this->totalHours = '-';
-        $this->leftEarlyNote = null;
+        $this->leftEarlyNote = '-';
     }
 
     public function setData(array $daily_data)
     {
         $this->dailyData = $daily_data;
+        return $this;
+    }
+
+    public function setDate($date)
+    {
+        $this->date = $date;
         return $this;
     }
 
@@ -58,9 +63,12 @@ class DailyExcel
                 $sheet->fromArray($this->data, null, 'A1', false, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:N1', function ($cells) {
+                $sheet->cell('A1:O1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
+                $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
+                    array('horizontal' => 'left')
+                );
                 $sheet->setAutoSize(true);
             });
         })->export('xlsx');
@@ -123,7 +131,7 @@ class DailyExcel
             }
 
             array_push($this->data, [
-                'date' => $attendance['date'],
+                'date' => $attendance['date'] ? $attendance['date'] : $this->date,
                 'employee_id' => $attendance['employee_id'],
                 'employee_name' => $attendance['member']['name'],
                 'department' => $attendance['department']['name'],
