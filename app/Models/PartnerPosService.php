@@ -5,6 +5,10 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
+
+
 class PartnerPosService extends Model
 {
     use SoftDeletes;
@@ -21,6 +25,11 @@ class PartnerPosService extends Model
     public function category()
     {
         return $this->belongsTo(PosCategory::class, 'pos_category_id');
+    }
+
+    public function imageGallery()
+    {
+        return $this->hasMany(PartnerPosServiceImageGallery::class);
     }
 
     public function scopePublished($query)
