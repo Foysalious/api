@@ -80,6 +80,7 @@ class Creator
         $image_gallery_link = [];
         foreach ($image_gallery as $key => $file) {
             if (!empty($file)) {
+                dd(1);
                 list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
                 $image_gallery_link[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
             }
