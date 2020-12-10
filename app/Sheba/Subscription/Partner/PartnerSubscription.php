@@ -3,7 +3,6 @@
 use App\Models\Partner;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerSubscriptionUpdateRequest;
-use Carbon\Carbon;
 use Sheba\ModificationFields;
 use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 
@@ -134,9 +133,11 @@ class PartnerSubscription
                 'refund'                 => $remaining,
                 'minimum_wallet_balance' => $threshold
             ],
-            'subscription_vat'           => SubscriptionStatics::getPartnerSubscriptionVat()
+            'subscription_vat'           => SubscriptionStatics::getPartnerSubscriptionVat(),
+            'popular_package_id'         => SubscriptionStatics::getPopularPackageId()
         ];
 
         return array_merge($data, SubscriptionStatics::getPackageStaticDiscount());
     }
+
 }
