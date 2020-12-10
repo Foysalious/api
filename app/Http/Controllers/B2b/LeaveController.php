@@ -37,6 +37,7 @@ use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
+use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
 
 class LeaveController extends Controller
 {
@@ -55,9 +56,10 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
+     * @param LeaveRequestExcel $leave_request_report
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -97,6 +99,9 @@ class LeaveController extends Controller
         }
         if ($request->has('sort')) {
             $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
+        }
+        if ($request->file == 'excel') {
+            return $leave_request_report->setLeave($leaves)->get();
         }
 
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
