@@ -38,8 +38,7 @@ class Creator
         $this->format();
         $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
-        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery($image_gallery);
-        dd($image_gallery);
+        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery(json_decode($image_gallery,true));
         $partner_pos_service =  $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service,$image_gallery);
         return $partner_pos_service;
@@ -59,6 +58,7 @@ class Creator
                 'image_link' => $image
             ]);
         });
+        dd($data);
         return PartnerPosServiceImageGallery::insert($data);
     }
     /**
