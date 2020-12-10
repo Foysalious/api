@@ -166,6 +166,18 @@ class EventDataConverter
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\CreatedFrom'
                             ]
                         ]
+                    ],
+                    'top_up' => [
+                        'name' => 'Top Up',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type' => 'number',
+                                'min' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\Amount'
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
