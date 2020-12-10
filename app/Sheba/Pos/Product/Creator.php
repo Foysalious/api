@@ -2,6 +2,7 @@
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
@@ -57,7 +58,7 @@ class Creator
                 'image_link' => $image
             ]);
         });
-        return $this->imageGalleryRepo->insert($data);
+        return PartnerPosServiceImageGallery::insert($data);
     }
     /**
      * Save profile image for resource
