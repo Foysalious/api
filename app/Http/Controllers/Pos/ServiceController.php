@@ -66,7 +66,8 @@ class ServiceController extends Controller
                         'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null,
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
-                        'color' => $service->color
+                        'color' => $service->color,
+                        'image_gallery' => $service->image_gallery ? json_decode($service->image_gallery,true) : []
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -80,7 +81,7 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price','show_image','shape','color'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price','show_image','shape','color','image_gallery'];
     }
 
     /**
@@ -125,7 +126,7 @@ class ServiceController extends Controller
                 'name'        => 'required',
                 'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
-                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
+                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -162,6 +163,7 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
+            $partner_pos_service->image_gallery = json_decode($partner_pos_service_model->image_gallery,true);
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
@@ -269,6 +271,7 @@ class ServiceController extends Controller
             $partner_pos_service->warranty_unit   = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
             $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
             $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
+            $partner_pos_service->image_gallery = $partner_pos_service->image_gallery ? json_decode($partner_pos_service->image_gallery,true) : [];
             $partner_pos_service_arr              = $partner_pos_service->toArray();
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [

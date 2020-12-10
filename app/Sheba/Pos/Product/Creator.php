@@ -41,6 +41,7 @@ class Creator
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
+        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
     }
 
     /**
@@ -54,6 +55,22 @@ class Creator
         return $this->saveImageToCDN($avatar, getPosServiceThumbFolder(), $avatar_filename);
     }
 
+    /**
+     * @return false|string
+     */
+    private function saveImageGallery()
+    {
+        $image_gallery = [];
+        foreach ($this->data['image_gallery'] as $key => $file) {
+            if (!empty($file)) {
+                list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
+            }
+        }
+        return json_encode($image_gallery);
+
+    }
+
     private function format()
     {
         $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
@@ -61,6 +78,8 @@ class Creator
         $this->data['warranty_unit']    = (isset($this->data['warranty_unit']) && in_array($this->data['warranty_unit'], array_keys(config('pos.warranty_unit')))) ? $this->data['warranty_unit'] : config('pos.warranty_unit.day.en');
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
         $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
+        $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
+        $this->data['is_published_for_shop']            = isset($this->data['is_published_for_shop'])  ?  $this->data['is_published_for_shop'] : 0;
     }
 
     private function hasFile($filename)

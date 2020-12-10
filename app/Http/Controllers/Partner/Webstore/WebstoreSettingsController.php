@@ -44,9 +44,9 @@ class WebstoreSettingsController extends Controller
                 'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
                 'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
         ]);
-        $webstoreSettingsUpdateRequest->setPartner($partner);
+        $webstoreSettingsUpdateRequest->setPartner($request->partner);
         if ($request->has('is_webstore_published')) {
-            AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
