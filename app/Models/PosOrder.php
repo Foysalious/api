@@ -3,6 +3,7 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\EMI\Calculations;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Log\Supported\Types;
@@ -52,6 +53,7 @@ class PosOrder extends Model {
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
         }
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
+        $this->netBill += $this->sales_channel == SalesChannels::WEBSTORE && $this->partner->delivery_charge ? $this->partner->delivery_charge : 0;
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
 
