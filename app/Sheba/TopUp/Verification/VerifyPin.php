@@ -12,6 +12,7 @@ use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
+use Sheba\TopUp\Exception\ResetRememberTokenException;
 
 class VerifyPin
 {
@@ -97,7 +98,7 @@ class VerifyPin
         }
         $this->logout();
         $this->resetRememberToken();
-        throw new PinMismatchException();
+        throw new ApiValidationException("You have been logged out", 403);
     }
 
     /**
