@@ -2,8 +2,10 @@
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
@@ -14,6 +16,7 @@ class Creator
 
     private $data;
     private $serviceRepo;
+    private $imageGalleryRepo;
 
     public function __construct(PosServiceRepositoryInterface $service_repo)
     {
@@ -33,17 +36,29 @@ class Creator
         $this->data['pos_category_id'] = $this->data['category_id'];
         $this->data['cost'] = (double)$this->data['cost'];
         $this->format();
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id']);
-
-        return $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
+        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
+        $partner_pos_service =  $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
+        $this->storeImageGallery($partner_pos_service,$this->data['image_gallery']);
+        return $partner_pos_service;
     }
 
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
-        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery();
     }
 
+    private function storeImageGallery($partner_pos_service,$image_gallery)
+    {
+        $data = [];
+        collect($image_gallery)->each(function($image) use($partner_pos_service, $data){
+            array_push($data, [
+                'partner_pos_service_id' => $partner_pos_service->id,
+                'image_link' => $image
+            ]);
+        });
+        return PartnerPosServiceImageGallery::insert($data);
+    }
     /**
      * Save profile image for resource
      *
