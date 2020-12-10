@@ -54,7 +54,7 @@ class PartnerSubscriptionController extends Controller
             $data = (new PartnerSubscription())->allPackagesData($partner, $partner_subscription_packages);
             return api_response($request, null, 200, [ "data" => $data]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

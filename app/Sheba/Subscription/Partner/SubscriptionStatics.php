@@ -4,6 +4,7 @@ namespace Sheba\Subscription\Partner;
 
 use App\Models\Partner;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class SubscriptionStatics
 {
@@ -45,5 +46,10 @@ class SubscriptionStatics
     public static function getPartnerSubscriptionVat()
     {
         return config('sheba.partner_subscription_vat');
+    }
+
+    public static function getPopularPackageId()
+    {
+        return Partner::where('package_id' , '!=', self::getLitePackageID())->groupBy('package_id')->orderBy(DB::raw('count(id)'), "desc")->select('package_id')->first()->package_id;
     }
 }
