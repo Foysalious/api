@@ -18,10 +18,9 @@ class Creator
     private $serviceRepo;
     private $imageGalleryRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceImageGalleyRepositoryInterface $image_gallery_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo)
     {
         $this->serviceRepo = $service_repo;
-        $this->imageGalleryRepo = $image_gallery_repo;
     }
 
     public function setData($data)
