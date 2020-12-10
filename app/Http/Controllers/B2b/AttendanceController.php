@@ -57,11 +57,10 @@ class AttendanceController extends Controller
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
      * @param BusinessOfficeRepoInterface $business_office_repo
-     * @param DailyExcel $daily_excel
      * @return JsonResponse
      */
     public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
-                                  BusinessOfficeRepoInterface $business_office_repo,  DailyExcel $daily_excel)
+                                  BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
@@ -71,19 +70,20 @@ class AttendanceController extends Controller
 
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
-        
-        $checkin_location = $checkout_location = null;
 
+        $checkin_location = $checkout_location = null;
         if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
         if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
 
+        /** @var array $attendances */
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
             ->setCheckinStatus($request->checkin_status)
             ->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->setSortKey($request->sort)
+            ->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
             ->setOfficeOrRemoteCheckin($request->checkin_office_or_remote)
             ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
@@ -92,13 +92,8 @@ class AttendanceController extends Controller
             ->get();
 
         $count = count($attendances);
-        if ($count > 0) {
-            if ($request->file == 'excel') return $daily_excel->setData($attendances)->download();
-
-            return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
-        } else {
-            return api_response($request, null, 404);
-        }
+        if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('d/m/Y'))->setData($attendances)->download();
+        return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
@@ -136,10 +131,6 @@ class AttendanceController extends Controller
 
         $members = $members->get();
         $all_employee_attendance = [];
-
-        $year = (int)date('Y');
-        $month = (int)date('m');
-        // if ($request->has('month')) $month = $request->month;
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->start_date;
             $end_date = $request->end_date;
@@ -160,7 +151,6 @@ class AttendanceController extends Controller
 
             $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-            // $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
@@ -639,8 +629,9 @@ class AttendanceController extends Controller
      * @param BusinessOfficeRepoInterface $business_office_repo
      * @return mixed
      */
-    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo){
+    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo)
+    {
         $business_office = $business_office_repo->find($location);
-        return  $business_office ? $business_office->ip : null;
+        return $business_office ? $business_office->ip : null;
     }
 }
