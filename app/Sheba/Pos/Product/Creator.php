@@ -4,6 +4,7 @@ use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
@@ -16,7 +17,7 @@ class Creator
     private $serviceRepo;
     private $imageGalleryRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceImageGalleyRepositoryInterface $image_gallery_repo)
     {
         $this->serviceRepo = $service_repo;
         $this->imageGalleryRepo = $image_gallery_repo;
