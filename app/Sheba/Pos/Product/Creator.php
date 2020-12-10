@@ -72,6 +72,7 @@ class Creator
     }
 
     /**
+     * @param $image_gallery
      * @return false|string
      */
     private function saveImageGallery($image_gallery)
@@ -82,6 +83,7 @@ class Creator
                 list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
                 $image_gallery_link[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);
             }
+            dd($image_gallery_link);
         }
         return json_encode($image_gallery_link);
 
