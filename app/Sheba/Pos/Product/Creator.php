@@ -58,7 +58,6 @@ class Creator
                 'image_link' => $image
             ]);
         });
-        dd($data);
         return PartnerPosServiceImageGallery::insert($data);
     }
     /**
