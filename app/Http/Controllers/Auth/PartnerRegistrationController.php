@@ -104,7 +104,7 @@ class PartnerRegistrationController extends Controller
             if (!$code_data)
                 return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
-
+            $request->merge(['phone'=>$mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) {
@@ -435,6 +435,7 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $mobile = formatMobile($request->mobile);
+            $request->merge(['phone'=>$mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 if ($profile->name === "" || $profile->name === null) {
                     $profile->name = $request->name;
