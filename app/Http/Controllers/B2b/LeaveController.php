@@ -408,8 +408,9 @@ class LeaveController extends Controller
         $pending = $leaves->where('status', Status::PENDING)->sortByDesc('created_at');
         $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
         $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
+        $canceled = $leaves->where('status', Status::CANCELED)->sortByDesc('created_at');
 
-        return $pending->merge($accepted)->merge($rejected);
+        return $pending->merge($accepted)->merge($rejected)->merge($canceled);
     }
 
     /**
