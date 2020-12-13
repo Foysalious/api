@@ -117,19 +117,31 @@ class ServiceController extends Controller
     public function store(Request $request, ProductCreator $creator)
     {
         try {
-            $secondaries_categories = PosCategory::child()->pluck('id')->toArray();
+            $sub_categories = PosCategory::child()->pluck('id')->toArray();
+            $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
                 'name'        => 'required',
-                'category_id' => 'required|in:' . implode(',', $secondaries_categories),
+                'category_id' => 'required_without:master_category_id',
+                'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
 
             ]);
             $this->setModifier($request->manager_resource);
-            $partner_pos_service = $creator->setData($request->all())->create();
+
+            $is_valid_sub_category = (in_array($request->category_id,$sub_categories)) ? 1 : 0 ;
+            if(!$request->has('master_category_id') && !$is_valid_sub_category)
+                return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+            if($request->has('master_category_id') && !$is_valid_sub_category){
+                $request->request->remove('category_id');
+                $request->merge($this->resolveSubcategory($request->master_category_id));
+            }
+
+            $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+
             $partner_pos_service->unit          = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
@@ -146,6 +158,9 @@ class ServiceController extends Controller
             $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
             $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
             $partner_pos_service->discounts = $partner_pos_service_model->discounts;
+            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
+            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
@@ -160,6 +175,36 @@ class ServiceController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param $master_category
+     * @return array
+     */
+    private function resolveSubcategory($master_category)
+    {
+        $default_subcategory = PosCategory::where('name','Sub None Category')->where('parent_id',$master_category)->first();
+        if($default_subcategory)
+            return ['category_id' => $default_subcategory->id];
+        $sub_category = $this->createSubcategory($master_category);
+        return ['category_id' => $sub_category->id];
+    }
+
+    /**
+     * @param $master_category
+     * @return PosCategory
+     */
+    private function createSubcategory($master_category)
+    {
+        $master_category = PosCategory::where('id',$master_category)->first();
+        $master_category->parent_id = $master_category->id;
+        $master_category->name = 'Sub None Category';
+        $master_category->slug = 'sub-none-category';
+
+        $sub_category = collect($master_category)->all();
+
+      return  PosCategory::create($this->withCreateModificationField(array_except($sub_category , ['id','created_at','created_by','created_by_name','updated_at','updated_by','updated_by_name'])));
+
     }
 
     /**
@@ -221,6 +266,8 @@ class ServiceController extends Controller
 
             $partner_pos_service->unit            = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit   = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+            $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
+            $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
             $partner_pos_service_arr              = $partner_pos_service->toArray();
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [

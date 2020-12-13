@@ -58,6 +58,7 @@ class Updater
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
+        else if (array_key_exists('app_thumb',$this->data) && (is_null($this->data['app_thumb']) || $this->data['app_thumb'] == "null" )) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
     }
 
     private function hasFile($filename)
@@ -142,6 +143,9 @@ class Updater
         }
         if ((isset($this->data['color']) && $this->data['color'] != $this->service->color)) {
             $this->updatedData['color'] = $this->data['color'];
+        }
+        if ((isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] != $this->service->is_published_for_shop)) {
+            $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
         }
 
 

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Algolia;
 
 use App\Console\Commands\Command;
+use App\Models\PartnerPosService;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 
@@ -35,6 +36,12 @@ class AlgoliaSync extends Command
         /** @var Service $service */
         foreach ($services as $service) {
             $service->pushToIndex();
+        }
+
+        $pos_services = PartnerPosService::get();
+        /** @var PartnerPosService $service */
+        foreach ($pos_services as $pos_service) {
+            $pos_service->pushToIndex();
         }
     }
 

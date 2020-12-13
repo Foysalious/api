@@ -3266,6 +3266,7 @@
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
                 "reference": "0fa198858a700624b5bf56f9f8abaedd416ec3df"
+
             },
             "require": {
                 "php": ">=5.4"
@@ -6181,6 +6182,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": []
 }
