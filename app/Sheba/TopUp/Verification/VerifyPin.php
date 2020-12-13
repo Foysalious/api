@@ -99,7 +99,7 @@ class VerifyPin
         }
         $this->logout();
         $this->resetRememberToken();
-        throw new ApiValidationException("You have been logged out", 403);
+        throw new ApiValidationException("You have been logged out", 401);
     }
 
     /**
