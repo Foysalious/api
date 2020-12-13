@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\FailedReason;
 
 use Sheba\TopUp\ResponseCode\SslRechargeResponseCodes;
+use Throwable;
 
 class SslFailedReason extends FailedReason
 {
@@ -14,11 +15,11 @@ class SslFailedReason extends FailedReason
             }
             $recharge_response_codes = array_except(SslRechargeResponseCodes::messages(), $this->removedResponseCodes());
             if (array_key_exists($transaction_details['recharge_status'], $recharge_response_codes)) return $recharge_response_codes[$transaction_details['recharge_status']];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
         }
-        return "The Recharge could not be processed due to a technical issue. Pls try again later.";
 
+        return "The Recharge could not be processed due to a technical issue. Pls try again later.";
     }
 
     private function removedResponseCodes()

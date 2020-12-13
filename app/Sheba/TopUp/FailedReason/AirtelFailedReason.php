@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\FailedReason;
 
+use Throwable;
+
 class AirtelFailedReason extends PretupsFailedReason
 {
     public function getReason()
@@ -10,9 +12,10 @@ class AirtelFailedReason extends PretupsFailedReason
                 return $transaction_details_response['MESSAGE'];
             }
             return $transaction_details['message'];
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
         }
+
         return "The Recharge could not be processed due to a technical issue. Pls try again later.";
     }
 }
