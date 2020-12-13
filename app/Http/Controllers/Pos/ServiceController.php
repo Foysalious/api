@@ -280,13 +280,13 @@ class ServiceController extends Controller
             $partner_pos_service->warranty_unit   = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
             $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
             $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
-            $partner_pos_service->image_gallery = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function($image){
+            $partner_pos_service_arr              = $partner_pos_service->toArray();
+            $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function($image){
                 return [
                     'id' =>   $image->id,
                     'image_link' => $image->image_link
                 ];
             }) : [];
-            $partner_pos_service_arr              = $partner_pos_service->toArray();
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [
                 'msg' => 'Product Updated Successfully',
