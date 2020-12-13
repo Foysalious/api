@@ -99,7 +99,8 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
-    'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
+    'partner_lite_packages_id'  => env('LITE_PACKAGE_ID'),
+    'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]

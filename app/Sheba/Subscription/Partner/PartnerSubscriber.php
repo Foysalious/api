@@ -11,10 +11,17 @@ class PartnerSubscriber extends ShebaSubscriber
 {
     private $partner;
     const basicSubscriptionPackageId = 1;
+    private $sms_notification = 1;
 
     public function __construct(Partner $partner)
     {
         $this->partner = $partner;
+    }
+
+    public function setSMSNotification($key)
+    {
+        $this->sms_notification = $key;
+        return $this;
     }
 
     public function getPackage(SubscriptionPackage $package = null)
@@ -27,13 +34,18 @@ class PartnerSubscriber extends ShebaSubscriber
         // return $model collection;
     }
 
+    /**
+     * @param SubscriptionPackage $package
+     * @param PartnerSubscriptionUpdateRequest $update_request
+     * @throws \Exception
+     */
     public function upgrade(SubscriptionPackage $package, PartnerSubscriptionUpdateRequest $update_request)
     {
         $old_package = $this->partner->subscription;
 
         DB::transaction(function () use ($old_package, $package, $update_request) {
             $this->getPackage($package)->subscribe($update_request->new_billing_type, $update_request->discount_id);
-            $this->getBilling()->runUpgradeBilling($old_package, $package, $update_request->old_billing_type, $update_request->new_billing_type, $update_request->discount_id);
+            $this->getBilling()->setNotification($this->sms_notification)->runUpgradeBilling($old_package, $package, $update_request->old_billing_type, $update_request->new_billing_type, $update_request->discount_id);
             $update_request->status = 'Approved';
             $update_request->update();
         });

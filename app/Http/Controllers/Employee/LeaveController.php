@@ -167,7 +167,7 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $leave_types = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
+        $leave_types = $leave_types_repo->getAllLeaveTypesByBusinessMember($business_member);
 
         foreach ($leave_types as $leave_type) {
             /** @var LeaveType $leaves_taken */
