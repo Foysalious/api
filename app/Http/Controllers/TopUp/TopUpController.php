@@ -19,6 +19,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpDataFormat;
@@ -104,6 +105,8 @@ class TopUpController extends Controller
         if ($user == 'business') $agent = $auth_user->getBusiness();
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
+            \Log::info('partner reward test log');
+            \Log::info(json_encode($user));
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
             if ($token) {
@@ -146,6 +149,8 @@ class TopUpController extends Controller
 
         if ($topup_order) {
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+            \Log::info('partner reward test log');
+            \Log::info(json_encode($topup_order));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
             return api_response($request, null, 500);

@@ -78,7 +78,8 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->response->getError());
             return;
         }
-
+        \Log::info('partner reward test log - Model');
+        \Log::info(json_encode($topup_order));
         $response = $this->response->getSuccess();
         dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->getMessage())));
         try {
@@ -90,6 +91,7 @@ class TopUp
                 $this->vendor->deductAmount($topup_order->amount);
                 $this->isSuccessful = true;
             });
+
         } catch (Throwable $e) {
             logError($e);
         }
@@ -186,7 +188,6 @@ class TopUp
     public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
     {
         if ($top_up_order->isSuccess()) {
-            app()->make(ActionRewardDispatcher::class)->run('top_up', $top_up_order);
             return true;
         }
         DB::transaction(function () use ($top_up_order, $success_response) {
