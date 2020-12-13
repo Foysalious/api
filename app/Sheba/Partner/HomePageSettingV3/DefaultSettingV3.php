@@ -8,130 +8,148 @@ class DefaultSettingV3
             "key" => "pos",
             "name_en" => "Sales Point",
             "name_bn" => "বেচা-বিক্রি",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
         $pos_due = [
             "key" => "pos_due",
             "name_en" => "Due Tracker",
             "name_bn" => "বাকীর খাতা",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
         $payment_link = [
             "key" => "payment_link",
             "name_en" => "Digital Collection",
             "name_bn" => "ডিজিটাল কালেকশন",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
         $online_sheba = [
             "key" => "online_sheba",
             "name_en" => "Online Sheba",
             "name_bn" => "অনলাইন বিক্রি",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 1
         ];
 
         $extra_income = [
             "key" => "extra_income",
             "name_en" => "Extra Income",
             "name_bn" => "বাড়তি আয়",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $loan = [
             "key" => "loan",
             "name_en" => "Loan",
             "name_bn" => "ডিজিটাল লোন",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
 
         $earnings = [
             "key" => "earnings",
             "name_en" => "Earnings",
             "name_bn" => "ড্যাশবোর্ড",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
 
         $pos_history = [
             "key" => "pos_history",
             "name_en" => "Pos History",
             "name_bn" => "বিক্রির খাতা",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $customer_list = [
             "key" => "customer_list",
             "name_en" => "Customer List",
             "name_bn" => "গ্রাহক তালিকা",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $marketing = [
             "key" => "marketing",
             "name_en" => "Marketing & Promo",
             "name_bn" => "মার্কেটিং ও প্রোমো",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $report = [
             "key" => "report",
             "name_en" => "Report",
             "name_bn" => "রিপোর্ট",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $stock = [
             "key" => "stock",
             "name_en" => "Stock",
             "name_bn" => "স্টক",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $e_shop = [
             "key" => "e-shop",
             "name_en" => "E-Shop",
             "name_bn" => "পাইকারি বাজার",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $expense = [
             "key" => "expense",
             "name_en" => "Expense Track",
             "name_bn" => "হিসাব খাতা",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $gift_shop = [
             "key" => "gift_shop",
             "name_en" => "Gift Shop",
             "name_bn" => "গিফট শপ",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $emi= [
             "key" => "emi",
             "name_en" => "EMI",
             "name_bn" => "কিস্তি",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $digital_banking= [
             "key" => "digital_banking",
             "name_en" => "Digital Banking",
             "name_bn" => "ব্যাংক একাউন্ট",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 0,
+            "is_new" => 0
         ];
 
         $topup = [
             "key" => "topup",
             "name_en" => "Top Up",
             "name_bn" => "টপ-আপ",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 1,
+            "is_new" => 0
         ];
-        
+
         return [$pos, $pos_due, $payment_link, $online_sheba, $topup, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $digital_banking];
     }
 
     public static function getLastUpdatedAt()
     {
-        return '2020-10-22';
+        return '2020-12-13';
     }
 }

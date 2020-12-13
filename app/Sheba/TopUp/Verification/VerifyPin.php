@@ -7,6 +7,7 @@ use ReflectionClass;
 use ReflectionException;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\AuthenticationRequest\Statuses;
+use Sheba\Dal\AuthorizationToken\BlacklistedReason;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
@@ -98,7 +99,7 @@ class VerifyPin
         }
         $this->logout();
         $this->resetRememberToken();
-        throw new ApiValidationException("You have been logged out", 403);
+        throw new ApiValidationException("You have been logged out", 401);
     }
 
     /**
@@ -129,6 +130,6 @@ class VerifyPin
     private function logout()
     {
         if (!$this->authUser) return;
-        $this->accountServer->logout($this->request->access_token->token);
+        $this->accountServer->logout($this->request->access_token->token, BlacklistedReason::TOPUP_LOGOUT);
     }
 }
