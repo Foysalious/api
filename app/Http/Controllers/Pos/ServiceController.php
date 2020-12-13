@@ -159,12 +159,12 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery->map(function($image){
+            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
                return [
                  'id' =>   $image->id,
                    'image_link' => $image->image_link
                ];
-            });
+            }) : [];
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
              * USAGE LOG
