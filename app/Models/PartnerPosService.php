@@ -45,6 +45,11 @@ class PartnerPosService extends BaseModel
         return $query->where('publication_status', 1);
     }
 
+    public function scopePublishedForShop($query)
+    {
+        return $query->where('is_published_for_shop', 1);
+    }
+
     /**
      * Scope a query to only include a specific master category.
      *

@@ -20,6 +20,8 @@ use Sheba\Pos\Product\Updater as ProductUpdater;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -347,12 +349,19 @@ class ServiceController extends Controller
      * @param $partner
      * @param $service
      * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
      */
     public function togglePublishForShopStatus(Request $request, $partner, $service)
     {
+        $rules = $request->partner->subscription_rules;
+        if (is_string($rules)) $rules = json_decode($rules, true);
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
         if (empty($posService)) {
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
+        }
+        if (!$posService->is_published_for_shop) {
+            AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($posService->stock == null || $posService->stock < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();

@@ -167,6 +167,8 @@ class PartnerController extends Controller
                 'status',
                 'logo',
                 'address',
+                'delivery_charge',
+                'is_webstore_published',
                 'created_at'
             ]);
             $info->put('mobile', $partner->getContactNumber());
@@ -1403,11 +1405,6 @@ class PartnerController extends Controller
             return api_response($request, null, 400, ['message' => $messages]);
         }
         $partner = Partner::find($partner);
-        if (!in_array($partner->status, [
-            'Unverified',
-            'Onboarded'
-        ]))
-            return api_response($request, null, 400, ['message' => 'Can not change logo after verification']);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);
