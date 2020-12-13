@@ -6,7 +6,7 @@ class BusinessRoute
     {
         $api->post('business/login', 'B2b\LoginController@login');
         $api->post('business/contact-us', 'B2b\BusinessesController@contactUs');
-        $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
+        // $api->get('business/test-login', 'B2b\LoginController@generateDummyToken')->middleware('admin.auth');
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
@@ -137,6 +137,14 @@ class BusinessRoute
                         $api->group(['prefix' => 'others'], function ($api) {
                             $api->get('/', 'B2b\LeaveSettingsController@othersInfo');
                             $api->post('/', 'B2b\LeaveSettingsController@othersUpdate');
+                        });
+                    });
+                    $api->group(['prefix' => 'prorate'], function ($api) {
+                        $api->post('/', 'B2b\ProrateController@store');
+                        $api->get('/', 'B2b\ProrateController@index');
+                        $api->post('/delete', 'B2b\ProrateController@delete');
+                        $api->group(['prefix' => '{prorate}'], function ($api) {
+                            $api->post('/', 'B2b\ProrateController@edit');
                         });
                     });
                 });

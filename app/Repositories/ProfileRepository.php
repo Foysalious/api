@@ -113,7 +113,7 @@ class ProfileRepository
                 $info['bank_logo'] = $avatar->bank->logo;
                 $info['bank_name'] = $avatar->bank->name;
                 $defaultPass       = 'ShebaAdmin#1';
-                if ($request->password == $defaultPass)
+                if ($request->password == $defaultPass || $request->password == 'ShebaAdmin')
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;

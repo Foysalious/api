@@ -23,7 +23,7 @@ return [
     'material_commission_rate' => 5.0,
     'portals' => ['admin-portal', 'partner-portal', 'manager-app', 'customer-app', 'customer-portal', 'resource-portal', 'resource-app', 'bondhu-app', 'bondhu-portal', 'automatic', 'business-portal', 'digigo-portal'],
     'send_order_create_sms' => env('SEND_ORDER_CREATE_SMS', true),
-    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal', 'manager-app', 'partner-portal'],
+    'stopped_sms_portal_for_customer' => ['customer-app', 'customer-portal'],
     'push_notification_topic_name' => [
         'customer' => env('CUSTOMER_TOPIC_NAME', 'customer_'),
         'resource' => env('RESOURCE_TOPIC_NAME', 'resource_'),
@@ -99,7 +99,8 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
-    'partner_lite_packages_id' => env('LITE_PACKAGE_ID'),
+    'partner_lite_packages_id'  => env('LITE_PACKAGE_ID'),
+    'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]

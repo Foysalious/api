@@ -25,6 +25,7 @@ class CoWorkerListTransformer extends TransformerAbstract
             'id' => $member->id,
             'employee_id' => $business_member->employee_id,
             'business_member_id' => $business_member->id,
+            'is_super' => $business_member->is_super,
             'profile' => [
                 'id' => $profile->id,
                 'name' => $profile->name,
