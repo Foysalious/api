@@ -256,7 +256,7 @@ class JobController extends Controller
      */
     public function isStatusBeforeProcess($status)
     {
-        return constants('JOB_STATUS_SEQUENCE')[$status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
+        return constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[$status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
     }
 
     private function formatComplains($complains)
