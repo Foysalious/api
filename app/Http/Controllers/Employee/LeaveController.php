@@ -74,10 +74,7 @@ class LeaveController extends Controller
      * @param LogFormatter $log_formatter
      * @return JsonResponse
      */
-    public function show($leave,
-                         Request $request,
-                         LeaveRepoInterface $leave_repo,
-                         LogFormatter $log_formatter)
+    public function show($leave, Request $request, LeaveRepoInterface $leave_repo, LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
         /** @var Business $business */
@@ -85,7 +82,9 @@ class LeaveController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
-        if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        if (!$leave || $leave->business_member_id != $business_member->id)
+            return api_response($request, null, 403);
+
         $leave = $leave->load(['leaveType' => function ($q) {
             return $q->withTrashed();
         }]);
