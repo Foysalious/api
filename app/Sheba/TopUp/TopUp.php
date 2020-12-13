@@ -67,11 +67,12 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
-
+        \Log::info('recharge 1');
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
             return;
         }
+        \Log::info('recharge 2');
 
         $this->response = $this->vendor->recharge($topup_order);
 
@@ -79,10 +80,14 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->response->getError());
             return;
         }
+        \Log::info('recharge 3');
 
         $response = $this->response->getSuccess();
+        \Log::info('recharge 4');
 
         try {
+            \Log::info('recharge 5');
+
             DB::transaction(function () use ($response, $topup_order) {
                 $this->setModifier($this->agent);
                 $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
@@ -91,6 +96,8 @@ class TopUp
                 $this->vendor->deductAmount($topup_order->amount);
                 $this->isSuccessful = true;
             });
+            \Log::info('recharge 6');
+
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
         } catch (Throwable $e) {
             logError($e);
@@ -188,9 +195,9 @@ class TopUp
     public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
     {
         if ($top_up_order->isSuccess()) {
-            app()->make(ActionRewardDispatcher::class)->run('top_up', $top_up_order);
             return true;
         }
+
         DB::transaction(function () use ($top_up_order, $success_response) {
             $top_up_order->status = config('topup.status.successful')['sheba'];
             $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
