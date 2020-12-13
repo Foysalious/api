@@ -56,6 +56,8 @@ class EmployeeRoute
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
+                    $api->post('update', 'Employee\LeaveController@update');
+                    $api->post('cancel', 'Employee\LeaveController@cancel');
                 });
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
