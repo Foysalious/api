@@ -1,14 +1,10 @@
-<?php
-
-namespace App\Http;
+<?php namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
-use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
-use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -33,6 +29,9 @@ use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\XSS;
+use App\Http\Middleware\CheckForMaintenanceMode;
+
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -50,8 +49,9 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        Middleware\CheckForMaintenanceMode::class,
-        CriticalAppVersionMiddleware::class
+        CheckForMaintenanceMode::class,
+        CriticalAppVersionMiddleware::class,
+        XSS::class
     ];
 
     /**
@@ -63,9 +63,8 @@ class Kernel extends HttpKernel
         'web' => [
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
-            StartSession::class,
-            ShareErrorsFromSession::class,
-            VerifyCsrfToken::class,
+            StartSession::class, ShareErrorsFromSession::class,
+            VerifyCsrfToken::class
         ],
 
         'api' => [
@@ -81,31 +80,7 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => Authenticate::class,
-        'auth.basic' => AuthenticateWithBasicAuth::class,
-        'can' => Authorize::class,
-        'guest' => RedirectIfAuthenticated::class,
-        'throttle' => ThrottleRequests::class,
-        'cors2' => Cors2MiddleWare::class,
-        'admin.auth' => AdminAuthMiddleware::class,
-        'customer.auth' => CustomerAuthMiddleware::class,
-        'customer_job.auth' => CustomerJobAuthMiddleware::class,
-        'profile.auth' => ProfileAuthMiddleware::class,
-        'affiliate.auth' => AffiliateAuthMiddleware::class,
-        'resource.auth' => Middleware\ResourceAuthMiddleware::class,
-        'manager.auth' => ManagerAuthMiddleware::class,
-        'partner_job.auth' => PartnerJobAuthMiddleware::class,
-        'partner_order.auth' => PartnerOrderAuthMiddleware::class,
-        'partner_resource.auth' => PartnerResourceAuthMiddleware::class,
-        'resource_job.auth' => ResourceJobAuthMiddleware::class,
-        'vendor.auth' => VendorMiddleware::class,
-        'business_order.auth' => OrderMiddleware::class,
-        'geo.auth' => GeoAuthMiddleware::class,
-        'loan.version' => DLSApiVersioning::class,
-        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class,
-        'business.auth' => BusinessManagerAuthMiddleware::class,
-        'member.auth' => MemberAuthMiddleware::class,
-        'jwtAuth' => JWTAuthentication::class,//10
+        'auth' => Authenticate::class, 'auth.basic' => AuthenticateWithBasicAuth::class, 'can' => Authorize::class, 'guest' => RedirectIfAuthenticated::class, 'throttle' => ThrottleRequests::class, 'cors2' => Cors2MiddleWare::class, 'customer.auth' => CustomerAuthMiddleware::class, 'customer_job.auth' => CustomerJobAuthMiddleware::class, 'profile.auth' => ProfileAuthMiddleware::class, 'affiliate.auth' => AffiliateAuthMiddleware::class, 'resource.auth' => Middleware\ResourceAuthMiddleware::class, 'manager.auth' => ManagerAuthMiddleware::class, 'partner_job.auth' => PartnerJobAuthMiddleware::class, 'partner_order.auth' => PartnerOrderAuthMiddleware::class, 'partner_resource.auth' => PartnerResourceAuthMiddleware::class, 'resource_job.auth' => ResourceJobAuthMiddleware::class, 'vendor.auth' => VendorMiddleware::class, 'business_order.auth' => OrderMiddleware::class, 'geo.auth' => GeoAuthMiddleware::class, 'loan.version' => DLSApiVersioning::class, 'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class, 'business.auth' => BusinessManagerAuthMiddleware::class, 'member.auth' => MemberAuthMiddleware::class, 'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
         'topUp.auth' => TopUpAuthMiddleware::class,//1
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
