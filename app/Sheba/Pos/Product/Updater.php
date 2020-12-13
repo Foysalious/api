@@ -4,6 +4,7 @@ use App\Models\PartnerPosService;
 use App\Repositories\FileRepository;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceLogRepositoryInterface;
@@ -73,16 +74,14 @@ class Updater
             list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
             $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
         }
-
-        $old_images = isset($this->data['old_images']) ? $this->data['old_images'] : [];
+        $old_images = PartnerPosServiceImageGallery::where('partner_pos_service_id',$this->service->id)->pluck('image_link')->toArray();
         if (isset($this->data['deleted_image'])) {
+            $this->data['deleted_image'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
             $this->deleteFromCDN($this->data['deleted_image']);
             $old_images = array_diff($old_images, $this->data['deleted_image']);
         }
-
         $image_gallery = array_filter(array_merge($image_gallery, $old_images));
         return json_encode($image_gallery);
-
     }
 
     private function deleteFromCDN($files)
