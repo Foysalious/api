@@ -543,6 +543,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
     }
 
+    public function currentSubscription()
+    {
+        return $this->subscription->where('id', $this->package_id)->first();
+    }
+
     public function subscriptionOrders()
     {
         return $this->hasMany(SubscriptionOrder::class);
