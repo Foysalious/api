@@ -47,7 +47,9 @@ class Updater
     {
         $this->saveImages();
         $this->format();
-        $image_gallery = json_decode($this->updatedData['image_gallery'],true);
+        $image_gallery = [];
+        if (isset($this->updatedData['image_gallery']))
+            $image_gallery = json_decode($this->updatedData['image_gallery'],true);
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off','image_gallery']);
         $this->updatedData = array_except($this->updatedData, 'image_gallery');
         if (!empty($this->updatedData)) {
