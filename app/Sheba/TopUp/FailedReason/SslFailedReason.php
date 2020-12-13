@@ -6,13 +6,19 @@ class SslFailedReason extends FailedReason
 {
     public function getReason()
     {
-        $transaction_details = json_decode($this->transaction, true);
-
-        if (array_key_exists('response', $transaction_details)) return $transaction_details['response']['message'];
-        $recharge_response_codes = array_except(SslRechargeResponseCodes::messages(), $this->removedResponseCodes());
-        if (array_key_exists($transaction_details['recharge_status'], $recharge_response_codes)) return $recharge_response_codes[$transaction_details['recharge_status']];
-
+        try {
+            $transaction_details = json_decode($this->transaction, true);
+            if (array_key_exists('response', $transaction_details)) {
+                if (array_key_exists('message', $transaction_details['response'])) return $transaction_details['response']['message'];
+                return $transaction_details['response']['MESSAGE'];
+            }
+            $recharge_response_codes = array_except(SslRechargeResponseCodes::messages(), $this->removedResponseCodes());
+            if (array_key_exists($transaction_details['recharge_status'], $recharge_response_codes)) return $recharge_response_codes[$transaction_details['recharge_status']];
+        } catch (\Throwable $e) {
+            logError($e);
+        }
         return "The Recharge could not be processed due to a technical issue. Pls try again later.";
+
     }
 
     private function removedResponseCodes()
