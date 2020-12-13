@@ -3,8 +3,9 @@
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 use Sheba\Reward\Rewardable;
+use Sheba\Transactions\Wallet\HasWalletTransaction;
 
-class TopUpOrder extends Model implements PayableType, Rewardable
+class TopUpOrder extends Model implements PayableType, Rewardable, HasWalletTransaction
 {
     protected $guarded = ['id'];
     protected $table = 'topup_orders';
@@ -60,5 +61,15 @@ class TopUpOrder extends Model implements PayableType, Rewardable
     }
     public function isRobiWalletTopUp(){
         return !!$this->is_robi_topup_wallet;
+    }
+
+    public function reload()
+    {
+        // TODO: Implement reload() method.
+    }
+
+    public function transactions()
+    {
+        // TODO: Implement transactions() method.
     }
 }
