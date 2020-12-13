@@ -24,6 +24,8 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
     /**
      * SendCancelPushNotificationToApprovers constructor.
      * @param $approver
+     * @param $leave
+     * @param Profile $profile
      */
     public function __construct($approver, $leave, Profile $profile)
     {
