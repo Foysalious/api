@@ -45,7 +45,12 @@ class PosServiceTransformer extends TransformerAbstract
             'show_image' => ($service->show_image) || is_null($service->show_image) ? 1 : 0,
             'shape' => $service->shape,
             'color' => $service->color,
-            'image_gallery' => $service->image_gallery ? json_decode($service->image_gallery,true) : []
+            'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'image_link' => $image->image_link
+                ];
+            }) : 0
 
         ];
     }
