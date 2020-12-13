@@ -405,6 +405,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsToMany(Resource::class)->where('resource_type', constants('RESOURCE_TYPES')['Admin'])->withPivot($this->resourcePivotColumns);
     }
 
+
     public function updatedAt()
     {
         if ($operation_resource = $this->operationResources()->first())
@@ -1027,15 +1028,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 
-    public function posCategories()
-    {
-        return $this->hasMany(PartnerPosCategory::class);
-    }
 
-    public function canTopUp()
+    public function canTopup()
     {
         return $this->can_topup == 1;
     }
+    public function posCategories()
+    {
+        return $this->hasMany(PartnerPosCategory::class);
 
+    }
 
 }
