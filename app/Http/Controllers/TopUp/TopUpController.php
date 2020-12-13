@@ -8,9 +8,11 @@ use App\Models\Business;
 use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\TopUp\TopUpBulkRequest\Formatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
+use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
@@ -212,8 +214,9 @@ class TopUpController extends Controller
             $excel_error = null;
             $halt_top_up = false;
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
+            $total_recharge_amount = 0;
 
-            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator) {
+            $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
                 $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
@@ -238,17 +241,22 @@ class TopUpController extends Controller
                     $excel_error = null;
                 }
 
+                $total_recharge_amount += $value->$amount_field;
+
                 $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
             });
 
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-                if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
+                /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
                     $this->dispatch(new SendTopUpFailMail($agent, $agent_email, $top_up_excel_data_format_errors));
-                }
+                }*/
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
+
+            if ($total_recharge_amount > $agent->wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
@@ -408,13 +416,6 @@ class TopUpController extends Controller
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
 
-        $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'];
-        $validator = Validator::make($request->all(), $rules);
-        if ($validator->fails()) {
-            $error = $validator->errors()->all()[0];
-            return api_response($request, $error, 400, ['msg' => $error]);
-        }
-
         list($offset, $limit) = calculatePagination($request);
         $model = "App\\Models\\" . ucfirst(camel_case($request->type));
         $user = $request->user;
@@ -425,9 +426,12 @@ class TopUpController extends Controller
         $topups = $model::find($user->id)->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
-        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
+        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
+        if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
+        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=' , null);
+        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=' , $request->bulk_id);
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
@@ -445,7 +449,6 @@ class TopUpController extends Controller
             $history_excel->setAgent($user)->setData($topup_data_for_excel)->takeCompletedAction();
             return api_response($request, null, 200);
         }
-
         return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
     }
 
@@ -502,7 +505,7 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
-        if (!$authorizationCode) {
+        if(!$authorizationCode) {
             return api_response($request, null, 400, [
                 'message' => 'Authorization code not provided'
             ]);
