@@ -110,7 +110,7 @@ class Updater
 
     private function deleteFromDB($deleted_image)
     {
-        if(($deleted_image = PartnerPosServiceImageGallery::whereIn('id',$deleted_image)->get()))
+        if(($deleted_image = PartnerPosServiceImageGallery::whereIn('id',$deleted_image)))
             $deleted_image->delete();
     }
 
