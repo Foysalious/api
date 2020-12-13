@@ -5,6 +5,8 @@ use App\Models\CustomerFavorite;
 use App\Models\Job;
 use Sheba\Authentication\AuthUser;
 use Sheba\Customer\Jobs\Reschedule\Reschedule;
+use App\Models\PartnerOrder;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -30,6 +32,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Location\FromGeo;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -37,6 +40,7 @@ use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
+use Sheba\PartnerOrder\InvoiceHandler;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -163,6 +167,8 @@ class JobController extends Controller
         $job_collection->put('can_take_review', $this->canTakeReview($job));
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
+        $job_collection->put('can_reschedule', $this->isStatusBeforeProcess($job->status) ? 1 : 0);
+        $job_collection->put('can_cancel', $this->isStatusBeforeProcess($job->status) ? 1 : 0);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
@@ -242,6 +248,15 @@ class JobController extends Controller
         $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
         $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
         return api_response($request, $job_collection, 200, ['job' => $job_collection]);
+    }
+
+    /**
+     * @param $status
+     * @return bool
+     */
+    public function isStatusBeforeProcess($status)
+    {
+        return constants('JOB_STATUS_SEQUENCE')[$status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
     }
 
     private function formatComplains($complains)
@@ -602,7 +617,7 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
-            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
@@ -737,6 +752,27 @@ class JobController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInvoice(Request $request)
+    {
+        $invoice = $this->generateInvoiceOfJob($request->job);
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+    }
+
+    public function generateInvoiceOfJob(Job $job)
+    {
+        $invoice = null;
+        if($job->isServed()) {
+            return [
+                'link' => $job->partnerOrder->invoice
+            ];
+        }
+        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
+    }
+
     public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
     {
         $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
@@ -755,7 +791,7 @@ class JobController extends Controller
             ->setScheduleDate($request->schedule_date)
             ->setScheduleTimeSlot($request->schedule_time_slot);
 
-        $response = $reschedule_job->reschedule();
+        $response = $reschedule_job->reschedule()->getResponse();
         return api_response($request, $response, $response['code'], ['message' => $response['msg']]);
     }
 }
