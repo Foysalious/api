@@ -32,6 +32,7 @@ class Event extends Action implements AmountCalculator
 
     public function setParams(array $params)
     {
+        \Log::info(json_encode($params));
         parent::setParams($params);
         $this->partner = $this->params[0];
     }
