@@ -121,8 +121,8 @@ class TopUpController extends Controller
                 }
             }
 
-        } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+        }
+        else return api_response($request, null, 400);
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -432,8 +432,8 @@ class TopUpController extends Controller
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
+        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=' , null);
+        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=' , $request->bulk_id);
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
@@ -504,14 +504,6 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['data' => $special_amount]);
     }
 
-    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
-    {
-        $auth_user = $request->auth_user;
-        $agent = $auth_user->getBusiness();
-        $agent_type = $this->getFullAgentType($agent->type);
-        $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
-        return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
-    }
 
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
