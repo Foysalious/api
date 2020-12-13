@@ -485,6 +485,22 @@ class Job extends BaseModel implements MorphCommentable
         return $this->created_at->diffInDays($this->getClosingTime());
     }
 
+    /**
+     * @return boolean
+     */
+    public function canReschedule()
+    {
+        return constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[$this->status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
+    }
+
+    /**
+     * @return boolean
+     */
+    public function canCancel()
+    {
+        return constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[$this->status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
+    }
+
     public function scopeInfo($query)
     {
         return $query->select(
