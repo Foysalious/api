@@ -151,6 +151,7 @@ class TopUpController extends Controller
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
             \Log::info('partner reward test log');
             \Log::info(json_encode($topup_order));
+            app()->make(ActionRewardDispatcher::class)->run('top_up', $topup_order, $topup_order);
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
             return api_response($request, null, 500);

@@ -2,8 +2,9 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
+use Sheba\Reward\Rewardable;
 
-class TopUpOrder extends Model implements PayableType
+class TopUpOrder extends Model implements PayableType, Rewardable
 {
     protected $guarded = ['id'];
     protected $table = 'topup_orders';
