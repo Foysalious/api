@@ -155,6 +155,31 @@ class LeaveController extends Controller
     }
 
     /**
+     * @param $leave
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveUpdater $leave_updater
+     * @return JsonResponse
+     */
+    public function cancelStatusUpdateByEmployee($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
+    {
+        $this->validate($request, ['status' => 'required']);
+        /** @var Leave $leave */
+        $leave = $leave_repo->find((int)$leave);
+        $business_member = $this->getBusinessMember($request);
+
+        if ($leave->business_member_id != $business_member->id)
+            return api_response($request, null, 404, ['message'=> "You are not authorised to cancel the request."]);
+
+        $this->setModifier($business_member->member);
+        $approvers = $leave->requests;
+
+        $leave_updater->setLeave($leave)->setApprovers($approvers)->setBusinessMember($business_member)->setStatus($request->status)->updateStatus();
+
+        return api_response($request, null, 200);
+    }
+
+    /**
      * @param Request $request
      * @param LeaveTypesRepoInterface $leave_types_repo
      * @return JsonResponse

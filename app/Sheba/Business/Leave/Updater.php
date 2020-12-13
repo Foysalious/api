@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Leave;
 
 use App\Jobs\Business\SendLeaveSubstitutionPushNotificationToEmployee;
+use App\Jobs\Business\SendSupportPushNotificationToSuperAdminEmployee;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
@@ -49,6 +50,7 @@ class Updater
      */
     private $previous_substitute;
     private $businessMemberRepo;
+    private $approvers;
 
     /**
      * Updater constructor.
@@ -143,6 +145,16 @@ class Updater
     }
 
     /**
+     * @param $approvers
+     * @return $this
+     */
+    public function setApprovers($approvers)
+    {
+        $this->approvers = $approvers;
+        return $this;
+    }
+
+    /**
      * @param Leave $leave
      */
     private function createAttachments(Leave $leave)
@@ -161,12 +173,15 @@ class Updater
         DB::transaction(function () {
             $previous_status = $this->leave->status;
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
+
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
         });
 
         try {
+            if ($this->approvers) $this->sendCancelNotificationDataToApprovers();
+
             $this->sendNotification($this->status);
         } catch (Exception $e) {
         }
@@ -178,6 +193,7 @@ class Updater
      */
     public function sendNotification($status)
     {
+
         $status = LeaveStatusPresenter::statuses()[$status];
         $business_member = $this->businessMemberRepository->where('id', $this->leave->business_member_id)->first();
         $sheba_notification_data = [
@@ -253,32 +269,6 @@ class Updater
         if ($this->attachments) {
             $data['log'] = $this->member->profile->name . ' added attachment(s)';
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
-        }
-
-
-    }
-
-    /**
-     * @param Leave $leave
-     */
-    private function sendPushToSubstitute(Leave $leave)
-    {
-        dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
-    }
-
-    public function statusUpdate()
-    {
-        DB::transaction(function () {
-            $previous_status = $this->leave->status;
-            $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['status' => $this->status]));
-            $this->leaveStatusLogCreator->setMember($this->member->profile->name)->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
-                ->setBusinessMember($this->businessMember)
-                ->create();
-        });
-
-        try {
-            $this->sendNotification($this->status);
-        } catch (Exception $e) {
         }
     }
 }
