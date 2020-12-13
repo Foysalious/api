@@ -55,8 +55,6 @@ class TopUpJob extends Job implements ShouldQueue
             $this->topUp = app(TopUp::class);
             $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
-            \Log::info('partner reward test log - Job');
-            \Log::info(json_encode($this->topUpOrder));
 
             $this->topUp->recharge($this->topUpOrder);
 

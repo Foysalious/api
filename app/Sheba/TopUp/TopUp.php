@@ -78,8 +78,7 @@ class TopUp
             $this->updateFailedTopOrder($topup_order, $this->response->getError());
             return;
         }
-        \Log::info('partner reward test log - Model');
-        \Log::info(json_encode($topup_order));
+
         $response = $this->response->getSuccess();
         dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->getMessage())));
         try {

@@ -32,7 +32,6 @@ class Event extends Action implements AmountCalculator
 
     public function setParams(array $params)
     {
-        \Log::info(json_encode($params));
         parent::setParams($params);
         $this->partner = $this->params[0];
     }
@@ -47,9 +46,10 @@ class Event extends Action implements AmountCalculator
      */
     public function calculateAmount()
     {
+        $topUpAmount = $this->params[0];
         if ($this->reward->is_amount_percentage) {
-            \Log::info('amount ----->', $this->reward->amount * $this->params->amount);
-            return $this->reward->amount * $this->params->amount;
+
+            return $topUpAmount->amount + (($this->reward->amount * $topUpAmount->amount) / 100);
         }
         return $this->reward->amount;
     }
