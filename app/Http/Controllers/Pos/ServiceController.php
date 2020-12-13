@@ -67,7 +67,12 @@ class ServiceController extends Controller
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
                         'color' => $service->color,
-                        'image_gallery' => $service->image_gallery ? json_decode($service->image_gallery,true) : []
+                        'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function($image){
+                            return [
+                                'id' =>   $image->id,
+                                'image_link' => $image->image_link
+                            ];
+                        }) : []
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -163,8 +168,12 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery->pluck('id')->toArray();
-
+            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery->map(function($image){
+               return [
+                 'id' =>   $image->id,
+                   'image_link' => $image->image_link
+               ];
+            });
 
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
