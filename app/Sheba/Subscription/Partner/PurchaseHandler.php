@@ -172,6 +172,19 @@ class PurchaseHandler
      */
     public function getBalance($new = false)
     {
-        return $new ? array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['breakdown']['threshold']]) : $this->balance;
+        if($new) {
+            $data = array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['breakdown']['threshold']]);
+            return array_merge($data, ["subscription_package" => $this->partner->currentSubscription()->show_name_bn, "package_type" => $this->getSubscriptionFee()]);
+        }
+        return $this->balance;
+    }
+
+    public function getSubscriptionFee()
+    {
+        $fees = (json_decode($this->partner->currentSubscription()->new_rules)->subscription_fee);
+        foreach ($fees as $fee)
+            if($fee->title == $this->partner->billing_type) return $fee;
+
+        return null;
     }
 }
