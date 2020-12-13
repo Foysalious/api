@@ -7,8 +7,6 @@ use App\Models\PartnerOrder;
 use Illuminate\Support\Facades\App;
 use Sheba\Authentication\AuthUser;
 use Sheba\Customer\Jobs\Reschedule\Reschedule;
-use App\Models\PartnerOrder;
-use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
