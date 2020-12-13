@@ -13,7 +13,7 @@ use Sheba\Reward\Rewardable;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Vendor\Vendor;
 
-class Creator implements Rewardable
+class Creator
 {
     use ModificationFields;
 
