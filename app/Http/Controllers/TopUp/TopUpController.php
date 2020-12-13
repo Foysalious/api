@@ -10,12 +10,14 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -42,9 +44,15 @@ use Sheba\TopUp\Vendor\VendorFactory;
 use Storage;
 use Throwable;
 use Validator;
+use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
+use Sheba\ShebaAccountKit\ShebaAccountKit;
+use Firebase\JWT\ExpiredException;
+use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
+    private $escape_otf_business = [1334];
+
     public function getVendor(Request $request)
     {
         try {
@@ -74,35 +82,64 @@ class TopUpController extends Controller
 
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation)
     {
-        $this->validate($request, [
+        $agent = $request->user;
+        $validation_data = [
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
-            'amount' => 'required|min:10|max:1000|numeric',
-            'password' => 'required',
-        ]);
+            'password' => 'required'
+        ];
+        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
+            'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
+            'required|min:10|max:1000|numeric';
+
+        $this->validate($request, $validation_data);
+
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
         if ($user == 'business') $agent = $auth_user->getBusiness();
         elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        elseif ($user == 'partner') {
+            $agent = $auth_user->getPartner();
+            $token = $request->topup_token;
+            if($token) {
+                try {
+                    $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
+                } catch(ExpiredException $e) {
+                    return api_response($request, null, 409, ['message' => 'Topup token expired']);
+                } catch(Exception $e) {
+                    return api_response($request, null, 409, ['message' => 'Invalid topup token']);
+                }
+
+                if ($credentials->sub != $agent->id) {
+                    return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
+                }
+            }
+
+        }
         else return api_response($request, null, 400);
+
         (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
             ->setMobile($request->mobile)
             ->setType($request->connection_type)
             ->setAgent($agent)
             ->setVendorId($request->vendor_id)
+            ->setLat($request->lat ? $request->lat : null)
+            ->setLong($request->long ? $request->long : null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($agent instanceof Business) {
+        if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }
 
         if ($top_up_request->hasError())
+        {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+        }
 
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
@@ -202,7 +239,7 @@ class TopUpController extends Controller
                 } elseif (!$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'Amount Should be Integer';
-                } elseif ($agent instanceof Business && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+                } elseif ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'The recharge amount is blocked due to OTF activation issue';
                 } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
@@ -373,18 +410,16 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param TopUpFailedReason $topUp_failed_reason
      * @param TopUpHistoryExcel $history_excel
+     * @param TopUpDataFormat $topUp_data_format
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpFailedReason $topUp_failed_reason, TopUpHistoryExcel $history_excel)
+    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
     {
-        ini_set('memory_limit', '4096M');
-        ini_set('max_execution_time', 180);
+        ini_set('memory_limit', '6096M');
+        ini_set('max_execution_time', 480);
 
-        $rules = [
-            'from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'
-        ];
+        $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             $error = $validator->errors()->all()[0];
@@ -407,31 +442,18 @@ class TopUpController extends Controller
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
+
         $total_topups = $topups->count();
         if ($is_excel_report) {
             $offset = 0;
-            $limit = 100000;
+            $limit = 10000;
         }
 
         $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
-
-        $topup_data = [];
-        foreach ($topups as $topup) {
-            $topup = [
-                'payee_mobile' => $topup->payee_mobile, 'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A', 'amount' => $topup->amount, 'operator' => $topup->vendor->name, 'payee_mobile_type' => $topup->payee_mobile_type, 'status' => $topup->status, 'failed_reason' => $topUp_failed_reason->setTopup($topup)->getFailedReason(), 'created_at' => $topup->created_at->format('jS M, Y h:i A'), 'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-            ];
-            array_push($topup_data, $topup);
-        }
+        list($topup_data, $topup_data_for_excel) = $topUp_data_format->topUpHistoryDataFormat($topups);
 
         if ($is_excel_report) {
-            $url = 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/bulk_top_ups/topup_history_format_file.xlsx';
-            $file_path = storage_path('exports') . DIRECTORY_SEPARATOR . basename($url);
-            file_put_contents($file_path, file_get_contents($url));
-            $history_excel->setFile($file_path);
-            foreach ($topup_data as $key => $topup_history) {
-                $history_excel->setRow($key + 2)->updateMobile($topup_history['payee_mobile'])->updateOperator($topup_history['operator'] == Vendors::GRAMEENPHONE ? "GP" : $topup_history['operator'])->updateConnectionType($topup_history['payee_mobile_type'])->updateAmount($topup_history['amount'])->updateStatus($topup_history['status'])->updateName($topup_history['payee_name'])->updateCreatedDate($topup_history['created_at_raw']);
-            }
-            $history_excel->takeCompletedAction();
+            $history_excel->setAgent($user)->setData($topup_data_for_excel)->takeCompletedAction();
             return api_response($request, null, 200);
         }
 
@@ -485,5 +507,43 @@ class TopUpController extends Controller
     {
         $special_amount = $topUp_special_amount->get();
         return api_response($request, null, 200, ['data' => $special_amount]);
+    }
+
+
+    public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
+    {
+        $authorizationCode = $request->authorization_code;
+        if(!$authorizationCode) {
+            return api_response($request, null, 400, [
+                'message' => 'Authorization code not provided'
+            ]);
+        }
+        $access_token_request->setAuthorizationCode($authorizationCode);
+        $otpNumber = $sheba_accountKit->getMobile($access_token_request);
+
+        /** @var AuthUser $user */
+        $user = $request->auth_user;
+        $resourceNumber = $user->getPartner()->getContactNumber();
+        if ($otpNumber == $resourceNumber) {
+            $timeSinceMidnight = time() - strtotime("midnight");
+            $remainingTime = (24 * 3600) - $timeSinceMidnight;
+
+            $payload = [
+                'iss' => "topup-jwt",
+                'sub' => $user->getPartner()->id,
+                'iat' => time(),
+//                'exp' => time() + $remainingTime
+                'exp' => time() + (60 * 60)
+            ];
+
+            return api_response($request, null, 200, [
+                'topup_token' => JWT::encode($payload, config('jwt.secret'))
+            ]);
+        }
+
+        return api_response($request, null, 403, [
+            'message' => 'Invalid Request'
+        ]);
+
     }
 }
