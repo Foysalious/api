@@ -34,6 +34,7 @@ class Event extends Action implements AmountCalculator
     {
         parent::setParams($params);
         $this->partner = $this->params[0];
+        $this->requestFrom = $this->params[1];
     }
 
     public function isEligible()
