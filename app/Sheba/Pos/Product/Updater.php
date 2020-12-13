@@ -7,12 +7,13 @@ use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceLogRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 
 class Updater
 {
-    use FileManager, CdnFileManager;
+    use FileManager, CdnFileManager, ModificationFields;
 
     private $data;
     private $updatedData;
@@ -48,13 +49,29 @@ class Updater
     {
         $this->saveImages();
         $this->format();
-        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off']);
-
+        $image_gallery = $this->updatedData['image_gallery'];
+        $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'is_vat_percentage_off', 'is_stock_off','image_gallery']);
+        $this->updatedData = array_except($this->updatedData, 'image_gallery');
         if (!empty($this->updatedData)) {
             $old_service = clone $this->service;
             $this->serviceRepo->update($this->service, $this->updatedData);
             $this->storeLogs($old_service, $this->updatedData);
         }
+        $this->storeImageGallery($image_gallery);
+
+    }
+
+    private function storeImageGallery($image_gallery)
+    {
+
+        $data = [];
+        collect($image_gallery)->each(function($image) use(&$data){
+            array_push($data, [
+                    'partner_pos_service_id' => $this->service->id,
+                    'image_link' => $image
+                ]+  $this->modificationFields(true, false));
+        });
+        return PartnerPosServiceImageGallery::insert($data);
     }
 
     private function saveImages()
@@ -75,14 +92,11 @@ class Updater
             list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
             $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
         }
-
-        $old_images = PartnerPosServiceImageGallery::where('partner_pos_service_id',$this->service->id)->pluck('image_link')->toArray();
         if (isset($this->data['deleted_image'])) {
-            $this->data['deleted_image'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
-            $this->deleteFromCDN($this->data['deleted_image']);
-            $old_images = array_diff($old_images, $this->data['deleted_image']);
+            $this->data['deleted_image_link'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
+            $this->deleteFromCDN($this->data['deleted_image_link']);
+            $this->deleteFromDB($this->data['deleted_image']);
         }
-        $image_gallery = array_filter(array_merge($image_gallery, $old_images));
         return json_encode($image_gallery);
     }
 
@@ -92,6 +106,11 @@ class Updater
             $filename = substr($file, strlen(env('S3_URL')));
             (new FileRepository())->deleteFileFromCDN($filename);
         }
+    }
+
+    private function deleteFromDB($deleted_image)
+    {
+        PartnerPosServiceImageGallery::whereIn('id',$deleted_image)->delete();
     }
 
     private function hasFile($filename)
