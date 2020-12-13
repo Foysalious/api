@@ -47,7 +47,10 @@ class Event extends Action implements AmountCalculator
      */
     public function calculateAmount()
     {
-        \Log::info('calculate'.$this->reward->amount);
+        if ($this->reward->is_amount_percentage) {
+            \Log::info('amount ----->', $this->reward->amount * $this->params->amount);
+            return $this->reward->amount * $this->params->amount;
+        }
         return $this->reward->amount;
     }
 
