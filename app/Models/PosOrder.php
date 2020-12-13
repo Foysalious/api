@@ -3,6 +3,8 @@
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\POSOrder\OrderStatuses as POSOrderStatuses;
+use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\EMI\Calculations;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Log\Supported\Types;
@@ -11,6 +13,7 @@ use Sheba\Pos\Order\RefundNatures\Natures;
 use Sheba\Pos\Order\RefundNatures\ReturnNatures;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Dal\POSOrder\OrderStatuses;
+
 
 class PosOrder extends Model {
     use SoftDeletes;
@@ -52,6 +55,7 @@ class PosOrder extends Model {
             $this->update(['interest' => $this->interest, 'bank_transaction_charge' => $this->bank_transaction_charge]);
         }
         $this->netBill = $this->originalTotal + round((double)$this->interest, 2) + (double)round($this->bank_transaction_charge, 2);
+        if ($this->sales_channel == POSOrderSalesChannel::WEBSTORE && $this->delivery_charge && !in_array($this->status, [POSOrderStatuses::CANCELLED, POSOrderStatuses::DECLINED])) $this->netBill += (double)round($this->delivery_charge, 2);
         $this->_calculatePaidAmount();
         $this->paid = round($this->paid ?: 0, 2);
 
@@ -330,5 +334,10 @@ class PosOrder extends Model {
     public function scopeShipped($query)
     {
         return $query->where('status', OrderStatuses::SHIPPED);
+    }
+
+    public function scopeSalesChannel($query, $salesChannel)
+    {
+        return $query->where('sales_channel', $salesChannel);
     }
 }
