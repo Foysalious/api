@@ -15,7 +15,6 @@ class Event extends Action implements AmountCalculator
 {
     /** @var Partner $partner */
     private $partner;
-    private $requestFrom;
 
     /**
      * @param BaseRule $rule
@@ -34,7 +33,6 @@ class Event extends Action implements AmountCalculator
     {
         parent::setParams($params);
         $this->partner = $this->params[0];
-        $this->requestFrom = $this->params[1];
     }
 
     public function isEligible()
@@ -45,8 +43,14 @@ class Event extends Action implements AmountCalculator
     /**
      * @return float|int|mixed
      */
+
     public function calculateAmount()
     {
+        $topUpAmount = $this->params[0];
+        if ($this->reward->is_amount_percentage) {
+
+            return (($this->reward->amount * $topUpAmount->amount) / 100);
+        }
         return $this->reward->amount;
     }
 

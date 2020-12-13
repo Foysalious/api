@@ -67,18 +67,21 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
+
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
             return;
         }
 
         $this->response = $this->vendor->recharge($topup_order);
+
         if ($this->response->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->response->getError());
             return;
         }
 
         $response = $this->response->getSuccess();
+
         try {
             DB::transaction(function () use ($response, $topup_order) {
                 $this->setModifier($this->agent);
@@ -88,6 +91,7 @@ class TopUp
                 $this->vendor->deductAmount($topup_order->amount);
                 $this->isSuccessful = true;
             });
+            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
         } catch (Throwable $e) {
             logError($e);
         }
