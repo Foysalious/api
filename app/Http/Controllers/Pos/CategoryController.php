@@ -159,7 +159,7 @@ class CategoryController extends Controller
 
     private function getSelectColumnsOfCategory()
     {
-        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner'];
+        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
     }
 
     public function getMasterCategoriesWithSubCategory(Request $request)
