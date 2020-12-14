@@ -237,7 +237,7 @@ class Updater
 
     private function makeData()
     {
-        $this->data['note'] = $this->note;
+        if ($this->note) $this->data['note'] = $this->note;
         if ($this->substitute) $this->data['substitute_id'] = $this->substitute;
     }
 
