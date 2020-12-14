@@ -295,8 +295,12 @@ class DashboardController extends Controller
         try {
             $this->setModifier($request->partner);
             $home_page_setting = $setting->setPartner($request->partner)->get();
-            foreach ($home_page_setting as $setting) {
-                in_array($setting->key, NewFeatures::get()) ? $setting->is_new = 1 : $setting->is_new = 0;
+            foreach ($home_page_setting as &$setting) {
+                if (is_object($setting)) {
+                    in_array($setting->key, NewFeatures::get()) ? $setting->is_new = 1 : $setting->is_new = 0;
+                } else {
+                    in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
+                }
             }
             return api_response($request, null, 200, ['data' => $home_page_setting]);
         } catch (Throwable $e) {
