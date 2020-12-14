@@ -244,7 +244,7 @@ class Updater
     {
         if ($this->note) $this->data['note'] = $this->note;
         if ($this->substitute) $this->data['substitute_id'] = $this->substitute;
-        if ($this->substitute == "") $this->data['substitute_id'] = null;
+        if ($this->substitute == "null") $this->data['substitute_id'] = null;
     }
 
     private function getSubstituteName($substitute_id)
@@ -272,8 +272,8 @@ class Updater
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
         }
 
-        if ($this->substitute || $this->substitute == "") {
-            if ($this->substitute == "") {
+        if ($this->substitute || $this->substitute == "null") {
+            if ($this->substitute == "null") {
                 $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to n/s';
             } else {
                 $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to ' . $this->getSubstituteName($this->substitute);
