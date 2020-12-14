@@ -9,6 +9,7 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 
 
+
 class PartnerPosService extends BaseModel
 {
     use SoftDeletes, AlgoliaEloquentTrait;

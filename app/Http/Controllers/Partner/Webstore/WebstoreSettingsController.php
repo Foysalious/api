@@ -47,6 +47,7 @@ class WebstoreSettingsController extends Controller
         $webstoreSettingsUpdateRequest->setPartner($request->partner);
         if ($request->has('is_webstore_published')) {
             if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
+
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
@@ -93,6 +94,7 @@ class WebstoreSettingsController extends Controller
      */
     public function storeBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
+
         $this->validate($request, [
             'banner_id' => 'required',
             'title' => 'string',
@@ -111,7 +113,7 @@ class WebstoreSettingsController extends Controller
 
         $webstoreBannerSettings->setData($data)->store();
         return api_response($request, null, 200, ['message' => 'Banner Settings Created Successfully']);
-    }
+ }
 
 
     /**
@@ -129,6 +131,7 @@ class WebstoreSettingsController extends Controller
             return api_response($request, null, 400, ['msg' => 'Banner Settings not found']);
         $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
         return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+
     }
 
 }

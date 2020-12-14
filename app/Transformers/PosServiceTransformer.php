@@ -51,7 +51,6 @@ class PosServiceTransformer extends TransformerAbstract
                     'image_link' => $image->image_link
                 ];
             }) : []
-
         ];
     }
 }

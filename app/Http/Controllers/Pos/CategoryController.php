@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
 
+
+
 class CategoryController extends Controller
 {
     public function index(Request $request)
@@ -230,6 +232,4 @@ class CategoryController extends Controller
         $category->createPartnerCategory($partner->id, $master_category, $sub_category);
         return api_response($request, null, 200, ['message' => 'Category Created Successfully']);
     }
-
-
 }
