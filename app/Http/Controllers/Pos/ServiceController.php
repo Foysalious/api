@@ -255,7 +255,16 @@ class ServiceController extends Controller
             $partner_pos_service = PartnerPosService::find($request->service);
 
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
-            $updater->setService($partner_pos_service)->setData($request->all())->update();
+
+            $sub_categories = PosCategory::child()->pluck('id')->toArray();
+            $is_valid_sub_category = (in_array($request->category_id,$sub_categories)) ? 1 : 0 ;
+            if(!$request->has('master_category_id') && !$is_valid_sub_category)
+                return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+            if($request->has('master_category_id') && !$is_valid_sub_category){
+                $request->request->remove('category_id');
+                $request->merge($this->resolveSubcategory($request->master_category_id));
+            }
+            $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
 
             if ($request->discount_id) {
                 $discount_data = [];
