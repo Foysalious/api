@@ -5,13 +5,14 @@ use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
 
 class Creator
 {
-    use FileManager, CdnFileManager;
+    use FileManager, CdnFileManager, ModificationFields;
 
     private $data;
     private $serviceRepo;
@@ -61,7 +62,7 @@ class Creator
             array_push($data, [
                 'partner_pos_service_id' => $partner_pos_service->id,
                 'image_link' => $image
-            ]);
+            ] +  $this->modificationFields(true, false) );
         });
         return PartnerPosServiceImageGallery::insert($data);
     }

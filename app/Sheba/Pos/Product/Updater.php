@@ -1,8 +1,10 @@
 <?php namespace Sheba\Pos\Product;
 
 use App\Models\PartnerPosService;
+use App\Repositories\FileRepository;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
