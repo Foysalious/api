@@ -8,10 +8,6 @@ use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class PaywellClient
 {
-    const VR_PROXY_RECHARGE_ACTION = "recharge";
-    const VR_PROXY_BALANCE_ACTION = "get_balance";
-    const VR_PROXY_STATUS_ACTION = "get_status";
-
     /** @var HttpClient */
     private $httpClient;
 
@@ -22,6 +18,7 @@ class PaywellClient
     private $api_key;
     private $encryption_key;
     private $single_topup_url;
+    private $paywell_proxy_url;
 
     public function __construct(HttpClient $client)
     {
@@ -33,6 +30,7 @@ class PaywellClient
         $this->api_key = config('topup.paywell.api_key');
         $this->encryption_key = config('topup.paywell.encryption_key');
         $this->single_topup_url = config('topup.paywell.single_topup_url');
+        $this->paywell_proxy_url = config('topup.paywell.proxy_url');
     }
 
     /**
@@ -40,7 +38,7 @@ class PaywellClient
      * @return TopUpResponse
      * @throws \Exception
      */
-    public function recharge(TopUpOrder $topup_order)
+    public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $security_token = $this->getToken();
         $request_data = json_encode(array(
@@ -56,70 +54,43 @@ class PaywellClient
         $hashed_data = hash_hmac('sha256', $request_data, $this->encryption_key);
         $bearer_token = base64_encode($security_token . ":" . $this->api_key . ":" . $hashed_data);
 
-        $curl = curl_init();
-
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $this->single_topup_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => $request_data,
-            CURLOPT_HTTPHEADER => [
+        $data = [
+            'url' => $this->single_topup_url,
+            'input' => $request_data,
+            'header' => [
                 "Authorization: Bearer " . $bearer_token,
                 "Content-Type: application/json"
             ],
-        ]);
+        ];
 
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
+        $get_response = $this->call($data);
+        $results = json_decode($get_response, 1);
 
-        curl_close($curl);
+        echo $results['data']['status'];
 
-        if ($err) {
-            echo $err;
-            return json_decode($err);
-        } else {
-            echo $response;
-            return json_decode($response, 1);
-        }
+        $topup_response = app(TopUpResponse::class);
+
+        $topup_response->setResponse(['recharge_status' => 200]);
+
+        return $topup_response;
     }
 
     /**
      * @return mixed
-     * @throws Exception
      */
     public function getToken()
     {
         $auth_code = base64_encode($this->username . ":" . $this->auth_password);
-
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $this->get_token_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => "",
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 60,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => "POST",
-            CURLOPT_POSTFIELDS => "",
-            CURLOPT_HTTPHEADER => [
+        $data = [
+            'url' => $this->get_token_url,
+            'input' => '',
+            'header' => [
                 "Authorization: Basic " . $auth_code
             ],
-        ]);
+        ];
 
-        $response = curl_exec($curl);
-        $err = curl_error($curl);
-
-        curl_close($curl);
-
-        if ($err) {
-            return $err;
-        } else {
-             return json_decode($response, 1)['token']['security_token'];
-        }
+        $get_response = $this->call($data);
+        return json_decode($get_response, 1)['token']['security_token'];
     }
 
     private function getOperatorId($mobile_number)
@@ -147,26 +118,15 @@ class PaywellClient
      */
     private function call($data)
     {
-        $common = [
-            'url' => $this->topUpUrl,
-            'client_id' => $this->clientId,
-            'client_password' => $this->clientPassword
-        ];
-
         try {
-            $response = $this->httpClient->request('POST', $this->proxyUrl, [
-                'form_params' => $common + $data,
-                'timeout' => 60,
-                'read_timeout' => 60,
-                'connect_timeout' => 60
-            ]);
-
-            $proxy_response = $response->getBody()->getContents();
+            $response = $this->httpClient->request('POST', $this->paywell_proxy_url, ['form_params' => $data]);
+            $proxy_response = $response->getBody();
             if (!$proxy_response) throw new Exception("VR proxy server not working.");
-            $proxy_response = json_decode($proxy_response);
-            if ($proxy_response->code != 200) throw new Exception("VR proxy server error: ". $proxy_response->message);
-            return $proxy_response->vr_response;
+            $proxy_response = json_decode($proxy_response, 1);
+            if ($proxy_response['code'] != 200) throw new Exception("VR proxy server error: ". $proxy_response->message);
+            return $proxy_response['data'];
         } catch (GuzzleException $e) {
+            echo $e->getMessage();
             throw new Exception("VR proxy server error: ". $e->getMessage());
         }
     }
