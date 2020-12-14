@@ -232,19 +232,23 @@ class Updater
     public function update()
     {
         $this->makeData();
-        DB::transaction(function () {
+
+       DB::transaction(function () {
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField($this->data));
             if ($this->attachments) $this->createAttachments($this->leave);
             $this->createLog();
         });
-        if ($this->substitute) $this->sendPushToSubstitute($this->leave);
+        if ($this->substitute && $this->substitute !== 'null') $this->sendPushToSubstitute($this->leave);
     }
 
     private function makeData()
     {
         if ($this->note) $this->data['note'] = $this->note;
-        if ($this->substitute) $this->data['substitute_id'] = $this->substitute;
-        if ((int)$this->substitute === 0) $this->data['substitute_id'] = null;
+        if ($this->substitute && $this->substitute !== 'null') {
+            $this->data['substitute_id'] = $this->substitute;
+        } elseif ($this->substitute == 'null') {
+            $this->data['substitute_id'] = null;
+        }
     }
 
     private function getSubstituteName($substitute_id)
@@ -272,8 +276,8 @@ class Updater
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
         }
 
-        if ($this->substitute || ((int)$this->substitute === 0)) {
-            if ((int)$this->substitute === 0) {
+        if ($this->substitute || ($this->substitute == 'null')) {
+            if ($this->substitute == 'null') {
                 $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to n/s';
             } else {
                 $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to ' . $this->getSubstituteName($this->substitute);
