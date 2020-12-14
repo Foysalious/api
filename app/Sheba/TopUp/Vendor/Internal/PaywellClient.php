@@ -46,15 +46,15 @@ class PaywellClient
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $security_token = $this->getToken();
-        $request_data = json_encode(array(
+        $request_data = json_encode([
             "username" => $this->username,
             "password" => $this->password,
             "ref_id" => $topup_order->id,
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
-            "operator" => $this->getOperatorId($topup_order->payee_mobile),
-        ));
+            "operator" => $this->getOperatorId($topup_order->payee_mobile)
+        ]);
 
         $hashed_data = hash_hmac('sha256', $request_data, $this->encryption_key);
         $bearer_token = base64_encode($security_token . ":" . $this->api_key . ":" . $hashed_data);
@@ -96,6 +96,7 @@ class PaywellClient
         ];
 
         $get_response = $this->call($data);
+
         return json_decode($get_response, 1)['token']['security_token'];
     }
 
@@ -127,13 +128,14 @@ class PaywellClient
         try {
             $response = $this->httpClient->request('POST', $this->paywell_proxy_url, ['form_params' => $data]);
             $proxy_response = $response->getBody();
-            if (!$proxy_response) throw new Exception("VR proxy server not working.");
+            if (!$proxy_response) throw new Exception("PAYWELL proxy server not working.");
             $proxy_response = json_decode($proxy_response, 1);
-            if ($proxy_response['code'] != 200) throw new Exception("VR proxy server error: ". $proxy_response->message);
+            if ($proxy_response['code'] != 200) throw new Exception("PAYWELL proxy server error: ". $proxy_response->message);
+
             return $proxy_response['data'];
         } catch (GuzzleException $e) {
             echo $e->getMessage();
-            throw new Exception("VR proxy server error: ". $e->getMessage());
+            throw new Exception("PAYWELL proxy server error: ". $e->getMessage());
         }
     }
 }
