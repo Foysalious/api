@@ -76,7 +76,7 @@ class PaywellClient
         $response = curl_exec($curl);
         $err = curl_error($curl);
 
-        echo $response;
+        curl_close($curl);
 
         if ($err) {
             echo $err;
@@ -136,7 +136,7 @@ class PaywellClient
         } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
             return 'TT';
         } else {
-            throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
+            throw new \InvalidArgumentException('Invalid Mobile for paywell topup.');
         }
     }
 

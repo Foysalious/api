@@ -31,13 +31,13 @@ return [
         'successful' => ['sheba' => 'Successful', 'partner' => 'Inactive', 'customer' => 'Inactive'],
         'failed' => ['sheba' => 'Failed', 'partner' => 'Inactive', 'customer' => 'Blocked'],
     ],
-    'paywell' => array(
-        'username' => 'shebaxyz',
-        'auth_password' => 'nH3vB0zP6gC2tI3',
-        'password' => '73651646',
-        'get_token_url' => 'https://agentapi.paywellonline.com/Authantication/PaywellAuth/getToken',
-        'api_key' => 'f9d1b62eb863f39842e4ff56cb44510f648e3a987e9a8548b2ffda0331398609',
-        'encryption_key' => '0b797747c3803efc2956c8f218c68a25f0e9b6dad5fa83dc95c53a76c160303167a5ceaa8356bfb5be9c765c83fcdb2ef54ed69614964576780caf3d41a36378',
-        'single_topup_url' => 'https://agentapi.paywellonline.com/Recharge/mobileRecharge/singleTopup',
-    ),
+    'paywell' => [
+        'username' => env('PAYWELL_USERNAME'),
+        'auth_password' => env('PAYWELL_AUTH_PASSWORD'),
+        'password' => env('PAYWELL_PASSWORD'),
+        'get_token_url' => env('PAYWELL_GET_TOKEN_URL'),
+        'api_key' => env('PAYWELL_API_KEY'),
+        'encryption_key' => env('PAYWELL_ENCRYPTION_KEY'),
+        'single_topup_url' => env('PAYWELL_SINGLE_TOPUP_URL'),
+    ],
 ];
