@@ -261,8 +261,10 @@ class Updater
             'is_changed_by_super' => 0,
         ];
 
-        $data['log'] = $this->member->profile->name . ' changed the leave note';
-        $this->leaveLogRepo->create($this->withCreateModificationField($data));
+        if ($this->note) {
+            $data['log'] = $this->member->profile->name . ' changed the leave note';
+            $this->leaveLogRepo->create($this->withCreateModificationField($data));
+        }
 
         $previous_substitute = $this->leave->substitute_id;
         if ($this->substitute) {
