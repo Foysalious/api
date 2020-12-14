@@ -53,7 +53,6 @@ use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
-    private $escape_otf_business = [1334];
 
     public function getVendor(Request $request)
     {
@@ -131,7 +130,7 @@ class TopUpController extends Controller
             ->setLong($request->long ? $request->long : null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business)) {
+        if ($agent instanceof Business && $request->has('is_otf') && $request->is_otf == 0) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }
