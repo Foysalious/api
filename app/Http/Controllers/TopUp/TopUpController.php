@@ -119,7 +119,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -199,7 +199,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
-            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
+            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
