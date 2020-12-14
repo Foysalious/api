@@ -153,6 +153,7 @@ class PartnerPosService extends BaseModel
             'category_id' => $this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
+            'stock' => $this->stock,
             'description' => $this->description,
             'publication_status' => $this->publication_status,
             'is_published_for_shop' => (int) $this->is_published_for_shop,
