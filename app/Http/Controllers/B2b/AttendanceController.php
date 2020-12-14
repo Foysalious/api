@@ -102,8 +102,8 @@ class AttendanceController extends Controller
     {
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
-        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with([
+        $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->limit(5)->first();
+        $members = $business->members()->select('members.id', 'profile_id')->limit(5)->with([
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
@@ -184,16 +184,16 @@ class AttendanceController extends Controller
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
-
-        if (count($all_employee_attendance) > 0) {
-            if ($request->file == 'excel') {
+        if ($request->file == 'excel') {
+            if (count($all_employee_attendance) > 0) {
                 return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
-            }
-            return api_response($request, $all_employee_attendance, 200, [
-                'all_employee_attendance' => $all_employee_attendance,
-                'total_members' => $total_members,
-            ]);
-        } else return api_response($request, null, 404);
+            } else return api_response($request, null, 404);
+        }
+
+        return api_response($request, $all_employee_attendance, 200, [
+            'all_employee_attendance' => $all_employee_attendance,
+            'total_members' => $total_members,
+        ]);
     }
 
     /**
