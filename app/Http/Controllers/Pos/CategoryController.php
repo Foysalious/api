@@ -10,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
 
+
+
 class CategoryController extends Controller
 {
     public function index(Request $request)
@@ -158,7 +160,7 @@ class CategoryController extends Controller
 
     private function getSelectColumnsOfCategory()
     {
-        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner'];
+        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
     }
 
     public function getMasterCategoriesWithSubCategory(Request $request)
@@ -231,5 +233,23 @@ class CategoryController extends Controller
         return api_response($request, null, 200, ['message' => 'Category Created Successfully']);
     }
 
-
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param $category_id
+     * @param Category $category
+     * @return JsonResponse
+     */
+    public function update(Request $request, $partner, $category_id, Category $category)
+    {
+        $this->validate($request, [
+            'name' => 'required',
+        ]);
+        $modifier = $request->manager_resource;
+        $pos_category = PosCategory::where('id',$request->category_id)->first();
+        if($pos_category->is_published_for_sheba)
+            return api_response($request, null, 403, ['message' => 'Not allowed to update this category']);
+        $category->update($modifier,$pos_category,$request->name);
+        return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
+    }
 }

@@ -13,15 +13,17 @@ use Sheba\RequestIdentification;
 
 class Creator
 {
-    use FileManager, CdnFileManager,  ModificationFields;
+    use FileManager, CdnFileManager, ModificationFields;
+
 
     private $data;
     private $serviceRepo;
     private $imageGalleryRepo;
 
-    public function __construct(PosServiceRepositoryInterface $service_repo)
+    public function __construct(PosServiceRepositoryInterface $service_repo, PosServiceRepositoryInterface $image_gallery_repo)
     {
         $this->serviceRepo = $service_repo;
+        $this->imageGalleryRepo = $image_gallery_repo;
     }
 
     public function setData($data)
@@ -41,7 +43,7 @@ class Creator
         if (isset($this->data['image_gallery']))
             $image_gallery = $this->data['image_gallery'];
         $this->data = array_except($this->data, ['remember_token', 'discount_amount', 'end_date', 'manager_resource', 'partner', 'category_id', 'image_gallery']);
-        if (isset($image_gallery)) $image_gallery = $this->saveImageGallery($image_gallery);
+        //if (isset($image_gallery)) $image_gallery = $this->saveImageGallery($image_gallery);
         $partner_pos_service = $this->serviceRepo->save($this->data + (new RequestIdentification())->get());
         $this->storeImageGallery($partner_pos_service, json_decode($image_gallery, true));
         return $partner_pos_service;
@@ -50,6 +52,9 @@ class Creator
     private function saveImages()
     {
         if ($this->hasFile('app_thumb')) $this->data['app_thumb'] = $this->saveAppThumbImage();
+
+        if (isset($this->data['image_gallery'])) $this->data['image_gallery'] = $this->saveImageGallery($this->data['image_gallery']);
+
     }
 
     private function storeImageGallery($partner_pos_service,$image_gallery)
@@ -59,7 +64,7 @@ class Creator
             array_push($data, [
                 'partner_pos_service_id' => $partner_pos_service->id,
                 'image_link' => $image
-            ]+  $this->modificationFields(true, false));
+                ] +  $this->modificationFields(true, false) );
         });
         return PartnerPosServiceImageGallery::insert($data);
     }
@@ -78,6 +83,7 @@ class Creator
      * @param $image_gallery
      * @return false|string
      */
+
     private function saveImageGallery($image_gallery)
     {
         $image_gallery_link = [];

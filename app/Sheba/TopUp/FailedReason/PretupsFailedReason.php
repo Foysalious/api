@@ -4,6 +4,5 @@ class PretupsFailedReason extends FailedReason
 {
     public function getReason()
     {
-
     }
 }

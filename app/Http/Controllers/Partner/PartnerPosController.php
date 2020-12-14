@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
+use App\Models\PosCategory;
 use App\Transformers\Partner\PosServiceTransformer;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
@@ -19,7 +20,11 @@ class PartnerPosController extends Controller
             $products = $products->getAvailableProducts();
 
             if (count($products) > 0) {
-                $categories = $posCategoryRepository->whereIn('id', $products->pluck('pos_category_id')->unique()->toArray())->get()->pluck('parent')->pluck('id','name');
+                $categories = PosCategory::parents()->published()->select(['id','name'])
+                    ->whereHas('children',function ($q) use ($products) {
+                        $q->whereIn('id', $products->pluck('pos_category_id')->unique()->toArray());
+                    })->get();
+
                 $resource = new Collection($products, new PosServiceTransformer());
                 $category_data= [];
                 foreach ($categories as $key => $value) {
@@ -29,7 +34,11 @@ class PartnerPosController extends Controller
                     array_push($category_data, $category);
                 }
                 return api_response($request, $products, 200, ['products' => $fractal->createData($resource)->toArray()['data'],
-                    'categories' => $category_data ]);
+                    'categories' => $categories->map(function ($category) use ($products) {
+                        $category['total_products'] = $products->whereIn('pos_category_id', $category->children->pluck('id')->toArray())->count();
+                        removeRelationsAndFields($category);
+                        return $category;
+                    })]);
             } else return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
