@@ -9,6 +9,7 @@ class PosServiceTransformer extends TransformerAbstract
         $service_discount = $service->discount();
 
         return [
+            'id' => $service->id,
             'name' => $service->name,
             'app_thumb' => $service->app_thumb,
             'app_banner' => $service->app_banner,
