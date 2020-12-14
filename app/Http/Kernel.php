@@ -64,8 +64,9 @@ class Kernel extends HttpKernel
         'web' => [
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
-            StartSession::class, ShareErrorsFromSession::class,
-            VerifyCsrfToken::class
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
         ],
 
         'api' => [

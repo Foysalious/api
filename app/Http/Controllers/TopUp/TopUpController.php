@@ -121,8 +121,8 @@ class TopUpController extends Controller
                 }
             }
 
-        }
-        else return api_response($request, null, 400);
+        } else return api_response($request, null, 400);
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -147,7 +147,6 @@ class TopUpController extends Controller
 
         if ($topup_order) {
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
-
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
             return api_response($request, null, 500);
@@ -202,7 +201,7 @@ class TopUpController extends Controller
             if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
-            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
+            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
@@ -258,7 +257,8 @@ class TopUpController extends Controller
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
 
-            if ($total_recharge_amount > $agent->wallet) return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+            if ($total_recharge_amount > $agent->wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
@@ -451,7 +451,6 @@ class TopUpController extends Controller
             $history_excel->setAgent($user)->setData($topup_data_for_excel)->takeCompletedAction();
             return api_response($request, null, 200);
         }
-
         return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
     }
 
@@ -508,7 +507,7 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
-        if (!$authorizationCode) {
+        if(!$authorizationCode) {
             return api_response($request, null, 400, [
                 'message' => 'Authorization code not provided'
             ]);

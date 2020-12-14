@@ -218,4 +218,16 @@ class AccountServer
             ]
         ]);
     }
+
+    public function getAuthenticateRequests($token, $purpose)
+    {
+        return (new Client())->get(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password/requests", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'query' => [
+                'purpose' => $purpose
+            ]
+        ]);
+    }
 }
