@@ -30,6 +30,7 @@ class GatewayFactory
         if ($this->gatewayName == Names::BANGLALINK) return app(Banglalink::class);
         if ($this->gatewayName == Names::ROBI) return app(Robi::class);
         if ($this->gatewayName == Names::AIRTEL) return app(Airtel::class);
+        if ($this->gatewayName == Names::PAYWELL) return app(Paywell::class);
         else return app(Ssl::class);
     }
 }
