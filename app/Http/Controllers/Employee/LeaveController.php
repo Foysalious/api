@@ -181,7 +181,7 @@ class LeaveController extends Controller
 
         if ($current_time > $leave_end_time)
             return api_response($request, null, 404, ['message' => "You can't cancel this request anymore."]);
-        
+
         $business_member = $this->getBusinessMember($request);
 
         if ($leave->business_member_id != $business_member->id)
@@ -241,6 +241,7 @@ class LeaveController extends Controller
         $leaves = $leave_repo->builder()
             ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration')
             ->where('business_member_id', $business_member->id)
+            ->where('status', 'pending')->orWhere('status', 'accepted')
             ->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
             ->get();
 
@@ -291,9 +292,9 @@ class LeaveController extends Controller
 
     public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
     {
-        $this->validate($request, [
+       /* $this->validate($request, [
             'note' => 'required',
-        ]);
+        ]);*/
         $member = $this->getMember($request);
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($member);
