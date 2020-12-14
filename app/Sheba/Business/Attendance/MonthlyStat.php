@@ -54,7 +54,8 @@ class MonthlyStat
             'on_leave' => 0,
             'full_day_leave' => 0,
             'half_day_leave' => 0,
-            'present' => 0
+            'present' => 0,
+            'left_early_note' => 0
         ];
 
         $daily_breakdown = [];
@@ -107,6 +108,7 @@ class MonthlyStat
                 }
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
+                $statistics['left_early_note'] = (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null;
             }
 
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
