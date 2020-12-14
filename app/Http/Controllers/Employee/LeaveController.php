@@ -241,6 +241,7 @@ class LeaveController extends Controller
         $leaves = $leave_repo->builder()
             ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration')
             ->where('business_member_id', $business_member->id)
+            ->where('status', 'pending')->orWhere('status', 'accepted')
             ->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
             ->get();
 
