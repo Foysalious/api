@@ -6,6 +6,10 @@ use App\Models\PosCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use App\Sheba\Pos\Category\Category;
+use Illuminate\Validation\ValidationException;
+use Sheba\ModificationFields;
+
 
 class CategoryController extends Controller
 {
@@ -208,5 +212,23 @@ class CategoryController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @param $partner
+     * @param Category $category
+     * @return JsonResponse
+     */
+    public function store(Request $request, $partner, Category $category)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+        ]);
+        $partner = $request->partner;
+        $modifier = $request->manager_resource;
+        list($master_category, $sub_category) = $category->createCategory($modifier, $request->name);
+        $category->createPartnerCategory($partner->id, $master_category, $sub_category);
+        return api_response($request, null, 200, ['message' => 'Category Created Successfully']);
     }
 }

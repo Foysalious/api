@@ -66,7 +66,13 @@ class ServiceController extends Controller
                         'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null,
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
-                        'color' => $service->color
+                        'color' => $service->color,
+                        'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function($image){
+                            return [
+                                'id' =>   $image->id,
+                                'image_link' => $image->image_link
+                            ];
+                        }) : []
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -80,7 +86,7 @@ class ServiceController extends Controller
 
     private function getSelectColumnsOfService()
     {
-        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price','show_image','shape','color'];
+        return ['id', 'name', 'app_thumb', 'app_banner', 'price', 'stock', 'vat_percentage', 'is_published_for_shop', 'warranty', 'warranty_unit', 'unit', 'wholesale_price','show_image','shape','color','image_gallery'];
     }
 
     /**
@@ -125,8 +131,7 @@ class ServiceController extends Controller
                 'name'        => 'required',
                 'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
-                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
-
+                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -164,6 +169,15 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
 
+            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
+            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
+            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
+               return [
+                 'id' =>   $image->id,
+                   'image_link' => $image->image_link
+               ];
+            }) : [];
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
              * USAGE LOG
@@ -271,6 +285,12 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
             $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
             $partner_pos_service_arr              = $partner_pos_service->toArray();
+            $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function($image){
+                return [
+                    'id' =>   $image->id,
+                    'image_link' => $image->image_link
+                ];
+            }) : [];
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [
                 'msg' => 'Product Updated Successfully',
