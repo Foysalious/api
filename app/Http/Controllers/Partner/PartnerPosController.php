@@ -34,10 +34,10 @@ class PartnerPosController extends Controller
                     array_push($category_data, $category);
                 }
                 return api_response($request, $products, 200, ['categories' => $categories->map(function ($category) use ($products) {
-                        $category['total_products'] = $products->whereIn('pos_category_id', $category->children->pluck('id')->toArray())->count();
-                        removeRelationsAndFields($category);
-                        return $category;
-                    })]);
+                    $category['total_products'] = $products->whereIn('pos_category_id', $category->children->pluck('id')->toArray())->count();
+                    removeRelationsAndFields($category);
+                    return $category;
+                })]);
             } else return api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
