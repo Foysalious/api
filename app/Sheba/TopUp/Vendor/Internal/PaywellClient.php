@@ -5,6 +5,7 @@ use Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
+use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class PaywellClient
@@ -69,14 +70,12 @@ class PaywellClient
         ];
 
         $get_response = $this->call($data);
-        $results = json_decode($get_response);
+        $response = json_decode($get_response)->data;
 
-        echo $results['data']['status'];
+        print_r($response);
 
-        $topup_response = app(TopUpResponse::class);
-
-        $topup_response->setResponse(['recharge_status' => 200]);
-
+        $topup_response = app(PaywellResponse::class);
+        $topup_response->setResponse($response);
         return $topup_response;
     }
 
@@ -96,8 +95,7 @@ class PaywellClient
         ];
 
         $get_response = $this->call($data);
-
-        return json_decode($get_response, 1)['token']['security_token'];
+        return json_decode($get_response)->token->security_token;
     }
 
     private function getOperatorId($mobile_number)
@@ -131,7 +129,6 @@ class PaywellClient
             if (!$proxy_response) throw new Exception("PAYWELL proxy server not working.");
             $proxy_response = json_decode($proxy_response, 1);
             if ($proxy_response['code'] != 200) throw new Exception("PAYWELL proxy server error: ". $proxy_response->message);
-
             return $proxy_response['data'];
         } catch (GuzzleException $e) {
             echo $e->getMessage();
