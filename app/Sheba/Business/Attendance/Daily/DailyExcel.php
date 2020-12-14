@@ -23,9 +23,8 @@ class DailyExcel
     private $totalHours;
     private $leftEarlyNote;
 
-    public function __construct()
+    private function initializeData()
     {
-        $this->date = null;
         $this->employeeId = null;
         $this->employeeName = null;
         $this->department = null;
@@ -77,6 +76,7 @@ class DailyExcel
     private function makeData()
     {
         foreach ($this->dailyData as $attendance) {
+            $this->initializeData();
             if (!is_null($attendance['check_in']) && !$attendance['is_absent']) {
                 if ($attendance['is_half_day_leave']) {
                     $this->status = "On leave: half day";
