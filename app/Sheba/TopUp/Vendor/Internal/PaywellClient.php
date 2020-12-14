@@ -4,6 +4,7 @@ use App\Models\TopUpOrder;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\GuzzleException;
+use InvalidArgumentException;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class PaywellClient
@@ -20,6 +21,10 @@ class PaywellClient
     private $single_topup_url;
     private $paywell_proxy_url;
 
+    /**
+     * PaywellClient constructor.
+     * @param HttpClient $client
+     */
     public function __construct(HttpClient $client)
     {
         $this->httpClient = $client;
@@ -36,7 +41,7 @@ class PaywellClient
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
@@ -64,7 +69,7 @@ class PaywellClient
         ];
 
         $get_response = $this->call($data);
-        $results = json_decode($get_response, 1);
+        $results = json_decode($get_response);
 
         echo $results['data']['status'];
 
@@ -77,6 +82,7 @@ class PaywellClient
 
     /**
      * @return mixed
+     * @throws Exception
      */
     public function getToken()
     {
@@ -107,14 +113,14 @@ class PaywellClient
         } elseif (preg_match("/^(\+88015)/", $mobile_number)) {
             return 'TT';
         } else {
-            throw new \InvalidArgumentException('Invalid Mobile for paywell topup.');
+            throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
         }
     }
 
     /**
      * @param $data
      * @return object
-     * @throws \Exception
+     * @throws Exception
      */
     private function call($data)
     {
