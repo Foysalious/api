@@ -62,4 +62,19 @@ class Category
 
     }
 
+    /**
+     * @param $modifier
+     * @param $pos_category
+     * @param $name
+     * @return mixed
+     */
+    public function update($modifier, $pos_category, $name)
+    {
+        $this->setModifier($modifier);
+        if($pos_category->name !=  $name)
+        {
+           return $pos_category->update($this->withUpdateModificationField(['name' => $name]));
+        }
+    }
+
 }

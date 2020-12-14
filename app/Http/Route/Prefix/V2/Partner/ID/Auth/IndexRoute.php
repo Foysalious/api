@@ -85,6 +85,7 @@ class IndexRoute
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->post('/', 'Pos\CategoryController@store');
+                    $api->post('{category_id}', 'Pos\CategoryController@update');
                 });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'Pos\OrderController@index');
