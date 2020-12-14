@@ -31,7 +31,6 @@ use Sheba\ModificationFields;
 use Sheba\Partner\HomePageSetting\CacheManager;
 use Sheba\Partner\HomePageSetting\Setting;
 use Sheba\Partner\HomePageSettingV3\DefaultSettingV3;
-use Sheba\Partner\HomePageSettingV3\NewFeatures;
 use Sheba\Partner\HomePageSettingV3\SettingV3;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Pos\Order\OrderPaymentStatuses;
@@ -295,11 +294,8 @@ class DashboardController extends Controller
     {
         try {
             $this->setModifier($request->partner);
-            $home_page_setting = $setting->setPartner($request->partner)->get();
-            foreach ($home_page_setting as &$setting) {
-                in_array($setting['key'], NewFeatures::get()) ? $setting['is_new'] = 1 : $setting['is_new'] = 0;
-            }
-            return api_response($request, null, 200, ['data' => $home_page_setting]);
+            $setting = $setting->setPartner($request->partner)->get();
+            return api_response($request, null, 200, ['data' => $setting]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
