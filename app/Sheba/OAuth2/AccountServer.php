@@ -2,6 +2,7 @@
 
 
 use GuzzleHttp\Client;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
 {
@@ -195,12 +196,38 @@ class AccountServer
         return $this->client->get("api/v3/send-verification-link?token=$token");
     }
 
-    public function logout($token)
+    public function logout($token, $reason)
     {
         return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/logout", [
             'headers' => [
                 'Authorization' => 'Bearer ' . $token,
             ],
+            'form_params' => [
+                'reason' => $reason
+            ]
+        ]);
+    }
+
+    public function passwordAuthenticate($mobile, $password, $purpose)
+    {
+        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
+            'form_params' => [
+                'mobile' => $mobile,
+                'password' => $password,
+                'purpose' => $purpose
+            ]
+        ]);
+    }
+
+    public function getAuthenticateRequests($token, $purpose)
+    {
+        return (new Client())->get(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password/requests", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'query' => [
+                'purpose' => $purpose
+            ]
         ]);
     }
 }
