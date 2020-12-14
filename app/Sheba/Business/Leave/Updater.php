@@ -244,6 +244,7 @@ class Updater
     {
         if ($this->note) $this->data['note'] = $this->note;
         if ($this->substitute) $this->data['substitute_id'] = $this->substitute;
+        if ($this->substitute=="") $this->data['substitute_id'] = null;
     }
 
     private function getSubstituteName($substitute_id)
