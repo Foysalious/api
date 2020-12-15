@@ -72,7 +72,7 @@ class Excel
     {
         foreach ($this->balanceData as $balance) {
             foreach ($balance['leave_balance'] as $leave_type) {
-                $this->leave_types[$leave_type['title']] ="'".$leave_type['used_leaves'] . '/' . $leave_type['allowed_leaves']."'";
+                $this->leave_types[$leave_type['title']] =$leave_type['used_leaves'] . '/' . $leave_type['allowed_leaves'];
             }
             $data = ['employee_id' => $balance['employee_id'] ? $balance['employee_id'] : 'N/A', 'employee_name' => $balance['employee_name'], 'department' => $balance['department']] + $this->leave_types;
             array_push($this->data, $data);
