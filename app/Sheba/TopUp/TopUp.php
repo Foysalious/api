@@ -157,6 +157,7 @@ class TopUp
      * @param TopUpOrder $top_up_order
      * @param TopUpFailResponse $top_up_fail_response
      * @return bool
+     * @throws Exception
      */
     public function processFailedTopUp(TopUpOrder $top_up_order, TopUpFailResponse $top_up_fail_response)
     {

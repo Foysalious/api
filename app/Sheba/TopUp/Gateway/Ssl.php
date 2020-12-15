@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway;
 
 use App\Models\TopUpOrder;
+use Exception;
 use Sheba\TopUp\Vendor\Internal\SslClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -17,7 +18,7 @@ class Ssl implements Gateway
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
