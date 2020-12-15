@@ -245,10 +245,10 @@ class CategoryController extends Controller
             'name' => 'required',
         ]);
         $modifier = $request->manager_resource;
-        $pos_category = PosCategory::where('id',$request->category_id)->first();
-        if($pos_category->is_published_for_sheba)
+        $pos_category = PosCategory::where('id', $request->category_id)->first();
+        if ($pos_category->is_published_for_sheba)
             return api_response($request, null, 403, ['message' => 'Not allowed to update this category']);
-        $category->update($modifier,$pos_category,$request->name);
+        $category->update($modifier, $pos_category, $request->name);
         return api_response($request, null, 200, ['message' => 'Category Updated Successfully']);
     }
 }
