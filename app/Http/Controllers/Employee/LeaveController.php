@@ -293,9 +293,6 @@ class LeaveController extends Controller
 
     public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
     {
-       /* $this->validate($request, [
-            'note' => 'required',
-        ]);*/
         $member = $this->getMember($request);
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($member);
