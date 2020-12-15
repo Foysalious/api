@@ -132,6 +132,7 @@ class ServiceController extends Controller
                 'category_id' => 'required_without:master_category_id',
                 'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
                 'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
+                'image_gallery' => 'sometimes|required'
             ]);
             $this->setModifier($request->manager_resource);
 
@@ -247,7 +248,11 @@ class ServiceController extends Controller
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
         try {
-            $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
+            $rules = [
+                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
+                'image_gallery' => 'sometimes|required',
+                'deleted_images' => 'sometimes|required'
+            ];
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
             $this->validate($request, $rules);
