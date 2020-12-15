@@ -139,7 +139,7 @@ class LocationController extends Controller
      */
     private function calculateModelAvailability($input_ids, $model_name, $location)
     {
-
+        if (!json_decode($input_ids)) return [];
         $ids = array_map('intval', json_decode($input_ids));
         if (!$ids) return [];
 
