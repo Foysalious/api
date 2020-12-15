@@ -922,15 +922,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
-    /** @return array
-     * @throws InvalidPreviousSubscriptionRules
+    /**
+     * @return array
      */
     public function getCreditBreakdown()
     {
-        $remaining = (double)$this->subscriber()->periodicBillingHandler()->remainingCredit();
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining             = (double)0;
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
