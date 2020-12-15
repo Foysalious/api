@@ -1,7 +1,9 @@
 <?php namespace App\Sheba\Business\LeaveStatusChangeLog;
 
 use App\Models\BusinessMember;
+use App\Models\Member;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeRepoInterface;
 use Sheba\ModificationFields;
 
@@ -14,6 +16,7 @@ class Creator
     private $previousStatus;
     private $status;
     private $data;
+    /** @var Member $member */
     private $member;
 
     public function __construct(LeaveStatusChangeRepoInterface $leave_status_change_repository)
@@ -56,7 +59,7 @@ class Creator
         $this->data['leave_id'] = $this->leave->id;
         $this->data['from_status'] = $this->previousStatus;
         $this->data['to_status'] = $this->status;
-        $this->data['log'] = "Leave status change from $this->previousStatus to $this->status";
+        $this->data['log'] = $this->generateLogs();
         $this->withCreateModificationField($this->data);
     }
 
@@ -64,5 +67,12 @@ class Creator
     {
         $this->makeData();
         $this->leaveStatusChangeRepository->create($this->data);
+    }
+
+    private function generateLogs()
+    {
+        if ($this->status == Status::CANCELED)
+            return $this->member->profile->name." $this->status this leave";
+        return "Leave status change from $this->previousStatus to $this->status";
     }
 }
