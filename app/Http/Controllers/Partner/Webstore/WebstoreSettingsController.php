@@ -76,14 +76,8 @@ class WebstoreSettingsController extends Controller
      */
     public function bannerList(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        try{
-            $list = $webstoreBannerSettings->getBannerList();
-            return api_response($request, null, 200, ['data' => $list]);
-
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $list = $webstoreBannerSettings->getBannerList();
+        return api_response($request, null, 200, ['data' => $list]);
     }
 
     /**
@@ -94,7 +88,6 @@ class WebstoreSettingsController extends Controller
      */
     public function storeBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-
         $this->validate($request, [
             'banner_id' => 'required',
             'title' => 'string',
@@ -113,8 +106,7 @@ class WebstoreSettingsController extends Controller
 
         $webstoreBannerSettings->setData($data)->store();
         return api_response($request, null, 200, ['message' => 'Banner Settings Created Successfully']);
- }
-
+    }
 
     /**
      * @param Request $request
@@ -128,7 +120,7 @@ class WebstoreSettingsController extends Controller
         $this->setModifier($request->manager_resource);
         $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
         if (!$banner_settings)
-            return api_response($request, null, 400, ['msg' => 'Banner Settings not found']);
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
         $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
         return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
 
