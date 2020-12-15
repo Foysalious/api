@@ -175,6 +175,7 @@ class PartnerController extends Controller
                 'created_at'
             ]);
             $info->put('mobile', $partner->getContactNumber());
+            $info->put('banner', $partner->webstoreBanner->banner->image_link);
             $working_info = [];
             //$partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
             foreach ($this->days as $day) {
