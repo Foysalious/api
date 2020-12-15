@@ -109,6 +109,9 @@ class Reschedule
 
         if($response['code'] === 421) {
             $this->initialAutoSPAssignOnExistingJob();
+
+            $response['code'] = 200;
+            $response['msg'] = "Job Rescheduled Successfully!";
         }
 
         return $response;
@@ -120,16 +123,9 @@ class Reschedule
         $customer = $partnerOrder->order->customer;
 
         $deliveryAddress = $customer->delivery_addresses()->withTrashed()->where('id', $partnerOrder->order->delivery_address_id)->first();
-        $geo = new Geo();
-        $geo->setLng($deliveryAddress->geo->lng)->setLat($deliveryAddress->geo->lat);
-        $services = [];
-        $this->job->jobServices->each(function ($service, $key) use (&$services){
-            array_push($services, [
-                'id' => $service->service_id,
-                'quantity' => $service->quantity,
-                'option' => json_decode($service->option),
-            ]);
-        });
+        $geo = $deliveryAddress->getGeo();
+
+        $services = $this->formatServicesForOrder($this->job->jobServices);
 
         $this->serviceRequestObject = $this->serviceRequest
             ->setServices($services)->get();
@@ -143,6 +139,20 @@ class Reschedule
         $partnersFromList = $this->partnerListBuilder->get();
 
         if($partnersFromList) dispatch(new InitiateAutoSpAssign($this->job->partnerOrder, $customer, $partnersFromList->pluck('id')->toArray()));
+    }
+
+    private function formatServicesForOrder($jobServices)
+    {
+        $services = [];
+        $jobServices->each(function ($service, $key) use (&$services){
+            array_push($services, [
+                'id' => $service->service_id,
+                'quantity' => $service->quantity,
+                'option' => json_decode($service->option),
+            ]);
+        });
+
+        return $services;
     }
 
 }
