@@ -79,7 +79,7 @@ class PaywellClient
 
         $headers = [
             "Authorization: Bearer " . $bearer_token,
-            "Content-Type: application/json"
+            "Content-Type:application/json"
         ];
 
         $this->tpRequest->setUrl($this->single_topup_url)
@@ -89,11 +89,8 @@ class PaywellClient
 
         $response = $this->httpClient->call($this->tpRequest);
 
-        dd($response);
-
         $topup_response = app(PaywellResponse::class);
-        $topup_response->setResponse($response);
-
+        $topup_response->setResponse($response->data);
         return $topup_response;
     }
 
