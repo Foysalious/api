@@ -53,7 +53,7 @@ class PaywellClient
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $security_token = $this->getToken();
-        $request_data = json_encode([
+        $request_data = [
             "username" => $this->username,
             "password" => $this->password,
             "ref_id" => $topup_order->id,
@@ -61,26 +61,35 @@ class PaywellClient
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
             "operator" => $this->getOperatorId($topup_order->payee_mobile)
-        ]);
-
-        $hashed_data = hash_hmac('sha256', $request_data, $this->encryption_key);
-        $bearer_token = base64_encode($security_token . ":" . $this->api_key . ":" . $hashed_data);
-
-        $data = [
-            'url' => $this->single_topup_url,
-            'input' => $request_data,
-            'header' => [
-                "Authorization: Bearer " . $bearer_token,
-                "Content-Type: application/json"
-            ],
         ];
 
-        $this->tpRequest
-            ->setUrl($this->makeUrl())
-            ->setMethod(TPRequest::METHOD_GET);
+        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryption_key);
+        $bearer_token = base64_encode($security_token . ":" . $this->api_key . ":" . $hashed_data);
 
-        $get_response = $this->call();
-        $response = json_decode($get_response)->data;
+//        $this->tpRequest
+//            ->setUrl($this->makeUrl())
+//            ->setMethod(TPRequest::METHOD_GET)
+//            ->setInput($request_data);
+//
+//        $get_response = $this->call();
+//        $response = json_decode($get_response)->data;
+//
+//        $topup_response = app(PaywellResponse::class);
+//        $topup_response->setResponse($response);
+
+        $headers = [
+            "Authorization: Bearer " . $bearer_token,
+            "Content-Type: application/json"
+        ];
+
+        $this->tpRequest->setUrl($this->single_topup_url)
+            ->setMethod(TPRequest::METHOD_POST)
+            ->setHeaders($headers)
+            ->setInput($request_data);
+
+        $response = $this->httpClient->call($this->tpRequest);
+
+        dd($response);
 
         $topup_response = app(PaywellResponse::class);
         $topup_response->setResponse($response);
@@ -95,11 +104,14 @@ class PaywellClient
     public function getToken()
     {
         $auth_code = base64_encode($this->username . ":" . $this->auth_password);
-        $headers = ["Authorization: Basic " . $auth_code];
-        $this->tpRequest->setUrl($this->get_token_url)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
-        $response = $this->call();
+        $headers = [
+            "Authorization: Basic " . $auth_code
+        ];
 
-        return json_decode($response)->token->security_token;
+        $this->tpRequest->setUrl($this->get_token_url)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        $response = $this->httpClient->call($this->tpRequest);
+
+        return $response->token->security_token;
     }
 
     /**
