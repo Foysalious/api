@@ -76,14 +76,8 @@ class WebstoreSettingsController extends Controller
      */
     public function bannerList(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        try{
-            $list = $webstoreBannerSettings->getBannerList();
-            return api_response($request, null, 200, ['data' => $list]);
-
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $list = $webstoreBannerSettings->getBannerList();
+        return api_response($request, null, 200, ['data' => $list]);
     }
 
     /**
@@ -94,33 +88,24 @@ class WebstoreSettingsController extends Controller
      */
     public function storeBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        try {
-            $this->validate($request, [
-                'banner_id' => 'required',
-                'title' => 'string',
-                'description' => 'string',
-                'is_published' => 'sometimes|in:1,0',
-            ]);
+        $this->validate($request, [
+            'banner_id' => 'required',
+            'title' => 'string',
+            'description' => 'string',
+            'is_published' => 'sometimes|in:1,0',
+        ]);
 
-            $this->setModifier($request->manager_resource);
-            $data = [
-                'partner_id' => $request->partner->id,
-                'banner_id' => $request->banner_id,
-                'title' => $request->title ?: null,
-                'description' => $request->description ?: null,
-                'is_published' => $request->is_published ?: 0,
-            ];
+        $this->setModifier($request->manager_resource);
+        $data = [
+            'partner_id' => $request->partner->id,
+            'banner_id' => $request->banner_id,
+            'title' => $request->title ?: null,
+            'description' => $request->description ?: null,
+            'is_published' => $request->is_published ?: 0,
+        ];
 
-            $webstoreBannerSettings->setData($data)->store();
-            return api_response($request, null, 200, ['msg' => 'Banner Settings Created Successfully']);
-
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $webstoreBannerSettings->setData($data)->store();
+        return api_response($request, null, 200, ['message' => 'Banner Settings Created Successfully']);
     }
 
 
@@ -132,21 +117,13 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-        try {
             $partner_id = $request->partner->id;
             $this->setModifier($request->manager_resource);
             $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
             if (!$banner_settings)
-                return api_response($request, null, 400, ['msg' => 'Banner Settings not found']);
+                return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
             $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-            return api_response($request, null, 200, ['msg' => 'Banner Settings Updated Successfully']);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+            return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 
 }
