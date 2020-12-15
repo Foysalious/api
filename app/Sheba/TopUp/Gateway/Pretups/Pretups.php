@@ -33,7 +33,12 @@ abstract class Pretups
 
     public function getInitialStatus()
     {
-        return config('topup.status.successful')['sheba'];
+        return self::getInitialStatusStatically();
+    }
+
+    public static function getInitialStatusStatically()
+    {
+        return config('topup.status.successful.sheba');
     }
 
     abstract protected function getPin();

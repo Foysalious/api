@@ -41,6 +41,13 @@ abstract class TopUpResponse
     }
 
     /**
+     * Success status can be different for different vendor response.
+     *
+     * @return string
+     */
+    abstract public function resolveTopUpSuccessStatus();
+
+    /**
      * @return TopUpSuccessResponse
      * @throws Exception
      */
@@ -51,6 +58,7 @@ abstract class TopUpResponse
         $topup_response = new TopUpSuccessResponse();
         $topup_response->transactionId = $this->getTransactionId();
         $topup_response->transactionDetails = $this->response;
+        $topup_response->topUpStatus = $this->resolveTopUpSuccessStatus();
         return $topup_response;
     }
 

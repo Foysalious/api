@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
+use Sheba\TopUp\Gateway\Ssl;
+
 class SslResponse extends TopUpResponse
 {
     public function hasSuccess(): bool
@@ -29,5 +31,10 @@ class SslResponse extends TopUpResponse
     public function getErrorMessage()
     {
         return $this->response->Message;
+    }
+
+    public function resolveTopUpSuccessStatus()
+    {
+        return Ssl::getInitialStatusStatically();
     }
 }

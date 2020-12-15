@@ -33,4 +33,9 @@ class MockResponse extends TopUpResponse
     {
         return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Error message not given.';
     }
+
+    public function resolveTopUpSuccessStatus()
+    {
+        return config('topup.status.successful.sheba');
+    }
 }

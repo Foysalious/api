@@ -27,11 +27,16 @@ class Ssl implements Gateway
 
     public function getInitialStatus()
     {
-        return config('topup.status.pending.sheba');
+        return self::getInitialStatusStatically();
     }
 
     public function getShebaCommission()
     {
         return self::SHEBA_COMMISSION;
+    }
+
+    public static function getInitialStatusStatically()
+    {
+        return config('topup.status.pending.sheba');
     }
 }

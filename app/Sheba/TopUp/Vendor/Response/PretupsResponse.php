@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
+use Sheba\TopUp\Gateway\Pretups\Pretups;
+
 class PretupsResponse extends TopUpResponse
 {
     public function hasSuccess(): bool
@@ -29,5 +31,10 @@ class PretupsResponse extends TopUpResponse
     public function getErrorMessage()
     {
         return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Vendor api call error.';
+    }
+
+    public function resolveTopUpSuccessStatus()
+    {
+        return Pretups::getInitialStatusStatically();
     }
 }

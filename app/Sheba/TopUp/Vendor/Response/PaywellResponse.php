@@ -4,7 +4,7 @@ class PaywellResponse extends TopUpResponse
 {
     public function hasSuccess(): bool
     {
-        return $this->response && $this->response->status == 200;
+        return $this->response && ($this->response->status == 200 || $this->response->status == 100);
     }
 
     /**setResponse
@@ -29,5 +29,12 @@ class PaywellResponse extends TopUpResponse
     public function getErrorMessage()
     {
         return $this->response->message;
+    }
+
+    public function resolveTopUpSuccessStatus()
+    {
+        return ($this->response->status == 100) ?
+            config('topup.status.pending.sheba') :
+            config('topup.status.successful.sheba');
     }
 }
