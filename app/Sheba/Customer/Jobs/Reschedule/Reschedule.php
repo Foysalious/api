@@ -12,6 +12,7 @@ use Sheba\Jobs\JobTime;
 use Sheba\Jobs\PreferredTime;
 use Sheba\Customer\Jobs\Reschedule\RescheduleResponse;
 use Sheba\Location\Geo;
+use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\UserAgentInformation;
@@ -29,11 +30,13 @@ class Reschedule
     private $partnerListBuilder;
     private $serviceRequestObject;
     private $serviceRequest;
+    private $partnerListDirector;
 
-    public function __construct(ServiceRequest $serviceRequest, PartnerListBuilder $partnerListBuilder)
+    public function __construct(ServiceRequest $serviceRequest, PartnerListBuilder $partnerListBuilder, Director $director)
     {
         $this->partnerListBuilder = $partnerListBuilder;
         $this->serviceRequest = $serviceRequest;
+        $this->partnerListDirector = $director;
     }
 
     public function setUserAgentInformation(UserAgentInformation $userAgentInformation)
@@ -106,10 +109,8 @@ class Reschedule
             ]);
         
         $response = $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
-
         if($response['code'] === 421) {
             $this->initialAutoSPAssignOnExistingJob();
-
             $response['code'] = 200;
             $response['msg'] = "Job Rescheduled Successfully!";
         }
@@ -126,7 +127,6 @@ class Reschedule
         $geo = $deliveryAddress->getGeo();
 
         $services = $this->formatServicesForOrder($this->job->jobServices);
-
         $this->serviceRequestObject = $this->serviceRequest
             ->setServices($services)->get();
 
@@ -135,6 +135,8 @@ class Reschedule
             ->setServiceRequestObjectArray($this->serviceRequestObject)
             ->setScheduleTime($this->scheduleTimeSlot)
             ->setScheduleDate($this->scheduleDate);
+
+        $this->partnerListDirector->setBuilder($this->partnerListBuilder)->buildPartnerListForOrderPlacement();
 
         $partnersFromList = $this->partnerListBuilder->get();
 
