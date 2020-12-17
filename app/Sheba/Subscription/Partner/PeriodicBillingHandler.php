@@ -129,7 +129,7 @@ class PeriodicBillingHandler
                 if ($fee->title == $billing_type) $value = $fee->price;
         if (!isset($value)) throw new InvalidPreviousSubscriptionRules();
         $total = $this->totalDaysOfUsage() ? : 1;
-        return round(doubleval($value) / $total, 2);
+        return round(doubleval($value) / $total, 6);
     }
 
 
