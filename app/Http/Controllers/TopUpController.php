@@ -294,16 +294,16 @@ class TopUpController extends Controller
 
     public function paywellStatusUpdate($topup_order_id, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
     {
-        $respose = app(PaywellClient::class)->enquiry($topup_order_id);
+        $response = app(PaywellClient::class)->enquiry($topup_order_id);
 
-        if($respose->status_code == "200"){
-            $success_response->setResponse($respose);
+        if($response->status_code == "200"){
+            $success_response->setResponse($response);
             $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
-        } else if ($respose->status_code != "100") {
-            $fail_response->setResponse($respose);
+        } else if ($response->status_code != "100") {
+            $fail_response->setResponse($response);
             $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
         }
 
-        return $respose;
+        return api_response($response, json_encode($response), 200);
     }
 }
