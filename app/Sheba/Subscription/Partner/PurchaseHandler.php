@@ -174,7 +174,7 @@ class PurchaseHandler
     {
         if($new) {
             $data = array_merge($this->balance, ['remaining_balance' => $this->partner->wallet - $this->balance['breakdown']['threshold']]);
-            return array_merge($data, ["subscription_package" => $this->partner->currentSubscription()->show_name_bn, "package_type" => $this->getSubscriptionFee()]);
+            return array_merge($data, ["subscription_package" => $this->partner->currentSubscription()->show_name_bn, "package_type" => $this->getSubscriptionFee(), "extended_days" => $this->extended_days()]);
         }
         return $this->balance;
     }
@@ -186,5 +186,11 @@ class PurchaseHandler
             if($fee->title == $this->partner->billing_type) return $fee;
 
         return null;
+    }
+
+    public function extended_days()
+    {
+        $charges = $this->partner->subscriptionPackageCharges()->orderBy('created_at', 'desc')->first();
+        return ($charges) ? $charges->adjusted_days_from_last_subscription : 0;
     }
 }
