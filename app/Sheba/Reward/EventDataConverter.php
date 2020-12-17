@@ -205,7 +205,29 @@ class EventDataConverter
                                 'is_multi_selectable' => 1
                             ]
                         ]
-                    ]
+                    ],
+                    'pos_entry' => [
+                        'name' => 'Pos Entry',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Campaign\PosEntry\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Campaign\PosEntry\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                        ]
+                    ],
+                    'due_entry' => [
+                        'name' => 'Due Entry',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Campaign\DueTrackerEntry\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Campaign\DueTrackerEntry\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                        ]
+                    ],
                 ]
             ],
             'customer' => [
