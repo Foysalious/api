@@ -1,10 +1,8 @@
 <?php namespace App\Http\Controllers;
 
-use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
-use App\Models\Location;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -18,7 +16,7 @@ use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;
 use Sheba\Location\Distance\DistanceStrategy;
-use Sheba\Location\Geo;
+use App\Sheba\Geo;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Customer\CustomerDeliveryAddressInterface;
 use Throwable;
