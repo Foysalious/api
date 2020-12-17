@@ -32,6 +32,9 @@ use App\Models\Affiliate;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
+use Sheba\TopUp\Vendor\Internal\PaywellClient;
+use Sheba\TopUp\Vendor\Response\Paywell\PaywellSuccessResponse;
+use Sheba\TopUp\Vendor\Response\Paywell\PaywellFailResponse;
 
 class TopUpController extends Controller
 {
@@ -287,5 +290,20 @@ class TopUpController extends Controller
     {
         $last_topup = $agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
+    }
+
+    public function paywellStatusUpdate($topup_order_id, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
+    {
+        $respose = app(PaywellClient::class)->enquiry($topup_order_id);
+
+        if($respose->status_code == "200"){
+            $success_response->setResponse($respose);
+            $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+        } else if ($respose->status_code != "100") {
+            $fail_response->setResponse($respose);
+            $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+        }
+
+        return $respose;
     }
 }

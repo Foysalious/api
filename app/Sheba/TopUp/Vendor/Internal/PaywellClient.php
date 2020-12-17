@@ -20,7 +20,7 @@ class PaywellClient
     private $apiKey;
     private $encryptionKey;
     private $singleTopupUrl;
-    private $paywellProxyUrl;
+    private $topupEnquiryUrl;
     /** @var TPRequest $tpRequest */
     private $tpRequest;
 
@@ -34,12 +34,12 @@ class PaywellClient
         $this->httpClient = $client;
         $this->tpRequest = $request;
 
-        $this->paywellProxyUrl = config('topup.paywell.proxy_url');
         $this->username = config('topup.paywell.username');
         $this->password = config('topup.paywell.password');
         $this->authPassword = config('topup.paywell.auth_password');
         $this->singleTopupUrl = config('topup.paywell.single_topup_url');
         $this->getTokenUrl = config('topup.paywell.get_token_url');
+        $this->topupEnquiryUrl = config('topup.paywell.topup_enquiry_url');
         $this->apiKey = config('topup.paywell.api_key');
         $this->encryptionKey = config('topup.paywell.encryption_key');
     }
@@ -124,5 +124,32 @@ class PaywellClient
         else {
             throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
         }
+    }
+
+
+    public function enquiry($topup_order_id)
+    {
+        $security_token = $this->getToken();
+        $request_data = [
+            "username" => $this->username,
+            "trxId" => $topup_order_id
+        ];
+
+        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
+        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
+
+        $headers = [
+            "Authorization: Bearer " . $bearer_token,
+            "Content-Type:application/json"
+        ];
+
+        $this->tpRequest->setUrl($this->topupEnquiryUrl)
+            ->setMethod(TPRequest::METHOD_POST)
+            ->setHeaders($headers)
+            ->setInput($request_data);
+
+        $response = $this->httpClient->call($this->tpRequest);
+
+        return $response->enquiryData;
     }
 }

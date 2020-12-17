@@ -39,6 +39,6 @@ return [
         'api_key' => env('PAYWELL_API_KEY'),
         'encryption_key' => env('PAYWELL_ENCRYPTION_KEY'),
         'single_topup_url' => env('PAYWELL_SINGLE_TOPUP_URL'),
-        'proxy_url' => env('PAYWELL_PROXY_URL'),
+        'topup_enquiry_url' => env('PAYWELL_TOPUP_ENQUIRY_URL'),
     ],
 ];
