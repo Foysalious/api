@@ -3,7 +3,6 @@
 use App\Models\TopUpOrder;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\GuzzleException;
 use InvalidArgumentException;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -16,12 +15,12 @@ class PaywellClient
     private $httpClient;
     private $username;
     private $password;
-    private $auth_password;
-    private $get_token_url;
-    private $api_key;
-    private $encryption_key;
-    private $single_topup_url;
-    private $paywell_proxy_url;
+    private $authPassword;
+    private $getTokenUrl;
+    private $apiKey;
+    private $encryptionKey;
+    private $singleTopupUrl;
+    private $paywellProxyUrl;
     /** @var TPRequest $tpRequest */
     private $tpRequest;
 
@@ -35,14 +34,14 @@ class PaywellClient
         $this->httpClient = $client;
         $this->tpRequest = $request;
 
-        $this->paywell_proxy_url = config('topup.paywell.proxy_url');
+        $this->paywellProxyUrl = config('topup.paywell.proxy_url');
         $this->username = config('topup.paywell.username');
         $this->password = config('topup.paywell.password');
-        $this->auth_password = config('topup.paywell.auth_password');
-        $this->single_topup_url = config('topup.paywell.single_topup_url');
-        $this->get_token_url = config('topup.paywell.get_token_url');
-        $this->api_key = config('topup.paywell.api_key');
-        $this->encryption_key = config('topup.paywell.encryption_key');
+        $this->authPassword = config('topup.paywell.auth_password');
+        $this->singleTopupUrl = config('topup.paywell.single_topup_url');
+        $this->getTokenUrl = config('topup.paywell.get_token_url');
+        $this->apiKey = config('topup.paywell.api_key');
+        $this->encryptionKey = config('topup.paywell.encryption_key');
     }
 
     /**
@@ -63,26 +62,15 @@ class PaywellClient
             "operator" => $this->getOperatorId($topup_order->payee_mobile)
         ];
 
-        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryption_key);
-        $bearer_token = base64_encode($security_token . ":" . $this->api_key . ":" . $hashed_data);
-
-//        $this->tpRequest
-//            ->setUrl($this->makeUrl())
-//            ->setMethod(TPRequest::METHOD_GET)
-//            ->setInput($request_data);
-//
-//        $get_response = $this->call();
-//        $response = json_decode($get_response)->data;
-//
-//        $topup_response = app(PaywellResponse::class);
-//        $topup_response->setResponse($response);
+        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
+        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
 
         $headers = [
             "Authorization: Bearer " . $bearer_token,
             "Content-Type:application/json"
         ];
 
-        $this->tpRequest->setUrl($this->single_topup_url)
+        $this->tpRequest->setUrl($this->singleTopupUrl)
             ->setMethod(TPRequest::METHOD_POST)
             ->setHeaders($headers)
             ->setInput($request_data);
@@ -100,12 +88,12 @@ class PaywellClient
      */
     public function getToken()
     {
-        $auth_code = base64_encode($this->username . ":" . $this->auth_password);
+        $auth_code = base64_encode($this->username . ":" . $this->authPassword);
         $headers = [
             "Authorization: Basic " . $auth_code
         ];
 
-        $this->tpRequest->setUrl($this->get_token_url)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        $this->tpRequest->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
         $response = $this->httpClient->call($this->tpRequest);
 
         return $response->token->security_token;
@@ -136,28 +124,5 @@ class PaywellClient
         else {
             throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
         }
-    }
-
-    /**
-     * @return object
-     * @throws Exception
-     */
-    private function call()
-    {
-        return $this->httpClient->call($this->tpRequest);
-
-        /*try {
-            $response = $this->httpClient->request('POST', $this->paywell_proxy_url, ['form_params' => $data]);
-            $proxy_response = $response->getBody();
-            if (!$proxy_response) throw new Exception("PAYWELL proxy server not working.");
-            $proxy_response = json_decode($proxy_response, 1);
-
-            if ($proxy_response['code'] != 200)
-                throw new Exception("PAYWELL proxy server error: ". $proxy_response->message);
-
-            return $proxy_response['data'];
-        } catch (GuzzleException $e) {
-            throw new Exception("PAYWELL proxy server error: ". $e->getMessage());
-        }*/
     }
 }
