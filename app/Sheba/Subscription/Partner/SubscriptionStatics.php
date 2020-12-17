@@ -18,7 +18,14 @@ class SubscriptionStatics
         $date = Carbon::parse($partner->next_billing_date);
         $month = banglaMonth($date->month);
         $date  = convertNumbersToBangla($date->day, false);
-        return "আপনি বর্তমানে বেসিক প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা বালান্স রাখুন।";
+        $current_package = self::getCurrentPackageName($partner);
+        return "আপনি বর্তমানে $current_package প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা বালান্স রাখুন।";
+    }
+
+    static function getCurrentPackageName(Partner $partner)
+    {
+        $current_package = $partner->currentSubscription();
+        return $current_package ? $current_package->show_name_bn : '';
     }
 
     public static function getLitePackageID()
