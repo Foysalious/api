@@ -115,7 +115,7 @@ class CategoryController extends Controller
             $data['total_items'] = (double)$total_items;
             $data['total_buying_price'] = (double)$total_buying_price;
             $data['items_with_buying_price'] = $items_with_buying_price;
-            $data['has_webstore'] = $partner->has_webstore;
+            $data['is_webstore_published'] = $partner->is_webstore_published;
 
             return api_response($request, $master_categories, 200, $data);
         } catch (\Throwable $e) {
