@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\Location;
-
+<?php namespace Sheba\Location;
 
 use App\Models\Thana;
 use Sheba\Location\Distance\Distance;
@@ -28,5 +24,10 @@ class FromGeo
         $results = $distance->from([$current])->to($to)->sortedDistance()[0];
         $result = array_keys($results)[0];
         return $this->thanas->where('id', $result)->first();
+    }
+
+    public function getThanaFromGeo(Geo $geo)
+    {
+        return $this->getThana($geo->getLat(), $geo->getLng());
     }
 }

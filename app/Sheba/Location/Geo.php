@@ -34,6 +34,16 @@ class Geo
         return $this->lng ? (double)$this->lng : null;
     }
 
+    public function isNull()
+    {
+        return is_null($this->getLat()) || is_null($this->getLng());
+    }
+
+    public function isNotNull()
+    {
+        return !$this->isNull();
+    }
+
     /**
      * @return float[]|null[]
      */
@@ -59,5 +69,15 @@ class Geo
     public function toStdObject()
     {
         return json_decode($this->toJson());
+    }
+
+    public function isSameTo(Geo $geo)
+    {
+        return $this->getLat() === $geo->getLat() && $this->getLng() === $geo->getLng();
+    }
+
+    public function isDifferentWith(Geo $geo)
+    {
+        return !$this->isSameTo($geo);
     }
 }
