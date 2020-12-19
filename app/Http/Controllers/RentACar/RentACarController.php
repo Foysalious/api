@@ -92,8 +92,9 @@ class RentACarController extends Controller
         $pickup_lng = $request->pickup_lng;
         $destination_lat = $request->destination_lat;
         $destination_lng = $request->destination_lng;
+        $fromGeo->setThanas();
 
-        $pickup_thana = ($pickup_lat && $pickup_lng) ? $fromGeo->setThanas()->getThana($pickup_lat, $pickup_lng) : null;
+        $pickup_thana = ($pickup_lat && $pickup_lng) ? $fromGeo->getThana($pickup_lat, $pickup_lng) : null;
         $pickup_thana = $pickup_thana ? [
             'id' => $pickup_thana->id,
             'name' => $pickup_thana->name,
@@ -101,7 +102,7 @@ class RentACarController extends Controller
             'lat' => $pickup_thana->lat,
             'lng' => $pickup_thana->lng,
         ] : null;
-        $destination_thana = ($destination_lat && $destination_lng) ? $fromGeo->setThanas()->getThana($destination_lat, $destination_lng) : null;
+        $destination_thana = ($destination_lat && $destination_lng) ? $fromGeo->getThana($destination_lat, $destination_lng) : null;
         $destination_thana = $destination_thana ? [
             'id' => $destination_thana->id,
             'name' => $destination_thana->name,
