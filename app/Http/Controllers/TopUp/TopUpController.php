@@ -200,7 +200,7 @@ class TopUpController extends Controller
             if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
-            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->verify();
+            $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
@@ -257,7 +257,7 @@ class TopUpController extends Controller
             }
 
             if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.','recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
@@ -431,8 +431,8 @@ class TopUpController extends Controller
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=' , null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=' , $request->bulk_id);
+        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
+        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
         if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
             $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
         });
@@ -506,7 +506,7 @@ class TopUpController extends Controller
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
-        if(!$authorizationCode) {
+        if (!$authorizationCode) {
             return api_response($request, null, 400, [
                 'message' => 'Authorization code not provided'
             ]);
