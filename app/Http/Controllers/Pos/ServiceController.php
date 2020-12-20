@@ -169,10 +169,6 @@ class ServiceController extends Controller
             $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
             $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
             $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
-
-            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
-            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
-            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
             $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
                return [
                  'id' =>   $image->id,
