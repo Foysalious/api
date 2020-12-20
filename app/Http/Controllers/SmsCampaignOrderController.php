@@ -1,33 +1,36 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Partner;
-use App\Models\SmsCampaignOrder;
-
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
-
+use Sheba\Dal\SmsCampaignOrder\SmsCampaignOrderRepository;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
+use Sheba\ModificationFields;
 use Sheba\SmsCampaign\SmsCampaign;
+use Sheba\SmsCampaign\DTO\SmsCampaignOrderDTO;
+use Sheba\SmsCampaign\DTO\SmsCampaignOrderListDTO;
 use Sheba\SmsCampaign\SmsExcel;
-use Sheba\SmsCampaign\SmsLogs;
+use Sheba\SmsCampaign\CampaignSmsStatusChanger;
 use Sheba\UrlShortener\ShortenUrl;
-
 use DB;
 use Excel;
-use Throwable;
 use Sheba\Usage\Usage;
 
 class SmsCampaignOrderController extends Controller
 {
+    use ModificationFields;
+
+    /** @var SmsCampaignOrderRepository */
+    private $orderRepo;
+
+    public function __construct(SmsCampaignOrderRepository $order_repo)
+    {
+        $this->orderRepo = $order_repo;
+    }
+
     public function getSettings(Request $request)
     {
-        try {
-            return api_response($request, null, 200, ['settings' => constants('SMS_CAMPAIGN')]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['settings' => constants('SMS_CAMPAIGN')]);
     }
 
     /**
@@ -38,45 +41,30 @@ class SmsCampaignOrderController extends Controller
      */
     public function create($partner_id, Request $request, SmsCampaign $campaign)
     {
-        try {
-            if ($request->has('customers') && $request->has('param_type')) {
-                $customers = json_decode(request()->customers, true);
-                $request['customers'] = $customers;
-            }
-
-            $data = ['title' => 'required', 'message' => 'required'];
-            if ($request->has('customers')) $data += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
-            if ($request->hasFile('file')) $data += ['file' => 'required|file'];
-            $this->validate($request, $data);
-
-            $requests = $request->all();
-            if ($request->hasFile('file')) {
-                $this->pickDataFromExcel($request, $campaign);
-            }
-            $campaign = $campaign->formatRequest($requests);
-
-            if ($campaign->partnerHasEnoughBalance()) {
-                if ($campaign->createOrder()) {
-                    /**
-                     * USAGE LOG
-                     */
-                    (new Usage())->setUser($request->partner)->setType(Usage::Partner()::SMS_MARKETING)->create($request->manager_resource);
-                    return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
-                }
-                return api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);
-            }
-            return api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            $code = $e->getCode();
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        if ($request->has('customers') && $request->has('param_type')) {
+            $customers = json_decode(request()->customers, true);
+            $request['customers'] = $customers;
         }
+
+        $this->setModifier($request['manager_resource']);
+
+        $rules = ['title' => 'required', 'message' => 'required'];
+        if ($request->has('customers')) $rules += ['customers' => 'required|array', 'customers.*.mobile' => 'required|mobile:bd'];
+        if ($request->hasFile('file')) $rules += ['file' => 'required|file'];
+        $this->validate($request, $rules);
+
+        $requests = $request->all();
+        if ($request->hasFile('file')) {
+            $this->pickDataFromExcel($request, $campaign);
+        }
+        $campaign = $campaign->formatRequest($requests);
+
+        if (!$campaign->partnerHasEnoughBalance()) api_response($request, null, 200, ['message' => 'Insufficient Balance On Partner Wallet', 'error_code' => 'insufficient_balance', 'code' => 200]);
+
+        if (!$campaign->createOrder()) api_response($request, null, 200, ['message' => 'Failed to create campaign', 'error_code' => 'unknown_error', 'code' => 500]);
+
+        (new Usage())->setUser($request->partner)->setType(Usage::Partner()::SMS_MARKETING)->create($request->manager_resource);
+        return api_response($request, null, 200, ['message' => "Campaign created successfully"]);
     }
 
     private function pickDataFromExcel(Request $request, SmsCampaign $campaign)
@@ -102,21 +90,15 @@ class SmsCampaignOrderController extends Controller
 
     public function getTemplates($partner, Request $request)
     {
-        try {
-            $partner = Partner::find($partner);
-            $deep_link = config('sheba.front_url') . '/partners/' . $partner->sub_domain;
-            $templates = config('sms_campaign_templates');
-            foreach ($templates as $index => $template) {
-                $template = (object)$template;
-                $template->message .= ' ' . $deep_link;
-                $templates[$index] = $template;
-            }
-            return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            $code = $e->getCode();
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
+        $partner = Partner::find($partner);
+        $deep_link = config('sheba.front_url') . '/partners/' . $partner->sub_domain;
+        $templates = config('sms_campaign_templates');
+        foreach ($templates as $index => $template) {
+            $template = (object)$template;
+            $template->message .= ' ' . $deep_link;
+            $templates[$index] = $template;
         }
+        return api_response($request, null, 200, ['templates' => $templates, 'deep_link' => $deep_link]);
     }
 
     public function getDeepLink($partner, ShortenUrl $shortenUrl)
@@ -132,53 +114,22 @@ class SmsCampaignOrderController extends Controller
 
     public function getHistory($partner, Request $request)
     {
-        try {
-            $history = SmsCampaignOrder::where('partner_id', $partner)->with('order_receivers')->orderBy('created_at', 'desc')->get();
-            $total_history = [];
-            foreach ($history as $item) {
-                $current_history = [
-                    'id' => $item->id,
-                    'name' => $item->title,
-                    'cost' => $item->total_cost,
-                    'created_at' => $item->created_at->format('Y-m-d H:i:s')
-                ];
-                array_push($total_history, $current_history);
-            }
-            return api_response($request, null, 200, ['history' => $total_history]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            $code = $e->getCode();
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
-        }
+        $orders = $this->orderRepo->getLatestByPartnerWithReceivers($partner);
+        return api_response($request, null, 200, [
+            'history' => (new SmsCampaignOrderListDTO($orders))->toArray()
+        ]);
     }
 
     public function getHistoryDetails($partner, $history, Request $request)
     {
-        try {
-            $details = SmsCampaignOrder::find($history);
-            $data = [
-                'id' => $details->id,
-                'total_cost' => $details->total_cost,
-                'title' => $details->title,
-                'message' => $details->message,
-                'total_messages_requested' => $details->total_messages,
-                'successfully_sent' => $details->successful_messages,
-                'messages_pending' => $details->pending_messages,
-                'messages_failed' => $details->failed_messages,
-                'sms_count' => $details->order_receivers[0]->sms_count,
-                'sms_rate' => $details->rate_per_sms,
-                'created_at' => $details->created_at->format('Y-m-d H:i:s')
-            ];
-            return api_response($request, null, 200, ['details' => $data]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            $code = $e->getCode();
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'code' => $code ? $code : 500]);
-        }
+        $order = $this->orderRepo->find($history);
+        return api_response($request, null, 200, [
+            'details' => (new SmsCampaignOrderDTO($order))->toArray()
+        ]);
     }
 
-    public function processQueue(SmsLogs $smsLogs)
+    public function processQueue(CampaignSmsStatusChanger $sms_status_changer)
     {
-        $smsLogs->processLogs();
+        $sms_status_changer->processPendingSms();
     }
 }
