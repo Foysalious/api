@@ -66,9 +66,9 @@ class VerifyPin
     private function authenticateWithPassword()
     {
         try {
-            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->request->password, Purpose::TOPUP);
+            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
         } catch (ClientException $e) {
-            if ($e->getCode() != 403) throw new ApiValidationException("Something went wrong", 500);
+            if ($e->getCode() != 403) throw $e;
             $this->getAuthenticateRequests();
         }
     }
