@@ -2,6 +2,7 @@
 
 use App\Models\PosOrder;
 use Illuminate\Support\Facades\Mail;
+use Throwable;
 
 class EmailHandler
 {
@@ -22,9 +23,7 @@ class EmailHandler
             Mail::send('emails.pos-order-bill', ['order' => $this->order], function ($m) {
                 $m->to($this->order->customer->profile->email)->subject('Order Bills');
             });
-        } catch(\Exception $e) {
-
-        }
+        } catch (Throwable $e){}
 
     }
 }
