@@ -13,10 +13,9 @@ class BankUserController extends Controller
     public function getBankUserInfo(Request $request, ProfileRepository $profileRepository)
     {
         try {
-            $info = $profileRepository->getProfileInfo('bankUser', $request->profile, $request);
+            $info = $profileRepository->getProfileInfo('bankUser', $request->access_token->profile, $request);
             return api_response($request, $info, 200, ['data' => $info]);
-        }
-        catch (Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
