@@ -6,4 +6,5 @@ class Names
     const ROBI = 'robi';
     const BANGLALINK = 'banglalink';
     const AIRTEL = 'airtel';
+    const PAYWELL = 'paywell';
 }

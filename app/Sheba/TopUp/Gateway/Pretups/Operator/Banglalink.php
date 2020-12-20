@@ -59,9 +59,4 @@ class Banglalink extends Pretups implements Gateway
     {
         return "https://bl-vpn.sheba.xyz";
     }
-
-    public function getShebaCommission()
-    {
-        return self::SHEBA_COMMISSION;
-    }
 }

@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
+use Exception;
+
 abstract class TopUpResponse
 {
     protected $response;
@@ -39,26 +41,34 @@ abstract class TopUpResponse
     }
 
     /**
+     * Success status can be different for different vendor response.
+     *
+     * @return string
+     */
+    abstract public function resolveTopUpSuccessStatus();
+
+    /**
      * @return TopUpSuccessResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function getSuccess(): TopUpSuccessResponse
     {
-        if (!$this->hasSuccess()) throw new \Exception('Response does not have success.');
+        if (!$this->hasSuccess()) throw new Exception('Response does not have success.');
 
         $topup_response = new TopUpSuccessResponse();
         $topup_response->transactionId = $this->getTransactionId();
         $topup_response->transactionDetails = $this->response;
+        $topup_response->topUpStatus = $this->resolveTopUpSuccessStatus();
         return $topup_response;
     }
 
     /**
      * @return TopUpErrorResponse
-     * @throws \Exception
+     * @throws Exception
      */
     public function getError(): TopUpErrorResponse
     {
-        if ($this->hasSuccess()) throw new \Exception('Response has success.');
+        if ($this->hasSuccess()) throw new Exception('Response has success.');
 
         $topup_error = new TopUpErrorResponse();
         $topup_error->errorCode = isset($this->response->recharge_status) ? $this->response->recharge_status : 400;
@@ -66,5 +76,4 @@ abstract class TopUpResponse
         $topup_error->errorResponse = $this->response ? $this->response : '';
         return $topup_error;
     }
-
 }
