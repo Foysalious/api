@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
 use App\Exceptions\ApiValidationException;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
@@ -292,18 +293,27 @@ class TopUpController extends Controller
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
 
-    public function paywellStatusUpdate($topup_order_id, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
+    public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
     {
-        $response = app(PaywellClient::class)->enquiry($topup_order_id);
+        $topup_order = app(TopUpOrder::class)->find($request->topup_order_id);
 
-        if($response->status_code == "200"){
-            $success_response->setResponse($response);
-            $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
-        } else if ($response->status_code != "100") {
-            $fail_response->setResponse($response);
-            $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+        if($topup_order->gateway == 'paywell' && $topup_order->status == 'Pending'){
+            $response = app(PaywellClient::class)->enquiry($request->topup_order_id);
+            if ($response->status_code == "200") {
+                $success_response->setResponse($response);
+                $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+            } else if ($response->status_code != "100") {
+                $fail_response->setResponse($response);
+                $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+            }
+            return api_response($response, json_encode($response), 200);
+        } else {
+            $response = [
+                'recipient_msisdn' => $topup_order->payee_mobile,
+                'status_name' => $topup_order->status,
+                'status_code' => '',
+            ];
+            return api_response(json_encode($response), json_encode($response), 200);
         }
-
-        return api_response($response, json_encode($response), 200);
     }
 }
