@@ -73,7 +73,6 @@ class PaymentLinkController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -95,9 +94,16 @@ class PaymentLinkController extends Controller
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
+
+            if($request->has('pos_order_id')){
+                $pos_order = PosOrder::find($request->pos_order_id);
+                $customer = PosCustomer::find($pos_order->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            }
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
+                $this->creator->sentSms();
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -131,7 +137,7 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-
+                $this->creator->sentSms();
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);

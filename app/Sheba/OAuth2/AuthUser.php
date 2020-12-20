@@ -8,6 +8,7 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -58,6 +59,11 @@ class AuthUser
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage());
         }
+    }
+    
+    public static function authenticate()
+    {
+        JWTAuth::getPayload(JWTAuth::getToken());
     }
 
     /**
