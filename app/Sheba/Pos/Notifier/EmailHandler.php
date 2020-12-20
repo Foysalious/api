@@ -18,8 +18,13 @@ class EmailHandler
 
     public function handle()
     {
-        Mail::send('emails.pos-order-bill', ['order' => $this->order], function ($m) {
-            $m->to($this->order->customer->profile->email)->subject('Order Bills');
-        });
+        try {
+            Mail::send('emails.pos-order-bill', ['order' => $this->order], function ($m) {
+                $m->to($this->order->customer->profile->email)->subject('Order Bills');
+            });
+        } catch(\Exception $e) {
+
+        }
+
     }
 }
