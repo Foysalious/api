@@ -8,6 +8,12 @@ class LoanRoute
 {
     function set($api)
     {
+        $api->group(['prefix' => 'loans'], function ($api) {
+            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
+            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
+            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
+        });
+
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
             $api->post('/password/reset', 'Auth\PasswordController@resetPasswordForBank');
         });
@@ -22,7 +28,6 @@ class LoanRoute
             $api->get('/{loan_id}/claim-list', 'Loan\\ClaimController@claimListForPortal');
             $api->get('/{loan_id}/repayment-list', 'Loan\\RepaymentController@repaymentListForPortal');
             $api->post('/{loan_id}', 'Loan\\LoanController@update');
-            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
             /* $api->post('/{loan_id}/upload-documents','Loan\\LoanController@uploadDocuments');*/
             $api->post('/{loan_id}/status', 'Loan\\LoanController@statusChange');
             $api->get('/{loan_id}/banks/{bank_id}', 'Loan\\LoanController@assignBank');
@@ -31,12 +36,10 @@ class LoanRoute
             $api->post('/{partner_bank_loan}/comments', 'Loan\\LoanController@storeComment');
             $api->get('/{partner_bank_loan}/comments', 'Loan\\LoanController@getComments');
             $api->post('/{partner_bank_loan}/status-change', 'Loan\\LoanController@statusChange');
-            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
             $api->get('/statuses', 'Loan\\LoanController@getStatus');
             $api->get('/{loan_id}/details-for-agents', 'Loan\\LoanController@showForAgent');
             $api->get('{partner_bank_loan}/logs-for-agent', 'Loan\\LoanController@getChangeLogsForAgent');
             $api->delete('{partner_bank_loan}/delete-documents', 'Loan\\LoanController@deleteDocument');
-            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
             $api->post('/{loan_id}/update-claim-status', 'Loan\\ClaimController@claimStatusUpdate');
             $api->get('loan-disbursement-report', 'Loan\\LoanReportController@loanDisbursementReport');
             $api->get('ipdc-sms-sending-report', 'Loan\\LoanReportController@ipdcSmsSendingReport');
