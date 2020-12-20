@@ -82,12 +82,7 @@ class TopUpController extends Controller
         }
     }
 
-    public function topUp(Request $request,
-                          $user,
-                          TopUpRequest $top_up_request,
-                          Creator $creator,
-                          TopUpSpecialAmount $special_amount,
-                          UserAgentInformation $userAgentInformation)
+    public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
     {
         $agent = $request->user;
         $validation_data = [
@@ -109,12 +104,12 @@ class TopUpController extends Controller
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
-            if($token) {
+            if ($token) {
                 try {
                     $credentials = JWT::decode($request->topup_token, config('jwt.secret'), ['HS256']);
-                } catch(ExpiredException $e) {
+                } catch (ExpiredException $e) {
                     return api_response($request, null, 409, ['message' => 'Topup token expired']);
-                } catch(Exception $e) {
+                } catch (Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
 
@@ -123,10 +118,8 @@ class TopUpController extends Controller
                 }
             }
 
-        }
-        else return api_response($request, null, 400);
-
-        (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($auth_user)->verify();
+        } else return api_response($request, null, 400);
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -143,8 +136,7 @@ class TopUpController extends Controller
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }
 
-        if ($top_up_request->hasError())
-        {
+        if ($top_up_request->hasError()) {
             return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
         }
 
@@ -195,21 +187,8 @@ class TopUpController extends Controller
         return $blocked_amount_by_operator;
     }
 
-    /**
-     * @param Request $request
-     * @param VendorFactory $vendor
-     * @param TopUpRequest $top_up_request
-     * @param Creator $creator
-     * @param TopUpExcelDataFormatError $top_up_excel_data_format_error
-     * @param TopUpSpecialAmount $special_amount
-     * @return JsonResponse
-     */
-    public function bulkTopUp(Request $request,
-                              VendorFactory $vendor,
-                              TopUpRequest $top_up_request,
-                              Creator $creator,
-                              TopUpExcelDataFormatError $top_up_excel_data_format_error,
-                              TopUpSpecialAmount $special_amount)
+
+    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
         try {
             $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
@@ -220,8 +199,7 @@ class TopUpController extends Controller
                 return api_response($request, null, 400, ['message' => 'File type not support']);
 
             $agent = $request->user;
-
-            (new VerifyPin())->setAgent($agent)->setProfile($request->profile)->setRequest($request)->setAuthUser($request->auth_user)->verify();
+            $verifyPin->setAgent($agent)->setProfile($request->profile)->setRequest($request)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
@@ -237,7 +215,7 @@ class TopUpController extends Controller
             $halt_top_up = false;
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $total_recharge_amount = 0;
-            
+
             $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
                 $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
                 $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
@@ -546,8 +524,7 @@ class TopUpController extends Controller
                 'iss' => "topup-jwt",
                 'sub' => $user->getPartner()->id,
                 'iat' => time(),
-//                'exp' => time() + $remainingTime
-                'exp' => time() + (60 * 60)
+                'exp' => time() + $remainingTime
             ];
 
             return api_response($request, null, 200, [

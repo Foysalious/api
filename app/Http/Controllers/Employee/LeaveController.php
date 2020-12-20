@@ -228,16 +228,29 @@ class LeaveController extends Controller
         return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
     }
 
+    /**
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveBreakdown $leave_breakdown
+     * @return JsonResponse
+     */
     public function getLeaveDates(Request $request, LeaveRepoInterface $leave_repo, LeaveBreakdown $leave_breakdown)
     {
         /**@var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
-        $leaves = $leave_repo->builder()->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration')->where('business_member_id', $business_member->id)->where('start_date', '>=', Carbon::now()->toDateString())->get();
+        $leaves = $leave_repo->builder()
+            ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration', 'status')
+            ->where('business_member_id', $business_member->id)
+            ->where(function ($query) {
+                $query->where('status', 'pending')->orWhere('status', 'accepted');
+            })->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
+            ->get();
 
         list($leaves, $leaves_date_with_half_and_full_days) = $leave_breakdown->formatLeaveAsDateArray($leaves);
 
         $full_day_leaves = [];
         $half_day_leaves = [];
+
         foreach ($leaves_date_with_half_and_full_days as $date => $leaves_date_with_half_and_full_day) {
             !$leaves_date_with_half_and_full_day['is_half_day_leave'] ? $full_day_leaves[] = $leaves_date_with_half_and_full_day['date'] :
                 array_push($half_day_leaves, [
@@ -245,6 +258,7 @@ class LeaveController extends Controller
                     'which_half_day' => $leaves_date_with_half_and_full_day['which_half_day'],
                 ]);
         }
+
         return api_response($request, null, 200, ['full_day_leaves' => $full_day_leaves, 'half_day_leaves' => $half_day_leaves]);
     }
 
@@ -279,9 +293,6 @@ class LeaveController extends Controller
 
     public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
     {
-        $this->validate($request, [
-            'note' => 'required',
-        ]);
         $member = $this->getMember($request);
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($member);

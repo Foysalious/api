@@ -6,6 +6,10 @@ use Carbon\CarbonPeriod;
 
 class LeaveBreakdown
 {
+    /**
+     * @param $leaves
+     * @return array
+     */
     public function formatLeaveAsDateArray($leaves)
     {
         $business_member_leaves_date = [];
@@ -24,7 +28,6 @@ class LeaveBreakdown
         
         return [array_unique($business_member_leaves_date), $business_member_leaves_date_with_half_and_full_day];
     }
-
 
     /**
      * @param $leaves
@@ -47,6 +50,7 @@ class LeaveBreakdown
 
         return [array_unique($business_member_leaves_date), $business_member_leaves_date_with_half_and_full_day];
     }
+
     /**
      * @param Carbon $date
      * @param array $leaves_date_with_half_and_full_day
