@@ -208,14 +208,16 @@ class AccountServer
         ]);
     }
 
-    public function passwordAuthenticate($mobile, $password, $purpose)
+    public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
+        $data = [
+            'password' => $password,
+            'purpose' => $purpose
+        ];
+        if (!empty($email)) $data['email'] = $email;
+        if (!empty($mobile)) $data['mobile'] = $mobile;
         return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
-            'form_params' => [
-                'mobile' => $mobile,
-                'password' => $password,
-                'purpose' => $purpose
-            ]
+            'form_params' => $data
         ]);
     }
 
