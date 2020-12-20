@@ -167,7 +167,7 @@ class JobController extends Controller
         $job_collection->put('can_take_review', $this->canTakeReview($job));
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
-        $job_collection->put('can_reschedule', $job->canReschedule() ? 1 : 0);
+        $job_collection->put('can_reschedule', $job->canReschedule() && ($this->checkPreparationTime($job) || $job->isScheduleDue()) ? 1 : 0);
         $job_collection->put('can_cancel', $job->canCancel() ? 1 : 0);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
@@ -248,6 +248,17 @@ class JobController extends Controller
         $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
         $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
         return api_response($request, $job_collection, 200, ['job' => $job_collection]);
+    }
+
+    private function checkPreparationTime(Job $job)
+    {
+        $preparation_time = $job->category->preparation_time_minutes;
+        $now = Carbon::now();
+
+        $job_schedule = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);;
+        $current_time_with_preparation = $job_schedule->subMinutes(60)->subMinutes($preparation_time);
+
+        return ($now <= $current_time_with_preparation);
     }
 
     /**

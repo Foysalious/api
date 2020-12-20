@@ -501,6 +501,14 @@ class Job extends BaseModel implements MorphCommentable
         return constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[$this->status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
     }
 
+    /**
+     * @return boolean
+     */
+    public function isScheduleDue()
+    {
+        return JobStatuses::isScheduleDue($this->status);
+    }
+
     public function scopeInfo($query)
     {
         return $query->select(

@@ -124,4 +124,9 @@ class JobStatuses
     {
         return in_array($status, [self::PROCESS, self::SERVE_DUE]);
     }
+
+    public static function isScheduleDue($status)
+    {
+        return $status === self::SCHEDULE_DUE;
+    }
 }
