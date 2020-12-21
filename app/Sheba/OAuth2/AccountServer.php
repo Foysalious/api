@@ -1,6 +1,5 @@
 <?php namespace Sheba\OAuth2;
 
-
 use GuzzleHttp\Client;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 

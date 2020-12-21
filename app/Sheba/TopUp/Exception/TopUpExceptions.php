@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\TopUp\Exception;
-
+<?php namespace Sheba\TopUp\Exception;
 
 use Throwable;
 
@@ -12,5 +8,4 @@ class TopUpExceptions extends \Exception
     {
         parent::__construct($message, $code, $previous);
     }
-
 }
