@@ -239,9 +239,11 @@ class LeaveController extends Controller
         /**@var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $leaves = $leave_repo->builder()
-            ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration')
+            ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration', 'status')
             ->where('business_member_id', $business_member->id)
-            ->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
+            ->where(function ($query) {
+                $query->where('status', 'pending')->orWhere('status', 'accepted');
+            })->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
             ->get();
 
         list($leaves, $leaves_date_with_half_and_full_days) = $leave_breakdown->formatLeaveAsDateArray($leaves);
@@ -291,9 +293,6 @@ class LeaveController extends Controller
 
     public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
     {
-        $this->validate($request, [
-            'note' => 'required',
-        ]);
         $member = $this->getMember($request);
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($member);

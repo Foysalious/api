@@ -1,9 +1,9 @@
 <?php namespace Sheba\SmsCampaign\Commands;
 
 use Illuminate\Console\Command;
-use Sheba\SmsCampaign\SmsLogs;
+use Sheba\SmsCampaign\CampaignSmsStatusChanger;
 
-class ProcessSmsCampaignStatuses extends Command
+class CampaignSmsStatusChangeCommand extends Command
 {
     /** @var string The name and signature of the console command. */
     protected $signature = 'sheba:process-sms-campaign-statuses';
@@ -13,10 +13,10 @@ class ProcessSmsCampaignStatuses extends Command
 
     /**
      * Execute the console command.
-     * @param SmsLogs $logs
+     * @param CampaignSmsStatusChanger $changer
      */
-    public function handle(SmsLogs $logs)
+    public function handle(CampaignSmsStatusChanger $changer)
     {
-        $logs->processLogs();
+        $changer->processPendingSms();
     }
 }

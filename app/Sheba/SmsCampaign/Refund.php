@@ -2,11 +2,11 @@
 
 use App\Models\Partner;
 use App\Models\Tag;
-
 use Sheba\PartnerWallet\PartnerTransactionHandler;
 
 class Refund
 {
+    /** @var Partner $refundReceiver */
     private $refundReceiver;
     private $smsCount;
 
@@ -34,7 +34,7 @@ class Refund
         $handler = new PartnerTransactionHandler($this->refundReceiver);
 
         $amount = $this->smsCount * constants('SMS_CAMPAIGN.rate_per_sms');
-        $log = $amount . " BDT. has been credited for failing to sent a message in a campaign you have created";
+        $log = $amount . " BDT has been credited for failing to sent a message in a campaign you have created.";
         $tag = Tag::where('name', 'refunded sms campaign')->pluck('id')->toArray();
 
         $handler->credit($amount, $log, null, $tag);
