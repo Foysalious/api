@@ -77,7 +77,7 @@ class LeaveController extends Controller
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
-        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
 
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
