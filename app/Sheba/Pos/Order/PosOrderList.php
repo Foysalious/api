@@ -184,6 +184,10 @@ class PosOrderList
             [
                 'pos_orders.partner_id',
                 $this->partner->id
+            ],
+            [
+                'pos_orders.sales_channel',
+                $this->sales_channel
             ]
         ]);
         return $orders_query;
