@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Leave\Request;
 
-use Carbon\Carbon;
 use Excel as LeaveRequestExcel;
 
 class Excel
@@ -24,7 +23,7 @@ class Excel
     public function get()
     {
         $this->makeData();
-        $file_name = Carbon::now()->timestamp . '_' . 'leave_request_report';
+        $file_name = 'Leave_request_report';
         LeaveRequestExcel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);
