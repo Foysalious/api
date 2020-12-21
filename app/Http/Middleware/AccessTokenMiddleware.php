@@ -30,7 +30,7 @@ class AccessTokenMiddleware
     {
         try {
             $token = JWTAuth::getToken();
-            if (!$token) return api_response($request, 401, ['message' => "Your session has expired. Try Login"]);
+            if (!$token) return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
             if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
