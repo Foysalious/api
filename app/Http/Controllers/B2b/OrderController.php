@@ -27,6 +27,7 @@ use Sheba\Location\Coords;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Map\Address;
 use Sheba\Map\GeoCode;
+use Sheba\Map\MapClientNoResultException;
 use Sheba\ModificationFields;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\AvailableMethods;
@@ -39,8 +40,13 @@ class OrderController extends Controller
 {
     use ModificationFields;
 
+    /** @var MemberManager $memberManager */
     private $memberManager;
 
+    /**
+     * OrderController constructor.
+     * @param MemberManager $member_manager
+     */
     public function __construct(MemberManager $member_manager)
     {
         $this->memberManager = $member_manager;
@@ -367,6 +373,13 @@ class OrderController extends Controller
         }
     }
 
+    /**
+     * @param Request $request
+     * @param GeoCode $geo_code
+     * @param Address $address
+     * @return JsonResponse
+     * @throws GuzzleException
+     */
     public function placeOrder(Request $request, GeoCode $geo_code, Address $address)
     {
         try {
@@ -418,6 +431,7 @@ class OrderController extends Controller
                 $issue->update($this->withBothModificationFields(['order_id' => $order->id, 'status' => 'closed']));
             }
             $this->sendNotifications($order);
+
             return api_response($request, $order, 200, [
                 'job_id' => $order->jobs->first()->id,
                 'order_id' => $order->jobs->first()->partnerOrder->id,
@@ -427,6 +441,10 @@ class OrderController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             logError($e, $request, $message);
             return response()->json(['data' => null, 'message' => $message]);
+        } catch (MapClientNoResultException $e) {
+            $message = $e->getMessage();
+            logError($e, $request, $message);
+            return response()->json(['data' => null, 'message' => 'Invalid delivery address! Please check.']);
         } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

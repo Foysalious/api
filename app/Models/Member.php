@@ -15,7 +15,7 @@ class Member extends Model
 
     public function businesses()
     {
-        return $this->belongsToMany(Business::class)->withTimestamps();
+        return $this->belongsToMany(Business::class)->whereIn('status', Statuses::getAccessible())->withTimestamps();
     }
 
     public function inspections()

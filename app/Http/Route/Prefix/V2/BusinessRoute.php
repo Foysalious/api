@@ -10,7 +10,6 @@ class BusinessRoute
         $api->get('business/test-push-notification', 'PushSubscriptionController@send');
         $api->get('business/test-email', 'B2b\ProcurementPaymentRequestController@testEmail');
         $api->post('business/register', 'B2b\RegistrationController@registerV2');
-
         $api->group(['prefix' => 'businesses/tenders'], function ($api) {
             $api->get('/', 'B2b\ProcurementController@tenders');
             $api->get('filter-options', 'B2b\ProcurementController@filterOptions');
@@ -362,6 +361,7 @@ class BusinessRoute
                 $api->post('update-business-info', 'B2b\MemberController@updateBusinessInfo');
                 $api->post('/attachments', 'B2b\MemberController@storeAttachment');
                 $api->get('/attachments', 'B2b\MemberController@getAttachments');
+
                 $api->group(['prefix' => 'vehicles'], function ($api) {
                     $api->post('/', 'B2b\VehiclesController@store');
                     $api->post('/bulk-store', 'B2b\VehiclesController@bulkStore');
@@ -408,7 +408,6 @@ class BusinessRoute
                         $api->post('comments', 'B2b\TripRequestController@commentOnTrip');
                     });
                 });
-
                 $api->group(['prefix' => 'trip-requests'], function ($api) {
                     $api->get('/', 'B2b\TripRequestController@getTripRequests');
                     $api->post('/', 'B2b\TripRequestController@createTripRequests');
@@ -418,7 +417,6 @@ class BusinessRoute
                     });
                 });
                 $api->get('/fleet-mail', 'B2b\TripRequestController@fleetMail');
-
                 $api->group(['prefix' => 'trip-request-approval'], function ($api) {
                     $api->get('/', 'B2b\TripRequestApprovalController@index');
                     $api->post('{approval}/change-status', 'B2b\TripRequestApprovalController@statusUpdate');

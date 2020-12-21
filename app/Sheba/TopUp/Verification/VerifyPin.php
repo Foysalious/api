@@ -3,14 +3,12 @@
 use App\Exceptions\ApiValidationException;
 use App\Models\Affiliate;
 use App\Models\Partner;
-use ReflectionClass;
-use ReflectionException;
+use GuzzleHttp\Exception\ClientException;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\AuthenticationRequest\Statuses;
-use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
+use Sheba\Dal\AuthorizationToken\BlacklistedReason;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
-use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
 
 class VerifyPin
@@ -22,18 +20,11 @@ class VerifyPin
     private $profile;
     private $request;
     private $managerResource;
-    /** @var AuthUser */
-    private $authUser;
-    /**
-     * @var WrongPINCountRepo $wrongPinCountRepo
-     */
-    private $wrongPinCountRepo;
     /** @var AccountServer */
     private $accountServer;
 
-    public function __construct(WrongPINCountRepo $wrongPinCountRepo, AccountServer $accountServer)
+    public function __construct(AccountServer $accountServer)
     {
-        $this->wrongPinCountRepo = $wrongPinCountRepo;
         $this->accountServer = $accountServer;
     }
 
@@ -67,46 +58,48 @@ class VerifyPin
         return $this;
     }
 
-    /**
-     * @param AuthUser $authUser
-     * @return VerifyPin
-     */
-    public function setAuthUser($authUser)
-    {
-        $this->authUser = $authUser;
-        return $this;
-    }
-
-    private function wrongPinQuery()
-    {
-        return $this->wrongPinCountRepo->where('type_id', $this->agent->id)->where('type', class_basename($this->agent));
-    }
-
-
     public function verify()
     {
-        $result = $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->request->password, Purpose::TOPUP);
+        $this->authenticateWithPassword();
+    }
+
+    private function authenticateWithPassword()
+    {
+        try {
+            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
+        } catch (ClientException $e) {
+            if ($e->getCode() != 403) throw $e;
+            $this->getAuthenticateRequests();
+        }
+    }
+
+    /**
+     * @throws ApiValidationException
+     * @throws PinMismatchException
+     */
+    private function getAuthenticateRequests()
+    {
+        $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $data = json_decode($result->getBody(), true);
-        if ($data['code'] == 200) return;
-        if ($data['code'] == 500) throw new ApiValidationException();
+        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT) throw new PinMismatchException();
         for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
-            if ($data['log_attempts'][$i]['status'] != Statuses::FAIL) {
+            if ($data['requests'][$i]['status'] != Statuses::FAIL) {
                 throw new PinMismatchException();
             }
         }
-        $this->logout();
-        $this->resetRememberToken();
-        throw new PinMismatchException();
+        $this->sessionOut();
     }
 
-    /**
-     * @param mixed $managerResource
-     * @return VerifyPin
-     */
-    public function setManagerResource($managerResource)
+    private function sessionOut()
     {
-        $this->managerResource = $managerResource;
-        return $this;
+        $this->logout();
+        $this->resetRememberToken();
+        throw new ApiValidationException("You have been logged out", 401);
+    }
+
+    private function logout()
+    {
+        $this->accountServer->logout($this->request->access_token->token, BlacklistedReason::TOPUP_LOGOUT);
     }
 
     private function resetRememberToken()
@@ -115,18 +108,5 @@ class VerifyPin
         if ($this->agent instanceof Affiliate) $this->agent->update(['remember_token' => str_random(255)]);
     }
 
-    /**
-     * @throws ReflectionException
-     */
-    private function getType()
-    {
-        $class = (new ReflectionClass($this->agent))->getShortName();
-        return strtolower($class);
-    }
 
-    private function logout()
-    {
-        if (!$this->authUser) return;
-        $this->accountServer->logout($this->request->access_token->token);
-    }
 }
