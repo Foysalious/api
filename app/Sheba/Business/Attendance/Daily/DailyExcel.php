@@ -112,7 +112,7 @@ class DailyExcel
                     } else {
                         $this->checkOutLocation = "Office IP";
                     }
-                    $this->checkOutAddress = $attendance['check_out']['is_remote'];
+                    $this->checkOutAddress = $attendance['check_out']['address'];
                 }
 
                 $this->totalHours = $attendance['active_hours'];
