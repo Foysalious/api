@@ -231,3 +231,15 @@ if (!function_exists('convertSemverToInt')) {
         return (int)str_replace('.', '', $semver);
     }
 }
+
+if (!function_exists('hasSameValues')) {
+    /**
+     * @param array $a
+     * @param array $b
+     * @return bool
+     */
+    function hasSameValues(array $a, array $b)
+    {
+        return array_diff($a, $b) === array_diff($b, $a);
+    }
+}
