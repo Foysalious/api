@@ -261,8 +261,6 @@ class TopUpController extends Controller
             } else {
                 $excel_error = null;
             }
-                    $excel_error = 'Mobile number Invalid';
-                $excel_error = 'Mobile number Invalid';
 
             $total_recharge_amount += $value->$amount_field;
 
