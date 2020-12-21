@@ -14,6 +14,7 @@ use Sheba\Customer\Jobs\Reschedule\RescheduleResponse;
 use Sheba\Location\Geo;
 use Sheba\PartnerList\Director;
 use Sheba\PartnerList\PartnerListBuilder;
+use Sheba\PushNotificationHandler;
 use Sheba\ServiceRequest\ServiceRequest;
 use Sheba\UserAgentInformation;
 
@@ -113,9 +114,40 @@ class Reschedule
             $this->initialAutoSPAssignOnExistingJob();
             $response['code'] = 200;
             $response['msg'] = "Job Rescheduled Successfully!";
+        } else {
+            $this->notifyPartnerAboutReschedule();
         }
 
         return $response;
+    }
+
+    private function notifyPartnerAboutReschedule()
+    {
+        $partner = $this->job->partnerOrder->partner;
+        $sender_id = $this->job->partnerOrder->order->customer_id;
+        $sender_type = 'customer';
+
+        notify()->partner($partner->id)->sender($sender_id, $sender_type)->send([
+            'title'      => 'Order Reschedule ID ' . $this->job->partnerOrder->code(),
+            'link'       => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $this->job->partnerOrder->id,
+            'type'       => notificationType('Info'),
+            'event_type' => "App\Models\PartnerOrder",
+            'event_id'   => $this->job->partnerOrder->id,
+            //'version' => $partner_order->getVersion()
+        ]);
+        $topic   = config('sheba.push_notification_topic_name.manager') . $this->job->partnerOrder->partner_id;
+        $channel = config('sheba.push_notification_channel_name.manager');
+        $sound   = config('sheba.push_notification_sound.manager');
+        (new PushNotificationHandler())->send([
+            "title"      => 'New Order',
+            "message"    => "প্রিয় $partner->name আপনার একটি অর্ডার reschedule হয়েছে - " . $this->job->partnerOrder->code(),
+            "event_type" => 'PartnerOrder',
+            "event_id"   => $this->job->partnerOrder->id,
+            "link"       => "new_order",
+            "sound"      => "notification_sound",
+            "channel_id" => $channel
+        ], $topic, $channel, $sound);
+
     }
 
     private function initialAutoSPAssignOnExistingJob()
