@@ -34,7 +34,7 @@ class AccessTokenMiddleware
             if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
-            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') throw new AccessTokenNotValidException();
+            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token' && !$access_token->isValid()) throw new AccessTokenNotValidException();
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
         } catch (JWTException $e) {

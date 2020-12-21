@@ -218,7 +218,14 @@ class Creator
     {
         if ($this->getPayerInfo())
         {
-            $link = $this->bitlyLink->shortUrl($this->paymentLinkCreated->link);
+            /** @var PaymentLinkClient $paymentLinkClient */
+            $paymentLinkClient = app(PaymentLinkClient::class);
+            $paymentLink = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
+            $link = null;
+            if($paymentLink) {
+                $link = $paymentLink->url->shortUrl;
+            }
+//            $link = $this->bitlyLink->shortUrl($this->paymentLinkCreated->link);
             $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
             $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
             $mobile = $this->getPayerInfo()['payer']['mobile'];
