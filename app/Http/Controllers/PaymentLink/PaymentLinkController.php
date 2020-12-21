@@ -139,7 +139,9 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-                $this->creator->sentSms();
+                if(!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
