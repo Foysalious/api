@@ -124,6 +124,7 @@ class Reschedule
     private function notifyPartnerAboutReschedule()
     {
         $partner = $this->job->partnerOrder->partner;
+        if(!$partner) return;
         $sender_id = $this->job->partnerOrder->order->customer_id;
         $sender_type = 'customer';
 
@@ -140,7 +141,7 @@ class Reschedule
         $sound   = config('sheba.push_notification_sound.manager');
         (new PushNotificationHandler())->send([
             "title"      => 'New Order',
-            "message"    => "প্রিয় $partner->name আপনার একটি অর্ডার reschedule হয়েছে - " . $this->job->partnerOrder->code(),
+            "message"    => "প্আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে, রিসোর্স আসাইন করুন",
             "event_type" => 'PartnerOrder',
             "event_id"   => $this->job->partnerOrder->id,
             "link"       => null,
@@ -187,8 +188,8 @@ class Reschedule
             ];
 
             if($carRentalJobDetail) {
-                $s['pick_up_location_geo'] = json_decode($carRentalJobDetail->pick_up_address_geo);
-                $s['destination_location_geo'] = json_decode($carRentalJobDetail->destination_address_geo);
+                $s['pick_up_location_geo'] = json_decode($carRentalJobDetail->pick_up_address_geo, 1);
+                $s['destination_location_geo'] = json_decode($carRentalJobDetail->destination_address_geo, 1);
             }
 
             array_push($services, $s);
