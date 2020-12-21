@@ -92,7 +92,7 @@ class Registrar
             'user_agent'      => request()->header('User-Agent'),
             'created_by'      => $user->id,
             'created_by_type' => class_basename($user),
-            'created_by_name' => $created_by,
+            'created_by_name' => empty($created_by)?"Empty Name User":$created_by,
             'to_account'      => $to_account,
             'amount'          => $this->amount,
             'details'         => $this->details,
