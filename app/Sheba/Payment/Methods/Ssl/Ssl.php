@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Ssl;
 
+use App\Models\PartnerOrder;
 use App\Models\Payable;
 use App\Models\Payment;
 use Carbon\Carbon;
@@ -90,20 +91,28 @@ class Ssl extends PaymentMethod
      */
     private function createSslSession(Payment $payment)
     {
+        /** @var Payable $payable */
         $payable = $payment->payable;
 
         $data = array();
         $data['store_id'] = $this->store->getStoreId();
         $data['store_passwd'] = $this->store->getStorePassword();
         $data['total_amount'] = (double)$payable->amount;
-        $data['currency'] = "BDT";
-        $data['success_url'] = $this->successUrl;
-        $data['fail_url'] = $this->failUrl;
-        $data['cancel_url'] = $this->cancelUrl;
-        $data['tran_id'] = $payment->transaction_id;
-        $data['cus_name'] = $payable->getName();
-        $data['cus_email'] = $payable->getEmail();
-        $data['cus_phone'] = $payable->getMobile();
+        $data['currency']     = "BDT";
+        $data['success_url']  = $this->successUrl;
+        $data['fail_url']     = $this->failUrl;
+        $data['cancel_url']   = $this->cancelUrl;
+        $data['tran_id']      = $payment->transaction_id;
+        if ($payable->isPartnerOrder()) {
+            $data['invoice_id']   = $this->getPayableInvoiceId($payable);
+            /** @var PartnerOrder $partner_order */
+            $partner_order = $payable->getPayableType();
+            $job = $partner_order->lastJob();
+            $data['no_offer'] = $job->hasDiscount() ? 1 : 0;
+        }
+        $data['cus_name']     = $payable->getName();
+        $data['cus_email']    = $payable->getEmail();
+        $data['cus_phone']    = $payable->getMobile();
         if ($payable->amount >= config('sheba.min_order_amount_for_emi')) {
             $data['emi_option'] = 1;
             $data['emi_max_inst_option'] = 12;

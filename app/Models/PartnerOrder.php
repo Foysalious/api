@@ -481,6 +481,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         return $this->jobs()->where('status', '<>', constants('JOB_STATUSES')['Cancelled'])->first();
     }
 
+    /**
+     * @return Job
+     */
     public function lastJob()
     {
         if ($this->isCancelled()) return $this->jobs->last();

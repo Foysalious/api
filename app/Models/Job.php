@@ -1005,6 +1005,11 @@ class Job extends BaseModel implements MorphCommentable
         return $discount_threshold_minutes ? $this->created_at->copy()->addMinutes($discount_threshold_minutes) >= Carbon::now() && $this->online_discount == 0 : 1;
     }
 
+    public function hasDiscount()
+    {
+        return $this->discount > 0;
+    }
+
     public function isCapApplied()
     {
         return $this->discount_percentage && ($this->discount_percentage != $this->original_discount_amount);
