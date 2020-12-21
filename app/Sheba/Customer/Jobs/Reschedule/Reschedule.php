@@ -143,7 +143,7 @@ class Reschedule
             "message"    => "প্রিয় $partner->name আপনার একটি অর্ডার reschedule হয়েছে - " . $this->job->partnerOrder->code(),
             "event_type" => 'PartnerOrder',
             "event_id"   => $this->job->partnerOrder->id,
-            "link"       => "new_order",
+            "link"       => null,
             "sound"      => "notification_sound",
             "channel_id" => $channel
         ], $topic, $channel, $sound);
@@ -187,8 +187,8 @@ class Reschedule
             ];
 
             if($carRentalJobDetail) {
-                $s['pick_up_location_geo'] = $carRentalJobDetail->pick_up_address_geo;
-                $s['destination_location_geo'] = $carRentalJobDetail->destination_address_geo;
+                $s['pick_up_location_geo'] = json_decode($carRentalJobDetail->pick_up_address_geo);
+                $s['destination_location_geo'] = json_decode($carRentalJobDetail->destination_address_geo);
             }
 
             array_push($services, $s);
