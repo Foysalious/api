@@ -129,7 +129,7 @@ class Reschedule
 
         notify()->partner($partner->id)->sender($sender_id, $sender_type)->send([
             'title'      => 'Order Reschedule ID ' . $this->job->partnerOrder->code(),
-            'link'       => env('SHEBA_PARTNER_END_URL') . '/' . $partner->sub_domain . '/order/' . $this->job->partnerOrder->id,
+            'link'       => null,
             'type'       => notificationType('Info'),
             'event_type' => "App\Models\PartnerOrder",
             'event_id'   => $this->job->partnerOrder->id,
