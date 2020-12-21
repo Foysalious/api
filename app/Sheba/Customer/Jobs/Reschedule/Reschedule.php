@@ -6,6 +6,7 @@ namespace Sheba\Customer\Jobs\Reschedule;
 
 use App\Models\Customer;
 use App\Models\Job;
+use App\Models\Order;
 use GuzzleHttp\Client;
 use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Jobs\JobTime;
@@ -111,6 +112,7 @@ class Reschedule
         
         $response = $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
         if($response['code'] === 421) {
+            $this->resetJob();
             $this->initialAutoSPAssignOnExistingJob();
             $response['code'] = 200;
             $response['msg'] = "Order Rescheduled Successfully!";
@@ -196,6 +198,13 @@ class Reschedule
         });
 
         return $services;
+    }
+
+    private function resetJob() {
+        /** @var  Order $order */
+        $order = $this->job->partnerOrder->order;
+
+        $this->job = $order->lastJob();
     }
 
 }
