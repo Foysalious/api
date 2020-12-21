@@ -13,7 +13,6 @@ use App\Sheba\TopUp\TopUpBulkRequest\Formatter;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
-use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
