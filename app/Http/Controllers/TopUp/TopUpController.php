@@ -238,7 +238,7 @@ class TopUpController extends Controller
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $total_recharge_amount = 0;
 
-        $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
+        $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount, $request) {
             $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
             $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
             $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
@@ -252,7 +252,7 @@ class TopUpController extends Controller
             } elseif (!$this->isAmountInteger($value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'Amount Should be Integer';
-            } elseif ($agent instanceof Business && !in_array($agent->id, $this->escape_otf_business) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+            } elseif ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                 $halt_top_up = true;
                 $excel_error = 'The recharge amount is blocked due to OTF activation issue';
             } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
