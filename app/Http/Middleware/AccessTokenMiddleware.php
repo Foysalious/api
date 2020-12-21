@@ -31,10 +31,10 @@ class AccessTokenMiddleware
         try {
             $token = JWTAuth::getToken();
             if (!$token) return api_response($request, 401, ['message' => "Your session has expired. Try Login"]);
-            if ($request->header('portal-name') != Portals::PARTNER_APP) JWTAuth::getPayload($token);
+            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
-            if ($request->header('portal-name') != Portals::PARTNER_APP && !$access_token->isValid()) throw new AccessTokenNotValidException();
+            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') throw new AccessTokenNotValidException();
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
         } catch (JWTException $e) {
