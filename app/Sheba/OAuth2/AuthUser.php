@@ -76,7 +76,7 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            if (request()->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') {
+            if (request()->url() == config('sheba.api_url') . '/v2/top-up/get-topup-token') {
                 $jws = JWS::load($token);
                 $payload = $jws->getPayload();
             } else {
