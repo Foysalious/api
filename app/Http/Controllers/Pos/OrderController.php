@@ -195,7 +195,7 @@ class OrderController extends Controller
 
                 $transformer = new PaymentLinkTransformer();
                 $transformer->setResponse($paymentLink);
-                $link = ['link' => $transformer->getLink()];
+                $link = ['link' => config('sheba.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
             }
             $order = [
                 'id'                    => $order->id,
