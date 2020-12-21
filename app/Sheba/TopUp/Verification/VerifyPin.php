@@ -85,19 +85,30 @@ class VerifyPin
     {
         $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $data = json_decode($result->getBody(), true);
+        $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
+        
         if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
-            throw new PinMismatchException(count($data['requests']), $message = "Pin Mismatch", $code = 403);
+            throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
 
-        // $continuous_wrong_pin_attempted = 0;
         for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
-            // if ($data['requests'][$i]['status'] == Statuses::FAIL) $continuous_wrong_pin_attempted++;
             if ($data['requests'][$i]['status'] != Statuses::FAIL) {
-                // if ($continuous_wrong_pin_attempted > 0) $continuous_wrong_pin_attempted--;
-                throw new PinMismatchException(count($data['requests']), $message = "Pin Mismatch", $code = 403);
+                throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
             }
         }
 
         $this->sessionOut();
+    }
+
+    /**
+     * @param $request_status
+     * @return int
+     */
+    private function getConsecutiveFailedCount($request_status)
+    {
+        foreach ($request_status as $i => $data) {
+            if ($data['status'] == Statuses::SUCCESS) return (int)$i;
+        }
+        return count($request_status);
     }
 
     private function sessionOut()
