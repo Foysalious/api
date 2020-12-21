@@ -177,13 +177,21 @@ class Reschedule
 
     private function formatServicesForOrder($jobServices)
     {
+        $carRentalJobDetail = $this->job->carRentalJobDetail;
         $services = [];
-        $jobServices->each(function ($service, $key) use (&$services){
-            array_push($services, [
+        $jobServices->each(function ($service, $key) use (&$services, $carRentalJobDetail){
+            $s = [
                 'id' => $service->service_id,
                 'quantity' => $service->quantity,
                 'option' => json_decode($service->option),
-            ]);
+            ];
+
+            if($carRentalJobDetail) {
+                $s['pick_up_location_geo'] = $carRentalJobDetail->pick_up_address_geo;
+                $s['destination_location_geo'] = $carRentalJobDetail->destination_address_geo;
+            }
+
+            array_push($services, $s);
         });
 
         return $services;
