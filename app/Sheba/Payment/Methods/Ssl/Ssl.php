@@ -1,5 +1,6 @@
 <?php namespace Sheba\Payment\Methods\Ssl;
 
+use App\Models\PartnerOrder;
 use App\Models\Payable;
 use App\Models\Payment;
 use Sheba\Payment\Methods\PaymentMethod;
@@ -86,6 +87,7 @@ class Ssl extends PaymentMethod
      */
     private function createSslSession(Payment $payment)
     {
+        /** @var Payable $payable */
         $payable = $payment->payable;
 
         $data                 = array();
@@ -97,6 +99,13 @@ class Ssl extends PaymentMethod
         $data['fail_url']     = $this->failUrl;
         $data['cancel_url']   = $this->cancelUrl;
         $data['tran_id']      = $payment->transaction_id;
+        if ($payable->isPartnerOrder()) {
+            $data['invoice_id']   = $this->getPayableInvoiceId($payable);
+            /** @var PartnerOrder $partner_order */
+            $partner_order = $payable->getPayableType();
+            $job = $partner_order->lastJob();
+            $data['no_offer'] = $job->hasDiscount() ? 1 : 0;
+        }
         $data['cus_name']     = $payable->getName();
         $data['cus_email']    = $payable->getEmail();
         $data['cus_phone']    = $payable->getMobile();
