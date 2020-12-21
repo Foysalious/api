@@ -173,7 +173,7 @@ class Reschedule
 
         $partnersFromList = $this->partnerListBuilder->get();
 
-        if($partnersFromList) dispatch(new InitiateAutoSpAssign($this->job->partnerOrder, $customer, $partnersFromList->pluck('id')->toArray()));
+        if($partnersFromList->count() > 0) dispatch(new InitiateAutoSpAssign($this->job->partnerOrder, $customer, $partnersFromList->pluck('id')->toArray()));
     }
 
     private function formatServicesForOrder($jobServices)
