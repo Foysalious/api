@@ -23,6 +23,10 @@ class VerifyPin
     /** @var AccountServer */
     private $accountServer;
 
+    /**
+     * VerifyPin constructor.
+     * @param AccountServer $accountServer
+     */
     public function __construct(AccountServer $accountServer)
     {
         $this->accountServer = $accountServer;
@@ -81,12 +85,18 @@ class VerifyPin
     {
         $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $data = json_decode($result->getBody(), true);
-        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT) throw new PinMismatchException();
+        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
+            throw new PinMismatchException(count($data['requests']), $message = "Pin Mismatch", $code = 403);
+
+        // $continuous_wrong_pin_attempted = 0;
         for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
+            // if ($data['requests'][$i]['status'] == Statuses::FAIL) $continuous_wrong_pin_attempted++;
             if ($data['requests'][$i]['status'] != Statuses::FAIL) {
-                throw new PinMismatchException();
+                // if ($continuous_wrong_pin_attempted > 0) $continuous_wrong_pin_attempted--;
+                throw new PinMismatchException(count($data['requests']), $message = "Pin Mismatch", $code = 403);
             }
         }
+
         $this->sessionOut();
     }
 
@@ -107,6 +117,4 @@ class VerifyPin
         if ($this->managerResource && $this->agent instanceof Partner) $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
         if ($this->agent instanceof Affiliate) $this->agent->update(['remember_token' => str_random(255)]);
     }
-
-
 }
