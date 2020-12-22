@@ -116,6 +116,7 @@ class Reschedule
             $this->initialAutoSPAssignOnExistingJob();
             $response['code'] = 200;
             $response['msg'] = "Order Rescheduled Successfully!";
+            $response['job_id'] = $this->job->id;
         } else {
             $this->notifyPartnerAboutReschedule();
         }
