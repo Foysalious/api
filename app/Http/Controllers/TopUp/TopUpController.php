@@ -230,7 +230,7 @@ class TopUpController extends Controller
                 } elseif (!$this->isAmountInteger($value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'Amount Should be Integer';
-                } elseif ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+                } elseif ($agent instanceof Business && $request->has('is_otf_allow') && ($request->is_otf_allow == 'false') && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
                     $halt_top_up = true;
                     $excel_error = 'The recharge amount is blocked due to OTF activation issue';
                 } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
