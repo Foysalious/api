@@ -75,7 +75,7 @@ class PartnerSubscription
             'current_package'            => $partner_subscription_package,
             'billing_type'               => $partner->billing_type,
             'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-            'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
+            'next_billing_date'          => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d'): null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
             'static_message'             => $partner_subscription_package->id === (int)SubscriptionStatics::getLitePackageID() ? SubscriptionStatics::getLitePackageMessage() : '',
@@ -125,7 +125,7 @@ class PartnerSubscription
                 'bn' => $partner_subscription_package->show_name_bn
             ],
             'last_billing_date'          => $partner->last_billed_date ? $partner->last_billed_date->format('Y-m-d') : null,
-            'next_billing_date'          => $partner->next_billing_date ? $partner->next_billing_date: null,
+            'next_billing_date'          => $partner->periodicBillingHandler()->nextBillingDate() ? $partner->periodicBillingHandler()->nextBillingDate()->format('Y-m-d') : null,
             'validity_remaining_in_days' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : null,
             'is_auto_billing_activated'  => ($partner->auto_billing_activated) ? true : false,
             'balance'                    => [
