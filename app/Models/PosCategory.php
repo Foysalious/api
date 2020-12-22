@@ -40,4 +40,11 @@ class PosCategory extends Model
     {
         return $this->hasMany(PartnerPosService::class);
     }
+
+    public function scopeMasterCategoryByPartner($q, $partner_id)
+    {
+        return $q->leftJoin('partner_pos_categories', 'pos_categories.id', '=', 'partner_pos_categories.category_id')
+            ->where('partner_pos_categories.partner_id',$partner_id)
+            ->whereNull('pos_categories.parent_id');
+    }
 }

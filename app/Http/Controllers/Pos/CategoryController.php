@@ -155,19 +155,26 @@ class CategoryController extends Controller
         ];
     }
 
-
-
     private function getSelectColumnsOfCategory()
     {
-        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
+        return ['pos_categories.id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
     }
 
     public function getMasterCategoriesWithSubCategory(Request $request)
     {
         try {
-            $master_categories = PosCategory::with(['children' => function ($query) {
+            $master_categories = PosCategory::where('is_published_for_sheba',1)
+                ->with(['children' => function ($query) {
                 $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
             }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
+
+            $partners_category = PosCategory::MasterCategoryByPartner($request->partner->id)
+                ->where('is_published_for_sheba',0)->with(['children' => function ($query) {
+                $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
+            }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
+
+            if(!empty($partners_category))
+            $master_categories = $master_categories->merge($partners_category);
 
             if (!$master_categories) return api_response($request, null, 404);
 
@@ -198,6 +205,7 @@ class CategoryController extends Controller
                 $category = $master_category->category()->first();
                 $item['id'] = $category->id;
                 $item['name'] = $category->name;
+                $item['is_published_for_sheba'] = $category->is_published_for_sheba;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
                     $total_services += $child->services()->where('partner_id', $partner->id)->where('publication_status', 1)->count();
