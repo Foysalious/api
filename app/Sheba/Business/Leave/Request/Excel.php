@@ -42,7 +42,7 @@ class Excel
     {
         foreach ($this->leaveRequests as $leave_request) {
             array_push($this->data, [
-                'employee_id' => $leave_request['leave']['employee_id'] ?: 'N/A', 'name' => $leave_request['leave']['name'], 'dept' => $leave_request['leave']['department'], 'type' => $leave_request['leave']['type'], 'total_days' => $leave_request['leave']['total_days'], 'leave_date' => $leave_request['leave']['period'], 'status' => $leave_request['leave']['status'],
+                'employee_id' => $leave_request['leave']['employee_id'] ?: 'N/A', 'name' => $leave_request['leave']['name'], 'dept' => $leave_request['leave']['department'], 'type' => $leave_request['leave']['type'], 'total_days' => $leave_request['leave']['total_days'], 'leave_date' => $leave_request['leave']['leave_date'], 'status' => $leave_request['leave']['status'],
             ]);
         }
 
