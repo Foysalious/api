@@ -267,26 +267,26 @@ class TopUpController extends Controller
             $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
         });
 
-        if ($halt_top_up) {
-            $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-            /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
-                $this->dispatch(new SendTopUpFailMail($agent, $agent_email, $top_up_excel_data_format_errors));
-            }*/
+            if ($total_recharge_amount > $agent->wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+            
+            if ($halt_top_up) {
+                $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
+                /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
+                    $this->dispatch(new SendTopUpFailMail($agent, $agent_email, $top_up_excel_data_format_errors));
+                }*/
 
             return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
         }
 
-        if ($total_recharge_amount > $agent->wallet)
-            return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
-
-        $bulk_request = $this->storeBulkRequest($agent);
-        $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
-            $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-            $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
-            $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-            $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-            $name_field = TopUpExcel::NAME_COLUMN_TITLE;
-            if (!$value->$operator_field) return;
+            $bulk_request = $this->storeBulkRequest($agent);
+            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
+                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+                $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+                $name_field = TopUpExcel::NAME_COLUMN_TITLE;
+                if (!$value->$operator_field) return;
 
             $vendor_id = $vendor->getIdByName($value->$operator_field);
             $request = $top_up_request->setType($value->$type_field)->setBulkId($bulk_request->id)->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
