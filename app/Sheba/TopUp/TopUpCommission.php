@@ -210,7 +210,7 @@ abstract class TopUpCommission
                 $otf_exists = $topupvendorotf->builder()->where('topup_vendor_id', $vendor_id)->where('amount', $amount)->where('sim_type', 'like', '%' . $con_type . '%')->where('status', 'Active')->first();
 
                 if($otf_exists){
-                    $agen_comm = round(min(($otf_settings->agent_commission / 100) * $otf_exists->cashback_amount , 50), 2);
+                    $agen_comm = round(($otf_settings->agent_commission / 100) * $otf_exists->cashback_amount, 2);
 
                     $otf_details['otf_id'] = $otf_exists->id;
                     $otf_details['agent_commisssion'] = $agen_comm;

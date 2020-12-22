@@ -329,7 +329,7 @@ class TopUpController extends Controller
 
                     foreach ($otf_list as $otf){
                         array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount , 50), 2));
-                        array_add($otf, 'otf_commission', round(min(($otf_settings->agent_commission / 100) * $otf->cashback_amount , 50), 2));
+                        array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
                     }
 
                     return api_response($request, $otf_list, 200, ['data' => $otf_list]);
@@ -378,7 +378,7 @@ class TopUpController extends Controller
 
                     foreach ($otf_list as $otf){
                         array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount , 50), 2));
-                        array_add($otf, 'otf_commission', round(min(($otf_settings->agent_commission / 100) * $otf->cashback_amount , 50), 2));
+                        array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
                     }
 
                     return api_response($request, $otf_list, 200, ['data' => $otf_list]);
