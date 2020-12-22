@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Attendance\Daily;
 
-use Carbon\Carbon;
 use Excel;
 
 class DailyExcel
@@ -56,7 +55,7 @@ class DailyExcel
     public function download()
     {
         $this->makeData();
-        $file_name = Carbon::now()->timestamp . '_' . 'daily_attendance_report';
+        $file_name = 'Daily_attendance_report';
         Excel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', false, false);

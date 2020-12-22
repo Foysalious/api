@@ -18,7 +18,7 @@ class Excel
     public function get()
     {
         $this->makeData();
-        $file_name = Carbon::now()->timestamp . '_' . 'monthly_attendance_report';
+        $file_name = 'Monthly_attendance_report';
         MonthlyExcel::create($file_name, function ($excel) {
             $excel->sheet('data', function ($sheet) {
                 $sheet->fromArray($this->data, null, 'A1', true, false);
