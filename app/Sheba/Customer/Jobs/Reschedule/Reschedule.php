@@ -116,6 +116,7 @@ class Reschedule
             $this->initialAutoSPAssignOnExistingJob();
             $response['code'] = 200;
             $response['msg'] = "Order Rescheduled Successfully!";
+            $response['job_id'] = $this->job->id;
         } else {
             $this->notifyPartnerAboutReschedule();
         }
@@ -142,8 +143,8 @@ class Reschedule
         $channel = config('sheba.push_notification_channel_name.manager');
         $sound   = config('sheba.push_notification_sound.manager');
         (new PushNotificationHandler())->send([
-            "title"      => 'New Order',
-            "message"    => "প্আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে, রিসোর্স আসাইন করুন",
+            "title"      => 'Order Reschedule',
+            "message"    => "আপনার ". $this->job->partnerOrder->code() . " অর্ডার টি শিডিউল পরিবর্তন হয়েছে, রিসোর্স আসাইন করুন",
             "event_type" => 'PartnerOrder',
             "event_id"   => $this->job->partnerOrder->id,
             "link"       => null,
