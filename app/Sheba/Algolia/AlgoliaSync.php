@@ -37,12 +37,6 @@ class AlgoliaSync extends Command
         foreach ($services as $service) {
             $service->pushToIndex();
         }
-
-        $pos_services = PartnerPosService::get();
-        /** @var PartnerPosService $service */
-        foreach ($pos_services as $pos_service) {
-            $pos_service->pushToIndex();
-        }
     }
 
 }
