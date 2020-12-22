@@ -245,6 +245,9 @@ class TopUpController extends Controller
                 $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
             });
 
+            if ($total_recharge_amount > $agent->wallet)
+                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+            
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
                 /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
@@ -253,9 +256,6 @@ class TopUpController extends Controller
 
                 return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
             }
-
-            if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
             $bulk_request = $this->storeBulkRequest($agent);
             $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
