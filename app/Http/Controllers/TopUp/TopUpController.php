@@ -130,7 +130,7 @@ class TopUpController extends Controller
             ->setLong($request->long ? $request->long : null)
             ->setUserAgent($userAgentInformation->getUserAgent());
 
-        if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
+        if ($agent instanceof Business && $request->has('is_otf_allow') && ($request->is_otf_allow == 'false')) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
             $top_up_request->setBlockedAmount($blocked_amount_by_operator);
         }
