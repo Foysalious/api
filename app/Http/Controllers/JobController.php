@@ -804,6 +804,10 @@ class JobController extends Controller
             ->setScheduleTimeSlot($request->schedule_time_slot);
 
         $response = $reschedule_job->reschedule();
-        return api_response($request, $response, $response['code'], ['message' => $response['msg']]);
+
+        $res = ['message' => $response['msg']];
+        if(!empty($response['job_id'])) $res['job_id'] = $response['job_id'];
+
+        return api_response($request, $response, $response['code'], $res);
     }
 }
