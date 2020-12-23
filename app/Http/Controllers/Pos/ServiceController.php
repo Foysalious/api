@@ -158,7 +158,7 @@ class ServiceController extends Controller
                         $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
                     }
                 ])->find($partner_pos_service->id);
-
+            $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
             $partner_pos_service->thumb = $partner_pos_service_model->thumb;
             $partner_pos_service->banner = $partner_pos_service_model->banner;
             $partner_pos_service->app_thumb = $partner_pos_service_model->app_thumb;
@@ -175,6 +175,7 @@ class ServiceController extends Controller
                    'image_link' => $image->image_link
                ];
             }) : [];
+            $creator->syncPartnerPosCategory($partner_pos_service);
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
              * USAGE LOG
