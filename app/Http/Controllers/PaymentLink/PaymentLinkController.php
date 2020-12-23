@@ -102,11 +102,6 @@ class PaymentLinkController extends Controller
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
-            try {
-                Log::error("$request->user->id".JWTAuth::getToken());
-            }catch (\Throwable $e){
-
-            }
 
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
