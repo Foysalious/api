@@ -89,10 +89,14 @@ class Updater
     private function updateImageGallery()
     {
         $image_gallery = [];
-        foreach ($this->data['image_gallery'] as $key => $file) {
-            list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
-            $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
+        if(isset($this->data['image_gallery']))
+        {
+            foreach ($this->data['image_gallery'] as $key => $file) {
+                list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
+                $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
+            }
         }
+
         if (isset($this->data['deleted_image'])) {
             $this->data['deleted_image_link'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
             $this->deleteFromCDN($this->data['deleted_image_link']);
