@@ -96,6 +96,10 @@ class WebstoreSettingsController extends Controller
         ]);
 
         $this->setModifier($request->manager_resource);
+
+        $banner_settings = PartnerWebstoreBanner::where('partner_id', $request->partner->id)->first();
+        if ($banner_settings)
+            return api_response($request, null, 403, ['message' => 'Banner Settings already exist']);
         $data = [
             'partner_id' => $request->partner->id,
             'banner_id' => $request->banner_id,
