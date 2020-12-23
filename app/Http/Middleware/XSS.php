@@ -15,7 +15,10 @@ class XSS
         'v2/businesses/*/bids/*/hire',
         'v2/payments/cbl/success',
         'v2/payments/cbl/fail',
-        'v2/payments/cbl/cancel'
+        'v2/payments/cbl/cancel',
+        'v2/partners/*/pos/services',
+        'v2/partners/*/pos/services/*',
+        'v2/partners/*/webstore-settings'
     ];
 
     /**
