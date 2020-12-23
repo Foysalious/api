@@ -147,9 +147,9 @@ class PartnerPosService extends BaseModel
     public function getAlgoliaRecord()
     {
         return [
-            'id' => $this->id,
-            'partner_id' => $this->partner_id,
-            'category_id' => $this->pos_category_id,
+            'id' => (int) $this->id,
+            'partner_id' => (int) $this->partner_id,
+            'category_id' => (int) $this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
             'stock' => (double)$this->stock,
