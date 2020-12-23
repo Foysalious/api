@@ -9,14 +9,13 @@ use Sheba\Dal\BaseModel;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 
 
-
 class PartnerPosService extends BaseModel
 {
     use SoftDeletes, AlgoliaEloquentTrait;
 
     protected $guarded = ['id'];
-    protected $casts   = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
-    protected $dates   = ['deleted_at'];
+    protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
+    protected $dates = ['deleted_at'];
 
     public static $savedEventClass = PartnerPosServiceSaved::class;
     public static $autoIndex = false;
@@ -122,7 +121,7 @@ class PartnerPosService extends BaseModel
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;
-        return round((($discount->amount/ $this->price) * 100),0);
+        return round((($discount->amount / $this->price) * 100), 0);
     }
 
     public function runningDiscounts()
@@ -153,10 +152,10 @@ class PartnerPosService extends BaseModel
             'category_id' => $this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
-            'stock' => $this->stock,
+            'stock' => (int)$this->stock,
             'description' => $this->description,
-            'publication_status' => $this->publication_status,
-            'is_published_for_shop' => $this->is_published_for_shop,
+            'publication_status' => (int)$this->publication_status,
+            'is_published_for_shop' => (int)$this->is_published_for_shop,
             'app_thumb' => $this->app_thumb,
         ];
     }
