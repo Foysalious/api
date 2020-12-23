@@ -80,7 +80,7 @@ class Updater
     {
         if ($this->hasFile('app_thumb')) $this->updatedData['app_thumb'] = $this->saveAppThumbImage();
         else if (array_key_exists('app_thumb',$this->data) && (is_null($this->data['app_thumb']) || $this->data['app_thumb'] == "null" )) $this->updatedData['app_thumb'] = config('sheba.s3_url').'images/pos/services/thumbs/default.jpg';
-        if (isset($this->data['image_gallery'])) $this->updatedData['image_gallery'] = $this->updateImageGallery();
+        if (isset($this->data['image_gallery']) || isset($this->data['deleted_image']) ) $this->updatedData['image_gallery'] = $this->updateImageGallery();
     }
 
     /**
@@ -98,7 +98,7 @@ class Updater
             $this->deleteFromCDN($this->data['deleted_image_link']);
             $this->deleteFromDB($this->data['deleted_image']);
         }
-        return json_encode($image_gallery);
+        return !empty($image_gallery) ? json_encode($image_gallery) : null;
     }
 
     private function deleteFromCDN($files)
