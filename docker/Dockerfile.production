@@ -55,6 +55,8 @@ COPY ./.sentryclirc .sentryclirc
 COPY ./docker/php/local.ini /usr/local/etc/php/conf.d/local.ini
 # Opcache configuration
 COPY ./docker/php/conf.d/opcache.ini /usr/local/etc/php/conf.d/opcache.ini
+# PHP-FPM configuration
+COPY ./docker/php/conf.d/www.production.conf /usr/local/etc/php-fpm.d/www.conf
 # Nginx configuration
 COPY ./docker/nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
 
