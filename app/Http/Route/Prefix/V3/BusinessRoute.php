@@ -14,6 +14,7 @@ class BusinessRoute
 
                 $api->group(['prefix' => 'approval-flows'], function ($api) {
                     $api->get('/', 'B2b\ApprovalSettingsController@index');
+                    $api->post('/', 'B2b\ApprovalSettingsController@store');
                 });
             });
         });
