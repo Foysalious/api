@@ -19,7 +19,6 @@ class XSS
         'v2/partners/*/pos/services',
         'v2/partners/*/pos/services/*',
         'v2/partners/*/webstore-settings',
-        'v2/partners/*/pos/orders',
         'v2/partners/*/pos/products/orders'
     ];
 
