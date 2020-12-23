@@ -40,15 +40,6 @@ class TopUpController extends Controller
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
     use ModificationFields;
 
-    private $topupotfsettings;
-    private $topupvendorotf;
-
-    public function __construct(TopUpOTFSettingsRepo $topupotfsettings, TopUpVendorOTFRepo $topupvendorotf)
-    {
-        $this->topupotfsettings = $topupotfsettings;
-        $this->topupvendorotf = $topupvendorotf;
-    }
-
     public function getVendor(Request $request)
     {
         try {
@@ -322,13 +313,16 @@ class TopUpController extends Controller
             return api_response($request, $message, 404, ['message' => $message]);
         }
 
-        $otf_settings = $this->topupotfsettings->builder()->where([
+        $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
+        $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
+
+        $otf_settings = $topup_otf_settings->builder()->where([
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
 
         if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
-            $otf_list = $this->topupvendorotf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
+            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
 
             foreach ($otf_list as $otf) {
                 array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
@@ -367,13 +361,16 @@ class TopUpController extends Controller
             return api_response($request, $message, 404, ['message' => $message]);
         }
 
-        $otf_settings = $this->topupotfsettings->builder()->where([
+        $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
+        $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
+
+        $otf_settings = $topup_otf_settings->builder()->where([
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
 
         if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
-            $otf_list = $this->topupvendorotf->builder()->where('id', $request->otf_id)->where('status', 'Active')->get();
+            $otf_list = $topup_vendor_otf->builder()->where('id', $request->otf_id)->where('status', 'Active')->get();
 
             foreach ($otf_list as $otf) {
                 array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
