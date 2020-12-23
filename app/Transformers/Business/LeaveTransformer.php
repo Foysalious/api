@@ -5,6 +5,7 @@ use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Transformers\AttachmentTransformer;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\Model as Leave;
@@ -15,10 +16,21 @@ class LeaveTransformer extends TransformerAbstract
 {
     protected $defaultIncludes = ['attachments'];
     private $business;
+    private $leaveLogDetails;
+    private $leaveCancelLogDetails;
+    private $isSubstituteRequired;
 
-    public function __construct(Business $business)
+    /**
+     * LeaveTransformer constructor.
+     * @param Business $business
+     * @param $leave_log_details
+     * @param $is_substitute_required
+     */
+    public function __construct(Business $business, $leave_log_details, $is_substitute_required)
     {
         $this->business = $business;
+        $this->leaveLogDetails = $leave_log_details;
+        $this->isSubstituteRequired = $is_substitute_required;
     }
 
     public function transform(Leave $leave)
@@ -31,6 +43,7 @@ class LeaveTransformer extends TransformerAbstract
         $substitute_member = $substitute_business_member ? $substitute_business_member->member : null;
         /** @var Profile $profile */
         $leave_substitute = $substitute_member ? $substitute_member->profile : null;
+        $approvers = $this->getApprover($leave);
         return [
             'title' => $leave->title,
             'leave_type' => $leave_type->title,
@@ -47,10 +60,27 @@ class LeaveTransformer extends TransformerAbstract
             'requested_on' => $leave->created_at,
             'note' => $leave->note,
             'substitute' => $substitute_business_member ? [
-                'name' => $leave_substitute->name
+                'id' => $substitute_business_member->id,
+                'name' => $leave_substitute->name,
+                'pro_pic' => $leave_substitute->pro_pic,
+                'designation' => $substitute_business_member->role ? $substitute_business_member->role->name : null
             ] : null,
-            'approvers' => $this->getApprover($leave)
+            'approvers' => $approvers,
+            'approver_count' => count($approvers),
+            'leave_log_details' => $this->leaveLogDetails,
+            'is_substitute_required' => $this->isSubstituteRequired,
+            'is_cancelable_request' => $this->isCancelableRequest($leave->status, $leave->start_date)
         ];
+    }
+
+    public function isCancelableRequest($status, $start_date)
+    {
+        $current_time = Carbon::now()->format('Y m d H:i:s');
+        $start_date = $start_date->format('Y m d H:i:s');
+
+        if (!in_array($status, ['canceled', 'rejected']) && $current_time < $start_date && Carbon::now()->format('H:i:s') <= '23:59:59') return 1;
+
+        return 0;
     }
 
     public function includeAttachments($leave)

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Schedule;
 
 use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryScheduleSlot\CategoryScheduleSlot;
 use App\Models\Partner;
 use App\Models\ResourceSchedule;
 use Carbon\Carbon;
@@ -36,7 +37,6 @@ class ScheduleSlot
         $this->limit = 1;
         $this->scheduleStart = '09:00:00';
         $this->scheduleEnd = '20:00:00';
-        $this->shebaSlots = $this->getShebaSlots();
         $this->preparationTime = 0;
         $this->today = Carbon::now()->addMinutes(15);
     }
@@ -79,6 +79,34 @@ class ScheduleSlot
     {
         $final = [];
         $last_day = $this->today->copy()->addDays($this->limit);
+        $day = $this->today->copy();
+        while ($day < $last_day) {
+            $slot = $this->formatSlots($day);
+            if($slot) {
+                array_push($final, [
+                    'value' => $day->toDateString(),
+                    'slots' => $slot
+                ]);
+            }
+
+            $day->addDay();
+        }
+        return $final;
+    }
+
+    public function getSlots($day)
+    {
+        $last_day = $this->today->copy()->addDays($this->limit);
+        if($this->category) {
+            $slots = CategoryScheduleSlot::category($this->category->id)->day($day->dayOfWeek)->get();
+            $slots = $slots->map(function ($slot) {
+                return $slot->scheduleSlot;
+            });
+        }
+        else $slots = $this->getShebaSlots();
+        
+        $this->shebaSlots = $slots;
+        if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
         $end = $last_day->format('Y-m-d') . ' ' . $this->shebaSlots->last()->end;
         if ($this->partner) {
@@ -88,16 +116,8 @@ class ScheduleSlot
             $category_partner = $this->partner->categories->where('id', $this->category->id)->first();
             if ($this->category && $category_partner) $this->preparationTime = $category_partner->pivot->preparation_time_minutes;
         }
-        $day = $this->today->copy();
-        while ($day < $last_day) {
-            if ($this->partner) $this->addAvailabilityToShebaSlots($day);
-            array_push($final, [
-                'value' => $day->toDateString(),
-                'slots' => $this->formatSlots($day, $this->shebaSlots->toArray())
-            ]);
-            $day->addDay();
-        }
-        return $final;
+
+        return $this->shebaSlots;
     }
 
     private function getResources()
@@ -214,13 +234,20 @@ class ScheduleSlot
         }
     }
 
-    private function formatSlots(Carbon $day, $slots)
+    private function formatSlots(Carbon $day)
     {
         $current_time = $this->today->copy();
-        if (!$this->partner && $this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
+
+        $slots = $this->getSlots($day);
+
+        if ($this->partner) $current_time = $this->today->copy()->addMinutes($this->preparationTime);
+        else if($this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
+
+        if(!$slots) return null;
+        if ($this->partner) $this->addAvailabilityToShebaSlots($day);
         foreach ($slots as &$slot) {
             $slot['key'] = $slot['start'] . '-' . $slot['end'];
-            $start = Carbon::parse($day->toDateString() . ' ' . $slot['start']);
+            $start = Carbon::parse($day->toDateString() . ' ' .  $slot['start']);
             $end = Carbon::parse($day->toDateString() . ' ' . $slot['end']);
             $slot['value'] = $start->format('g') . ' - ' . $end->format('g A');
             $slot_start = humanReadableShebaTime($slot['start'], true);
@@ -228,9 +255,10 @@ class ScheduleSlot
             $slot['start'] = $slot_start;
             $slot['end'] = $slot_end;
             $slot['is_valid'] = $start > $current_time ? 1 : 0;
-            $slot['is_available'] = isset($slot['is_available']) ? $slot['is_available'] : $slot['is_valid'];
-
+            $slot['is_available'] = !!($slot['is_available']) ? $slot['is_available'] : $slot['is_valid'];
+            removeRelationsAndFields($slot);
         }
+
         return $slots;
     }
 }

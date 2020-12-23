@@ -4,6 +4,8 @@ use App\Models\PosCustomer;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\Sms\Sms;
+use App\Sheba\Bitly\BitlyLinkShort;
 
 class Creator
 {
@@ -25,6 +27,8 @@ class Creator
     private $payerType;
     private $interest;
     private $bankTransactionCharge;
+    /** @var BitlyLinkShort */
+    private $bitlyLink;
 
 
     /**
@@ -37,6 +41,7 @@ class Creator
         $this->paymentLinkRepo = $payment_link_repository;
         $this->isDefault       = 0;
         $this->amount          = null;
+        $this->bitlyLink = new BitlyLinkShort();
     }
 
     public function setAmount($amount)
@@ -162,7 +167,6 @@ class Creator
         return $this->paymentLinkRepo->statusUpdate($this->linkId, $this->status);
     }
 
-
     public function save()
     {
         $this->makeData();
@@ -208,6 +212,27 @@ class Creator
             'interest'                => $this->paymentLinkCreated->interest,
             'bank_transaction_charge' => $this->paymentLinkCreated->bankTransactionCharge
         ], $payerInfo);
+    }
+
+    public function sentSms()
+    {
+        if ($this->getPayerInfo()) {
+            /** @var PaymentLinkClient $paymentLinkClient */
+            $paymentLinkClient = app(PaymentLinkClient::class);
+            $paymentLink = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
+            $link = null;
+            if ($paymentLink) {
+                $link = $paymentLink->url->shortUrl;
+            }
+            $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
+            $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
+            $mobile = $this->getPayerInfo()['payer']['mobile'];
+
+            /** @var Sms $sms */
+            $sms = app(Sms::class);
+            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
+            $sms->shoot();
+        }
     }
 
     private function getPayerInfo()

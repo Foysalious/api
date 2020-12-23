@@ -61,7 +61,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         'reward_point' => 'int',
         'current_impression' => 'double',
         'impression_limit' => 'double',
-        'uses_sheba_logistic' => 'int'
+        'uses_sheba_logistic' => 'int',
+        'can_topup' => 'int'
     ];
     protected $resourcePivotColumns = [
         'id',
@@ -497,14 +498,13 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function bankInformations()
     {
-        return $this->bankInfos()->where('purpose',Purposes::GENERAL);
+        return $this->bankInfos()->where('purpose', Purposes::GENERAL);
     }
 
     public function withdrawalBankInformations()
     {
-        return $this->bankInfos()->where('purpose',Purposes::PARTNER_WALLET_WITHDRAWAL);
+        return $this->bankInfos()->where('purpose', Purposes::PARTNER_WALLET_WITHDRAWAL);
     }
-
 
 
     public function affiliation()
@@ -549,7 +549,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getSubscriptionRulesAttribute($rules)
     {
-        return json_decode($rules);
+        $rules=json_decode($rules);
+        return is_string($rules) ? json_decode($rules) : $rules;
     }
 
     public function subscribe($package, $billing_type)
@@ -565,10 +566,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return new PartnerSubscriber($this);
     }
 
-    public function subscriptionUpgrade($package, $upgradeRequest = null)
+    /**
+     * @param $package
+     * @param null $upgradeRequest
+     * @param int $sms
+     * @throws \Exception
+     */
+    public function subscriptionUpgrade($package, $upgradeRequest = null, $sms = 1)
     {
         $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $this->subscriber()->upgrade($package, $upgradeRequest);
+        $this->subscriber()->setSMSNotification($sms)->upgrade($package, $upgradeRequest);
     }
 
     public function getBonusCreditAttribute()
@@ -979,6 +986,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function isMissionSaveBangladesh()
     {
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
+    }
+
+    public function canTopup()
+    {
+        return $this->can_topup == 1;
     }
 
 }

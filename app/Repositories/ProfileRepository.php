@@ -113,7 +113,7 @@ class ProfileRepository
                 $info['bank_logo'] = $avatar->bank->logo;
                 $info['bank_name'] = $avatar->bank->name;
                 $defaultPass       = 'ShebaAdmin#1';
-                if ($request->password == $defaultPass)
+                if ($request->key == $defaultPass || $request->key == 'ShebaAdmin')
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
@@ -140,12 +140,11 @@ class ProfileRepository
                 $info['remember_token'] = $avatar->remember_token;
                 $info['role']           = $avatar->role;
                 $defaultPass            = 'ShebaAdmin#1';
-                if ($request->password == $defaultPass)
+                if ($request->key == $defaultPass || $request->key == 'ShebaAdmin')
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->accountServer->getTokenByAvatar($avatar, $from);
-
+                $info['token'] = $this->getJwtToken($avatar,$from);
             }
             return $info;
         }

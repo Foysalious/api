@@ -70,10 +70,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->failPayment();
             throw $e;
         }
-        $this->payment = $this->saveInvoice();
-        $this->notify();
-        $this->dispatchReward();
-        $this->storeEntry();
+        try {
+            $this->payment = $this->saveInvoice();
+            $this->notify();
+            $this->dispatchReward();
+            $this->storeEntry();
+        }catch (\Throwable $e){
+            logError($e);
+        }
         return $this->payment;
     }
 
@@ -185,8 +189,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($this->target instanceof ExternalPayment) {
             $this->target->payment_id = $this->payment->id;
             $this->target->update();
+            $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
         }
-        $this->paymentLinkRepository->statusUpdate($this->paymentLink->getLinkID(), 0);
     }
 
     private function createUsage($payment_receiver, $modifier)

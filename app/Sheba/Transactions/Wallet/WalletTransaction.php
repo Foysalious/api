@@ -18,7 +18,7 @@ class WalletTransaction
     }
 
     /**
-     * @param Exception $e
+     * @param \Throwable|Exception $e
      */
     public static function throwException($e)
     {

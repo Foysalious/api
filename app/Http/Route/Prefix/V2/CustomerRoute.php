@@ -86,6 +86,7 @@ class CustomerRoute
                     $api->group(['prefix' => '{job}', 'middleware' => ['customer_job.auth']], function ($api) {
                         $api->get('/', 'JobController@show');
                         $api->get('bills', 'JobController@getBills');
+                        $api->get('invoice', 'JobController@getInvoice');
                         $api->get('bills/clear', 'JobController@clearBills');
                         $api->post('reschedule', 'JobController@rescheduleJob');
                         $api->get('logs', 'JobController@getLogs');

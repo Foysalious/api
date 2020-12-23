@@ -31,7 +31,8 @@ class LeaveSettingsController extends Controller
         if (!$business_member) return api_response($request, null, 404);
 
         $business_member = $business_member_repo->find($business_member['id']);
-        $leave_types = $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
+        $leave_types = $request->has('with_trashed') && !$request->with_trashed ?
+            $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business) : $leave_types_repo->getAllLeaveTypesWithTrashedByBusiness($business_member->business);
         $half_day_config = [
            'is_half_day_enable' => $business->is_half_day_enable,
            'half_day_initial_timings' => $this->getHalfDayTimings($business)
@@ -68,7 +69,7 @@ class LeaveSettingsController extends Controller
      */
     public function update($business, $leave_setting, Request $request, LeaveTypesRepoInterface $leave_types_repo)
     {
-        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required']);
+        $this->validate($request, ['title' => 'required', 'total_days' => 'required', 'is_half_day_enable' => 'required', 'is_published' => 'required']);
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 404);
         $this->setModifier($business_member->member);
@@ -79,6 +80,22 @@ class LeaveSettingsController extends Controller
             'total_days' => $request->total_days,
             'is_half_day_enable' => $request->is_half_day_enable
         ];
+
+        if($request->is_published) {
+            if ($leave_setting->deleted_at) {
+                $data += [
+                  'deleted_at' => null
+                ];
+            }
+        }
+
+        if(!$request->is_published) {
+            if(!$leave_setting->deleted_at) {
+                $data += [
+                    'deleted_at' => Carbon::now()
+                ];
+            }
+        }
         $leave_types_repo->update($leave_setting, $this->withUpdateModificationField($data));
         $leave_setting = $leave_types_repo->findWithTrashed($leave_setting->id);
         return api_response($request, null, 200, ['leave_setting' => $leave_setting]);

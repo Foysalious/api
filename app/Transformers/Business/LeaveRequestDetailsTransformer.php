@@ -104,14 +104,14 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function checkLeaveStatus($requestable)
     {
         /** @var Leave $requestable */
-        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
+        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected() || $requestable->status === 'canceled') return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
     }
 
     private function getLeaveLogDetails($requestable)
     {
-        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->get()->map(function ($log) {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->where('type', '<>', 'leave_adjustment')->select('log', 'created_at')->get()->map(function ($log) {
             return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
         })->toArray();
         return $logs ? $logs : null;

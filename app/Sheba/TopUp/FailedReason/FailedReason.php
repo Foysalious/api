@@ -10,5 +10,5 @@ abstract class FailedReason
         return $this;
     }
 
-    public abstract function getReason();
+    abstract public function getReason();
 }
