@@ -121,7 +121,7 @@ class PartnerPosService extends BaseModel
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;
-        return round((($discount->amount / $this->price) * 100), 0);
+        return round((($discount->amount / $this->price) * 100), 1);
     }
 
     public function runningDiscounts()
