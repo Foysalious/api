@@ -18,7 +18,8 @@ class XSS
         'v2/payments/cbl/cancel',
         'v2/partners/*/pos/services',
         'v2/partners/*/pos/services/*',
-        'v2/partners/*/webstore-settings'
+        'v2/partners/*/webstore-settings',
+        'v2/partners/*/pos/products/orders'
     ];
 
     /**

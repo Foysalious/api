@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\Leave\Balance;
 
-use Carbon\Carbon;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Excel as BalanceExcel;
@@ -51,7 +50,7 @@ class Excel
     {
         $header = $this->getHeaders();
         $this->makeData();
-        $file_name = Carbon::now()->timestamp . '_' . 'leave_balance_report';
+        $file_name = 'Leave_balance_report';
         BalanceExcel::create($file_name, function ($excel) use ($header){
             $excel->sheet('data', function ($sheet) use ($header){
                 $sheet->fromArray($this->data, null, 'A1', false, false);

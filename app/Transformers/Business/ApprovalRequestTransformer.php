@@ -62,6 +62,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y') ,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note
             ],

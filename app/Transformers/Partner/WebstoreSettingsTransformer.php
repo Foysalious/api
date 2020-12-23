@@ -20,6 +20,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'banner' => $banner_settings ? [
                 'id'       => $banner_settings->id,
                 'banner_id' => $banner_settings->banner_id,
+                'image_link' => $banner_settings->banner->image_link,
                 'title'    => $banner_settings->title,
                 'description' => $banner_settings->description,
                 'is_published' => $banner_settings->is_published

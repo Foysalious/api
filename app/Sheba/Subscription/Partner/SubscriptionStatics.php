@@ -19,7 +19,7 @@ class SubscriptionStatics
         $month = banglaMonth($date->month);
         $date  = convertNumbersToBangla($date->day, false);
         $current_package = self::getCurrentPackageName($partner);
-        return "আপনি বর্তমানে $current_package প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা বালান্স রাখুন।";
+        return "আপনি বর্তমানে $current_package প্যাকেজ ব্যবহার করছেন। স্বয়ংক্রিয় নবায়ন এর জন্য $date $month $price টাকা ব্যালেন্স রাখুন।";
     }
 
     static function getCurrentPackageName(Partner $partner)
