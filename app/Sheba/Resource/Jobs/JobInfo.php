@@ -67,6 +67,9 @@ class JobInfo
     private function getFirstJob()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $jobs->filter(function ($job) {
+            return $job->partnerOrder->order->sales_channel !== 'B2B';
+        });
         $jobs = $this->rearrange->rearrange($jobs);
         if (count($jobs) == 0) return null;
         return $jobs->first();
@@ -108,9 +111,43 @@ class JobInfo
         $formatted_job->put('can_process', 0);
         $formatted_job->put('can_serve', 0);
         $formatted_job->put('can_collect', 0);
-        $formatted_job->put('due', 0);
-        if ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job)) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+        $formatted_job->put('due', $job->partnerOrder->due);
+        $formatted_job->put('has_pending_due', $this->hasDueJob($job) ? 1 : 0);
+
+        $latest_pending_due_of_partner = $this->latestDueJob($job);
+        $formatted_job->put('pending_due', $latest_pending_due_of_partner
+            ? [
+                'resource_id' => $latest_pending_due_of_partner->resource_id,
+                'job_id' => $latest_pending_due_of_partner->id
+              ]
+            : null
+        );
+
+        $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
+
+        if ($this->isB2BJob($job) || ($this->getFirstJob() && $this->shouldICheckActions($this->getFirstJob(), $job))) $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
         return $formatted_job;
+    }
+
+    private function isB2BJob($job)
+    {
+        return $job->partnerOrder->order->sales_channel === 'B2B';
+    }
+
+    private function hasDueJob($job)
+    {
+        return $job->partnerOrder->cancelled_at === null
+            && $job->partnerOrder->closed_at !== null
+            && $job->partnerOrder->closed_and_paid_at == null;
+    }
+
+    private function latestDueJob($job)
+    {
+        $partner = $job->partnerOrder->partner;
+        $partner_order = $partner->partnerOrders()->NotB2bOrder()->closedButNotPaid()->notCancelled()->first();
+        if(empty($partner_order)) return null;
+        if($partner_order->getActiveJob()->id === $job->id) return null;
+        return $partner_order->getActiveJob();
     }
 
     /**

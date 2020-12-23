@@ -11,6 +11,9 @@ class AffiliateRoute
             $api->get('notifications', 'AffiliateController@getNotifications');
             $api->get('notifications/{notification}', 'AffiliateController@getNotification');
             $api->get('notification-seen/{id}', 'B2b\BusinessesController@notificationSeen');
+            $api->post('top-up', 'TopUpController@topUpWithPin');
+            $api->post('top-up-otf', 'TopUpController@topUpOTF');
+            $api->post('top-up-otf-details', 'TopUpController@topUpOTFDetails');
 
             $api->group(['prefix' => 'bondhu-balance'], function ($api) {
                 $api->post('purchase', 'BondhuBalanceController@purchase');

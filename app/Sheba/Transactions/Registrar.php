@@ -80,8 +80,8 @@ class Registrar
      */
     public function register($user, $gateway, $transaction_id, $to_account = null)
     {
-        $created_by = ($user instanceof Partner || $user instanceof Business) ? $user->name ?: 'Unknown Partner' : $user->profile->name ?: $user->profile->mobile;
-        $data = [
+        $created_by = ($user instanceof Partner || $user instanceof Business) ? !empty($user->name) && $user->name != '' ?: 'Unnamed User' : $user->profile->name ?: $user->profile->mobile;
+        $data       = [
             'gateway'         => $gateway,
             'transaction_id'  => $transaction_id,
             'type'            => 'credit',
@@ -92,7 +92,7 @@ class Registrar
             'user_agent'      => request()->header('User-Agent'),
             'created_by'      => $user->id,
             'created_by_type' => class_basename($user),
-            'created_by_name' => $created_by,
+            'created_by_name' => !empty($created_by) && $created_by != '' ? 'Unnamed User' : $created_by,
             'to_account'      => $to_account,
             'amount'          => $this->amount,
             'details'         => $this->details,

@@ -32,11 +32,22 @@ use App\Models\Affiliate;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
+use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
+use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
 
 class TopUpController extends Controller
 {
     const MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND = 10;
     use ModificationFields;
+
+    private $topupotfsettings;
+    private $topupvendorotf;
+
+    public function __construct(TopUpOTFSettingsRepo $topupotfsettings, TopUpVendorOTFRepo $topupvendorotf)
+    {
+        $this->topupotfsettings = $topupotfsettings;
+        $this->topupvendorotf = $topupvendorotf;
+    }
 
     public function getVendor(Request $request)
     {
@@ -288,4 +299,109 @@ class TopUpController extends Controller
         $last_topup = $agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function topUpOTF(Request $request)
+    {
+        try {
+            $this->validate($request, [
+                'sim_type' => 'required|in:prepaid,postpaid',
+                'for' => 'required|in:customer,partner,affiliate',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+            ]);
+
+            if ($request->for == 'customer') $agent = "App\\Models\\Customer";
+            elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
+            else $agent = "App\\Models\\Affiliate";
+
+            $vendor = TopUpVendor::select('id', 'name', 'gateway','is_published')->where('id', $request->vendor_id)->published()->first();
+
+            if($vendor){
+
+                $otf_settings = $this->topupotfsettings->builder()->where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+
+                if($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true){
+                    $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+                    $otf_list = $this->topupvendorotf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
+
+                    foreach ($otf_list as $otf){
+                        array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount , 50), 2));
+                        array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
+                    }
+
+                    return api_response($request, $otf_list, 200, ['data' => $otf_list]);
+                }else{
+                    $otf_list = [];
+                    return api_response($request, $otf_list, 200, ['message' => $otf_list]);
+                }
+
+            }else{
+                $message = "Vondor not found";
+                return api_response($request, $message, 404, ['message' => $message]);
+            }
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            dd($e);
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function topUpOTFDetails(Request $request){
+
+        try {
+            $this->validate($request, [
+                'for' => 'required|in:customer,partner,affiliate',
+                'vendor_id' => 'required|exists:topup_vendors,id',
+                'otf_id' => 'required|integer',
+            ]);
+
+            if ($request->for == 'customer') $agent = "App\\Models\\Customer";
+            elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
+            else $agent = "App\\Models\\Affiliate";
+
+            $vendor = TopUpVendor::select('id', 'name', 'gateway','is_published')->where('id', $request->vendor_id)->published()->first();
+
+            if($vendor){
+
+                $otf_settings = $this->topupotfsettings->builder()->where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+
+                if($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true){
+                    $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+                    $otf_list = $this->topupvendorotf->builder()->where('id', $request->otf_id)->where('status', 'Active')->get();
+
+                    foreach ($otf_list as $otf){
+                        array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount , 50), 2));
+                        array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
+                    }
+
+                    return api_response($request, $otf_list, 200, ['data' => $otf_list]);
+                }else{
+                    $otf_list = [];
+                    return api_response($request, $otf_list, 200, ['message' => $otf_list]);
+                }
+
+            }else{
+                $message = "Vondor not found";
+                return api_response($request, $message, 404, ['message' => $message]);
+            }
+
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+
+
+    }
+
+
 }
