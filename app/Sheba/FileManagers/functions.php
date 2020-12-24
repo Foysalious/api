@@ -1,5 +1,9 @@
 <?php
 
+use Sheba\FileManagers\ImageResizer;
+use Sheba\FileManagers\ImageSize;
+use Sheba\FileManagers\S3Image;
+
 if (!function_exists('getEmployeesImagesFolder')) {
 
     /**
@@ -331,6 +335,10 @@ if (!function_exists('getEmiBankIconsFolder')) {
 
 if (!function_exists('getPartnerPackageFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getPartnerPackageFolder($with_base_url = false)
     {
         $url = '';
@@ -469,6 +477,10 @@ if (!function_exists('getNIDFolder')) {
 
 if (!function_exists('getPushNotificationFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getPushNotificationFolder($with_base_url = false)
     {
         $url = '';
@@ -527,6 +539,10 @@ if (!function_exists('getSliderImagesFolder')) {
 
 if (!function_exists('getBankStatementImagesFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getBankStatementImagesFolder($with_base_url = false)
     {
         $url = '';
@@ -549,6 +565,10 @@ if (!function_exists('getBankStatementDefaultImage')) {
 
 if (!function_exists('getTradeLicenceImagesFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getTradeLicenceImagesFolder($with_base_url = false)
     {
         $url = '';
@@ -558,6 +578,10 @@ if (!function_exists('getTradeLicenceImagesFolder')) {
     }
 }
 if (!function_exists('getLoanFolder')) {
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getLoanFolder($with_base_url = false)
     {
         $url = '';
@@ -570,6 +594,10 @@ if (!function_exists('getLoanFolder')) {
 
 if (!function_exists('getTradeLicenceDocumentsFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getTradeLicenceDocumentsFolder($with_base_url = false)
     {
         $url = '';
@@ -579,6 +607,11 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
     }
 }
 if (!function_exists('getLoanDocumentFolder')) {
+
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getLoanDocumentsFolder($with_base_url = false)
     {
         $url = '';
@@ -733,6 +766,7 @@ if (!function_exists('getMemberNIDFolder')) {
 }
 
 if (!function_exists('getNotificationFolder')) {
+
     /**
      * getNotificationFolder.
      *
@@ -745,6 +779,7 @@ if (!function_exists('getNotificationFolder')) {
 }
 
 if (!function_exists('getNotificationFileName')) {
+
     /**
      * getNotificationFileName
      *
@@ -758,6 +793,7 @@ if (!function_exists('getNotificationFileName')) {
 }
 
 if (!function_exists('getBase64FileExtension')) {
+
     /**
      * getBase64FileExtension
      *
@@ -801,6 +837,11 @@ if (!function_exists('getProfileAvatarFolder')) {
 }
 
 if (!function_exists('getFileName')) {
+
+    /**
+     * @param $file
+     * @return mixed|string
+     */
     function getFileName($file)
     {
         $extension = explode("/", $file);
@@ -809,6 +850,11 @@ if (!function_exists('getFileName')) {
 }
 
 if (!function_exists('getFileExtension')) {
+
+    /**
+     * @param $file
+     * @return mixed|string
+     */
     function getFileExtension($file)
     {
         $extension = explode(".", $file);
@@ -1066,6 +1112,10 @@ if (!function_exists('getPosServiceBannerFolder')) {
 
 if (!function_exists('getVatRegistrationImagesFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getVatRegistrationImagesFolder($with_base_url = false)
     {
         $url = '';
@@ -1077,6 +1127,10 @@ if (!function_exists('getVatRegistrationImagesFolder')) {
 
 if (!function_exists('getVatRegistrationDocumentsFolder')) {
 
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getVatRegistrationDocumentsFolder($with_base_url = false)
     {
         $url = '';
@@ -1087,6 +1141,11 @@ if (!function_exists('getVatRegistrationDocumentsFolder')) {
 }
 
 if (!function_exists('getDueTrackerAttachmentsFolder')) {
+
+    /**
+     * @param false $with_base_url
+     * @return string
+     */
     function getDueTrackerAttachmentsFolder($with_base_url = false)
     {
         $url = '';
@@ -1114,11 +1173,40 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
 }
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
+
+    /**
+     * @param false $with_base_url
+     * @param int $partner_id
+     * @return string
+     */
     function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
     {
         $url = '';
         if ($with_base_url)
             $url = env('S3_URL');
         return $url . "partner/$partner_id/proof-of-business";
+    }
+}
+
+if (!function_exists('getResizedUrls')) {
+    /**
+     * @param $url
+     * @param $height
+     * @param $width
+     * @return array
+     */
+    function getResizedUrls($url, $height, $width)
+    {
+        /** @var ImageResizer $resizer */
+        $resizer = app(ImageResizer::class);
+        $resizer
+            ->setImage(new S3Image($url))
+            ->pushSize(new ImageSize($height, $width))
+            ->buildUrls();
+
+        return [
+            "webp" => $resizer->getWebpUrls(),
+            "original" => $resizer->getOriginalExtUrls()
+        ];
     }
 }
