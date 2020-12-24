@@ -101,13 +101,13 @@ class PartnerSubscriptionController extends Controller
     private function calculateDiscount($rules, PartnerSubscriptionPackage $package)
     {
         $rules['fee']['monthly']['original_price']   = $rules['fee']['monthly']['value'];
-        $rules['fee']['monthly']['discount']         = $this->discountPrice($package, 'monthly');
+        $rules['fee']['monthly']['discount']         = round($this->discountPrice($package, 'monthly'));
         $monthly_discounted_price                    = $rules['fee']['monthly']['original_price'] - $rules['fee']['monthly']['discount'];
         $rules['fee']['monthly']['discounted_price'] = $monthly_discounted_price > 0 ? $monthly_discounted_price : 0;
         $rules['fee']['monthly']['discount_note']    = $this->discountNote($package, 'monthly');
 
         $rules['fee']['half_yearly']['original_price']             = $rules['fee']['half_yearly']['value'];
-        $rules['fee']['half_yearly']['discount']                   = $this->discountPrice($package, 'half_yearly');
+        $rules['fee']['half_yearly']['discount']                   = round($this->discountPrice($package, 'half_yearly'));
         $half_yearly_discounted_price                              = $rules['fee']['half_yearly']['original_price'] - $rules['fee']['half_yearly']['discount'];
         $rules['fee']['half_yearly']['discounted_price']           = $half_yearly_discounted_price > 0 ? $half_yearly_discounted_price : 0;
         $rules['fee']['half_yearly']['discount_note']              = $this->discountNote($package, 'half_yearly');
@@ -116,7 +116,7 @@ class PartnerSubscriptionController extends Controller
         $rules['fee']['half_yearly']['breakdown_type']             = 'monthly';
 
         $rules['fee']['yearly']['original_price']             = $rules['fee']['yearly']['value'];
-        $rules['fee']['yearly']['discount']                   = $this->discountPrice($package, 'yearly');
+        $rules['fee']['yearly']['discount']                   = round($this->discountPrice($package, 'yearly'));
         $yearly_discounted_price                              = $rules['fee']['yearly']['original_price'] - $rules['fee']['yearly']['discount'];
         $rules['fee']['yearly']['discounted_price']           = $yearly_discounted_price > 0 ? $yearly_discounted_price : 0;
         $rules['fee']['yearly']['discount_note']              = $this->discountNote($package, 'yearly');
