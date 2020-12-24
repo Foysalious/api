@@ -18,7 +18,6 @@ class IndexRoute
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
             $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
             $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
-            $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
             $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
             $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
             $api->group(['prefix' => 'e-shop'], function ($api) {
