@@ -3,5 +3,15 @@
 
 class ApproverRequester
 {
+    private $approvers;
 
+    public function setApprovers($approvers)
+    {
+        $this->approvers = $approvers;
+    }
+
+    public function getApprovers()
+    {
+        return $this->approvers;
+    }
 }

@@ -1,8 +1,7 @@
 <?php namespace Sheba\Business\ApprovalSettingModule;
 
-
-use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\Dal\ApprovalSettingModule\ApprovalSettingModuleRepository;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\ModificationFields;
 
 class Creator
