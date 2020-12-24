@@ -68,12 +68,6 @@ COPY ./docker/fpm_log_file_created.sh /etc/fpm_log_file_created.sh
 RUN chmod +x /etc/fpm_log_file_created.sh
 RUN /etc/fpm_log_file_created.sh
 
-# Creating cache and views file with WWW-DATA permission
-RUN mkdir -p /var/www/storage/framework/cache
-RUN chown -R www-data:www-data /var/www/storage/framework/cache
-RUN mkdir -p /var/www/storage/framework/views
-RUN chown -R www-data:www-data /var/www/storage/framework/views
-
 RUN chmod -R g+w /var/www/storage
 RUN chmod -R g+w /var/www/bootstrap
 
