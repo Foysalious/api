@@ -164,28 +164,17 @@ class CategoryController extends Controller
     {
         try {
             $partner_id = $request->partner->id;
-            $master_categories = PosCategory::where('is_published_for_sheba',1)->with(['partnerPosCategory' => function($query) use($partner_id){
-                $query->where('partner_id',$partner_id)->where('is_published_for_sheba', 0);
-            }])->with(['children' => function ($query) {
+            $master_categories = PosCategory::where(function ($q) use ($partner_id) {
+                $q->where('is_published_for_sheba', 1);
+                $q->orWhere(function ($q) use ($partner_id) {
+                    $q->where('is_published_for_sheba', 0);
+                    $q->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
+                        $q->where('partner_id', $partner_id);
+                    });
+                });
+            })->with(['children' => function ($query) {
                 $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
             }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
-
-       /*
-                ->with(['children' => function ($query) {
-                $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
-            }])->wherehas('partnerPosCategory',function ($q){
-                $q-with('partnerPosCategory')->where('partner_id',$partner_id)
-                })*/
-
-
-/*
-            $partners_category = PosCategory::MasterCategoryByPartner($request->partner->id)
-                ->where('is_published_for_sheba',0)->with(['children' => function ($query) {
-                $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
-            }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
-
-            if(!empty($partners_category))
-            $master_categories = $master_categories->merge($partners_category);*/
 
             if (!$master_categories) return api_response($request, null, 404);
 

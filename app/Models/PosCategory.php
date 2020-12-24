@@ -44,7 +44,7 @@ class PosCategory extends Model
 
     public function partnerPosCategory()
     {
-       return $this->belongsToMany(PartnerPosCategory::class);
+       return $this->hasMany(PartnerPosCategory::class,'category_id');
     }
 
     public function scopeMasterCategoryByPartner($q, $partner_id)
