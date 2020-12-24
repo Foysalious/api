@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 
 class PosCategory extends Model
 {
@@ -39,6 +40,11 @@ class PosCategory extends Model
     public function services()
     {
         return $this->hasMany(PartnerPosService::class);
+    }
+
+    public function partnerPosCategory()
+    {
+       return $this->hasMany(PartnerPosCategory::class,'category_id');
     }
 
     public function scopeMasterCategoryByPartner($q, $partner_id)

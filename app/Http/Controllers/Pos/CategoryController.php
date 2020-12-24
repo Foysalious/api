@@ -164,23 +164,24 @@ class CategoryController extends Controller
     public function getMasterCategoriesWithSubCategory(Request $request)
     {
         try {
-            $master_categories = PosCategory::where('is_published_for_sheba',1)
-                ->with(['children' => function ($query) {
+            $partner_id = $request->partner->id;
+            $master_categories = PosCategory::where(function ($q) use ($partner_id) {
+                $q->where('is_published_for_sheba', 1);
+                $q->orWhere(function ($q) use ($partner_id) {
+                    $q->where('is_published_for_sheba', 0);
+                    $q->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
+                        $q->where('partner_id', $partner_id);
+                    });
+                });
+            })->with(['children' => function ($query) {
                 $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
             }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
-
-            $partners_category = PosCategory::MasterCategoryByPartner($request->partner->id)
-                ->where('is_published_for_sheba',0)->with(['children' => function ($query) {
-                $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
-            }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
-
-            if(!empty($partners_category))
-            $master_categories = $master_categories->merge($partners_category);
 
             if (!$master_categories) return api_response($request, null, 404);
 
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
