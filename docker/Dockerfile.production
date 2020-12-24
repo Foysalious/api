@@ -63,6 +63,11 @@ COPY ./docker/nginx/conf.d/nginx-prod.conf /etc/nginx/sites-enabled/default
 COPY ./docker/entrypoint.sh /etc/entrypoint.sh
 RUN chmod +x /etc/entrypoint.sh
 
+# Make fpm log script executable
+COPY ./docker/fpm_log_file_created.sh /etc/fpm_log_file_created.sh
+RUN chmod +x /etc/fpm_log_file_created.sh
+RUN /etc/fpm_log_file_created.sh
+
 RUN chmod -R g+w /var/www/storage
 RUN chmod -R g+w /var/www/bootstrap
 
@@ -77,11 +82,6 @@ WORKDIR /var/www
 
 # Make sentry cli script executable
 RUN chmod +x ./bin/sentry_release.sh
-
-# Make fpm log script executable
-COPY fpm_log_file_created.sh /etc/fpm_log_file_created.sh
-RUN chmod +x /etc/fpm_log_file_created.sh
-RUN /etc/fpm_log_file_created.sh
 
 RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/cache
 
