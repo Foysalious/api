@@ -35,11 +35,11 @@ use App\Http\Middleware\CheckForMaintenanceMode;
 
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Fideloper\Proxy\TrustProxies;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\Authorize;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -53,7 +53,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
-        XSS::class
+        XSS::class,
+        TrustProxies::class
     ];
 
     /**
