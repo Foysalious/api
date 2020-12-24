@@ -70,8 +70,8 @@ class WebstoreSettingsController extends Controller
                 PartnerWebstoreBanner::create($this->withCreateModificationField([
                     'banner_id' => WebstoreBanner::first()->id,
                     'partner_id' => $partner_id,
-                    'title' => null,
-                    'description' => null,
+                    'title' => 'Sample title',
+                    'description' => 'this is your sample description',
                     'is_published' => 0
                 ]));
             }
@@ -96,38 +96,6 @@ class WebstoreSettingsController extends Controller
     {
         $list = $webstoreBannerSettings->getBannerList();
         return api_response($request, null, 200, ['data' => $list]);
-    }
-
-    /**
-     * @param Request $request
-     * @param $partner
-     * @param WebstoreBannerSettings $webstoreBannerSettings
-     * @return JsonResponse
-     */
-    public function storeBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
-    {
-        $this->validate($request, [
-            'banner_id' => 'required',
-            'title' => 'string',
-            'description' => 'string',
-            'is_published' => 'sometimes|in:1,0',
-        ]);
-
-        $this->setModifier($request->manager_resource);
-
-        $banner_settings = PartnerWebstoreBanner::where('partner_id', $request->partner->id)->first();
-        if ($banner_settings)
-            return api_response($request, null, 403, ['message' => 'Banner Settings already exist']);
-        $data = [
-            'partner_id' => $request->partner->id,
-            'banner_id' => $request->banner_id,
-            'title' => $request->title ?: null,
-            'description' => $request->description ?: null,
-            'is_published' => $request->is_published ?: 0,
-        ];
-
-        $webstoreBannerSettings->setData($data)->store();
-        return api_response($request, null, 200, ['message' => 'Banner Settings Created Successfully']);
     }
 
 
