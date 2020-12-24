@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
+use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
