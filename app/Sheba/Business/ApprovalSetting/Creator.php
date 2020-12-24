@@ -2,8 +2,10 @@
 
 
 use App\Models\Business;
+use Sheba\Business\ApprovalSettingModule\ModuleRequester;
 use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
 use Sheba\ModificationFields;
+use Sheba\Business\ApprovalSettingModule\Creator as ApprovalSettingModuleCreator;
 
 class Creator
 {
@@ -13,24 +15,36 @@ class Creator
      */
     private $approvalSettingRepo;
     /**
-     * @var ApprovalSettingRequest
+     * @var ApprovalSettingRequester
      */
-    private $approvalSettingRequest;
+    private $approvalSettingRequester;
 
     private $approvalSettingData=[];
     /**
      * @var Business
      */
     private $business;
+    /**
+     * @var ApprovalSettingModuleCreator
+     */
+    private $approvalSettingModuleCreator;
+    /**
+     * @var ModuleRequester
+     */
+    private $moduleRequester;
 
-    public function __construct(ApprovalSettingRepository $approval_setting_repo)
+    public function __construct(ApprovalSettingRepository $approval_setting_repo,
+                                ModuleRequester $module_requester,
+                                ApprovalSettingModuleCreator $approval_setting_module_creator)
     {
         $this->approvalSettingRepo = $approval_setting_repo;
+        $this->moduleRequester = $module_requester;
+        $this->approvalSettingModuleCreator = $approval_setting_module_creator;
     }
 
-    public function setApprovalSettingRequest(ApprovalSettingRequest $approval_setting_request)
+    public function setApprovalSettingRequester(ApprovalSettingRequester $approval_setting_requester)
     {
-        $this->approvalSettingRequest = $approval_setting_request;
+        $this->approvalSettingRequester = $approval_setting_requester;
         return $this;
     }
 
@@ -41,7 +55,9 @@ class Creator
 
     public function create()
     {
-        $this->approvalSettingRepo->create($this->withCreateModificationField($this->approvalSettingData));
+        $approval_setting = $this->approvalSettingRepo->create($this->withCreateModificationField($this->approvalSettingData));
+        $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
+        $this->approvalSettingModuleCreator->setModuleRequester($this->moduleRequester)->setApprovalSetting($approval_setting)->create();
         return $this;
     }
 
@@ -49,9 +65,9 @@ class Creator
     {
         $this->approvalSettingData = [
             'business_id' => $this->business->id,
-            'target_type' => $this->approvalSettingRequest->getTargetType(),
-            'target_id' => $this->approvalSettingRequest->getTargetId(),
-            'note' => $this->approvalSettingRequest->getNote(),
+            'target_type' => $this->approvalSettingRequester->getTargetType(),
+            'target_id' => $this->approvalSettingRequester->getTargetId(),
+            'note' => $this->approvalSettingRequester->getNote(),
         ];
     }
 }

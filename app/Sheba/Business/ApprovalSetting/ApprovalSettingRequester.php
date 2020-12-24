@@ -1,7 +1,7 @@
 <?php namespace Sheba\Business\ApprovalSetting;
 
 
-class ApprovalSettingRequest
+class ApprovalSettingRequester
 {
     private $modules;
     private $targetType;
