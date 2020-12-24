@@ -12,6 +12,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Dal\WebstoreBanner\Model as WebstoreBanner;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
@@ -44,11 +45,15 @@ class WebstoreSettingsController extends Controller
                 'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
                 'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
         ]);
+        $is_webstore_published = 0 ;
+        $partner_id = $request->partner->id;
+        $this->setModifier($request->manager_resource);
         $webstoreSettingsUpdateRequest->setPartner($request->partner);
         if ($request->has('is_webstore_published')) {
             if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
 
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
+            $is_webstore_published = 1;
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
         if ($request->has('sub_domain')) {
@@ -58,6 +63,19 @@ class WebstoreSettingsController extends Controller
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
         if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
+
+        if ($is_webstore_published) {
+            $partner_banner_setting = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
+            if (!$partner_banner_setting) {
+                PartnerWebstoreBanner::create($this->withCreateModificationField([
+                    'banner_id' => WebstoreBanner::first()->id,
+                    'partner_id' => $partner_id,
+                    'title' => null,
+                    'description' => null,
+                    'is_published' => 0
+                ]));
+            }
+        }
         return api_response($request, null,200, ['message' => 'Webstore Settings Updated Successfully']);
 
     }
