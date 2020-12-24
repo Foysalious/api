@@ -251,8 +251,8 @@ class AuthUser
      */
     public function getPartner()
     {
-        if (!$this->profile || !$this->profile->resource) return null;
-        return $this->profile->resource->partners->first();
+        if (!isset($this->attributes['partner'])) return null;
+        return Partner::find($this->attributes['partner']['id']);
     }
 
     public function getAttributes()
