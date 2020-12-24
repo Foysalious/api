@@ -104,7 +104,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     private function rules()
     {
-        return json_decode($this->new_rules);
+        return isset($this->new_rules) ? json_decode($this->new_rules) : json_decode($this->rules);
     }
 
     public function getCommissionAttribute()
