@@ -17,6 +17,14 @@ class ApprovalSettingsController extends Controller
 {
     use ModificationFields;
 
+    /**
+     * @param Request $request
+     * @param ApprovalSettingRepository $approval_settings_repo
+     * @param BusinessMemberRepositoryInterface $business_member_repo
+     * @param ProfileRepository $profile_repo
+     * @param DepartmentRepositoryInterface $department_repo
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function index(Request $request, ApprovalSettingRepository $approval_settings_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo, DepartmentRepositoryInterface $department_repo)
     {
         $approval_settings = $approval_settings_repo->where('business_id', $request->business->id)->get();
