@@ -89,7 +89,6 @@ RUN composer install --ignore-platform-reqs && rm -rf /home/www-data/.composer/c
 
 RUN php artisan cache:clear
 RUN php artisan config:clear
-RUN php artisan view:clear
 
 EXPOSE 80 443
 
