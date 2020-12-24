@@ -11,6 +11,7 @@ use Sheba\Payment\Methods\Cbl\Cbl;
 use Sheba\Payment\Methods\Nagad\Nagad;
 use Sheba\Payment\Methods\OkWallet\OkWallet;
 use Sheba\Payment\Methods\PartnerWallet;
+use Sheba\Payment\Methods\BondhuBalance;
 use Sheba\Payment\Methods\PortWallet\PortWallet;
 use Sheba\Payment\Methods\Ssl\Ssl;
 use Sheba\Payment\Methods\Ssl\SslBuilder;
@@ -27,6 +28,7 @@ class PaymentStrategy
     const WALLET         = "wallet";
     const CBL            = "cbl";
     const PARTNER_WALLET = "partner_wallet";
+    const BONDHU_BALANCE = "bondhu_balance";
     const OK_WALLET      = 'ok_wallet';
     const SSL_DONATION   = "ssl_donation";
     const PORT_WALLET    = "port_wallet";
@@ -40,7 +42,7 @@ class PaymentStrategy
     /**
      * @param         $method
      * @param Payable $payable
-     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet|Nagad
+     * @return Bkash|Cbl|Ssl|Wallet|PartnerWallet|OkWallet|PortWallet|Nagad|BondhuBalance
      * @throws InvalidPaymentMethod
      */
     public static function getMethod($method, Payable $payable)
@@ -62,6 +64,8 @@ class PaymentStrategy
                 return app(Cbl::class);
             case self::PARTNER_WALLET:
                 return app(PartnerWallet::class);
+            case self::BONDHU_BALANCE:
+                return app(BondhuBalance::class);
             case self::OK_WALLET:
                 return app(OkWallet::class);
             case self::PORT_WALLET:

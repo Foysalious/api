@@ -10,6 +10,7 @@ use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveTransformer;
 use App\Transformers\CustomSerializer;
 use Carbon\Carbon;
+use Carbon\CarbonPeriod;
 use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,12 +19,14 @@ use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
+use Sheba\Business\Leave\Breakdown\LeaveBreakdown;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
 use App\Sheba\Business\Leave\Creator as LeaveCreator;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveType\Model as LeaveType;
+use App\Sheba\Business\Leave\Logs\Formatter as LogFormatter;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalFlow\Model as ApprovalFlow;
@@ -68,23 +71,29 @@ class LeaveController extends Controller
      * @param $leave
      * @param Request $request
      * @param LeaveRepoInterface $leave_repo
+     * @param LogFormatter $log_formatter
      * @return JsonResponse
      */
-    public function show($leave, Request $request, LeaveRepoInterface $leave_repo)
+    public function show($leave, Request $request, LeaveRepoInterface $leave_repo, LogFormatter $log_formatter)
     {
         $leave = $leave_repo->find($leave);
         /** @var Business $business */
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
-        if (!$leave || $leave->business_member_id != $business_member->id) return api_response($request, null, 403);
+        $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
+        if (!$leave || $leave->business_member_id != $business_member->id)
+            return api_response($request, null, 403);
+
         $leave = $leave->load(['leaveType' => function ($q) {
             return $q->withTrashed();
         }]);
 
+        $leave_log_details = $log_formatter->setLeave($leave)->format();
+
         $fractal = new Manager();
         $fractal->setSerializer(new CustomSerializer());
-        $resource = new Item($leave, new LeaveTransformer($business));
+        $resource = new Item($leave, new LeaveTransformer($business, $leave_log_details, $is_substitute_required));
         $leave = $fractal->createData($resource)->toArray()['data'];
 
         return api_response($request, $leave, 200, ['leave' => $leave]);
@@ -144,13 +153,45 @@ class LeaveController extends Controller
      */
     public function updateStatus($leave, Request $request, AccessControl $accessControl, LeaveUpdater $leaveUpdater)
     {
+
         $business_member = $this->getBusinessMember($request);
         $this->setModifier($business_member->member);
         $accessControl->setBusinessMember($business_member);
         if (!$accessControl->hasAccess('leave.rw')) return api_response($request, null, 403);
         $leave = Leave::findOrFail((int)$leave);
-
         $leaveUpdater->setLeave($leave)->setStatus($request->status)->updateStatus();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $leave
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveUpdater $leave_updater
+     * @return JsonResponse
+     */
+    public function cancel($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
+    {
+        $this->validate($request, ['status' => 'required']);
+        /** @var Leave $leave */
+        $leave = $leave_repo->find((int)$leave);
+
+        $current_time = Carbon::now();
+        $leave_end_time = $leave->end_date;
+
+        if ($current_time > $leave_end_time)
+            return api_response($request, null, 404, ['message' => "You can't cancel this request anymore."]);
+
+        $business_member = $this->getBusinessMember($request);
+
+        if ($leave->business_member_id != $business_member->id)
+            return api_response($request, null, 404, ['message' => "You are not authorised to cancel the request."]);
+
+        $this->setModifier($business_member->member);
+        $approval_requests = $leave->requests;
+
+        $leave_updater->setLeave($leave)->setApprovalRequests($approval_requests)->setBusinessMember($business_member)->setStatus($request->status)->updateStatus();
+
         return api_response($request, null, 200);
     }
 
@@ -167,7 +208,7 @@ class LeaveController extends Controller
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
-        $leave_types = $leave_types_repo->getAllLeaveTypesByBusiness($business_member->business);
+        $leave_types = $leave_types_repo->getAllLeaveTypesByBusinessMember($business_member);
 
         foreach ($leave_types as $leave_type) {
             /** @var LeaveType $leaves_taken */
@@ -185,6 +226,40 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leave_types' => $leave_types, 'half_day_configuration' => $half_day_configuration]);
+    }
+
+    /**
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveBreakdown $leave_breakdown
+     * @return JsonResponse
+     */
+    public function getLeaveDates(Request $request, LeaveRepoInterface $leave_repo, LeaveBreakdown $leave_breakdown)
+    {
+        /**@var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        $leaves = $leave_repo->builder()
+            ->select('id', 'title', 'business_member_id', 'leave_type_id', 'start_date', 'end_date', 'is_half_day', 'half_day_configuration', 'status')
+            ->where('business_member_id', $business_member->id)
+            ->where(function ($query) {
+                $query->where('status', 'pending')->orWhere('status', 'accepted');
+            })->where('start_date', '>=', Carbon::now()->subMonths(1)->toDateString())
+            ->get();
+
+        list($leaves, $leaves_date_with_half_and_full_days) = $leave_breakdown->formatLeaveAsDateArray($leaves);
+
+        $full_day_leaves = [];
+        $half_day_leaves = [];
+
+        foreach ($leaves_date_with_half_and_full_days as $date => $leaves_date_with_half_and_full_day) {
+            !$leaves_date_with_half_and_full_day['is_half_day_leave'] ? $full_day_leaves[] = $leaves_date_with_half_and_full_day['date'] :
+                array_push($half_day_leaves, [
+                    'date' => $leaves_date_with_half_and_full_day['date'],
+                    'which_half_day' => $leaves_date_with_half_and_full_day['which_half_day'],
+                ]);
+        }
+
+        return api_response($request, null, 200, ['full_day_leaves' => $full_day_leaves, 'half_day_leaves' => $half_day_leaves]);
     }
 
     /**
@@ -214,5 +289,40 @@ class LeaveController extends Controller
         $settings = ['is_substitute_required' => $is_substitute_required];
 
         return api_response($request, null, 200, ['settings' => $settings]);
+    }
+
+    public function update($leave, Request $request, LeaveUpdater $leave_updater, LeaveRepoInterface $leave_repo)
+    {
+        $member = $this->getMember($request);
+        $business_member = $this->getBusinessMember($request);
+        $this->setModifier($member);
+        $leave = $leave_repo->find((int)$leave);
+        $leave_updater->setLeave($leave)->setBusinessMember($business_member)
+            ->setSubstitute($request->substitute_id)
+            ->setNote($request->note)->setAttachments($request->attachments)->setCreatedBy($member);
+        if ($leave_updater->hasError()) return api_response($request, null, $leave_updater->getErrorCode(), ['message' => $leave_updater->getErrorMessage()]);
+        $leave_updater->update();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $leave
+     * @param Request $request
+     * @param LeaveRepoInterface $leave_repo
+     * @param LeaveUpdater $leave_updater
+     * @return JsonResponse
+     */
+    public function statusUpdate($leave, Request $request, LeaveRepoInterface $leave_repo, LeaveUpdater $leave_updater)
+    {
+        $this->validate($request, [
+            'status' => 'required',
+        ]);
+        $member = $this->getMember($request);
+        $business_member = $this->getBusinessMember($request);
+        $this->setModifier($member);
+        $leave = $leave_repo->find((int)$leave);
+        $leave_updater->setLeave($leave)->setBusinessMember($business_member)->setStatus($request->status)->statusUpdate();
+
+        return api_response($request, null, 200);
     }
 }

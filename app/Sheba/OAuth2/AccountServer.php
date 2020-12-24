@@ -1,6 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
 
+use GuzzleHttp\Client;
+use Sheba\Dal\AuthenticationRequest\Purpose;
+
 class AccountServer
 {
     /** @var AccountServerClient */
@@ -20,7 +23,7 @@ class AccountServer
      */
     public function getTokenByAvatar($avatar, $type)
     {
-        return $this->getTokenByIdAndRememberToken($avatar->id,$avatar->remember_token, $type);
+        return $this->getTokenByIdAndRememberToken($avatar->id, $avatar->remember_token, $type);
     }
 
     /**
@@ -71,6 +74,19 @@ class AccountServer
     public function getTokenByEmailAndPassword($email, $password)
     {
         return $this->getTokenByIdentityAndPassword($email, $password);
+    }
+
+    /**
+     * @param $email
+     * @param $password
+     * @return string
+     * @throws AccountServerNotWorking
+     * @throws AccountServerAuthenticationError
+     */
+    public function getTokenByEmailAndPasswordV2($email, $password)
+    {
+        $data = $this->client->post("api/v3/profile/login", ['email' => $email, 'password' => $password]);
+        return $data['token'];
     }
 
     /**
@@ -177,6 +193,43 @@ class AccountServer
      */
     public function sendEmailVerificationLink($token)
     {
-         return $this->client->get("api/v3/send-verification-link?token=$token");
+        return $this->client->get("api/v3/send-verification-link?token=$token");
+    }
+
+    public function logout($token, $reason)
+    {
+        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/logout", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'form_params' => [
+                'reason' => $reason
+            ]
+        ]);
+    }
+
+    public function passwordAuthenticate($mobile, $email, $password, $purpose)
+    {
+        $data = [
+            'password' => $password,
+            'purpose' => $purpose
+        ];
+        if (!empty($email)) $data['email'] = $email;
+        if (!empty($mobile)) $data['mobile'] = $mobile;
+        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
+            'form_params' => $data
+        ]);
+    }
+
+    public function getAuthenticateRequests($token, $purpose)
+    {
+        return (new Client())->get(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password/requests", [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token,
+            ],
+            'query' => [
+                'purpose' => $purpose
+            ]
+        ]);
     }
 }

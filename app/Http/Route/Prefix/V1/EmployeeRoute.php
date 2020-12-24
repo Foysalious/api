@@ -4,13 +4,14 @@ class EmployeeRoute
 {
     public function set($api)
     {
+        $api->post('employee/login', 'Employee\EmployeeController@login');
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
             $api->group(['prefix' => 'me'], function ($api) {
                 $api->get('/', 'Employee\EmployeeController@me');
                 $api->post('/', 'Employee\EmployeeController@updateMe');
                 $api->post('basic', 'Employee\EmployeeController@updateBasicInformation');
             });
-            $api->post('password', 'Employee\EmployeeController@updateMyPassword');
+            //$api->post('password', 'Employee\EmployeeController@updateMyPassword');
             $api->get('dashboard', 'Employee\EmployeeController@getDashboard');
             $api->get('notifications', 'Employee\NotificationController@index');
             $api->get('last-notifications', 'Employee\NotificationController@lastNotificationCount');
@@ -48,12 +49,15 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
+                $api->get('/dates', 'Employee\LeaveController@getLeaveDates');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
+                    $api->post('update', 'Employee\LeaveController@update');
+                    $api->post('cancel', 'Employee\LeaveController@cancel');
                 });
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
@@ -70,9 +74,9 @@ class EmployeeRoute
             $api->group(['prefix' => 'designations'], function ($api) {
                 $api->get('/', 'Employee\DesignationController@index');
             });
-            $api->get('managers','Employee\EmployeeController@getManagersList');
-            $api->get('/','Employee\EmployeeController@index');
-            $api->get('/{employee}','Employee\EmployeeController@show');
+            $api->get('managers', 'Employee\EmployeeController@getManagersList');
+            $api->get('/', 'Employee\EmployeeController@index');
+            $api->get('/{employee}', 'Employee\EmployeeController@show');
         });
     }
 }

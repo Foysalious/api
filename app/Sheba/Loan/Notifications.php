@@ -6,6 +6,7 @@ namespace Sheba\Loan;
 use App\Models\BankUser;
 use App\Sheba\Loan\DLSV2\Notification\SMS\SMSHandler;
 use Exception;
+use Sheba\Dal\PartnerBankLoan\LoanTypes;
 use Sheba\Dal\PartnerBankLoan\Statuses;
 use Sheba\Notification\NotificationHandler;
 use Sheba\PushNotificationHandler;
@@ -71,16 +72,17 @@ class Notifications
     {
         $message = null;
         $type    = null;
+        $loan_name = $partner_bank_loan->type === LoanTypes::MICRO ? 'টপ-আপ ফ্যাসিলিটি রিচার্জ' : 'টার্ম লোন';
         if ($new_status == Statuses::APPROVED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ আবেদন অনুমোদন করা হয়েছে। ক্রেডিট গ্রহণের জন্য অপেক্ষা করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা '.$loan_name.' আবেদন অনুমোদন করা হয়েছে। ক্রেডিট গ্রহণের জন্য অপেক্ষা করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type    = 'Loan Approved';
         }
         if ($new_status == Statuses::DISBURSED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি ক্রেডিট অ্যাকাউন্ট-এ ' . convertNumbersToBangla($partner_bank_loan->loan_amount, true, 0) . ' টাকা জমা করা হয়েছে। ব্যালেন্স জানতে আপনার sManager অ্যাপ এর লোন সেকশন চেক করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা '.$loan_name.' অ্যাকাউন্ট-এ ' . convertNumbersToBangla($partner_bank_loan->loan_amount, true, 0) . ' টাকা জমা করা হয়েছে। ব্যালেন্স জানতে আপনার sManager অ্যাপ এর লোন সেকশন চেক করুন। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type    = 'Loan Disbursed';
         }
         if ($new_status == Statuses::DECLINED) {
-            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা টপ-আপ ফ্যাসিলিটি রিচার্জ আবেদনটি ' . $reason . ' কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
+            $message = 'প্রিয় ' . $partner_bank_loan->partner->getContactPerson() . ', আপনার সেবা '.$loan_name.' আবেদনটি ' . $reason . ' কারণে মনোনীত হয়নি। প্রয়োজনে কল করুন ১৬৫১৬-এ।';
             $type    = 'Loan Declined';
         }
         (new SMSHandler())->setMsg($message)->setMobile($partner_bank_loan->partner->getContactNumber())->setMsgType($type)->setLoanId($partner_bank_loan->id)->setUser($user)->shoot();

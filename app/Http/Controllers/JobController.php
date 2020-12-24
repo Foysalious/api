@@ -2,6 +2,8 @@
 
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use App\Models\PartnerOrder;
+use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Payable;
@@ -34,6 +36,7 @@ use Sheba\Logistics\Repository\OrderRepository;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\Order\Policy\Orderable;
 use Sheba\Order\Policy\PreviousOrder;
+use Sheba\PartnerOrder\InvoiceHandler;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
@@ -598,7 +601,7 @@ class JobController extends Controller
     public function clearBills($customer, $job, Request $request, PaymentManager $payment_manager, OrderAdapter $order_adapter)
     {
         $this->validate($request, [
-            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet',
+            'payment_method' => 'sometimes|required|in:online,wallet,bkash,cbl,partner_wallet,nagad',
             'emi_month' => 'numeric'
         ]);
         $payment_method = $request->has('payment_method') ? $request->payment_method : 'online';
@@ -731,5 +734,26 @@ class JobController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getInvoice(Request $request)
+    {
+        $invoice = $this->generateInvoiceOfJob($request->job);
+        return api_response($request, $invoice, 200, ['invoice' => $invoice]);
+    }
+
+    public function generateInvoiceOfJob(Job $job)
+    {
+        $invoice = null;
+        if($job->isServed()) {
+            return [
+                'link' => $job->partnerOrder->invoice
+            ];
+        }
+        return (new InvoiceHandler($job->partnerOrder))->save('quotation');
     }
 }

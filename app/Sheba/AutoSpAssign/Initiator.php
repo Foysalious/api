@@ -78,7 +78,7 @@ class Initiator
 
     public function getStrategy()
     {
-        if ($this->getCustomerOrderCount() <= 3) return new Best();
+        if ($this->getCustomerOrderCount() <= config('auto_sp.new_customer_order_count')) return new Best();
         return new Basic();
     }
 

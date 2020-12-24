@@ -1,13 +1,13 @@
 <?php namespace App\Http\Controllers;
 
 use App\Http\Presenters\PresentableDTOPresenter;
+use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
-use App\Models\AppVersion;
+use Sheba\AppVersion\AppVersionManager;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\OfferShowcase;
-use App\Models\Partner;
 use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\Profile;
@@ -26,23 +26,20 @@ use DB;
 use Exception;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\EMI\Banks;
-use Sheba\EMI\Calculations;
 use Sheba\EMI\Calculator;
 use Sheba\EMI\CalculatorForManager;
 use Sheba\NID\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
-use Sheba\PaymentLink\PaymentLinkTransformer;
-use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
 
-class ShebaController extends Controller {
+class ShebaController extends Controller
+{
     use DispatchesJobs;
 
     private $serviceRepository;
@@ -68,75 +65,68 @@ class ShebaController extends Controller {
         ]);
     }
 
-    public function sendFaq(Request $request) {
-        try {
-            $validator = Validator::make($request->all(), [
-                'name'    => 'required|string',
-                'email'   => 'required|email',
-                'subject' => 'required|string',
-                'message' => 'required|string'
-            ]);
-            if ($validator->fails()) {
-                return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
-            }
-            $this->dispatch(new SendFaqEmail($request->all()));
-            return api_response($request, null, 200);
-        } catch (Exception $e) {
-            return api_response($request, null, 500);
+    public function sendFaq(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name'    => 'required|string',
+            'email'   => 'required|email',
+            'subject' => 'required|string',
+            'message' => 'required|string'
+        ]);
+        if ($validator->fails()) {
+            return api_response($request, null, 500, ['message' => $validator->errors()->all()[0]]);
         }
+        $this->dispatch(new SendFaqEmail($request->all()));
+        return api_response($request, null, 200);
     }
 
-    public function getImages(Request $request) {
-        try {
-            if ($request->has('is_business') && (int)$request->is_business) {
-                $portal_name = 'manager-app';
-                $screen      = 'eshop';
+    public function getImages(Request $request)
+    {
+        if ($request->has('is_business') && (int)$request->is_business) {
+            $portal_name = 'manager-app';
+            $screen      = 'eshop';
 
-                if (!$request->has('location')) $location = 4;
-                else $location = $request->location;
-            } else if ($request->has('is_ddn') && (int)$request->is_ddn) {
-                $portal_name = 'bondhu-app';
-                $screen = 'eshop';
+            if (!$request->has('location')) $location = 4;
+            else $location = $request->location;
+        } else if ($request->has('is_ddn') && (int)$request->is_ddn) {
+            $portal_name = 'bondhu-app';
+            $screen = 'eshop';
 
-                if (!$request->has('location')) $location = 4;
-                else $location = $request->location;
-            }else {
-                if ($request->has('location')) {
-                    $location = $request->location;
-                } else {
-                    if ($request->has('lat') && $request->has('lng')) {
-                        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
-                        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
-                    }
+            if (!$request->has('location')) $location = 4;
+            else $location = $request->location;
+        }else {
+            if ($request->has('location')) {
+                $location = $request->location;
+            } else {
+                if ($request->has('lat') && $request->has('lng')) {
+                    $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+                    if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
                 }
-
-                $portal_name = $request->portal;
-                $screen      = $request->screen;
             }
 
-            $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
-
-            if (!is_null($slider)) return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
-            else return api_response($request, null, 404);
-
-            /**
-             * Previous Codes, Left Written Until QA
-             *
-             * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
-             * if ($request->has('is_business') && (int)$request->is_business) {
-             * $images = $images->showBusiness()->map(function ($image) {
-             * $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
-             * return $image;
-             * });
-             * } else {
-             * $images = $images->show();
-             * }
-             * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            $portal_name = $request->portal;
+            $screen      = $request->screen;
         }
-    }
+
+        $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
+
+        if (!is_null($slider)) return api_response($request, $slider->slides, 200, ['images' => $slider->slides]);
+        else return api_response($request, null, 404);
+
+        /**
+         * Previous Codes, Left Written Until QA
+         *
+         * $images = Slider::select('id', 'image_link', 'small_image_link', 'target_link', 'target_type', 'target_id');
+         * if ($request->has('is_business') && (int)$request->is_business) {
+         * $images = $images->showBusiness()->map(function ($image) {
+         * $image['target_type'] = $image['target_type'] ? explode('\\', $image['target_type'])[2] : null;
+         * return $image;
+         * });
+         * } else {
+         * $images = $images->show();
+         * }
+         * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
+}
 
     /**
      * @param $location
@@ -144,7 +134,8 @@ class ShebaController extends Controller {
      * @param $screen
      * @return Slider
      */
-    private function getSliderWithSlides($location, $portal_name, $screen) {
+    private function getSliderWithSlides($location, $portal_name, $screen)
+    {
         $sliderPortal = SliderPortal::with('slider')->whereHas('slider', function ($query) use ($location) {
             $query->where('is_published', 1);
         })->where('portal_name', $portal_name)->where('screen', $screen)->first();
@@ -158,7 +149,8 @@ class ShebaController extends Controller {
         return $slider;
     }
 
-    public function getSimilarOffer($offer) {
+    public function getSimilarOffer($offer)
+    {
         $offer = OfferShowcase::select('id', 'thumb', 'title', 'banner', 'short_description', 'detail_description', 'target_link')
             ->where([
                 ['id', '<>', $offer],
@@ -167,100 +159,43 @@ class ShebaController extends Controller {
         return count($offer) >= 3 ? response()->json(['offer' => $offer, 'code' => 200]) : response()->json(['code' => 404]);
     }
 
-    public function getLeadRewardAmount() {
+    public function getLeadRewardAmount()
+    {
         return response()->json(['code' => 200, 'amount' => constants('AFFILIATION_REWARD_MONEY')]);
     }
 
-    public function getVersions(Request $request) {
-        try {
-            if ($request->has('version') && $request->has('app')) {
-                $version  = (int)$request->version;
-                $app      = $request->app;
-                $versions = AppVersion::where('tag', $app)
-                    ->where('version_code', '>', $version)
-                    ->where(function ($query) use ($version) {
-                        $query->where('lowest_upgradable_version_code', '<', $version)
-                            ->orWhereNull('lowest_upgradable_version_code');
-                    })
-                    ->get();
-
-                $data = [
-                    'title'       => !$versions->isEmpty() ? $versions->last()->title : null,
-                    'body'        => !$versions->isEmpty() ? $versions->last()->body : null,
-                    'height'      => !$versions->isEmpty() ? $versions->last()->height : null,
-                    'width'       => !$versions->isEmpty() ? $versions->last()->width : null,
-                    'image_link'  => !$versions->isEmpty() ? $versions->last()->image_link : null,
-                    'has_update'  => count($versions) > 0 ? 1 : 0,
-                    'is_critical' => count($versions->where('is_critical', 1)) > 0 ? 1 : 0
-                ];
-
-                return api_response($request, $data, 200, ['data' => $data]);
-            }
-
-            $apps = json_decode(Redis::get('app_versions'));
-            if ($apps == null) {
-                $apps = $this->scrapeAppVersionsAndStoreInRedis();
-            }
-
-            return api_response($request, $apps, 200, ['apps' => $apps]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+    public function getVersions(AppVersionRequest $request, AppVersionManager $app_version_manager)
+    {
+        if ($request->wantsSingleApp()) {
+            $data = $app_version_manager->getVersionForApp($request->app, (int)$request->version)->toArray();
+            return api_response($request, $data, 200, ['data' => $data]);
         }
+
+        $apps = $app_version_manager->getAllAppVersions();
+        return api_response($request, $apps, 200, ['apps' => $apps]);
     }
 
-    private function scrapeAppVersionsAndStoreInRedis() {
-        $version_string = 'itemprop="softwareVersion">';
-        $apps           = constants('APPS');
-        $final          = [];
-        foreach ($apps as $key => $value) {
-            $headers      = get_headers($value);
-            $version_code = 0;
-            if (substr($headers[0], 9, 3) == "200") {
-                $dom           = file_get_contents($value);
-                $version       = strpos($dom, $version_string);
-                $result_string = trim(substr($dom, $version + strlen($version_string), 15));
-                $final_string  = explode(' ', $result_string);
-                $version_code  = (int)str_replace('.', '', $final_string[0]);
-            }
-            array_push($final, ['name' => $key, 'version_code' => $version_code, 'is_critical' => 0]);
-        }
-        Redis::set('app_versions', json_encode($final));
-        return $final;
+    public function sendCarRentalInfo(Request $request)
+    {
+        $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
+        return api_response($request, $categories, 200, ['info' => $categories]);
     }
 
-    public function sendCarRentalInfo(Request $request) {
-        try {
-            $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
-            $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
-            return api_response($request, $categories, 200, ['info' => $categories]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
-    public function sendButcherInfo(Request $request) {
-        try {
-            $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
-            if ($butcher_service) {
-                $butcher_info = [
-                    'id'           => $butcher_service->id,
-                    'category_id'  => $butcher_service->category_id,
-                    'name'         => $butcher_service->name,
-                    'unit'         => $butcher_service->unit,
-                    'min_quantity' => (double)$butcher_service->min_quantity,
-                    'price_info'   => json_decode($butcher_service->variables),
-                    'date'         => "2018-08-21"
-                ];
-                return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
-            } else {
-                return api_response($request, null, 404);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+    public function sendButcherInfo(Request $request)
+    {
+        $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
+        if (!$butcher_service) return api_response($request, null, 404);
+        $butcher_info = [
+            'id'           => $butcher_service->id,
+            'category_id'  => $butcher_service->category_id,
+            'name'         => $butcher_service->name,
+            'unit'         => $butcher_service->unit,
+            'min_quantity' => (double)$butcher_service->min_quantity,
+            'price_info'   => json_decode($butcher_service->variables),
+            'date'         => "2018-08-21"
+        ];
+        return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
     }
 
     public function checkTransactionStatus(Request $request, $transaction_id)
@@ -443,13 +378,8 @@ class ShebaController extends Controller {
     public function redirectUrl(Request $request)
     {
         $this->validate($request, ['url' => 'required']);
-
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
-
-        if ($new_url) {
-            return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
-        } else {
-            return api_response($request, true, 404, ['message' => 'Not Found']);
-        }
+        if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
+        return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
     }
 }

@@ -86,8 +86,9 @@ class AvailableMethods
         return [
             PaymentStrategy::WALLET,
             PaymentStrategy::BKASH,
-            PaymentStrategy::CBL,
+            PaymentStrategy::NAGAD,
             PaymentStrategy::ONLINE,
+            PaymentStrategy::CBL,
         ];
     }
 
@@ -115,7 +116,8 @@ class AvailableMethods
             PaymentStrategy::CBL,
             PaymentStrategy::ONLINE,
             PaymentStrategy::BKASH,
-            PaymentStrategy::OK_WALLET
+            PaymentStrategy::OK_WALLET,
+            PaymentStrategy::NAGAD
         ];
     }
 
@@ -171,7 +173,8 @@ class AvailableMethods
             PaymentStrategy::CBL,
             PaymentStrategy::BKASH,
             PaymentStrategy::ONLINE,
-            PaymentStrategy::SSL_DONATION
+            PaymentStrategy::SSL_DONATION,
+            PaymentStrategy::NAGAD
         ];
     }
 

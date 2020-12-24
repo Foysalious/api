@@ -37,7 +37,6 @@ class BarikoiClient implements Client
         }
     }
 
-
     /**
      * @param Address $address
      * @return Geo

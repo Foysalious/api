@@ -53,10 +53,14 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         $this->validate($request, ['email' => 'required', 'password' => 'required']);
+
         $profile = $this->profileRepository->checkExistingEmail($request->email);
-        if (!$profile) return api_response($request, null, 403, ['message' => "The email address that you've entered doesn't match any account. Please register first."]);
+        if (!$profile)
+            return api_response($request, null, 403, ['message' => "The email address that you've entered doesn't match any account. Please register first."]);
+
         $member = $profile->member;
         $business_members = BusinessMember::where('member_id', $member->id)->get();
+
         if ($business_members->isEmpty()) return api_response($request, null, 403, ['message' => 'Please register first']);
         if (!$business_members->isEmpty()) {
             $business_members = $business_members->reject(function ($business_member) {
@@ -65,7 +69,8 @@ class LoginController extends Controller
 
             if (!$business_members->count()) return api_response($request, null, 420, ['message' => 'You account deactivated from this company']);
         }
-        $token = $this->accounts->createAvatarAndGetTokenByEmailAndPassword('member', $request->email, $request->password);
+
+        $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
         $info = [
             'token' => $token,
@@ -74,9 +79,11 @@ class LoginController extends Controller
             'business_id' => $auth_user->getMemberAssociatedBusinessId(),
             'is_super' => $auth_user->isMemberSuper()
         ];
+
         if (!$auth_user->isEmailVerified()) {
             $this->sendVerificationCode($auth_user->getProfileId());
         }
+
         return api_response($request, $info, 200, ['info' => $info]);
     }
 

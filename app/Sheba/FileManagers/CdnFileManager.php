@@ -9,6 +9,24 @@ trait CdnFileManager
         return $this->putFileToCDNAndGetPath((string)$file, $folder, $filename);
     }
 
+    private function putFileToCDNAndGetPath($file, $folder, $filename, $access_level = "public")
+    {
+        $filename = clean($filename, '_', ['.', '-']);
+        $filename = $folder . $filename;
+        $cdn = $this->getCDN();
+        if ($access_level == "private") {
+            $cdn->put($filename, $file);
+        } else {
+            $cdn->put($filename, $file, 'public');
+        }
+        return config('sheba.s3_url') . $filename;
+    }
+
+    private function getCDN()
+    {
+        return Storage::disk('s3');
+    }
+
     protected function saveFileToCDN($file, $folder, $filename)
     {
         return $this->putFileToCDNAndGetPath(file_get_contents($file), $folder, $filename);
@@ -27,23 +45,5 @@ trait CdnFileManager
     protected function deleteFileFromCDN($filename)
     {
         $this->getCDN()->delete($filename);
-    }
-
-    private function putFileToCDNAndGetPath($file, $folder, $filename, $access_level = "public")
-    {
-        $filename = clean($filename, '_', ['.', '-']);
-        $filename = $folder . $filename;
-        $cdn = $this->getCDN();
-        if($access_level == "private") {
-            $cdn->put($filename, $file);
-        } else {
-            $cdn->put($filename, $file, 'public');
-        }
-        return config('sheba.s3_url') . $filename;
-    }
-
-    private function getCDN()
-    {
-        return Storage::disk('s3');
     }
 }

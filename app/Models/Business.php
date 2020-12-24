@@ -1,7 +1,9 @@
 <?php namespace App\Models;
 
+use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
@@ -79,6 +81,24 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ]);
     }
 
+    /**
+     * @return array
+     */
+    public function getBusinessMemberProrate()
+    {
+        $business_member_leave_types = [];
+        $this->getAccessibleBusinessMember()->get()->each(function ($business_member) use (&$business_member_leave_types) {
+            $leave_types = [];
+            if (!$business_member->leaveTypes->isEmpty()) {
+                $business_member->leaveTypes->each(function ($leave_type) use (&$leave_types) {
+                    $leave_types[$leave_type->leave_type_id] = ['total_days' => $leave_type->total_days];
+                });
+                $business_member_leave_types[$business_member->id] = ['leave_types' => $leave_types];
+            }
+        });
+        return $business_member_leave_types;
+    }
+
     public function businessSms()
     {
         return $this->hasMany(BusinessSmsTemplate::class);
@@ -136,7 +156,7 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function topups()
     {
-        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', 'App\\Models\\Business');
+        return $this->hasMany(TopUpOrder::class, 'agent_id')->where('agent_type', self::class);
     }
 
     public function movieTicketOrders()
@@ -305,6 +325,38 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         $start_time = Carbon::parse($full_day_configuration->start_time)->format('h:i');
         $end_time = Carbon::parse($full_day_configuration->end_time)->format('h:i');
         return $start_time . '-' . $end_time;
+    }
+
+    public function calculationTodayLastCheckInTime($which_half_day)
+    {
+        if ($which_half_day) {
+            if ($which_half_day == HalfDayType::FIRST_HALF) {
+                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::SECOND_HALF));
+            }
+            if ($which_half_day == HalfDayType::SECOND_HALF) {
+                return Carbon::parse($this->halfDayStartTimeUsingWhichHalf(HalfDayType::FIRST_HALF));
+            }
+        } else {
+            $last_checkin_time = (new TimeByBusiness())->getOfficeStartTimeByBusiness();
+            if (is_null($last_checkin_time)) return null;
+            return Carbon::parse($last_checkin_time);
+        }
+    }
+
+    public function calculationTodayLastCheckOutTime($which_half_day)
+    {
+        if ($which_half_day) {
+            if ($which_half_day == HalfDayType::FIRST_HALF) {
+                return $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::SECOND_HALF);
+            }
+            if ($which_half_day == HalfDayType::SECOND_HALF) {
+                return $this->business->halfDayEndTimeUsingWhichHalf(HalfDayType::FIRST_HALF);
+            }
+        } else {
+            $checkout_time = (new TimeByBusiness())->getOfficeEndTimeByBusiness();
+            if (is_null($checkout_time)) return null;
+            return $checkout_time;
+        }
     }
 
     public function isIpBasedAttendanceEnable()

@@ -3,7 +3,6 @@
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\AttendanceActionLog\WeekendHolidayByBusiness;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
-use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\Attendance\Model as Attendance;
 use App\Models\BusinessMember;
 use App\Models\Business;
@@ -18,8 +17,10 @@ abstract class ActionChecker
     protected $attendanceOfToday;
     /** @var AttendanceActionLog[] */
     protected $attendanceLogsOfToday;
-    /** @var Business */
+    /** @var Business $business */
     protected $business;
+    /** @var BusinessMember $businessMember */
+    protected $businessMember;
     protected $ip;
     protected $deviceId;
     protected $resultCode;
@@ -34,6 +35,16 @@ abstract class ActionChecker
     public function setBusiness($business)
     {
         $this->business = $business;
+        return $this;
+    }
+
+    /**
+     * @param $business_member
+     * @return $this
+     */
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = $business_member;
         return $this;
     }
 

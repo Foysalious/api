@@ -11,10 +11,13 @@ class GeoCode
     /** @var Client */
     private $client;
 
-    public function __construct(BarikoiClient $barikoiClient)
+    /**
+     * GeoCode constructor.
+     * @param BarikoiClient $barikoi_client
+     */
+    public function __construct(BarikoiClient $barikoi_client)
     {
-        $this->client = $barikoiClient;
-
+        $this->client = $barikoi_client;
     }
 
     public function setAddress(Address $address)
@@ -22,8 +25,7 @@ class GeoCode
         $this->address = $address;
         return $this;
     }
-
-
+    
     /**
      * @throws GuzzleException
      * @throws MapClientNoResultException

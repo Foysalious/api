@@ -3,7 +3,7 @@
 
 use App\Models\Job;
 use Carbon\Carbon;
-use Sheba\BanglaConverter;
+use Sheba\NumberLanguageConverter;
 use Sheba\Jobs\JobStatuses;
 
 class StatusTagCalculator
@@ -37,7 +37,7 @@ class StatusTagCalculator
             } else {
                 $message = ['message' => "লেট", 'tag' => 'late'];
             }
-            return ['message' => BanglaConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
+            return ['message' => NumberLanguageConverter::en2bn($hr_message . $min_message) . ' ' . $message['message'], 'tag' => $message['tag']];
         }
     }
 
@@ -49,7 +49,7 @@ class StatusTagCalculator
         if ($job->status == JobStatuses::SERVED && $job->partnerOrder->isClosedAndPaidAt()) return ['type' => 'served', 'value' => 'Served'];
         if ($this->isStatusAfterOrEqualToProcess($job->status)) return ['type' => 'process', 'value' => 'Process'];
         if ($job_start_time->gt($now) && $job_start_time->diffInHours($now) <= 24) return ['type' => 'time', 'value' => Carbon::parse($job->preferred_time_start)->format('H:i A')];
-        return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('j F')];
+        return ['type' => 'date', 'value' => Carbon::parse($job->schedule_date)->format('M j')];
     }
 
     /**

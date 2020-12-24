@@ -1,0 +1,60 @@
+
+/*# sourceMappingURL=bootstrap.min.css.map */
+body {
+    font-family: 'kalpurush', sans-serif!important;
+    font-size: 13px !important;
+}
+
+.table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+}
+
+div {
+    box-sizing: border-box
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+td, th {
+    text-align: left;
+    padding: 5px;
+    font-weight: normal;
+    box-sizing: border-box;
+    position: relative;
+    vertical-align: baseline;
+}
+
+.sheba-logo {
+    margin-right: 30px;
+    height: 25px;
+}
+
+.bank-logo {
+    height: 25px;
+}
+
+.empty_table {
+    border: 1px dashed black;
+    margin: 3px;
+    border-radius: 3px;
+}
+
+.due-list table {
+    border-collapse: collapse;
+}
+
+.due-list td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 4px;
+}
+
+.due-list tr {
+    border: 1px solid black;
+    border-collapse: collapse;
+}

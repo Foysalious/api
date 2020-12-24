@@ -186,7 +186,6 @@ class FacebookController extends Controller
         }
         $info = $this->profileRepository->getProfileInfo($from, $profile, $request);
         if (!$info) return api_response($request, null, 404);
-        $info['jwt']['token'] = $authUser->setProfile($profile)->generateToken();
         $info['is_new'] = $is_new;
         return api_response($request, $info, 200, ['info' => $info]);
     }

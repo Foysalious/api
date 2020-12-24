@@ -4,6 +4,7 @@ use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\CarbonPeriod;
 use Sheba\Business\AttendanceActionLog\Creator as AttendanceActionLogCreator;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
+use Sheba\Business\Leave\HalfDay\HalfDayLeaveCheck;
 use Sheba\Dal\AttendanceActionLog\Model as AttendanceActionLog;
 use Sheba\Business\Attendance\Creator as AttendanceCreator;
 use Sheba\Dal\Attendance\EloquentImplementation;
@@ -145,7 +146,7 @@ class AttendanceAction
     {
         $processor = new ActionProcessor();
         $action = $processor->setActionName($this->action)->getAction();
-        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business);
+        $action->setAttendanceOfToday($this->attendance)->setIp($this->getIp())->setDeviceId($this->deviceId)->setBusiness($this->business)->setBusinessMember($this->businessMember);
         $action->check();
         $this->isRemote = $action->getIsRemote();
         return $action;
@@ -212,61 +213,6 @@ class AttendanceAction
      */
     private function checkHalfDayLeave()
     {
-        $which_half_day = null;
-        $leaves_date_with_half_and_full_day = $this->formatLeaveAsDateArray();
-        if ($this->isHalfDayLeave(Carbon::now(), $leaves_date_with_half_and_full_day)) {
-            $which_half_day = $this->whichHalfDayLeave(Carbon::now(), $leaves_date_with_half_and_full_day);
-        }
-        return $which_half_day;
-    }
-
-    /**
-     * @return array
-     */
-    private function formatLeaveAsDateArray()
-    {
-        $year = date('Y');
-        $month = date('m');
-        $time_frame = (new TimeFrame)->forAMonth($month, $year);
-        $business_member_leave = $this->businessMember->leaves()->accepted()->between($time_frame)->get();
-
-        $business_member_leaves_date_with_half_and_full_day = [];
-        $business_member_leave->each(function ($leave) use (&$business_member_leaves_date_with_half_and_full_day) {
-            $leave_period = CarbonPeriod::create($leave->start_date, $leave->end_date);
-            foreach ($leave_period as $date) {
-                $business_member_leaves_date_with_half_and_full_day[$date->toDateString()] = [
-                    'is_half_day_leave' => $leave->is_half_day,
-                    'which_half_day' => $leave->half_day_configuration,
-                ];
-            }
-        });
-
-        return $business_member_leaves_date_with_half_and_full_day;
-    }
-
-    /**
-     * @param Carbon $date
-     * @param array $leaves_date_with_half_and_full_day
-     * @return int
-     */
-    private function isHalfDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
-    {
-        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
-            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['is_half_day_leave'] == 1) return 1;
-        }
-        return 0;
-    }
-
-    /**
-     * @param Carbon $date
-     * @param array $leaves_date_with_half_and_full_day
-     * @return string
-     */
-    private function whichHalfDayLeave(Carbon $date, array $leaves_date_with_half_and_full_day)
-    {
-        if (array_key_exists($date->format('Y-m-d'), $leaves_date_with_half_and_full_day)) {
-            if ($leaves_date_with_half_and_full_day[$date->format('Y-m-d')]['which_half_day'] == HalfDayType::FIRST_HALF) return HalfDayType::FIRST_HALF;
-        }
-        return HalfDayType::SECOND_HALF;
+        return (new HalfDayLeaveCheck())->setBusinessMember($this->businessMember)->checkHalfDayLeave();
     }
 }

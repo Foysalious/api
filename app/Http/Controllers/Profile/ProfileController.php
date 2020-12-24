@@ -3,6 +3,7 @@
 use App\Http\Controllers\Controller;
 use App\Jobs\Business\SendMailVerificationCodeEmail;
 use App\Models\Profile;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
@@ -58,7 +59,7 @@ class ProfileController extends Controller
 
         $code = json_decode($code, 1);
         $profile = $profileRepository->find($code['profile_id']);
-        $profileRepository->update($profile, ['email_verified' => 1]);
+        $profileRepository->update($profile, ['email_verified' => 1, 'email_verified_at' => Carbon::now()]);
         $token = $accounts->getRefreshToken($request->token);
         $auth_user = AuthUser::createFromToken($token);
         $info = [

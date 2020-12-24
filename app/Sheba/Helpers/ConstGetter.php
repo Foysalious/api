@@ -40,7 +40,7 @@ trait ConstGetter
         return !static::isValid($value);
     }
 
-    public function implode($glue = ',')
+    public static function implode($glue = ',')
     {
         return implode($glue, static::get());
     }

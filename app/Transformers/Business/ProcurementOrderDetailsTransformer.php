@@ -91,7 +91,7 @@ class ProcurementOrderDetailsTransformer extends TransformerAbstract
                 'title' => $field->title,
                 'short_description' => $field->short_description,
                 'unit' => $unit,
-                'unit_price' => number_format($field->result / $unit, 2),
+                'unit_price' => $unit ? number_format($field->result / $unit, 2) : 0,
                 'total_price' => $field->result,
             ]);
         }

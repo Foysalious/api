@@ -66,12 +66,20 @@ class AttendanceController extends Controller
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
+        if ($request->has('sort_column')) {
+            $sort_column = $request->sort_column;
+            $sort = $request->sort;
+        } else {
+            $sort_column = AttendanceList::CHECKIN_TIME;
+            $sort = 'desc';
+        }
+
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
             ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->setSortKey($sort)->setSortColumn($sort_column)
             ->setStatusFilter($request->status_filter)
             ->get();
 
@@ -332,15 +340,18 @@ class AttendanceController extends Controller
         ],[
           'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
+        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                  ->setMember($business_member->member)
-                                  ->setOfficeHourType($request->office_hour_type)
-                                  ->setStartTime($request->start_time)
-                                  ->setEndTime($request->end_time)
-                                  ->setWeekends($request->weekends)
-                                  ->setHalfDayTimings($request)
-                                  ->update();
+                                ->setMember($business_member->member)
+                                ->setOfficeHourType($request->office_hour_type)
+                                ->setStartTime($start_time)
+                                ->setEndTime($end_time)
+                                ->setWeekends($request->weekends)
+                                ->setHalfDayTimings($request)
+                                ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }

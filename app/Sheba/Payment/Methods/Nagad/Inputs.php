@@ -31,6 +31,7 @@ class Inputs
             'X-KM-Client-Type' => 'MOBILE_WEB'
         ]);
     }
+
     static function makeHeaders(array $getHeaders)
     {
         $headers = [];
@@ -61,14 +62,14 @@ class Inputs
     }
 
     /**
-     * @param $transactionID
+     * @param            $transactionID
      * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    public static function init($transactionID,NagadStore $store)
+    public static function init($transactionID, NagadStore $store)
     {
-        return self::data($transactionID,$store);
+        return self::data($transactionID, $store);
     }
 
     /**
@@ -82,17 +83,18 @@ class Inputs
      */
     public static function complete($transactionId, Initialize $init, $amount, $callbackUrl, NagadStore $store)
     {
-        $data = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
-        return ['sensitiveData' => self::getEncoded($data,$store), 'signature' => self::generateSignature($data,$store), 'merchantCallbackURL' => $callbackUrl];
+        $merchantAdditionalInfo = '{"Service Name": "Sheba.xyz"}';
+        $data                   = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'amount' => $amount, 'currencyCode' => '050', 'challenge' => $init->getChallenge()]);
+        return ['sensitiveData' => self::getEncoded($data, $store), 'signature' => self::generateSignature($data, $store), 'merchantCallbackURL' => $callbackUrl, 'additionalMerchantInfo' => json_decode($merchantAdditionalInfo)];
     }
 
     /**
-     * @param string $data
+     * @param string     $data
      * @param NagadStore $store
      * @return string
      * @throws EncryptionFailed
      */
-    static function getEncoded($data,NagadStore $store)
+    static function getEncoded($data, NagadStore $store)
     {
         $key = openssl_get_publickey($store->getPublicKey());
         if (!openssl_public_encrypt($data, $encrypted, $key)) throw new EncryptionFailed();
@@ -100,16 +102,16 @@ class Inputs
     }
 
     /**
-     * @param $transactionId
+     * @param            $transactionId
      * @param NagadStore $store
      * @return array
      * @throws EncryptionFailed
      */
-    private static function data($transactionId,NagadStore $store)
+    private static function data($transactionId, NagadStore $store)
     {
         $date = Carbon::now()->format('YmdHis');
         $data = json_encode(['merchantId' => $store->getMerchantId(), 'orderId' => $transactionId, 'datetime' => $date, 'challenge' => self::generateRandomString(40)]);
-        return ['sensitiveData' => self::getEncoded($data,$store), 'signature' => self::generateSignature($data,$store), 'dateTime' => $date];
+        return ['sensitiveData' => self::getEncoded($data, $store), 'signature' => self::generateSignature($data, $store), 'dateTime' => $date];
     }
 
     private static function generateRandomString($length = 40)
@@ -123,7 +125,7 @@ class Inputs
         return $randomString;
     }
 
-    static function generateSignature($data,NagadStore $store)
+    static function generateSignature($data, NagadStore $store)
     {
         $private_key = $store->getPrivateKey();
         openssl_sign($data, $signature, $private_key, OPENSSL_ALGO_SHA256);

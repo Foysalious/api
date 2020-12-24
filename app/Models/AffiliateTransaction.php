@@ -61,6 +61,11 @@ class AffiliateTransaction extends Model
         return $query->where('log', 'LIKE', "%Transport Ticket%");
     }
 
+    public function scopeServicePurchase($query)
+    {
+        return $query->where('log', 'LIKE', "%Service Purchase%");
+    }
+
     public function scopeMovieTicket($query)
     {
         return $query->where('log', 'LIKE', '%Movie Ticket%');

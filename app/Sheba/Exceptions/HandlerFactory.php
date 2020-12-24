@@ -13,6 +13,8 @@ use Sheba\Exceptions\Handlers\NotFoundHttpExceptionHandler;
 use Sheba\Exceptions\Handlers\RouteNotFoundExceptionHandler;
 use Sheba\Exceptions\Handlers\ThrowableHandler;
 use Sheba\Exceptions\Handlers\ValidationExceptionHandler;
+use Sheba\Exceptions\Handlers\WrongPinErrorHandler;
+use Sheba\OAuth2\WrongPinError;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -29,7 +31,7 @@ class HandlerFactory
     {
         $handler = self::getHandler($e);
 
-        if(is_null($handler)) return null;
+        if (is_null($handler)) return null;
 
         return $handler->setException($e)->setRequest($request);
     }
@@ -41,6 +43,7 @@ class HandlerFactory
     private static function getHandler(BaseException $e)
     {
         if ($e instanceof ValidationException) return app(ValidationExceptionHandler::class);
+        if ($e instanceof WrongPinError) return app(WrongPinErrorHandler::class);
         if ($e instanceof ApiValidationException) return app(ApiValidationExceptionHandler::class);
         if ($e instanceof MethodNotAllowedHttpException) return app(MethodNotAllowedHttpExceptionHandler::class);
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);

@@ -71,7 +71,9 @@ class PartnerNotificationEventGetter
             $eventType = app($this->eventType);
             if ($eventType) {
                 $event = $eventType::find($this->notification->event_id);
+
                 if ($event instanceof OfferShowcase) return $this->getDetailsFromOffer($event);
+                if ($event instanceof PartnerOrder) return $this->getDetailsPartnerOrder($event);
                 return $this->getDetailsFromNotification();
             }
             return $this->getDetailsFromNotification();
@@ -97,16 +99,30 @@ class PartnerNotificationEventGetter
 
     private function getDetailsFromOffer(OfferShowcase $offer)
     {
-        ;
         return [
             'banner'      => $offer->app_banner ?: config('constants.NOTIFICATION_DEFAULTS.banner'),
             'title'       => $offer->title ? $offer->title : $this->notification->title ?: config('constants.NOTIFICATION_DEFAULTS.title'),
             'type'        => $this->notification->type ?: config('constants.NOTIFICATION_DEFAULTS.type'),
-            'description' => $offer->detail_description ? strip_tags($offer->detail_description) : config('constants.NOTIFICATION_DEFAULTS.short_description'),
+            'description' => $offer->detail_description ? $offer->detail_description : config('constants.NOTIFICATION_DEFAULTS.short_description'),
             'button_text' => $offer->button_text ? $offer->button_text : config('constants.NOTIFICATION_DEFAULTS.button_text'),
             "target_link" => $offer->target_link ? $offer->target_link : config('constants.NOTIFICATION_DEFAULTS.target_link'),
             "target_type" => $offer->target_type ? str_replace('App\Models\\', "", $offer->target_type) : config('constants.NOTIFICATION_DEFAULTS.target_type'),
             "target_id"   => $offer->target_id ? $offer->target_id : '',
         ];
+    }
+
+    private function getDetailsPartnerOrder(PartnerOrder $order)
+    {
+        $notification = constants('NOTIFICATION_DEFAULTS');
+        return [
+            'banner'      => $this->notification->app_banner ?: config('constants.NOTIFICATION_DEFAULTS.banner'),
+            'title' => $this->notification->title,
+            'short_description' => $this->notification->short_description ?: $notification['short_description'],
+            'description' => $this->notification->description ?: $notification['description'],
+            'button_text'       => 'View Order Details',
+            'type'              => $this->notification->type ?: $notification['description'],
+            'target_link' => $this->notification->link,
+            'target_type' => str_replace('App\Models\\', "", $this->eventType) ?: $notification['target_type'],
+            'target_id' => $this->notification->event_id];
     }
 }

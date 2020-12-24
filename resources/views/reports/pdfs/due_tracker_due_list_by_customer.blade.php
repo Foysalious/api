@@ -1,124 +1,9 @@
-<!DOCTYPE html>
-<html lang="en" >
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
 <head>
     <title>Customer wise due list report</title>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-    <style type="text/css">
-        @import url('https://fonts.maateen.me/mukti/font.css');
-
-        .page-break {
-            page-break-after: always;
-        }
-
-        .break-before {
-            page-break-before: auto;
-        }
-        body {
-            font-family: 'Mukti',  'Roboto',sans-serif;
-            color: #4a4a4a;
-            font-style: normal;
-            font-weight: normal;
-        }
-
-        .heading {
-            text-align: center;
-            margin-top: 20px;
-        }
-
-        .heading h2 {
-            font-size: 1.5rem;
-        }
-
-        .heading .sub-heading {
-            font-size: 1rem;
-            font-family: 'Mukti','Roboto',sans-serif;
-        }
-
-        .heading .sub-text {
-            font-size: .9rem;
-            font-family: 'Mukti','Roboto',sans-serif;
-        }
-
-        .table {
-            border-collapse: collapse;
-            width: 100%;
-            margin-top: 20px;
-            font-family: 'Mukti','Roboto',sans-serif;
-        }
-
-        .table td {
-            text-align: center;
-            padding: 0px 10px;
-            line-height: 1;
-        }
-
-        .table-head {
-            background-color: #ededed;
-            font-weight: normal;
-        }
-
-        .table-head th {
-            font-family: 'Mukti','Roboto',sans-serif;
-            font-weight: normal;
-            padding: 0px 10px;
-            text-align: center;
-        }
-        @page {
-            margin: 40px;
-            padding: 2cm;
-            footer: page-footer;
-        }
-
-        @media print {
-
-            .table {
-                page-break-inside: auto !important;
-                page-break-before: avoid !important;
-            }
-
-            .table tbody tr {
-                page-break-inside: avoid !important;
-                page-break-after: auto !important;
-            }
-
-        }
-
-        /** Define the footer rules **/
-        footer {
-            position: fixed;
-            bottom: 0cm;
-            left: 0cm;
-            right: 0cm;
-            height: 2cm;
-            text-align: center;
-            line-height: 1.5cm;
-        }
-
-
-
-        #pageCounter:before {
-            content: "Page " counter(page) ;
-        }
-
-        #counter {
-            position: fixed;
-            bottom: 0cm;
-            left: auto;
-            right: 30px;
-            height: 2cm;
-            text-align: center;
-            line-height: 1.5cm;
-            width: 120px;
-        }
-        .timeline {
-            text-align: center;
-            padding: 10px;
-            background-color: #F5F5F5;
-            margin: 5px 0;
-        }
-    </style>
+    <link rel="stylesheet" href="{{resource_path('assets/css/due_tracker_pdf.css')}}">
 </head>
 <body align="center">
 <?php $today = \Carbon\Carbon::today()->format('h:i A');?>
@@ -165,53 +50,9 @@
             <td style="width: 35%">Balance: <span style="color:{{$balance["color"]}}">{{$balance["amount"]}} tk ( {{$balance["type"]}} )</span></td>
         </tr>
     </table>
-    <table class="table table-bordered">
-        <thead>
-        <tr class="table-head">
-            <th>No</th>
-            <th>Date</th>
-            <th>Description</th>
-            <th>Credit</th>
-            <th>Debit</th>
-        </tr>
-        </thead>
-        <tbody>
-            @foreach($list as $key=>$item)
-            <tr>
-                <td style="width: 9%">{{++$key}}</td>
-                <td style="width: 15%">{{date('d-m-Y', strtotime($item['created_at'])) }}</td>
-
-                @if($item['source_type'] === 'PosOrder')
-                    <td style="width: 50%">Purchase, Order Id #{{$item['partner_wise_order_id']}}</td>
-                @elseif($item['head'] === 'Due Tracker')
-                    @if($item['note'])
-                        @if(strlen($item['note']) > 120)
-                            <td style="width: 50%">{{substr($item['note'], 0, 120)}}... </td>
-                        @else
-                            <td style="width: 50%"> {{$item['note']}} </td>
-                        @endif
-                    @else
-                        <td style="width: 50%"> -- </td>
-                    @endif
-                @else
-                    <td style="width: 50%">{{$item['head']}}</td>
-                @endif
-                @if($item['type'] === 'deposit')
-                    <td style="color: #219653;width: 13%">0</td>
-                    <td style="color: #DC1E1E;width: 13%">{{$item['amount'] }}</td>
-                    @else
-                    <td style="color: #219653;width: 13%">{{$item['amount'] }}</td>
-                    <td style="color: #DC1E1E;width: 13%">0</td>
-                @endif
-            </tr>
-        @endforeach
-            <tr>
-                <td style="text-align: right" colspan="3">Total</td>
-                <td style="color: #219653">{{$other_info["total_credit"]}}</td>
-                <td style="color: #DC1E1E">{{$other_info["total_debit"]}}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="due-list" style="margin-top: 20px">
+        @include('reports.pdfs.partials._due_list_by_customer')
+    </div>
     <table style="width: 100%;line-height: 1">
         <tr>
             <td style="width: 65%"></td>

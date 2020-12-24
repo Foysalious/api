@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Repositories;
+<?php namespace App\Repositories;
 
 use Aws\S3\Exception\S3Exception;
 use Storage;
@@ -14,15 +12,17 @@ class FileRepository
     {
         $this->s3 = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_REGION'),
+            'region' => config('s3.region'),
             'credentials' => [
-                'key' => env('AWS_KEY'),
-                'secret' => env('AWS_SECRET'),
+                'key' => config('s3.key'),
+                'secret' => config('s3.secret')
             ],
         ]);
-
     }
 
+    /**
+     * @param $filename
+     */
     public function deleteFileFromCDN($filename)
     {
         if ($filename != '') {
@@ -30,19 +30,26 @@ class FileRepository
         }
     }
 
+    /**
+     * @param $filename
+     * @param $file
+     * @param $folder
+     * @return false|string
+     */
     public function uploadToCDN($filename, $file, $folder)
     {
         $s3 = new S3Client([
             'version' => 'latest',
-            'region' => env('AWS_REGION'),
+            'region' => config('s3.region'),
             'credentials' => [
-                'key' => env('AWS_KEY'),
-                'secret' => env('AWS_SECRET'),
+                'key' => config('s3.key'),
+                'secret' => config('s3.secret')
             ],
         ]);
+
         try {
             $s3->putObject([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => config('s3.bucket'),
                 'Key' => $folder . $filename,
                 'Body' => file_get_contents($file),
                 'ACL' => 'public-read',
@@ -52,23 +59,31 @@ class FileRepository
         } catch (S3Exception $e) {
             return false;
         }
-        return env('S3_URL') . $folder . $filename;
+
+        return config('s3.url') . $folder . $filename;
     }
 
+    /**
+     * @param $folder
+     * @param $filename
+     * @param $image
+     * @return false|string
+     */
     public function uploadImageToCDN($folder, $filename, $image)
     {
         try {
             $this->s3->putObject([
-                'Bucket' => env('AWS_BUCKET'),
+                'Bucket' => config('s3.bucket'),
                 'Key' => $folder . '/' . $filename,
                 'Body' => $image,
                 'ACL' => 'public-read',
                 'ContentType' => $image->mime(),
-                'CacheControl' => 'max-age=2628000, public',
+                'CacheControl' => 'max-age=2628000, public'
             ]);
         } catch (S3Exception $e) {
             return false;
         }
-        return env('S3_URL') . $folder . '/' . $filename;
+
+        return config('s3.url') . $folder . '/' . $filename;
     }
 }

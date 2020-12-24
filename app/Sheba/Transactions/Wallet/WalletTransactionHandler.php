@@ -40,11 +40,11 @@ class WalletTransactionHandler extends WalletTransaction
             $transaction = $this->storeTransaction($extras);
             try {
                 $this->storeFraudDetectionTransaction(!$isJob);
-            } catch (Exception $e) {
+            } catch (\Throwable $e) {
                 WalletTransaction::throwException($e);
             }
             return $transaction;
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             WalletTransaction::throwException($e);
         }
         return null;

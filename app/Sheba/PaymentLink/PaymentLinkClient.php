@@ -3,6 +3,7 @@
 use GuzzleHttp\Client;
 use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
+use Exception;
 
 class PaymentLinkClient
 {
@@ -57,22 +58,20 @@ class PaymentLinkClient
         }
     }
 
+
     /**
      * @param $data
-     * @return \stdClass|null
+     * @return mixed
      * @throws \GuzzleHttp\Exception\GuzzleException
+     * @throws Exception
      */
     public function storePaymentLink($data)
     {
-        try {
-            $response = $this->client->request('POST', $this->baseUrl, ['form_params' => $data]);
-            $response = json_decode($response->getBody());
-            if ($response->code == 200)
-                return $response->link;
-            return null;
-        } catch (\Throwable $e) {
-            return null;
-        }
+        $response = $this->client->request('POST', $this->baseUrl, ['form_params' => $data]);
+        $response = json_decode($response->getBody());
+        if ($response->code == 200)
+            return $response->link;
+        throw new Exception(json_encode($response));
     }
 
     public function paymentLinkStatusChange($link, $status)

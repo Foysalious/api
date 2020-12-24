@@ -74,6 +74,13 @@ return [
                 'public_key_path'  => resource_path(env('NAGAD_AFFILIATE_PUBLIC_KEY_PATH', 'assets/nagad/Bondhu.pgPublic.key')),
                 'context_path'     => 'remote-payment-gateway-1.0'
             ],
+            'marketplace' => [
+                'base_url'         => env('NAGAD_BASE_URL', 'http://sandbox.mynagad.com:10080/remote-payment-gateway-1.0'),
+                'merchant_id'      => env('NAGAD_MARKETPLACE_MERCHANT_ID', '686200110675045'),
+                'private_key_path' => resource_path(env('NAGAD_MARKETPLACE_MERCHANT_PRIVATE_KEY', 'assets/nagad/Marketplace.merchantPrivate.key')),
+                'public_key_path'  => resource_path(env('NAGAD_MARKETPLACE_PUBLIC_KEY_PATH', 'assets/nagad/Marketplace.pgPublic.key')),
+                'context_path'     => 'remote-payment-gateway-1.0'
+            ],
         ]
     ]
 ];

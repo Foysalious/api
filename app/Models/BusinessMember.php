@@ -8,6 +8,7 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Helpers\TimeFrame;
 
 class BusinessMember extends Model
@@ -166,6 +167,22 @@ class BusinessMember extends Model
     {
         return $leave->start_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end) &&
             $leave->end_date->between($fiscal_year_time_frame->start, $fiscal_year_time_frame->end);
+    }
+
+    public function leaveTypes()
+    {
+        return $this->hasMany(BusinessMemberLeaveType::class);
+    }
+
+    /**
+     * @param $leave_type_id
+     * @return mixed
+     */
+    public function getTotalLeaveDaysByLeaveTypes($leave_type_id)
+    {
+        $business_member_leave_type = $this->leaveTypes()->where('leave_type_id', $leave_type_id)->first();
+        if ($business_member_leave_type) return $business_member_leave_type->total_days;
+        return $this->business->leaveTypes()->withTrashed()->where('id', $leave_type_id)->first()->total_days;
     }
 
     /**

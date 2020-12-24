@@ -2,6 +2,8 @@
 
 
 use Illuminate\Http\Request;
+use Sheba\AppVersion\Apps;
+use Sheba\Portals\Portals;
 
 class UserAgentInformation
 {
@@ -10,6 +12,7 @@ class UserAgentInformation
     private $ip;
     private $versionCode;
     private $portalName;
+    private $platformName;
     private $userAgent;
 
     public function setRequest(Request $request)
@@ -24,9 +27,11 @@ class UserAgentInformation
      */
     private function resolve()
     {
-        $this->setPortalName($this->request->header('portal-name') != null ? $this->request->header('portal-name') : 'customer-portal');
+        $sheba_request_header = getShebaRequestHeader($this->request);
+        $this->setPortalName($sheba_request_header->getPortalName() ?: Portals::CUSTOMER_WEB);
         $this->setIp($this->request->ip());
-        $this->setVersionCode($this->request->header('Version-Code'));
+        $this->setVersionCode($sheba_request_header->getVersionCode());
+        $this->setPlatformName($sheba_request_header->getPlatformName());
         $this->setUserAgent($this->request->header('User-Agent'));
         $this->request = null;
     }
@@ -46,6 +51,12 @@ class UserAgentInformation
     private function setPortalName($portalName)
     {
         $this->portalName = $portalName;
+        return $this;
+    }
+
+    private function setPlatformName($platform)
+    {
+        $this->platformName = $platform;
         return $this;
     }
 
@@ -73,5 +84,33 @@ class UserAgentInformation
     public function getUserAgent()
     {
         return $this->userAgent;
+    }
+
+    public function getPlatformName()
+    {
+        return $this->platformName;
+    }
+
+    public function getApp()
+    {
+        if ($this->portalName == Portals::CUSTOMER_APP) {
+            if ($this->platformName == 'ios') return Apps::CUSTOMER_APP_IOS;
+            return Apps::CUSTOMER_APP_ANDROID;
+        }
+
+        if ($this->portalName == Portals::EMPLOYEE_APP) {
+            if ($this->platformName == 'ios') return Apps::EMPLOYEE_APP_IOS;
+            return Apps::EMPLOYEE_APP_ANDROID;
+        }
+
+        if ($this->portalName == Portals::RESOURCE_APP) {
+            if ($this->platformName == 'ios') return Apps::RESOURCE_APP_IOS;
+            return Apps::RESOURCE_APP_ANDROID;
+        }
+
+        if ($this->portalName == Portals::BONDHU_APP) return Apps::BONDHU_APP_ANDROID;
+        if ($this->portalName == Portals::PARTNER_APP) return Apps::MANAGER_APP_ANDROID;
+
+        return null;
     }
 }

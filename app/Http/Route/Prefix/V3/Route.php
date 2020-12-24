@@ -10,6 +10,14 @@ class Route
             (new PartnerRoute())->set($api);
             (new BusinessRoute())->set($api);
 
+            $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('/information', 'BankUser\BankUserController@getBankUserInfo');
+            });
+
+            $api->group(['prefix' => 'retailer-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+                $api->get('/information', 'StrategicPartner\StrategicPartnerController@getStrategicPartnerInfo');
+            });
+
             $api->get('locations', 'Location\LocationController@index');
             $api->get('thana/reverse', 'Location\LocationController@getThanaFromLatLng');
             $api->get('thanas', 'Thana\ThanaController@index');

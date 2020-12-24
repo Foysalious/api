@@ -104,4 +104,22 @@
   'roboto condensed' => array(
     'normal' => $fontDir . '/13b971d7e3cad1816a0a8fd8c7b0ff17',
   ),
+  'kalpurush' => array(
+    'normal' => $fontDir . '/4f408d34df1aad54a5d4094b7bc9b0dc',
+  ),
+  'ekusheylohit' => array(
+    'normal' => $fontDir . '/cac28e32fa2a36b7b3cb3cf0e652acbe',
+  ),
+  'solaimanlipi' => array(
+    'normal' => $fontDir . '/23f1dfea7d0e8cda644946715a15eb48',
+  ),
+  'adorsholipi' => array(
+    'normal' => $fontDir . '/f53e9a332a933ffd101f53fd8b26b4e6',
+  ),
+  'bensen' => array(
+    'normal' => $fontDir . '/36240d1c06a1098e4f971ba0d005034e',
+  ),
+  'charukolaultralight' => array(
+    'normal' => $fontDir . '/f32f08cecd09f0893ee388b8f9bf3edc',
+  ),
 ) ?>

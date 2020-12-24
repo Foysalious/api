@@ -1,26 +1,12 @@
 <?php namespace App\Http\Middleware;
 
-use App\Models\Profile;
-use Closure;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use Tymon\JWTAuth\Facades\JWTAuth;
 
-class JWTAuthentication
+class JWTAuthentication extends AccessTokenMiddleware
 {
-    public function handle($request, Closure $next)
+    protected function setExtraDataToRequest($request)
     {
-        try {
-            $token = JWTAuth::getToken();
-            $payload = JWTAuth::getPayload($token)->toArray();
-        } catch (JWTException $e) {
-            return api_response($request, null, 401);
-        }
-        if ($payload) {
-            if (isset($payload['profile'])) {
-                $profile = Profile::find($payload['profile']['id']);
-                if ($profile) $request->merge(['profile' => $profile, 'auth_info' => $payload]);
-            }
-            return $next($request);
-        } else return api_response($request, null, 403);
+        if (!$this->authorizationToken->authorizationRequest->profile) return;
+        $auth_user = $request->auth_user;
+        $request->merge(['profile' => $this->authorizationToken->authorizationRequest->profile, 'auth_info' => $auth_user->getAttributes()]);
     }
 }

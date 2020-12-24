@@ -24,6 +24,11 @@ use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServer;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\AuthUser;
+use Sheba\OAuth2\SomethingWrongWithToken;
 use Sheba\Repositories\ProfileRepository;
 use App\Transformers\Business\EmployeeTransformer;
 use Illuminate\Http\Request;
@@ -37,16 +42,22 @@ class EmployeeController extends Controller
     private $repo;
     /** @var ApprovalRequestRepositoryInterface $approvalRequestRepo */
     private $approvalRequestRepo;
+    /** @var AccountServer $accounts */
+    private $accounts;
 
     /**
      * EmployeeController constructor.
      * @param MemberRepositoryInterface $member_repository
      * @param ApprovalRequestRepositoryInterface $approval_request_repository
+     * @param AccountServer $accounts
      */
-    public function __construct(MemberRepositoryInterface $member_repository, ApprovalRequestRepositoryInterface $approval_request_repository)
+    public function __construct(MemberRepositoryInterface $member_repository,
+                                ApprovalRequestRepositoryInterface $approval_request_repository,
+                                AccountServer $accounts)
     {
         $this->repo = $member_repository;
         $this->approvalRequestRepo = $approval_request_repository;
+        $this->accounts = $accounts;
     }
 
     public function me(Request $request)
@@ -273,5 +284,34 @@ class EmployeeController extends Controller
 
         if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
         return api_response($request, null, 404);
+    }
+
+    /**
+     * @param Request $request
+     * @param ProfileRepository $profile_repo
+     * @return JsonResponse
+     * @throws SomethingWrongWithToken
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function login(Request $request, ProfileRepository $profile_repo)
+    {
+        $this->validate($request, ['email' => 'required', 'password' => 'required']);
+
+        $profile = $profile_repo->checkExistingEmail($request->email);
+        if (!$profile) return response()->json(['code' => 404, 'message' => 'Profile not found']);
+
+        $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
+        $auth_user = AuthUser::createFromToken($token);
+        $info = [
+            'token' => $token,
+            'user' => [
+                'name' => $auth_user->getName(),
+                'mobile' => $profile->mobile,
+                'image' => $profile->pro_pic
+            ]
+        ];
+
+        return api_response($request, null, 200, $info);
     }
 }

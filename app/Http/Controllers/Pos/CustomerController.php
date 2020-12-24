@@ -106,8 +106,9 @@ class CustomerController extends Controller
     {
         try {
             $this->validate($request, [
-                'mobile' => 'required|mobile:bd',
-                'name'   => 'required'
+                'mobile'        => 'required|mobile:bd',
+                'name'          => 'required',
+                'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg'
             ]);
             $this->setModifier($request->manager_resource);
             $creator = $creator->setData($request->except([
@@ -145,7 +146,8 @@ class CustomerController extends Controller
             $this->setModifier($request->manager_resource);
             $updater->setCustomer($customer)->setData($request->except([
                 'partner_id',
-                'remember_token'
+                'remember_token',
+                'email'
             ]));
             if ($error = $updater->hasError())
                 return api_response($request, null, 400, ['message' => $error['msg']]);
