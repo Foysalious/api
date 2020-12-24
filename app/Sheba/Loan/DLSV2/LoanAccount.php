@@ -172,7 +172,7 @@ class LoanAccount
                 array_push($data['recent_repayments'], [
                     'id'          => $repayment->id,
                     'claim_id'    => $repayment->loan_claim_request_id,
-                    'amount'      => (int)$repayment->debit == 0 ? $repayment->credit : $repayment->debit,
+                    'amount'      => (int)$repayment->debit == 0 ? $repayment->credit ? : 0 : $repayment->debit ? : 0,
                     'amount_type' => (int)$repayment->debit == 0 ? 'credit' : 'debit',
                     'log'         => $repayment->log,
                     'created_at'  => Carbon::parse($repayment->created_at)->format('Y-m-d H:i:s')
