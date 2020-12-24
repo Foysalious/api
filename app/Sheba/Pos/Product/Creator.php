@@ -120,16 +120,16 @@ class Creator
         $master_cat_id = $partner_pos_service->master_category_id;
         $sub_cat_id = $partner_pos_service->sub_category_id;
 
-        $partner_categories = PartnerPosCategory::where('partner_id',$partner_id)->pluck('category_id')->toArray();
+        $partner_categories = PartnerPosCategory::where('partner_id',$partner_id)->whereIn('category_id',[$master_cat_id,$sub_cat_id])->pluck('category_id')->toArray();
 
-        if(!in_array($master_cat_id,$partner_categories))
+        if(empty($partner_categories) || !in_array($master_cat_id,$partner_categories))
         {
             array_push($data,$this->withCreateModificationField([
                 'partner_id' => $partner_id,
                 'category_id' => $master_cat_id,
             ]));
         }
-        if(!in_array($sub_cat_id,$partner_categories))
+        if(empty($partner_categories) || !in_array($sub_cat_id,$partner_categories))
         {
             array_push($data,$this->withCreateModificationField([
                 'partner_id' => $partner_id,
