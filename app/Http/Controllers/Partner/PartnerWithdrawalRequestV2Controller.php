@@ -17,6 +17,7 @@ use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
@@ -87,6 +88,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         /** @var Partner $partner */
         $partner = $request->partner;
+        if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
+        }
         if ($request->payment_method != 'bank') {
             if (
                 ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||
