@@ -131,7 +131,7 @@ class PartnerTransactionController extends Controller
             $cache_name = "partner_" . $request->partner->id . "_payment_reconcile_token";
             \Cache::store('redis')->put($cache_name, $payment_token = Str::random(32), $expires_at);
             $client = new Client();
-            $reconcile_url = env('SHEBA_BACKEND_URL') . '/api/partner/reconcile-collection';
+            $reconcile_url = config('sheba.admin_url') . '/api/partner/reconcile-collection';
             $res = json_decode($client->request('POST', $reconcile_url, [
                 'form_params' => [
                     'resource_id' => $request->manager_resource->id,

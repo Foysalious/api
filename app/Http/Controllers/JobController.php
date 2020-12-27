@@ -536,7 +536,7 @@ class JobController extends Controller
             ]);
 
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
                 [
                     'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'customer_id' => $customer,
