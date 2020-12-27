@@ -66,12 +66,20 @@ class AttendanceController extends Controller
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
+        if ($request->has('sort_column')) {
+            $sort_column = $request->sort_column;
+            $sort = $request->sort;
+        } else {
+            $sort_column = AttendanceList::CHECKIN_TIME;
+            $sort = 'desc';
+        }
+
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
             ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->setSortKey($sort)->setSortColumn($sort_column)
             ->setStatusFilter($request->status_filter)
             ->get();
 

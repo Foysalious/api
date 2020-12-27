@@ -2,17 +2,17 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use Sheba\TopUp\Vendor\Internal\SslClient;
+use Sheba\TopUp\Vendor\Internal\PaywellClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
-class Ssl implements Gateway
+class Paywell implements Gateway
 {
-    private $ssl;
+    private $paywell;
     CONST SHEBA_COMMISSION = 0.0;
 
-    public function __construct(SslClient $ssl)
+    public function __construct(PaywellClient $paywell)
     {
-        $this->ssl = $ssl;
+        $this->paywell = $paywell;
     }
 
     /**
@@ -22,7 +22,7 @@ class Ssl implements Gateway
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
-        return $this->ssl->recharge($topup_order);
+        return $this->paywell->recharge($topup_order);
     }
 
     public function getInitialStatus()
@@ -37,6 +37,6 @@ class Ssl implements Gateway
 
     public static function getInitialStatusStatically()
     {
-        return config('topup.status.pending.sheba');
+        return config('topup.status.successful.sheba');
     }
 }
