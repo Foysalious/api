@@ -1,7 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Transformers\Business\ApprovalSettingTransformer;
+use App\Transformers\Business\ApprovalSettingListTransformer;
+use App\Transformers\CustomSerializer;
 use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
@@ -29,14 +31,25 @@ class ApprovalSettingsController extends Controller
      */
     public function index(Request $request, ApprovalSettingRepository $approval_settings_repo, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
     {
-        $approval_settings =  $approval_settings_repo->where('business_id', $request->business->id)->get();
-        
-        $manager = new Manager();
-        $manager->setSerializer(new ArraySerializer());
-        $approval_settings_data = new Item($approval_settings, new ApprovalSettingTransformer($department_repo, $business_member_repo, $profile_repo));
-        $approval_settings_list = collect($manager->createData($approval_settings_data)->toArray());
+        list($offset, $limit) = calculatePagination($request);
+        $approval_settings =  $approval_settings_repo->where('business_id', $request->business->id);
+        if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type],['target_id', '=', $request->target_id]]);
+        if ($request->has('type') && $request->type) $approval_settings = $approval_settings->where('target_type', $request->type);
 
-        return api_response($request, null, 200, ['data' => $approval_settings_list]);
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer($department_repo, $business_member_repo, $profile_repo));
+        $approval_settings_list = $manager->createData($resource)->toArray()['data'];
+        if ($request->has('search')) $approval_settings_list = collect($this->searchWithType($approval_settings_list, $request->search))->values();
+        if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
+        return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => count($approval_settings_list)]);
+    }
+
+    private function searchWithType($approval_settings_list, $search)
+    {
+        return array_where($approval_settings_list, function ($key, $value) use ($search){
+            return str_contains(strtoupper($value[0]['target_type']['type']), strtoupper($search));
+        });
     }
 
     public function store(Request $request, ApprovalSettingRequester $approval_setting_requester, Creator $creator)
