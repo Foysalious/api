@@ -389,6 +389,7 @@ class TopUpController extends Controller
             return api_response($request, $otf_list, 200, ['message' => $otf_list]);
         }
     }
+                'recipient_msisdn' => $topup_order->payee_mobile,
 
 
     public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
