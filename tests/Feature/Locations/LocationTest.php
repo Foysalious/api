@@ -35,4 +35,28 @@ class LocationTest extends FeatureTestCase
         $this->assertNotTrue(in_array(1,$location_ids));
     }
 
+    public function  testWithoutPolygonLocationsNotAvailableOnList()
+    {
+        $response = $this->get("/v1/locations/");
+        $data = $response->decodeResponseJson();
+        $locations = collect($data['locations']);
+        $location_ids = $locations->pluck('id')->toArray();
+        $this->assertNotTrue(in_array(1,$location_ids));
+
+    }
+
+    public function  testWithRestLocationsNotAvailableOnList()
+    {
+        $rest_of_dhaka = Location::find(10);
+        $rest_of_dhaka->update(["publication_status" => 1]);
+        $response = $this->get("/v1/locations/");
+        $data = $response->decodeResponseJson();
+        $locations = collect($data['locations']);
+        $location_ids = $locations->pluck('id')->toArray();
+        $this->assertNotTrue(in_array(10,$location_ids));
+
+    }
+
+
+
 }
