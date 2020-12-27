@@ -100,7 +100,7 @@ class InfoCallController extends Controller
             $sd_but_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
             notify()->users($sd_but_not_crm)->send([
                 "title" => 'New Info Call Created by Customer',
-                'link' => env('SHEBA_BACKEND_URL') . '/info-call/' . $info_call->id,
+                'link' => config('sheba.admin_url') . '/info-call/' . $info_call->id,
                 "type" => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
