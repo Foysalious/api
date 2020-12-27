@@ -8,7 +8,9 @@ use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
+use Namshi\JOSE\JWS;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
+use Sheba\Portals\Portals;
 use Sheba\Profile\Avatars;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -60,7 +62,7 @@ class AuthUser
             throw new SomethingWrongWithToken($e->getMessage());
         }
     }
-    
+
     public static function authenticate()
     {
         JWTAuth::getPayload(JWTAuth::getToken());
@@ -74,7 +76,13 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            return new static(JWTAuth::getPayload($token)->toArray());
+            if (request()->url() == config('sheba.api_url') . '/v2/top-up/get-topup-token') {
+                $jws = JWS::load($token);
+                $payload = $jws->getPayload();
+            } else {
+                $payload = JWTAuth::getPayload($token)->toArray();
+            }
+            return new static($payload);
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
         }

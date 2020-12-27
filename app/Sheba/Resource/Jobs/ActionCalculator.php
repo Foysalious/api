@@ -18,12 +18,13 @@ class ActionCalculator
         $partner_order->calculate();
         if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
-        } elseif (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE) && $partner_order->due == 0) {
-            $formatted_job->put('can_serve', 1);
         } elseif ($job->status == JobStatuses::SERVED && $partner_order->due > 0) {
             $formatted_job->put('can_collect', 1);
         } elseif ($this->isStatusBeforeProcess($job->status)) {
             $formatted_job->put('can_process', 1);
+        }
+        if (($job->status == JobStatuses::PROCESS || $job->status == JobStatuses::SERVE_DUE)) {
+            $formatted_job->put('can_serve', 1);
         }
         if (!$partner_order->isClosedAndPaidAt()) $formatted_job->put('due', (double)$partner_order->due);
         return $formatted_job;
