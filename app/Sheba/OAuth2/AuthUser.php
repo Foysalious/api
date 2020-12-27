@@ -267,9 +267,11 @@ class AuthUser
      */
     public function getBusiness()
     {
+
         if (!isset($this->attributes['business_member'])) return null;
         $business = Business::find($this->attributes['business_member']['business_id']);
         if ($business) $this->setBusiness($business);
+        return $business;
     }
 
     /**
