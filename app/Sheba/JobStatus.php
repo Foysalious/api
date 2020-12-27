@@ -39,7 +39,7 @@ class JobStatus
                 $data['resource_id'] = $this->updated_by->id;
                 $data['created_by_type'] = 'Resource';
             }
-            $result = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $this->job->id . '/change-status',
+            $result = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/change-status',
                 [
                     'form_params' => array_merge((new UserRequestInformation($this->request))->getInformationArray(), $data)
                 ]);
