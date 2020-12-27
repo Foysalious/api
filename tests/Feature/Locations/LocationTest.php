@@ -1,27 +1,38 @@
 <?php namespace Tests\Feature\Locations;
 
+use App\Models\Location;
 use Tests\Feature\FeatureTestCase;
 
 class LocationTest extends FeatureTestCase
 {
-    public function testGetLocations()
+    public function testPublishedLocationCountMatches()
     {
-        $this->json('GET', '/v1/locations')->seeJsonStructure([
-            'code',
-            'locations' => [
-                '*' => ['id', 'name']
-            ],
-            'msg'
-        ]);
+        $response = $this->get("/v1/locations/");
+        $data = $response->decodeResponseJson();
+        $locations = collect($data['locations']);
+        $this->assertEquals(79, $locations->count());
     }
 
-    public function testCurrentLocations()
+    public function  testNewlyPublishedLocationIsAvailableOnTheList()
     {
-        $this->json('GET', '/v2/locations/current', ['lat' => 23.8270444, 'lng' => 90.3613735])->seeJsonStructure([
-            'code',
-            'location' => ['id', 'name'],
-            'message'
-        ]);
+        $ctg = Location::find(16);
+        $ctg->update(["publication_status" => 1]);
+        $response = $this->get("/v1/locations/");
+        $data = $response->decodeResponseJson();
+        $locations = collect($data['locations']);
+        $location_ids = $locations->pluck('id')->toArray();
+        $this->assertTrue(in_array(16,$location_ids));
+    }
+
+    public function  testNewlyUnpublishedLocationIsUnavailableOnTheList()
+    {
+        $mohammadpur = Location::find(1);
+        $mohammadpur->update(["publication_status" => 0]);
+        $response = $this->get("/v1/locations/");
+        $data = $response->decodeResponseJson();
+        $locations = collect($data['locations']);
+        $location_ids = $locations->pluck('id')->toArray();
+        $this->assertNotTrue(in_array(1,$location_ids));
     }
 
 }
