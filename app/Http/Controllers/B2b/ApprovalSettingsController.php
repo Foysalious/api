@@ -48,7 +48,7 @@ class ApprovalSettingsController extends Controller
     private function searchWithType($approval_settings_list, $search)
     {
         return array_where($approval_settings_list, function ($key, $value) use ($search){
-            return str_contains(strtoupper($value[0]['target_type']['type']), strtoupper($search));
+            return str_contains(strtoupper($value['target_type']['type']), strtoupper($search));
         });
     }
 

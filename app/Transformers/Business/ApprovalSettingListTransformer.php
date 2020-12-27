@@ -76,10 +76,8 @@ class ApprovalSettingListTransformer extends TransformerAbstract
                 'employee_id' => $target_business_member ? $target_business_member->employee_id : null, 'name' => $target_profile ? $target_profile->name : null, 'department' => $target_business_member ? $target_business_member->department() ? $target_business_member->department()->name : null : null,
             ] : null, 'department' => $department ? ['id' => $department->id, 'name' => $department->name] : null
         ];
-        array_push($data, [
-                'id' => $approval_setting->id, 'business_id' => $approval_setting->business_id, 'note' => $approval_setting->note, 'target_type' => $target_type, 'modules' => $module_data, 'approvars' => $approvar_data, 'approvar_count' => count($approvar_data),
-            ]);
-
-        return $data;
+        return [
+            'id' => $approval_setting->id, 'business_id' => $approval_setting->business_id, 'note' => $approval_setting->note, 'target_type' => $target_type, 'modules' => $module_data, 'approvars' => $approvar_data, 'approvar_count' => count($approvar_data),
+        ];
     }
 }
