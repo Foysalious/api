@@ -196,9 +196,10 @@ class TopUpController extends Controller
 
             if (!in_array($extension, $valid_extensions))
                 return api_response($request, null, 400, ['message' => 'File type not support']);
-
-            $agent = $request->user;
-            $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $agent = $auth_user->getBusiness();
+            $verifyPin->setAgent($auth_user->getBusiness())->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
             $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
             $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
@@ -247,7 +248,7 @@ class TopUpController extends Controller
 
             if ($total_recharge_amount > $agent->wallet)
                 return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
-            
+
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
                 /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
