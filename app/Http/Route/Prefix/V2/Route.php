@@ -153,11 +153,13 @@ class Route
             });
             $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
                 $api->get('/vendor', 'TopUp\TopUpController@getVendor');
+                $api->post('/get-topup-token', 'TopUp\TopUpController@generateJwt');
                 $api->post('/{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
                 $api->post('/bulk', 'TopUp\TopUpController@bulkTopUp');
                 $api->get('/history', 'TopUp\TopUpController@topUpHistory');
                 $api->get('/active-bulk', 'TopUp\TopUpController@activeBulkTopUps');
                 $api->get('/special-amount-data', 'TopUp\TopUpController@specialAmount');
+                $api->get('bulk-list', 'TopUp\TopUpController@bulkList');
                 /**
                  * FOR TEST
                  * $api->post('top-up-test', 'TopUp\\TopUpController@topUpTest');

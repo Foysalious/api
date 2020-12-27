@@ -1,6 +1,5 @@
 <?php namespace Sheba\Exceptions\Handlers;
 
-
 trait GenericHandler
 {
     /**

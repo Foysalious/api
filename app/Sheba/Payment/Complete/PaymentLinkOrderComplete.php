@@ -70,10 +70,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->failPayment();
             throw $e;
         }
-        $this->payment = $this->saveInvoice();
-        $this->notify();
-        $this->dispatchReward();
-        $this->storeEntry();
+        try {
+            $this->payment = $this->saveInvoice();
+            $this->notify();
+            $this->dispatchReward();
+            $this->storeEntry();
+        }catch (\Throwable $e){
+            logError($e);
+        }
         return $this->payment;
     }
 

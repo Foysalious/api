@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\TopUp\Exception;
-
+<?php namespace Sheba\TopUp\Exception;
 
 use App\Exceptions\ApiValidationException;
 use Throwable;
@@ -13,5 +9,4 @@ class PinMismatchException extends ApiValidationException
     {
         parent::__construct($message, $code, $previous);
     }
-
 }

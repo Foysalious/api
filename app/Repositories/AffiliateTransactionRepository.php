@@ -66,7 +66,7 @@ class AffiliateTransactionRepository
      */
     private function earning()
     {
-        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') + $this->topUps()->sum('agent_commission');
+        $amount = $this->affiliate->transactions()->earning()->between($this->start_date, $this->end_date)->sum('amount') + $this->topUps()->sum('agent_commission') + $this->topUps()->sum('otf_agent_commission');
         return $amount == null ? 0 : $amount;
     }
 
@@ -109,7 +109,7 @@ class AffiliateTransactionRepository
 
         if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচার্জ", "balance_recharge");
         if($count = $topUp->count()) $category_wise_transaction[] = $this->makeData($topUp->sum('amount'), $count, "Top Up", "টপ আপ", "topup", "-");
-        if(($count + $manual_disbursement->count())) $category_wise_transaction[] = $this->makeData($topUp->sum('agent_commission')+$manual_disbursement->sum('amount'), $count + $manual_disbursement->count(), "Top Up Commission", "টপ আপ কমিশন", "topup_commission");
+        if(($count + $manual_disbursement->count())) $category_wise_transaction[] = $this->makeData($topUp->sum('agent_commission')+$manual_disbursement->sum('amount')+$topUp->sum('otf_agent_commission'), $count + $manual_disbursement->count(), "Top Up Commission", "টপ আপ কমিশন", "topup_commission");
         if($count = $service_commission->count()) $category_wise_transaction[] = $this->makeData($service_commission->sum('amount'), $count, "Service Refer Commission", "সার্ভিস রেফার কমিশন", "service_refer_commission");
         if($count = $bus_ticket->count()) $category_wise_transaction[] = $this->makeData($bus_ticket->sum('amount'), $count, "Bus Ticket", "বাস টিকেট", "bus_ticket",'-');
         if($count = $movie_ticket->count()) $category_wise_transaction[] = $this->makeData($movie_ticket->sum('amount'), $count, "Movie Ticket", "সিনেমা টিকেট", "movie_ticket",'-');
