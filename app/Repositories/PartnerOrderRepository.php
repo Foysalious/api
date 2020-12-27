@@ -40,8 +40,8 @@ class PartnerOrderRepository
         $partner_order['can_process'] = $partner_order->order->isProcessable();
         $partner_order['can_serve'] = $partner_order->order->isServeable();
         $partner_order['can_pay'] = $partner_order->order->isPayable();
-
         $jobs = $partner_order->jobs->each(function (Job $job) use ($partner_order) {
+            if($job->status === JobStatuses::CANCELLED) return false;
             $job['partner_order'] = $partner_order;
             $job = $this->partnerJobRepository->getJobInfo($job);
             $services = [];
