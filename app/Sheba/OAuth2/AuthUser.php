@@ -23,8 +23,6 @@ class AuthUser
     private $profile;
     /** @var Resource */
     private $resource;
-    /** @var Business */
-    private $business;
     /** @var User */
     private $user;
     /** @var Model|null */
@@ -267,18 +265,11 @@ class AuthUser
      */
     public function getBusiness()
     {
-        if (!isset($this->attributes['business_member'])) return null;
-        $business = Business::find($this->attributes['business_member']['business_id']);
-        if ($business) $this->setBusiness($business);
+        if (!$this->profile || !$this->profile->member) return null;
+        $member = $this->profile->member;
+        $business_member = $member ? $member->businessMember : null;
+        if (!$business_member) return null;
+        return $business_member->business;
     }
 
-    /**
-     * @param Business $business
-     * @return AuthUser
-     */
-    public function setBusiness($business)
-    {
-        $this->business = $business;
-        return $this;
-    }
 }
