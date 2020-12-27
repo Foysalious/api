@@ -110,7 +110,10 @@ class IndexRoute
                     });
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);
-                $api->get('settings', 'Pos\SettingController@getSettings');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->post('/', 'Pos\SettingController@storePosSetting');
+                });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
                 $api->group(['prefix' => 'reports'], function ($api) {
                     $api->get('product-wise', 'Pos\ReportsController@product');
