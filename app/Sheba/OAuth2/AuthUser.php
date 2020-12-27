@@ -2,6 +2,7 @@
 
 
 use App\Models\Affiliate;
+use App\Models\BankUser;
 use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -253,6 +254,15 @@ class AuthUser
     {
         if (!isset($this->attributes['partner'])) return null;
         return Partner::find($this->attributes['partner']['id']);
+    }
+
+    /**
+     * @return Partner|null
+     */
+    public function getBankUser()
+    {
+        if (!isset($this->attributes['bank_user'])) return null;
+        return BankUser::find($this->attributes['bank_user']['id']);
     }
 
     public function getAttributes()
