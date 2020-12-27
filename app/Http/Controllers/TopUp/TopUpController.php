@@ -60,9 +60,14 @@ class TopUpController extends Controller
     public function getVendor(Request $request)
     {
         try {
-            if ($request->type == 'customer') $agent = "App\\Models\\Customer"; elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
+            /*if ($request->type == 'customer') $agent = "App\\Models\\Customer"; elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
             elseif ($request->type == 'business') $agent = "App\\Models\\Business";
-            else $agent = "App\\Models\\Affiliate";
+            else $agent = "App\\Models\\Affiliate";*/
+
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $agent = $auth_user->getBusiness();
+
             $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
             $error_message = "Currently, we’re supporting";
             foreach ($vendors as $vendor) {
@@ -99,21 +104,15 @@ class TopUpController extends Controller
     {
         $agent = $request->user;
         $validation_data = [
-            'mobile' => 'required|string|mobile:bd',
-            'connection_type' => 'required|in:prepaid,postpaid',
-            'vendor_id' => 'required|exists:topup_vendors,id',
-            'password' => 'required'
+            'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required'
         ];
-        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
-            'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
-            'required|min:10|max:1000|numeric';
+        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ? 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit : 'required|min:10|max:1000|numeric';
 
         $this->validate($request, $validation_data);
 
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        if ($user == 'business') $agent = $auth_user->getBusiness(); elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
@@ -135,14 +134,7 @@ class TopUpController extends Controller
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
-        $top_up_request->setAmount($request->amount)
-            ->setMobile($request->mobile)
-            ->setType($request->connection_type)
-            ->setAgent($agent)
-            ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
-            ->setUserAgent($userAgentInformation->getUserAgent());
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
@@ -217,13 +209,13 @@ class TopUpController extends Controller
         $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
         $extension = $request->file('file')->getClientOriginalExtension();
 
-        if (!in_array($extension, $valid_extensions))
-            return api_response($request, null, 400, ['message' => 'File type not support']);
-
-        $agent = $request->user;
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
-        $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
-        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $agent = $auth_user->getBusiness();
+            $verifyPin->setAgent($auth_user->getBusiness())->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
 
@@ -268,9 +260,8 @@ class TopUpController extends Controller
             $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
         });
 
-            if ($total_recharge_amount > $agent->wallet)
-                return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
-            
+            if ($total_recharge_amount > $agent->wallet) return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+
             if ($halt_top_up) {
                 $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
                 /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
@@ -394,10 +385,14 @@ class TopUpController extends Controller
     public function activeBulkTopUps(Request $request)
     {
         try {
-            $model = "App\\Models\\" . ucfirst(camel_case($request->type));
-            $agent_id = $request->user->id;
+            //$model = "App\\Models\\" . ucfirst(camel_case($request->type));
+            /** @var AuthUser $auth_user */
+            $auth_user = $request->auth_user;
+            $user = $auth_user->getBusiness();
+            $agent_id = $user->id;
+
             $topup_bulk_requests = TopUpBulkRequest::where([
-                ['status', 'pending'], ['agent_id', $agent_id], ['agent_type', $model]
+                ['status', 'pending'], ['agent_id', $agent_id], ['agent_type', $user]
             ])->with('numbers')->where('status', 'pending')->orderBy('id', 'desc')->get();
             $final = [];
             $topup_bulk_requests->filter(function ($topup_bulk_request) {
@@ -432,14 +427,11 @@ class TopUpController extends Controller
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
 
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $user = $auth_user->getBusiness();
         list($offset, $limit) = calculatePagination($request);
-        $model = "App\\Models\\" . ucfirst(camel_case($request->type));
-        $user = $request->user;
-        if ($request->has('partner')) {
-            $user = $request->partner;
-            $model = "App\\Models\\Partner";
-        }
-        $topups = $model::find($user->id)->topups();
+        $topups = $user->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
         if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
