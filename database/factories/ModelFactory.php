@@ -1,17 +1,8 @@
 <?php
 
-/*
-|--------------------------------------------------------------------------
-| Model Factories
-|--------------------------------------------------------------------------
-|
-| Here you may define all of your model factories. Model factories give
-| you a convenient way to create models for testing and seeding your
-| database. Just tell the factory how a default model should look.
-|
-*/
-
 use Carbon\Carbon;
+use Sheba\Dal\Category\Category;
+use Sheba\Dal\Service\Service;
 
 $common_seeds = [
     'created_by' => 1,
@@ -22,7 +13,7 @@ $common_seeds = [
     'updated_at' => Carbon::now()
 ];
 
-$factory->define(\App\Models\Category::class, function (Faker\Generator $faker) use ($common_seeds) {
+$factory->define(Category::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds, [
         'name' => "Category #" . $faker->randomNumber(),
         'slug' => $faker->slug,
@@ -36,7 +27,7 @@ $factory->define(\App\Models\Category::class, function (Faker\Generator $faker) 
     ]);
 });
 
-$factory->define(\Sheba\Dal\Service\Service::class, function (Faker\Generator $faker) use ($common_seeds) {
+$factory->define(Service::class, function (Faker\Generator $faker) use ($common_seeds) {
     $faqs = [];
     for ($i = 1; $i <= $faker->numberBetween($min = 1, $max = 5); $i++) {
         $question = [

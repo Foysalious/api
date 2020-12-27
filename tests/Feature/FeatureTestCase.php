@@ -1,6 +1,7 @@
 <?php namespace Tests\Feature;
 
 use Illuminate\Foundation\Testing\DatabaseMigrations;
+use Illuminate\Support\Facades\DB;
 use TestCase;
 
 class FeatureTestCase extends TestCase
@@ -10,7 +11,6 @@ class FeatureTestCase extends TestCase
     public function setUp()
     {
         parent::setUp();
-        // $this->seed();
     }
 
     public function get($uri, array $headers = [])
@@ -19,12 +19,17 @@ class FeatureTestCase extends TestCase
         return parent::get($uri, $headers);
     }
 
-    /*public function runDatabaseMigrations()
+    /**
+     * Define hooks to migrate the database before and after each test.
+     *
+     * @return void
+     */
+    public function runDatabaseMigrations()
     {
+        DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
-
         $this->beforeApplicationDestroyed(function () {
-            $this->artisan('migrate:rollback');
+            DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         });
-    }*/
+    }
 }

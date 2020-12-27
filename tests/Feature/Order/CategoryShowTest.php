@@ -1,7 +1,7 @@
 <?php namespace Tests\Feature\Order;
 
-use App\Models\Category;
 use App\Models\Location;
+use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
@@ -18,8 +18,8 @@ class CategoryShowTest extends FeatureTestCase
         parent::setUp();
 
         $this->location = Location::find(1);
-
         $master_category = factory(Category::class)->create();
+
         $this->secondaryCategory = factory(Category::class)->create([
             'parent_id' => $master_category->id,
             'publication_status' => 1
