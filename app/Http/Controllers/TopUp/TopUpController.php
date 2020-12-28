@@ -56,7 +56,6 @@ use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
-
     public function getVendor(Request $request)
     {
         try {
@@ -539,10 +538,22 @@ class TopUpController extends Controller
             ]);
         }
 
-        return api_response($request, null, 403, [
-            'message' => 'Invalid Request'
-        ]);
+        return api_response($request, null, 403, ['message' => 'Invalid Request']);
+    }
 
+    /**
+     * @param Request $request
+     * @param TopUpBulkRequestFormatter $topup_formatter
+     * @return JsonResponse
+     */
+    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
+    {
+        $auth_user = $request->auth_user;
+        $agent = $auth_user->getBusiness();
+        $agent_type = $this->getFullAgentType($agent->type);
+        $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
+
+        return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
     }
 
     /**

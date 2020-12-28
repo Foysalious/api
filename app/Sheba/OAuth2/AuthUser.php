@@ -23,8 +23,6 @@ class AuthUser
     private $profile;
     /** @var Resource */
     private $resource;
-    /** @var Business */
-    private $business;
     /** @var User */
     private $user;
     /** @var Model|null */
@@ -274,13 +272,4 @@ class AuthUser
         return $business;
     }
 
-    /**
-     * @param Business $business
-     * @return AuthUser
-     */
-    public function setBusiness($business)
-    {
-        $this->business = $business;
-        return $this;
-    }
 }
