@@ -15,7 +15,13 @@ use Throwable;
 class BkashPayoutController extends Controller {
     public function pay(Request $request, ShebaBkash $sheba_bkash) {
         if ($request->token != config('sheba.payout_token')) return api_response($request, null, 400);
-
+        return api_response($request, null, 200, ["completed_time"=> "2020-12-27T13:46:18:619 GMT+0000",
+  "trxID"=> "7LR2KRJYNE",
+  "status" => "Completed",
+  "amount" => 1300,
+  "invoice_no" => "7706",
+  "receiver_bkash_no" => "01764868959",
+  "b2cfee" => 0]);
         try {
             $this->validate($request, ['amount' => 'required|numeric', 'bkash_number' => 'required|string|mobile:bd', 'request_id' => 'required']);
             /** @var NormalPayout $payout */
