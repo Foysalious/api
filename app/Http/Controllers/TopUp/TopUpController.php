@@ -9,7 +9,6 @@ use App\Models\Business;
 use App\Models\Partner;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
-use App\Sheba\TopUp\TopUpBulkRequest\Formatter;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use App\Sheba\TopUp\Vendor\Vendors;
@@ -56,7 +55,6 @@ use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
-
     public function getVendor(Request $request)
     {
         try {
@@ -230,55 +228,52 @@ class TopUpController extends Controller
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $total_recharge_amount = 0;
 
-        $data->each(function ($value, $key) use ($agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount, $request) {
+        $data->each(function ($value, $key) use ($request, $agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
             $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
             $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
             $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
             $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
 
-                if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Mobile number Invalid, Amount Should be Integer';
-                } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Mobile number Invalid';
-                } elseif (!$this->isAmountInteger($value->$amount_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'Amount Should be Integer';
-                } elseif ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
-                    $halt_top_up = true;
-                    $excel_error = 'The recharge amount is blocked due to OTF activation issue';
-                } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
-                    $halt_top_up = true;
-                    $excel_error = 'The amount exceeded your topUp prepaid limit';
-                } else {
-                    $excel_error = null;
-                }
+            if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
+                $halt_top_up = true;
+                $excel_error = 'Mobile number Invalid, Amount Should be Integer';
+            } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
+                $halt_top_up = true;
+                $excel_error = 'Mobile number Invalid';
+            } elseif (!$this->isAmountInteger($value->$amount_field)) {
+                $halt_top_up = true;
+                $excel_error = 'Amount Should be Integer';
+            } elseif ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
+                $halt_top_up = true;
+                $excel_error = 'The recharge amount is blocked due to OTF activation issue';
+            } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
+                $halt_top_up = true;
+                $excel_error = 'The amount exceeded your topUp prepaid limit';
+            } else {
+                $excel_error = null;
+            }
 
             $total_recharge_amount += $value->$amount_field;
 
             $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
         });
 
-            if ($total_recharge_amount > $agent->wallet) return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
+        if ($total_recharge_amount > $agent->wallet)
+            return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
 
-            if ($halt_top_up) {
-                $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-                /*if ($this->isBusiness($agent) && $agent_email = $agent->getContactEmail()) {
-                    $this->dispatch(new SendTopUpFailMail($agent, $agent_email, $top_up_excel_data_format_errors));
-                }*/
-
+        if ($halt_top_up) {
+            $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
             return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
         }
 
-            $bulk_request = $this->storeBulkRequest($agent);
-            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
-                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
-                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-                $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-                $name_field = TopUpExcel::NAME_COLUMN_TITLE;
-                if (!$value->$operator_field) return;
+        $bulk_request = $this->storeBulkRequest($agent);
+        $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
+            $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+            $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+            $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+            $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+            $name_field = TopUpExcel::NAME_COLUMN_TITLE;
+            if (!$value->$operator_field) return;
 
             $vendor_id = $vendor->getIdByName($value->$operator_field);
             $request = $top_up_request->setType($value->$type_field)->setBulkId($bulk_request->id)->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
@@ -539,10 +534,7 @@ class TopUpController extends Controller
             ]);
         }
 
-        return api_response($request, null, 403, [
-            'message' => 'Invalid Request'
-        ]);
-
+        return api_response($request, null, 403, ['message' => 'Invalid Request']);
     }
 
     /**
@@ -557,6 +549,6 @@ class TopUpController extends Controller
         $agent_type = $this->getFullAgentType($agent->type);
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
-        return response()->json(['code' => 200, 'data' => $bulk_topup_data]);
+        return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
     }
 }

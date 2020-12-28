@@ -23,8 +23,6 @@ class AuthUser
     private $profile;
     /** @var Resource */
     private $resource;
-    /** @var Business */
-    private $business;
     /** @var User */
     private $user;
     /** @var Model|null */
@@ -283,4 +281,5 @@ class AuthUser
         $this->business = $business;
         return $this;
     }
+
 }

@@ -166,10 +166,8 @@ class CategoryController extends Controller
         try {
             $partner_id = $request->partner->id;
             $master_categories = PosCategory::where(function ($q) use ($partner_id) {
-                $q->where('is_published_for_sheba', 1);
-                $q->orWhere(function ($q) use ($partner_id) {
-                    $q->where('is_published_for_sheba', 0);
-                    $q->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
+                $q->where('is_published_for_sheba', 1)->orWhere(function ($q) use ($partner_id) {
+                    $q->where('is_published_for_sheba', 0)->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
                         $q->where('partner_id', $partner_id);
                     });
                 });
@@ -181,7 +179,6 @@ class CategoryController extends Controller
 
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }

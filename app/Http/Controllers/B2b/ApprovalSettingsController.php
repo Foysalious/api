@@ -9,6 +9,7 @@ use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AuthUser;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
@@ -95,10 +96,10 @@ class ApprovalSettingsController extends Controller
 
     public function delete($settings, Request $request)
     {
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
         $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
-
-        if(!$approval_settings) return api_response($request, null, 404);
-
+        if (!$approval_settings) return api_response($request, null, 404);
         $approval_settings->delete();
 
         return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
