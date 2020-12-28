@@ -45,8 +45,11 @@ class ApprovalSettingsController extends Controller
      */
     public function index(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
     {
+        $business = $request->business_member;
+        if (!$business) return api_response($request, null, 401);
+
         list($offset, $limit) = calculatePagination($request);
-        $approval_settings =  $this->approvalSettingsRepo->where('business_id', $request->business->id);
+        $approval_settings =  $this->approvalSettingsRepo->where('business_id', $business->id);
 
         if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type],['target_id', '=', $request->target_id]]);
         if ($request->has('type') && $request->type) $approval_settings = $approval_settings->where('target_type', $request->type);
@@ -81,6 +84,7 @@ class ApprovalSettingsController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
+
         $this->setModifier($manager_member);
         $approval_setting_requester->setModules($request->modules)
             ->setTargetType($request->target_type)
@@ -117,4 +121,18 @@ class ApprovalSettingsController extends Controller
 
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
     }
+
+    /*public function update(Request $request)
+    {
+        $this->validate($request, [
+            'modules' => 'integer',
+            'note' => 'string',
+            'target_type' => 'in:' . implode(',', Targets::get()),
+            'target_id' => 'required_if:target_type,in,'.implode(',', [Targets::DEPARTMENT,Targets::EMPLOYEE]),
+        ]);
+
+        $business = $request->business;
+        $manager_member = $request->manager_member;
+    }*/
+
 }
