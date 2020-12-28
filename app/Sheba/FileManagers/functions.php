@@ -1210,3 +1210,24 @@ if (!function_exists('getResizedUrls')) {
         ];
     }
 }
+
+if (!function_exists('resizeAndSaveImage')) {
+    /**
+     * @param $url
+     * @param $height
+     * @param $width
+     * @param null $image
+     */
+    function resizeAndSaveImage($url, $height, $width, $image = null)
+    {
+        $s3_image = new S3Image($url);
+        if ($image) $s3_image->setImage($image);
+
+        /** @var ImageResizer $resizer */
+        $resizer = app(ImageResizer::class);
+        $resizer
+            ->setImage($s3_image)
+            ->pushSize(new ImageSize($height, $width))
+            ->resizeAndSave();
+    }
+}

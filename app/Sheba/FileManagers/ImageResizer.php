@@ -3,6 +3,8 @@
 
 class ImageResizer
 {
+    use CdnFileManager;
+
     /** @var S3Image */
     private $image;
     /** @var ImageSize[] */
@@ -10,6 +12,9 @@ class ImageResizer
 
     private $webpUrls;
     private $originalExtUrls;
+
+    private $webpImages;
+    private $originalExtImages;
 
     public function setImage(S3Image $image)
     {
@@ -28,14 +33,28 @@ class ImageResizer
         $webp = [];
         $original = [];
         foreach ($this->sizes as $size) {
-            $name = $this->image->getFullNameWithoutExtension();
-            $ext = $this->image->getExtension();
-            $webp[$size->toString()] = $name . "_" . $size->toString() . ".webp";
-            $original[$size->toString()] = $name . "_" . $size->toString() . "." . $ext;
+            $webp[$size->toString()] = $this->buildResizedFileNameWithUrl($size, "webp");
+            $original[$size->toString()] = $this->buildResizedFileNameWithUrl($size, $this->image->getExtension());
         }
 
         $this->webpUrls = $webp;
         $this->originalExtUrls = $original;
+    }
+
+    private function buildResizedFileNameWithUrl(ImageSize $size, $ext)
+    {
+        return $this->buildResizedFileName($size, true, $ext);
+    }
+
+    private function buildResizedFileNameWithOutUrl(ImageSize $size, $ext)
+    {
+        return $this->buildResizedFileName($size, false, $ext);
+    }
+
+    private function buildResizedFileName(ImageSize $size, $with_url, $ext)
+    {
+        $name = $with_url ? $this->image->getFullNameWithoutExtension() : $this->image->getName();
+        return $name . "_" . $size->toString() . "." . $ext;
     }
 
     public function getWebpUrls()
@@ -48,8 +67,47 @@ class ImageResizer
         return $this->originalExtUrls;
     }
 
+    public function getWebpImages()
+    {
+        return $this->webpImages;
+    }
+
+    public function getOriginalExtImages()
+    {
+        return $this->originalExtImages;
+    }
+
     public function resize()
     {
+        $original_image = $this->image->getImage();
+        $ext = $this->image->getExtension();
 
+        $webp = [];
+        $original = [];
+
+        foreach ($this->sizes as $size) {
+            $resized_image = $original_image->resize($size->getWidth(), $size->getHeight());
+            $webp_image = $resized_image->encode($ext);
+            $org_ext_resized_image = $resized_image->encode($ext);
+
+            $webp[$this->buildResizedFileNameWithOutUrl($size, "webp")] = $webp_image;
+            $original[$this->buildResizedFileNameWithOutUrl($size, $ext)] = $org_ext_resized_image;
+        }
+
+        $this->webpImages = $webp;
+        $this->originalExtImages = $original;
+    }
+
+    public function resizeAndSave()
+    {
+        $this->resize();
+        $folder = $this->image->getFolder();
+
+        foreach ($this->getWebpImages() as $webp_filename => $webp_image) {
+            $this->saveImageToCDN($webp_image, $folder, $webp_filename);
+        }
+        foreach ($this->getOriginalExtImages() as $org_ext_filename => $org_ext_image) {
+            $this->saveImageToCDN($org_ext_image, $folder, $org_ext_filename);
+        }
     }
 }

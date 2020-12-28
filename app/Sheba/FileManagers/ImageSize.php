@@ -14,6 +14,16 @@ class ImageSize
         $this->width = $width;
     }
 
+    public function getHeight()
+    {
+        return $this->height;
+    }
+
+    public function getWidth()
+    {
+        return $this->width;
+    }
+
     public function toString()
     {
         return $this->width . "x" . $this->height;
