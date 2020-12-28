@@ -83,7 +83,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'amount'         => 'required|numeric',
             'payment_method' => 'required|in:bkash,bank',
             'bkash_number'   => 'required_if:payment_method,bkash|mobile:bd',
-            'code'           => 'required_if:payment_method,bkash|string'
+//            'code'           => 'required_if:payment_method,bkash|string'
         ]);
 
         /** @var Partner $partner */
