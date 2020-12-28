@@ -375,6 +375,14 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         ]);
     }
 
+    public function scopeClosedButNotPaid($query)
+    {
+        return $query->where([
+            ['closed_at', '<>', null],
+            ['closed_and_paid_at', null]
+        ]);
+    }
+
     public function scopeNew($query)
     {
         $query->where('cancelled_at', '<>', null)->orWhere('closed_and_paid_at', '<>', null);
@@ -401,6 +409,11 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function scopeCancelled($query)
     {
         $query->where('cancelled_at', '<>', null);
+    }
+
+    public function scopeNotCancelled($query)
+    {
+        $query->where('cancelled_at', null);
     }
 
     public function stageChangeLogs()
@@ -519,5 +532,12 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public function getCustomerPayable()
     {
         return (double)$this->dueWithLogistic;
+    }
+
+    public function scopeNotB2bOrder($query)
+    {
+        return $query->whereHas('order', function ($q) {
+            $q->where('sales_channel', '<>', "B2B");
+        });
     }
 }
