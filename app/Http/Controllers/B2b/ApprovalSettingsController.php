@@ -1,15 +1,13 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Transformers\Business\ApprovalSettingDetailsTransformer;
 use App\Transformers\Business\ApprovalSettingListTransformer;
 use App\Transformers\CustomSerializer;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
-use League\Fractal\Resource\Item;
-use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\ModificationFields;
-use Sheba\OAuth2\AuthUser;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
@@ -103,5 +101,20 @@ class ApprovalSettingsController extends Controller
         $approval_settings->delete();
 
         return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
+    }
+
+    public function show(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
+    {
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+        if (!$approval_settings) return api_response($request, null, 404);
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($approval_settings->get(), new ApprovalSettingDetailsTransformer($department_repo, $business_member_repo, $profile_repo));
+        $approval_settings_details = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['data' => $approval_settings_details]);
     }
 }
