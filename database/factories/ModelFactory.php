@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Location;
 use Carbon\Carbon;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
@@ -44,5 +45,16 @@ $factory->define(Service::class, function (Faker\Generator $faker) use ($common_
         'app_thumb' => $faker->imageUrl(),
         'app_banner' => $faker->imageUrl(),
         'faqs' => json_encode($faqs),
+    ]);
+});
+
+$factory->define(Location::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds, [
+        'city_id' => 1,
+        'name' => $faker->city,
+        'geo_informations' => '{"lat":23.75655,"lng":90.387215,"radius":"1.1","geometry":{"type":"Polygon","coordinates":[[[90.3898,23.75835],[90.38458,23.75791],[90.38449,23.75685],[90.38445,23.75499],[90.3855,23.75495],[90.38664,23.755],[90.38877,23.75475],[90.38967,23.7566],[90.38998,23.758],[90.3898,23.75835],[90.3898,23.75835]]]},"center":{"lat":23.75655,"lng":90.387215}}',
+        'publication_status' => 1,
+        'is_published_for_partner' => 1,
+
     ]);
 });
