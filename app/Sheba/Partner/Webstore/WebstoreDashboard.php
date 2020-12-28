@@ -3,6 +3,7 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -70,7 +71,7 @@ class WebstoreDashboard
 
         });
         $webstore_sales_count = $webstore_orders->count();
-        $webstore_sales = $webstore_orders->sum('sale');
+        $webstore_sales = $webstore_orders->where('status', OrderStatuses::COMPLETED)->sum('sale');
 
         $sales_stats['total_order'] = $webstore_sales_count;
         $sales_stats['total_sales'] = $webstore_sales;
