@@ -53,7 +53,6 @@ use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
-
     public function getVendor(Request $request)
     {
         try {
@@ -185,7 +184,6 @@ class TopUpController extends Controller
 
         return $blocked_amount_by_operator;
     }
-
 
     public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
     {
@@ -500,7 +498,6 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['data' => $special_amount]);
     }
 
-
     public function generateJwt(Request $request, AccessTokenRequest $access_token_request, ShebaAccountKit $sheba_accountKit)
     {
         $authorizationCode = $request->authorization_code;
@@ -531,9 +528,21 @@ class TopUpController extends Controller
             ]);
         }
 
-        return api_response($request, null, 403, [
-            'message' => 'Invalid Request'
-        ]);
+        return api_response($request, null, 403, ['message' => 'Invalid Request']);
+    }
 
+    /**
+     * @param Request $request
+     * @param TopUpBulkRequestFormatter $topup_formatter
+     * @return JsonResponse
+     */
+    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
+    {
+        $auth_user = $request->auth_user;
+        $agent = $auth_user->getBusiness();
+        $agent_type = $this->getFullAgentType($agent->type);
+        $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
+
+        return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
     }
 }
