@@ -15,10 +15,10 @@ class BusinessRoute
                 $api->group(['prefix' => 'approval-flows'], function ($api) {
                     $api->get('/', 'B2b\ApprovalSettingsController@index');
                     $api->post('/', 'B2b\ApprovalSettingsController@store');
-                    $api->post('/delete/{settings}', 'B2b\ApprovalSettingsController@delete');
                     $api->group(['prefix' => '{settings}'], function ($api) {
                         $api->get('/', 'B2b\ApprovalSettingsController@show');
                         $api->post('/', 'B2b\ApprovalSettingsController@update');
+                        $api->delete('/', 'B2b\ApprovalSettingsController@delete');
                     });
                 });
             });
