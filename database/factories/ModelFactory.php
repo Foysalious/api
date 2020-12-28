@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Location;
+use App\Models\Profile;
 use Carbon\Carbon;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
@@ -56,5 +57,24 @@ $factory->define(Location::class, function (Faker\Generator $faker) use ($common
         'publication_status' => 1,
         'is_published_for_partner' => 1,
 
+    ]);
+});
+
+$factory->define(Profile::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds, [
+
+        'name' => $faker->name,
+        'mobile' =>'+8801678242955',
+        'email' =>'tisha@sheba.xyz',
+        'password' =>bcrypt('12345'),
+        'is_blacklisted'=> 0,
+        'mobile_verified'=>1,
+        'email_verified'=>1,
+        'nid_verification_request_count'=>0,
+        'blood_group'=>'B+',
+        'pro_pic' => $faker->image(),
+        'total_asset_amount'=>$faker->randomNumber(),
+        'monthly_living_cost'=>$faker->randomNumber(),
+        'monthly_loan_installment_amount'=>$faker->randomNumber(),
     ]);
 });
