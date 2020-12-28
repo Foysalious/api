@@ -22,6 +22,21 @@ class ApprovalSettingsController extends Controller
     use ModificationFields;
 
     /**
+     * @var ApprovalSettingRepository
+     */
+    private $approvalSettingsRepo;
+
+    /**
+     * ApprovalSettingsController constructor.
+     * @param ApprovalSettingRepository $approval_settings_repo
+     */
+    public function __construct(ApprovalSettingRepository $approval_settings_repo)
+    {
+        $this->approvalSettingsRepo = $approval_settings_repo;
+
+    }
+
+    /**
      * @param Request $request
      * @param ApprovalSettingRepository $approval_settings_repo
      * @param DepartmentRepositoryInterface $department_repo
@@ -29,26 +44,31 @@ class ApprovalSettingsController extends Controller
      * @param ProfileRepository $profile_repo
      * @return \Illuminate\Http\JsonResponse
      */
-    public function index(Request $request, ApprovalSettingRepository $approval_settings_repo, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
+    public function index(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
     {
         list($offset, $limit) = calculatePagination($request);
-        $approval_settings =  $approval_settings_repo->where('business_id', $request->business->id);
+        $approval_settings =  $this->approvalSettingsRepo->where('business_id', $request->business->id);
+
         if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type],['target_id', '=', $request->target_id]]);
         if ($request->has('type') && $request->type) $approval_settings = $approval_settings->where('target_type', $request->type);
-
+        if ($request->has('module')) $approval_settings = $approval_settings->whereHas('modules', function($q) use ($request){
+            $q->whereIn('modules', explode(',', $request->module));
+        });
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer($department_repo, $business_member_repo, $profile_repo));
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
-        if ($request->has('search')) $approval_settings_list = collect($this->searchWithType($approval_settings_list, $request->search))->values();
+
+        if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
+
         return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => count($approval_settings_list)]);
     }
 
-    private function searchWithType($approval_settings_list, $search)
+    private function searchWithEmployee($approval_settings_list, $search)
     {
         return array_where($approval_settings_list, function ($key, $value) use ($search){
-            return str_contains(strtoupper($value['target_type']['type']), strtoupper($search));
+            return str_contains(strtoupper($value['target_type']['employee']['name']), strtoupper($search));
         });
     }
 
@@ -71,5 +91,16 @@ class ApprovalSettingsController extends Controller
         $creator->setApprovalSettingRequester($approval_setting_requester)->setBusiness($business)->create();
         return api_response($request, null, 200);
 
+    }
+
+    public function delete($settings, Request $request)
+    {
+        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+
+        if(!$approval_settings) return api_response($request, null, 404);
+
+        $approval_settings->delete();
+
+        return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
     }
 }
