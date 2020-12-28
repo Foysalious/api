@@ -272,4 +272,14 @@ class AuthUser
         return $business;
     }
 
+    /**
+     * @param Business $business
+     * @return AuthUser
+     */
+    public function setBusiness($business)
+    {
+        $this->business = $business;
+        return $this;
+    }
+
 }
