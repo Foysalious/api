@@ -180,7 +180,6 @@ class CategoryController extends Controller
 
             return api_response($request, $master_categories, 200, ['categories' => $master_categories]);
         } catch (\Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
