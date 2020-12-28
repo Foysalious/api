@@ -104,7 +104,7 @@ class ApprovalSettingsController extends Controller
         if (!$approval_settings) return api_response($request, null, 404);
         $approval_settings->delete();
 
-        return api_response($request, null, 200, ['msg' => "Deleted Successfully"]);
+        return api_response($request, null, 200);
     }
 
     public function show(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
@@ -122,17 +122,31 @@ class ApprovalSettingsController extends Controller
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
     }
 
-    /*public function update(Request $request)
+    /*public function update(Request $request, ApprovalSettingRequester $approval_setting_requester)
     {
         $this->validate($request, [
-            'modules' => 'integer',
+            'modules' => 'required|in:' . implode(',', Modules::get()),
             'note' => 'string',
             'target_type' => 'in:' . implode(',', Targets::get()),
             'target_id' => 'required_if:target_type,in,'.implode(',', [Targets::DEPARTMENT,Targets::EMPLOYEE]),
         ]);
 
-        $business = $request->business;
+        $business = $request->business_member;
+        if (!$business) return api_response($request, null, 401);
+
         $manager_member = $request->manager_member;
+
+        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+
+        $this->setModifier($manager_member);
+
+        $approval_setting_requester->setModules($request->modules)
+            ->setTargetType($request->target_type)
+            ->setTargetId($request->targetId)
+            ->setNote($request->note)
+            ->setApprovers($request->approvers);
+
+
     }*/
 
 }
