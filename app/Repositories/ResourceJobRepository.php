@@ -145,7 +145,7 @@ class ResourceJobRepository
     {
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/change-status',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
                 [
                     'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,
@@ -166,7 +166,7 @@ class ResourceJobRepository
     {
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/job/' . $job . '/reschedule',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/reschedule',
                 [
                     'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,
@@ -187,7 +187,7 @@ class ResourceJobRepository
     {
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $order->id . '/collect',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $order->id . '/collect',
                 [
                     'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
                         'resource_id' => $request->resource->id,

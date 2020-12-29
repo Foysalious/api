@@ -349,7 +349,7 @@ class CheckoutRepository
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partner_order_id[0] . '/collect',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order_id[0] . '/collect',
                 [
                     'form_params' => [
                         'customer_id' => $payment_info['customer_id'],
