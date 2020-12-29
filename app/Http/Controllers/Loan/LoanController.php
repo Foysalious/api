@@ -676,9 +676,11 @@ class LoanController extends Controller
 
             if ($data["loan_type"] === LoanTypes::MICRO) {
                 $loan_application_name = 'dana_classic_' . $loan_id;
-                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->download(true);
+                $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->save(true);
+                return api_response($request, null, 200, ['data' => $pdf]);
             }
-            return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
+            $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->save();
+            return api_response($request, null, 200, ['data' => $pdf]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
