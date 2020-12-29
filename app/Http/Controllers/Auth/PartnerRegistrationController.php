@@ -104,20 +104,20 @@ class PartnerRegistrationController extends Controller
             if (!$code_data)
                 return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
-
+            $request->merge(['phone' => $mobile, 'number' => $mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-               /* $affiliate = $profile->affiliate;
-                if (!$affiliate) {
-                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                }*/
+                /* $affiliate = $profile->affiliate;
+                 if (!$affiliate) {
+                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                 }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
-               /* $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
+                /* $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
             }
             if ($resource->partnerResources->count() > 0)
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
@@ -198,18 +198,18 @@ class PartnerRegistrationController extends Controller
      */
     private function createPartner($resource, $data)
     {
-        $data    = array_merge($data, [
+        $data = array_merge($data, [
             "sub_domain"     => $this->guessSubDomain($data['name']),
             "affiliation_id" => $this->partnerAffiliation($resource->profile->mobile),
-            'referrer_id'     => $this->partnerReferral($resource->profile->mobile,$data)
+            'referrer_id'    => $this->partnerReferral($resource->profile->mobile, $data)
         ]);
-        $by = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
+        $by   = ["created_by" => $resource->id, "created_by_name" => "Resource - " . $resource->profile->name];
 
         $partner = new Partner();
         $partner = $this->store($resource, $data, $by, $partner);
         if ($partner) {
             $this->sms->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: http://bit.ly/sManagerGettingStarted");
-            if($this->ref) $this->referrals::setReference($partner,$this->ref);
+            if ($this->ref) $this->referrals::setReference($partner, $this->ref);
             $partner->refer_code = $partner->referCode();
             $partner->save();
         }
@@ -231,11 +231,11 @@ class PartnerRegistrationController extends Controller
         $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
         if ($is_unicode) $name = "Partner No Name";
 
-        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        $base_name    = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
         $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         if (in_array($name, array_merge($blacklist, $already_used))) {
 //            $name = $base_name . uniqid();
-            $name=$base_name.(count($already_used)+1);
+            $name = $base_name . (count($already_used) + 1);
         }
 
         return $name;
@@ -278,6 +278,7 @@ class PartnerRegistrationController extends Controller
         return null;
 
     }
+
     private function store($resource, $data, $by, $partner)
     {
         try {
@@ -326,15 +327,15 @@ class PartnerRegistrationController extends Controller
 
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
-        ini_set('max_execution_time',220);
+        ini_set('max_execution_time', 220);
         try {
             $this->validate($request, [
-                'company_name' => 'required|string',
-                'from' => 'string|in:' . implode(',', constants('FROM')),
-                'geo' => 'string',
-                'name' => 'string',
-                'number' => 'string',
-                'address' => 'string',
+                'company_name'  => 'required|string',
+                'from'          => 'string|in:' . implode(',', constants('FROM')),
+                'geo'           => 'string',
+                'name'          => 'string',
+                'number'        => 'string',
+                'address'       => 'string',
                 'business_type' => 'string'
             ]);
             $profile = $request->profile;
@@ -342,19 +343,18 @@ class PartnerRegistrationController extends Controller
                 $resource = Resource::create([
                     'profile_id'     => $profile->id,
                     'remember_token' => str_random(60),
-                    'status' =>  $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
+                    'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
                 ]); else $resource = $profile->resource;
-            /*if(!$profile->affiliate)
-                $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
             $this->setModifier($resource);
             $request['package_id']   = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
+            $request->merge(['number' => $profile->mobile]);
             if ($request->has('name'))
                 $profile->update(['name' => $request->name]);
             if ($request->has('gender'))
                 $profile->update(['gender' => $request->gender]);
             if ($resource->partnerResources->count() == 0) {
-                $data = $this->makePartnerCreateData($request);
+                $data    = $this->makePartnerCreateData($request);
                 $partner = $this->createPartner($resource, $data);
                 (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
@@ -374,7 +374,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByResource(Request $request)
     {
-        ini_set('max_execution_time',220);
+        ini_set('max_execution_time', 220);
         try {
             $this->validate($request, [
                 'resource_id'    => 'required|int',
@@ -392,8 +392,8 @@ class PartnerRegistrationController extends Controller
             $profile       = $resource->profile;
             $profile->name = $request->name;
             $profile->save();
-           /* if(!$profile->affiliate)
-                $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
+            /* if(!$profile->affiliate)
+                 $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
             if ($resource->partnerResources->count() > 0)
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
             $request['package_id']   = env('LITE_PACKAGE_ID');
@@ -423,7 +423,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerReferAffiliate($affiliate, Request $request)
     {
-        ini_set('max_execution_time',220);
+        ini_set('max_execution_time', 220);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
@@ -433,6 +433,7 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $mobile = formatMobile($request->mobile);
+            $request->merge(['phone' => $mobile, 'number' => $mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 if ($profile->name === "" || $profile->name === null) {
                     $profile->name = $request->name;

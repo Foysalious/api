@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Business\Attendance\AttendanceList;
+use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
@@ -34,6 +35,7 @@ use Sheba\Business\Holiday\Creator as HolidayCreator;
 use Sheba\Business\Holiday\Updater as HolidayUpdater;
 use Sheba\Business\Holiday\CreateRequest as HolidayCreatorRequest;
 use Sheba\Business\Attendance\HalfDaySetting\Updater as HalfDaySettingUpdater;
+use Sheba\Business\Attendance\Detail\DetailsExcel as DetailsExcel;
 use Throwable;
 
 class AttendanceController extends Controller
@@ -54,30 +56,43 @@ class AttendanceController extends Controller
      * @param Request $request
      * @param AttendanceList $stat
      * @param TimeFrame $time_frame
+     * @param BusinessOfficeRepoInterface $business_office_repo
      * @return JsonResponse
      */
-    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame)
+    public function getDailyStats($business, Request $request, AttendanceList $stat, TimeFrame $time_frame,
+                                  BusinessOfficeRepoInterface $business_office_repo)
     {
         $this->validate($request, [
             'status' => 'string|in:' . implode(',', Statuses::get()),
             'department_id' => 'numeric',
             'date' => 'date|date_format:Y-m-d',
         ]);
+
         $date = $request->has('date') ? Carbon::parse($request->date) : Carbon::now();
         $selected_date = $time_frame->forADay($date);
 
+        $checkin_location = $checkout_location = null;
+        if ($request->checkin_location) $checkin_location = $this->getIpById($request->checkin_location, $business_office_repo);
+        if ($request->checkout_location) $checkout_location = $this->getIpById($request->checkout_location, $business_office_repo);
+
+        /** @var array $attendances */
         $attendances = $stat->setBusiness($request->business)
             ->setSelectedDate($selected_date)
             ->setBusinessDepartment($request->department_id)
             ->setSearch($request->search)
-            ->setCheckinStatus($request->checkin_status)->setCheckoutStatus($request->checkout_status)
-            ->setSortKey($request->sort)->setSortColumn($request->sort_column)
+            ->setCheckinStatus($request->checkin_status)
+            ->setCheckoutStatus($request->checkout_status)
+            ->setSortKey($request->sort)
+            ->setSortColumn($request->sort_column)
             ->setStatusFilter($request->status_filter)
+            ->setOfficeOrRemoteCheckin($request->checkin_office_or_remote)
+            ->setOfficeOrRemoteCheckout($request->checkout_office_or_remote)
+            ->setCheckinLocation($checkin_location)
+            ->setCheckoutLocation($checkout_location)
             ->get();
 
         $count = count($attendances);
-        if (!$count) return api_response($request, null, 404);
-
+        if ($request->file == 'excel') return (new DailyExcel())->setDate($date->format('Y-m-d'))->setData($attendances)->download();
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
@@ -92,7 +107,7 @@ class AttendanceController extends Controller
             'profile' => function ($q) {
                 $q->select('profiles.id', 'name', 'mobile', 'email');
             }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'employee_id')->with([
                     'role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
                             'businessDepartment' => function ($q) {
@@ -116,10 +131,13 @@ class AttendanceController extends Controller
 
         $members = $members->get();
         $all_employee_attendance = [];
-
-        $year = (int)date('Y');
-        $month = (int)date('m');
-        if ($request->has('month')) $month = $request->month;
+        if ($request->has('start_date') && $request->has('end_date')) {
+            $start_date = $request->start_date;
+            $end_date = $request->end_date;
+        } else {
+            $start_date = Carbon::now()->startOfMonth()->toDateString();
+            $end_date = Carbon::now()->endOfMonth()->toDateString();
+        }
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
@@ -131,14 +149,14 @@ class AttendanceController extends Controller
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
 
-            $time_frame = $time_frame->forAMonth($month, $year);
+            $time_frame = $time_frame->forDateRange($start_date, $end_date);
             $business_member_leave = $business_member->leaves()->accepted()->startDateBetween($time_frame)->endDateBetween($time_frame)->get();
-            $time_frame->end = $this->isShowRunningMonthsAttendance($year, $month) ? Carbon::now() : $time_frame->end;
             $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
             $employee_attendance = (new MonthlyStat($time_frame, $business_holiday, $business_weekend, $business_member_leave, false))->transform($attendances);
 
             array_push($all_employee_attendance, [
                 'business_member_id' => $business_member->id,
+                'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
                 'member' => [
                     'id' => $member->id,
                     'name' => $member_name,
@@ -149,6 +167,7 @@ class AttendanceController extends Controller
                 ],
                 'attendance' => $employee_attendance['statistics']
             ]);
+
         }
         $all_employee_attendance = collect($all_employee_attendance);
         if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
@@ -165,16 +184,14 @@ class AttendanceController extends Controller
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
+        if ($request->file == 'excel') {
+            return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
+        }
 
-        if (count($all_employee_attendance) > 0) {
-            if ($request->file == 'excel') {
-                return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
-            }
-            return api_response($request, $all_employee_attendance, 200, [
-                'all_employee_attendance' => $all_employee_attendance,
-                'total_members' => $total_members,
-            ]);
-        } else  return api_response($request, null, 404);
+        return api_response($request, $all_employee_attendance, 200, [
+            'all_employee_attendance' => $all_employee_attendance,
+            'total_members' => $total_members,
+        ]);
     }
 
     /**
@@ -241,17 +258,17 @@ class AttendanceController extends Controller
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,
-                             TimeFrame $time_frame, AttendanceList $list, MemberMonthlyExcel $member_monthly_excel)
+                             TimeFrame $time_frame, AttendanceList $list, DetailsExcel $details_excel)
     {
         $this->validate($request, ['month' => 'numeric|min:1|max:12']);
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $business_member_repository->where('business_id', $business->id)->where('member_id', $member)->first();
-        $month = $request->has('month') ? $request->month : date('m');
 
-        $time_frame = $time_frame->forAMonth($month, date('Y'));
+        $time_frame = $time_frame->forDateRange($request->start_date, $request->end_date);
+
         $business_member_leave = $business_member->leaves()->accepted()->between($time_frame)->get();
-        $time_frame->end = $this->isShowRunningMonthsAttendance(date('Y'), $month) ? Carbon::now() : $time_frame->end;
+
         $attendances = $attendance_repo->getAllAttendanceByBusinessMemberFilteredWithYearMonth($business_member, $time_frame);
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
@@ -267,13 +284,11 @@ class AttendanceController extends Controller
         if ($request->has('sort_on_hour')) $daily_breakdowns = $this->attendanceSortOnHour($daily_breakdowns, $request->sort_on_hour)->values();
         if ($request->has('sort_on_checkin')) $daily_breakdowns = $this->attendanceSortOnCheckin($daily_breakdowns, $request->sort_on_checkin)->values();
         if ($request->has('sort_on_checkout')) $daily_breakdowns = $this->attendanceSortOnCheckout($daily_breakdowns, $request->sort_on_checkout)->values();
-
         if ($request->file == 'excel') {
-            return $member_monthly_excel->setMonthlyData($daily_breakdowns->toArray())
-                ->setMember($business_member->member)
-                ->setDesignation($business_member->role ? $business_member->role->name : null)
+            return $details_excel->setBreakDownData($daily_breakdowns->toArray())
+                ->setBusinessMember($business_member)
                 ->setDepartment($business_member->role && $business_member->role->businessDepartment ? $business_member->role->businessDepartment->name : null)
-                ->get();
+                ->download();
         }
 
         return api_response($request, $list, 200, [
@@ -315,7 +330,7 @@ class AttendanceController extends Controller
             'half_day_leave_types' => $half_day_leave_types->pluck('title'),
             'half_day_initial_timings' => $this->getHalfDayTimings($business)
         ];
-        
+
         return api_response($request, null, 200, ['office_timing' => $data]);
     }
 
@@ -329,21 +344,21 @@ class AttendanceController extends Controller
         $this->validate($request, [
             'office_hour_type' => 'required', 'start_time' => 'date_format:H:i:s', 'end_time' => 'date_format:H:i:s|after:start_time', 'weekends' => 'required|array',
             'half_day' => 'required', 'half_day_config' => 'string'
-        ],[
-          'end_time.after' => 'Start Time Must Be Less Than End Time'
+        ], [
+            'end_time.after' => 'Start Time Must Be Less Than End Time'
         ]);
-        $start_time = Carbon::parse($request->start_time)->format('H:i').':59';
-        $end_time = Carbon::parse($request->end_time)->format('H:i').':59';
+        $start_time = Carbon::parse($request->start_time)->format('H:i') . ':59';
+        $end_time = Carbon::parse($request->end_time)->format('H:i') . ':59';
 
         $business_member = $request->business_member;
         $office_timing = $updater->setBusiness($request->business)
-                                ->setMember($business_member->member)
-                                ->setOfficeHourType($request->office_hour_type)
-                                ->setStartTime($start_time)
-                                ->setEndTime($end_time)
-                                ->setWeekends($request->weekends)
-                                ->setHalfDayTimings($request)
-                                ->update();
+            ->setMember($business_member->member)
+            ->setOfficeHourType($request->office_hour_type)
+            ->setStartTime($start_time)
+            ->setEndTime($end_time)
+            ->setWeekends($request->weekends)
+            ->setHalfDayTimings($request)
+            ->update();
 
         if ($office_timing) return api_response($request, null, 200, ['msg' => "Update Successful"]);
     }
@@ -361,8 +376,8 @@ class AttendanceController extends Controller
                                          BusinessOfficeRepoInterface $business_office_repo, AttendanceSettingTransformer $transformer)
     {
         $business = $request->business;
-        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $business_offices = $business_office_repo->getAllByBusiness($business);
+        $attendance_types = $business->attendanceTypes()->withTrashed()->get();
         $attendance_setting_data = $transformer->getData($attendance_types, $business_offices);
 
         return api_response($request, null, 200, [
@@ -605,5 +620,16 @@ class AttendanceController extends Controller
         $holidays = $holiday_list->getAllHolidayDates($request);
 
         return api_response($request, null, 200, ['business_holidays' => array_values($holidays)]);
+    }
+
+    /**
+     * @param $location
+     * @param BusinessOfficeRepoInterface $business_office_repo
+     * @return mixed
+     */
+    public function getIpById($location, BusinessOfficeRepoInterface $business_office_repo)
+    {
+        $business_office = $business_office_repo->find($location);
+        return $business_office ? $business_office->ip : null;
     }
 }
