@@ -164,7 +164,7 @@ class OrderController extends Controller
 
     private function sendSmsToCustomer($customer, $order) {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
     }
@@ -267,7 +267,7 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
