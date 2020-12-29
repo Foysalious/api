@@ -37,6 +37,7 @@ use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
+use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
 
 class LeaveController extends Controller
 {
@@ -55,9 +56,10 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
+     * @param LeaveRequestExcel $leave_request_report
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -67,20 +69,15 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
-
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
-
-        /*if ($request->has('department') || $request->has('employee') || $request->has('search')) {
-            $leave_approval_requests = $this->filterWithDepartmentOrEmployeeOrSearchWithEmployee($leave_approval_requests, $request);
-        }*/
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
-        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
 
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
@@ -102,6 +99,9 @@ class LeaveController extends Controller
         }
         if ($request->has('sort')) {
             $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
+        }
+        if ($request->file == 'excel') {
+            return $leave_request_report->setLeave($leaves)->get();
         }
 
         if (count($leaves) > 0) return api_response($request, $leaves, 200, [
@@ -408,8 +408,9 @@ class LeaveController extends Controller
         $pending = $leaves->where('status', Status::PENDING)->sortByDesc('created_at');
         $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
         $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
+        $canceled = $leaves->where('status', Status::CANCELED)->sortByDesc('created_at');
 
-        return $pending->merge($accepted)->merge($rejected);
+        return $pending->merge($accepted)->merge($rejected)->merge($canceled);
     }
 
     /**

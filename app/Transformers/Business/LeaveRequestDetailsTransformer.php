@@ -104,7 +104,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private function checkLeaveStatus($requestable)
     {
         /** @var Leave $requestable */
-        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected()) return 0;
+        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected() || $requestable->status === 'canceled') return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
     }

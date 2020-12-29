@@ -16,6 +16,7 @@ class UserController extends Controller
         $sheba_user->setUser($request->user);
         $data = [
             'name' => $sheba_user->getName(),
+            'email' => $sheba_user->getEmail(),
             'image' => $sheba_user->getImage(),
             'balance' => $sheba_user->getWallet(),
             'mobile' => $sheba_user->getMobile(),

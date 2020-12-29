@@ -1,14 +1,11 @@
-<?php
-
-namespace App\Http;
+<?php namespace App\Http;
 
 use App\Http\Middleware\AccessTokenMiddleware;
-use App\Http\Middleware\AdminAuthMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
+use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
-use App\Http\Middleware\CheckForMaintenanceMode;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
 use App\Http\Middleware\CustomerAuthMiddleware;
@@ -33,6 +30,9 @@ use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
 use App\Http\Middleware\VerifyCsrfToken;
+use App\Http\Middleware\XSS;
+use App\Http\Middleware\CheckForMaintenanceMode;
+
 use Illuminate\Auth\Middleware\AuthenticateWithBasicAuth;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Foundation\Http\Kernel as HttpKernel;
@@ -50,8 +50,9 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $middleware = [
-        Middleware\CheckForMaintenanceMode::class,
-        CriticalAppVersionMiddleware::class
+        CheckForMaintenanceMode::class,
+        CriticalAppVersionMiddleware::class,
+        XSS::class
     ];
 
     /**
@@ -87,7 +88,6 @@ class Kernel extends HttpKernel
         'guest' => RedirectIfAuthenticated::class,
         'throttle' => ThrottleRequests::class,
         'cors2' => Cors2MiddleWare::class,
-        'admin.auth' => AdminAuthMiddleware::class,
         'customer.auth' => CustomerAuthMiddleware::class,
         'customer_job.auth' => CustomerJobAuthMiddleware::class,
         'profile.auth' => ProfileAuthMiddleware::class,
@@ -111,5 +111,6 @@ class Kernel extends HttpKernel
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
+        'apiRequestLog' => ApiRequestMiddleware::class
     ];
 }

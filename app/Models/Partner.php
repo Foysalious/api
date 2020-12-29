@@ -549,7 +549,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getSubscriptionRulesAttribute($rules)
     {
-        return json_decode($rules);
+        $rules=json_decode($rules);
+        return is_string($rules) ? json_decode($rules) : $rules;
     }
 
     public function subscribe($package, $billing_type)

@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Attachment;
+use App\Models\Business;
 use App\Models\HyperLocal;
 use App\Sheba\Business\ACL\AccessControl;
 use Illuminate\Database\Eloquent\Model;
@@ -117,35 +118,28 @@ class MemberController extends Controller
      */
     public function getBusinessInfo($member, Request $request)
     {
-        try {
-            $member = Member::find((int)$member);
-            $profile = $member->profile;
+        /** @var Business $business */
+        $business = $request->business;
+        if (!$business) return api_response($request, null, 404, ["message" => 'Business not found.']);
 
-            if ($business = $member->businesses->first()) {
-                $location = null;
-                $geo_information = json_decode($business->geo_informations, 1);
-                $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
-                if (!is_null($hyperLocation)) $location = $hyperLocation->location;
-                $info = [
-                    "name" => $business->name,
-                    "sub_domain" => $business->sub_domain,
-                    "tagline" => $business->tagline,
-                    "company_type" => $business->type,
-                    "address" => $business->address,
-                    "area" => $location->name,
-                    "geo_informations" => $geo_information,
-                    "wallet" => (double)$business->wallet,
-                    "employee_size" => $business->employee_size,
-                ];
-                return api_response($request, $info, 200, ['info' => $info]);
-            } else {
-                return api_response($request, null, 404, ["message" => 'Business not found.']);
-            }
+        $location = null;
+        $geo_information = json_decode($business->geo_informations, 1);
+        $hyperLocation = HyperLocal::insidePolygon((double)$geo_information['lat'], (double)$geo_information['lng'])->with('location')->first();
+        if (!is_null($hyperLocation)) $location = $hyperLocation->location;
 
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $info = [
+            "name" => $business->name,
+            "sub_domain" => $business->sub_domain,
+            "tagline" => $business->tagline,
+            "company_type" => $business->type,
+            "address" => $business->address,
+            "area" => $location->name,
+            "geo_informations" => $geo_information,
+            "wallet" => (double)$business->wallet,
+            "employee_size" => $business->employee_size
+        ];
+
+        return api_response($request, null, 200, ['info' => $info]);
     }
 
     /**

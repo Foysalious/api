@@ -21,9 +21,11 @@ class TopUpDataFormat
             $status = $topup->status;
             $failed_reason = (new TopUpFailedReason())->setTopup($topup)->getFailedReason();
             $created_at = $topup->created_at->format('jS M, Y h:i A');
+            $created_date = $topup->created_at->format('jS M, Y');
+            $created_time = $topup->created_at->format('h:i A');
             $created_at_raw = $topup->created_at->format('Y-m-d h:i:s');
 
-            array_push($topup_data, $this->topUpData($payee_mobile, $payee_name, $amount, $operator, $payee_mobile_type, $status, $failed_reason, $created_at, $created_at_raw));
+            array_push($topup_data, $this->topUpData($payee_mobile, $payee_name, $amount, $operator, $payee_mobile_type, $status, $failed_reason, $created_at, $created_date, $created_time,  $created_at_raw));
             array_push($topup_data_for_excel, $this->topUpExcelData($payee_mobile, $operator, $payee_mobile_type, $amount, $status, $payee_name, $created_at_raw));
         }
         return [$topup_data, $topup_data_for_excel];
@@ -38,10 +40,12 @@ class TopUpDataFormat
      * @param $status
      * @param $failed_reason
      * @param $created_at
+     * @param $created_date
+     * @param $created_time
      * @param $created_at_raw
      * @return array
      */
-    private function topUpData($payee_mobile, $payee_name, $amount, $operator, $payee_mobile_type, $status, $failed_reason, $created_at, $created_at_raw)
+    private function topUpData($payee_mobile, $payee_name, $amount, $operator, $payee_mobile_type, $status, $failed_reason, $created_at,  $created_date, $created_time, $created_at_raw)
     {
         return [
             'payee_mobile' => $payee_mobile,
@@ -52,6 +56,8 @@ class TopUpDataFormat
             'status' => $status,
             'failed_reason' => $failed_reason,
             'created_at' => $created_at,
+            'created_date' => $created_date,
+            'created_time' => $created_time,
             'created_at_raw' => $created_at_raw
         ];
     }

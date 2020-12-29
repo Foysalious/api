@@ -1,18 +1,15 @@
 <?php namespace Sheba\TopUp\Verification;
 
+use App\Exceptions\ApiValidationException;
 use App\Models\Affiliate;
 use App\Models\Partner;
-use App\Models\Resource;
-use Illuminate\Support\Facades\Hash;
-use ReflectionClass;
-use ReflectionException;
-use Sheba\Helpers\Formatters\BDMobileFormatter;
-use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
+use GuzzleHttp\Exception\ClientException;
+use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\AuthenticationRequest\Statuses;
+use Sheba\Dal\AuthorizationToken\BlacklistedReason;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AccountServer;
-use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\Exception\PinMismatchException;
-use Sheba\TopUp\Exception\ResetRememberTokenException;
 
 class VerifyPin
 {
@@ -23,16 +20,16 @@ class VerifyPin
     private $profile;
     private $request;
     private $managerResource;
-    /** @var AuthUser */
-    private $authUser;
-    /**
-     * @var WrongPINCountRepo $wrongPinCountRepo
-     */
-    private $wrongPinCountRepo;
+    /** @var AccountServer */
+    private $accountServer;
 
-    public function __construct()
+    /**
+     * VerifyPin constructor.
+     * @param AccountServer $accountServer
+     */
+    public function __construct(AccountServer $accountServer)
     {
-        $this->wrongPinCountRepo = app(WrongPINCountRepo::class);
+        $this->accountServer = $accountServer;
     }
 
     /**
@@ -65,85 +62,70 @@ class VerifyPin
         return $this;
     }
 
-    /**
-     * @param AuthUser $authUser
-     * @return VerifyPin
-     */
-    public function setAuthUser($authUser)
-    {
-        $this->authUser = $authUser;
-        return $this;
-    }
-
-    private function wrongPinQuery()
-    {
-        return $this->wrongPinCountRepo->where('type_id', $this->agent->id)->where('type', class_basename($this->agent));
-    }
-
-    /**
-     * @throws PinMismatchException
-     * @throws ResetRememberTokenException|ReflectionException
-     */
     public function verify()
     {
-        if (!Hash::check($this->request->password, $this->profile->password)) {
-            $data = [
-                'type_id' => $this->agent->id,
-                'type' => $this->getType(),
-                'topup_number' => BDMobileFormatter::format($this->request->mobile),
-                'topup_amount' => $this->request->amount ?: 10,
-                'password' => $this->request->password,
-                'ip_address' => $this->request->ip()
-            ];
-            $this->wrongPinCountRepo->create($this->withBothModificationFields($data));
-            $wrongPinCount = $this->wrongPinQuery()->get()->count();
+        $this->authenticateWithPassword();
+    }
 
-            if ($wrongPinCount >= self::WRONG_PIN_COUNT_LIMIT) {
-                $this->logout();
-                $this->resetRememberToken();
-                $this->wrongPinQuery()->delete();
-                throw new ResetRememberTokenException();
-            }
-
-            throw new PinMismatchException();
-        } else {
-            $wp_count = $this->wrongPinQuery()->get()->count();
-            if ($wp_count > 0) {
-                $this->wrongPinQuery()->delete();
-            }
+    private function authenticateWithPassword()
+    {
+        try {
+            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
+        } catch (ClientException $e) {
+            if ($e->getCode() != 403) throw $e;
+            $this->getAuthenticateRequests();
         }
     }
 
     /**
-     * @param mixed $managerResource
-     * @return VerifyPin
+     * @throws ApiValidationException
+     * @throws PinMismatchException
      */
-    public function setManagerResource($managerResource)
+    private function getAuthenticateRequests()
     {
-        $this->managerResource = $managerResource;
-        return $this;
+        $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
+        $data = json_decode($result->getBody(), true);
+        $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
+        
+        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
+            throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
+
+        for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
+            if ($data['requests'][$i]['status'] != Statuses::FAIL) {
+                throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
+            }
+        }
+
+        $this->sessionOut();
+    }
+
+    /**
+     * @param $request_status
+     * @return int
+     */
+    private function getConsecutiveFailedCount($request_status)
+    {
+        foreach ($request_status as $i => $data) {
+            if ($data['status'] == Statuses::SUCCESS) return (int)$i;
+        }
+        return count($request_status);
+    }
+
+    private function sessionOut()
+    {
+        $this->logout();
+        $this->resetRememberToken();
+        throw new ApiValidationException("You have been logged out", 401);
+    }
+
+    private function logout()
+    {
+        $this->accountServer->logout($this->request->access_token->token, BlacklistedReason::TOPUP_LOGOUT);
     }
 
     private function resetRememberToken()
     {
         if ($this->managerResource && $this->agent instanceof Partner) $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
-        if ($this->agent instanceof Affiliate) $this->agent->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
-    }
-
-    /**
-     * @throws ReflectionException
-     */
-    private function getType()
-    {
-        $class = (new ReflectionClass($this->agent))->getShortName();
-        return strtolower($class);
-    }
-
-    private function logout()
-    {
-        if (!$this->authUser) return;
-        /** @var AccountServer $account_server */
-        $account_server = app(AccountServer::class);
-        $account_server->logout($this->request->access_token->token);
+        if ($this->agent instanceof Affiliate) $this->agent->update(['remember_token' => str_random(255)]);
     }
 }
