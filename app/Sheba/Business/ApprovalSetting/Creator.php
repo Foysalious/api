@@ -74,14 +74,14 @@ class Creator
     {
         $this->makeData();
         $approval_setting = null;
-        DB::transaction(function () use ($approval_setting){
-            $approval_setting = $this->approvalSettingRepo->create($this->withCreateModificationField($this->approvalSettingData));
+        DB::transaction(function () use ($approval_setting) {
+            $approval_setting = $this->approvalSettingRepo->create($this->approvalSettingData);
             /** Approval Setting Module */
             $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
             $this->approvalSettingModuleCreator->setModuleRequester($this->moduleRequester)->setApprovalSetting($approval_setting)->create();
             /** Approval Setting Approvers */
             $this->approverRequester->setApprovers($this->approvalSettingRequester->getApprovers());
-            $this->approverSettingApproverCreator->setApprovalSetting($approval_setting)->setApproverRequester($this->approverRequester)->create();
+            $this->approverSettingApproverCreator->setApproverRequester($this->approverRequester)->setApprovalSetting($approval_setting)->create();
         });
         return $approval_setting;
     }

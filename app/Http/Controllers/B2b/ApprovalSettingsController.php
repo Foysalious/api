@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
 use Sheba\Dal\ApprovalSetting\Targets;
 use Sheba\Dal\ApprovalSettingModule\Modules;
+
 class ApprovalSettingsController extends Controller
 {
     use ModificationFields;
@@ -49,11 +50,11 @@ class ApprovalSettingsController extends Controller
         if (!$business) return api_response($request, null, 401);
 
         list($offset, $limit) = calculatePagination($request);
-        $approval_settings =  $this->approvalSettingsRepo->where('business_id', $business->id);
+        $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id);
 
-        if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type],['target_id', '=', $request->target_id]]);
+        if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type], ['target_id', '=', $request->target_id]]);
         if ($request->has('type') && $request->type) $approval_settings = $approval_settings->where('target_type', $request->type);
-        if ($request->has('module')) $approval_settings = $approval_settings->whereHas('modules', function($q) use ($request){
+        if ($request->has('module')) $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
             $q->whereIn('modules', explode(',', $request->module));
         });
         $manager = new Manager();
@@ -69,15 +70,17 @@ class ApprovalSettingsController extends Controller
 
     private function searchWithEmployee($approval_settings_list, $search)
     {
-        return array_where($approval_settings_list, function ($key, $value) use ($search){
+        return array_where($approval_settings_list, function ($key, $value) use ($search) {
             return str_contains(strtoupper($value['target_type']['employee']['name']), strtoupper($search));
         });
     }
 
     public function store(Request $request, ApprovalSettingRequester $approval_setting_requester, Creator $creator)
     {
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
         $this->validate($request, [
-            'modules' => 'required|in:' . implode(',', Modules::get()),
+            'modules' => 'required',
             'note' => 'required|string',
             'target_type' => 'required|in:' . implode(',', Targets::get()),
             'approvers' => 'required',
@@ -90,17 +93,17 @@ class ApprovalSettingsController extends Controller
             ->setTargetType($request->target_type)
             ->setTargetId($request->targetId)
             ->setNote($request->note)
-            ->setApprovers($request->appovers);
+            ->setApprovers($request->approvers);
+
         $creator->setApprovalSettingRequester($approval_setting_requester)->setBusiness($business)->create();
         return api_response($request, null, 200);
-
     }
 
     public function delete($settings, Request $request)
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+        $approval_settings = $this->approvalSettingsRepo->where('id', $request->settings);
         if (!$approval_settings) return api_response($request, null, 404);
         $approval_settings->delete();
 
@@ -111,7 +114,7 @@ class ApprovalSettingsController extends Controller
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+        $approval_settings = $this->approvalSettingsRepo->where('id', $request->settings);
         if (!$approval_settings) return api_response($request, null, 404);
 
         $manager = new Manager();
