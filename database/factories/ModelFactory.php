@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Affiliate;
 use App\Models\Location;
 use App\Models\Profile;
 use Carbon\Carbon;
@@ -76,5 +77,22 @@ $factory->define(Profile::class, function (Faker\Generator $faker) use ($common_
         'total_asset_amount'=>$faker->randomNumber(),
         'monthly_living_cost'=>$faker->randomNumber(),
         'monthly_loan_installment_amount'=>$faker->randomNumber(),
+    ]);
+});
+$factory->define(Affiliate::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds, [
+        'is_ambassador'=>0,
+        'is_moderator'=>0,
+        'acquisition_cost'=>100,
+        'wallet'=>10000,
+        'robi_topup_wallet'=>100000,
+        'total_earning'=>0,
+        'total_gifted_amount'=>0,
+        'total_gifted_number'=>0,
+        'is_banking_info_verified'=>1,
+        'reject_reason'=>'',
+        'is_suspended'=>0,
+        'remember_token'=>str_random(50),
+
     ]);
 });
