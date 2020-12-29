@@ -38,6 +38,7 @@ use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
 use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
+use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
 class LeaveController extends Controller
 {
@@ -116,19 +117,23 @@ class LeaveController extends Controller
      * @param $approval_request
      * @param Request $request
      * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         /** @var Business $business */
         $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
+
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+
         if ($business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
+
         $leave_requester_business_member = $requestable->businessMember;
         /** @var Member $member */
         $member = $leave_requester_business_member->member;
@@ -139,7 +144,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
