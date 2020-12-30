@@ -36,7 +36,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
      * @param LeaveLogRepo $leave_log_repo
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      */
-    public function __construct(Profile $profile, Business $business, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function __construct(Profile $profile, Business $business)
     {
         $this->profile = $profile;
         $this->business = $business;
