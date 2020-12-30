@@ -12,7 +12,6 @@ use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -21,7 +20,6 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
-use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
@@ -58,11 +56,9 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveRequestExcel $leave_request_report
-     * @param LeaveLogRepo $leave_log_repo
-     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function index(Request $request, LeaveRequestExcel $leave_request_report, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -122,7 +118,7 @@ class LeaveController extends Controller
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function show($business, $approval_request, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -146,7 +142,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);

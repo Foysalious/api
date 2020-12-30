@@ -33,16 +33,14 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
      * @param Business $business
      * @param Profile $profile
      * @param BusinessRole $role
-     * @param LeaveLogRepo $leave_log_repo
-     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      */
-    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function __construct(Business $business, Profile $profile, BusinessRole $role)
     {
         $this->business = $business;
         $this->profile = $profile;
         $this->role = $role;
-        $this->leaveLogRepo = $leave_log_repo;
-        $this->leaveStatusChangeLogRepo = $leave_status_change_log_repo;
+        $this->leaveLogRepo = app(LeaveLogRepo::class);
+        $this->leaveStatusChangeLogRepo = app(LeaveStatusChangeLogRepo::class);
     }
 
     /**
