@@ -5,6 +5,7 @@ use Sheba\Business\ApprovalSettingModule\Creator as ApprovalSettingModuleCreator
 use  Sheba\Business\ApprovalSettingApprover\Creator as ApprovalSettingApproverCreator;
 use Sheba\Business\ApprovalSettingApprover\ApproverRequester;
 use Sheba\Business\ApprovalSettingModule\ModuleRequester;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
 use Illuminate\Support\Facades\DB;
 use Sheba\ModificationFields;
@@ -74,14 +75,10 @@ class Creator
     {
         $this->makeData();
         $approval_setting = null;
-        DB::transaction(function () use ($approval_setting){
-            $approval_setting = $this->approvalSettingRepo->create($this->withCreateModificationField($this->approvalSettingData));
-            /** Approval Setting Module */
-            $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
-            $this->approvalSettingModuleCreator->setModuleRequester($this->moduleRequester)->setApprovalSetting($approval_setting)->create();
-            /** Approval Setting Approvers */
-            $this->approverRequester->setApprovers($this->approvalSettingRequester->getApprovers());
-            $this->approverSettingApproverCreator->setApprovalSetting($approval_setting)->setApproverRequester($this->approverRequester)->create();
+        DB::transaction(function () use ($approval_setting) {
+            $approval_setting = $this->approvalSettingRepo->create($this->approvalSettingData);
+            $this->createApprovalSettingModules($approval_setting);
+            $this->createApprovalSettingApprover($approval_setting);
         });
         return $approval_setting;
     }
@@ -94,5 +91,23 @@ class Creator
             'target_id' => $this->approvalSettingRequester->getTargetId(),
             'note' => $this->approvalSettingRequester->getNote(),
         ];
+    }
+
+    /**
+     * @param ApprovalSetting $approval_setting
+     */
+    private function createApprovalSettingModules(ApprovalSetting $approval_setting)
+    {
+        $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
+        $this->approvalSettingModuleCreator->setModuleRequester($this->moduleRequester)->setApprovalSetting($approval_setting)->create();
+    }
+
+    /**
+     * @param ApprovalSetting $approval_setting
+     */
+    private function createApprovalSettingApprover(ApprovalSetting $approval_setting)
+    {
+        $this->approverRequester->setApprovers($this->approvalSettingRequester->getApprovers());
+        $this->approverSettingApproverCreator->setApproverRequester($this->approverRequester)->setApprovalSetting($approval_setting)->create();
     }
 }

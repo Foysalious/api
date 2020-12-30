@@ -461,7 +461,7 @@ class CheckoutRepository
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
-            (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                 'order_code' => $order->code()
             ]);
         }

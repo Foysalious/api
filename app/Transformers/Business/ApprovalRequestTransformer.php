@@ -3,7 +3,6 @@
 use App\Models\Business;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -37,6 +36,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
         $business_member = $requestable->businessMember;
+
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -80,6 +80,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             $approvers[] = $this->approvarWithStatus($approval_request, $profile);
 
         });
+
         return $approvers;
     }
 
