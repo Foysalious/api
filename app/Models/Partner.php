@@ -4,15 +4,18 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
 use DB;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\Relation;
 use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
+use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Payment\PayableUser;
 use Sheba\Transactions\Types;
@@ -29,6 +32,7 @@ use Sheba\Wallet\Wallet;
 use Sheba\Referral\HasReferrals;
 use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
+use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -42,6 +46,8 @@ use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
+use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
+use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
@@ -51,74 +57,80 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public $totalPriceRequiredForSubscription;
     public $creditBreakdown;
     protected $guarded = ['id'];
-    protected $dates = [
-        'last_billed_date',
-        'billing_start_date'
-    ];
-    protected $casts = [
-        'wallet' => 'double',
-        'last_billed_amount' => 'double',
-        'reward_point' => 'int',
-        'current_impression' => 'double',
-        'impression_limit' => 'double',
-        'uses_sheba_logistic' => 'int',
-        'can_topup' => 'int'
-    ];
-    protected $resourcePivotColumns = [
-        'id',
-        'designation',
-        'department',
-        'resource_type',
-        'is_verified',
-        'verification_note',
-        'created_by',
-        'created_by_name',
-        'created_at',
-        'updated_by',
-        'updated_by_name',
-        'updated_at'
-    ];
-    protected $categoryPivotColumns = [
-        'id',
-        'experience',
-        'preparation_time_minutes',
-        'response_time_min',
-        'response_time_max',
-        'commission',
-        'is_verified',
-        'uses_sheba_logistic',
-        'verification_note',
-        'created_by',
-        'created_by_name',
-        'created_at',
-        'updated_by',
-        'updated_by_name',
-        'updated_at',
-        'is_home_delivery_applied',
-        'is_partner_premise_applied',
-        'delivery_charge'
-    ];
-    protected $servicePivotColumns = [
-        'id',
-        'description',
-        'options',
-        'prices',
-        'min_prices',
-        'base_prices',
-        'base_quantity',
-        'is_published',
-        'discount',
-        'discount_start_date',
-        'discount_start_date',
-        'is_verified',
-        'verification_note',
-        'created_by',
-        'created_by_name',
-        'created_at',
-        'updated_by',
-        'updated_by_name',
-        'updated_at'
-    ];
+    protected $dates
+        = [
+            'last_billed_date',
+            'billing_start_date'
+        ];
+    protected $casts
+        = [
+            'wallet' => 'double',
+            'last_billed_amount' => 'double',
+            'reward_point' => 'int',
+            'current_impression' => 'double',
+            'impression_limit' => 'double',
+            'uses_sheba_logistic' => 'int',
+            'delivery_charge' => 'double',
+            'can_topup' => 'int'
+        ];
+    protected $resourcePivotColumns
+        = [
+            'id',
+            'designation',
+            'department',
+            'resource_type',
+            'is_verified',
+            'verification_note',
+            'created_by',
+            'created_by_name',
+            'created_at',
+            'updated_by',
+            'updated_by_name',
+            'updated_at'
+        ];
+    protected $categoryPivotColumns
+        = [
+            'id',
+            'experience',
+            'preparation_time_minutes',
+            'response_time_min',
+            'response_time_max',
+            'commission',
+            'is_verified',
+            'uses_sheba_logistic',
+            'verification_note',
+            'created_by',
+            'created_by_name',
+            'created_at',
+            'updated_by',
+            'updated_by_name',
+            'updated_at',
+            'is_home_delivery_applied',
+            'is_partner_premise_applied',
+            'delivery_charge'
+        ];
+    protected $servicePivotColumns
+        = [
+            'id',
+            'description',
+            'options',
+            'prices',
+            'min_prices',
+            'base_prices',
+            'base_quantity',
+            'is_published',
+            'discount',
+            'discount_start_date',
+            'discount_start_date',
+            'is_verified',
+            'verification_note',
+            'created_by',
+            'created_by_name',
+            'created_at',
+            'updated_by',
+            'updated_by_name',
+            'updated_at'
+        ];
     private $resourceTypes;
 
     public function __construct($attributes = [])
@@ -262,7 +274,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function leaves()
     {
-        return $this->hasMany(PartnerLeave::class);
+        Relation::morphMap(['partner' => 'App\Models\Partner']);
+        return $this->morphMany(ArtisanLeave::class, 'artisan');
     }
 
     public function shebaCredit()
@@ -278,6 +291,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function bonuses()
     {
         return $this->morphMany(Bonus::class, 'user');
+    }
+
+    public function retailers()
+    {
+        return $this->getContactResource()->retailers();
     }
 
     public function hasLeave($date)
@@ -303,8 +321,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getContactResource()
     {
-        if ($operation_resource = $this->getFirstOperationResource())
-            return $operation_resource;
         if ($admin_resource = $this->getFirstAdminResource())
             return $admin_resource;
         return null;
@@ -488,7 +504,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasAppropriateCreditLimit()
     {
-        return (double)$this->wallet >= (double)$this->walletSetting->min_wallet_threshold;
+        return (double)$this->wallet >= ($this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : constants('PARTNER_DEFAULT_SECURITY_MONEY'));
     }
 
     public function bankInfos()
@@ -506,6 +522,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->bankInfos()->where('purpose', Purposes::PARTNER_WALLET_WITHDRAWAL);
     }
 
+    public function neoBankAccount()
+    {
+        return $this->hasMany(PartnerNeoBankingAccount::class);
+    }
+
+    public function neoBankInfo()
+    {
+        return $this->hasOne(PartnerNeoBankingInfo::class, 'partner_id', 'id');
+    }
 
     public function affiliation()
     {
@@ -540,6 +565,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function subscriptionDiscount()
     {
         return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
+    }
+
+    public function currentSubscription()
+    {
+        return $this->subscription->where('id', $this->package_id)->first();
     }
 
     public function subscriptionOrders()
@@ -588,15 +618,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
-    public function runUpfrontSubscriptionBilling()
-    {
-        $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
-
-    public function retailers()
-    {
-        return $this->getFirstAdminResource()->retailers();
-    }
 
     public function movieTicketOrders()
     {
@@ -879,9 +900,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     /**
      * @param PartnerSubscriptionPackage $package
-     * @param $billingType
+     * @param                            $billingType
      * @param int $billingCycle
      * @return bool
+     * @throws InvalidPreviousSubscriptionRules
      */
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
@@ -890,20 +912,24 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
-    /** @return float|int */
+    /** @return float|int
+     * @throws InvalidPreviousSubscriptionRules
+     */
     public function getTotalCreditExistsForSubscription()
     {
         list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
-    /** @return array */
+    /**
+     * @return array
+     */
     public function getCreditBreakdown()
     {
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining             = (double)0;
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
@@ -918,24 +944,38 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         ];
     }
 
-    public function alreadyCollectedSubscriptionFee()
-    {
-        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee())
-            return 0;
-        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (!empty($last_subscription_package_charge))
-            return $last_subscription_package_charge->package_price; else return 0;
-    }
-
-    /**
-     * @return bool
-     */
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
-        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (empty($last_subscription_package_charge))
-            return false;
-        return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
+        $last_advance_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
+        if (empty($last_advance_subscription_package_charge)) return false;
+        return $this->isValidAdvancePayment($last_advance_subscription_package_charge);
+    }
+
+    public function invalidateAdvanceSubscriptionFee()
+    {
+        $charge = $this->lastAdvanceSubscriptionCharge();
+        if (!empty($charge)) {
+            $charge->is_valid_advance_payment = 0;
+            $charge->save();
+        }
+    }
+
+    private function lastAdvanceSubscriptionCharge()
+    {
+        return $this->subscriptionPackageCharges()->where('advance_subscription_fee', 1)->where('is_valid_advance_payment')->orderBy('id', 'desc')->first();
+    }
+
+    public function isValidAdvancePayment($last_subscription_package_charge)
+    {
+        return $last_subscription_package_charge->advance_subscription_fee && $last_subscription_package_charge->is_valid_advance_payment;
+    }
+
+    public function alreadyCollectedSubscriptionFee()
+    {
+        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
+        $last_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
+        if (empty($last_subscription_package_charge) || !$this->isValidAdvancePayment($last_subscription_package_charge)) return 0;
+        return (double)$last_subscription_package_charge->package_price;
     }
 
     public function subscriptionPackageCharges()
@@ -988,9 +1028,20 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->id == config('sheba.mission_save_bangladesh_partner_id');
     }
 
+
     public function canTopup()
     {
         return $this->can_topup == 1;
+    }
+    public function posCategories()
+    {
+        return $this->hasMany(PartnerPosCategory::class);
+
+    }
+
+    public function webstoreBanner()
+    {
+        return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
 }
