@@ -105,7 +105,7 @@ class ApprovalSettingsController extends Controller
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $approval_settings = $this->approvalSettingsRepo->where('id', $request->settings);
+        $approval_settings = $this->approvalSettingsRepo->find($request->settings);
         if (!$approval_settings) return api_response($request, null, 404);
         $approval_settings->delete();
 
