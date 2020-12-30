@@ -63,7 +63,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলনের জন্য আবেদন করতে পারবেন না।';
             }
 
-            if($request->partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
+            if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
                 $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
                 $is_partner_blacklisted = true;
             }
