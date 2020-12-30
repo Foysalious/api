@@ -518,6 +518,7 @@ class TopUpController extends Controller
         /** @var AuthUser $user */
         $user = $request->auth_user;
         $resourceNumber = $user->getPartner()->getContactNumber();
+        \Log::info($otpNumber. '-----------------'.$resourceNumber);
         if ($otpNumber == $resourceNumber) {
             $timeSinceMidnight = time() - strtotime("midnight");
             $remainingTime = (24 * 3600) - $timeSinceMidnight;
