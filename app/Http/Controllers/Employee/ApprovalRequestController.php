@@ -22,6 +22,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
+use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 use Sheba\ModificationFields;
 
 class ApprovalRequestController extends Controller
@@ -84,9 +86,11 @@ class ApprovalRequestController extends Controller
     /**
      * @param $approval_request
      * @param Request $request
+     * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($approval_request, Request $request)
+    public function show($approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         $approval_request = $this->approvalRequestRepo->find($approval_request);
         /** @var Leave $requestable */
@@ -109,7 +113,7 @@ class ApprovalRequestController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+        $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $attachments = $this->getAttachments($requestable);

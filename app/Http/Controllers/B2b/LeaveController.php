@@ -58,9 +58,11 @@ class LeaveController extends Controller
     /**
      * @param Request $request
      * @param LeaveRequestExcel $leave_request_report
+     * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function index(Request $request, LeaveRequestExcel $leave_request_report)
+    public function index(Request $request, LeaveRequestExcel $leave_request_report, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -93,7 +95,7 @@ class LeaveController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $leave_log_repo, $leave_status_change_log_repo));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($leaves, $approval_request);
