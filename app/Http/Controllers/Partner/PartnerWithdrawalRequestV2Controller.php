@@ -130,7 +130,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         }
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
-            $message = "You don't have sufficient balance";
+            $message = "পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।";
             return api_response($request, null, 403, ['message' => $message]);
         }
         $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
