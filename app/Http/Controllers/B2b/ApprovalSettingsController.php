@@ -7,6 +7,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
+use Sheba\Business\ApprovalSetting\Updater;
 use Sheba\ModificationFields;
 use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
@@ -85,6 +86,7 @@ class ApprovalSettingsController extends Controller
             'target_type' => 'required|in:' . implode(',', Targets::get()),
             'approvers' => 'required',
         ]);
+
         $business = $request->business;
         $manager_member = $request->manager_member;
 
@@ -125,10 +127,11 @@ class ApprovalSettingsController extends Controller
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
     }
 
-    /*public function update(Request $request, ApprovalSettingRequester $approval_setting_requester)
+    public function update(Request $request, ApprovalSettingRequester $approval_setting_requester, Updater $updater)
     {
+
         $this->validate($request, [
-            'modules' => 'required|in:' . implode(',', Modules::get()),
+            'modules' => 'required',
             'note' => 'string',
             'target_type' => 'in:' . implode(',', Targets::get()),
             'target_id' => 'required_if:target_type,in,'.implode(',', [Targets::DEPARTMENT,Targets::EMPLOYEE]),
@@ -139,7 +142,9 @@ class ApprovalSettingsController extends Controller
 
         $manager_member = $request->manager_member;
 
-        $approval_settings =  $this->approvalSettingsRepo->where('id', $request->settings);
+        $approval_settings =  $this->approvalSettingsRepo->find($request->settings);
+
+        if (!$approval_settings) return api_response($request, null, 404);
 
         $this->setModifier($manager_member);
 
@@ -149,7 +154,8 @@ class ApprovalSettingsController extends Controller
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
+        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($approval_setting_requester)->update();
 
-    }*/
+    }
 
 }
