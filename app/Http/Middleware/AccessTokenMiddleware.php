@@ -31,10 +31,10 @@ class AccessTokenMiddleware
         try {
             $token = JWTAuth::getToken();
             if (!$token) return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
-            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
+            if (strpos($request->url(), '/v2/top-up/get-topup-token') === false) JWTAuth::getPayload($token);
             $access_token = $this->findAccessToken($token);
             if (!$access_token) throw new AccessTokenDoesNotExist();
-            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token' && !$access_token->isValid()) throw new AccessTokenNotValidException();
+            if (strpos($request->url(), '/v2/top-up/get-topup-token') === false && !$access_token->isValid()) throw new AccessTokenNotValidException();
             $this->setAuthorizationToken($access_token);
             $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
         } catch (JWTException $e) {
