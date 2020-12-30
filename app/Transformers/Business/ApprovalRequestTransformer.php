@@ -3,7 +3,6 @@
 use App\Models\Business;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -41,8 +40,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
     {
         $this->profile = $profile;
         $this->business = $business;
-        $this->leaveLogRepo = $leave_log_repo;
-        $this->leaveStatusChangeLogRepo = $leave_status_change_log_repo;
+        $this->leaveLogRepo = app(LeaveLogRepo::class);
+        $this->leaveStatusChangeLogRepo = app(LeaveStatusChangeLogRepo::class);
     }
 
     /**
@@ -84,8 +83,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y') ,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note,
-                'leave_log_details' => $this->getLeaveLog($requestable),
             ],
+            'leave_log_details' => $this->getLeaveLog($requestable),
             'approvers' => $approvers,
         ];
     }

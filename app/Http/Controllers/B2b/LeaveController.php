@@ -95,7 +95,7 @@ class LeaveController extends Controller
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business, $leave_log_repo, $leave_status_change_log_repo));
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
             $approval_request = $manager->createData($resource)->toArray()['data'];
 
             array_push($leaves, $approval_request);
