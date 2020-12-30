@@ -8,10 +8,11 @@ class LoanRoute
 {
     function set($api)
     {
+//        'middleware' => 'shebaServer'
         $api->group(['prefix' => 'loans'], function ($api) {
-            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
-            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
-            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
+            $api->get('/{loan_id}/admin/generate-pdf', 'Loan\\LoanController@generateApplication');
+            $api->get('/{loan_id}/admin/download-documents', 'Loan\\LoanController@downloadDocuments');
+            $api->post('/{loan_id}/admin/upload-documents', 'Loan\\LoanController@uploadDocuments');
         });
 
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
@@ -46,6 +47,9 @@ class LoanRoute
             $api->get('loan-due-report', 'Loan\\LoanReportController@loanDueReport');
             $api->get('loan-status-report', 'Loan\\LoanReportController@loanStatusReport');
             $api->get('retailer-registration-report', 'Loan\\LoanReportController@retailerRegistrationReport');
+            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
+            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
+            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
 
         });
     }
