@@ -156,6 +156,7 @@ class ApprovalSettingsController extends Controller
 
         $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($approval_setting_requester)->update();
 
+        return api_response($request, null, 200);
     }
 
 }
