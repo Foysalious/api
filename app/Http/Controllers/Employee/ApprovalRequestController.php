@@ -21,7 +21,6 @@ use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
-use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\ModificationFields;
 
 class ApprovalRequestController extends Controller

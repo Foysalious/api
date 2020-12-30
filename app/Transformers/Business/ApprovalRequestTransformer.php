@@ -10,6 +10,8 @@ use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
+use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
 class ApprovalRequestTransformer extends TransformerAbstract
 {
@@ -18,11 +20,28 @@ class ApprovalRequestTransformer extends TransformerAbstract
     private $profile;
     /** @var Business $business */
     private $business;
+    /**
+     * @var LeaveLogRepo
+     */
+    private $leaveLogRepo;
+    /**
+     * @var LeaveStatusChangeLogRepo
+     */
+    private $leaveStatusChangeLogRepo;
 
-    public function __construct(Profile $profile, Business $business)
+    /**
+     * ApprovalRequestTransformer constructor.
+     * @param Profile $profile
+     * @param Business $business
+     * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
+     */
+    public function __construct(Profile $profile, Business $business, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         $this->profile = $profile;
         $this->business = $business;
+        $this->leaveLogRepo = app(LeaveLogRepo::class);
+        $this->leaveStatusChangeLogRepo = app(LeaveStatusChangeLogRepo::class);
     }
 
     /**
@@ -64,9 +83,10 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y') ,
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
-                'note' => $requestable->note
+                'note' => $requestable->note,
             ],
-            'approvers' => $approvers
+            'leave_log_details' => $this->getLeaveLog($requestable),
+            'approvers' => $approvers,
         ];
     }
 
@@ -94,5 +114,29 @@ class ApprovalRequestTransformer extends TransformerAbstract
         if ($approval_request->status == Status::ACCEPTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
         if ($approval_request->status == Status::REJECTED) return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
         return ['name' => $profile->name, 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]];
+    }
+
+    private function getLeaveLogDetails($requestable)
+    {
+        $logs = $this->leaveLogRepo->where('leave_id', $requestable->id)->where('type', '<>', 'leave_adjustment')->select('log', 'created_at')->get()->map(function ($log) {
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
+        })->toArray();
+        return $logs ? $logs : null;
+    }
+
+    private function getLeaveCancelLogDetails($requestable)
+    {
+        $logs = $this->leaveStatusChangeLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->orderBy('id', 'DESC')->get()->map(function ($log) {
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
+        })->toArray();
+        return $logs ? $logs : null;
+    }
+
+    private function getLeaveLog($requestable)
+    {
+        $cancel_log = $this->getLeaveCancelLogDetails($requestable) ? $this->getLeaveCancelLogDetails($requestable) : [];
+        $update_log = $this->getLeaveLogDetails($requestable) ? $this->getLeaveLogDetails($requestable) : [];
+
+        return array_merge($cancel_log, $update_log);
     }
 }
