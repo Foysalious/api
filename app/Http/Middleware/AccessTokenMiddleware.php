@@ -1,11 +1,11 @@
 <?php namespace App\Http\Middleware;
 
+use Illuminate\Http\Request;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\AuthorizationToken\AuthorizationTokenRepositoryInterface;
 use Sheba\OAuth2\AuthUser;
-use Sheba\Portals\Portals;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -26,9 +26,13 @@ class AccessTokenMiddleware
         $this->authorizeTokenRepository = $authorize_token_repository;
     }
 
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         try {
+            if ($this->runningUnitTests()) {
+                JWTAuth::setRequest($request);
+            }
+
             $token = JWTAuth::getToken();
             if (!$token) return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
             if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
@@ -67,5 +71,11 @@ class AccessTokenMiddleware
     protected function getAuthorizationToken()
     {
         return $this->authorizationToken;
+    }
+
+    private function runningUnitTests()
+    {
+        $app = app();
+        return $app->runningInConsole() && $app->runningUnitTests();
     }
 }

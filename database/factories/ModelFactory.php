@@ -3,7 +3,10 @@
 use App\Models\Affiliate;
 use App\Models\Location;
 use App\Models\Profile;
+use App\Models\TopUpVendor;
 use Carbon\Carbon;
+use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
+use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 
@@ -63,7 +66,6 @@ $factory->define(Location::class, function (Faker\Generator $faker) use ($common
 
 $factory->define(Profile::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds, [
-
         'name' => $faker->name,
         'mobile' =>'+8801678242955',
         'email' =>'tisha@sheba.xyz',
@@ -73,10 +75,6 @@ $factory->define(Profile::class, function (Faker\Generator $faker) use ($common_
         'email_verified'=>1,
         'nid_verification_request_count'=>0,
         'blood_group'=>'B+',
-        'pro_pic' => $faker->image(),
-        'total_asset_amount'=>$faker->randomNumber(),
-        'monthly_living_cost'=>$faker->randomNumber(),
-        'monthly_loan_installment_amount'=>$faker->randomNumber(),
     ]);
 });
 $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($common_seeds) {
@@ -93,6 +91,37 @@ $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($commo
         'reject_reason'=>'',
         'is_suspended'=>0,
         'remember_token'=>str_random(50),
+
+    ]);
+});
+
+$factory->define(AuthorizationRequest::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return [
+        'purpose' => 'login',
+        'status' => 'success',
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now()
+    ];
+});
+
+$factory->define(AuthorizationToken::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return [
+        'valid_till' =>Carbon::now()->addDay() ,
+        'refresh_valid_till' =>Carbon::now()->addDays(7) ,
+        'is_blacklisted' => 0,
+        'created_at' => Carbon::now(),
+        'updated_at' => Carbon::now(),
+        'updated_by' => 1,
+    ];
+});
+
+$factory->define(TopUpVendor::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+        'name' => 'Mock',
+        'amount' => '100000',
+        'gateway' => 'ssl',
+        'sheba_commission' => 4.0,
+        'is_published' => 1,
 
     ]);
 });

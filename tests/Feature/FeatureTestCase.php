@@ -19,6 +19,12 @@ class FeatureTestCase extends TestCase
         return parent::get($uri, $headers);
     }
 
+    public function post($uri, array $data = [], array $headers = [])
+    {
+        $uri = trim($this->baseUrl, '/') . '/' . trim($uri, '/');
+        return parent::post($uri, $data, $headers);
+    }
+
     /**
      * Define hooks to migrate the database before and after each test.
      *
@@ -26,10 +32,10 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        /*DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
         $this->beforeApplicationDestroyed(function () {
             DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });
+        });*/
     }
 }
