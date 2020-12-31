@@ -62,11 +62,11 @@ class ApprovalSettingsController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer($department_repo, $business_member_repo, $profile_repo));
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
-
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
+        $total_approval_settings = count($approval_settings_list);
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
 
-        return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => count($approval_settings_list)]);
+        return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => $total_approval_settings]);
     }
 
     private function searchWithEmployee($approval_settings_list, $search)
