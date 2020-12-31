@@ -15,11 +15,11 @@ class Controller extends BaseController
      *     basePath="/",
      *     @SWG\Info(
      *         version="1.0.0",
-     *         title="Swagger Integration with PHP Laravel",
-     *         description="Integrate Swagger in Laravel application",
+     *         title="Sheba API Project",
+     *         description="Shbea API documentation",
      *         termsOfService="",
      *         @SWG\Contact(
-     *             email="sachit.wadhawan@quovantis.com"
+     *             email="info@sheba.xyz"
      *         ),
      *     ),
      * )
