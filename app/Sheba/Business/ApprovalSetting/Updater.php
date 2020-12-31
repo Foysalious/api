@@ -155,6 +155,9 @@ class Updater
             if (!in_array($approvar->type, $approvar_type))
             {
                 $this->approvalSettingModuleRepo->delete($approvar);
+            }else{
+                $index = array_search($approvar->type, array_column($new_approvars, 'type'));
+                $this->approvalSettingModuleRepo->update($approvar, $new_approvars[$index]);
             }
             $updated_approvars[$approvar->type] = $approvar->type;
         }
@@ -165,9 +168,9 @@ class Updater
             {
                 $this->approvalSettingApproverData[] = [
                     'approval_setting_id' => $this->approvalSettings->id,
-                    'type' => $new_approvar->type,
-                    'type_id' => $new_approvar->type_id,
-                    'order' => $new_approvar->order,
+                    'type' => $new_approvar['type'],
+                    'type_id' => $new_approvar['type_id'],
+                    'order' => $new_approvar['order'],
                 ];
             }
         }
