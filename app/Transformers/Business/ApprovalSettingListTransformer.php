@@ -64,7 +64,7 @@ class ApprovalSettingListTransformer extends TransformerAbstract
             $profile = $member ? $this->profileRepo->where('id', $member->profile_id)->get()->first() : null;
 
             array_push($approvar_data, [
-                'id' => $approvar->id, 'approvar_type' => ucfirst(Types::getType($approvar->type)), 'approvar_type_id' => $approvar->type_id, 'approvar_name' => $profile ? $profile->name : null, 'approver_id' => $business_member ? $business_member->employee_id : null, 'approver_department' => $business_member ? $business_member->department : null, 'profile_pic' => $profile ? $profile->profile_pic : null
+                'id' => $approvar->id, 'approver_type' => ucfirst(Types::getType($approvar->type)), 'approver_type_id' => $approvar->type_id, 'approver_name' => $profile ? $profile->name : null, 'approver_id' => $business_member ? $business_member->employee_id : null, 'approver_department' => $business_member ? $business_member->department : null, 'profile_pic' => $profile ? $profile->profile_pic : null
             ]);
         }
         $target_business_member = $approval_setting->target_type == Targets::EMPLOYEE ? $this->businessMemberRepo->where('id', $approval_setting->target_id)->get()->first() : null;
@@ -77,7 +77,7 @@ class ApprovalSettingListTransformer extends TransformerAbstract
             ] : null, 'department' => $department ? ['id' => $department->id, 'name' => $department->name] : null
         ];
         return [
-            'id' => $approval_setting->id, 'business_id' => $approval_setting->business_id, 'note' => $approval_setting->note, 'target_type' => $target_type, 'modules' => $module_data, 'approvars' => $approvar_data, 'approvar_count' => count($approvar_data),
+            'id' => $approval_setting->id, 'business_id' => $approval_setting->business_id, 'note' => $approval_setting->note, 'target_type' => $target_type, 'modules' => $module_data, 'approvers' => $approvar_data, 'approver_count' => count($approvar_data),
         ];
     }
 }
