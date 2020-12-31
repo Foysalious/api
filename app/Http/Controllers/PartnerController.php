@@ -93,7 +93,27 @@ class PartnerController extends Controller
             'msg'      => 'successful'
         ]);
     }
-
+    /**
+     * @SWG\Get(
+     *     path="/v2/partners/{partner}",
+     *     description="Return a Component name and description",
+     *     @SWG\Parameter(
+     *         name="partner",
+     *         in="path",
+     *         type="string",
+     *         description="partner_id",
+     *         required=true,
+     *     ),
+     *     @SWG\Response(
+     *         response=200,
+     *         description="OK",
+     *     ),
+     *     @SWG\Response(
+     *         response=500,
+     *         description="Internel Server Error"
+     *     )
+     * )
+     */
     public function show($partner, Request $request)
     {
         try {

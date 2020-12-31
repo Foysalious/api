@@ -49,5 +49,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(PartnerHomeSettingServiceProviderV3::class);
         $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
         $this->app->register(CURServiceProvider::class);
+        $this->app->register(\L5Swagger\L5SwaggerServiceProvider::class);
     }
 }
