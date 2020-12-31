@@ -5,7 +5,6 @@ use App\Models\Affiliate;
 use App\Models\Profile;
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
-use Faker\Generator;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Tests\Feature\FeatureTestCase;
@@ -30,7 +29,7 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
 
         $this->authorizationRequest = factory(AuthorizationRequest::class)->create([
-                'profile_id' => $this->profile->id
+            'profile_id' => $this->profile->id
         ]);
         $this->token = JWTAuth::fromUser($this->profile, [
             'name' => $this->profile->name,
@@ -48,7 +47,7 @@ class SingleTopUpTest extends FeatureTestCase
             "exp" => Carbon::now()->addDay()->timestamp
         ]);
         $this->authrorizationToken = factory(AuthorizationToken::class)->create([
-            'authorization_request_id' => $this-> authorizationRequest->id,
+            'authorization_request_id' => $this->authorizationRequest->id,
             'token' => $this->token
         ]);
         TopUpVendor::where('name', 'Mock')->delete();
@@ -71,4 +70,63 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
 
+    public function testMobileNumberValidationResponseCode()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 112,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.", $data['message']);
+    }
+
+    public function testVendorIdValidationResponseCode()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'connection_type' => 'prepaid',
+            'amount' => 112,
+            'password' => 12345,
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The vendor id field is required.", $data['message']);
+    }
+
+    public function testConnectionTypeValidationResponseCode()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'amount' => 112,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.", $data['message']);
+    }
+
+    public function testAmountValidationResponseCode()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.", $data['message']);
+    }
 }
