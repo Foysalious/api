@@ -673,7 +673,6 @@ class LoanController extends Controller
                 $loan_application_name = 'proposal_letter_' . $loan_id;
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
             }
-
             if ($data["loan_type"] === LoanTypes::MICRO) {
                 $loan_application_name = 'dana_classic_' . $loan_id;
                 if( $request->has("from_admin")) {

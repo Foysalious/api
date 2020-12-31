@@ -8,11 +8,8 @@ class LoanRoute
 {
     function set($api)
     {
-//        'middleware' => 'shebaServer'
-        $api->group(['prefix' => 'loans'], function ($api) {
+        $api->group(['prefix' => 'loans', 'middleware' => 'shebaServer'], function ($api) {
             $api->get('/{loan_id}/admin/generate-pdf', 'Loan\\LoanController@generateApplication');
-            $api->get('/{loan_id}/admin/download-documents', 'Loan\\LoanController@downloadDocuments');
-            $api->post('/{loan_id}/admin/upload-documents', 'Loan\\LoanController@uploadDocuments');
         });
 
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
