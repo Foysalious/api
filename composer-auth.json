@@ -1,0 +1,10 @@
+{
+  "bitbucket-oauth": {
+    "bitbucket.org": {
+      "consumer-key": "BRaRb2RSQExPwsKJWW",
+      "consumer-secret": "SKmCpr6bp9FstqehYq9ergdwYDZc3J6N",
+      "access-token": "tOD51kQksZ8qeGPRdyjwiNGtpBzLojNqju7s02G_Uj0u6mtgazg_SaqhcE_x6aUyuflo_qOEzYbEJ_g5ku9yRSBVdfioPMh7AZvZz-FniyBSv8EKtjur8LHCr8h7MVStIBV4DEm9stfySC7Njnzg",
+      "access-token-expiration": 1609073315
+    }
+  }
+}
