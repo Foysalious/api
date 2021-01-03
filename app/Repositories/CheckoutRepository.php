@@ -349,7 +349,7 @@ class CheckoutRepository
         $partner_order_id = array_unique($payment_info['partner_order_id']);
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partner_order_id[0] . '/collect',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partner_order_id[0] . '/collect',
                 [
                     'form_params' => [
                         'customer_id' => $payment_info['customer_id'],
@@ -461,7 +461,7 @@ class CheckoutRepository
     {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         if (!in_array($order->portal_name, config('sheba.stopped_sms_portal_for_customer'))) {
-            (new SmsHandler('order-created'))->setVendor('sslwireless')->send($customer->profile->mobile, [
+            (new SmsHandler('order-created'))->send($customer->profile->mobile, [
                 'order_code' => $order->code()
             ]);
         }

@@ -31,4 +31,14 @@ return [
         'successful' => ['sheba' => 'Successful', 'partner' => 'Inactive', 'customer' => 'Inactive'],
         'failed' => ['sheba' => 'Failed', 'partner' => 'Inactive', 'customer' => 'Blocked'],
     ],
+    'paywell' => [
+        'username' => env('PAYWELL_USERNAME'),
+        'auth_password' => env('PAYWELL_AUTH_PASSWORD'),
+        'password' => env('PAYWELL_PASSWORD'),
+        'get_token_url' => env('PAYWELL_GET_TOKEN_URL'),
+        'api_key' => env('PAYWELL_API_KEY'),
+        'encryption_key' => env('PAYWELL_ENCRYPTION_KEY'),
+        'single_topup_url' => env('PAYWELL_SINGLE_TOPUP_URL'),
+        'topup_enquiry_url' => env('PAYWELL_TOPUP_ENQUIRY_URL'),
+    ],
 ];

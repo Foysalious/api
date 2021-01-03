@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Order\RefundNatures;
 
 use App\Models\PosOrder;
+use Sheba\Dal\POSOrder\SalesChannels as POSOrderSalesChannel;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -34,7 +35,7 @@ abstract class ReturnPosItem extends RefundNature
             'unit_price'
         ], 'service_id', true)->toArray();;
         $this->updater->setOrder($this->order)->setData($this->data)->setNew($this->new)->update();
-        $this->refundPayment();
+        if ($this->order->calculate()->getPaid()) $this->refundPayment();
         $this->generateDetails();
         $this->saveLog();
         try {
@@ -76,6 +77,7 @@ abstract class ReturnPosItem extends RefundNature
         });
         $details['items']['changes']         = $changes;
         $details['items']['total_sale']      = $this->oldOrder->getNetBill();
+        if($this->oldOrder->sales_channel == POSOrderSalesChannel::WEBSTORE && $this->oldOrder->delivery_charge) $details['items']['total_sale'] += $this->oldOrder->delivery_charge;
         $details['items']['vat_amount']      = $this->oldOrder->getTotalVat();
         $details['items']['returned_amount'] = isset($this->data['paid_amount']) ? $this->data['paid_amount'] : 0.00;
         $this->details                       = json_encode($details);

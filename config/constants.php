@@ -1126,7 +1126,7 @@ return [
         ],
         'dozon'  => [
             'bn' => 'ডজন',
-            'en' => 'dozon'
+            'en' => 'dozen'
         ],
         'inch'   => [
             'bn' => 'ইঞ্চি',
