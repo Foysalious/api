@@ -46,6 +46,7 @@ use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
+use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
 
 class AffiliateController extends Controller
 {
@@ -723,6 +724,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function topUpHistory($affiliate, Request $request)
     {
+        $topupvendorotf = app(TopUpVendorOTFRepo::class);
+
         try {
             $rules = [
                 'from' => 'date_format:Y-m-d',
@@ -760,12 +763,24 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
 
             foreach ($topups as $topup) {
+
+                if($topup->otf_id > 0){
+                    $topupotf = $topupvendorotf->builder()->where('id', $topup->otf_id)->first();
+                    $otf_name_en = isset($topupotf->name_en) ? $topupotf->name_en : "";
+                    $otf_name_bn = isset($topupotf->name_bn) ? $topupotf->name_bn : "";
+                }else{
+                    $otf_name_en = '';
+                    $otf_name_bn = '';
+                }
+
                 $topup = [
                     'payee_mobile' => $topup->payee_mobile,
                     'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
                     'amount' => $topup->amount,
                     'operator' => $topup->vendor->name,
                     'status' => $topup->status,
+                    'otf_name_en' => $otf_name_en,
+                    'otf_name_bn' => $otf_name_bn,
                     'created_at' => $topup->created_at->format('jS M, Y h:i A'),
                     'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
                 ];
@@ -857,6 +872,12 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         }
     }
 
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @param ProfileRepositoryInterface $profile_repo
+     * @return JsonResponse
+     */
     public function updatePersonalInformation($affiliate, Request $request, ProfileRepositoryInterface $profile_repo)
     {
         try {
@@ -869,7 +890,15 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             ]);
 
             $this->setModifier($affiliate);
-            $profile_repo->update($affiliate->profile, $request->only(['name', 'bn_name', 'dob', 'nid_no']));
+
+            $updatable_data = [];
+            if ($request->name != null) $updatable_data['name'] = $request->name;
+            if ($request->bn_name != null) $updatable_data['bn_name'] = $request->bn_name;
+            if ($request->dob != null) $updatable_data['dob'] = $request->dob;
+            if ($request->nid_no != null) $updatable_data['nid_no'] = $request->nid_no;
+            if ($request->gender != null) $updatable_data['gender'] = $request->gender;
+
+            $profile_repo->update($affiliate->profile, $updatable_data);
 
             $manager = new Manager();
             $manager->setSerializer(new CustomSerializer());
@@ -878,9 +907,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             return api_response($request, null, 200, ['data' => $details]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);

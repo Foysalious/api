@@ -21,7 +21,7 @@ class Notifications
             13
         ])->send([
             "title"      => $title,
-            'link'       => env('SHEBA_BACKEND_URL') . "/sp-loan/$eventId",
+            'link'       => config('sheba.admin_url') . "/sp-loan/$eventId",
             "type"       => notificationType('Info'),
             "event_type" => $eventType,
             "event_id"   => $eventId

@@ -583,6 +583,15 @@ class Job extends BaseModel implements MorphCommentable
      * @param Builder $query
      * @return Builder
      */
+    public function scopeResource($query, $resource_id)
+    {
+        return $query->where('resource_id', $resource_id);
+    }
+
+    /**
+     * @param Builder $query
+     * @return Builder
+     */
     public function scopeTillNow($query)
     {
         return $query->where('schedule_date', '<=', date('Y-m-d'));

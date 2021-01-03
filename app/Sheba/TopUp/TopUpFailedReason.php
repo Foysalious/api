@@ -18,6 +18,7 @@ class TopUpFailedReason
     public function getFailedReason()
     {
         if (!$this->topUpOrder->isFailed()) return null;
+        if (!$this->topUpOrder->transaction_details) return null;
         try {
             $topup_failed_reason = FailedReasonFactory::make($this->topUpOrder);
             return $topup_failed_reason->setTransaction($this->topUpOrder->transaction_details)->getReason();

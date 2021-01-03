@@ -104,16 +104,16 @@ class PartnerRegistrationController extends Controller
             if (!$code_data)
                 return api_response($request, null, 401, ['message' => 'AccountKit authorization failed']);
             $mobile = formatMobile($code_data['mobile']);
-
+            $request->merge(['phone' => $mobile, 'number' => $mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 $resource = $profile->resource;
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-                /* $affiliate = $profile->affiliate;
-                 if (!$affiliate) {
-                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                 }*/
+               /* $affiliate = $profile->affiliate;
+                if (!$affiliate) {
+                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -334,8 +334,7 @@ class PartnerRegistrationController extends Controller
                 'name'          => 'string',
                 'number'        => 'string',
                 'address'       => 'string',
-                'business_type' => 'string',
-                'has_webstore'  => 'sometimes|numeric|between:0,1'
+                'business_type' => 'string'
             ]);
             $profile = $request->profile;
             if (!$profile->resource)
@@ -344,17 +343,16 @@ class PartnerRegistrationController extends Controller
                     'remember_token' => str_random(60),
                     'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
                 ]); else $resource = $profile->resource;
-            /*if(!$profile->affiliate)
-                $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
             $this->setModifier($resource);
             $request['package_id']   = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
+            $request->merge(['number' => $profile->mobile]);
             if ($request->has('name'))
                 $profile->update(['name' => $request->name]);
             if ($request->has('gender'))
                 $profile->update(['gender' => $request->gender]);
             if ($resource->partnerResources->count() == 0) {
-                $data = $this->makePartnerCreateData($request);
+                $data    = $this->makePartnerCreateData($request);
                 $partner = $this->createPartner($resource, $data);
                 (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', $profile);
@@ -433,6 +431,7 @@ class PartnerRegistrationController extends Controller
             ]);
 
             $mobile = formatMobile($request->mobile);
+            $request->merge(['phone' => $mobile, 'number' => $mobile]);
             if ($profile = $this->profileRepository->ifExist($mobile, 'mobile')) {
                 if ($profile->name === "" || $profile->name === null) {
                     $profile->name = $request->name;

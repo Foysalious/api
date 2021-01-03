@@ -1,7 +1,8 @@
-<?php namespace App\Sheba\SmsCampaign;
+<?php namespace Sheba\SmsCampaign;
 
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Sms\Sms;
+use Sheba\SmsCampaign\DTO\VendorSmsDTO;
 
 class SmsHandler
 {
@@ -27,12 +28,16 @@ class SmsHandler
 
     /**
      * @param $message_id
-     * @return mixed
+     * @return VendorSmsDTO
      */
     public function getSingleMessage($message_id)
     {
         $response = $this->sms->get(['messageId' => $message_id]);
-        return $response->results[0];
+        $single_sms = new VendorSmsDTO();
+        if ($response && is_array($response->results) && !empty($response->results)) {
+            $single_sms->setResponse($response->results[0]);
+        }
+        return $single_sms;
     }
 
     /**
