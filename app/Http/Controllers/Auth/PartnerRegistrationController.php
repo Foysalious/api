@@ -110,10 +110,10 @@ class PartnerRegistrationController extends Controller
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-                /* $affiliate = $profile->affiliate;
-                 if (!$affiliate) {
-                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                 }*/
+               /* $affiliate = $profile->affiliate;
+                if (!$affiliate) {
+                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -163,13 +163,11 @@ class PartnerRegistrationController extends Controller
         } else {
             $data['registration_channel'] = constants('PARTNER_ACQUISITION_CHANNEL')['App'];
         }
-        if ($request->has('billing_type') && $request->has('package_id')) {
-            $data['billing_type']       = $request->billing_type;
-            $data['package_id']         = $request->package_id;
-            $data['billing_start_date'] = Carbon::today();
-            $data['last_billed_date']   = Carbon::today();
-            $data['last_billed_amount'] = 0.00;
-        }
+        $data['billing_type']       = $request->has('billing_type') ? $request->billing_type : 'monthly';
+        $data['package_id']         = $request->has('package_id') ? $request->package_id : config('sheba.partner_lite_packages_id');
+        $data['billing_start_date'] = Carbon::today();
+        $data['last_billed_date']   = Carbon::today();
+        $data['last_billed_amount'] = 0.00;
         if ($request->has('affiliate_id')) {
             $data['affiliate_id'] = $request->affiliate_id;
         }

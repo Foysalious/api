@@ -138,6 +138,8 @@ class IndexRoute
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
+                $api->get('/all-packages', 'Partner\PartnerSubscriptionController@allPackages');
+                $api->get('/current-package', 'Partner\PartnerSubscriptionController@currentPackage');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
