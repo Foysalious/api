@@ -1,5 +1,6 @@
 <?php namespace App\Providers;
 
+use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 
@@ -36,5 +37,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(PartnerHomeSettingServiceProviderV3::class);
         $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
         $this->app->register(CURServiceProvider::class);
+        $this->app->register(EventsListenerProvider::class);
     }
 }
