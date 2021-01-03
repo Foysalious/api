@@ -111,109 +111,109 @@ class OrderController extends Controller
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
 
-            $this->validate($request, [
-                'services'              => 'required|string',
-                'paid_amount'           => 'sometimes|required|numeric',
-                'payment_method'        => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
-                'customer_name'         => 'string',
-                'customer_mobile'       => 'string',
-                'customer_address'      => 'string',
-                'nPos'                  => 'numeric',
-                'discount'              => 'numeric',
-                'is_percentage'         => 'numeric',
-                'previous_order_id'     => 'numeric',
-                'emi_month'             => 'required_if:payment_method,emi|numeric',
-                'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
-                'payment_link_amount'   => 'sometimes|numeric',
-                'sales_channel'         => 'sometimes|string'
-            ]);
-            $link = null;
-            if ($request->manager_resource) {
-                $partner = $request->partner;
-                $modifier = $request->manager_resource;
-                $usage_type = Usage::Partner()::POS_ORDER_CREATE;
-                $this->setModifier($modifier);
-                $creator->setStatus(OrderStatuses::COMPLETED);
-            } else {
-                /** @var Partner $partner */
-                $partner              = $partnerRepository->find((int)$partner);
-                /** @var Profile $profile */
-                $profile              = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
-                $_data['mobile']=$request->customer_mobile;
-                $_data['name']=$request->customer_name;
-                $partner_pos_customer = $posCustomerCreator->setData($_data)->setProfile($profile)->setPartner($partner)->create();
-                $pos_customer         = $partner_pos_customer->customer;
-                $modifier = $profile->customer;
-                $usage_type = Usage::Partner()::PRODUCT_LINK;
-                $this->setModifier($modifier);
-                $creator->setCustomer($pos_customer);
-                $creator->setStatus(OrderStatuses::PENDING);
+        $this->validate($request, [
+            'services' => 'required|string',
+            'paid_amount' => 'sometimes|required|numeric',
+            'payment_method' => 'sometimes|required|string|in:' . implode(',', config('pos.payment_method')),
+            'customer_name' => 'string',
+            'customer_mobile' => 'string',
+            'customer_address' => 'string',
+            'nPos' => 'numeric',
+            'discount' => 'numeric',
+            'is_percentage' => 'numeric',
+            'previous_order_id' => 'numeric',
+            'emi_month' => 'required_if:payment_method,emi|numeric',
+            'amount_without_charge' => 'sometimes|required_if:payment_method,emi|numeric|min:' . config('emi.manager.minimum_emi_amount'),
+            'payment_link_amount' => 'sometimes|numeric',
+            'sales_channel' => 'sometimes|string'
+        ]);
+        $link = null;
+        if ($request->manager_resource) {
+            $partner = $request->partner;
+            $modifier = $request->manager_resource;
+            $usage_type = Usage::Partner()::POS_ORDER_CREATE;
+            $this->setModifier($modifier);
+            $creator->setStatus(OrderStatuses::COMPLETED);
+        } else {
+            /** @var Partner $partner */
+            $partner = $partnerRepository->find((int)$partner);
+            /** @var Profile $profile */
+            $profile = $profileCreator->setMobile($request->customer_mobile)->setName($request->customer_name)->create();
+            $_data['mobile'] = $request->customer_mobile;
+            $_data['name'] = $request->customer_name;
+            $partner_pos_customer = $posCustomerCreator->setData($_data)->setProfile($profile)->setPartner($partner)->create();
+            $pos_customer = $partner_pos_customer->customer;
+            $modifier = $profile->customer;
+            $usage_type = Usage::Partner()::PRODUCT_LINK;
+            $this->setModifier($modifier);
+            $creator->setCustomer($pos_customer);
+            $creator->setStatus(OrderStatuses::PENDING);
+        }
+        $creator->setPartner($partner)->setData($request->all());
+        if ($error = $creator->hasDueError())
+            return $error;
+        /**
+         * POS ORDER CHECK IF STOCK LIMIT EXCEED
+         *
+         * if ($error = $creator->hasError())
+         *     return $error;
+         */
+        $order = $creator->create();
+        $order = $order->calculate();
+        /**
+         * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
+         *
+         * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
+         */
+        try {
+            if ($order->sales_channel == SalesChannels::WEBSTORE) {
+                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                $this->sendOrderPlacePushNotificationToPartner($order);
             }
-            $creator->setPartner($partner)->setData($request->all());
-            if($error=$creator->hasDueError())
-                return $error;
-            /**
-             * POS ORDER CHECK IF STOCK LIMIT EXCEED
-             *
-             * if ($error = $creator->hasError())
-             *     return $error;
-             */
-            $order = $creator->create();
-            $order = $order->calculate();
-            /**
-             * TURNED OFF POS ORDER CREATE SMS BY SERVER END, HANDLED BY CLIENT SIDE
-             *
-             * if ($partner->wallet >= 1) $this->sendCustomerSms($order);
-             */
-            try {
-                if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                    if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
-                    $this->sendOrderPlacePushNotificationToPartner($order);
-                }
-            } catch (Throwable $e) {
-                app('sentry')->captureException($e);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+        }
+        $this->sendCustomerEmail($order);
+        $order->payment_status = $order->getPaymentStatus();
+        $order->client_pos_order_id = $request->client_pos_order_id;
+        $order->net_bill = $order->getNetBill();
+        $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
+        if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
+            $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
+                ->setUserName($partner->name)->setUserId($partner->id)
+                ->setUserType('partner')
+                ->setTargetId($order->id)
+                ->setTargetType('pos_order')
+                ->setEmiMonth($request->emi_month);
+            if ($request->payment_method == 'emi') {
+                $paymentLink->setInterest($order->interest)->setBankTransactionCharge($order->bank_transaction_charge);
             }
-            $this->sendCustomerEmail($order);
-            $order->payment_status      = $order->getPaymentStatus();
-            $order->client_pos_order_id = $request->client_pos_order_id;
-            $order->net_bill            = $order->getNetBill();
-            $payment_link_amount = $request->has('payment_link_amount') ? $request->payment_link_amount : $order->net_bill;
-            if ($request->payment_method == 'payment_link' || $request->payment_method == 'emi') {
-                $paymentLink = $paymentLinkCreator->setAmount($payment_link_amount)->setReason("PosOrder ID: $order->id Due payment")
-                    ->setUserName($partner->name)->setUserId($partner->id)
-                    ->setUserType('partner')
-                    ->setTargetId($order->id)
-                    ->setTargetType('pos_order')
-                    ->setEmiMonth($request->emi_month);
-                if ($request->payment_method == 'emi') {
-                    $paymentLink->setInterest($order->interest)->setBankTransactionCharge($order->bank_transaction_charge);
-                }
-                if ($order->customer) {
-                    $paymentLink->setPayerId($order->customer->id)->setPayerType('pos_customer');
-                }
-                $paymentLink = $paymentLink->save();
+            if ($order->customer) {
+                $paymentLink->setPayerId($order->customer->id)->setPayerType('pos_customer');
+            }
+            $paymentLink = $paymentLink->save();
 
-                $transformer = new PaymentLinkTransformer();
-                $transformer->setResponse($paymentLink);
-                $link = ['link' => config('sheba.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
-            }
-            $order = [
-                'id'                    => $order->id,
-                'payment_status'        => $order->payment_status,
-                'net_bill'              => $order->net_bill,
-                "client_pos_order_id"   => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
-                'partner_wise_order_id' => $order->partner_wise_order_id
-            ];
-            app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
-            /**
-             * USAGE LOG
-             */
-            (new Usage())->setUser($partner)->setType($usage_type)->create($modifier);
-            return api_response($request, null, 200, [
-                'message' => 'Order Created Successfully',
-                'order'   => $order,
-                'payment' => $link
-            ]);
+            $transformer = new PaymentLinkTransformer();
+            $transformer->setResponse($paymentLink);
+            $link = ['link' => config('sheba.payment_link_web_url') . '/' . $transformer->getLinkIdentifier()];
+        }
+        $order = [
+            'id' => $order->id,
+            'payment_status' => $order->payment_status,
+            'net_bill' => $order->net_bill,
+            "client_pos_order_id" => $request->has('client_pos_order_id') ? $request->client_pos_order_id : null,
+            'partner_wise_order_id' => $order->partner_wise_order_id
+        ];
+        app()->make(ActionRewardDispatcher::class)->run('pos_order_create', $partner, $partner, $order, (new RequestIdentification())->get()['portal_name']);
+        /**
+         * USAGE LOG
+         */
+        (new Usage())->setUser($partner)->setType($usage_type)->create($modifier);
+        return api_response($request, null, 200, [
+            'message' => 'Order Created Successfully',
+            'order' => $order,
+            'payment' => $link
+        ]);
     }
 
     private function sendCustomerEmail($order)
