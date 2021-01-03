@@ -40,9 +40,9 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
             $email = 'miajee@sheba.xyz';
 
             $subject = $verification_code . " is sBusiness login code";
-            Mail::send('emails.email_verification_V3', ['code' => 12211221], function ($m) use ($email, $subject) {
+            Mail::send('emails.reset-password', ['code' => 12211221], function ($m) use ($email, $subject) {
                 $m->from('b2b@sheba.xyz', 'sBusiness.xyz');
-                $m->to($email)->subject($subject);
+                $m->to('tamanna.habib@meenabazar.com.bd')->subject($subject);
             });
         }
     }
