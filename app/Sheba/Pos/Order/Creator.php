@@ -13,6 +13,7 @@ use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\Pos\Discount\DiscountTypes;
 use Sheba\Pos\Discount\Handler as DiscountHandler;
+use Sheba\Pos\Exceptions\PosServiceNotFoundException;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Product\StockManager;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
@@ -133,6 +134,8 @@ class Creator
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if(!$original_service)
+                throw new PosServiceNotFoundException();
 
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
