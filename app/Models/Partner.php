@@ -31,6 +31,7 @@ use Sheba\Wallet\Wallet;
 use Sheba\Referral\HasReferrals;
 use Sheba\Resource\ResourceTypes;
 use Sheba\Reward\Rewardable;
+use Sheba\Subscription\Exceptions\InvalidPreviousSubscriptionRules;
 use Sheba\Subscription\Partner\PartnerSubscriber;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpTrait;
@@ -545,6 +546,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->belongsTo(PartnerSubscriptionPackageDiscount::class, 'discount_id');
     }
 
+    public function currentSubscription()
+    {
+        return $this->subscription->where('id', $this->package_id)->first();
+    }
+
     public function subscriptionOrders()
     {
         return $this->hasMany(SubscriptionOrder::class);
@@ -591,10 +597,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         $this->subscriber()->getBilling()->runSubscriptionBilling();
     }
 
-    public function runUpfrontSubscriptionBilling()
-    {
-        $this->subscriber()->getBilling()->runUpfrontBilling();
-    }
 
     public function retailers()
     {
@@ -882,9 +884,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     /**
      * @param PartnerSubscriptionPackage $package
-     * @param $billingType
-     * @param int $billingCycle
+     * @param                            $billingType
+     * @param int                        $billingCycle
      * @return bool
+     * @throws InvalidPreviousSubscriptionRules
      */
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
@@ -893,20 +896,24 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
-    /** @return float|int */
+    /** @return float|int
+     * @throws InvalidPreviousSubscriptionRules
+     */
     public function getTotalCreditExistsForSubscription()
     {
         list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
         return round($bonus_wallet + $wallet + $remaining) - $threshold;
     }
 
-    /** @return array */
+    /**
+     * @return array
+     */
     public function getCreditBreakdown()
     {
-        $remaining = (double)$this->subscriber()->getBilling()->remainingCredit($this->subscription, $this->billing_type);
-        $wallet = (double)$this->wallet;
-        $bonus_wallet = (double)$this->bonusWallet();
-        $threshold = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
+        $remaining             = (double)0;
+        $wallet                = (double)$this->wallet;
+        $bonus_wallet          = (double)$this->bonusWallet();
+        $threshold             = $this->walletSetting ? (double)$this->walletSetting->min_wallet_threshold : 0;
         $this->creditBreakdown = [
             'remaining_subscription_charge' => $remaining,
             'wallet' => $wallet,
@@ -921,24 +928,38 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         ];
     }
 
-    public function alreadyCollectedSubscriptionFee()
-    {
-        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee())
-            return 0;
-        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (!empty($last_subscription_package_charge))
-            return $last_subscription_package_charge->package_price; else return 0;
-    }
-
-    /**
-     * @return bool
-     */
     public function isAlreadyCollectedAdvanceSubscriptionFee()
     {
-        $last_subscription_package_charge = $this->subscriptionPackageCharges()->orderBy('id', 'desc')->first();
-        if (empty($last_subscription_package_charge))
-            return false;
-        return $this->last_billed_date ? $last_subscription_package_charge->billing_date->between($this->last_billed_date->addSecond(), $this->periodicBillingHandler()->nextBillingDate()) : false;
+        $last_advance_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
+        if (empty($last_advance_subscription_package_charge)) return false;
+        return $this->isValidAdvancePayment($last_advance_subscription_package_charge);
+    }
+
+    public function invalidateAdvanceSubscriptionFee()
+    {
+        $charge = $this->lastAdvanceSubscriptionCharge();
+        if (!empty($charge)) {
+            $charge->is_valid_advance_payment = 0;
+            $charge->save();
+        }
+    }
+
+    private function lastAdvanceSubscriptionCharge()
+    {
+        return $this->subscriptionPackageCharges()->where('advance_subscription_fee', 1)->where('is_valid_advance_payment')->orderBy('id', 'desc')->first();
+    }
+
+    public function isValidAdvancePayment($last_subscription_package_charge)
+    {
+        return $last_subscription_package_charge->advance_subscription_fee && $last_subscription_package_charge->is_valid_advance_payment;
+    }
+
+    public function alreadyCollectedSubscriptionFee()
+    {
+        if (!$this->isAlreadyCollectedAdvanceSubscriptionFee()) return 0;
+        $last_subscription_package_charge = $this->lastAdvanceSubscriptionCharge();
+        if (empty($last_subscription_package_charge) || !$this->isValidAdvancePayment($last_subscription_package_charge)) return 0;
+        return (double)$last_subscription_package_charge->package_price;
     }
 
     public function subscriptionPackageCharges()
