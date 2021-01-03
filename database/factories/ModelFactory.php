@@ -74,7 +74,7 @@ $factory->define(Profile::class, function (Faker\Generator $faker) use ($common_
         'mobile_verified'=>1,
         'email_verified'=>1,
         'nid_verification_request_count'=>0,
-        'blood_group'=>'B+',
+        'blood_group'=>'B+'
     ]);
 });
 $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($common_seeds) {
@@ -91,6 +91,7 @@ $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($commo
         'reject_reason'=>'',
         'is_suspended'=>0,
         'remember_token'=>str_random(50),
+        'verification_status'=>'verified'
 
     ]);
 });
