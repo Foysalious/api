@@ -110,10 +110,10 @@ class PartnerRegistrationController extends Controller
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-                /* $affiliate = $profile->affiliate;
-                 if (!$affiliate) {
-                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                 }*/
+               /* $affiliate = $profile->affiliate;
+                if (!$affiliate) {
+                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -330,12 +330,12 @@ class PartnerRegistrationController extends Controller
         ini_set('max_execution_time', 220);
         try {
             $this->validate($request, [
-                'company_name'  => 'required|string',
-                'from'          => 'string|in:' . implode(',', constants('FROM')),
-                'geo'           => 'string',
-                'name'          => 'string',
-                'number'        => 'string',
-                'address'       => 'string',
+                'company_name' => 'required|string',
+                'from' => 'string|in:' . implode(',', constants('FROM')),
+                'geo' => 'string',
+                'name' => 'string',
+                'number' => 'string',
+                'address' => 'string',
                 'business_type' => 'string',
                 'has_webstore' => 'sometimes|numeric|between:0,1'
             ]);
