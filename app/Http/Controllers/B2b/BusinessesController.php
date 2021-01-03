@@ -2,9 +2,12 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Requests\TimeFrameReportRequest;
+use App\Jobs\Business\SendMailVerificationCodeEmail;
+use App\Jobs\Business\SendRFQCreateNotificationToPartners;
 use App\Models\BusinessJoinRequest;
 use App\Models\Notification;
 use App\Models\Partner;
+use App\Models\Procurement;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
@@ -25,6 +28,7 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use DB;
+use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Partner\PartnerStatuses;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
@@ -403,4 +407,10 @@ class BusinessesController extends Controller
 
         return $partner;
     }
+    public function testMail()
+    {
+        $profile = Profile::find(258042);
+        dispatch(new SendMailVerificationCodeEmail($profile));
+    }
+
 }
