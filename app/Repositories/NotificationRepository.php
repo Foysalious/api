@@ -271,7 +271,7 @@ class NotificationRepository
     public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade, $withMessage = true)
     {
         $title     = ' অপর্যাপ্ত  ব্যলেন্স';
-        $type      = BillingType::BN()[$package_type];
+        $type      = $package->titleTypeBn($package_type);
         $gradeType = $grade == PartnerSubscriptionChange::UPGRADE ? " এর" : $grade == PartnerSubscriptionChange::RENEWED ? " নাবায়ন এর" : " এর";
         $message   = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);

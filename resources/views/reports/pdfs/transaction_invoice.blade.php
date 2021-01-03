@@ -190,14 +190,14 @@
             </td>
         </tr>
 
-        <tr>
+        <!--<tr>
             <td>
                 <p class="terms">
                     <strong>Terms and Note:</strong>
                     If needed, it can take a maximum of 15 days to get your refund. You will only get return by the way you pay.
                 </p>
             </td>
-        </tr>
+        </tr>-->
 
     @endif
 
