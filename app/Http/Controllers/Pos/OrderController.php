@@ -25,7 +25,6 @@ use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Customer\Creator as PosCustomerCreator;
 use Sheba\Pos\Exceptions\InvalidPosOrder;
 use Sheba\Pos\Exceptions\PosExpenseCanNotBeDeleted;
-use Sheba\Pos\Exceptions\PosServiceNotFoundException;
 use Sheba\Pos\Jobs\OrderBillEmail;
 use Sheba\Pos\Jobs\OrderBillSms;
 use Sheba\Pos\Jobs\WebstoreOrderPushNotification;
@@ -111,7 +110,7 @@ class OrderController extends Controller
      */
     public function store($partner, Request $request, Creator $creator, ProfileCreator $profileCreator, PosCustomerCreator $posCustomerCreator, PartnerRepository $partnerRepository, PaymentLinkCreator $paymentLinkCreator)
     {
-        try {
+
             $this->validate($request, [
                 'services'              => 'required|string',
                 'paid_amount'           => 'sometimes|required|numeric',
@@ -215,15 +214,6 @@ class OrderController extends Controller
                 'order'   => $order,
                 'payment' => $link
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (PosServiceNotFoundException $exception) {
-            return api_response($request, $exception, 400, ['message' => $exception->getMessage()]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     private function sendCustomerEmail($order)
