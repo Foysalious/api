@@ -34,7 +34,7 @@ class PosCustomer extends Model implements CanApplyVoucher
 
     public function scopeGetByMobile($query, $mobile)
     {
-        return $query->select('pos_customers.*')->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')->where('profiles.mobile', 'LIKE', "%$mobile%")->first();
+        return $query->select('pos_customers.*')->leftJoin('profiles', 'profiles.id', '=', 'pos_customers.profile_id')->where('profiles.mobile', 'LIKE', "%$mobile%");
     }
 
     public function partnerPosCustomer()
