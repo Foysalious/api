@@ -403,7 +403,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
 
     public function scopeHistory($query)
     {
-        return $query->where([['closed_and_paid_at', '<>', null], ['cancelled_at', null]]);
+        return $query->where([['closed_and_paid_at', '<>', null], ['cancelled_at', null]])->orWhere('cancelled_at', '<>', null);
     }
 
     public function scopeCancelled($query)
