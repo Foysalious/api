@@ -85,6 +85,7 @@ abstract class PaymentMethod
             $payment->gateway_account_name   = $gateway_account_name;
             $payment->status                 = Statuses::INITIATED;
             $payment->valid_till             = $this->getValidTill();
+            $payment->request_payload        = json_encode(request()->all());
             $this->setModifier($user);
             $payment->fill((new RequestIdentification())->get());
             $this->withCreateModificationField($payment);
