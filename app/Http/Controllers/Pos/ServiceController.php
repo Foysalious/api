@@ -244,7 +244,6 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
-        try {
             $rules = [
                 'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
                 'image_gallery' => 'sometimes|required',
@@ -311,16 +310,6 @@ class ServiceController extends Controller
                 'msg' => 'Product Updated Successfully',
                 'service' => $partner_pos_service_arr
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
