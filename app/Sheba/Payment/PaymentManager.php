@@ -102,7 +102,6 @@ class PaymentManager
      */
     public function complete()
     {
-        \Log::info('complete'.request()->all());
         $payment = $this->validate();
         if ($payment->canComcompleteplete()) {
             $completion_class = $this->payable->getCompletionClass();
