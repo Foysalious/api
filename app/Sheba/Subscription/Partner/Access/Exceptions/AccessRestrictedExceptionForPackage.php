@@ -1,9 +1,10 @@
 <?php namespace Sheba\Subscription\Partner\Access\Exceptions;
 
+use App\Exceptions\ApiValidationException;
 use Exception;
 use Throwable;
 
-class AccessRestrictedExceptionForPackage extends Exception
+class AccessRestrictedExceptionForPackage extends ApiValidationException
 {
     public function __construct($message = "", $code = 0, Throwable $previous = null)
     {
