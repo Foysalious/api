@@ -31,8 +31,7 @@ class ExpensePdf
             ->orderBy('id', 'desc')->get();
 
         $total = $expenses->sum('amount');
-        //$total_in_words = (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($total);
-        $total_in_words = 'One Hundred tk';
+        $total_in_words = (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($total);
 
         $data = [
             'company' => $business->name,
