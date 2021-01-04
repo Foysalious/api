@@ -120,6 +120,17 @@ return [
         'Serve Due'     => 5,
         'Served'        => 6
     ],
+    'JOB_STATUS_SEQUENCE_FOR_ACTION'                         => [
+        'Pending'       => 1,
+        'Declined'      => 1,
+        'Not Responded' => 1,
+        'Accepted'      => 2,
+        'Schedule Due'  => 3,
+        'Process'       => 4,
+        'Serve Due'     => 5,
+        'Served'        => 6,
+        'Cancelled'     => 7
+    ],
     'JOB_STATUSES_SHOW'                           => [
         'Pending'       => [
             'sheba'    => 'Pending',
