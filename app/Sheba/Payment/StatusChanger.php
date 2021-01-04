@@ -29,6 +29,7 @@ class StatusChanger
      */
     public function changeToInitiationFailed($error_details)
     {
+        \Log::info('ctif'.json_encode(request()->all()));
         $this->logRepo->create([
             'to' => Statuses::INITIATION_FAILED,
             'from' => $this->payment->status,
@@ -46,6 +47,7 @@ class StatusChanger
      */
     public function changeToValidated($success_details)
     {
+        \Log::info('ctiv'.json_encode(request()->all()));
         $this->logRepo->create([
             'to' => Statuses::VALIDATED,
             'from' => $this->payment->status,
@@ -63,6 +65,7 @@ class StatusChanger
      */
     public function changeToValidationFailed($error_details)
     {
+        \Log::info('ctivf'.json_encode(request()->all()));
         $this->logRepo->create([
             'to' => Statuses::VALIDATION_FAILED,
             'from' => $this->payment->status,
