@@ -32,6 +32,7 @@ abstract class PaymentComplete
 
     protected function changePaymentStatus($to_status)
     {
+        \Log::info('payment compolete'.json_encode(request()->all()));
         $this->paymentRepository->create(['to' => $to_status, 'from' => $this->payment->status, 'transaction_details' => $this->payment->transaction_details]);
         $this->payment->status = $to_status;
         $this->payment->update();
