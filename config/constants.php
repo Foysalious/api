@@ -1124,7 +1124,7 @@ return [
             'bn' => 'মিটার',
             'en' => 'meter'
         ],
-        'dozon'  => [
+        'dozen'  => [
             'bn' => 'ডজন',
             'en' => 'dozen'
         ],
