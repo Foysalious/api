@@ -307,8 +307,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getContactResource()
     {
-        if ($operation_resource = $this->getFirstOperationResource())
-            return $operation_resource;
         if ($admin_resource = $this->getFirstAdminResource())
             return $admin_resource;
         return null;
