@@ -8,6 +8,7 @@ use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -19,6 +20,7 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Usage\Usage;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class PaymentLinkController extends Controller
 {

@@ -1,12 +1,11 @@
-<?php
-
-namespace Sheba\TopUp\Vendor\Response;
+<?php namespace Sheba\TopUp\Vendor\Response;
 
 
 class TopUpSuccessResponse
 {
     private $transactionId;
     private $transactionDetails;
+    private $topUpStatus;
 
     public function __get($name)
     {

@@ -9,5 +9,7 @@ interface Gateway
 
     public function getInitialStatus();
 
+    public static function getInitialStatusStatically();
+
     public function getShebaCommission();
 }
