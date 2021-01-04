@@ -3,7 +3,9 @@
 
 use App\Models\Affiliate;
 use App\Models\Profile;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
+use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -14,6 +16,9 @@ use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Verification\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
+use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
+use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 
 class SingleTopUpTest extends FeatureTestCase
 {
@@ -23,6 +28,11 @@ class SingleTopUpTest extends FeatureTestCase
     private $authrorizationToken;
     private $topUpVendor;
     private $token;
+    private $topUpVendorCommission;
+    private $topUpOtfSettings;
+    private $topUpVendorOtf;
+    private $topUpStatusChangeLog;
+
 
     public function setUp()
     {
@@ -58,8 +68,31 @@ class SingleTopUpTest extends FeatureTestCase
 
         Schema::disableForeignKeyConstraints();
         TopUpVendor::truncate();
+        TopUpVendorCommission::truncate();
+        TopUpOTFSettings::truncate();
+        TopUpOrder::truncate();
         Schema::enableForeignKeyConstraints();
+
         $this->topUpVendor = factory(TopUpVendor::class)->create();
+        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+                 'topup_vendor_id' => $this->topUpVendor->id
+        ]);
+
+        $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
+            'topup_vendor_id' => $this->topUpVendor->id
+        ]);
+
+        //TopUpVendorOTF::truncate();
+        $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
+            'topup_vendor_id' => $this->topUpVendor->id
+        ]);
+
+        //TopUpVendorOTFChangeLog::truncate();
+        $this->topUpStatusChangeLog= factory(TopUpVendorOTFChangeLog::class)->create([
+            'otf_id' => $this->topUpVendorOtf->id
+        ]);
+
+
     }
 
     public function testInvalidMobileNumberIsRejected()
@@ -154,7 +187,69 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The password field is required.", $data['message']);
     }
 
-    public function testSuccessfulTopUpRequest()
+    public function testOneTopUpRequestCreateOneTopUpOrder()
+    {
+        $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
+            ->setConstructorArgs([$this->app->make(AccountServer::class)])
+            ->setMethods(['verify'])
+            ->getMock();
+        $verify_pin_mock->method('setAgent')->will($this->returnSelf());
+        $verify_pin_mock->method('setProfile')->will($this->returnSelf());
+        $verify_pin_mock->method('setRequest')->will($this->returnSelf());
+
+        $this->app->instance(VerifyPin::class, $verify_pin_mock);
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 112,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        //$data = $response->decodeResponseJson();
+        $this->assertEquals(1, TopUpOrder::count());
+
+    }
+
+    public function testTopUpOrderDataMatchesTopUpRequestData()
+    {
+        $verify_pin_mock= $this->getMockBuilder(VerifyPin::class)
+            ->setConstructorArgs([$this->app->make(AccountServer::class)])
+            ->setMethods(['verify'])
+            ->getMock();
+        $verify_pin_mock->method('setAgent')->will($this->returnSelf());
+        $verify_pin_mock->method('setProfile')->will($this->returnSelf());
+        $verify_pin_mock->method('setRequest')->will($this->returnSelf());
+
+        $this->app->instance(VerifyPin::class, $verify_pin_mock);
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 112,
+            'password' => '12345'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals(1,$top_up_order->id);
+        $this->assertEquals('Successful',$top_up_order->status);
+        $this->assertEquals('+8801678242955',$top_up_order->payee_mobile);
+        $this->assertEquals('prepaid',$top_up_order->payee_mobile_type);
+        $this->assertEquals('112',$top_up_order->amount);
+        $this->assertEquals('1',$top_up_order->vendor_id);
+        $this->assertEquals('App\Models\Affiliate',$top_up_order->agent_type);
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals('1.12',$top_up_order->agent_commission);
+
+    }
+    public function testTopUpOrderSuccessfulResponseCodeAndMessage()
     {
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
@@ -177,10 +272,9 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(200, $data['code']);
-        $this->assertEquals("The password field is required.", $data['message']);
-    }
+        $this->assertEquals("Recharge Request Successful", $data['message']);
 
+    }
 
 }

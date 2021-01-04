@@ -4,6 +4,7 @@ use App\Models\Affiliate;
 use App\Models\Location;
 use App\Models\Profile;
 use App\Models\TopUpVendor;
+use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
 use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
@@ -126,3 +127,46 @@ $factory->define(TopUpVendor::class, function (Faker\Generator $faker) use ($com
 
     ]);
 });
+
+$factory->define(TopUpVendorCommission::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+
+        'agent_commission' => '1.00',
+        'ambassador_commission' =>'0.20',
+        'type' =>'App\Models\Affiliate',
+
+    ]);
+});
+
+$factory->define(Sheba\Dal\TopUpOTFSettings\Model::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+
+        'applicable_gateways'=>'["ssl","airtel"]',
+        'type'=>'App\Models\Affiliate',
+        'agent_commission'=>'5.03',
+    ]);
+});
+$factory->define(Sheba\Dal\TopUpVendorOTF\Model::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+
+        'amount' =>'104' ,
+        'name_en' =>'jkfhik' ,
+        'name_bn' => 'hurefi',
+        'description' =>'fgeywgw',
+        'type' =>'Bundle',
+        'sim_type' =>'Prepaid' ,
+        'cashback_amount' =>'12.00' ,
+        'status' =>'Active',
+
+    ]);
+});
+
+$factory->define(Sheba\Dal\TopUpVendorOTFChangeLog\Model::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+        'from_status'=>'Deactive',
+        'to_status'=>'Active',
+        'log'=>'OTF status changed from Deactive to Active.',
+
+    ]);
+});
+
