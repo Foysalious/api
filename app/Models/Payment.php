@@ -137,9 +137,4 @@ class Payment extends Model
         $details = $this->getTransactionDetails();
         return $details && property_exists($details, 'errorMessage') ? $details->errorMessage : null;
     }
-
-    public function setRequestPayloadAttribute()
-    {
-        $this->attributes['request_payload'] = json_encode(request()->all());
-    }
 }
