@@ -12,6 +12,7 @@ class XSS
      */
     protected $except = [
         'v2/businesses/*/announcements',
+        'v2/businesses/*/announcements/*',
         'v2/businesses/*/bids/*/hire',
         'v2/payments/cbl/success',
         'v2/payments/cbl/fail',
