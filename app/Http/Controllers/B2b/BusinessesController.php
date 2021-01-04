@@ -407,7 +407,7 @@ class BusinessesController extends Controller
 
         return $partner;
     }
-    public function testMail()
+    public function testMail(Request $request)
     {
         $profile = Profile::find(258042);
         dispatch(new SendMailVerificationCodeEmail($profile));

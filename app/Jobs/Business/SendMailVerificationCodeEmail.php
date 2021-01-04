@@ -32,13 +32,15 @@ class SendMailVerificationCodeEmail extends Job implements ShouldQueue
      */
     public function handle()
     {
+
         if ($this->attempts() <= 1) {
             $verification_code = randomString(4, 1);
             $key_name = 'email_verification_code_' . $verification_code;
             #Redis::set($key_name, json_encode(["profile_id" => 258042, 'code' => $verification_code]));
             #Redis::expire($key_name, 600);
-            $email = 'miajee@sheba.xyz';
-           # $email = 'tamanna.habib@meenabazar.com.bd';
+            #$email = 'miajee@sheba.xyz';
+           #$email = 'tamanna.habib@meenabazar.com.bd';
+           $email = request()->email;
 
             $subject = $verification_code . " is sBusiness login code";
             Mail::send('emails.reset-password', ['code' => 12211221], function ($m) use ($email, $subject) {
