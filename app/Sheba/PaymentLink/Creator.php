@@ -38,8 +38,8 @@ class Creator
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
         $this->paymentLinkRepo = $payment_link_repository;
-        $this->isDefault       = 0;
-        $this->amount          = null;
+        $this->isDefault = 0;
+        $this->amount = null;
         $this->bitlyLink = new BitlyLinkShort();
     }
 
@@ -177,18 +177,18 @@ class Creator
     private function makeData()
     {
         $this->data = [
-            'amount'                => $this->amount,
-            'reason'                => $this->reason,
-            'isDefault'             => $this->isDefault,
-            'userId'                => $this->userId,
-            'userName'              => $this->userName,
-            'userType'              => $this->userType,
-            'targetId'              => (int)$this->targetId,
-            'targetType'            => $this->targetType,
-            'payerId'               => $this->payerId,
-            'payerType'             => $this->payerType,
-            'emiMonth'              => $this->emiMonth,
-            'interest'              => $this->interest,
+            'amount' => $this->amount,
+            'reason' => $this->reason,
+            'isDefault' => $this->isDefault,
+            'userId' => $this->userId,
+            'userName' => $this->userName,
+            'userType' => $this->userType,
+            'targetId' => (int)$this->targetId,
+            'targetType' => $this->targetType,
+            'payerId' => $this->payerId,
+            'payerType' => $this->payerType,
+            'emiMonth' => $this->emiMonth,
+            'interest' => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge
         ];
         if ($this->isDefault)
@@ -199,17 +199,17 @@ class Creator
 
     public function getPaymentLinkData()
     {
-        $payer     = null;
+        $payer = null;
         $payerInfo = $this->getPayerInfo();
         return array_merge([
-            'link_id'                 => $this->paymentLinkCreated->linkId,
-            'reason'                  => $this->paymentLinkCreated->reason,
-            'type'                    => $this->paymentLinkCreated->type,
-            'status'                  => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
-            'amount'                  => $this->paymentLinkCreated->amount,
-            'link'                    => $this->paymentLinkCreated->link,
-            'emi_month'               => $this->paymentLinkCreated->emiMonth,
-            'interest'                => $this->paymentLinkCreated->interest,
+            'link_id' => $this->paymentLinkCreated->linkId,
+            'reason' => $this->paymentLinkCreated->reason,
+            'type' => $this->paymentLinkCreated->type,
+            'status' => $this->paymentLinkCreated->isActive == 1 ? 'active' : 'inactive',
+            'amount' => $this->paymentLinkCreated->amount,
+            'link' => $this->paymentLinkCreated->link,
+            'emi_month' => $this->paymentLinkCreated->emiMonth,
+            'interest' => $this->paymentLinkCreated->interest,
             'bank_transaction_charge' => $this->paymentLinkCreated->bankTransactionCharge
         ], $payerInfo);
     }
@@ -228,10 +228,7 @@ class Creator
             $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
             $mobile = $this->getPayerInfo()['payer']['mobile'];
 
-            /** @var Sms $sms */
-            $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
-            $sms->shoot();
+            $this->sendSms($mobile, $message);
         }
     }
 
@@ -241,13 +238,13 @@ class Creator
         if ($this->paymentLinkCreated->payerId) {
             try {
                 /** @var PosCustomer $payer */
-                $payer   = app('App\\Models\\' . pamelCase($this->paymentLinkCreated->payerType))::find($this->paymentLinkCreated->payerId);
+                $payer = app('App\\Models\\' . pamelCase($this->paymentLinkCreated->payerType))::find($this->paymentLinkCreated->payerId);
                 $details = $payer ? $payer->details() : null;
                 if ($details) {
                     $payerInfo = [
                         'payer' => [
-                            'id'     => $details['id'],
-                            'name'   => $details['name'],
+                            'id' => $details['id'],
+                            'name' => $details['name'],
                             'mobile' => $details['phone']
                         ]
                     ];
@@ -272,5 +269,19 @@ class Creator
             $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
         }
         return $this;
+    }
+
+    private function sendSms($sender_mobile, $message)
+    {
+        /** @var Sms $sms */
+        $sms = app(Sms::class);
+        $sms = $sms->setVendor('infobip')->to($sender_mobile)->msg($message);
+        try {
+            $sms->shoot();
+        } catch (\Throwable $e) {
+            logError($e);
+            return false;
+        }
+        return true;
     }
 }

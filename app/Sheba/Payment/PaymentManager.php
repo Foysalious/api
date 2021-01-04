@@ -103,7 +103,7 @@ class PaymentManager
     public function complete()
     {
         $payment = $this->validate();
-        if ($payment->canComplete()) {
+        if ($payment->canComcompleteplete()) {
             $completion_class = $this->payable->getCompletionClass();
             $completion_class->setPayment($payment);
             $payment = $completion_class->complete();
