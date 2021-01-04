@@ -152,6 +152,19 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $cancel_log = $this->getLeaveCancelLogDetails($requestable) ? $this->getLeaveCancelLogDetails($requestable) : [];
         $update_log = $this->getLeaveLogDetails($requestable) ? $this->getLeaveLogDetails($requestable) : [];
 
-        return array_merge($cancel_log, $update_log);
+        $data = array_merge($cancel_log, $update_log);
+
+        usort($data, array($this,'sortByCreatedAt'));
+
+        return $data;
+    }
+
+    private function sortByCreatedAt($a, $b)
+    {
+        $a = $a['created_at'];
+        $b = $b['created_at'];
+
+        if ($a == $b) return 0;
+        return $a > $b ? -1 : 1;
     }
 }
