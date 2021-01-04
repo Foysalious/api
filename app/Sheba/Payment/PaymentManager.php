@@ -104,6 +104,7 @@ class PaymentManager
     {
         \Log::info('complete'.json_encode(request()->all()));
         $payment = $this->validate();
+        $payment->request_payload = json_encode(request()->all());
         if ($payment->canComcompleteplete()) {
             $completion_class = $this->payable->getCompletionClass();
             $completion_class->setPayment($payment);
