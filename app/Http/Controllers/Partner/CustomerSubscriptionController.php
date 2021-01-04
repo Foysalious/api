@@ -184,7 +184,7 @@ class CustomerSubscriptionController extends Controller
             $form_data = [
                 'remember_token' => $request->remember_token,
             ];
-            $url = env('SHEBA_BACKEND_URL') . "/api/bulk-accept-subscription-orders/$subscription->id";
+            $url = config('sheba.admin_url') . "/api/bulk-accept-subscription-orders/$subscription->id";
             $client = new Client();
             $response = $client->request('POST', $url, ['form_params' => $form_data]);
 

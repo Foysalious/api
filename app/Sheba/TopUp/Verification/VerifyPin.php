@@ -23,6 +23,10 @@ class VerifyPin
     /** @var AccountServer */
     private $accountServer;
 
+    /**
+     * VerifyPin constructor.
+     * @param AccountServer $accountServer
+     */
     public function __construct(AccountServer $accountServer)
     {
         $this->accountServer = $accountServer;
@@ -81,13 +85,30 @@ class VerifyPin
     {
         $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $data = json_decode($result->getBody(), true);
-        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT) throw new PinMismatchException();
+        $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
+        
+        if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
+            throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
+
         for ($i = 0; $i < self::WRONG_PIN_COUNT_LIMIT; $i++) {
             if ($data['requests'][$i]['status'] != Statuses::FAIL) {
-                throw new PinMismatchException();
+                throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
             }
         }
+
         $this->sessionOut();
+    }
+
+    /**
+     * @param $request_status
+     * @return int
+     */
+    private function getConsecutiveFailedCount($request_status)
+    {
+        foreach ($request_status as $i => $data) {
+            if ($data['status'] == Statuses::SUCCESS) return (int)$i;
+        }
+        return count($request_status);
     }
 
     private function sessionOut()
@@ -107,6 +128,4 @@ class VerifyPin
         if ($this->managerResource && $this->agent instanceof Partner) $this->managerResource->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
         if ($this->agent instanceof Affiliate) $this->agent->update(['remember_token' => str_random(255)]);
     }
-
-
 }

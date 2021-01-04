@@ -37,7 +37,7 @@ class OrderHandler
         if (get_class($user) == constants('REWARD_TARGET_TYPE')['Partner']) $user_name = $user->name;
         elseif (get_class($user) == constants('REWARD_TARGET_TYPE')['Customer']) $user_name = $user->profile->name;
 
-        $this->notify("$user_name has placed a reward order.", env('SHEBA_BACKEND_URL'). '/reward-shop/order', $order);
+        $this->notify("$user_name has placed a reward order.", config('sheba.admin_url'). '/reward-shop/order', $order);
 
     }
 
@@ -62,7 +62,7 @@ class OrderHandler
      */
     protected function notify($title = 'New Reward Order Placed', $link = null, $order)
     {
-        $link = $link ? : env('SHEBA_BACKEND_URL');
+        $link = $link ? : config('sheba.admin_url');
 
         notify()->departments([5, 9, 13, 18])->send([
             "title" => $title,
