@@ -340,7 +340,7 @@ class ServiceController extends Controller
             $units     = [];
             $all_units = constants('POS_SERVICE_UNITS');
             foreach ($all_units as $key => $unit) {
-                array_push($units, $unit);
+                array_push($units, array_merge($unit,['key' => $key]));
             }
             $default_unit =[
                 'key' => 'piece',
