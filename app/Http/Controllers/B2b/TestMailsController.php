@@ -13,15 +13,23 @@ class TestMailsController extends Controller
     {
         #$this->dispatch(new SendTestMail());
         #return api_response($request, null, 200);
-        try {
-            $email = $request->email;
-            $subject = "This Is Test Mail";
+        $email = $request->email;
+        $subject = "This Is Test Mail";
+        if ($request->has('design') && $request->design == 1) {
+            Mail::send('emails.test-mail', [], function ($m) use ($email, $subject) {
+                $m->to($email)->subject($subject);
+            });
+        } elseif ($request->has('complex_design') && $request->complex_design == 1) {
+            Mail::send('emails.email_verification_V3', ['code' => 1111], function ($m) use ($email, $subject) {
+                $m->to($email)->subject($subject);
+            });
+        } else {
             Mail::send([], [], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject)->setBody('Hi, welcome to Sheba Platform Limited.');
             });
-        } catch (Exception $e) {
-            throw new MailgunClientException();
         }
+
+        return api_response($request, null, 200);
     }
 
 }
