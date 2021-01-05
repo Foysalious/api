@@ -365,7 +365,7 @@ class CoWorkerController extends Controller
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @return JsonResponse
      */
-    public function index($business, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
+    public function index($business, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -377,57 +377,33 @@ class CoWorkerController extends Controller
             return api_response($request, $department_info, 200, ['department_info' => $department_info]);
         }
 
-        $is_inactive_filter_applied = false;
         list($offset, $limit) = calculatePagination($request);
 
         if ($request->has('status') && $request->status == Statuses::INACTIVE) {
-            $is_inactive_filter_applied = true;
-            $members = $business->members()->select('members.id', 'profile_id')->with([
-                'profile' => function ($q) {
-                    $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
-                }
-            ])->wherePivot('status', Statuses::INACTIVE)->get()->unique()
-                ->each(function ($member) use ($business_member_repo, $business) {
-                    $business_member = $business_member_repo->builder()
-                        ->where('business_id', $business->id)
-                        ->where('member_id', $member->id)
-                        ->where('status', Statuses::INACTIVE)
-                        ->first();
 
-                    $member->setRelation('businessMemberGenerated', $business_member->load([
-                        'role' => function ($q) {
-                            $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                'businessDepartment' => function ($q) {
-                                    $q->select('business_departments.id', 'business_id', 'name');
-                                }
-                            ]);
-                        }
-                    ]));
-                    $member->push();
-                });
+            $business_members = $business->getAccessibleInactiveBusinessMember();
 
             if ($request->has('department')) {
-                $members = $members->filter(function ($member) use ($request) {
-                    return $member->businessMemberGenerated->role && $member->businessMemberGenerated->role->businessDepartment->id == $request->department;
-                });
-            }
-        } else {
-            $members = $business->membersWithProfileAndAccessibleBusinessMember();
-            if ($request->has('department')) {
-                $members = $members->whereHas('businessMember', function ($q) use ($request) {
-                    $q->whereHas('role', function ($q) use ($request) {
-                        $q->whereHas('businessDepartment', function ($q) use ($request) {
-                            $q->where('business_departments.id', $request->department);
-                        });
+                $business_members = $business_members->whereHas('role', function ($q) use ($request){
+                    $q->whereHas('businessDepartment', function ($q) use ($request){
+                        $q->where('id', $request->department);
                     });
                 });
             }
-            $members = $members->get()->unique();
+        } else {
+            $business_members = $business->getAccessibleBusinessMember();
+            if ($request->has('department')) {
+                $business_members = $business_members->whereHas('role', function ($q) use ($request){
+                    $q->whereHas('businessDepartment', function ($q) use ($request){
+                        $q->where('id', $request->department);
+                    });
+                });
+            }
         }
 
         $manager = new Manager();
         $manager->setSerializer(new ArraySerializer());
-        $employees = new Collection($members, new CoWorkerListTransformer($is_inactive_filter_applied));
+        $employees = new Collection($business_members->get(), new CoWorkerListTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
         if ($request->has('status')) $employees = $this->findByStatus($employees, $request->status)->values();
