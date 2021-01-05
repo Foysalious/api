@@ -12,7 +12,6 @@ class ApprovalSettingRequester
     public function setModules($modules)
     {
         $this->modules = $modules;
-        if ($this->modules) $this->modules = json_decode($this->modules, 1);
         return $this;
     }
 
