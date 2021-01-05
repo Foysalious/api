@@ -1,11 +1,14 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Exceptions\ApiValidationException;
 use App\Models\Partner;
 use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Models\Profile;
 use Sheba\Dal\Discount\InvalidDiscountType;
+use Sheba\Dal\POSOrder\OrderStatuses;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
@@ -42,6 +45,8 @@ class Creator
     private $discountHandler;
     private $posServiceRepo;
     private $paymentMethod;
+    /** @var OrderStatuses $status */
+    protected $status;
 
     public function __construct(PosOrderRepository $order_repo, PosOrderItemRepository $item_repo,
                                 PaymentCreator $payment_creator, StockManager $stock_manager,
@@ -80,6 +85,7 @@ class Creator
         $this->data = $data;
         $this->createValidator->setServices(json_decode($this->data['services'], true));
         if (!isset($this->data['payment_method'])) $this->data['payment_method'] = 'cod';
+        if (isset($this->data['customer_address'])) $this->setAddress($this->data['customer_address']);
         return $this;
     }
 
@@ -101,10 +107,17 @@ class Creator
         return $this;
     }
 
+    public function setStatus($status)
+    {
+        $this->status = $status;
+        return $this;
+    }
+
     /**
      * @return PosOrder
      * @throws InvalidDiscountType
      * @throws ExpenseTrackingServerError
+     * @throws ApiValidationException
      */
     public function create()
     {
@@ -114,11 +127,16 @@ class Creator
         $order_data['previous_order_id']     = (isset($this->data['previous_order_id']) && $this->data['previous_order_id']) ? $this->data['previous_order_id'] : null;
         $order_data['partner_wise_order_id'] = $this->createPartnerWiseOrderId($this->partner);
         $order_data['emi_month']             = isset($this->data['emi_month']) ? $this->data['emi_month'] : null;
+        $order_data['sales_channel']         = isset($this->data['sales_channel']) ? $this->data['sales_channel'] : SalesChannels::POS;
+        $order_data['delivery_charge']       = isset($this->data['sales_channel']) && $this->data['sales_channel'] == SalesChannels::WEBSTORE ? $this->partner->delivery_charge : 0;
+        $order_data['status']                = $this->status;
         $order                               = $this->orderRepo->save($order_data);
         $services                            = json_decode($this->data['services'], true);
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
+            if(!$original_service)
+                throw new ApiValidationException("Service not found with provided ID", 400);
 
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
@@ -239,6 +257,7 @@ class Creator
               ->setInterest($order->interest)
               ->setBankTransactionCharge($order->bank_transaction_charge)
               ->setPaymentMethod($this->paymentMethod)
+              ->setIsWebstoreOrder($order->sales_channel == SalesChannels::WEBSTORE ? 1 : 0)
               ->store();
     }
 

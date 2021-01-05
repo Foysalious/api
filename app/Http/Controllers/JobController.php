@@ -1,7 +1,10 @@
 <?php namespace App\Http\Controllers;
 
+use App\Models\Customer;
 use App\Models\CustomerFavorite;
 use App\Models\Job;
+use Sheba\Authentication\AuthUser;
+use Sheba\Customer\Jobs\Reschedule\Reschedule;
 use App\Models\PartnerOrder;
 use Illuminate\Support\Facades\App;
 use Sheba\Dal\JobCancelReason\JobCancelReason;
@@ -29,6 +32,7 @@ use Sheba\Dal\Discount\DiscountTypes;
 use Sheba\Dal\JobService\JobService;
 use Sheba\Dal\Payable\Types;
 use Sheba\JobDiscount\JobDiscountHandler;
+use Sheba\Jobs\JobStatuses;
 use Sheba\Location\FromGeo;
 use Sheba\LocationService\PriceCalculation;
 use Sheba\LocationService\UpsellCalculation;
@@ -43,6 +47,7 @@ use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Services\FormatServices;
+use Sheba\UserAgentInformation;
 use Throwable;
 
 class JobController extends Controller
@@ -162,6 +167,8 @@ class JobController extends Controller
         $job_collection->put('can_take_review', $this->canTakeReview($job));
         $job_collection->put('can_pay', $this->canPay($job));
         $job_collection->put('can_add_promo', $this->canAddPromo($job));
+        $job_collection->put('can_reschedule', $job->canReschedule() && ($this->checkPreparationTime($job) || $job->isScheduleDue()) ? 1 : 0);
+        $job_collection->put('can_cancel', $job->canCancel() ? 1 : 0);
         $job_collection->put('is_vat_applicable', $job->category ? $job->category['is_vat_applicable'] : null);
         $job_collection->put('max_order_amount', $job->category ? (double)$job->category['max_order_amount'] : null);
         $job_collection->put('is_same_service', 0);
@@ -241,6 +248,26 @@ class JobController extends Controller
         $job_collection->put('delivery_charge', $delivery_charge_discount_data['delivery_charge']);
         $job_collection->put('delivery_discount', $delivery_charge_discount_data['delivery_discount']);
         return api_response($request, $job_collection, 200, ['job' => $job_collection]);
+    }
+
+    private function checkPreparationTime(Job $job)
+    {
+        $preparation_time = $job->category->preparation_time_minutes;
+        $now = Carbon::now();
+
+        $job_schedule = Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start);;
+        $current_time_with_preparation = $job_schedule->subMinutes(60)->subMinutes($preparation_time);
+
+        return ($now <= $current_time_with_preparation);
+    }
+
+    /**
+     * @param $status
+     * @return bool
+     */
+    public function isStatusBeforeProcess($status)
+    {
+        return constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[$status] < constants('JOB_STATUS_SEQUENCE_FOR_ACTION')[JobStatuses::PROCESS];
     }
 
     private function formatComplains($complains)
@@ -755,5 +782,31 @@ class JobController extends Controller
             ];
         }
         return (new InvoiceHandler($job->partnerOrder))->save('quotation');
+    }
+
+    public function rescheduleJob($customer, $job, Request $request, Reschedule $reschedule_job, UserAgentInformation $user_agent_information)
+    {
+        $this->validate($request, ['schedule_date' => 'string', 'schedule_time_slot' => 'string']);
+
+        $job = Job::find($job);
+        if ($job == null) return api_response($request, null, 404);
+
+        $user_agent_information->setRequest($request);
+
+        $customer = Customer::find($customer);
+
+        $reschedule_job
+            ->setCustomer($customer)
+            ->setJob($job)
+            ->setUserAgentInformation($user_agent_information)
+            ->setScheduleDate($request->schedule_date)
+            ->setScheduleTimeSlot($request->schedule_time_slot);
+
+        $response = $reschedule_job->reschedule();
+
+        $res = ['message' => $response['msg']];
+        if(!empty($response['job_id'])) $res['job_id'] = $response['job_id'];
+
+        return api_response($request, $response, $response['code'], $res);
     }
 }
