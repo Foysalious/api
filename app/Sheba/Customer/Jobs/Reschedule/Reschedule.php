@@ -97,7 +97,7 @@ class Reschedule
         if (!$job_time->validate()) return $response->setCode(400)->setMessage($job_time->error_message);
 
         $client = new Client();
-        $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/reschedule',
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $this->job->id . '/customer-reschedule',
             [
                 'form_params' => [
                     'customer_id' => $this->customer->id,
@@ -109,7 +109,7 @@ class Reschedule
                     'ip' => $this->userAgentInformation->getIp()
                 ]
             ]);
-        
+
         $response = $response->setResponse(json_decode($res->getBody(), 1))->getResponse();
         if($response['code'] === 421) {
             $this->resetJob();
