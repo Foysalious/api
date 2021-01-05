@@ -44,7 +44,7 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
             $channel = config('sheba.push_notification_channel_name.employee');
             $name = $this->profile->name ?: null;
             $data = [
-                "title" => "leave cancel",
+                "title" => "Leave Cancel",
                 "message" => $name . " canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $this->leave->id,
