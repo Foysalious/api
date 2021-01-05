@@ -15,7 +15,6 @@ use Throwable;
 class BkashPayoutController extends Controller {
     public function pay(Request $request, ShebaBkash $sheba_bkash) {
         if ($request->token != config('sheba.payout_token')) return api_response($request, null, 400);
-
         try {
             $this->validate($request, ['amount' => 'required|numeric', 'bkash_number' => 'required|string|mobile:bd', 'request_id' => 'required']);
             /** @var NormalPayout $payout */
