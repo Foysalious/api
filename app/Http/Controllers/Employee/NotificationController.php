@@ -117,7 +117,7 @@ class NotificationController extends Controller
                 "message" => "Test support",
                 "event_type" => 'support',
                 "event_id" => $request->support_id,
-                "sound" => "notification_sound",
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
@@ -128,7 +128,7 @@ class NotificationController extends Controller
                 "message" => "Test announcement",
                 "event_type" => 'announcement',
                 "event_id" => $request->announcement_id,
-                "sound" => "notification_sound",
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
@@ -141,6 +141,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "attendance_action_type" => 'checkin',
                 "time" => Carbon::now(),
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -151,7 +152,7 @@ class NotificationController extends Controller
                 "message" => "Leave Request Arrived Message",
                 "event_type" => 'leave_request',
                 "event_id" => $request->leave_request,
-                "sound" => "notification_sound",
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
@@ -162,19 +163,18 @@ class NotificationController extends Controller
                 "message" => "AI choose you a substitute",
                 "event_type" => 'substitute',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound",
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
         }
-
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
                 "title" => "leave cancel",
                 "message" => "Test canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound",
+                "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel);
