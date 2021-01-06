@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequestRepositoryInterface;
 use Sheba\Partner\ImpressionManager;
+use Sheba\PartnerOrderRequest\Events\OrderRequestEvent;
 use Sheba\PartnerOrderRequest\Validators\CreateValidator;
 use Sheba\PushNotificationHandler;
 use Throwable;
@@ -97,14 +98,16 @@ class Creator
             $topic = config('sheba.push_notification_topic_name.manager') . $partner->id;
             $channel = config('sheba.push_notification_channel_name.manager');
             $sound = config('sheba.push_notification_sound.manager');
-            $this->pushNotificationHandler->send([
+            $payload=[
                 "title" => 'New Order',
                 "message" => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "sound" => "notification_sound",
                 "event_type" => 'PartnerOrder',
                 "event_id" => $this->partnerOrderRequestId,
                 "link" => "new_order"
-            ], $topic, $channel, $sound);
+            ];
+            $this->pushNotificationHandler->send($payload, $topic, $channel, $sound);
+            event(new OrderRequestEvent(['user_type'=>'partner','user_id'=>$partner->id,'payload'=>$payload]));
         } catch (Throwable $e) {
             logError($e);
         }
