@@ -1,9 +1,9 @@
 <?php namespace Sheba\Payment\Exceptions;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use Throwable;
 
-class InitiateFailedException extends ApiValidationException
+class InitiateFailedException extends DoNotThrowException
 {
     public function __construct($message = 'Payment initiation failed!', $code = 400, Throwable $previous = null)
     {

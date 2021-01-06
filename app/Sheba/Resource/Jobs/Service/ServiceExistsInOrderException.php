@@ -1,10 +1,10 @@
 <?php namespace Sheba\Resource\Jobs\Service;
 
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use Throwable;
 
-class ServiceExistsInOrderException extends ApiValidationException
+class ServiceExistsInOrderException extends DoNotThrowException
 {
     public function __construct($message = 'This service is already added in your order.', $code = 400, Throwable $previous = null)
     {
