@@ -234,7 +234,7 @@ class AutomaticEntryRepository extends BaseRepository
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
         $data                       = [
-            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_at'              => Carbon::now()->format('Y-m-d H:s:i'),
             'created_from'            => json_encode($created_from),
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
