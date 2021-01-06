@@ -1,6 +1,5 @@
 <?php namespace Sheba\Business\ApprovalSetting;
 
-
 use Sheba\Business\ApprovalSettingModule\Creator as ApprovalSettingModuleCreator;
 use  Sheba\Business\ApprovalSettingApprover\Creator as ApprovalSettingApproverCreator;
 use Sheba\Business\ApprovalSettingApprover\ApproverRequester;
@@ -46,6 +45,14 @@ class Creator
      */
     private $approverSettingApproverCreator;
 
+    /**
+     * Creator constructor.
+     * @param ApprovalSettingRepository $approval_setting_repo
+     * @param ModuleRequester $module_requester
+     * @param ApprovalSettingModuleCreator $approval_setting_module_creator
+     * @param ApproverRequester $approver_requester
+     * @param ApprovalSettingApproverCreator $approval_setting_approver_creator
+     */
     public function __construct(ApprovalSettingRepository $approval_setting_repo,
                                 ModuleRequester $module_requester,
                                 ApprovalSettingModuleCreator $approval_setting_module_creator,
@@ -59,12 +66,20 @@ class Creator
         $this->approverSettingApproverCreator = $approval_setting_approver_creator;
     }
 
+    /**
+     * @param ApprovalSettingRequester $approval_setting_requester
+     * @return $this
+     */
     public function setApprovalSettingRequester(ApprovalSettingRequester $approval_setting_requester)
     {
         $this->approvalSettingRequester = $approval_setting_requester;
         return $this;
     }
 
+    /**
+     * @param Business $business
+     * @return $this
+     */
     public function setBusiness(Business $business)
     {
         $this->business = $business;

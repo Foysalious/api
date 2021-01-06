@@ -3,20 +3,17 @@
 use App\Transformers\Business\ApprovalSettingDetailsTransformer;
 use App\Transformers\Business\ApprovalSettingListTransformer;
 use App\Transformers\CustomSerializer;
+use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\Business\ApprovalSetting\Updater;
 use Sheba\ModificationFields;
-use Sheba\Repositories\Interfaces\Business\DepartmentRepositoryInterface;
-use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
-use Sheba\Repositories\ProfileRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
 use Sheba\Dal\ApprovalSetting\Targets;
-use Sheba\Dal\ApprovalSettingModule\Modules;
 
 class ApprovalSettingsController extends Controller
 {
@@ -26,29 +23,32 @@ class ApprovalSettingsController extends Controller
      * @var ApprovalSettingRepository
      */
     private $approvalSettingsRepo;
+    /**
+     * @var ApprovalSettingRequester
+     */
+    private $approvalSettingsRequester;
 
     /**
      * ApprovalSettingsController constructor.
      * @param ApprovalSettingRepository $approval_settings_repo
+     * @param ApprovalSettingRequester $approval_setting_requester
      */
-    public function __construct(ApprovalSettingRepository $approval_settings_repo)
+    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester)
     {
         $this->approvalSettingsRepo = $approval_settings_repo;
+        $this->approvalSettingsRequester = $approval_setting_requester;
 
     }
 
     /**
      * @param Request $request
-     * @param ApprovalSettingRepository $approval_settings_repo
-     * @param DepartmentRepositoryInterface $department_repo
-     * @param BusinessMemberRepositoryInterface $business_member_repo
-     * @param ProfileRepository $profile_repo
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
-    public function index(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
+    public function index(Request $request)
     {
-        $business = $request->business_member;
-        if (!$business) return api_response($request, null, 401);
+        $business = $request->business;
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
 
         list($offset, $limit) = calculatePagination($request);
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id);
@@ -60,7 +60,7 @@ class ApprovalSettingsController extends Controller
         });
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer($department_repo, $business_member_repo, $profile_repo));
+        $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
@@ -69,117 +69,113 @@ class ApprovalSettingsController extends Controller
         return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => $total_approval_settings]);
     }
 
-    public function store(Request $request, ApprovalSettingRequester $approval_setting_requester, Creator $creator)
+    /**
+     * @param Request $request
+     * @param Creator $creator
+     * @return JsonResponse
+     */
+    public function store(Request $request, Creator $creator)
     {
+        $business = $request->business;
+        $manager_member = $request->manager_member;
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
         $this->validate($request, [
             'modules' => 'required',
-            'note' => 'required|string',
+            'note' => 'string',
             'target_type' => 'required|in:' . implode(',', Targets::get()),
             'approvers' => 'required',
         ]);
 
-        $message = $this->moduleValidation($request);
-
-        if ($message) return api_response($request, null, 400, ['message' => $message]);
-
-        $request_modules = json_decode($request->modules,true);
-
-        $business = $request->business;
-        $manager_member = $request->manager_member;
-
         $this->setModifier($manager_member);
-        $approval_setting_requester->setModules($request_modules)
+        $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->targetId)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
-        $creator->setApprovalSettingRequester($approval_setting_requester)->setBusiness($business)->create();
+        if ($this->approvalSettingsRequester->hasError()) {
+            return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
+        }
+
+        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->create();
         return api_response($request, null, 200);
     }
 
-    public function delete($settings, Request $request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function show(Request $request)
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $approval_settings = $this->approvalSettingsRepo->find($request->settings);
-        if (!$approval_settings) return api_response($request, null, 404);
-        $approval_settings->delete();
-
-        return api_response($request, null, 200);
-    }
-
-    public function show(Request $request, DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
-    {
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-        $approval_settings = $this->approvalSettingsRepo->where('id', $request->settings);
+        $approval_settings = $this->approvalSettingsRepo->find($request->setting);
         if (!$approval_settings) return api_response($request, null, 404);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($approval_settings->get(), new ApprovalSettingDetailsTransformer($department_repo, $business_member_repo, $profile_repo));
+        $resource = new Collection($approval_settings->get(), new ApprovalSettingDetailsTransformer());
         $approval_settings_details = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
     }
 
-    public function update(Request $request, ApprovalSettingRequester $approval_setting_requester, Updater $updater)
+    /**
+     * @param Request $request
+     * @param Updater $updater
+     * @return JsonResponse
+     */
+    public function update(Request $request, Updater $updater)
     {
+        $manager_member = $request->manager_member;
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
 
         $this->validate($request, [
-            'modules' => 'required',
+            'modules' => 'sometimes|required',
             'note' => 'string',
-            'target_type' => 'in:' . implode(',', Targets::get()),
-            'target_id' => 'required_if:target_type,in,'.implode(',', [Targets::DEPARTMENT,Targets::EMPLOYEE]),
+            'target_type' => 'sometimes|required|in:' . implode(',', Targets::get()),
+            'target_id' => 'required_if:target_type,in,' . implode(',', [Targets::DEPARTMENT, Targets::EMPLOYEE]),
         ]);
 
-        $message = $this->moduleValidation($request);
-
-        if ($message) return api_response($request, null, 400, ['message' => $message]);
-
-        $request_modules = json_decode($request->modules,true);
-
-        $business = $request->business_member;
-        if (!$business) return api_response($request, null, 401);
-
-        $manager_member = $request->manager_member;
-
-        $approval_settings =  $this->approvalSettingsRepo->find($request->settings);
-
+        $approval_settings = $this->approvalSettingsRepo->find($request->setting);
         if (!$approval_settings) return api_response($request, null, 404);
 
         $this->setModifier($manager_member);
-
-        $approval_setting_requester->setModules($request_modules)
+        $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->targetId)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
-        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($approval_setting_requester)->update();
-
+        if ($this->approvalSettingsRequester->hasError()) {
+            return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
+        }
+        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->update();
         return api_response($request, null, 200);
     }
 
-    private function moduleValidation($request)
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function delete(Request $request)
     {
-        $request_modules = json_decode($request->modules,true);
-        $message = null;
-        if (!is_array($request_modules) || json_last_error() > 0) return $message = 'Not a valid modules request';
-        $modules = [];
-        foreach ($request_modules as $module)
-        {
-            if (!in_array($module, Modules::get())) array_push($modules, $module);
-        }
-        if (count($modules) > 0) return $message = (implode(',', $modules)).' is not valid module';
-
-        return $message;
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $approval_settings = $this->approvalSettingsRepo->find($request->setting);
+        if (!$approval_settings) return api_response($request, null, 404);
+        $approval_settings->delete();
+        return api_response($request, null, 200);
     }
 
+    /**
+     * @param $approval_settings_list
+     * @param $search
+     * @return array
+     */
     private function searchWithEmployee($approval_settings_list, $search)
     {
         return array_where($approval_settings_list, function ($key, $value) use ($search) {
