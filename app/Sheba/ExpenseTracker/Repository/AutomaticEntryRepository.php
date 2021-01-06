@@ -240,7 +240,7 @@ class AutomaticEntryRepository extends BaseRepository
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
             'head_name'               => $this->head,
-            'note'                    => $this->paymentMethod == "payment_link" ? 'Automatically Placed from Sheba payment link' : 'Automatically Placed from Sheba',
+            'note'                    => $this->paymentMethod == 'Automatically Placed from Sheba payment link',
             'source_type'             => $this->sourceType,
             'source_id'               => $this->sourceId,
             'type'                    => $this->for,
@@ -249,7 +249,8 @@ class AutomaticEntryRepository extends BaseRepository
             'emi_month'               => $this->emiMonth,
             'interest'                => $this->interest,
             'bank_transaction_charge' => $this->bankTransactionCharge,
-            'is_webstore_order'       => $this->isWebstoreOrder
+            'is_webstore_order'       => $this->isWebstoreOrder,
+            'is_payment_link'         => true,
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
