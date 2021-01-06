@@ -1,8 +1,8 @@
 <?php namespace Sheba\LocationService;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 
-class CorruptedPriceStructureException extends ApiValidationException
+class CorruptedPriceStructureException extends DoNotThrowException
 {
 
 }

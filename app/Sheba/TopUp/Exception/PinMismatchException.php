@@ -1,9 +1,9 @@
 <?php namespace Sheba\TopUp\Exception;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use Throwable;
 
-class PinMismatchException extends ApiValidationException
+class PinMismatchException extends DoNotThrowException
 {
     private $wrongPinCount;
 

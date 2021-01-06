@@ -69,17 +69,11 @@ class ApprovalSettingsController extends Controller
         return api_response($request, null, 200, ['data' => $approval_settings_list, 'total_approval_settings' => $total_approval_settings]);
     }
 
-    private function searchWithEmployee($approval_settings_list, $search)
-    {
-        return array_where($approval_settings_list, function ($key, $value) use ($search) {
-            return str_contains(strtoupper($value['target_type']['employee']['name']), strtoupper($search));
-        });
-    }
-
     public function store(Request $request, ApprovalSettingRequester $approval_setting_requester, Creator $creator)
     {
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+
         $this->validate($request, [
             'modules' => 'required',
             'note' => 'required|string',
@@ -87,11 +81,17 @@ class ApprovalSettingsController extends Controller
             'approvers' => 'required',
         ]);
 
+        $message = $this->moduleValidation($request);
+
+        if ($message) return api_response($request, null, 400, ['message' => $message]);
+
+        $request_modules = json_decode($request->modules,true);
+
         $business = $request->business;
         $manager_member = $request->manager_member;
 
         $this->setModifier($manager_member);
-        $approval_setting_requester->setModules($request->modules)
+        $approval_setting_requester->setModules($request_modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->targetId)
             ->setNote($request->note)
@@ -137,6 +137,12 @@ class ApprovalSettingsController extends Controller
             'target_id' => 'required_if:target_type,in,'.implode(',', [Targets::DEPARTMENT,Targets::EMPLOYEE]),
         ]);
 
+        $message = $this->moduleValidation($request);
+
+        if ($message) return api_response($request, null, 400, ['message' => $message]);
+
+        $request_modules = json_decode($request->modules,true);
+
         $business = $request->business_member;
         if (!$business) return api_response($request, null, 401);
 
@@ -148,7 +154,7 @@ class ApprovalSettingsController extends Controller
 
         $this->setModifier($manager_member);
 
-        $approval_setting_requester->setModules($request->modules)
+        $approval_setting_requester->setModules($request_modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->targetId)
             ->setNote($request->note)
@@ -157,6 +163,28 @@ class ApprovalSettingsController extends Controller
         $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($approval_setting_requester)->update();
 
         return api_response($request, null, 200);
+    }
+
+    private function moduleValidation($request)
+    {
+        $request_modules = json_decode($request->modules,true);
+        $message = null;
+        if (!is_array($request_modules) || json_last_error() > 0) return $message = 'Not a valid modules request';
+        $modules = [];
+        foreach ($request_modules as $module)
+        {
+            if (!in_array($module, Modules::get())) array_push($modules, $module);
+        }
+        if (count($modules) > 0) return $message = (implode(',', $modules)).' is not valid module';
+
+        return $message;
+    }
+
+    private function searchWithEmployee($approval_settings_list, $search)
+    {
+        return array_where($approval_settings_list, function ($key, $value) use ($search) {
+            return str_contains(strtoupper($value['target_type']['employee']['name']), strtoupper($search));
+        });
     }
 
 }

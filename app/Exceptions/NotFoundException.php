@@ -2,7 +2,7 @@
 
 use Exception;
 
-class NotFoundException extends ApiValidationException
+class NotFoundException extends DoNotThrowException
 {
 
 }

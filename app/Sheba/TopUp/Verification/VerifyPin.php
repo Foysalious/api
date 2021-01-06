@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp\Verification;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use GuzzleHttp\Exception\ClientException;
@@ -72,13 +72,13 @@ class VerifyPin
         try {
             $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
         } catch (ClientException $e) {
-            if ($e->getCode() != 403) throw $e;
+            if ($e->getCode() != 403) throw new DoNotThrowException();
             $this->getAuthenticateRequests();
         }
     }
 
     /**
-     * @throws ApiValidationException
+     * @throws DoNotThrowException
      * @throws PinMismatchException
      */
     private function getAuthenticateRequests()
@@ -86,7 +86,7 @@ class VerifyPin
         $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $data = json_decode($result->getBody(), true);
         $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
-        
+
         if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
             throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
 
@@ -115,7 +115,7 @@ class VerifyPin
     {
         $this->logout();
         $this->resetRememberToken();
-        throw new ApiValidationException("You have been logged out", 401);
+        throw new DoNotThrowException("You have been logged out", 401);
     }
 
     private function logout()

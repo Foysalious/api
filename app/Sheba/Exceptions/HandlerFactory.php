@@ -1,6 +1,6 @@
 <?php namespace Sheba\Exceptions;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use Exception as BaseException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -47,7 +47,7 @@ class HandlerFactory
         if ($e instanceof ValidationException) return app(ValidationExceptionHandler::class);
         if ($e instanceof WrongPinError) return app(WrongPinErrorHandler::class);
         if ($e instanceof PinMismatchException) return app(PinMismatchExceptionHandler::class);
-        if ($e instanceof ApiValidationException) return app(ApiValidationExceptionHandler::class);
+        if ($e instanceof DoNotThrowException) return app(ApiValidationExceptionHandler::class);
         if ($e instanceof MethodNotAllowedHttpException) return app(MethodNotAllowedHttpExceptionHandler::class);
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
