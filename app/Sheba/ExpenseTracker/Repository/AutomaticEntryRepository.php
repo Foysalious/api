@@ -240,7 +240,7 @@ class AutomaticEntryRepository extends BaseRepository
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
             'head_name'               => $this->head,
-            'note'                    => $this->paymentMethod == 'Automatically Placed from Sheba payment link',
+            'note'                    => 'Automatically Placed from Sheba payment link',
             'source_type'             => $this->sourceType,
             'source_id'               => $this->sourceId,
             'type'                    => $this->for,
