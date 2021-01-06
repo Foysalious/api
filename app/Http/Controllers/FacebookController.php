@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Profile;
 use App\Repositories\FacebookRepository;
@@ -24,7 +22,6 @@ class FacebookController extends Controller
     private $fbKit;
     private $profileRepository;
     private $facebookRepository;
-
 
     public function __construct()
     {
