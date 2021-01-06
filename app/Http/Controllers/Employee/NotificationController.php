@@ -117,7 +117,7 @@ class NotificationController extends Controller
                 "message" => "Test support",
                 "event_type" => 'support',
                 "event_id" => $request->support_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -128,7 +128,7 @@ class NotificationController extends Controller
                 "message" => "Test announcement",
                 "event_type" => 'announcement',
                 "event_id" => $request->announcement_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -138,10 +138,9 @@ class NotificationController extends Controller
                 "title" => 'Attendance Alert',
                 "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
                 "event_type" => 'attendance',
-                "sound" => "notification_sound",
                 "attendance_action_type" => 'checkin',
                 "time" => Carbon::now(),
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -152,7 +151,7 @@ class NotificationController extends Controller
                 "message" => "Leave Request Arrived Message",
                 "event_type" => 'leave_request',
                 "event_id" => $request->leave_request,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -163,7 +162,7 @@ class NotificationController extends Controller
                 "message" => "AI choose you a substitute",
                 "event_type" => 'substitute',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -174,7 +173,7 @@ class NotificationController extends Controller
                 "message" => "Test canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
