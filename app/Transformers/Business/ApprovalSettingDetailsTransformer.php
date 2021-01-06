@@ -26,21 +26,18 @@ class ApprovalSettingDetailsTransformer extends TransformerAbstract
     private $profileRepo;
 
     /**
-     * ApprovalSettingTransformer constructor.
-     * @param DepartmentRepositoryInterface $department_repo
-     * @param BusinessMemberRepositoryInterface $business_member_repo
-     * @param ProfileRepository $profile_repo
+     * ApprovalSettingListTransformer constructor.
      */
-    public function __construct(DepartmentRepositoryInterface $department_repo, BusinessMemberRepositoryInterface $business_member_repo, ProfileRepository $profile_repo)
+    public function __construct()
     {
-        $this->departmentRepo = $department_repo;
-        $this->businessMemberRepo = $business_member_repo;
-        $this->profileRepo = $profile_repo;
+        $this->departmentRepo = app(DepartmentRepositoryInterface::class);
+        $this->businessMemberRepo = app(BusinessMemberRepositoryInterface::class);
+        $this->profileRepo = app(ProfileRepository::class);
 
     }
 
     /**
-     * @param Business $business
+     * @param $approval_setting
      * @return mixed
      */
     public function transform($approval_setting)
