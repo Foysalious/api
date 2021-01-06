@@ -177,6 +177,7 @@ class AutomaticEntryRepository extends BaseRepository
         return $this;
     }
 
+
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
@@ -186,7 +187,7 @@ class AutomaticEntryRepository extends BaseRepository
         $this->emiMonth = $emiMonth;
         return $this;
     }
-    
+
     /**
      * @param mixed $interest
      * @return AutomaticEntryRepository
@@ -234,7 +235,7 @@ class AutomaticEntryRepository extends BaseRepository
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
         $data                       = [
-            'created_at'              => Carbon::now()->format('Y-m-d H:s:i'),
+            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
             'created_from'            => json_encode($created_from),
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
@@ -251,6 +252,7 @@ class AutomaticEntryRepository extends BaseRepository
             'is_webstore_order'       => $this->isWebstoreOrder,
             'is_payment_link'         => true,
         ];
+        \Log::info('real ' . json_encode($data));
         if (empty($data['amount']))
             $data['amount'] = 0;
         if (is_null($this->amountCleared))
