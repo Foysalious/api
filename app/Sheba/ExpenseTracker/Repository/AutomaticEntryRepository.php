@@ -252,7 +252,6 @@ class AutomaticEntryRepository extends BaseRepository
             'is_webstore_order'       => $this->isWebstoreOrder,
             'is_payment_link'         => true,
         ];
-        \Log::info('real ' . json_encode($data));
         if (empty($data['amount']))
             $data['amount'] = 0;
         if (is_null($this->amountCleared))
