@@ -4,6 +4,7 @@ class CustomerRoute
 {
     public function set($api)
     {
+        $api->post('continue-with-kit', 'Customer\LoginController@continueWithKit');
         $api->group(['prefix' => 'customers'], function ($api) {
             $api->group(['prefix' => '{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('partners-nearby', 'PartnerLocationController@getNearbyPartners');
