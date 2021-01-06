@@ -120,7 +120,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
@@ -131,7 +131,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('attendance')) {
             $pushNotificationHandler->send([
@@ -155,7 +155,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('leave_id')) {
             $pushNotificationHandler->send([
@@ -166,7 +166,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
@@ -177,7 +177,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound.aiff",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
 
         return api_response($request, null, 200);
