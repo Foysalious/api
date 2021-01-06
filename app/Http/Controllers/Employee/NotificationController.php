@@ -107,9 +107,9 @@ class NotificationController extends Controller
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
 
-        $topic  = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
-        $channel= config('sheba.push_notification_channel_name.employee');
 
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
