@@ -1,9 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotThrowException;
 use Throwable;
 
-class WrongPinError extends ApiValidationException
+class WrongPinError extends DoNotThrowException
 {
     private $wrongPinCount;
     private $remainingHours;

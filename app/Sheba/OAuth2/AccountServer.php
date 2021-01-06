@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Exceptions\DoNotThrowException;
 use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
@@ -207,14 +209,20 @@ class AccountServer
         ]);
     }
 
+    /**
+     * @param $mobile
+     * @param $email
+     * @param $password
+     * @param $purpose
+     * @return ResponseInterface
+     * @throws DoNotThrowException
+     */
     public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
-        $data = [
-            'password' => $password,
-            'purpose' => $purpose
-        ];
-        if (!empty($email)) $data['email'] = $email;
+        $data = ['password' => $password, 'purpose' => $purpose];
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
+        if (!isset($data['mobile']) && !isset($data['email'])) throw new DoNotThrowException();
         return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
             'form_params' => $data
         ]);

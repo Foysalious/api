@@ -22,7 +22,7 @@ class Handler extends ExceptionHandler
         AuthorizationException::class,
         HttpException::class,
         ValidationException::class,
-        ApiValidationException::class
+        DoNotThrowException::class
     ];
 
     /**
