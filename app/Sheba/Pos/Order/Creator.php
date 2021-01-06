@@ -1,7 +1,10 @@
 <?php namespace Sheba\Pos\Order;
 
 use App\Exceptions\DoNotThrowException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Models\Partner;
+use App\Models\PartnerPosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -178,11 +181,18 @@ class Creator
 
     /**
      * @return mixed|null
+     * @throws PosCustomerNotFoundException
+     * @throws PartnerPosCustomerNotFoundException
      */
     private function resolveCustomerId()
     {
         if ($this->customer) return $this->customer->id;
-        else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+        if (!isset($this->data['customer_id']) || !$this->data['customer_id']) return null;
+        $pos_customer = PosCustomer::find($this->data['customer_id']);
+        if (!$pos_customer) throw new PosCustomerNotFoundException("Customer #" . $this->data['customer_id'] . " Doesn't Exists.");
+        $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where('customer_id', $this->data['customer_id'])->first();
+        if (!$partner_pos_customer) throw new PartnerPosCustomerNotFoundException("Customer #" . $this->data['customer_id'] . " Doesn't Belong To Partner #" . $this->partner->id);
+        return $this->data['customer_id'];
     }
 
 
