@@ -1,7 +1,6 @@
 <?php namespace Sheba\OAuth2;
 
 use GuzzleHttp\Client;
-use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
 {
@@ -230,5 +229,17 @@ class AccountServer
                 'purpose' => $purpose
             ]
         ]);
+    }
+
+    /**
+     * @param $code
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getTokenByShebaAccountKit($code)
+    {
+        $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
+        return $data['token'];
     }
 }
