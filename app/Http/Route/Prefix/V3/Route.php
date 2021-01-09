@@ -65,7 +65,5 @@ class Route
                 $api->get('/{id}', 'SubscriptionController@details');
             });
         });
-
-
     }
 }
