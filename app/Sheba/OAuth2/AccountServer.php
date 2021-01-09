@@ -239,4 +239,16 @@ class AccountServer
             ]
         ]);
     }
+
+    /**
+     * @param $code
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getTokenByShebaAccountKit($code)
+    {
+        $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
+        return $data['token'];
+    }
 }

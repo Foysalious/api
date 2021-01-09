@@ -1,6 +1,5 @@
 <?php namespace Sheba\OAuth2;
 
-
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Partner;
@@ -27,7 +26,6 @@ class AuthUser
     private $user;
     /** @var Model|null */
     private $avatar;
-
 
     public function __construct($attributes = [])
     {
@@ -281,5 +279,4 @@ class AuthUser
         $this->business = $business;
         return $this;
     }
-
 }
