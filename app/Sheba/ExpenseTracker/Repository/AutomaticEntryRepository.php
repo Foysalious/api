@@ -236,7 +236,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @return mixed
      * @throws Exception
      */
-    private function getData()
+    public function getData()
     {
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');

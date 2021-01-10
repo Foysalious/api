@@ -93,6 +93,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($this->target) {
             \Log::info('target time -----------   '.json_encode($this->target->created_at).'  ---------');
             $entry_repo->setCreatedAt($this->target->created_at);
+            \Log::info('getData -----------   '.json_encode($entry_repo->getData()).'  ---------');
             $entry_repo->setSourceType($this->getSourceType());
             $entry_repo->setSourceId($this->target->id);
         }
