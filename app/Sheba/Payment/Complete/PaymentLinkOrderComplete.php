@@ -91,7 +91,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                                                           ->setEmiMonth($payable->emi_month)->setAmountCleared($payable->amount);
         $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
         if ($this->target) {
-            \Log::info('target time -----------   '.json_encode($this->target->created_at).'  ---------');
+            \Log::info('target time -----------   '.json_encode($this->target).'  ---------');
             $entry_repo->setCreatedAt($this->target->created_at);
             $entry_repo->setSourceType($this->getSourceType());
             $entry_repo->setSourceId($this->target->id);
