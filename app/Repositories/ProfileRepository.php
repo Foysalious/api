@@ -124,7 +124,6 @@ class ProfileRepository
                 $info['order_count']  = $avatar->orders->count();
                 $info['voucher_code'] = constants('APP_VOUCHER');
                 $info['referrer_id']  = $avatar->referrer_id;
-                $info['token']        = $this->getJwtToken($avatar, $from);
             } elseif ($from == 'resource') {
                 $resource_types                    = $avatar->partnerResources->pluck('resource_type')->toArray();
                 $info['is_handyman']               = count($resource_types) > 0 ? !isResourceAdmin($resource_types) : false;
