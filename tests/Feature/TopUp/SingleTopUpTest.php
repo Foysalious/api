@@ -1,4 +1,4 @@
-<?php namespace Feature\TopUp;
+<?php namespace Tests\Feature\TopUp;
 
 
 use App\Models\Affiliate;
@@ -75,19 +75,17 @@ class SingleTopUpTest extends FeatureTestCase
 
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-                 'topup_vendor_id' => $this->topUpVendor->id
+            'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
-        //TopUpVendorOTF::truncate();
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
 
-        //TopUpVendorOTFChangeLog::truncate();
         $this->topUpStatusChangeLog= factory(TopUpVendorOTFChangeLog::class)->create([
             'otf_id' => $this->topUpVendorOtf->id
         ]);
@@ -171,6 +169,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The amount field is required.", $data['message']);
     }
+
     public function testPasswordValidationResponseCode()
     {
         $response = $this->post('/v2/top-up/affiliate', [
@@ -199,7 +198,7 @@ class SingleTopUpTest extends FeatureTestCase
 
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
 
-        $response = $this->post('/v2/top-up/affiliate', [
+        $this->post('/v2/top-up/affiliate', [
             'mobile' => '01678242955',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
@@ -209,9 +208,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        //$data = $response->decodeResponseJson();
         $this->assertEquals(1, TopUpOrder::count());
-
     }
 
     public function testTopUpOrderDataMatchesTopUpRequestData()
@@ -247,8 +244,8 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals('App\Models\Affiliate',$top_up_order->agent_type);
         $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
         $this->assertEquals('1.12',$top_up_order->agent_commission);
-
     }
+
     public function testTopUpOrderSuccessfulResponseCodeAndMessage()
     {
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
@@ -274,7 +271,6 @@ class SingleTopUpTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
-
     }
 
 }
