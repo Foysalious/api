@@ -1,6 +1,6 @@
 <?php namespace Sheba\Pos\Order;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
 use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
 use App\Models\Partner;
@@ -120,7 +120,7 @@ class Creator
      * @return PosOrder
      * @throws InvalidDiscountType
      * @throws ExpenseTrackingServerError
-     * @throws ApiValidationException
+     * @throws DoNotReportException
      */
     public function create()
     {
@@ -139,7 +139,7 @@ class Creator
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
             if(!$original_service)
-                throw new ApiValidationException("Service not found with provided ID", 400);
+                throw new DoNotReportException("Service not found with provided ID", 400);
 
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;

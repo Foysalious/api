@@ -1,9 +1,9 @@
 <?php namespace App\Exceptions\Pos\Customer;
 
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 
-class PartnerPosCustomerNotFoundException extends ApiValidationException
+class PartnerPosCustomerNotFoundException extends DoNotReportException
 {
 
 }
