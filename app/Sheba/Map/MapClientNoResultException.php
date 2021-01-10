@@ -1,7 +1,7 @@
 <?php namespace Sheba\Map;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class MapClientNoResultException extends DoNotThrowException
+class MapClientNoResultException extends DoNotReportException
 {
 }

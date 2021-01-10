@@ -1,8 +1,8 @@
 <?php namespace Sheba\LocationService;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class CorruptedPriceStructureException extends DoNotThrowException
+class CorruptedPriceStructureException extends DoNotReportException
 {
 
 }

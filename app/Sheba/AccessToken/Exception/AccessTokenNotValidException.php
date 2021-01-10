@@ -1,9 +1,9 @@
 <?php namespace Sheba\AccessToken\Exception;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class AccessTokenNotValidException extends DoNotThrowException
+class AccessTokenNotValidException extends DoNotReportException
 {
     public function __construct($message = "Your session has expired. Try Login", $code = 401, Throwable $previous = null)
     {

@@ -1,10 +1,10 @@
 <?php namespace Sheba\Subscription\Partner\Access\Exceptions;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Exception;
 use Throwable;
 
-class AccessRestrictedExceptionForPackage extends DoNotThrowException
+class AccessRestrictedExceptionForPackage extends DoNotReportException
 {
     public function __construct($message = "", $code = 0, Throwable $previous = null)
     {

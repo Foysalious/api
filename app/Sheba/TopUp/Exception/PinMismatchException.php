@@ -1,9 +1,9 @@
 <?php namespace Sheba\TopUp\Exception;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class PinMismatchException extends DoNotThrowException
+class PinMismatchException extends DoNotReportException
 {
     private $wrongPinCount;
 

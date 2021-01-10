@@ -1,9 +1,9 @@
 <?php namespace Sheba\Payment\Exceptions;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class InitiateFailedException extends DoNotThrowException
+class InitiateFailedException extends DoNotReportException
 {
     public function __construct($message = 'Payment initiation failed!', $code = 400, Throwable $previous = null)
     {

@@ -3,7 +3,7 @@
 use Exception;
 use Throwable;
 
-class DoNotThrowException extends Exception
+class DoNotReportException extends Exception
 {
     public function __construct($message = 'Bad Request', $code = 400, Throwable $previous = null)
     {

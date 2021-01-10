@@ -1,9 +1,9 @@
 <?php namespace Sheba\Payment\Adapters\Error;
 
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class PayableInitiateErrorException extends DoNotThrowException
+class PayableInitiateErrorException extends DoNotReportException
 {
 
 }

@@ -1,7 +1,7 @@
 <?php namespace App\Exceptions;
 
 
-class NotAvailableException extends DoNotThrowException
+class NotAvailableException extends DoNotReportException
 {
 
 }

@@ -2,7 +2,7 @@
 
 use Throwable;
 
-class HyperLocationNotFoundException extends DoNotThrowException
+class HyperLocationNotFoundException extends DoNotReportException
 {
     public function __construct($message = 'Your are out of service area.', $code = 400, Throwable $previous = null)
     {
