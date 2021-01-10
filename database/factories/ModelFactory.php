@@ -1,8 +1,11 @@
 <?php
 
 use App\Models\Affiliate;
+use App\Models\Customer;
 use App\Models\Location;
+use App\Models\Member;
 use App\Models\Profile;
+use App\Models\Resource;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
@@ -168,5 +171,41 @@ $factory->define(Sheba\Dal\TopUpVendorOTFChangeLog\Model::class, function (Faker
         'log'=>'OTF status changed from Deactive to Active.',
 
     ]);
+
 });
 
+$factory->define(Customer::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+        'remember_token'=>$faker->randomLetter,
+        'wallet'=>'10000',
+        'reward_point'=>'5000',
+        'order_count'=>'0',
+        'served_order_count'=>'0',
+        'voucher_order_count'=>'0',
+
+    ]);
+
+});
+
+$factory->define(Resource::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+
+        'father_name'=>$faker->name,
+        'remember_token'=>$faker->randomLetter,
+        'status'=>'Verified',
+        'is_verified'=>1,
+        'wallet'=>'10000',
+        'reward_point'=>'0',
+
+    ]);
+
+});
+
+$factory->define(Member::class, function (Faker\Generator $faker) use ($common_seeds) {
+    return array_merge($common_seeds,[
+
+        'remember_token'=>$faker->randomLetter,
+        'is_verified'=>1,
+    ]);
+
+});

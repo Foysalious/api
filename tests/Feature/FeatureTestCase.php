@@ -1,6 +1,7 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Customer;
 use App\Models\Profile;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -56,6 +57,15 @@ class FeatureTestCase extends TestCase
         $affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
+        $customer = factory(Customer::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $resource = factory(Customer::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $member = factory(Customer::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
 
         $authorization_request = factory(AuthorizationRequest::class)->create([
             'profile_id' => $this->profile->id
@@ -68,9 +78,15 @@ class FeatureTestCase extends TestCase
                 'name' => $this->profile->name,
                 'email_verified' => $this->profile->email_verified
             ],
-            'customer' => null,
-            'resource' => null,
-            'member' => null,
+            'customer' =>[
+                'id' => $customer->id
+            ],
+            'resource' => [
+                'id' => $resource->id
+            ],
+            'member' => [
+                'id' => $member->id
+            ],
             'business_member' => null,
             'affiliate' => [
                 'id' => $affiliate->id
@@ -85,6 +101,7 @@ class FeatureTestCase extends TestCase
             'authorization_request_id' => $authorization_request->id,
             'token' => $this->token
         ]);
+
     }
 
     protected  function truncateTable($table)

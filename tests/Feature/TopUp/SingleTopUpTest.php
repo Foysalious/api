@@ -32,6 +32,7 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
         $this->logIn();
 
+
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -85,6 +86,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
+        dd($this->token);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
