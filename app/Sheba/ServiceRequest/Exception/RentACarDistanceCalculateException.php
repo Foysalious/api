@@ -1,9 +1,9 @@
 <?php namespace Sheba\ServiceRequest\Exception;
 
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 
-class RentACarDistanceCalculateException extends ApiValidationException
+class RentACarDistanceCalculateException extends DoNotReportException
 {
 
 }
