@@ -133,6 +133,7 @@ class EmployeeController extends Controller
     public function getDashboard(Request $request, ActionProcessor $action_processor,
                                  ProfileCompletionCalculator $completion_calculator)
     {
+        $business = $this->getBusiness($request);
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
 
@@ -159,7 +160,10 @@ class EmployeeController extends Controller
             ],
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
-            'is_profile_complete' => $profile_completion_score ? 1 : 0
+            'is_profile_complete' => $profile_completion_score ? 1 : 0,
+            'is_eligible_for_lunch' => !in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
+                'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
+            ] : null
         ];
 
         if ($data['attendance']['can_checkout']) {
@@ -280,7 +284,9 @@ class EmployeeController extends Controller
         $employees = new Collection($members, new CoWorkerMinimumTransformer());
         $employees = collect($manager->createData($employees)->toArray()['data']);
 
-        $employees = $employees->reject(function($employee) use ($business_member) { return $employee['id'] == $business_member->id; });
+        $employees = $employees->reject(function ($employee) use ($business_member) {
+            return $employee['id'] == $business_member->id;
+        });
 
         if (count($employees) > 0) return api_response($request, $employees, 200, ['managers' => $employees->values()]);
         return api_response($request, null, 404);
