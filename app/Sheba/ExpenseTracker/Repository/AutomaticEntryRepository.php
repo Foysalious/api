@@ -236,7 +236,7 @@ class AutomaticEntryRepository extends BaseRepository
      * @return mixed
      * @throws Exception
      */
-    public function getData()
+    private function getData()
     {
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
@@ -265,7 +265,6 @@ class AutomaticEntryRepository extends BaseRepository
             $data['amount_cleared'] = $data['amount'];
         if ($this->profileId)
             $data['profile_id'] = $this->profileId;
-        \Log::info('createdAt -----------   '.json_encode($this->createdAt).'  ---------');
         return $data;
     }
 
