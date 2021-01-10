@@ -14,7 +14,6 @@ use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
-use Sheba\TopUp\Exception\TopUpExceptions;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
@@ -24,19 +23,15 @@ use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Sheba\TopUp\Verification\VerifyPin;
 use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
 use Throwable;
-
 use Hash;
 use App\Models\Affiliate;
-use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
-use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
-use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
+use Sheba\Dal\TopUpOTFSettings\EloquentImplementation as TopUpOTFSettingsRepo;
+use Sheba\Dal\TopUpVendorOTF\EloquentImplementation as TopUpVendorOTFRepo;
 use Sheba\TopUp\Vendor\Internal\PaywellClient;
 use Sheba\TopUp\Vendor\Response\Paywell\PaywellSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Paywell\PaywellFailResponse;
@@ -326,7 +321,7 @@ class TopUpController extends Controller
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
 
-        if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
+        if ($otf_settings && $otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
             $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
 
