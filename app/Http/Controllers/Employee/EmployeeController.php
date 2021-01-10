@@ -161,7 +161,7 @@ class EmployeeController extends Controller
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
-            'is_eligible_for_lunch' => !in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
+            'is_eligible_for_lunch' => in_array($business->id, config('b2b.BUSINESSES_IDS_FOR_LUNCH')) ? [
                 'link' => config('b2b.BUSINESSES_LUNCH_LINK'),
             ] : null
         ];
