@@ -1,14 +1,18 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessMember;
+use App\Models\Member;
 use App\Transformers\Business\ApprovalSettingDetailsTransformer;
 use App\Transformers\Business\ApprovalSettingListTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\Business\ApprovalSetting\Updater;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -91,7 +95,7 @@ class ApprovalSettingsController extends Controller
         $this->setModifier($manager_member);
         $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
-            ->setTargetId($request->targetId)
+            ->setTargetId($request->target_id)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
@@ -109,14 +113,16 @@ class ApprovalSettingsController extends Controller
      */
     public function show(Request $request)
     {
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+        /** @var ApprovalSetting $approval_settings */
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
         if (!$approval_settings) return api_response($request, null, 404);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($approval_settings->get(), new ApprovalSettingDetailsTransformer());
+        $resource = new Item($approval_settings, new ApprovalSettingDetailsTransformer());
         $approval_settings_details = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
@@ -129,7 +135,9 @@ class ApprovalSettingsController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
+        /** @var Member $manager_member */
         $manager_member = $request->manager_member;
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
@@ -146,7 +154,7 @@ class ApprovalSettingsController extends Controller
         $this->setModifier($manager_member);
         $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
-            ->setTargetId($request->targetId)
+            ->setTargetId($request->target_id)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
@@ -163,6 +171,7 @@ class ApprovalSettingsController extends Controller
      */
     public function delete(Request $request)
     {
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
