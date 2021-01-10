@@ -258,6 +258,7 @@ class AutomaticEntryRepository extends BaseRepository
             $data['amount_cleared'] = $data['amount'];
         if ($this->profileId)
             $data['profile_id'] = $this->profileId;
+        \Log::info('real data -----------   '.json_encode($data).'  ---------');
         return $data;
     }
 
