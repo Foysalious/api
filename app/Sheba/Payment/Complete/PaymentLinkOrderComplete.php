@@ -102,7 +102,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($payer instanceof Profile) {
             $entry_repo->setParty($payer);
         }
-        $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)->setPaymentId($this->payment->id);
+        $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
+            ->setPaymentId($this->payment->id)
+            ->setIsPaymentLink(1);
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
