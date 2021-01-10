@@ -27,6 +27,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $interest;
     private $bankTransactionCharge;
     private $isWebstoreOrder = 0;
+    private $isPaymentLink = 0;
 
     /**
      * @param mixed $paymentMethod
@@ -131,6 +132,12 @@ class AutomaticEntryRepository extends BaseRepository
     public function setIsWebstoreOrder($isWebstoreOrder)
     {
         $this->isWebstoreOrder = $isWebstoreOrder;
+        return $this;
+    }
+
+    public function setIsPaymentLink($isPaymentLink)
+    {
+        $this->isPaymentLink = $isPaymentLink;
         return $this;
     }
 
@@ -240,7 +247,7 @@ class AutomaticEntryRepository extends BaseRepository
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
             'head_name'               => $this->head,
-            'note'                    => 'Automatically Placed from Sheba payment link',
+            'note'                    => 'Automatically Placed from Sheba',
             'source_type'             => $this->sourceType,
             'source_id'               => $this->sourceId,
             'type'                    => $this->for,
@@ -250,7 +257,7 @@ class AutomaticEntryRepository extends BaseRepository
             'interest'                => $this->interest,
             'bank_transaction_charge' => $this->bankTransactionCharge,
             'is_webstore_order'       => $this->isWebstoreOrder,
-            'is_payment_link'         => true,
+            'is_payment_link'         => $this->isPaymentLink
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;
