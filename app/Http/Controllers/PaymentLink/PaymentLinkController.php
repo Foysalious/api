@@ -90,7 +90,17 @@ class PaymentLinkController extends Controller
             ]);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order')->setEmiMonth((int)$request->emi_month)->setEmiCalculations();
+            $this->creator
+                ->setIsDefault($request->isDefault)
+                ->setAmount($request->amount)
+                ->setReason($request->purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setTargetId($request->pos_order_id)
+                ->setTargetType('pos_order')
+                ->setEmiMonth((int)$request->emi_month)
+                ->setEmiCalculations();
 
             if($request->has('pos_order_id')){
                 $pos_order = PosOrder::find($request->pos_order_id);
