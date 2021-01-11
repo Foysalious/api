@@ -68,7 +68,7 @@ class TopUp
      */
     public function recharge(TopUpOrder $topup_order)
     {
-        \Log::info('recharge reward'.json_encode(request()-all()));
+        \Log::info('recharge reward'.json_encode(request()->all()));
         if ($this->validator->setTopupOrder($topup_order)->validate()->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->validator->getError());
             return;
