@@ -340,9 +340,14 @@ class ServiceController extends Controller
             $units     = [];
             $all_units = constants('POS_SERVICE_UNITS');
             foreach ($all_units as $key => $unit) {
-                array_push($units, $unit);
+                array_push($units, array_merge($unit,['key' => $key]));
             }
-            return api_response($request, $units, 200, ['units' => $units]);
+            $default_unit =[
+                'key' => 'piece',
+                'en' => constants('POS_SERVICE_UNITS')['piece']['en'],
+                'bn' => constants('POS_SERVICE_UNITS')['piece']['bn']
+            ];
+            return api_response($request, $units, 200, ['units' => $units,'default_unit' => $default_unit]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);

@@ -177,7 +177,7 @@ class PosOrderList
         });
         $orders_query = $orders_query->orWhere([
             [
-                'pos_orders.id',
+                'pos_orders.partner_wise_order_id',
                 'LIKE',
                 '%' . $search_query . '%'
             ],
