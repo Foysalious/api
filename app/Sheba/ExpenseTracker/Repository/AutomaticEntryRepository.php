@@ -165,10 +165,10 @@ class AutomaticEntryRepository extends BaseRepository
     public function setCreatedAt(Carbon $created_at)
     {
         try {
-            $this->createdAt = $created_at->format('Y-m-d H:s:i');
+            $this->createdAt = $created_at->format('Y-m-d H:i:s');
             return $this;
         } catch (Throwable $e) {
-            $this->createdAt = Carbon::now()->format('Y-m-d H:s:i');
+            $this->createdAt = Carbon::now()->format('Y-m-d H:i:s');
             $this->notifyBug($e);
             return $this;
         }
@@ -240,10 +240,10 @@ class AutomaticEntryRepository extends BaseRepository
     {
         $datetime = time();
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
-        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
-        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
+        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:i:s');
+        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:i:s');
         $data                       = [
-            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:i:s'),
             'created_from'            => json_encode($created_from),
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
