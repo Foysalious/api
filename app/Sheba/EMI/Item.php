@@ -123,7 +123,7 @@ class Item implements Arrayable {
             'id'              => $this->id,
             'customer_name'   => 'George Di*****son',
             'amount'          => 4999.02,
-            'created_at'      => $time->format('Y-m-d H:s:i'),
+            'created_at'      => $time->format('Y-m-d H:i:s'),
             'date'            => $time->format('Y-m-d'),
             'customer_mobile' => '+8801717588445'
         ];
