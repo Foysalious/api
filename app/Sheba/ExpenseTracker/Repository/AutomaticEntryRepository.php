@@ -269,6 +269,7 @@ class AutomaticEntryRepository extends BaseRepository
             $data['profile_id'] = $this->profileId;
 
         \Log::info('-----expense data '.json_encode($data) . ' -----');
+        \Log::info('-----expense carbon time '.json_encode(Carbon::now()->format('Y-m-d H:s:i')) . ' -----');
         return $data;
     }
 
