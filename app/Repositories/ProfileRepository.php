@@ -93,14 +93,15 @@ class ProfileRepository
     {
         $avatar = $profile->$from;
         if ($avatar != null) {
-            $info = array(
+            $info = [
                 'id'            => $avatar->id,
                 'name'          => $profile->name,
                 'mobile'        => $profile->mobile,
                 'email'         => $profile->email,
                 'profile_image' => $profile->pro_pic,
-                'token'         => $avatar->remember_token,
-            );
+                'token'         => $avatar->remember_token
+            ];
+
             if ($from == 'affiliate') {
                 $info['name']                = $profile->name;
                 $info['mobile']              = $profile->mobile;
@@ -117,7 +118,7 @@ class ProfileRepository
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar,$from);
+                $info['token'] = $this->getJwtToken($avatar, $from);
             } elseif ($from == 'customer') {
                 $info['referral']     = $avatar->referral ? $avatar->referral->code : '';
                 $info['order_count']  = $avatar->orders->count();
@@ -144,10 +145,12 @@ class ProfileRepository
                     $info['has_changed_password'] = 0;
                 else
                     $info['has_changed_password'] = 1;
-                $info['token'] = $this->getJwtToken($avatar,$from);
+                $info['token'] = $this->getJwtToken($avatar, $from);
             }
+
             return $info;
         }
+
         return null;
     }
 
@@ -270,19 +273,30 @@ class ProfileRepository
         return $promo->save();
     }
 
+    /**
+     * @param $info
+     * @return mixed
+     */
     public function registerMobile($info)
     {
         $data = [
-            'mobile'          => $info['mobile'],
-            'portal_name'          => $info['portal_name'],
+            'mobile' => $info['mobile'],
+            'portal_name' => $info['portal_name'],
             'mobile_verified' => 1,
-            "remember_token"  => str_random(255)
+            "remember_token" => str_random(255)
         ];
         if (isset($info['name'])) $data['name'] = $info['name'];
         $profile = Profile::create($data);
+
         return Profile::find($profile->id);
     }
 
+    /**
+     * @param $avatar
+     * @param $request
+     * @param Profile $profile
+     * @return Customer|Resource
+     */
     public function registerAvatar($avatar, $request, Profile $profile)
     {
         if ($avatar == 'customer') {
@@ -312,6 +326,11 @@ class ProfileRepository
         }
     }
 
+    /**
+     * @param $avatar
+     * @param $user
+     * @return Resource
+     */
     public function registerAvatarByKit($avatar, $user)
     {
         if ($avatar == 'customer') {

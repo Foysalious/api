@@ -107,9 +107,9 @@ class NotificationController extends Controller
         $business_member = $auth_info['business_member'];
         if (!$business_member) return api_response($request, null, 401);
 
-        $topic  = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
+        $channel = config('sheba.push_notification_channel_name.employee');
         $sound  = config('sheba.push_notification_sound.employee');
-        $channel= config('sheba.push_notification_channel_name.employee');
 
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
@@ -117,10 +117,10 @@ class NotificationController extends Controller
                 "message" => "Test support",
                 "event_type" => 'support',
                 "event_id" => $request->support_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
@@ -128,20 +128,19 @@ class NotificationController extends Controller
                 "message" => "Test announcement",
                 "event_type" => 'announcement',
                 "event_id" => $request->announcement_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('attendance')) {
             $pushNotificationHandler->send([
                 "title" => 'Attendance Alert',
                 "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
                 "event_type" => 'attendance',
-                "sound" => "notification_sound",
                 "attendance_action_type" => 'checkin',
                 "time" => Carbon::now(),
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
@@ -152,10 +151,10 @@ class NotificationController extends Controller
                 "message" => "Leave Request Arrived Message",
                 "event_type" => 'leave_request',
                 "event_id" => $request->leave_request,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('leave_id')) {
             $pushNotificationHandler->send([
@@ -163,10 +162,10 @@ class NotificationController extends Controller
                 "message" => "AI choose you a substitute",
                 "event_type" => 'substitute',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
@@ -174,10 +173,10 @@ class NotificationController extends Controller
                 "message" => "Test canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $request->leave_id,
-                "sound" => "notification_sound.aiff",
+                "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
 
         return api_response($request, null, 200);

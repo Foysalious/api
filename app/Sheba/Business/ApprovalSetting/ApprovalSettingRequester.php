@@ -1,8 +1,12 @@
 <?php namespace Sheba\Business\ApprovalSetting;
 
+use Sheba\Dal\ApprovalSettingModule\Modules;
+use Sheba\Helpers\HasErrorCodeAndMessage;
 
 class ApprovalSettingRequester
 {
+    use HasErrorCodeAndMessage;
+
     private $modules;
     private $targetType;
     private $targetId;
@@ -12,6 +16,8 @@ class ApprovalSettingRequester
     public function setModules($modules)
     {
         $this->modules = $modules;
+        if ($this->modules) $this->modules = json_decode($this->modules, 1);
+        $this->moduleValidation();
         return $this;
     }
 
@@ -63,5 +69,18 @@ class ApprovalSettingRequester
     public function getApprovers()
     {
         return $this->approvers;
+    }
+
+    /**
+     * @return $this
+     */
+    private function moduleValidation()
+    {
+        $modules = [];
+        foreach ($this->modules as $module) {
+            if (!in_array($module, Modules::get())) array_push($modules, $module);
+        }
+        if (count($modules) > 0) $this->setError(420, (implode(', ', $modules)) . ' is not valid module');
+        return $this;
     }
 }

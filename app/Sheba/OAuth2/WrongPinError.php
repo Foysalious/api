@@ -1,9 +1,9 @@
 <?php namespace Sheba\OAuth2;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use Throwable;
 
-class WrongPinError extends DoNotThrowException
+class WrongPinError extends DoNotReportException
 {
     private $wrongPinCount;
     private $remainingHours;

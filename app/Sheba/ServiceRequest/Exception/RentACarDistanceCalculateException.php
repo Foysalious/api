@@ -1,9 +1,9 @@
 <?php namespace Sheba\ServiceRequest\Exception;
 
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class RentACarDistanceCalculateException extends DoNotThrowException
+class RentACarDistanceCalculateException extends DoNotReportException
 {
 
 }

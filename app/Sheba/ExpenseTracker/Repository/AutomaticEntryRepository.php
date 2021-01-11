@@ -27,6 +27,7 @@ class AutomaticEntryRepository extends BaseRepository
     private $interest;
     private $bankTransactionCharge;
     private $isWebstoreOrder = 0;
+    private $isPaymentLink = 0;
 
     /**
      * @param mixed $paymentMethod
@@ -134,6 +135,12 @@ class AutomaticEntryRepository extends BaseRepository
         return $this;
     }
 
+    public function setIsPaymentLink($isPaymentLink)
+    {
+        $this->isPaymentLink = $isPaymentLink;
+        return $this;
+    }
+
     /**
      * @param $head
      * @throws InvalidHeadException
@@ -177,6 +184,7 @@ class AutomaticEntryRepository extends BaseRepository
         return $this;
     }
 
+
     /**
      * @param mixed $emiMonth
      * @return AutomaticEntryRepository
@@ -186,7 +194,7 @@ class AutomaticEntryRepository extends BaseRepository
         $this->emiMonth = $emiMonth;
         return $this;
     }
-    
+
     /**
      * @param mixed $interest
      * @return AutomaticEntryRepository
@@ -230,6 +238,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function getData()
     {
+        $datetime = time();
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
@@ -239,7 +248,7 @@ class AutomaticEntryRepository extends BaseRepository
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
             'head_name'               => $this->head,
-            'note'                    => 'Automatically Placed from Sheba',
+            'note'                    => $this->isPaymentLink ? 'Automatically Placed from Sheba payment link':'Automatically Placed from Sheba',
             'source_type'             => $this->sourceType,
             'source_id'               => $this->sourceId,
             'type'                    => $this->for,
@@ -248,7 +257,8 @@ class AutomaticEntryRepository extends BaseRepository
             'emi_month'               => $this->emiMonth,
             'interest'                => $this->interest,
             'bank_transaction_charge' => $this->bankTransactionCharge,
-            'is_webstore_order'       => $this->isWebstoreOrder
+            'is_webstore_order'       => $this->isWebstoreOrder,
+            'is_payment_link'         => $this->isPaymentLink
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;

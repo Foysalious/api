@@ -1,8 +1,8 @@
 <?php namespace Sheba\ServiceRequest\Exception;
 
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class ServiceIsUnpublishedException extends DoNotThrowException
+class ServiceIsUnpublishedException extends DoNotReportException
 {
 }

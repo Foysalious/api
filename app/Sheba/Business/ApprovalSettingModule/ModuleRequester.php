@@ -1,8 +1,5 @@
 <?php namespace Sheba\Business\ApprovalSettingModule;
 
-
-use Sheba\Dal\ApprovalSetting\ApprovalSetting;
-
 class ModuleRequester
 {
     private $modules;

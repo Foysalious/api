@@ -2,7 +2,7 @@
 
 use Exception;
 
-class NotFoundException extends DoNotThrowException
+class NotFoundException extends DoNotReportException
 {
 
 }

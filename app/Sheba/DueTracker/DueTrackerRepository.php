@@ -16,6 +16,7 @@ use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -136,7 +137,13 @@ class DueTrackerRepository extends BaseRepository
         $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
+            $pos_order = PosOrder::withTrashed()->find($item['source_id']);
+            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' && $pos_order ? $pos_order->partner_wise_order_id: null;
+            if ($pos_order && $pos_order->sales_channel === SalesChannels::WEBSTORE) {
+                $item['source_type'] = 'WebstoreOrder';
+                $item['head'] = 'Webstore sales';
+                $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+            }
             return $item;
         });
 
