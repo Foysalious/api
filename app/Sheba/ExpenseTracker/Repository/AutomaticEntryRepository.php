@@ -166,11 +166,9 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $this->createdAt = $created_at->format('Y-m-d H:s:i');
-            \Log::info('-----try '.json_encode($created_at->format('Y-m-d H:s:i')) . ' -----');
             return $this;
         } catch (Throwable $e) {
             $this->createdAt = Carbon::now()->format('Y-m-d H:s:i');
-            \Log::info('-----catch '.json_encode(Carbon::now()->format('Y-m-d H:s:i')) . ' -----');
             $this->notifyBug($e);
             return $this;
         }
