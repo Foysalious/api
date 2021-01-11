@@ -1,6 +1,6 @@
 <?php namespace App\Http\Requests;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use Illuminate\Contracts\Validation\Validator;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -12,12 +12,12 @@ class ApiRequest extends CustomRequest
      * @param Validator $validator
      *
      * @return void
-     * @throws ApiValidationException
+     * @throws DoNotReportException
      */
     protected function failedValidation(Validator $validator)
     {
         $message = getValidationErrorMessage($validator->errors()->all());
-        throw new ApiValidationException($message, 400);
+        throw new DoNotReportException($message, 400);
     }
 
     /**
