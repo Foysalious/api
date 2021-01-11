@@ -2,7 +2,9 @@
 
 use App\Models\Affiliate;
 use App\Models\Customer;
+use App\Models\Member;
 use App\Models\Profile;
+use App\Models\Resource;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Support\Facades\Schema;
@@ -17,7 +19,16 @@ class FeatureTestCase extends TestCase
     use DatabaseMigrations;
 
     protected $token;
+    /** @var Profile */
     protected $profile;
+    /** @var Affiliate */
+    protected $affiliate;
+    /** @var Customer */
+    protected $customer;
+    /** @var Resource */
+    protected $resource;
+    /** @var Member */
+    protected $member;
 
     public function setUp()
     {
@@ -52,25 +63,39 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
-        $this->truncateTable(Profile::class);
-        $this->profile = factory(Profile::class)->create();
-        $affiliate = factory(Affiliate::class)->create([
-            'profile_id' => $this->profile->id
-        ]);
-        $customer = factory(Customer::class)->create([
-            'profile_id' => $this->profile->id
-        ]);
-        $resource = factory(Customer::class)->create([
-            'profile_id' => $this->profile->id
-        ]);
-        $member = factory(Customer::class)->create([
-            'profile_id' => $this->profile->id
+        $this->createAccounts();
+        $this->token = $this->generateToken();
+        $this->createAuthTables();
+    }
+
+    private function createAccounts()
+    {
+        $this->truncateTables([
+            Profile::class,
+            Affiliate::class,
+            Customer::class,
+            Member::class,
+            Resource::class
         ]);
 
-        $authorization_request = factory(AuthorizationRequest::class)->create([
+        $this->profile = factory(Profile::class)->create();
+        $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        $this->token = JWTAuth::fromUser($this->profile, [
+        $this->customer = factory(Customer::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $this->resource = factory(Resource::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $this->member = factory(Member::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+    }
+
+    protected function generateToken()
+    {
+        return JWTAuth::fromUser($this->profile, [
             'name' => $this->profile->name,
             'image' => $this->profile->pro_pic,
             'profile' => [
@@ -79,17 +104,17 @@ class FeatureTestCase extends TestCase
                 'email_verified' => $this->profile->email_verified
             ],
             'customer' =>[
-                'id' => $customer->id
+                'id' => $this->customer->id
             ],
             'resource' => [
-                'id' => $resource->id
+                'id' => $this->resource->id
             ],
             'member' => [
-                'id' => $member->id
+                'id' => $this->member->id
             ],
             'business_member' => null,
             'affiliate' => [
-                'id' => $affiliate->id
+                'id' => $this->affiliate->id
             ],
             'logistic_user' => null,
             'bank_user' => null,
@@ -97,14 +122,20 @@ class FeatureTestCase extends TestCase
             'avatar' => null,
             "exp" => Carbon::now()->addDay()->timestamp
         ]);
+    }
+
+    private function createAuthTables()
+    {
+        $authorization_request = factory(AuthorizationRequest::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
         factory(AuthorizationToken::class)->create([
             'authorization_request_id' => $authorization_request->id,
             'token' => $this->token
         ]);
-
     }
 
-    protected  function truncateTable($table)
+    protected function truncateTable($table)
     {
         $this->truncateTables([
             $table

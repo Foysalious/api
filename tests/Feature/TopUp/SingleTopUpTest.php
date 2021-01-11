@@ -14,7 +14,6 @@ use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
 
 class SingleTopUpTest extends FeatureTestCase
 {
-    private $affiliate;
     private $topUpVendor;
     private $topUpVendorCommission;
     private $topUpOtfSettings;
@@ -28,7 +27,7 @@ class SingleTopUpTest extends FeatureTestCase
             TopUpVendor::class,
             TopUpVendorCommission::class,
             TopUpOTFSettings::class,
-            TopUpOrder::class
+            TopUpOrder::class,
         ]);
         $this->logIn();
 
@@ -86,7 +85,6 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        dd($this->token);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);

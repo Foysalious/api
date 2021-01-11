@@ -1,62 +1,23 @@
 <?php
 
-use App\Models\Affiliate;
-use App\Models\Customer;
-use App\Models\Location;
-use App\Models\Member;
-use App\Models\Profile;
-use App\Models\Resource;
-use App\Models\TopUpVendor;
-use App\Models\TopUpVendorCommission;
-use Carbon\Carbon;
-use Sheba\Dal\AuthorizationRequest\AuthorizationRequest;
-use Sheba\Dal\AuthorizationToken\AuthorizationToken;
-use Sheba\Dal\Category\Category;
-use Sheba\Dal\Service\Service;
+use Factories\Factory;
+use Factories\CategoryFactory;
+use Factories\ServiceFactory;
 
-$common_seeds = [
-    'created_by' => 1,
-    'created_by_name' => 'IT - Shafiqul Islam',
-    'updated_by' => 1,
-    'updated_by_name' => 'IT - Shafiqul Islam',
-    'created_at' => Carbon::now(),
-    'updated_at' => Carbon::now()
+$factory_classes = [
+    CategoryFactory::class,
+    ServiceFactory::class
 ];
 
-$factory->define(Category::class, function (Faker\Generator $faker) use ($common_seeds) {
-    return array_merge($common_seeds, [
-        'name' => "Category #" . $faker->randomNumber(),
-        'slug' => $faker->slug,
-        'short_description' => $faker->text,
-        'long_description' => $faker->paragraph,
-        'thumb' => $faker->imageUrl(),
-        'app_thumb' => $faker->imageUrl(),
-        'banner' => $faker->imageUrl(),
-        'app_banner' => $faker->imageUrl(),
-        'video_link' => $faker->url
-    ]);
-});
+foreach ($factory_classes as $factory_class) {
+    /** @var Factory $f */
+    $f = (new $factory_class($factory));
+    $f->handle();
+}
 
-$factory->define(Service::class, function (Faker\Generator $faker) use ($common_seeds) {
-    $faqs = [];
-    for ($i = 1; $i <= $faker->numberBetween($min = 1, $max = 5); $i++) {
-        $question = [
-            'question' => rtrim($faker->sentence, '.') . "?",
-            'answer' => $faker->paragraph
-        ];
-        $faqs[] = $question;
-    }
 
-    return array_merge($common_seeds, [
-        'name' => "Service #" . $faker->randomNumber(),
-        'slug' => $faker->slug,
-        'description' => $faker->paragraph,
-        'app_thumb' => $faker->imageUrl(),
-        'app_banner' => $faker->imageUrl(),
-        'faqs' => json_encode($faqs),
-    ]);
-});
-
+/*
+ *
 $factory->define(Location::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds, [
         'city_id' => 1,
@@ -81,6 +42,7 @@ $factory->define(Profile::class, function (Faker\Generator $faker) use ($common_
         'blood_group'=>'B+'
     ]);
 });
+
 $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds, [
         'is_ambassador'=>0,
@@ -96,7 +58,6 @@ $factory->define(Affiliate::class, function (Faker\Generator $faker) use ($commo
         'is_suspended'=>0,
         'remember_token'=>str_random(50),
         'verification_status'=>'verified'
-
     ]);
 });
 
@@ -127,23 +88,19 @@ $factory->define(TopUpVendor::class, function (Faker\Generator $faker) use ($com
         'gateway' => 'ssl',
         'sheba_commission' => 4.0,
         'is_published' => 1,
-
     ]);
 });
 
 $factory->define(TopUpVendorCommission::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds,[
-
         'agent_commission' => '1.00',
         'ambassador_commission' =>'0.20',
         'type' =>'App\Models\Affiliate',
-
     ]);
 });
 
 $factory->define(Sheba\Dal\TopUpOTFSettings\Model::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds,[
-
         'applicable_gateways'=>'["ssl","airtel"]',
         'type'=>'App\Models\Affiliate',
         'agent_commission'=>'5.03',
@@ -151,7 +108,6 @@ $factory->define(Sheba\Dal\TopUpOTFSettings\Model::class, function (Faker\Genera
 });
 $factory->define(Sheba\Dal\TopUpVendorOTF\Model::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds,[
-
         'amount' =>'104' ,
         'name_en' =>'jkfhik' ,
         'name_bn' => 'hurefi',
@@ -160,7 +116,6 @@ $factory->define(Sheba\Dal\TopUpVendorOTF\Model::class, function (Faker\Generato
         'sim_type' =>'Prepaid' ,
         'cashback_amount' =>'12.00' ,
         'status' =>'Active',
-
     ]);
 });
 
@@ -169,9 +124,7 @@ $factory->define(Sheba\Dal\TopUpVendorOTFChangeLog\Model::class, function (Faker
         'from_status'=>'Deactive',
         'to_status'=>'Active',
         'log'=>'OTF status changed from Deactive to Active.',
-
     ]);
-
 });
 
 $factory->define(Customer::class, function (Faker\Generator $faker) use ($common_seeds) {
@@ -182,14 +135,11 @@ $factory->define(Customer::class, function (Faker\Generator $faker) use ($common
         'order_count'=>'0',
         'served_order_count'=>'0',
         'voucher_order_count'=>'0',
-
     ]);
-
 });
 
 $factory->define(Resource::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds,[
-
         'father_name'=>$faker->name,
         'remember_token'=>$faker->randomLetter,
         'status'=>'Verified',
@@ -203,9 +153,9 @@ $factory->define(Resource::class, function (Faker\Generator $faker) use ($common
 
 $factory->define(Member::class, function (Faker\Generator $faker) use ($common_seeds) {
     return array_merge($common_seeds,[
-
         'remember_token'=>$faker->randomLetter,
         'is_verified'=>1,
     ]);
 
 });
+*/
