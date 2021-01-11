@@ -127,7 +127,7 @@ return [
         ],
     ],
     'BUSINESSES_IDS_FOR_LUNCH' => [
-        142
+        110, 1416, 1274
     ],
     'BUSINESSES_LUNCH_LINK' => 'https://docs.google.com/forms/d/1MeRaVlL34-n6YQHIt_l_50nDkQHnyt5h8XpqSJPUbqA/viewform?edit_requested=true',
 ];

@@ -1,9 +1,9 @@
 <?php namespace App\Exceptions\Pos\Customer;
 
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 
-class PosCustomerNotFoundException extends DoNotThrowException
+class PosCustomerNotFoundException extends DoNotReportException
 {
 
 }
