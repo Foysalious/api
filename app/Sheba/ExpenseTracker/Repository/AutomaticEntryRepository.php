@@ -166,11 +166,11 @@ class AutomaticEntryRepository extends BaseRepository
     {
         try {
             $this->createdAt = $created_at->format('Y-m-d H:s:i');
-            \Log::info('-----try '.$created_at->format('Y-m-d H:s:i') . ' -----');
+            \Log::info('-----try '.json_encode($created_at->format('Y-m-d H:s:i')) . ' -----');
             return $this;
         } catch (Throwable $e) {
             $this->createdAt = Carbon::now()->format('Y-m-d H:s:i');
-            \Log::info('-----catch '.Carbon::now()->format('Y-m-d H:s:i') . ' -----');
+            \Log::info('-----catch '.json_encode(Carbon::now()->format('Y-m-d H:s:i')) . ' -----');
             $this->notifyBug($e);
             return $this;
         }
@@ -268,7 +268,7 @@ class AutomaticEntryRepository extends BaseRepository
         if ($this->profileId)
             $data['profile_id'] = $this->profileId;
 
-        \Log::info('-----expense data '.$data . ' -----');
+        \Log::info('-----expense data '.json_encode($data) . ' -----');
         return $data;
     }
 
