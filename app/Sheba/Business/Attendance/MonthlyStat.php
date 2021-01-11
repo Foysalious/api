@@ -45,7 +45,7 @@ class MonthlyStat
         $dates_of_holidays_formatted = $data;
         $period = CarbonPeriod::create($this->timeFrame->start, $this->timeFrame->end);
         $statistics = [
-            'working_days' => $this->timeFrame->start->daysInMonth,
+            'working_days' => $this->timeFrame->start->diffInDays($this->timeFrame->end) + 1,
             Statuses::ON_TIME => 0,
             Statuses::LATE => 0,
             Statuses::LEFT_EARLY => 0,
@@ -54,7 +54,8 @@ class MonthlyStat
             'on_leave' => 0,
             'full_day_leave' => 0,
             'half_day_leave' => 0,
-            'present' => 0
+            'present' => 0,
+            'left_early_note' => 0
         ];
 
         $daily_breakdown = [];
@@ -70,6 +71,8 @@ class MonthlyStat
             $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
             $is_on_leave = $this->isLeave($date, $leaves);
 
+//            dd($is_weekend_or_holiday);
+
             if ($is_weekend_or_holiday || $is_on_leave) {
                 if ($this->forOneEmployee) $breakdown_data['weekend_or_holiday_tag'] = $this->isWeekendHolidayLeaveTag($date, $leaves_date_with_half_and_full_day, $dates_of_holidays_formatted);
                 if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day))$statistics['working_days']--;
@@ -79,6 +82,7 @@ class MonthlyStat
 
             /** @var Attendance $attendance */
             $attendance = $attendances->where('date', $date->toDateString())->first();
+
             if ($attendance) {
                 $attendance_checkin_action = $attendance->checkinAction();
                 $attendance_checkout_action = $attendance->checkoutAction();
@@ -104,6 +108,7 @@ class MonthlyStat
                 }
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkin_action) $statistics[$attendance_checkin_action->status]++;
                 if (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance_checkout_action) $statistics[$attendance_checkout_action->status]++;
+                $statistics['left_early_note'] = (!($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) && $attendance->hasEarlyCheckout()) ? $attendance->checkoutAction()->note : null;
             }
 
             if ($this->isAbsent($attendance, ($is_weekend_or_holiday || $this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)), $date)) {
@@ -115,16 +120,16 @@ class MonthlyStat
             if ($this->forOneEmployee) $daily_breakdown[] = $breakdown_data;
         }
 
-        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
-        foreach ($remain_days as $date) {
-            $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
-            $is_on_leave = $this->isLeave($date, $leaves);
-            if ($is_weekend_or_holiday || $is_on_leave) {
-                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
-                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
-                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
-            }
-        }
+//        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
+//        foreach ($remain_days as $date) {
+//            $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
+//            $is_on_leave = $this->isLeave($date, $leaves);
+//            if ($is_weekend_or_holiday || $is_on_leave) {
+//                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
+//                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
+//                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
+//            }
+//        }
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
 
@@ -270,7 +275,7 @@ class MonthlyStat
      */
     private function isAbsent($attendance, $is_weekend_or_holiday_or_leave, Carbon $date)
     {
-        return !$attendance && !$is_weekend_or_holiday_or_leave && !$date->eq(Carbon::today());
+        return !$attendance && !$is_weekend_or_holiday_or_leave && $date->lt(Carbon::today());
     }
 
     /**

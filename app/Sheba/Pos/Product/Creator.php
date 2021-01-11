@@ -2,6 +2,7 @@
 
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -109,5 +110,33 @@ class Creator
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
+    }
+
+    public function syncPartnerPosCategory($partner_pos_service)
+    {
+        $data = [];
+        $partner_id = $partner_pos_service->partner_id;
+        $master_cat_id = $partner_pos_service->master_category_id;
+        $sub_cat_id = $partner_pos_service->sub_category_id;
+
+        $partner_categories = PartnerPosCategory::where('partner_id',$partner_id)->whereIn('category_id',[$master_cat_id,$sub_cat_id])->pluck('category_id')->toArray();
+
+        if(empty($partner_categories) || !in_array($master_cat_id,$partner_categories))
+        {
+            array_push($data,$this->withCreateModificationField([
+                'partner_id' => $partner_id,
+                'category_id' => $master_cat_id,
+            ]));
+        }
+        if(empty($partner_categories) || !in_array($sub_cat_id,$partner_categories))
+        {
+            array_push($data,$this->withCreateModificationField([
+                'partner_id' => $partner_id,
+                'category_id' => $sub_cat_id,
+            ]));
+        }
+
+        if(!empty($data))
+            PartnerPosCategory::insert($data);
     }
 }

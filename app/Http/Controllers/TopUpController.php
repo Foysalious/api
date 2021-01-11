@@ -1,6 +1,7 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
@@ -32,6 +33,11 @@ use App\Models\Affiliate;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
 use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
+use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
+use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
+use Sheba\TopUp\Vendor\Internal\PaywellClient;
+use Sheba\TopUp\Vendor\Response\Paywell\PaywellSuccessResponse;
+use Sheba\TopUp\Vendor\Response\Paywell\PaywellFailResponse;
 
 class TopUpController extends Controller
 {
@@ -287,5 +293,122 @@ class TopUpController extends Controller
     {
         $last_topup = $agent->topups()->select('id', 'created_at')->orderBy('id', 'desc')->first();
         return $last_topup && $last_topup->created_at->diffInSeconds(Carbon::now()) < self::MINIMUM_TOPUP_INTERVAL_BETWEEN_TWO_TOPUP_IN_SECOND;
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function topUpOTF(Request $request)
+    {
+        $this->validate($request, [
+            'sim_type' => 'required|in:prepaid,postpaid',
+            'for' => 'required|in:customer,partner,affiliate',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+        ]);
+
+        if ($request->for == 'customer') $agent = "App\\Models\\Customer";
+        elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
+        else $agent = "App\\Models\\Affiliate";
+
+        $vendor = TopUpVendor::select('id', 'name', 'gateway','is_published')->where('id', $request->vendor_id)->published()->first();
+        if (!$vendor) {
+            $message = "Vendor not found";
+            return api_response($request, $message, 404, ['message' => $message]);
+        }
+
+        $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
+        $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
+
+        $otf_settings = $topup_otf_settings->builder()->where([
+            ['topup_vendor_id', $request->vendor_id], ['type', $agent]
+        ])->first();
+
+        if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
+            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
+
+            foreach ($otf_list as $otf) {
+                array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
+                array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
+            }
+
+            return api_response($request, $otf_list, 200, ['data' => $otf_list]);
+        } else {
+            $otf_list = [];
+            return api_response($request, $otf_list, 200, ['message' => $otf_list]);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function topUpOTFDetails(Request $request)
+    {
+        $this->validate($request, [
+            'for' => 'required|in:customer,partner,affiliate',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'otf_id' => 'required|integer'
+        ]);
+
+        if ($request->for == 'customer') $agent = "App\\Models\\Customer";
+        elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
+        else $agent = "App\\Models\\Affiliate";
+
+        $vendor = TopUpVendor::select('id', 'name', 'gateway', 'is_published')
+            ->where('id', $request->vendor_id)
+            ->published()->first();
+
+        if (!$vendor) {
+            $message = "Vendor not found";
+            return api_response($request, $message, 404, ['message' => $message]);
+        }
+
+        $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
+        $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
+
+        $otf_settings = $topup_otf_settings->builder()->where([
+            ['topup_vendor_id', $request->vendor_id], ['type', $agent]
+        ])->first();
+
+        if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
+            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
+            $otf_list = $topup_vendor_otf->builder()->where('id', $request->otf_id)->where('status', 'Active')->get();
+
+            foreach ($otf_list as $otf) {
+                array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
+                array_add($otf, 'otf_commission', round(($otf_settings->agent_commission / 100) * $otf->cashback_amount, 2));
+            }
+
+            return api_response($request, $otf_list, 200, ['data' => $otf_list]);
+        } else {
+            $otf_list = [];
+            return api_response($request, $otf_list, 200, ['message' => $otf_list]);
+        }
+    }
+    
+    public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
+    {
+        $topup_order = app(TopUpOrder::class)->find($request->topup_order_id);
+
+        if($topup_order->gateway == 'paywell' && $topup_order->status == 'Pending'){
+            $response = app(PaywellClient::class)->enquiry($request->topup_order_id);
+            if ($response->status_code == "200") {
+                $success_response->setResponse($response);
+                $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+            } else if ($response->status_code != "100") {
+                $fail_response->setResponse($response);
+                $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+            }
+            return api_response($response, json_encode($response), 200);
+        } else {
+            $response = [
+                'recipient_msisdn' => $topup_order->payee_mobile,
+                'status_name' => $topup_order->status,
+                'status_code' => '',
+            ];
+            return api_response(json_encode($response), json_encode($response), 200);
+        }
     }
 }

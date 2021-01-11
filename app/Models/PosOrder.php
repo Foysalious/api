@@ -336,6 +336,21 @@ class PosOrder extends Model {
         return $query->where('status', OrderStatuses::SHIPPED);
     }
 
+    public function scopeCompleted($query)
+    {
+        return $query->where('status', OrderStatuses::COMPLETED);
+    }
+
+    public function scopeDeclined($query)
+    {
+        return $query->where('status', OrderStatuses::DECLINED);
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', OrderStatuses::CANCELLED);
+    }
+
     public function scopeSalesChannel($query, $salesChannel)
     {
         return $query->where('sales_channel', $salesChannel);

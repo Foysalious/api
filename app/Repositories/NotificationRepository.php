@@ -103,7 +103,7 @@ class NotificationRepository
     {
         notify()->user($partner_order->jobs[0]->crm_id)->sender($this->sender_id, $this->sender_type)->send([
             'title' => 'An online payment of ' . $amount . ' has been completed to this order ' . $this->order->code(),
-            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'link'  => config('sheba.admin_url') . '/order/' . $this->order->id,
             'type'  => notificationType('Info')
         ]);
     }
@@ -116,7 +116,7 @@ class NotificationRepository
                 8
             ])->send([
                 'title' => 'New Affiliate Registration from ' . $affiliate->profile->mobile,
-                'link'  => env('SHEBA_BACKEND_URL') . '/affiliate/' . $affiliate->id,
+                'link'  => config('sheba.admin_url') . '/affiliate/' . $affiliate->id,
                 'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
@@ -129,7 +129,7 @@ class NotificationRepository
         try {
             notify()->department(7)->send([
                 'title' => 'New Affiliation Arrived from ' . $affiliate->profile->mobile,
-                'link'  => env('SHEBA_BACKEND_URL') . '/affiliation/' . $affiliation->id,
+                'link'  => config('sheba.admin_url') . '/affiliation/' . $affiliation->id,
                 'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
@@ -141,7 +141,7 @@ class NotificationRepository
     {
         notify()->department(7)->send([
             'title'      => 'New SP Referral Arrived from ' . $affiliate->profile->mobile,
-            'link'       => env('SHEBA_BACKEND_URL') . '/partner-affiliation/' . $partner_affiliation->id,
+            'link'       => config('sheba.admin_url') . '/partner-affiliation/' . $partner_affiliation->id,
             'type'       => notificationType('Info'),
             'event_type' => "App\\Models\\" . class_basename($affiliate),
             'event_id'   => $partner_affiliation->id
@@ -260,7 +260,7 @@ class NotificationRepository
         try {
             notify()->user($cm_id)->send([
                 'title' => $title,
-                'link'  => env('SHEBA_BACKEND_URL') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
+                'link'  => config('sheba.admin_url') . '/' . strtolower(class_basename($model)) . '/' . $model->id,
                 'type'  => notificationType('Info')
             ]);
         } catch (\Throwable $e) {
@@ -271,7 +271,7 @@ class NotificationRepository
     public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade, $withMessage = true)
     {
         $title     = ' অপর্যাপ্ত  ব্যলেন্স';
-        $type      = BillingType::BN()[$package_type];
+        $type      = $package->titleTypeBn($package_type);
         $gradeType = $grade == PartnerSubscriptionChange::UPGRADE ? " এর" : $grade == PartnerSubscriptionChange::RENEWED ? " নাবায়ন এর" : " এর";
         $message   = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
@@ -314,7 +314,7 @@ class NotificationRepository
     {
         notify()->user($this->order->jobs->first()->crm_id)->sender($this->sender_id, $this->sender_type)->send([
             'title' => 'You have been assigned to a new order - ' . $this->order->code(),
-            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'link'  => config('sheba.admin_url') . '/order/' . $this->order->id,
             'type'  => notificationType('Info')
         ]);
     }
@@ -326,7 +326,7 @@ class NotificationRepository
             7
         ])->sender($this->sender_id, $this->sender_type)->send([
             'title' => 'New Order Placed From Front End - ' . $this->order->code(),
-            'link'  => env('SHEBA_BACKEND_URL') . '/order/' . $this->order->id,
+            'link'  => config('sheba.admin_url') . '/order/' . $this->order->id,
             'type'  => notificationType('Info')
         ]);
     }
