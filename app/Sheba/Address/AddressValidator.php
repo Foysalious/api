@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Sheba\Address;
+<?php namespace App\Sheba\Address;
 
 use Sheba\Location\Coords;
 use Sheba\Location\Distance\Distance;

@@ -1,6 +1,7 @@
 <?php namespace Sheba\Algolia;
 
 use App\Console\Commands\Command;
+use App\Models\PartnerPosService;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
 

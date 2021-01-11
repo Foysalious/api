@@ -38,7 +38,7 @@ class FraudTransactionJob extends Job implements ShouldQueue
         try {
             $this->repo = new TransactionRepository();
             $this->repo->store($this->data);
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
             WalletTransaction::throwException($e);
         }
     }

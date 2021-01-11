@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AccessTokenMiddleware;
 use App\Http\Middleware\AffiliateAuthMiddleware;
+use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
@@ -63,8 +64,9 @@ class Kernel extends HttpKernel
         'web' => [
             EncryptCookies::class,
             AddQueuedCookiesToResponse::class,
-            StartSession::class, ShareErrorsFromSession::class,
-            VerifyCsrfToken::class
+            StartSession::class,
+            ShareErrorsFromSession::class,
+            VerifyCsrfToken::class,
         ],
 
         'api' => [
@@ -80,11 +82,35 @@ class Kernel extends HttpKernel
      * @var array
      */
     protected $routeMiddleware = [
-        'auth' => Authenticate::class, 'auth.basic' => AuthenticateWithBasicAuth::class, 'can' => Authorize::class, 'guest' => RedirectIfAuthenticated::class, 'throttle' => ThrottleRequests::class, 'cors2' => Cors2MiddleWare::class, 'customer.auth' => CustomerAuthMiddleware::class, 'customer_job.auth' => CustomerJobAuthMiddleware::class, 'profile.auth' => ProfileAuthMiddleware::class, 'affiliate.auth' => AffiliateAuthMiddleware::class, 'resource.auth' => Middleware\ResourceAuthMiddleware::class, 'manager.auth' => ManagerAuthMiddleware::class, 'partner_job.auth' => PartnerJobAuthMiddleware::class, 'partner_order.auth' => PartnerOrderAuthMiddleware::class, 'partner_resource.auth' => PartnerResourceAuthMiddleware::class, 'resource_job.auth' => ResourceJobAuthMiddleware::class, 'vendor.auth' => VendorMiddleware::class, 'business_order.auth' => OrderMiddleware::class, 'geo.auth' => GeoAuthMiddleware::class, 'loan.version' => DLSApiVersioning::class, 'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class, 'business.auth' => BusinessManagerAuthMiddleware::class, 'member.auth' => MemberAuthMiddleware::class, 'jwtAuth' => JWTAuthentication::class,//10
+        'auth' => Authenticate::class,
+        'auth.basic' => AuthenticateWithBasicAuth::class,
+        'can' => Authorize::class,
+        'guest' => RedirectIfAuthenticated::class,
+        'throttle' => ThrottleRequests::class,
+        'cors2' => Cors2MiddleWare::class,
+        'customer.auth' => CustomerAuthMiddleware::class,
+        'customer_job.auth' => CustomerJobAuthMiddleware::class,
+        'profile.auth' => ProfileAuthMiddleware::class,
+        'affiliate.auth' => AffiliateAuthMiddleware::class,
+        'resource.auth' => Middleware\ResourceAuthMiddleware::class,
+        'manager.auth' => ManagerAuthMiddleware::class,
+        'partner_job.auth' => PartnerJobAuthMiddleware::class,
+        'partner_order.auth' => PartnerOrderAuthMiddleware::class,
+        'partner_resource.auth' => PartnerResourceAuthMiddleware::class,
+        'resource_job.auth' => ResourceJobAuthMiddleware::class,
+        'vendor.auth' => VendorMiddleware::class,
+        'business_order.auth' => OrderMiddleware::class,
+        'geo.auth' => GeoAuthMiddleware::class,
+        'loan.version' => DLSApiVersioning::class,
+        'external_payment_link.auth' => ExternalPaymentLinkAuthMiddleware::class,
+        'business.auth' => BusinessManagerAuthMiddleware::class,
+        'member.auth' => MemberAuthMiddleware::class,
+        'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
         'topUp.auth' => TopUpAuthMiddleware::class,//1
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
+        'apiRequestLog' => ApiRequestMiddleware::class
     ];
 }
