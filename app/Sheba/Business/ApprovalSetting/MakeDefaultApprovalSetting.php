@@ -1,6 +1,8 @@
 <?php namespace Sheba\Business\ApprovalSetting;
 
 
+use Sheba\Dal\ApprovalSettingModule\Modules;
+
 class MakeDefaultApprovalSetting
 {
 
@@ -13,9 +15,16 @@ class MakeDefaultApprovalSetting
             'note' => 'Default Approval Setting',
             'target_type' => $this->getTargetType(),
             'modules' => $this->getModule(),
+            'is_all_modules' => $this->isAllModules(),
             'approvers' => $this->getApprovers(),
             'approver_count' => count($this->getApprovers()),
         ];
+    }
+
+    private function isAllModules()
+    {
+        if (count(Modules::get()) == count($this->getModule())) return 1;
+        return 0;
     }
 
     private function getTargetType()

@@ -11,6 +11,7 @@ use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
+use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
 use Sheba\Business\ApprovalSetting\Updater;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\ModificationFields;
@@ -31,16 +32,22 @@ class ApprovalSettingsController extends Controller
      * @var ApprovalSettingRequester
      */
     private $approvalSettingsRequester;
+    /**
+     * @var MakeDefaultApprovalSetting
+     */
+    private $defaultApprovalSetting;
 
     /**
      * ApprovalSettingsController constructor.
      * @param ApprovalSettingRepository $approval_settings_repo
      * @param ApprovalSettingRequester $approval_setting_requester
+     * @param MakeDefaultApprovalSetting $default_approval_setting
      */
-    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester)
+    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester, MakeDefaultApprovalSetting $default_approval_setting)
     {
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
+        $this->defaultApprovalSetting = $default_approval_setting;
 
     }
 
@@ -66,6 +73,9 @@ class ApprovalSettingsController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
+        $default_approval_setting =  $this->defaultApprovalSetting->getApprovalSettings();
+        $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
+
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
