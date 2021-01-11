@@ -127,6 +127,7 @@ class TopUpController extends Controller
                     return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
                 }
             }
+            array_merge($request, ['topup_for' => 'partner']);
 
         } else return api_response($request, null, 400);
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
