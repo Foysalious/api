@@ -28,7 +28,7 @@ class PosServiceTransformer extends TransformerAbstract
             'stock' => $service->stock,
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
-            'unit' => $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null,
+            'unit' => $service->unit ? array_merge(constants('POS_SERVICE_UNITS')[$service->unit], ['key' => $service->unit]) : null,
             'description' => $service->description,
             'description_applicable' => $service->description ? true : false,
             'warranty_applicable' => $service->warranty ? true : false,
