@@ -22,27 +22,37 @@ class ApprovalSettingDataFormat
      * @var Application|mixed
      */
     private $businessMemberRepo;
+    /**
+     * @var array
+     */
+    private $moduleData;
+    /**
+     * @var array
+     */
+    private $approverData;
 
     public function __construct()
     {
         $this->departmentRepo = app(DepartmentRepositoryInterface::class);
         $this->businessMemberRepo = app(BusinessMemberRepositoryInterface::class);
+        $this->moduleData = [];
+        $this->approverData = [];
     }
+
     /**
      * @param $modules
      * @return array
      */
     public function getModules($modules)
     {
-        $module_data = [];
         foreach ($modules as $module) {
-            array_push($module_data, [
+            array_push($this->moduleData, [
                 'id' => $module->id,
                 'approval_setting_id' => $module->approval_setting_id,
-                'name' => ucfirst(Modules::getModule($module->modules))
+                'name' => Modules::getModule($module->modules)
             ]);
         }
-        return $module_data;
+        return $this->moduleData;
     }
 
     /**
@@ -51,7 +61,6 @@ class ApprovalSettingDataFormat
      */
     public function getApprovers($approvars)
     {
-        $approvar_data = [];
         foreach ($approvars as $approvar) {
             /** @var BusinessMember $business_member */
             $business_member = $this->businessMemberRepo->find($approvar->type_id);
@@ -60,7 +69,7 @@ class ApprovalSettingDataFormat
             /** @var Profile $profile */
             $profile = $member ? $member->profile : null;
 
-            array_push($approvar_data, [
+            array_push($this->approverData, [
                 'id' => $approvar->id,
                 'type' => ucfirst(Types::getType($approvar->type)),
                 'type_id' => $approvar->type_id,
@@ -70,7 +79,7 @@ class ApprovalSettingDataFormat
                 'profile_pic' => $profile ? $profile->pro_pic : null
             ]);
         }
-        return $approvar_data;
+        return $this->approverData;
     }
 
     /**
@@ -81,7 +90,7 @@ class ApprovalSettingDataFormat
     {
         return [
             'id' => $approval_setting->target_id,
-            'type' => ucfirst(Targets::getTargetType($approval_setting->target_type)),
+            'type' => Targets::getTargetType($approval_setting->target_type),
             'employee' => $this->getTargetEmployee($approval_setting),
             'department' => $this->getTargetDepartment($approval_setting)
         ];
@@ -120,5 +129,24 @@ class ApprovalSettingDataFormat
             'id' => $business_department->id,
             'name' => $business_department->name
         ] : null;
+    }
+
+    /**
+     * @param $approval_setting
+     * @return int
+     */
+    public function isDefault($approval_setting)
+    {
+        if ($approval_setting->target_type == Targets::GENERAL) return 1;
+        return 0;
+    }
+
+    /**
+     * @return int
+     */
+    public function isAllModules()
+    {
+        if (count(Modules::get()) == count($this->moduleData)) return 1;
+        return 0;
     }
 }
