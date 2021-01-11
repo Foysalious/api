@@ -169,7 +169,8 @@ class DashboardController extends Controller
                 'home_videos'    => $videos ? $videos : null,
                 'feature_videos' => $details,
                 'has_qr_code'    => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0,
-                'has_webstore'   => $partner->has_webstore
+                'has_webstore'   => $partner->has_webstore,
+                'is_webstore_published' => $partner->is_webstore_published
             ];
             if (request()->hasHeader('Portal-Name'))
                 $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
