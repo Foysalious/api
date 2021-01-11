@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model;
 use Jenssegers\Mongodb\Eloquent\HybridRelations;
+use Sheba\Location\Geo;
 
 class Location extends Model
 {
@@ -61,5 +62,19 @@ class Location extends Model
     public function isPublished()
     {
         return (int)$this->publication_status;
+    }
+
+    /**
+     * @return Geo
+     */
+    public function getCenter()
+    {
+        $lat = $lng = null;
+        if ($this->geo_informations) {
+            $geo = json_decode($this->geo_informations);
+            $lat = isset($geo->center) ? $geo->center->lat : $geo->lat;
+            $lng = isset($geo->center) ? $geo->center->lng : $geo->lng;
+        }
+        return new Geo($lat, $lng);
     }
 }

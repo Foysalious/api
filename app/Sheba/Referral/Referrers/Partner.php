@@ -72,7 +72,7 @@ class Partner extends Referrer implements ReferrerInterface
     private function notify($ref){
         notify()->department(7)->send([
             'title' => 'New SP Referral Arrived from ' . $this->referrer->getContactNumber(),
-            'link' => env('SHEBA_BACKEND_URL') . '/partner-referrals/' . $ref->id,
+            'link' => config('sheba.admin_url') . '/partner-referrals/' . $ref->id,
             'type' => notificationType('Info'),
             'event_type' => "App\\Models\\" . class_basename($ref),
             'event_id' => $ref->id

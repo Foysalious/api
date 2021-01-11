@@ -46,6 +46,7 @@ class Updater
     private $previous_substitute;
     private $businessMemberRepo;
     private $approvalRequests;
+    private $previousSubstituteName = 'n/s';
 
     /**
      * Updater constructor.
@@ -54,7 +55,10 @@ class Updater
      * @param BusinessMemberRepositoryInterface $business_member_repo
      * @param Attachments $attachment_manager
      */
-    public function __construct(LeaveRepository $leave_repository, LeaveStatusChangeLogCreator $leave_status_change_log_creator, BusinessMemberRepositoryInterface $business_member_repo, Attachments $attachment_manager, LeaveLogRepo $leave_log_repo)
+    public function __construct(LeaveRepository $leave_repository,
+                                LeaveStatusChangeLogCreator $leave_status_change_log_creator,
+                                BusinessMemberRepositoryInterface $business_member_repo,
+                                Attachments $attachment_manager, LeaveLogRepo $leave_log_repo)
     {
         $this->leaveRepository = $leave_repository;
         $this->leaveStatusLogCreator = $leave_status_change_log_creator;
@@ -71,6 +75,7 @@ class Updater
     public function setLeave(Leave $leave)
     {
         $this->leave = $leave;
+        if ($this->leave->substitute_id) $this->previousSubstituteName = $this->getSubstituteName($this->leave->substitute_id);
         return $this;
     }
 
@@ -227,18 +232,23 @@ class Updater
     public function update()
     {
         $this->makeData();
-        DB::transaction(function () {
+
+       DB::transaction(function () {
             $this->leaveRepository->update($this->leave, $this->withUpdateModificationField($this->data));
             if ($this->attachments) $this->createAttachments($this->leave);
             $this->createLog();
         });
-        if ($this->substitute) $this->sendPushToSubstitute($this->leave);
+        if ($this->substitute && $this->substitute !== 'null') $this->sendPushToSubstitute($this->leave);
     }
 
     private function makeData()
     {
-        $this->data['note'] = $this->note;
-        if ($this->substitute) $this->data['substitute_id'] = $this->substitute;
+        if ($this->note) $this->data['note'] = $this->note;
+        if ($this->substitute && $this->substitute !== 'null') {
+            $this->data['substitute_id'] = $this->substitute;
+        } elseif ($this->substitute == 'null') {
+            $this->data['substitute_id'] = null;
+        }
     }
 
     private function getSubstituteName($substitute_id)
@@ -261,12 +271,17 @@ class Updater
             'is_changed_by_super' => 0,
         ];
 
-        $data['log'] = $this->member->profile->name . ' changed the leave note';
-        $this->leaveLogRepo->create($this->withCreateModificationField($data));
+        if ($this->note) {
+            $data['log'] = $this->member->profile->name . ' changed the leave note';
+            $this->leaveLogRepo->create($this->withCreateModificationField($data));
+        }
 
-        $previous_substitute = $this->leave->substitute_id;
-        if ($this->substitute) {
-            $data['log'] = $this->member->profile->name . ' changed from ' . $this->getSubstituteName($previous_substitute) . ' to ' . $this->getSubstituteName($this->substitute);
+        if ($this->substitute || ($this->substitute == 'null')) {
+            if ($this->substitute == 'null') {
+                $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to n/s';
+            } else {
+                $data['log'] = $this->member->profile->name . ' changed substitute from ' . $this->previousSubstituteName . ' to ' . $this->getSubstituteName($this->substitute);
+            }
             $this->leaveLogRepo->create($this->withCreateModificationField($data));
         }
 
