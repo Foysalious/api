@@ -271,7 +271,7 @@ class AutomaticEntryRepository extends BaseRepository
 
         \Log::info('-----expense data '.json_encode($data) . ' -----');
         \Log::info('-----expense carbon time '.json_encode(Carbon::now()->format('Y-m-d H:s:i')) . ' -----');
-        \Log::info('-----expense php time '.date('Y-m-d H:s:i',$datetime . ' -----'));
+        \Log::info('-----expense php time '.json_encode(date('Y-m-d H:s:i',$datetime)) . ' -----');
         return $data;
     }
 
