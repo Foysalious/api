@@ -155,17 +155,22 @@ class CategoryController extends Controller
         ];
     }
 
-
-
     private function getSelectColumnsOfCategory()
     {
-        return ['id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
+        return ['pos_categories.id', 'name', 'thumb', 'banner', 'app_thumb', 'app_banner','is_published_for_sheba'];
     }
 
     public function getMasterCategoriesWithSubCategory(Request $request)
     {
         try {
-            $master_categories = PosCategory::with(['children' => function ($query) {
+            $partner_id = $request->partner->id;
+            $master_categories = PosCategory::where(function ($q) use ($partner_id) {
+                $q->where('is_published_for_sheba', 1)->orWhere(function ($q) use ($partner_id) {
+                    $q->where('is_published_for_sheba', 0)->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
+                        $q->where('partner_id', $partner_id);
+                    });
+                });
+            })->with(['children' => function ($query) {
                 $query->select(array_merge($this->getSelectColumnsOfCategory(), ['parent_id']));
             }])->parents()->published()->select($this->getSelectColumnsOfCategory())->get();
 
@@ -198,6 +203,7 @@ class CategoryController extends Controller
                 $category = $master_category->category()->first();
                 $item['id'] = $category->id;
                 $item['name'] = $category->name;
+                $item['is_published_for_sheba'] = $category->is_published_for_sheba;
                 $total_services = 0;
                 $category->children()->get()->each(function ($child) use ($partner, &$total_services) {
                     $total_services += $child->services()->where('partner_id', $partner->id)->where('publication_status', 1)->count();
