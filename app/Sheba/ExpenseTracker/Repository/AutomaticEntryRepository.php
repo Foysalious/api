@@ -240,6 +240,7 @@ class AutomaticEntryRepository extends BaseRepository
      */
     private function getData()
     {
+        $datetime = time();
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
         $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
         $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
@@ -270,6 +271,7 @@ class AutomaticEntryRepository extends BaseRepository
 
         \Log::info('-----expense data '.json_encode($data) . ' -----');
         \Log::info('-----expense carbon time '.json_encode(Carbon::now()->format('Y-m-d H:s:i')) . ' -----');
+        \Log::info('-----expense php time '.date('Y-m-d H:s:i',$datetime . ' -----'));
         return $data;
     }
 
