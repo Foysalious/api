@@ -161,15 +161,26 @@ class PartnerController extends Controller
                 'id',
                 'name',
                 'sub_domain',
-                'mobile',
                 'description',
                 'email',
                 'verified_at',
                 'status',
                 'logo',
                 'address',
+                'delivery_charge',
+                'is_webstore_published',
                 'created_at'
             ]);
+            $info->put('mobile', $partner->getContactNumber());
+            $banner = null;
+            if($partner->webstoreBanner)
+                $banner = [
+                    'image_link' => $partner->webstoreBanner->banner->image_link,
+                    'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
+                    'title'  => $partner->webstoreBanner->title,
+                    'description' => $partner->webstoreBanner->description
+                ];
+            $info->put('banner', $banner);
             $working_info = [];
             //$partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
             foreach ($this->days as $day) {
@@ -1403,11 +1414,6 @@ class PartnerController extends Controller
             return api_response($request, null, 400, ['message' => $messages]);
         }
         $partner = Partner::find($partner);
-        if (!in_array($partner->status, [
-            'Unverified',
-            'Onboarded'
-        ]))
-            return api_response($request, null, 400, ['message' => 'Can not change logo after verification']);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);

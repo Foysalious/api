@@ -39,7 +39,8 @@ return [
     ],
     'push_notification_sound' => [
         'customer' => 'default',
-        'manager' => 'notification_sound'
+        'manager' => 'notification_sound',
+        'employee'  => 'notification_sound.aiff'
     ],
     'partner_packages' => [
         'ESP' => 4,
@@ -99,8 +100,10 @@ return [
         ['#00B8BA', '#00FFED']
     ],
     'screen' => ['home', 'eshop', 'payment_link', 'pos', 'inventory', 'referral', 'due'],
-    'partner_lite_packages_id'  => env('LITE_PACKAGE_ID'),
+    'partner_lite_packages_id'  => env('LITE_PACKAGE_ID', 1),
     'partner_basic_packages_id' => env('BASIC_PACKAGE_ID', 2),
+    'lite_package_message'      => 'প্রিমিয়াম প্যাকেজ গুলোর দুর্দান্ত সব ফিচার ব্যাবহার করে ২ গুন ব্যবসা বৃদ্ধি করুন কোন বাড়তি ঝামেলা ছাড়াই!',
+    'partner_subscription_vat'  => 5.00,
     'rent_a_car' => [
         'inside_city' => [
             'category' => [222]
@@ -155,4 +158,5 @@ return [
     'lpg_service_id' => env('LPG_SERVICE_ID'),
     'mission_save_bangladesh_partner_id' => env('MISSION_SAVE_BANGLADESH_PARTNER_ID'),
     'topup_special_amount_get_url_by_ssl' => env('TOPUP_SPECIAL_AMOUNT_GET_URL_BY_SSL', 'http://vrapi.sslwireless.com/rest/specialAmount/v2/'),
+    'webstore_url' => env('SHEBA_WEBSTORE_URL')
 ];

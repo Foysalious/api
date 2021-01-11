@@ -14,6 +14,7 @@ use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresent
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
+use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
@@ -23,13 +24,26 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
     private $role;
     private $leaveLogRepo;
     protected $defaultIncludes = ['attachments'];
+    /**
+     * @var LeaveStatusChangeLogRepo
+     */
+    private $leaveStatusChangeLogRepo;
 
-    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo)
+    /**
+     * LeaveRequestDetailsTransformer constructor.
+     * @param Business $business
+     * @param Profile $profile
+     * @param BusinessRole $role
+     * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
+     */
+    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         $this->business = $business;
         $this->profile = $profile;
         $this->role = $role;
         $this->leaveLogRepo = $leave_log_repo;
+        $this->leaveStatusChangeLogRepo = $leave_status_change_log_repo;
     }
 
     /**
@@ -64,17 +78,18 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i A'),
-                'type' => ['id' => $leave_type->id, 'title' => $leave_type->title],
-                'total_days' => (int)$requestable->total_days,
-                'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-                'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
-                'start_date' => $requestable->start_date->format('Y-m-d'),
-                'end_date' => $requestable->end_date->format('Y-m-d'),
-                'note' => $requestable->note,
-                'status' => LeaveStatusPresenter::statuses()[$requestable->status],
-                'is_half_day' => $requestable->is_half_day,
-                'half_day_configuration' => $requestable->is_half_day ? [
+                'type' => [
+                    'id' => $leave_type->id,
+                    'title' => $leave_type->title],
+                    'total_days' => (int)$requestable->total_days,
+                    'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
+                    'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
+                    'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
+                    'start_date' => $requestable->start_date->format('Y-m-d'),
+                    'end_date' => $requestable->end_date->format('Y-m-d'),
+                    'note' => $requestable->note,
+                    'status' => LeaveStatusPresenter::statuses()[$requestable->status], 'is_half_day' => $requestable->is_half_day,
+                    'half_day_configuration' => $requestable->is_half_day ? [
                     'half_day' => $requestable->half_day_configuration,
                     'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
                 ] : null,
@@ -91,7 +106,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'department' => $this->role ? $this->role->businessDepartment->name : null,
                 'designation' => $this->role ? $this->role->name : null
             ],
-            'leave_log_details' => $this->getLeaveLogDetails($requestable),
+            'leave_log_details' => $this->getLeaveLog($requestable),
         ];
     }
 
@@ -124,5 +139,21 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
         })->toArray();
         return $logs ? $logs : null;
+    }
+
+    private function getLeaveCancelLogDetails($requestable)
+    {
+        $logs = $this->leaveStatusChangeLogRepo->where('leave_id', $requestable->id)->select('log', 'created_at')->orderBy('id', 'DESC')->get()->map(function ($log) {
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
+        })->toArray();
+        return $logs ? $logs : null;
+    }
+
+    private function getLeaveLog($requestable)
+    {
+        $cancel_log = $this->getLeaveCancelLogDetails($requestable) ? $this->getLeaveCancelLogDetails($requestable) : [];
+        $update_log = $this->getLeaveLogDetails($requestable) ? $this->getLeaveLogDetails($requestable) : [];
+
+        return array_merge($cancel_log, $update_log);
     }
 }

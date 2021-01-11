@@ -9,6 +9,7 @@ class PosServiceTransformer extends TransformerAbstract
         $service_discount = $service->discount();
 
         return [
+            'id' => $service->id,
             'name' => $service->name,
             'app_thumb' => $service->app_thumb,
             'app_banner' => $service->app_banner,
@@ -19,6 +20,7 @@ class PosServiceTransformer extends TransformerAbstract
             'wholesale_price' => $service->wholesale_price,
             'cost' => $service->cost,
             'category_id' => $service->subCategory->parent->id,
+            'master_category_id' => $service->subCategory->parent->id,
             'category_name' => $service->subCategory->parent->name,
             'sub_category_id' => $service->subCategory->id,
             'sub_category_name' => $service->subCategory->name,
@@ -26,7 +28,7 @@ class PosServiceTransformer extends TransformerAbstract
             'stock' => $service->stock,
             'vat_applicable' => $service->vat_percentage ? true : false,
             'vat' => $service->vat_percentage,
-            'unit' => $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null,
+            'unit' => $service->unit ? array_merge(constants('POS_SERVICE_UNITS')[$service->unit], ['key' => $service->unit]) : null,
             'description' => $service->description,
             'description_applicable' => $service->description ? true : false,
             'warranty_applicable' => $service->warranty ? true : false,
@@ -38,11 +40,19 @@ class PosServiceTransformer extends TransformerAbstract
             'discount_amount' => $service_discount ? (double)$service_discount->amount : 0.00,
             'discount_applicable' => $service_discount ? true : false,
             'discounted_price' => $service_discount ? (double)$service->getDiscountedAmount() : 0,
+            'discount_percentage' => $service_discount ? $service->getDiscountPercentage() : 0,
             'discount_end_time' => $service_discount ? $service_discount->end_date->format('Y-m-d') : null,
-            'product_link' => config('sheba.front_url') . '/p/' . $service->partner->sub_domain . '/store/' . $service->id,
+            'product_link' => config('sheba.webstore_url') . '/' . $service->partner->sub_domain . '/store/' . $service->id,
             'show_image' => ($service->show_image) || is_null($service->show_image) ? 1 : 0,
             'shape' => $service->shape,
-            'color' => $service->color
+            'color' => $service->color,
+            'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function ($image) {
+                return [
+                    'id' => $image->id,
+                    'image_link' => $image->image_link
+                ];
+
+            }) : []
         ];
     }
 }
