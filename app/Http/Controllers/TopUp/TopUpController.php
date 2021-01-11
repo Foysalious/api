@@ -146,7 +146,6 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
         if ($topup_order) {
-            app()->make(ActionRewardDispatcher::class)->run('top_up', $request->user, $topup_order);
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
