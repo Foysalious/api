@@ -178,7 +178,8 @@ return [
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
-        Sheba\Logistics\Listeners\EventsProvider::class
+        Sheba\Logistics\Listeners\EventsProvider::class,
+        L5Swagger\L5SwaggerServiceProvider::class,
     ],
 
     /*
