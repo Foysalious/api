@@ -10,14 +10,14 @@ class Controller extends BaseController
 {
     /**
      * @SWG\Swagger(
-     *     schemes={"http"},
-     *     host="api.sheba.test",
+     *     schemes={"http","https"},
+     *     host="api.dev-sheba.xyz",
      *     basePath="/",
      *     @SWG\Info(
      *         version="1.0.0",
      *         title="Sheba API Project",
-     *         description="Shbea API documentation",
-     *         termsOfService="",
+     *         description="For details of swagger annotation visit php artisan l5-swagger:generate || php artisan swagger-upload-json",
+     *         termsOfService="smanager.sheba.xyz",
      *         @SWG\Contact(
      *             email="info@sheba.xyz"
      *         ),
