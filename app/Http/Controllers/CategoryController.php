@@ -547,6 +547,7 @@ class CategoryController extends Controller
                 $parent_category = null;
                 if ($category->parent_id != null) $parent_category = $category->parent()->select('id', 'name', 'slug')->first();
                 $category = collect($category)->only(['id', 'name', 'slug', 'banner', 'parent_id', 'app_banner', 'service_title', 'is_auto_sp_enabled', 'min_order_amount', 'max_order_amount', 'is_vat_applicable', 'terms_and_conditions']);
+                $category['vat_percentage'] = config('sheba.category_vat_in_percentage');
                 $version_code = (int)$request->header('Version-Code');
                 $services = $this->serviceQuestionSet($services);
                 if ($version_code && $version_code <= 30122 && $version_code <= 107) {
