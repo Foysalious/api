@@ -7,6 +7,7 @@ use Sheba\Business\ApprovalSettingModule\ModuleRequester;
 use Sheba\Business\ApprovalSettingModule\Updater as ApprovalSettingModuleUpdater;
 use Sheba\Business\ApprovalSettingApprover\Updater as ApprovalSettingApproverUpdater;
 use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
+use Sheba\Dal\ApprovalSetting\Targets;
 use Sheba\ModificationFields;
 use Sheba\Dal\ApprovalSettingModule\ApprovalSettingModuleRepository;
 use Sheba\Dal\ApprovalSettingApprover\ApprovalSettingApproverRepository;
@@ -51,6 +52,7 @@ class Updater
     private $approvalSettingModuleData = [];
     private $approvalSettingApproverData = [];
     private $approvalSettingApproverRepo;
+    private $isDefault;
 
     /**
      * Updater constructor.
@@ -99,6 +101,16 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param $is_default
+     * @return $this
+     */
+    public function setIsDefault($is_default)
+    {
+        $this->isDefault = $is_default;
+        return $this;
+    }
+
     public function update()
     {
         $this->makeData();
@@ -112,7 +124,7 @@ class Updater
     public function makeData()
     {
         if ($this->approvalSettingRequester->getTargetType()) {
-            $this->approvalSettingData['target_type'] = $this->approvalSettingRequester->getTargetType();
+            $this->approvalSettingData['target_type'] = $this->isDefault ? Targets::GENERAL : $this->approvalSettingRequester->getTargetType();
         }
         if ($this->approvalSettingRequester->getTargetId()) {
             $this->approvalSettingData['target_id'] = $this->approvalSettingRequester->getTargetId();

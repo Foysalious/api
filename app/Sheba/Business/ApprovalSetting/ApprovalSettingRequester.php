@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\ApprovalSetting;
 
+use Sheba\Dal\ApprovalSetting\Targets;
 use Sheba\Dal\ApprovalSettingModule\Modules;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
@@ -13,22 +14,11 @@ class ApprovalSettingRequester
     private $note;
     private $approvers;
 
-    public function setModules($modules)
-    {
-        $this->modules = $modules;
-        if ($this->modules) $this->modules = json_decode($this->modules, 1);
-        $this->moduleValidation();
-        return $this;
-    }
-
-    public function getModules()
-    {
-        return $this->modules;
-    }
 
     public function setTargetType($target_type)
     {
         $this->targetType = $target_type;
+        if ($this->targetType == Targets::GENERAL) $this->targetType = Targets::GENERAL_MODULE;
         return $this;
     }
 
@@ -46,6 +36,19 @@ class ApprovalSettingRequester
     public function getTargetId()
     {
         return $this->targetId;
+    }
+    
+    public function setModules($modules)
+    {
+        $this->modules = $modules;
+        if ($this->modules) $this->modules = json_decode($this->modules, 1);
+        $this->moduleValidation();
+        return $this;
+    }
+
+    public function getModules()
+    {
+        return $this->modules;
     }
 
     public function setNote($note)
