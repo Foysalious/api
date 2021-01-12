@@ -73,7 +73,7 @@ class ApprovalSettingsController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
-        $default_approval_setting =  $this->defaultApprovalSetting->getApprovalSettings();
+        $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
         $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
 
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
@@ -99,9 +99,10 @@ class ApprovalSettingsController extends Controller
             'modules' => 'required',
             'note' => 'string',
             'target_type' => 'required|in:' . implode(',', Targets::get()),
+            'target_id' => 'required_if:target_type,in,' . implode(',', [Targets::DEPARTMENT, Targets::EMPLOYEE]),
             'approvers' => 'required',
+            'is_default' => 'required|in:1,0',
         ]);
-
         $this->setModifier($manager_member);
         $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
@@ -113,7 +114,7 @@ class ApprovalSettingsController extends Controller
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
 
-        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->create();
+        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->setIsDefault($request->is_default)->create();
         return api_response($request, null, 200);
     }
 
@@ -140,6 +141,19 @@ class ApprovalSettingsController extends Controller
 
     /**
      * @param Request $request
+     * @return JsonResponse
+     */
+    public function showDefault(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
+        return api_response($request, null, 200, ['data' => $default_approval_setting]);
+    }
+
+    /**
+     * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
      */
@@ -156,6 +170,7 @@ class ApprovalSettingsController extends Controller
             'note' => 'string',
             'target_type' => 'sometimes|required|in:' . implode(',', Targets::get()),
             'target_id' => 'required_if:target_type,in,' . implode(',', [Targets::DEPARTMENT, Targets::EMPLOYEE]),
+            'is_default' => 'required|in:1,0'
         ]);
 
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
@@ -171,7 +186,7 @@ class ApprovalSettingsController extends Controller
         if ($this->approvalSettingsRequester->hasError()) {
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
-        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->update();
+        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->setIsDefault($request->is_default)->update();
         return api_response($request, null, 200);
     }
 
