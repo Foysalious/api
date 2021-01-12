@@ -94,7 +94,9 @@ class TopUp
                 $this->isSuccessful = true;
             });
 
-            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
+            if ($topup_order["agent_type"] == "App\\Models\\Partner") {
+                app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
+            }
 
         } catch (Throwable $e) {
             logError($e);

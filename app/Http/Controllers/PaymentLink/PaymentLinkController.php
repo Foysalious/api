@@ -82,34 +82,52 @@ class PaymentLinkController extends Controller
 
     public function store(Request $request)
     {
-        $this->validate($request, [
-            'amount' => 'required',
-            'purpose' => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
-            'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
-        ]);
-        $emi_month_invalidity = Creator::validateEmiMonth($request->all());
-        if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
-        $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order')->setEmiMonth((int)$request->emi_month)->setEmiCalculations();
+        try {
+            $this->validate($request, [
+                'amount'    => 'required',
+                'purpose'   => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
+            ]);
+            $emi_month_invalidity = Creator::validateEmiMonth($request->all());
+            if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
+            $this->creator
+                ->setIsDefault($request->isDefault)
+                ->setAmount($request->amount)
+                ->setReason($request->purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setTargetId($request->pos_order_id)
+                ->setTargetType('pos_order')
+                ->setEmiMonth((int)$request->emi_month)
+                ->setEmiCalculations();
 
-        if ($request->has('pos_order_id')) {
-            $pos_order = PosOrder::find($request->pos_order_id);
-            $customer = PosCustomer::find($pos_order->customer_id);
-            if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-        }
-
-        if ($request->has('customer_id')) {
-            $customer = PosCustomer::find($request->customer_id);
-            if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-        }
-
-        $payment_link_store = $this->creator->save();
-        if ($payment_link_store) {
-            $payment_link = $this->creator->getPaymentLinkData();
-            if (!$request->has('emi_month')) {
-                $this->creator->sentSms();
+            if ($request->has('pos_order_id')) {
+                $pos_order = PosOrder::find($request->pos_order_id);
+                $customer = PosCustomer::find($pos_order->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
-            return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
-        } else {
+
+            if ($request->has('customer_id')) {
+                $customer = PosCustomer::find($request->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            }
+
+            $payment_link_store = $this->creator->save();
+            if ($payment_link_store) {
+                $payment_link = $this->creator->getPaymentLinkData();
+                if (!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
+                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+            } else {
+                return api_response($request, null, 500);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }

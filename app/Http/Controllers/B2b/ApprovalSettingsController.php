@@ -1,14 +1,19 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\BusinessMember;
+use App\Models\Member;
 use App\Transformers\Business\ApprovalSettingDetailsTransformer;
 use App\Transformers\Business\ApprovalSettingListTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
+use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalSetting\ApprovalSettingRequester;
 use Sheba\Business\ApprovalSetting\Creator;
+use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
 use Sheba\Business\ApprovalSetting\Updater;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -27,16 +32,22 @@ class ApprovalSettingsController extends Controller
      * @var ApprovalSettingRequester
      */
     private $approvalSettingsRequester;
+    /**
+     * @var MakeDefaultApprovalSetting
+     */
+    private $defaultApprovalSetting;
 
     /**
      * ApprovalSettingsController constructor.
      * @param ApprovalSettingRepository $approval_settings_repo
      * @param ApprovalSettingRequester $approval_setting_requester
+     * @param MakeDefaultApprovalSetting $default_approval_setting
      */
-    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester)
+    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester, MakeDefaultApprovalSetting $default_approval_setting)
     {
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
+        $this->defaultApprovalSetting = $default_approval_setting;
 
     }
 
@@ -62,6 +73,9 @@ class ApprovalSettingsController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
+        $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
+        $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
+
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
@@ -85,13 +99,14 @@ class ApprovalSettingsController extends Controller
             'modules' => 'required',
             'note' => 'string',
             'target_type' => 'required|in:' . implode(',', Targets::get()),
+            'target_id' => 'required_if:target_type,in,' . implode(',', [Targets::DEPARTMENT, Targets::EMPLOYEE]),
             'approvers' => 'required',
+            'is_default' => 'required|in:1,0',
         ]);
-
         $this->setModifier($manager_member);
         $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
-            ->setTargetId($request->targetId)
+            ->setTargetId($request->target_id)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
@@ -99,7 +114,7 @@ class ApprovalSettingsController extends Controller
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
 
-        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->create();
+        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->setIsDefault($request->is_default)->create();
         return api_response($request, null, 200);
     }
 
@@ -109,17 +124,32 @@ class ApprovalSettingsController extends Controller
      */
     public function show(Request $request)
     {
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
+        /** @var ApprovalSetting $approval_settings */
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
         if (!$approval_settings) return api_response($request, null, 404);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Collection($approval_settings->get(), new ApprovalSettingDetailsTransformer());
+        $resource = new Item($approval_settings, new ApprovalSettingDetailsTransformer());
         $approval_settings_details = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, ['data' => $approval_settings_details]);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function showDefault(Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
+        return api_response($request, null, 200, ['data' => $default_approval_setting]);
     }
 
     /**
@@ -129,7 +159,9 @@ class ApprovalSettingsController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
+        /** @var Member $manager_member */
         $manager_member = $request->manager_member;
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
@@ -138,6 +170,7 @@ class ApprovalSettingsController extends Controller
             'note' => 'string',
             'target_type' => 'sometimes|required|in:' . implode(',', Targets::get()),
             'target_id' => 'required_if:target_type,in,' . implode(',', [Targets::DEPARTMENT, Targets::EMPLOYEE]),
+            'is_default' => 'required|in:1,0'
         ]);
 
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
@@ -146,14 +179,14 @@ class ApprovalSettingsController extends Controller
         $this->setModifier($manager_member);
         $this->approvalSettingsRequester->setModules($request->modules)
             ->setTargetType($request->target_type)
-            ->setTargetId($request->targetId)
+            ->setTargetId($request->target_id)
             ->setNote($request->note)
             ->setApprovers($request->approvers);
 
         if ($this->approvalSettingsRequester->hasError()) {
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
-        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->update();
+        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->setIsDefault($request->is_default)->update();
         return api_response($request, null, 200);
     }
 
@@ -163,6 +196,7 @@ class ApprovalSettingsController extends Controller
      */
     public function delete(Request $request)
     {
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
         $approval_settings = $this->approvalSettingsRepo->find($request->setting);
