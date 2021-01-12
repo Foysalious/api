@@ -96,6 +96,7 @@ class PartnerController extends Controller
     /**
      * @SWG\Get(
      *     path="/v2/partners/{partner}",
+     *     tags={"Partner"},
      *     description="Return partner's info",
      *     @SWG\Parameter(
      *         name="partner",
