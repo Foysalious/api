@@ -108,7 +108,7 @@ class Creator
                 "message"    => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে, অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "sound"      => "notification_sound",
                 "event_type" => 'PartnerOrder',
-                "event_id"   => $this->partnerOrderRequestId,
+                "event_id"   => $this->partnerOrderRequestId->id,
                 "link"       => "new_order",
                 "order"      => $this->getOrderRequestData()
             ];
@@ -122,13 +122,13 @@ class Creator
     private function getOrderRequestData()
     {
         try {
-            $order_request = $this->partnerOrderRequestRepo->find($this->partnerOrderRequestId);
+            $order_request = $this->partnerOrderRequestId;
             $manager       = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($order_request, new OrderRequestTransformer());
             return $manager->createData($resource)->toArray()['data'];
         }catch (Throwable $e){
-            return [];
+            return [$this->partnerOrderRequestId,$e->getMessage(),$e->getLine()];
         }
     }
 
