@@ -140,7 +140,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->jobPricesWithLogistic = $this->jobPrices + $this->totalLogisticCharge;
         $this->grossAmountWithLogistic = $this->grossAmount + $this->grossLogisticCharge;
         $this->paid = $this->sheba_collection + $this->partner_collection;
-        $this->due = floatValFormat($this->grossAmount - $this->paid);
+        $this->due = floatValFormat($this->grossAmount - $this->paid + $this->vat);
         $this->paidWithLogistic = floatValFormat($this->paid + $this->totalLogisticPaid);
         $this->dueWithLogistic = floatValFormat($this->due + $this->totalLogisticDue);
         $this->overPaid = $this->isOverPaid() ? floatValFormat($this->paid - $this->grossAmount) : 0;
@@ -230,8 +230,9 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalServiceCost += $job->serviceCost;
         $this->totalMaterialPrice += $job->materialPrice;
         $this->totalMaterialCost += $job->materialCost;
-        $this->jobPrices += $job->totalPrice;
+        $this->jobPrices += $job->totalPrice - $job->vat;
         $this->totalPrice += $job->grossPrice;
+        $this->vat += $job->vat;
         $this->totalCostWithoutDiscount += $job->totalCostWithoutDiscount;
         $this->totalCost += $job->totalCost;
         $this->totalCommission += $job->commission;

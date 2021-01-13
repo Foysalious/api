@@ -53,6 +53,7 @@ class BillInfo
         $bill['total'] = (double)$partnerOrder->totalPrice;
         $bill['paid'] = (double)$partnerOrder->paid;
         $bill['due'] = (double)$partnerOrder->due;
+        $bill['vat'] = (double)$partnerOrder->vat;
         $bill['total_material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discount;
