@@ -126,7 +126,7 @@ class PaymentLinkTransformer
             return $model_name . 'PosOrder';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
-        if ($this->response->targeType == 'due_tracker') return 'due_tracker';
+        if ($this->response->targetType == 'due_tracker') return 'due_tracker';
     }
 
     private function getPaymentLinkPayer()
