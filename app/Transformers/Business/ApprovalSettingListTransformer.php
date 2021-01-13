@@ -25,6 +25,7 @@ class ApprovalSettingListTransformer extends TransformerAbstract
      */
     public function transform($approval_setting)
     {
+        $this->approvalSettingDataFormat->initialize();
         $modules_data = $this->approvalSettingDataFormat->getModules($approval_setting->modules);
         $approvars_data = $this->approvalSettingDataFormat->getApprovers($approval_setting->approvers);
 
