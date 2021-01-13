@@ -35,10 +35,13 @@ class ApprovalSettingDataFormat
     {
         $this->departmentRepo = app(DepartmentRepositoryInterface::class);
         $this->businessMemberRepo = app(BusinessMemberRepositoryInterface::class);
+    }
+
+    public function initialize()
+    {
         $this->moduleData = [];
         $this->approverData = [];
     }
-
     /**
      * @param $modules
      * @return array
