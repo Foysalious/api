@@ -42,7 +42,7 @@ class PosServiceTransformer extends TransformerAbstract
             'discounted_price' => $service_discount ? (double)$service->getDiscountedAmount() : 0,
             'discount_percentage' => $service_discount ? $service->getDiscountPercentage() : 0,
             'discount_end_time' => $service_discount ? $service_discount->end_date->format('Y-m-d') : null,
-            'product_link' => config('sheba.webstore_url') . '/' . $service->partner->sub_domain . '/store/' . $service->id,
+            'product_link' => config('sheba.webstore_url') . '/' . $service->partner->sub_domain . '/product/' . $service->id,
             'show_image' => ($service->show_image) || is_null($service->show_image) ? 1 : 0,
             'shape' => $service->shape,
             'color' => $service->color,
