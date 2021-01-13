@@ -26,6 +26,7 @@ class PosOrderList
     protected $sales_channel;
     protected $q;
     protected $type;
+    protected $orderStatus;
 
     public function __construct()
     {
@@ -49,6 +50,16 @@ class PosOrderList
     public function setStatus($status)
     {
         $this->status = $status;
+        return $this;
+    }
+
+    /**
+     * @param $orderStatus
+     * @return PosOrderList
+     */
+    public function setOrderStatus($orderStatus)
+    {
+        $this->orderStatus = $orderStatus;
         return $this;
     }
 
@@ -164,6 +175,7 @@ class PosOrderList
     {
         $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
+        if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
         return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
     }
@@ -198,6 +210,12 @@ class PosOrderList
         if ($type == 'new') $orders_query = $orders_query->where('status', OrderStatuses::PENDING);
         if ($type == 'running') $orders_query = $orders_query->whereIn('status', [OrderStatuses::PROCESSING, OrderStatuses::SHIPPED]);
         if ($type == 'completed') $orders_query = $orders_query->whereIn('status', [OrderStatuses::COMPLETED, OrderStatuses::CANCELLED, OrderStatuses::DECLINED]);
+        return $orders_query;
+    }
+
+    private function filteredByOrderStatus($orders_query, $orderStatus)
+    {
+        $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
     }
 }
