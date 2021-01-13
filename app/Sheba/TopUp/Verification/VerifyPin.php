@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp\Verification;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use GuzzleHttp\Exception\ClientException;
@@ -78,7 +78,7 @@ class VerifyPin
     }
 
     /**
-     * @throws ApiValidationException
+     * @throws DoNotReportException
      * @throws PinMismatchException
      */
     private function getAuthenticateRequests()
@@ -115,7 +115,7 @@ class VerifyPin
     {
         $this->logout();
         $this->resetRememberToken();
-        throw new ApiValidationException("You have been logged out", 401);
+        throw new DoNotReportException("You have been logged out", 401);
     }
 
     private function logout()
