@@ -126,7 +126,9 @@ class Creator
             $manager       = new Manager();
             $manager->setSerializer(new CustomSerializer());
             $resource = new Item($order_request, new OrderRequestTransformer());
-            return $manager->createData($resource)->toArray()['data'];
+            $data= $manager->createData($resource)->toArray()['data'];
+            $data['time_left_to_accept_in_seconds']=config('partner.order.request_accept_time_limit_in_seconds');
+            return $data;
         }catch (Throwable $e){
             return [$this->partnerOrderRequestId,$e->getMessage(),$e->getLine()];
         }
