@@ -347,8 +347,8 @@ class JobController extends Controller
         $bill['total_without_logistic'] = (double)($partnerOrder->totalPrice);
         $bill['original_price'] = (double)$partnerOrder->jobPrices;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
-        $bill['due'] = (double)$partnerOrder->dueWithLogistic + $this->getVatOfJob($job);
-        $bill['vat'] = $this->getVatOfJob($job);
+        $bill['due'] = (double)$partnerOrder->dueWithLogistic;
+        $bill['vat'] = $job->vat;
         $bill['vat_percentage'] = config('sheba.category_vat_in_percentage');
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
@@ -383,20 +383,6 @@ class JobController extends Controller
         $bill['surcharge_amount'] = (double)$job->totalServiceSurcharge;
 
         return api_response($request, $bill, 200, ['bill' => $bill]);
-    }
-
-    private function getVatOfJob(Job $job)
-    {
-        $is_vat_applicable = $job->category ? $job->category->is_vat_applicable : 0;
-
-        if(!$is_vat_applicable) return 0;
-
-        $partnerOrder = $job->partnerOrder;
-        $partnerOrder->calculate(true);
-        $due = (double)$partnerOrder->dueWithLogistic;
-        $vat_percentage = (double) config('sheba.category_vat_in_percentage');
-
-        return ($due * $vat_percentage)/100;
     }
 
     private function formatPaymentMethod($payment_method)
