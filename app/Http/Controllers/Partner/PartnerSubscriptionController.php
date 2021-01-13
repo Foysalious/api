@@ -299,7 +299,7 @@ class PartnerSubscriptionController extends Controller
                     $grade = $handler->getGrade();
                     if ($grade == PartnerSubscriptionChange::DOWNGRADE && $partner->status != PartnerStatuses::INACTIVE) {
                         DB::commit();
-                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bd  প্যকেজে অবনমনের  অনুরোধ  গ্রহণ  করা  হয়েছে "]);
+                        return api_response($request, null, $inside ? 200 : 202, ['message' => " আপনার $requestedPackage->show_name_bn প্যকেজে ডাউনগ্রেড করার অনুরোধ গ্রহণ করা হয়েছে। মেয়াদ শেষে সয়ঙ্ক্রিয় ভাবে প্যাকেজের ডাউনগ্রেড হয়ে যাবে।"]);
                     }
                     $hasCredit = $handler->hasCredit();
                     if (!$hasCredit) {
