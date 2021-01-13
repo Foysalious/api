@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Transformers\Business\ApprovalSettingDetailsTransformer;
@@ -43,7 +44,9 @@ class ApprovalSettingsController extends Controller
      * @param ApprovalSettingRequester $approval_setting_requester
      * @param MakeDefaultApprovalSetting $default_approval_setting
      */
-    public function __construct(ApprovalSettingRepository $approval_settings_repo, ApprovalSettingRequester $approval_setting_requester, MakeDefaultApprovalSetting $default_approval_setting)
+    public function __construct(ApprovalSettingRepository $approval_settings_repo,
+                                ApprovalSettingRequester $approval_setting_requester,
+                                MakeDefaultApprovalSetting $default_approval_setting)
     {
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
@@ -57,7 +60,9 @@ class ApprovalSettingsController extends Controller
      */
     public function index(Request $request)
     {
+        /** @var Business $business */
         $business = $request->business;
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
@@ -90,8 +95,11 @@ class ApprovalSettingsController extends Controller
      */
     public function store(Request $request, Creator $creator)
     {
+        /** @var Business $business */
         $business = $request->business;
+        /** @var Member $manager_member */
         $manager_member = $request->manager_member;
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
@@ -104,17 +112,20 @@ class ApprovalSettingsController extends Controller
             'is_default' => 'required|in:1,0',
         ]);
         $this->setModifier($manager_member);
-        $this->approvalSettingsRequester->setModules($request->modules)
+        $this->approvalSettingsRequester->setBusiness($business)
+            ->setIsDefault($request->is_default)
+            ->setModules($request->modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->target_id)
             ->setNote($request->note)
-            ->setApprovers($request->approvers);
+            ->setApprovers($request->approvers)
+            ->checkValidation();
 
         if ($this->approvalSettingsRequester->hasError()) {
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
 
-        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->setIsDefault($request->is_default)->create();
+        $creator->setApprovalSettingRequester($this->approvalSettingsRequester)->setBusiness($business)->create();
         return api_response($request, null, 200);
     }
 
@@ -159,6 +170,8 @@ class ApprovalSettingsController extends Controller
      */
     public function update(Request $request, Updater $updater)
     {
+        /** @var Business $business */
+        $business = $request->business;
         /** @var Member $manager_member */
         $manager_member = $request->manager_member;
         /** @var BusinessMember $business_member */
@@ -177,16 +190,19 @@ class ApprovalSettingsController extends Controller
         if (!$approval_settings) return api_response($request, null, 404);
 
         $this->setModifier($manager_member);
-        $this->approvalSettingsRequester->setModules($request->modules)
+        $this->approvalSettingsRequester->setBusiness($business)
+            ->setIsDefault($request->is_default)
+            ->setModules($request->modules)
             ->setTargetType($request->target_type)
             ->setTargetId($request->target_id)
             ->setNote($request->note)
-            ->setApprovers($request->approvers);
+            ->setApprovers($request->approvers)
+            ->checkValidation();
 
         if ($this->approvalSettingsRequester->hasError()) {
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
         }
-        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->setIsDefault($request->is_default)->update();
+        $updater->setApprovalSettings($approval_settings)->setApprovalSettingRequester($this->approvalSettingsRequester)->update();
         return api_response($request, null, 200);
     }
 
@@ -199,9 +215,10 @@ class ApprovalSettingsController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
-        $approval_settings = $this->approvalSettingsRepo->find($request->setting);
-        if (!$approval_settings) return api_response($request, null, 404);
-        $approval_settings->delete();
+        /** @var ApprovalSetting $approval_setting */
+        $approval_setting = $this->approvalSettingsRepo->find($request->setting);
+        if (!$approval_setting) return api_response($request, null, 404);
+        $approval_setting->delete();
         return api_response($request, null, 200);
     }
 

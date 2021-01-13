@@ -124,7 +124,7 @@ class Updater
     public function makeData()
     {
         if ($this->approvalSettingRequester->getTargetType()) {
-            $this->approvalSettingData['target_type'] = $this->isDefault ? Targets::GENERAL : $this->approvalSettingRequester->getTargetType();
+            $this->approvalSettingData['target_type'] = $this->approvalSettingRequester->getIsDefault() ? Targets::GENERAL : $this->approvalSettingRequester->getTargetType();
         }
         if ($this->approvalSettingRequester->getTargetId()) {
             $this->approvalSettingData['target_id'] = $this->approvalSettingRequester->getTargetId();
