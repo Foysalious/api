@@ -139,6 +139,7 @@ class PaymentLinkController extends Controller
                 $data = Calculations::getMonthData($request->amount, (int)$request->emi_month, false);
                 $this->creator->setAmount($data['total_amount'])->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setEmiMonth((int)$request->emi_month);
             }
+            $this->creator->setTargetType('due_tracker');
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
