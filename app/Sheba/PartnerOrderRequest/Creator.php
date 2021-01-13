@@ -121,11 +121,15 @@ class Creator
 
     private function getOrderRequestData()
     {
-        $order_request = $this->partnerOrderRequestRepo->find($this->partnerOrderRequestId);
-        $manager       = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($order_request, new OrderRequestTransformer());
-        return $manager->createData($resource)->toArray()['data'];
+        try {
+            $order_request = $this->partnerOrderRequestRepo->find($this->partnerOrderRequestId);
+            $manager       = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($order_request, new OrderRequestTransformer());
+            return $manager->createData($resource)->toArray()['data'];
+        }catch (Throwable $e){
+            return [];
+        }
     }
 
     private function sendOrderRequestSmsToPartner($partner_id)
