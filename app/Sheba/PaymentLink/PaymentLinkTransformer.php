@@ -116,7 +116,7 @@ class PaymentLinkTransformer
 
     public function isDueTrackerPaymentLink()
     {
-        return $this->response->targeType == 'due_tracker' ? 1 : 0;
+        return $this->response->targetType == 'due_tracker' ? 1 : 0;
     }
 
     private function resolveTargetClass()
