@@ -88,16 +88,6 @@ class Creator
         return $this;
     }
 
-    /**
-     * @param $is_default
-     * @return $this
-     */
-    public function setIsDefault($is_default)
-    {
-        $this->isDefault = $is_default;
-        return $this;
-    }
-
     public function create()
     {
         $this->makeData();
@@ -114,7 +104,7 @@ class Creator
     {
         $this->approvalSettingData = [
             'business_id' => $this->business->id,
-            'target_type' => $this->isDefault ? Targets::GENERAL : $this->approvalSettingRequester->getTargetType(),
+            'target_type' => $this->approvalSettingRequester->getIsDefault() ? Targets::GENERAL : $this->approvalSettingRequester->getTargetType(),
             'target_id' => $this->approvalSettingRequester->getTargetId(),
             'note' => $this->approvalSettingRequester->getNote(),
         ];
