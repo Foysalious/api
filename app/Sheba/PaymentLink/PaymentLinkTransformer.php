@@ -106,11 +106,17 @@ class PaymentLinkTransformer
     public function getTarget()
     {
         if ($this->response->targetType) {
-            $model_name   = $this->resolveTargetClass();
+            $model_name = $this->resolveTargetClass();
+            if ($model_name == 'due_tracker') return null;
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
             return null;
+    }
+
+    public function isDueTrackerPaymentLink()
+    {
+        return $this->response->targeType == 'due_tracker' ? 1 : 0;
     }
 
     private function resolveTargetClass()
@@ -120,6 +126,7 @@ class PaymentLinkTransformer
             return $model_name . 'PosOrder';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
+        if ($this->response->targeType == 'due_tracker') return 'due_tracker';
     }
 
     private function getPaymentLinkPayer()
@@ -148,12 +155,12 @@ class PaymentLinkTransformer
 
     public function getSuccessUrl()
     {
-        return $this->target->success_url.'?transaction_id='.$this->target->transaction_id;
+        return $this->target->success_url . '?transaction_id=' . $this->target->transaction_id;
     }
 
     public function getFailUrl()
     {
-        return $this->target->fail_url.'?transaction_id='.$this->target->transaction_id;
+        return $this->target->fail_url . '?transaction_id=' . $this->target->transaction_id;
     }
 
     public function toArray()
@@ -162,22 +169,22 @@ class PaymentLinkTransformer
         $payer      = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                   'id'                  => $this->getLinkID(),
-                   'identifier'          => $this->getLinkIdentifier(),
-                   'purpose'             => $this->getReason(),
-                   'amount'              => $this->getAmount(),
-                   'emi_month'           => $this->getEmiMonth(),
-                   'payment_receiver'    => [
-                       'name'  => $user->name,
-                       'image' => $user->logo,
-                       'id'    => $user->id,
-                   ],
-                   'payer'               => $payer ? [
-                       'name'   => $payer->name,
-                       'mobile' => $payer->mobile
-                   ] : null,
-                   'is_external_payment' => $isExternal,
-               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+                'id'                  => $this->getLinkID(),
+                'identifier'          => $this->getLinkIdentifier(),
+                'purpose'             => $this->getReason(),
+                'amount'              => $this->getAmount(),
+                'emi_month'           => $this->getEmiMonth(),
+                'payment_receiver'    => [
+                    'name'  => $user->name,
+                    'image' => $user->logo,
+                    'id'    => $user->id,
+                ],
+                'payer'               => $payer ? [
+                    'name'   => $payer->name,
+                    'mobile' => $payer->mobile
+                ] : null,
+                'is_external_payment' => $isExternal,
+            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
 }
