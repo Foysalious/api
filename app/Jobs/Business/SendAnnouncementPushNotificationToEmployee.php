@@ -33,6 +33,7 @@ class SendAnnouncementPushNotificationToEmployee extends Job implements ShouldQu
             try {
                 $topic = config('sheba.push_notification_topic_name.employee') . $this->member;
                 $channel = config('sheba.push_notification_channel_name.employee');
+                $sound  = config('sheba.push_notification_sound.employee');
                 $this->pushNotification->send([
                     "title" => 'New announcement arrived',
                     "message" => $this->announcement->title,
@@ -41,7 +42,7 @@ class SendAnnouncementPushNotificationToEmployee extends Job implements ShouldQu
                     "sound" => "notification_sound",
                     "channel_id" => $channel,
                     "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-                ], $topic, $channel);
+                ], $topic, $channel, $sound);
             } catch (Throwable $e) {
                 app('sentry')->captureException($e);
             }
