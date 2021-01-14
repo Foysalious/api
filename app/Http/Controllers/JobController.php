@@ -348,6 +348,7 @@ class JobController extends Controller
         $bill['original_price'] = (double)$partnerOrder->jobPrices;
         $bill['paid'] = (double)$partnerOrder->paidWithLogistic;
         $bill['due'] = (double)$partnerOrder->dueWithLogistic;
+        $bill['grand_total'] = (double)$partnerOrder->grandTotal;
         $bill['vat'] = $job->vat;
         $bill['vat_percentage'] = config('sheba.category_vat_in_percentage');
         $bill['material_price'] = (double)$job->materialPrice;
