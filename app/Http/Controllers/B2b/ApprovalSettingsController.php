@@ -15,6 +15,7 @@ use Sheba\Business\ApprovalSetting\Creator;
 use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
 use Sheba\Business\ApprovalSetting\Updater;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
+use Sheba\Dal\ApprovalSettingModule\Modules;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -220,6 +221,16 @@ class ApprovalSettingsController extends Controller
         if (!$approval_setting) return api_response($request, null, 404);
         $approval_setting->delete();
         return api_response($request, null, 200);
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getModules(Request $request)
+    {
+        $modules =  Modules::get();
+        return api_response($request, null, 200, ['modules' => $modules]);
     }
 
     /**

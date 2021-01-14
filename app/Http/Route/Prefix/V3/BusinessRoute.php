@@ -15,6 +15,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'approval-settings'], function ($api) {
                     $api->get('/', 'B2b\ApprovalSettingsController@index');
                     $api->get('/default', 'B2b\ApprovalSettingsController@showDefault');
+                    $api->get('/modules', 'B2b\ApprovalSettingsController@getModules');
                     $api->post('/', 'B2b\ApprovalSettingsController@store');
                     $api->group(['prefix' => '{setting}'], function ($api) {
                         $api->get('/', 'B2b\ApprovalSettingsController@show');

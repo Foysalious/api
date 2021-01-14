@@ -15,11 +15,11 @@ class ApprovalSettingDataFormat
 {
 
     /**
-     * @var Application|mixed
+     * @var DepartmentRepositoryInterface
      */
     private $departmentRepo;
     /**
-     * @var Application|mixed
+     * @var BusinessMemberRepositoryInterface
      */
     private $businessMemberRepo;
     /**
@@ -77,6 +77,7 @@ class ApprovalSettingDataFormat
                 'type' => ucfirst(Types::getType($approvar->type)),
                 'type_id' => $approvar->type_id,
                 'name' => $profile ? $profile->name : null,
+                'business_member_id' => $business_member ? $business_member->id : null,
                 'employee_id' => $business_member ? $business_member->employee_id : null,
                 'department' => $business_member ? $business_member->department() ? $business_member->department()->name : null : null,
                 'profile_pic' => $profile ? $profile->pro_pic : null
@@ -113,6 +114,7 @@ class ApprovalSettingDataFormat
         $profile = $member ? $member->profile : null;
 
         return $business_member ? [
+            'business_member_id' => $business_member ? $business_member->id : null,
             'employee_id' => $business_member ? $business_member->employee_id : null,
             'name' => $profile ? $profile->name : null,
             'department' => $business_member ? $business_member->department() ? $business_member->department()->name : null : null,
