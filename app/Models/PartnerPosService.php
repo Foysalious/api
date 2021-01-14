@@ -159,4 +159,9 @@ class PartnerPosService extends BaseModel
             'app_thumb' => $this->app_thumb,
         ];
     }
+
+    public function scopeServiceCountByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id)->count();
+    }
 }

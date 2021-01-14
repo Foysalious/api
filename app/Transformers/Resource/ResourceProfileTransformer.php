@@ -25,7 +25,7 @@ class ResourceProfileTransformer extends TransformerAbstract
         return [
             'name' => $resource->profile->name,
             'picture' => $resource->profile->pro_pic,
-            'partner_name' => $resource->firstPartner()->name,
+            'partner_name' => $resource->firstPartner() ? $resource->firstPartner()->name : null,
             'is_verified' => $resource->is_verified,
             'is_online' => $leave_status['status'] ? 0 : 1,
             'nid_no' => $resource->nid_no,
