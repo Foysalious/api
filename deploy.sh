@@ -26,6 +26,14 @@ if [ "$branch_name" = master ]; then
     php artisan set-release-number --release=$VERSION
 fi
 
-sudo composer install --ignore-platform-reqs --no-interaction
+if [ "$branch_name" = master ]; then
+  composer_version="prod"
+elif [ "$branch_name" = release ]; then
+  composer_version="prod"
+else
+  composer_version="dev"
+fi
+
+sudo ./bin/sheba-composer.sh install $composer_version
 sudo php artisan config:clear
 php artisan queue:restart
