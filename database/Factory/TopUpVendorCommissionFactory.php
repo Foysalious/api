@@ -1,4 +1,4 @@
-<?php namespace Factories;
+<?php namespace Factory;
 
 
 use App\Models\TopUpVendorCommission;

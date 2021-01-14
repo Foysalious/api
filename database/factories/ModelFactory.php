@@ -1,21 +1,21 @@
 <?php
 
-use Factories\Factory;
-use Factories\CategoryFactory;
-use Factories\ServiceFactory;
-use Factories\LocationFactory;
-use Factories\ProfileFactory;
-use Factories\AffiliateFactory;
-use Factories\AuthorizationRequestFactory;
-use Factories\AuthorizationTokenFactory;
-use Factories\TopUpVendorFactory;
-use Factories\TopUpVendorCommissionFactory;
-use Factories\TopUpOTFSettingsFactory;
-use Factories\TopUpVendorOTFFactory;
-use Factories\TopUpVendorOTFChangeLogFactory;
-use Factories\CustomerFactory;
-use Factories\ResourceFactory;
-use Factories\MemberFactory;
+use Factory\Factory;
+use Factory\CategoryFactory;
+use Factory\ServiceFactory;
+use Factory\LocationFactory;
+use Factory\ProfileFactory;
+use Factory\AffiliateFactory;
+use Factory\AuthorizationRequestFactory;
+use Factory\AuthorizationTokenFactory;
+use Factory\TopUpVendorFactory;
+use Factory\TopUpVendorCommissionFactory;
+use Factory\TopUpOTFSettingsFactory;
+use Factory\TopUpVendorOTFFactory;
+use Factory\TopUpVendorOTFChangeLogFactory;
+use Factory\CustomerFactory;
+use Factory\ResourceFactory;
+use Factory\MemberFactory;
 
 $factory_classes = [
     CategoryFactory::class,
