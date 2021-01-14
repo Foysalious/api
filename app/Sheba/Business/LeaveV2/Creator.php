@@ -14,6 +14,10 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
 use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
+use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
+use Sheba\Dal\ApprovalSetting\Targets;
+use Sheba\Dal\ApprovalSettingModule\Modules;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
@@ -64,6 +68,10 @@ class Creator
     private $business;
     private $businessHoliday;
     private $businessWeekend;
+    /**
+     * @var ApprovalSettingRepository
+     */
+    private $approvalSettingsRepo;
 
     /**
      * Creator constructor.
@@ -75,12 +83,13 @@ class Creator
      * @param PushNotificationHandler $push_notification_handler
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param ApprovalSettingRepository $approval_setting_repo
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
                                 ApprovalRequestCreator $approval_request_creator, TimeFrame $time_frame,
                                 Attachments $attachment_manager, PushNotificationHandler $push_notification_handler,
                                 BusinessHolidayRepoInterface $business_holiday_repo,
-                                BusinessWeekendRepoInterface $business_weekend_repo)
+                                BusinessWeekendRepoInterface $business_weekend_repo, ApprovalSettingRepository $approval_setting_repo)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
@@ -90,6 +99,7 @@ class Creator
         $this->pushNotificationHandler = $push_notification_handler;
         $this->businessHoliday = $business_holiday_repo;
         $this->businessWeekend = $business_weekend_repo;
+        $this->approvalSettingsRepo = $approval_setting_repo;
     }
 
     public function setTitle($title)
@@ -108,13 +118,14 @@ class Creator
         $this->business = $this->businessMember->business;
         if ($this->isLeaveAdjustment) return $this;
 
-        $this->getManager($this->businessMember);
-
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
             return $this;
         }
+        /** @Var ApprovalSetting $approval_setting */
+        $approval_setting = $this->getApprovalSetting();
 
+        $this->getManager($this->businessMember);
         if (empty($this->managers)) {
             $this->setError(422, 'Manager not set yet!');
             return $this;
@@ -128,6 +139,7 @@ class Creator
         }
 
         $approval_flow = $department->approvalFlowBy(Type::LEAVE);
+
         if (!$approval_flow) {
             $this->setError(422, 'Approval flow not set yet!');
             return $this;
@@ -294,6 +306,48 @@ class Creator
     private function sendPushToSubstitute(Leave $leave)
     {
         dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
+    }
+
+
+    /**
+     * @return mixed|null
+     */
+    public function getApprovalSetting()
+    {
+        $approval_settings_with_leave = null;
+
+        $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
+            ->where('target_type', Targets::EMPLOYEE)->where('target_id', $this->businessMember->id);
+        if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings);
+
+        if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
+            $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
+                ->where('target_type', Targets::DEPARTMENT)->where('target_id', $this->businessMember->department()->id);
+            if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings);
+        }
+        if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
+            $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
+                ->where('target_type', Targets::GENERAL_MODULE);
+            if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings);
+        }
+        if ($approval_settings->count() == 0 || !$approval_settings_with_leave) {
+            $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
+                ->where('target_type', Targets::GENERAL);
+            if ($approval_settings->count() > 0) $approval_settings_with_leave = $this->getApprovalSettingWithLeave($approval_settings);
+        }
+
+        return $approval_settings_with_leave;
+    }
+
+    /**
+     * @param $approval_settings
+     * @return mixed
+     */
+    private function getApprovalSettingWithLeave($approval_settings)
+    {
+        return $approval_settings->whereHas('modules', function ($module_query) {
+            $module_query->where('modules', Modules::LEAVE);
+        })->get()->last();
     }
 
     private function getManager($business_member)
