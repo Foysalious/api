@@ -33,6 +33,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalMaterialPrice;
     public $totalMaterialCost;
     public $totalPrice;
+    public $grandTotal;
     public $gmv;
     public $serviceCharge;
     public $totalCommission;
@@ -232,6 +233,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalMaterialCost += $job->materialCost;
         $this->jobPrices += $job->totalPrice - $job->vat;
         $this->totalPrice += $job->grossPrice;
+        $this->grandTotal += $job->totalPrice;
         $this->vat += $job->vat;
         $this->totalCostWithoutDiscount += $job->totalCostWithoutDiscount;
         $this->totalCost += $job->totalCost;
