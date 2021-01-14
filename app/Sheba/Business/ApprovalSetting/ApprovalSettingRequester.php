@@ -120,29 +120,15 @@ class ApprovalSettingRequester
         }
         if (count($this->validModules) > 0) $this->setError(420, (implode(', ', $this->validModules)) . ' is not valid module.');
 
-        if ($this->targetType && $this->targetId) {
-            $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)->with('modules')
-                ->where('target_type', $this->targetType)->where('target_id', $this->targetId)->get();
-            $this->areThoseModuleUsed($approval_settings);
-        }
+        $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
+            ->where('target_type', $this->targetType);
+        if ($this->targetId) $approval_settings = $approval_settings->where('target_id', $this->targetId);
 
-        if ($this->targetType) {
-            $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)->with('modules')
-                ->where('target_type', $this->targetType)->get();
-            $this->areThoseModuleUsed($approval_settings);
-        }
-        if (count($this->usedModules) > 0) $this->setError(420, 'This approval flow is already present in this system. Please select different options to add new flow.');
+        $approval_settings = $approval_settings->whereHas('modules', function ($module_query) {
+            $module_query->whereIn('modules', $this->modules);
+        })->toSql();
+
+        if (!$approval_settings->isEmpty()) $this->setError(420, 'This approval flow is already present in this system. Please select different options to add new flow.');
         return $this;
-    }
-
-    public function areThoseModuleUsed($approval_settings)
-    {
-        foreach ($approval_settings as $approval_setting) {
-            foreach ($this->modules as $module) {
-                $approval_setting_module = $approval_setting->modules()->where('modules', $module)->first();
-                if ($approval_setting_module) array_push($this->usedModules, $module);
-            }
-        }
-        return $this->usedModules;
     }
 }
