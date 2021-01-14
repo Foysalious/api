@@ -255,12 +255,14 @@ class DueTrackerRepository extends BaseRepository
     {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
-        $order->calculate();
-        if ($order->getDue() > 0) {
-            $payment_data['pos_order_id'] = $pos_order_id;
-            $payment_data['amount']       = $amount_cleared;
-            $payment_data['method']       = $payment_method;
-            $this->paymentCreator->credit($payment_data);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                $this->paymentCreator->credit($payment_data);
+            }
         }
     }
 
