@@ -6,7 +6,7 @@ class EmployeeRoute
     {
         $api->group(['prefix' => 'employee', 'middleware' => ['jwtAuth']], function ($api) {
             $api->group(['prefix' => 'leaves'], function ($api) {
-                $api->post('/', 'Employee\LeaveController@store');
+                $api->post('/', 'Employee\LeaveV2Controller@store');
             });
         });
     }

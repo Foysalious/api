@@ -126,7 +126,7 @@ class ApprovalSettingRequester
 
         $approval_settings = $approval_settings->whereHas('modules', function ($module_query) {
             $module_query->whereIn('modules', $this->modules);
-        })->toSql();
+        })->get();
 
         if (!$approval_settings->isEmpty()) $this->setError(420, 'This approval flow is already present in this system. Please select different options to add new flow.');
         return $this;
