@@ -93,7 +93,7 @@ class ServiceController extends Controller
     {
         ini_set('memory_limit', '2048M');
         $service = Service::where('id', (int)$service)->select('id', 'name', 'unit', 'structured_description', 'stock', 'stock_left', 'category_id', 'short_description', 'description', 'thumb', 'slug', 'min_quantity', 'banner', 'faqs', 'bn_name', 'bn_faqs', 'variable_type', 'variables');
-        $service_groups = $service->first()->groups;
+        $service_groups = $service->first() ? $service->first()->groups : null;
         $offers = collect();
         if ($service_groups) {
             $service_groups->map(function ($service_group) use ($offers) {
