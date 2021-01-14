@@ -74,13 +74,14 @@ class ApprovalSettingDataFormat
 
             array_push($this->approverData, [
                 'id' => $approvar->id,
-                'type' => ucfirst(Types::getType($approvar->type)),
+                'type' => Types::getType($approvar->type),
                 'type_id' => $approvar->type_id,
                 'name' => $profile ? $profile->name : null,
                 'business_member_id' => $business_member ? $business_member->id : null,
                 'employee_id' => $business_member ? $business_member->employee_id : null,
                 'department' => $business_member ? $business_member->department() ? $business_member->department()->name : null : null,
-                'profile_pic' => $profile ? $profile->pro_pic : null
+                'profile_pic' => $profile ? $profile->pro_pic : null,
+                'order' => $approvar->order
             ]);
         }
         return $this->approverData;
