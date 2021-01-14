@@ -124,7 +124,6 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
-        try {
             $sub_categories = PosCategory::child()->pluck('id')->toArray();
             $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
@@ -182,13 +181,6 @@ class ServiceController extends Controller
              */
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_CREATE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
@@ -389,6 +381,7 @@ class ServiceController extends Controller
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
         }
         if (!$posService->is_published_for_shop) {
+            if(PartnerPosService::serviceCountByPartner($request->partner->id) >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
             AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
             if ($posService->stock == null || $posService->stock < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
         }

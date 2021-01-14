@@ -1,5 +1,7 @@
 <?php namespace Sheba\Pos\Product;
 
+use App\Models\Partner;
+use App\Models\PartnerPosService;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -10,6 +12,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class Creator
 {
@@ -95,6 +98,9 @@ class Creator
 
     }
 
+    /**
+     * @throws \Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage
+     */
     private function format()
     {
         $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
@@ -103,8 +109,19 @@ class Creator
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
         $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
         $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
-        $this->data['is_published_for_shop']            = isset($this->data['is_published_for_shop'])  ?  $this->data['is_published_for_shop'] : 0;
+        if(isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1)
+        {
+            if(PartnerPosService::serviceCountByPartner($this->data['partner_id']) >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
+        }else{
+            $this->data['is_published_for_shop']  = 0;
+        }
 
+    }
+
+    private function getPartner($partner_id)
+    {
+        return Partner::find($this->data['partner_id']);
     }
 
     private function hasFile($filename)
