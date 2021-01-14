@@ -70,11 +70,19 @@ class ApprovalSettingsController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id);
 
-        if ($request->has('type') && $request->has('target_id')) $approval_settings = $approval_settings->where([['target_type', '=', $request->type], ['target_id', '=', $request->target_id]]);
-        if ($request->has('type') && $request->type) $approval_settings = $approval_settings->where('target_type', $request->type);
-        if ($request->has('module')) $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
-            $q->whereIn('modules', explode(',', $request->module));
-        });
+
+        if ($request->has('type') && $request->has('target_id')) {
+            $approval_settings = $approval_settings->where([['target_type', '=', $request->type], ['target_id', '=', $request->target_id]]);
+        }
+        if ($request->has('type') && $request->type) {
+            $approval_settings = $approval_settings->where('target_type', $request->type);
+        }
+        if ($request->has('module')) {
+            $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
+                $q->whereIn('modules', json_decode($request->module,1));
+            });
+        }
+
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
