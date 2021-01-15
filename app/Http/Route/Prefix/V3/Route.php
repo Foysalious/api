@@ -64,6 +64,7 @@ class Route
                 $api->get('/{id}', 'SubscriptionController@details');
             });
             $api->get('settings/car', 'HomePageSettingController@getCarV3');
+            $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
         });
     }
 }
