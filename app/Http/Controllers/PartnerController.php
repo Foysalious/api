@@ -337,6 +337,13 @@ class PartnerController extends Controller
      *         description="partner_id",
      *         required=true,
      *     ),
+     *     @SWG\Parameter(
+     *         name="category",
+     *         in="path",
+     *         type="string",
+     *         description="category_id",
+     *         required=true,
+     *     ),
      *     @SWG\Response(
      *         response=200,
      *         description="OK",
