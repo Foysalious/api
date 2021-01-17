@@ -179,7 +179,7 @@ class Bkash extends PaymentMethod
             try {
                 $this->registrar->setAmount($payment->payable->amount)
                     ->setDetails(json_encode($success->details))
-                    ->setTime(Carbon::now()->format('Y-m-d H:s:i'))
+                    ->setTime(Carbon::now()->format('Y-m-d H:i:s'))
                     ->setIsValidated(1)
                     ->register($payment->payable->user, 'bkash', $success->id, $this->merchantNumber);
                 $status = Statuses::VALIDATED;

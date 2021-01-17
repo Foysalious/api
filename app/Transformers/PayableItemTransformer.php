@@ -24,7 +24,7 @@ class PayableItemTransformer extends TransformerAbstract
             'amount' => (double)$payable['amount'],
             'amount_paid' => (double)$payable['amount_cleared'],
             "note" => $payable['note'],
-            "created_at" => Carbon::parse($payable['created_at'])->format('Y-m-d h:s:i A')
+            "created_at" => Carbon::parse($payable['created_at'])->format('Y-m-d h:i:s A')
         ];
     }
 }

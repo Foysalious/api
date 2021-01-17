@@ -87,7 +87,7 @@ class PartnerRepository
             $data['picture']                 = $resource->profile->pro_pic;
             $avg_rating                      = $resource->reviews->avg('rating');
             $data['rating']                  = $avg_rating != null ? round($avg_rating, 2) : null;
-            $data['joined_at']               = $resource->pivot->created_at->timestamp;
+            $data['joined_at']               = $resource->pivot->created_at ? $resource->pivot->created_at->timestamp : null;
             $data['resource_type']           = $resource->pivot->resource_type;
             $data['is_verified']             = $resource->is_verified;
             $data['is_available']            = $resource->is_tagged;
