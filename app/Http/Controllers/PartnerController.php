@@ -96,6 +96,7 @@ class PartnerController extends Controller
             'msg' => 'successful'
         ]);
     }
+
     /**
      * @SWG\Get(
      *     path="/v2/partners/{partner}",
@@ -197,11 +198,11 @@ class PartnerController extends Controller
             ]);
             $info->put('mobile', $partner->getContactNumber());
             $banner = null;
-            if($partner->webstoreBanner)
+            if ($partner->webstoreBanner)
                 $banner = [
                     'image_link' => $partner->webstoreBanner->banner->image_link,
                     'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
-                    'title'  => $partner->webstoreBanner->title,
+                    'title' => $partner->webstoreBanner->title,
                     'description' => $partner->webstoreBanner->description
                 ];
             $info->put('banner', $banner);
@@ -324,6 +325,28 @@ class PartnerController extends Controller
         }
     }
 
+    /**
+     * @SWG\Get(
+     *     path="/v2/partners/{partner}/categories/{category}/services",
+     *     tags={"Partner"},
+     *     description="Return partner's info",
+     *     @SWG\Parameter(
+     *         name="partner",
+     *         in="path",
+     *         type="string",
+     *         description="partner_id",
+     *         required=true,
+     *     ),
+     *     @SWG\Response(
+     *         response=200,
+     *         description="OK",
+     *     ),
+     *     @SWG\Response(
+     *         response=500,
+     *         description="Internel Server Error"
+     *     )
+     * )
+     */
     public function getServices($partner, $category, Request $request)
     {
         try {
@@ -847,8 +870,8 @@ class PartnerController extends Controller
                 $locations->push([
                     'id' => $location->id,
                     'name' => $location->name,
-                    'lat'  => $location->geo_informations ? (double) json_decode($location->geo_informations)->lat : null,
-                    'lng'  => $location->geo_informations ? (double) json_decode($location->geo_informations)->lng : null,
+                    'lat' => $location->geo_informations ? (double)json_decode($location->geo_informations)->lat : null,
+                    'lng' => $location->geo_informations ? (double)json_decode($location->geo_informations)->lng : null,
                 ]);
             });
             if ($locations->count() == 0)
