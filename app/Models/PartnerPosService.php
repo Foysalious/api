@@ -162,6 +162,6 @@ class PartnerPosService extends BaseModel
 
     public function scopeServiceCountByPartner($query, $partner_id)
     {
-        return $query->where('partner_id', $partner_id)->count();
+        return $query->where('partner_id', $partner_id);
     }
 }
