@@ -255,21 +255,24 @@ class DueTrackerRepository extends BaseRepository
     {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
-        $order->calculate();
-        if ($order->getDue() > 0) {
-            $payment_data['pos_order_id'] = $pos_order_id;
-            $payment_data['amount']       = $amount_cleared;
-            $payment_data['method']       = $payment_method;
-            $this->paymentCreator->credit($payment_data);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                $this->paymentCreator->credit($payment_data);
+            }
         }
     }
 
     public function removePosOrderPayment($pos_order_id, $amount){
-       return PosOrderPayment::where('pos_order_id', $pos_order_id)
-           ->where('amount', $amount)
-           ->where('transaction_type', 'Credit')
-           ->first()
-           ->delete();
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 
     private function createStoreData(Request $request)

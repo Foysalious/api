@@ -194,7 +194,7 @@ class PaymentLinkController extends Controller
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-
+                if (empty($request->user->name)) $request->user->name = "UnknownName";
                 $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [
