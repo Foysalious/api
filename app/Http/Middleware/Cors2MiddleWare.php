@@ -112,7 +112,8 @@ class Cors2MiddleWare
             "https://retailers.dev-sheba.xyz",
             "https://bkash-client.dev-sheba.xyz",
             "https://business.stage.sheba.xyz",
-            "https://partners.smanager.xyz"
+            "https://partners.smanager.xyz",
+            "http://api-documentation.dev-sheba.xyz/"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';
