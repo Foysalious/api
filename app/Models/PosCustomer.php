@@ -16,12 +16,12 @@ class PosCustomer extends Model implements CanApplyVoucher
     {
         $profile = $this->profile;
         return [
-            'id'      => $this->id,
-            'name'    => $profile->name,
-            'phone'   => $profile->mobile,
-            'email'   => $profile->email,
+            'id' => $this->id,
+            'name' => $profile->name,
+            'phone' => $profile->mobile,
+            'email' => $profile->email,
             'address' => $profile->address,
-            'image'   => $profile->pro_pic
+            'image' => $profile->pro_pic
         ];
     }
 
@@ -29,7 +29,7 @@ class PosCustomer extends Model implements CanApplyVoucher
     {
         $permissible_user_type = ['Resource', 'Partner'];
         return $this->profile->created_by &&
-               in_array(explode('-', $this->profile->created_by_name)[0], $permissible_user_type);
+            in_array(explode('-', $this->profile->created_by_name)[0], $permissible_user_type);
     }
 
     public function scopeGetByMobile($query, $mobile)
@@ -39,6 +39,11 @@ class PosCustomer extends Model implements CanApplyVoucher
 
     public function partnerPosCustomer()
     {
-        return $this->hasMany("App\\Models\\PartnerPosCustomer",'customer_id');
+        return $this->hasMany("App\\Models\\PartnerPosCustomer", 'customer_id');
+    }
+
+    public function movieTicketOrders()
+    {
+        return $this->morphMany(MovieTicketOrder::class, 'agent');
     }
 }
