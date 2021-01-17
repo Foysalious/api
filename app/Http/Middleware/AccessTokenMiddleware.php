@@ -32,8 +32,9 @@ class AccessTokenMiddleware
     {
         $sheba_headers = getShebaRequestHeader($request);
         $is_digigo = $sheba_headers->getPortalName() == Portals::EMPLOYEE_APP;
-        $key_name = "digigo_debug";
-        $now = Carbon::now()->toDateTimeString();
+        $now = Carbon::now()->timestamp;
+        $key_name = 'digigo:debug:' . $now;
+
         try {
             $token = JWTAuth::getToken();
             if (!$token) {
@@ -56,7 +57,9 @@ class AccessTokenMiddleware
             if ($is_digigo) Redis::set($key_name, "4 (". $e->getMessage() . "): $now : " . (isset($token) ? $token : "null") );
             return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
+
         $this->setExtraDataToRequest($request);
+
         return $next($request);
     }
 
@@ -77,7 +80,6 @@ class AccessTokenMiddleware
 
     protected function setExtraDataToRequest($request)
     {
-
     }
 
     protected function getAuthorizationToken()
