@@ -724,7 +724,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
 
     public function topUpHistory($affiliate, Request $request)
     {
-        return response()->json(['code' => 200, 'data' => [], 'total_topups' => 0, 'offset' => 0]);
         $topupvendorotf = app(TopUpVendorOTFRepo::class);
 
         try {
