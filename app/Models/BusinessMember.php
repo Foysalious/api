@@ -10,6 +10,9 @@ use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
 use Sheba\Helpers\TimeFrame;
+use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
+use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
+use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
 
 class BusinessMember extends Model
 {
@@ -17,6 +20,12 @@ class BusinessMember extends Model
     protected $table = 'business_member';
     protected $dates = ['join_date'];
     protected $casts = ['is_super' => 'int'];
+
+    protected $dispatchesEvents = [
+        'created' => BusinessMemberCreated::class,
+        'updated' => BusinessMemberUpdated::class,
+        'deleted' => BusinessMemberDeleted::class,
+    ];
 
     public function member()
     {

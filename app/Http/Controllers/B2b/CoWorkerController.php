@@ -7,6 +7,7 @@ use App\Models\Procurement;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
@@ -483,7 +484,7 @@ class CoWorkerController extends Controller
 
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
         $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
-
+        event(new BusinessMemberUpdated($business_member));
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
