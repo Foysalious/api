@@ -38,6 +38,14 @@ class ApprovalSettingsController extends Controller
      * @var MakeDefaultApprovalSetting
      */
     private $defaultApprovalSetting;
+    /**
+     * @var array
+     */
+    private $managers;
+    /**
+     * @var array
+     */
+    private $departments;
 
     /**
      * ApprovalSettingsController constructor.
@@ -52,6 +60,31 @@ class ApprovalSettingsController extends Controller
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
         $this->defaultApprovalSetting = $default_approval_setting;
+        $this->managers = [];
+        $this->departments = [];
+
+    }
+
+    private function getManager($business_member)
+    {
+        $manager = $business_member->manager()->first();
+
+        if ($manager) {
+            if (in_array($manager->id, $this->managers)) {
+                return;
+            }
+            #$department = $manager->department();
+            array_push($this->managers, $manager->id);
+            #array_push($this->departments, $department->id);
+
+            $this->getManager($manager);
+        }
+        return;
+    }
+
+    private function isAlreadyVisited()
+    {
+        $is_visited = false;
 
     }
 
@@ -63,6 +96,11 @@ class ApprovalSettingsController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
+        $business_member = $request->business_member;
+        $this->getManager($business_member);
+        dd($this->managers, $this->departments);
+        #dd($business->getAccessibleBusinessMember()->get());
+
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
@@ -79,7 +117,7 @@ class ApprovalSettingsController extends Controller
         }
         if ($request->has('module')) {
             $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
-                $q->whereIn('modules', json_decode($request->module,1));
+                $q->whereIn('modules', json_decode($request->module, 1));
             });
         }
 
@@ -237,7 +275,7 @@ class ApprovalSettingsController extends Controller
      */
     public function getModules(Request $request)
     {
-        $modules =  Modules::get();
+        $modules = Modules::get();
         return api_response($request, null, 200, ['modules' => $modules]);
     }
 
