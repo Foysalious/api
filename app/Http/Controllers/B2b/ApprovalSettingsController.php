@@ -46,6 +46,14 @@ class ApprovalSettingsController extends Controller
      * @var array
      */
     private $departments;
+    /**
+     * @var null
+     */
+    private $initialDepartment;
+    /**
+     * @var null
+     */
+    private $headOfDepartment;
 
     /**
      * ApprovalSettingsController constructor.
@@ -62,6 +70,8 @@ class ApprovalSettingsController extends Controller
         $this->defaultApprovalSetting = $default_approval_setting;
         $this->managers = [];
         $this->departments = [];
+        $this->initialDepartment = null;
+        $this->headOfDepartment = null;
 
     }
 
@@ -73,20 +83,17 @@ class ApprovalSettingsController extends Controller
             if (in_array($manager->id, $this->managers)) {
                 return;
             }
-            #$department = $manager->department();
+            $department = $manager->department();
+            if (!$this->initialDepartment) $this->initialDepartment = $department;
+            if ($this->initialDepartment->id==$department->id){
+                $this->headOfDepartment = $manager;
+            }
             array_push($this->managers, $manager->id);
-            #array_push($this->departments, $department->id);
-
             $this->getManager($manager);
         }
         return;
     }
 
-    private function isAlreadyVisited()
-    {
-        $is_visited = false;
-
-    }
 
     /**
      * @param Request $request
