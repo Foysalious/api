@@ -41,6 +41,30 @@ class SettingController extends Controller
         }
     }
 
+    public function storePosSetting(Request $request) {
+        try {
+            $partnerPosSetting = PartnerPosSetting::where('partner_id', $request->partner->id)->first();
+            $data = [];
+            $this->setModifier($request->manager_resource);
+            if($request->has('vat_percentage')) {
+                $data["vat_percentage"] = $request->vat_percentage;
+            }
+
+            if($request->has('sms_invoice')) {
+                $data["sms_invoice"] = $request->sms_invoice;
+            }
+
+            if($request->has('auto_printing')) {
+                $data["auto_printing"] = $request->auto_printing;
+            }
+            $partnerPosSetting->update($this->withUpdateModificationField($data));
+            return api_response($request, null, 200);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
     /**
      * @param Request $request
      * @return JsonResponse
