@@ -5,6 +5,7 @@ use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpFailResponse;
@@ -72,13 +73,16 @@ class TopUp
         }
 
         $this->response = $this->vendor->recharge($topup_order);
+
         if ($this->response->hasError()) {
             $this->updateFailedTopOrder($topup_order, $this->response->getError());
             return;
         }
 
         $response = $this->response->getSuccess();
+
         try {
+
             DB::transaction(function () use ($response, $topup_order) {
                 $this->setModifier($this->agent);
                 $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
@@ -87,6 +91,11 @@ class TopUp
                 $this->vendor->deductAmount($topup_order->amount);
                 $this->isSuccessful = true;
             });
+
+            if ($topup_order["agent_type"] == "App\\Models\\Partner") {
+                app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
+            }
+
         } catch (Throwable $e) {
             logError($e);
         }
@@ -183,7 +192,10 @@ class TopUp
      */
     public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
     {
-        if ($top_up_order->isSuccess()) return true;
+        if ($top_up_order->isSuccess()) {
+            return true;
+        }
+
         DB::transaction(function () use ($top_up_order, $success_response) {
             $top_up_order->status = config('topup.status.successful')['sheba'];
             $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());

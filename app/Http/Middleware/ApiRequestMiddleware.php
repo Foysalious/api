@@ -26,6 +26,8 @@ class ApiRequestMiddleware
             'google_advertising_id' => $request->google_advertising_id,
             'lat' => $request->lat,
             'lng' => $request->lng,
+            'uuid' => $request->uuid,
+            'firebase_token' => $request->firebase_token
         ]);
         $request->merge(['api_request' => $api_request]);
         return $next($request);
