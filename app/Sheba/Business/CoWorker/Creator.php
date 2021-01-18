@@ -273,6 +273,7 @@ class Creator
     private function sendExistingUserMail($profile)
     {
         try {
+            config()->set('services.mailgun.domain', config('services.mailgun.business_domain'));
             $coworker_invite_email = new SendBusinessRequestEmail($profile->email);
             if ($this->password) $coworker_invite_email->setPassword($this->password);
             if (empty($profile->password)) {
