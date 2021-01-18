@@ -112,7 +112,7 @@ class Creator
         $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
         if(isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1)
         {
-            if(PartnerPosService::serviceCountByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+            if(PartnerPosService::webstorePublishedServiceCountByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
                 AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
         }else{
             $this->data['is_published_for_shop']  = 0;
