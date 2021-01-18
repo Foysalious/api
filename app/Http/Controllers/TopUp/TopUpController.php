@@ -425,6 +425,8 @@ class TopUpController extends Controller
      */
     public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
     {
+        return response()->json(['code' => 200, 'data' => [], 'total_topups' => 0, 'offset' => 0]);
+        
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
 
