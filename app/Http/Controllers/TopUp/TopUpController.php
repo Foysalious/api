@@ -207,16 +207,20 @@ class TopUpController extends Controller
         $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
         $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) return api_response($request, null, 400, ['message' => 'File type not support']);
-            /** @var AuthUser $auth_user */
-            $auth_user = $request->auth_user;
-            $agent = $auth_user->getBusiness();
-            $verifyPin->setAgent($auth_user->getBusiness())->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
-            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
-            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+        if (!in_array($extension, $valid_extensions))
+            return api_response($request, null, 400, ['message' => 'File type not support']);
+        
+        $agent = $request->user;
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+
+        $sheet_names = Excel::load($request->file)->getSheetNames();
+        if (!in_array(TopUpExcel::SHEET, $sheet_names))
+            return api_response($request, null, 400, ['message' => 'The sheet name used in the excel file is incorrect. Please download the sample excel file for reference.']);
+
+        $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
-
         $data = $data->filter(function ($row) {
             return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
         });
