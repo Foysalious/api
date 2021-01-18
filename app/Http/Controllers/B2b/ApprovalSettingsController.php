@@ -103,11 +103,6 @@ class ApprovalSettingsController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
-        $business_member = $request->business_member;
-        $this->getManager($business_member);
-        dd($this->managers, $this->departments);
-        #dd($business->getAccessibleBusinessMember()->get());
-
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
