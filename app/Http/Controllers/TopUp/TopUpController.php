@@ -218,11 +218,15 @@ class TopUpController extends Controller
 
         $agent = $request->user;
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+
+        $sheet_names = Excel::load($request->file)->getSheetNames();
+        if (!in_array(TopUpExcel::SHEET, $sheet_names))
+            return api_response($request, null, 400, ['message' => 'The sheet name used in the excel file is incorrect. Please download the sample excel file for reference.']);
+
         $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
         $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
-
         $data = $data->filter(function ($row) {
             return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
         });
