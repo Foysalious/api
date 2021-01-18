@@ -39,7 +39,8 @@ return [
     ],
     'push_notification_sound' => [
         'customer' => 'default',
-        'manager' => 'notification_sound'
+        'manager' => 'notification_sound',
+        'employee'  => 'notification_sound.aiff'
     ],
     'partner_packages' => [
         'ESP' => 4,

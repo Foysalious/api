@@ -1,6 +1,6 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;

@@ -244,7 +244,6 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
-        try {
             $rules = [
                 'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
                 'image_gallery' => 'sometimes|required',
@@ -311,16 +310,6 @@ class ServiceController extends Controller
                 'msg' => 'Product Updated Successfully',
                 'service' => $partner_pos_service_arr
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
@@ -351,9 +340,14 @@ class ServiceController extends Controller
             $units     = [];
             $all_units = constants('POS_SERVICE_UNITS');
             foreach ($all_units as $key => $unit) {
-                array_push($units, $unit);
+                array_push($units, array_merge($unit,['key' => $key]));
             }
-            return api_response($request, $units, 200, ['units' => $units]);
+            $default_unit =[
+                'key' => 'piece',
+                'en' => constants('POS_SERVICE_UNITS')['piece']['en'],
+                'bn' => constants('POS_SERVICE_UNITS')['piece']['bn']
+            ];
+            return api_response($request, $units, 200, ['units' => $units,'default_unit' => $default_unit]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
