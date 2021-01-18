@@ -209,9 +209,11 @@ class TopUpController extends Controller
 
         if (!in_array($extension, $valid_extensions))
             return api_response($request, null, 400, ['message' => 'File type not support']);
-        
-        $agent = $request->user;
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $agent = $auth_user->getBusiness();
+        $verifyPin->setAgent($auth_user->getBusiness())->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
 
         $sheet_names = Excel::load($request->file)->getSheetNames();
         if (!in_array(TopUpExcel::SHEET, $sheet_names))
