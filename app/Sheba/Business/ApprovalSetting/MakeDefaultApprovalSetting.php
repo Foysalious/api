@@ -68,7 +68,8 @@ class MakeDefaultApprovalSetting
                 "name" => null,
                 "employee_id" => null,
                 "department" => null,
-                "profile_pic" => null
+                "profile_pic" => null,
+                'order' => 1
             ],
             [
                 "id" => null,
@@ -77,7 +78,8 @@ class MakeDefaultApprovalSetting
                 "name" => null,
                 "employee_id" => null,
                 "department" => null,
-                "profile_pic" => null
+                "profile_pic" => null,
+                'order' => 1
             ]];
     }
 }

@@ -506,7 +506,6 @@ class CoWorkerController extends Controller
 
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
         $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
-        event(new BusinessMemberUpdated($business_member));
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
