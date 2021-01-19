@@ -48,6 +48,10 @@ class DueTrackerRepository extends BaseRepository
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
+        if($request->has('filer_by_supplier') && $result->filer_by_supplier == 1)
+        {
+            $list = $list->where('is_supplier', $request->is_supplier)->values();
+        }
         if ($request->has('q') && !empty($request->q)) {
             $query = trim($request->q);
             $list  = $list->filter(function ($item) use ($query) {
