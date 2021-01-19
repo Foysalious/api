@@ -17,6 +17,7 @@ class WebstoreSettingsUpdateRequest
     protected $partner;
     protected $data;
     protected $hasWebstore;
+    protected $address;
 
     /**
      * @param Partner $partner
@@ -78,6 +79,16 @@ class WebstoreSettingsUpdateRequest
         return $this;
     }
 
+    /**
+     * @param $address
+     * @return WebstoreSettingsUpdateRequest
+     */
+    public function setAddress($address)
+    {
+        $this->address = $address;
+        return $this;
+    }
+
     private function makeData()
     {
         $data = [];
@@ -101,6 +112,12 @@ class WebstoreSettingsUpdateRequest
     {
         $repo = new PartnerRepository($this->partner);
         $repo->toggleSmsActivation();
+    }
+
+    public function updateAddress()
+    {
+        $repo = new PartnerRepository($this->partner);
+        $repo->updateAddress($this->address);
     }
 
 }

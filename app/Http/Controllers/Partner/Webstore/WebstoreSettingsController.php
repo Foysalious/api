@@ -122,4 +122,11 @@ class WebstoreSettingsController extends Controller
         return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
     }
 
+    public function updateAddress(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    {
+        $partner = $request->partner;
+        $webstoreSettingsUpdateRequest->setPartner($partner)->setAddress($request->address)->updateAddress();
+        return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
+    }
+
 }

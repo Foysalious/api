@@ -15,6 +15,7 @@ use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
@@ -41,13 +42,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private $invoiceCreator;
     private $target;
     private $payment_receiver;
+    private $paymentLinkTax;
 
     public function __construct()
     {
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
         $this->invoiceCreator        = app(InvoiceCreator::class);
-        $this->paymentLinkCommission = 2;
+        $this->paymentLinkCommission = PaymentLinkStatics::get_payment_link_commission();
+        $this->paymentLinkTax        = PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function complete()
@@ -166,7 +169,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "(3TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $minus_log                 = "($this->paymentLinkTax"."TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
