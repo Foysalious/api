@@ -201,8 +201,7 @@ class Updater
         }
         if ((isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] != $this->service->is_published_for_shop)) {
             if($this->data['is_published_for_shop'] == 1)
-            {
-                if(PartnerPosService::webstorePublishedServiceCountByPartner($this->service->partner->id) >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+            {     if(PartnerPosService::webstorePublishedServiceByPartner($this->service->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
                     AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->service->partner->subscription->getAccessRules());
                 $this->updatedData['is_published_for_shop'] = $this->data['is_published_for_shop'];
             }else

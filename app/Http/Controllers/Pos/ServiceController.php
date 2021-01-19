@@ -381,8 +381,8 @@ class ServiceController extends Controller
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
         }
         if (!$posService->is_published_for_shop) {
-            if(PartnerPosService::webstorePublishedServiceCountByPartner($request->partner->id) >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
-            AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
+            if (PartnerPosService::webstorePublishedServiceByPartner($request->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
             if ($posService->stock == null || $posService->stock < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
