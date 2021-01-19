@@ -167,7 +167,8 @@ class DueTrackerRepository extends BaseRepository
                 'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
+                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
+                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
             ],
             'partner'    => $this->getPartnerInfo($partner),
             'other_info' => [
