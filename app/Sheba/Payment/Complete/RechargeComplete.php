@@ -23,6 +23,7 @@ class RechargeComplete extends PaymentComplete
                 if ($payable_user instanceof Partner) {
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                 }
+                $this->storeCommissionTransaction();
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -41,5 +42,13 @@ class RechargeComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
+    }
+
+    private function storeCommissionTransaction()
+    {
+        /** @var HasWalletTransaction $user */
+        $user = $this->payment->payable->user;
+        $amount = 11.11;
+        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$amount)->setType(Types::debit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 }
