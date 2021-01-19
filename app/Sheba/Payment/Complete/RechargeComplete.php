@@ -51,7 +51,7 @@ class RechargeComplete extends PaymentComplete
         $user = $this->payment->payable->user;
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
-            ->where('service_type', "App\\Models\\" . ucwords($user))
+            ->where('service_type', $user = $this->payment->created_by_type)
             ->where('name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
             ->get()
