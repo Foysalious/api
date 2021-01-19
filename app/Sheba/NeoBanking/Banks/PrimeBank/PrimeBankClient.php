@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Sheba\NeoBanking\Banks\PrimeBank\ApiClient;
+use Sheba\TPProxy\SbsProxyClient;
 use Sheba\TPProxy\TPProxyClient;
 use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPRequest;
@@ -57,7 +58,7 @@ class PrimeBankClient extends ApiClient
     {
         $options = $data ? $this->getOptions($data) : ['json'=>[]];
         /** @var TPProxyClient $client */
-        $client = app(TPProxyClient::class);
+        $client = app(SbsProxyClient::class);
         if (!isset($options['json'])) {
             return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
         }
