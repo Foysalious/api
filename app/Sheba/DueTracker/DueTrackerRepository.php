@@ -102,9 +102,11 @@ class DueTrackerRepository extends BaseRepository
                 $item['customer_name'] = $profile ? $profile->name : "Unknown";
             }
 
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
             $item['customer_id']     = $customerId;
+            $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
             return $item;
         });
         return $list;
