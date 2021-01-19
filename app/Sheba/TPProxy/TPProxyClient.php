@@ -7,7 +7,7 @@ class TPProxyClient
 {
     /** @var HttpClient */
     private $httpClient;
-    private $proxyUrl;
+    protected $proxyUrl;
 
     public function __construct(HttpClient $client)
     {
