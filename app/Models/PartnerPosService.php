@@ -160,7 +160,7 @@ class PartnerPosService extends BaseModel
         ];
     }
 
-    public function scopeWebstorePublishedServiceCountByPartner($query, $partner_id)
+    public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
     {
         return $query->where('partner_id', $partner_id)->where('publication_status',1)->where('is_published_for_shop',1);
     }
