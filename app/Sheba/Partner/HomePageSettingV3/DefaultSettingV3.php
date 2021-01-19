@@ -24,8 +24,8 @@ class DefaultSettingV3
         ];
         $online_sheba = [
             "key" => "online_sheba",
-            "name_en" => "Online Sheba",
-            "name_bn" => "অনলাইন বিক্রি",
+            "name_en" => "Online Store",
+            "name_bn" => "অনলাইন স্টোর",
             "is_on_homepage" => 1
         ];
 
@@ -129,6 +129,6 @@ class DefaultSettingV3
     }
     public static function getLastUpdatedAt()
     {
-        return '2020-10-22';
+        return '2020-12-13';
     }
 }

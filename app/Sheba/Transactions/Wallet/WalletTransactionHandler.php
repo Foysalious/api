@@ -112,7 +112,7 @@ class WalletTransactionHandler extends WalletTransaction
             'gateway'        => $this->transaction_details ? $this->transaction_details->getGateway() : null,
             'gateway_trx_id' => $this->transaction_details ? $this->transaction_details->getTransactionID() : null,
             'amount'         => $this->amount,
-            'created_at'     => Carbon::now()->format('Y-m-d H:s:i')
+            'created_at'     => Carbon::now()->format('Y-m-d H:i:s')
         ];
         if ($isJob) {
             dispatch((new FraudTransactionJob())->setData($data));

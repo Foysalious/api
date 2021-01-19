@@ -16,7 +16,7 @@ class ExpenseTransformer extends TransformerAbstract
             "amount" => (double)$expense['amount'],
             "due" => (double)($expense['amount'] - $expense['amount_cleared']),
             "type" => $expense['type'],
-            "created_at" => Carbon::parse($expense['entry_at'])->format('Y-m-d h:s:i A'),
+            "created_at" => Carbon::parse($expense['entry_at'])->format('Y-m-d h:i:s A'),
             "head" => [
                 "id" => $expense['head']['id'],
                 "name" => [

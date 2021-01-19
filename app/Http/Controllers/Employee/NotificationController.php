@@ -99,6 +99,8 @@ class NotificationController extends Controller
             'attendance' => 'sometimes|required|numeric',
             'leave_request_id' => 'sometimes|required|numeric',
             'leave_id' => 'sometimes|required|numeric',
+            'cancel_leave_id' => 'sometimes|required|numeric',
+
         ]);
 
         $auth_info = $request->auth_info;
@@ -107,6 +109,7 @@ class NotificationController extends Controller
 
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member['member_id'];
         $channel = config('sheba.push_notification_channel_name.employee');
+        $sound  = config('sheba.push_notification_sound.employee');
 
         if ($request->has('support_id')) {
             $pushNotificationHandler->send([
@@ -117,7 +120,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('announcement_id')) {
             $pushNotificationHandler->send([
@@ -128,7 +131,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('attendance')) {
             $pushNotificationHandler->send([
@@ -138,7 +141,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('leave_request_id')) {
             $pushNotificationHandler->send([
@@ -149,7 +152,7 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
         }
         if ($request->has('leave_id')) {
             $pushNotificationHandler->send([
@@ -160,7 +163,19 @@ class NotificationController extends Controller
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
-            ], $topic, $channel);
+            ], $topic, $channel, $sound);
+        }
+
+        if ($request->has('cancel_leave_id')) {
+            $pushNotificationHandler->send([
+                "title" => "leave cancel",
+                "message" => "Test canceled his leave",
+                "event_type" => 'leave',
+                "event_id" => $request->leave_id,
+                "sound" => "notification_sound",
+                "channel_id" => $channel,
+                "click_action" => "FLUTTER_NOTIFICATION_CLICK"
+            ], $topic, $channel, $sound);
         }
 
         return api_response($request, null, 200);

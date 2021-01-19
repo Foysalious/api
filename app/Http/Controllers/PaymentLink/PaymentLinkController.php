@@ -8,6 +8,7 @@ use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
@@ -19,6 +20,7 @@ use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Usage\Usage;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class PaymentLinkController extends Controller
 {
@@ -73,7 +75,6 @@ class PaymentLinkController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -89,15 +90,35 @@ class PaymentLinkController extends Controller
             ]);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
-            $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type)->setTargetId($request->pos_order_id)->setTargetType('pos_order')->setEmiMonth((int)$request->emi_month)->setEmiCalculations();
+            $this->creator
+                ->setIsDefault($request->isDefault)
+                ->setAmount($request->amount)
+                ->setReason($request->purpose)
+                ->setUserName($request->user->name)
+                ->setUserId($request->user->id)
+                ->setUserType($request->type)
+                ->setTargetId($request->pos_order_id)
+                ->setTargetType('pos_order')
+                ->setEmiMonth((int)$request->emi_month)
+                ->setEmiCalculations();
+
+            if($request->has('pos_order_id')){
+                $pos_order = PosOrder::find($request->pos_order_id);
+                $customer = PosCustomer::find($pos_order->customer_id);
+                if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+            }
 
             if ($request->has('customer_id')) {
                 $customer = PosCustomer::find($request->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
+
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
+                if(!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -128,10 +149,13 @@ class PaymentLinkController extends Controller
                 $data = Calculations::getMonthData($request->amount, (int)$request->emi_month, false);
                 $this->creator->setAmount($data['total_amount'])->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setEmiMonth((int)$request->emi_month);
             }
+            $this->creator->setTargetType('due_tracker')->setTargetId(1);
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-
+                if(!$request->has('emi_month')) {
+                    $this->creator->sentSms();
+                }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
             } else {
                 return api_response($request, null, 500);
@@ -180,7 +204,7 @@ class PaymentLinkController extends Controller
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
-
+                if (empty($request->user->name)) $request->user->name = "UnknownName";
                 $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = [

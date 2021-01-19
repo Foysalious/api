@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Models\TopUpOrder;
@@ -53,6 +53,8 @@ class Creator
         $gateway = $gateway_factory->setGatewayName($top_up_order->gateway)->get();
         $top_up_order->sheba_commission = ($this->topUpRequest->getAmount() * $gateway->getShebaCommission()) / 100;
         $top_up_order->ip = getIp();
+        $top_up_order->lat = $this->topUpRequest->getLat();
+        $top_up_order->long = $this->topUpRequest->getLong();
         $top_up_order->user_agent = $this->topUpRequest->getUserAgent();
         $this->setModifier($agent);
         $this->withCreateModificationField($top_up_order);

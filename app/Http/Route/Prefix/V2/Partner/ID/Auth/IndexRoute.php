@@ -8,6 +8,7 @@ class IndexRoute
     {
         $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
             $api->get('dashboard', 'Partner\DashboardController@get');
+            $api->get('webstore-dashboard', 'Partner\Webstore\WebstoreDashboardController@getDashboard');
             $api->get('home-setting', 'Partner\DashboardController@getHomeSetting');
             $api->post('home-setting', 'Partner\DashboardController@updateHomeSetting');
             $api->get('wallet-balance', 'PartnerController@getWalletBalance');
@@ -15,6 +16,11 @@ class IndexRoute
             $api->get('qr-code', 'PartnerController@getQRCode');
             $api->post('qr-code', 'PartnerController@setQRCode');
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
+            $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
+            $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
+            $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
+            $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
+            $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -60,6 +66,7 @@ class IndexRoute
                 });
             });
             $api->group(['prefix' => 'pos'], function ($api) {
+                $api->get('/master-categories', 'Pos\CategoryController@getMasterCategories');
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Pos\CategoryController@index');
                     $api->get('/master', 'Pos\CategoryController@getMasterCategoriesWithSubCategory');
@@ -76,6 +83,10 @@ class IndexRoute
                         $api->post('/copy', 'Pos\ServiceController@copy');
                     });
                 });
+                $api->group(['prefix' => 'categories'], function ($api) {
+                    $api->post('/', 'Pos\CategoryController@store');
+                    $api->post('{category_id}', 'Pos\CategoryController@update');
+                });
                 $api->group(['prefix' => 'orders'], function ($api) {
                     $api->get('/', 'Pos\OrderController@index');
                     $api->post('/', 'Pos\OrderController@store');
@@ -83,6 +94,7 @@ class IndexRoute
                     $api->group(['prefix' => '{order}'], function ($api) {
                         $api->get('/', 'Pos\OrderController@show');
                         $api->post('/', 'Pos\OrderController@update');
+                        $api->post('/update-status', 'Pos\OrderController@updateStatus');
                         $api->delete('/','Pos\OrderController@delete');
                         $api->post('/collect-payment', 'Pos\OrderController@collectPayment');
                         $api->get('/send-sms', 'Pos\OrderController@sendSms');
@@ -99,7 +111,10 @@ class IndexRoute
                     });
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);
-                $api->get('settings', 'Pos\SettingController@getSettings');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->post('/', 'Pos\SettingController@storePosSetting');
+                });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
                 $api->group(['prefix' => 'reports'], function ($api) {
                     $api->get('product-wise', 'Pos\ReportsController@product');
@@ -138,6 +153,8 @@ class IndexRoute
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
+                $api->get('/all-packages', 'Partner\PartnerSubscriptionController@allPackages');
+                $api->get('/current-package', 'Partner\PartnerSubscriptionController@currentPackage');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
@@ -260,7 +277,7 @@ class IndexRoute
             });
             $api->group(['prefix' => 'withdrawals'], function ($api) {
                 $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
-                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store');
+                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store')->middleware('apiRequestLog');
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');

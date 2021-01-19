@@ -1107,6 +1107,16 @@ if (!function_exists('getDueTrackerAttachmentsFolder')) {
     }
 }
 
+if (!function_exists('getPosServiceImageGalleryFolder')) {
+    function getPosServiceImageGalleryFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'partner/pos-service-image-gallery/';
+    }
+}
+
 if (!function_exists('getCoWorkerInviteErrorFolder')) {
 
     /**

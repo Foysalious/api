@@ -1,7 +1,6 @@
 <?php namespace App\Http\Middleware;
 
 
-
 class JWTAuthMiddleware extends AccessTokenMiddleware
 {
     protected function setExtraDataToRequest($request)

@@ -49,12 +49,15 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'leaves'], function ($api) {
                 $api->get('/', 'Employee\LeaveController@index');
+                $api->get('/dates', 'Employee\LeaveController@getLeaveDates');
                 $api->get('/types', 'Employee\LeaveController@getLeaveTypes');
                 $api->get('/settings', 'Employee\LeaveController@getLeaveSettings');
                 $api->post('/', 'Employee\LeaveController@store');
                 $api->group(['prefix' => '{leave}'], function ($api) {
                     $api->get('/', 'Employee\LeaveController@show');
                     $api->post('/', 'Employee\LeaveController@updateStatus');
+                    $api->post('update', 'Employee\LeaveController@update');
+                    $api->post('cancel', 'Employee\LeaveController@cancel');
                 });
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {

@@ -28,6 +28,7 @@ class PosOrderTransformer extends TransformerAbstract
             'date'=>$order->created_at->format('Y-m-d'),
             'partner_name' => $order->partner->name,
             'price' => (double)$order->getNetBill(),
+            'order_status' => $order->status,
             'payment_status' => $order->getPaymentStatus(),
             'vat' => (double)$order->getTotalVat(),
             'discount_amount' => (double)$order->getTotalDiscount(),
@@ -35,11 +36,13 @@ class PosOrderTransformer extends TransformerAbstract
             'status'=>$order->getPaymentStatus(),
             'due' => $order->getDue(),
             'customer' => null,
+            'address' => $order->address,
             'is_refundable' =>$refundable&&empty($refund_status) ,
             'refund_status' => $refund_status,
             'return_orders' => null,
             'partner_wise_order_id' => $order->partner_wise_order_id,
-            'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null
+            'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
+            'sales_channel' => $order->sales_channel
         ];
         if ($data['due'] > 0) {
             $repo = app(PaymentLinkRepositoryInterface::class);

@@ -33,7 +33,8 @@ class TopUpRequest
     /** @var array $blockedAmountByOperator */
     private $blockedAmountByOperator = [];
     protected $userAgent;
-
+    private $lat;
+    private $long;
 
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
@@ -227,8 +228,6 @@ class TopUpRequest
 
     /**
      * @param Business $business
-     * @param $amount
-     * @param $connection_type
      * @return bool
      */
     private function isPrepaidAmountLimitExceed(Business $business)
@@ -287,5 +286,27 @@ class TopUpRequest
     public function getUserAgent()
     {
         return $this->userAgent;
+    }
+
+    public function setLat($lat)
+    {
+        $this->lat = $lat;
+        return $this;
+    }
+
+    public function setLong($long)
+    {
+        $this->long = $long;
+        return $this;
+    }
+
+    public function getLat()
+    {
+        return $this->lat;
+    }
+
+    public function getLong()
+    {
+        return $this->long;
     }
 }

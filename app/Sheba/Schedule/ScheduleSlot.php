@@ -237,8 +237,12 @@ class ScheduleSlot
     private function formatSlots(Carbon $day)
     {
         $current_time = $this->today->copy();
-        if (!$this->partner && $this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
+
         $slots = $this->getSlots($day);
+
+        if ($this->partner) $current_time = $this->today->copy()->addMinutes($this->preparationTime);
+        else if($this->category) $current_time = $this->today->copy()->addMinutes($this->category->preparation_time_minutes);
+
         if(!$slots) return null;
         if ($this->partner) $this->addAvailabilityToShebaSlots($day);
         foreach ($slots as &$slot) {

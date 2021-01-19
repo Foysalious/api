@@ -159,4 +159,9 @@ trait FileManager
     {
         return [$file, $this->uniqueFileName($file, $name)];
     }
+
+    protected function makeImageGallery($file, $name)
+    {
+        return [$file, $this->uniqueFileName($file, $name)];
+    }
 }

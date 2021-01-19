@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Sheba\Payment\PayableType;
 use Sheba\Subscription\Partner\BillingType;
@@ -30,7 +31,29 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPrice($billing_type = 'monthly')
     {
-        return (double)json_decode($this->rules, 1)['fee'][$billing_type]['value'];
+        $types = $this->getSubscriptionFee();
+        foreach ($types as $type)
+            if ($type->title == $billing_type) return (double) $type->price;
+
+        return 0;
+    }
+
+    public function originalDuration($billing_type = 'monthly')
+    {
+        $types = $this->getSubscriptionFee();
+        foreach ($types as $type)
+            if ($type->title == $billing_type) return $type->duration ? $type->duration : 1;
+
+        return 1;
+    }
+
+    public function titleTypeBn($billing_type = 'monthly')
+    {
+        $types = $this->getSubscriptionFee();
+        foreach ($types as $type)
+            if ($type->title == $billing_type) return  $type->title_bn;
+
+        return '';
     }
 
     public function discountPrice($billing_type = 'monthly', $billing_cycle = 1)
@@ -62,21 +85,13 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function originalPricePerDay($billing_type = 'monthly')
     {
-        switch ($billing_type) {
-            case BillingType::MONTHLY:
-                $day = 30;
-                break;
-            case BillingType::HALF_YEARLY:
-                $day = 365 / 2;
-                break;
-            case BillingType::YEARLY:
-                $day = 365;
-                break;
-            default:
-                $day = 1;
-        }
-
+        $day = $this->originalDuration($billing_type);
         return $this->originalPrice($billing_type) / $day;
+    }
+
+    public function calculateNextBillingDate($billing_type = 'monthly', $additional_days = 0)
+    {
+        return Carbon::now()->addDays($this->originalDuration($billing_type) + $additional_days);
     }
 
     public function runningDiscount($billing_type = 'monthly')
@@ -89,7 +104,7 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     private function rules()
     {
-        return json_decode($this->rules);
+        return isset($this->new_rules) ? json_decode($this->new_rules) : json_decode($this->rules);
     }
 
     public function getCommissionAttribute()
@@ -104,6 +119,11 @@ class PartnerSubscriptionPackage extends Model implements SubscriptionPackage,Pa
 
     public function getAccessRules()
     {
-        return json_decode($this->rules, 1)['access_rules'];
+        return json_decode($this->new_rules, 1)['access_rules'];
+    }
+
+    public function getSubscriptionFee()
+    {
+        return $this->rules()->subscription_fee;
     }
 }

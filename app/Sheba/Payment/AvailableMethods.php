@@ -86,9 +86,9 @@ class AvailableMethods
         return [
             PaymentStrategy::WALLET,
             PaymentStrategy::BKASH,
-            PaymentStrategy::CBL,
-            PaymentStrategy::ONLINE,
             PaymentStrategy::NAGAD,
+            PaymentStrategy::ONLINE,
+            PaymentStrategy::CBL,
         ];
     }
 
