@@ -52,7 +52,6 @@ class ApprovalSettingsController extends Controller
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
         $this->defaultApprovalSetting = $default_approval_setting;
-
     }
 
     /**
@@ -79,7 +78,7 @@ class ApprovalSettingsController extends Controller
         }
         if ($request->has('module')) {
             $approval_settings = $approval_settings->whereHas('modules', function ($q) use ($request) {
-                $q->whereIn('modules', json_decode($request->module,1));
+                $q->whereIn('modules', json_decode($request->module, 1));
             });
         }
 
@@ -237,7 +236,7 @@ class ApprovalSettingsController extends Controller
      */
     public function getModules(Request $request)
     {
-        $modules =  Modules::get();
+        $modules = Modules::get();
         return api_response($request, null, 200, ['modules' => $modules]);
     }
 

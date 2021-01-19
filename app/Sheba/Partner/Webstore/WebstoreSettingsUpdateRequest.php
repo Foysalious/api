@@ -64,7 +64,7 @@ class WebstoreSettingsUpdateRequest
      */
     public function setSubDomain($subDomain)
     {
-        $this->subDomain = $subDomain;
+        $this->subDomain = str_replace(' ', '', $subDomain);
         return $this;
     }
 

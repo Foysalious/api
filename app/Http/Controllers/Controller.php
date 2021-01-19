@@ -16,7 +16,7 @@ class Controller extends BaseController
      *     @SWG\Info(
      *         version="1.0.0",
      *         title="Sheba API Project",
-     *         description="For details of swagger annotation visit php artisan l5-swagger:generate || php artisan swagger-upload-json",
+     *         description="php artisan l5-swagger:generate || php artisan swagger-upload-json",
      *         termsOfService="smanager.sheba.xyz",
      *         @SWG\Contact(
      *             email="info@sheba.xyz"

@@ -2,7 +2,6 @@
 
 use App\Sheba\Business\Attendance\HalfDaySetting\HalfDayType;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
 use Sheba\Business\AttendanceActionLog\TimeByBusiness;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
@@ -20,11 +19,8 @@ use Sheba\TopUp\TopUpTransaction;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceType;
-
-use Sheba\Wallet\WalletUpdateEvent;
 use Sheba\Dal\BusinessOffice\Model as BusinessOffice;
 use Sheba\Dal\BusinessOfficeHours\Model as BusinessOfficeHour;
-use Sheba\Dal\BusinessAttendanceTypes\Model as BusinessAttendanceTypes;
 
 class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTransaction
 {
@@ -236,11 +232,9 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setType(Types::debit())->setLog($transaction->getLog())
+        (new WalletTransactionHandler())->setModel($this)
+            ->setAmount($transaction->getAmount())
+            ->setType(Types::debit())->setLog($transaction->getLog())
             ->setSource(TransactionSources::TOP_UP)->dispatch();
     }
 

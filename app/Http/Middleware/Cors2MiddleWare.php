@@ -114,7 +114,8 @@ class Cors2MiddleWare
             "https://business.stage.sheba.xyz",
             "https://partners.smanager.xyz",
             "https://smanager-webstore.dev-sheba.xyz",
-            "https://smanager-webstore.stage.sheba.xyz"
+            "https://smanager-webstore.stage.sheba.xyz",
+            "http://api-documentation.dev-sheba.xyz"
         ];
         // ALLOW OPTIONS METHOD
         $headers['Access-Control-Allow-Credentials'] = 'true';

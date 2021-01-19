@@ -3,6 +3,7 @@
 
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
+use Sheba\Sms\Infobip;
 
 class WebstoreSettingsTransformer extends TransformerAbstract
 {
@@ -25,6 +26,10 @@ class WebstoreSettingsTransformer extends TransformerAbstract
                 'description' => $banner_settings->description,
                 'is_published' => $banner_settings->is_published
             ] : null,
+            'address' => $partner->address,
+            'wallet' => $partner->wallet,
+            'single_sms_cost' => Infobip::SINGLE_SMS_COST,
+            'is_sms_active' => $partner->is_sms_active
         ];
     }
 }

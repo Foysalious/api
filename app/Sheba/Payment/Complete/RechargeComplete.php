@@ -18,6 +18,7 @@ class RechargeComplete extends PaymentComplete
             DB::transaction(function () {
                 $this->storeTransaction();
                 $this->completePayment();
+                $this->storeCommissionTransaction();
                 $payable      = $this->payment->payable;
                 $payable_user = $payable->user;
                 if ($payable_user instanceof Partner) {
@@ -36,6 +37,14 @@ class RechargeComplete extends PaymentComplete
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
         (new WalletTransactionHandler())->setModel($user)->setAmount((double)$this->payment->payable->amount)->setType(Types::credit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+    }
+
+    private function storeCommissionTransaction()
+    {
+        /** @var HasWalletTransaction $user */
+        $user = $this->payment->payable->user;
+        $amount = 11.11;
+        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$amount)->setType(Types::debit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
     }
 
     protected function saveInvoice()
