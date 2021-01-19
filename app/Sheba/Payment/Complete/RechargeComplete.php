@@ -49,9 +49,10 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
+
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
-            ->where('service_type', "App\\Models\\" . ucwords($user))
+            ->where('service_type', $this->payment->created_by_type)
             ->where('name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
             ->get()
@@ -61,7 +62,7 @@ class RechargeComplete extends PaymentComplete
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
                 ->setType(Types::debit())
-                ->setLog('Credit Purchase Commission')
+                ->setLog('Credit Purchase Gateway Charge')
                 ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
                 ->setSource($this->payment->paymentDetails->last()->method)
                 ->store();
