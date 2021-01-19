@@ -382,5 +382,11 @@ class PartnerRepository
         $this->partner->save();
     }
 
+    public function updateAddress($address)
+    {
+        $this->partner->address = $address;
+        $this->partner->save();
+    }
+
 }
 
