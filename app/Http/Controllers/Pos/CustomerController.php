@@ -89,7 +89,9 @@ class CustomerController extends Controller
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
 //            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
-            $data['note']                  = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first()->note;
+            $partner_pos_customer = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first();
+            $data['note']                  = $partner_pos_customer->note;
+            $data['is_supplier']                  = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -108,7 +110,8 @@ class CustomerController extends Controller
             $this->validate($request, [
                 'mobile'        => 'required|mobile:bd',
                 'name'          => 'required',
-                'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg'
+                'profile_image' => 'sometimes|required|mimes:jpeg,png,jpg',
+                'is_supplier' => 'sometimes|required|in:1,0'
             ]);
             $this->setModifier($request->manager_resource);
             $creator = $creator->setData($request->except([
@@ -154,6 +157,7 @@ class CustomerController extends Controller
             $customer = $updater->update();
             $customerDetails = $customer->details();
             $customerDetails['name'] = isset($customer['name']) && !empty($customer['name']) ? $customer['name'] : $customerDetails['name'];
+            $customerDetails['is_supplier'] = isset($customer['is_supplier']) && !is_null($customer['is_supplier']) ? $customer['is_supplier'] : 0;
             return api_response($request, $customer, 200, ['customer' => $customerDetails]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
