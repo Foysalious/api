@@ -8,6 +8,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 
 class RechargeComplete extends PaymentComplete
 {
@@ -48,7 +49,22 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        $amount = 11.11;
-        (new WalletTransactionHandler())->setModel($user)->setAmount((double)$amount)->setType(Types::debit())->setLog('Credit Purchase')->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setSource($this->payment->paymentDetails->last()->method)->store();
+        $payment_gateways = app(PaymentGatewayRepo::class);
+        $payment_gateway = $payment_gateways->builder()
+            ->where('service_type', "App\\Models\\" . ucwords($user))
+            ->where('name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->get()
+            ->first();
+
+        if($payment_gateway){
+            (new WalletTransactionHandler())->setModel($user)
+                ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
+                ->setType(Types::debit())
+                ->setLog('Credit Purchase Commission')
+                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                ->setSource($this->payment->paymentDetails->last()->method)
+                ->store();
+        }
     }
 }
