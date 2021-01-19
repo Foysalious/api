@@ -115,4 +115,11 @@ class WebstoreSettingsController extends Controller
         return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 
+    public function toggleSmsActivation(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
+    {
+        $partner = $request->partner;
+        $webstoreSettingsUpdateRequest->setPartner($partner)->toggleSmsActivation();
+        return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+    }
+
 }

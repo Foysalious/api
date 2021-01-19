@@ -168,7 +168,7 @@ class OrderController extends Controller
          */
         try {
             if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                if ($partner->is_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
                 $this->sendOrderPlacePushNotificationToPartner($order);
             }
         } catch (Throwable $e) {
@@ -323,7 +323,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
-        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
+        if ($order->partner->is_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
                 dispatch(new WebstoreOrderSms($order));
             } catch (Throwable $e) {
