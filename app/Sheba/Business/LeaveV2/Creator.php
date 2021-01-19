@@ -14,6 +14,8 @@ use Exception;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalSetting\ApprovalSetting;
@@ -70,18 +72,10 @@ class Creator
     private $business;
     private $businessHoliday;
     private $businessWeekend;
-    private $managers = [];
-    private $departments;
-    private $initialDepartment;
-    private $headOfDepartment;
-    /**
-     * @var ApprovalSettingRepository
-     */
-    private $approvalSettingsRepo;
-    /**
-     * @var Application|mixed
-     */
-    private $defaultApprovalSetting;
+    /** @var FindApprovalSettings $findApprovalSetting */
+    private $findApprovalSetting;
+    /** @var FindApprovers $findApprovers */
+    private $findApprovers;
 
     /**
      * Creator constructor.
@@ -93,13 +87,12 @@ class Creator
      * @param PushNotificationHandler $push_notification_handler
      * @param BusinessHolidayRepoInterface $business_holiday_repo
      * @param BusinessWeekendRepoInterface $business_weekend_repo
-     * @param ApprovalSettingRepository $approval_setting_repo
      */
     public function __construct(LeaveRepository $leave_repo, BusinessMemberRepositoryInterface $business_member_repo,
                                 ApprovalRequestCreator $approval_request_creator, TimeFrame $time_frame,
                                 Attachments $attachment_manager, PushNotificationHandler $push_notification_handler,
                                 BusinessHolidayRepoInterface $business_holiday_repo,
-                                BusinessWeekendRepoInterface $business_weekend_repo, ApprovalSettingRepository $approval_setting_repo)
+                                BusinessWeekendRepoInterface $business_weekend_repo)
     {
         $this->leaveRepository = $leave_repo;
         $this->businessMemberRepository = $business_member_repo;
@@ -109,13 +102,9 @@ class Creator
         $this->pushNotificationHandler = $push_notification_handler;
         $this->businessHoliday = $business_holiday_repo;
         $this->businessWeekend = $business_weekend_repo;
-        $this->approvalSettingsRepo = $approval_setting_repo;
-        $this->managers = [];
+        $this->findApprovalSetting = app(FindApprovalSettings::class);
+        $this->findApprovers = app(FindApprovers::class);
         $this->approvers = [];
-        $this->departments = [];
-        $this->initialDepartment = null;
-        $this->headOfDepartment = null;
-        $this->defaultApprovalSetting = app(MakeDefaultApprovalSetting::class);
     }
 
     public function setTitle($title)
@@ -139,8 +128,8 @@ class Creator
             return $this;
         }
         /** @Var ApprovalSetting $approval_setting */
-        $approval_setting = $this->getApprovalSetting();
-        $this->calculateApprovers($approval_setting);
+        $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->businessMember, Modules::LEAVE);
+        $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->businessMember);
         return $this;
     }
 
@@ -337,79 +326,6 @@ class Creator
         return $approval_settings->whereHas('modules', function ($module_query) {
             $module_query->where('modules', Modules::LEAVE);
         })->get()->last();
-    }
-
-    /**
-     * @param $approval_setting
-     * @return array
-     */
-    private function calculateApprovers($approval_setting)
-    {
-        if (!$approval_setting) {
-            $approval_setting_approvers = $this->defaultApprovalSetting->getApprovalSettings()['approvers'];
-            foreach ($approval_setting_approvers as $approver) {
-                if ($approver['type'] == Types::LM) {
-                    $line_manager = $this->businessMember->manager()->first();
-                    if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-                    array_push($this->approvers, $line_manager->id);
-                }
-                if ($approver['type'] == Types::HOD) {
-                    /** @var BusinessDepartment $department */
-                    $department = $this->businessMember->department();
-                    if (!$department) $this->setError(422, 'Department not set yet!');
-                    $this->getHeadOfDepartment($this->businessMember);
-                    array_push($this->approvers, $this->headOfDepartment->id);
-                }
-
-                if ($approver->type == Types::EMPLOYEE) {
-                    array_push($this->approvers, (int)$approver->type_id);
-                }
-            }
-        } else {
-            $approval_setting_approvers = $approval_setting->approvers;
-            foreach ($approval_setting_approvers as $approver) {
-                if ($approver->type == Types::LM) {
-                    $line_manager = $this->businessMember->manager()->first();
-                    if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-                    array_push($this->approvers, $line_manager->id);
-                }
-                if ($approver->type == Types::HOD) {
-                    /** @var BusinessDepartment $department */
-                    $department = $this->businessMember->department();
-                    if (!$department) $this->setError(422, 'Department not set yet!');
-                    $this->getHeadOfDepartment($this->businessMember);
-                    array_push($this->approvers, $this->headOfDepartment->id);
-                }
-
-                if ($approver->type == Types::EMPLOYEE) {
-                    array_push($this->approvers, (int)$approver->type_id);
-                }
-            }
-        }
-
-    }
-
-    /**
-     * @param $business_member
-     */
-    public function getHeadOfDepartment($business_member)
-    {
-        $manager = $business_member->manager()->first();
-
-        if ($manager) {
-            if (in_array($manager->id, $this->managers)) {
-                return;
-            }
-            /** @var BusinessDepartment $department */
-            $department = $manager->department();
-            if (!$this->initialDepartment) $this->initialDepartment = $department;
-            if ($this->initialDepartment->id == $department->id) {
-                $this->headOfDepartment = $manager;
-            }
-            array_push($this->managers, $manager->id);
-            $this->getHeadOfDepartment($manager);
-        }
-        return;
     }
 
     private function getLeftDays()
