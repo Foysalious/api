@@ -63,7 +63,7 @@ class Creator
 
     public function setUserName($user_name)
     {
-        $this->userName = $user_name;
+        $this->userName = (empty($user_name)) ? "UnknownName" : $user_name;
         return $this;
     }
 
