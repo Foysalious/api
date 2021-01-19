@@ -97,4 +97,10 @@ class WebstoreSettingsUpdateRequest
 
     }
 
+    public function toggleSmsActivation()
+    {
+        $repo = new PartnerRepository($this->partner);
+        $repo->toggleSmsActivation();
+    }
+
 }
