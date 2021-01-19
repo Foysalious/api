@@ -5,6 +5,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\Attendance\Statuses;
+use Sheba\Dal\AttendanceActionLog\Actions;
 use Sheba\Helpers\TimeFrame;
 
 class MonthlyStat
@@ -16,6 +17,14 @@ class MonthlyStat
     private $forOneEmployee;
     private $businessMemberLeave;
 
+    /**
+     * MonthlyStat constructor.
+     * @param TimeFrame $time_frame
+     * @param $business_holiday
+     * @param $business_weekend
+     * @param $business_member_leave
+     * @param bool $for_one_employee
+     */
     public function __construct(TimeFrame $time_frame, $business_holiday, $business_weekend, $business_member_leave, $for_one_employee = true)
     {
         $this->timeFrame = $time_frame;
@@ -120,16 +129,6 @@ class MonthlyStat
             if ($this->forOneEmployee) $daily_breakdown[] = $breakdown_data;
         }
 
-//        $remain_days = CarbonPeriod::create($this->timeFrame->end->addDay(), $this->timeFrame->start->endOfMonth());
-//        foreach ($remain_days as $date) {
-//            $is_weekend_or_holiday = $this->isWeekendHoliday($date, $weekend_day, $dates_of_holidays_formatted);
-//            $is_on_leave = $this->isLeave($date, $leaves);
-//            if ($is_weekend_or_holiday || $is_on_leave) {
-//                if (!$this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['working_days']--;
-//                if ($this->isFullDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['full_day_leave']++;
-//                if ($this->isHalfDayLeave($date, $leaves_date_with_half_and_full_day)) $statistics['half_day_leave'] += 0.5;
-//            }
-//        }
         $statistics['present'] = $statistics[Statuses::ON_TIME] + $statistics[Statuses::LATE];
         $statistics['on_leave'] = $statistics['full_day_leave'] + $statistics['half_day_leave'];
 

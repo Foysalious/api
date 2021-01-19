@@ -38,22 +38,6 @@ class ApprovalSettingsController extends Controller
      * @var MakeDefaultApprovalSetting
      */
     private $defaultApprovalSetting;
-    /**
-     * @var array
-     */
-    private $managers;
-    /**
-     * @var array
-     */
-    private $departments;
-    /**
-     * @var null
-     */
-    private $initialDepartment;
-    /**
-     * @var null
-     */
-    private $headOfDepartment;
 
     /**
      * ApprovalSettingsController constructor.
@@ -68,32 +52,7 @@ class ApprovalSettingsController extends Controller
         $this->approvalSettingsRepo = $approval_settings_repo;
         $this->approvalSettingsRequester = $approval_setting_requester;
         $this->defaultApprovalSetting = $default_approval_setting;
-        $this->managers = [];
-        $this->departments = [];
-        $this->initialDepartment = null;
-        $this->headOfDepartment = null;
-
     }
-
-    private function getManager($business_member)
-    {
-        $manager = $business_member->manager()->first();
-
-        if ($manager) {
-            if (in_array($manager->id, $this->managers)) {
-                return;
-            }
-            $department = $manager->department();
-            if (!$this->initialDepartment) $this->initialDepartment = $department;
-            if ($this->initialDepartment->id==$department->id){
-                $this->headOfDepartment = $manager;
-            }
-            array_push($this->managers, $manager->id);
-            $this->getManager($manager);
-        }
-        return;
-    }
-
 
     /**
      * @param Request $request
