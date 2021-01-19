@@ -49,6 +49,7 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
+        dd($user = $this->payment->payable->user);
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
             ->where('service_type', "App\\Models\\" . ucwords($user))
