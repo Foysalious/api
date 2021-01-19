@@ -58,21 +58,11 @@ class RechargeComplete extends PaymentComplete
             ->get()
             ->first();
 
-        $payment_gateway1 = $payment_gateways->builder()
-            ->where('service_type', 'App\\Models\\Affiliate')
-            ->where('name', $this->payment->paymentDetails->last()->method)
-            ->where('status', 'Published')
-            ->get()
-            ->first();
-
-        dump($payment_gateway);
-        dump($payment_gateway1);
-        dd(1111111111111111111);
         if($payment_gateway){
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
                 ->setType(Types::debit())
-                ->setLog('Credit Purchase Commission')
+                ->setLog('Credit Purchase Gateway Charge')
                 ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
                 ->setSource($this->payment->paymentDetails->last()->method)
                 ->store();
