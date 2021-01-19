@@ -16,6 +16,7 @@ use Exception;
 use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
+use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -37,6 +38,27 @@ class PaymentLinkController extends Controller
         $this->paymentLinkRepo          = $payment_link_repo;
         $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
+    }
+
+    public function getDashboard(Request $request, PaymentLink $link)
+    {
+        try {
+            $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
+            if ($default_payment_link) {
+                $default_payment_link = $link->defaultPaymentLinkData($default_payment_link);
+            } else {
+                $request->merge(['isDefault' => 1]);
+                $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+                $store_default_link   = $this->creator->save();
+                $default_payment_link = $link->defaultPaymentLinkData($store_default_link, 0);
+            }
+            $data = $link->getPaymentLinkVideo($request->user);
+            $data = $link->setPaymentLinkVideo($data)->dashboard();
+            return api_response($request, $default_payment_link, 200, ["data" => $data]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function index(Request $request)

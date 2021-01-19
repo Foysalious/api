@@ -11,6 +11,7 @@ class PaymentLinkRoute
             $api->post('/due-collection', 'PaymentLink\PaymentLinkController@createPaymentLinkForDueCollection');
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
             $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
+            $api->get('/dashboard', 'PaymentLink\PaymentLinkController@getDashboard');
             $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
             $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
         });
