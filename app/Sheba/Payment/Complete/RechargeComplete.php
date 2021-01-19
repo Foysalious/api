@@ -49,14 +49,25 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
+
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
-            ->where('service_type', $user = $this->payment->created_by_type)
+            ->where('service_type', $this->payment->created_by_type)
             ->where('name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
             ->get()
             ->first();
 
+        $payment_gateway1 = $payment_gateways->builder()
+            ->where('service_type', 'App\\Models\\Affiliate')
+            ->where('name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->get()
+            ->first();
+
+        dump($payment_gateway);
+        dump($payment_gateway1);
+        dd(1111111111111111111);
         if($payment_gateway){
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
