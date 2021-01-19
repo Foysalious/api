@@ -79,6 +79,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
     public $totalDeliveryDiscount = 0.00;
     public $totalDeliveryDiscountShebaContribution = 0.00;
     public $totalDeliveryDiscountPartnerContribution = 0.00;
+    public $vat;
 
     /** @var CodeBuilder */
     private $codeBuilder;

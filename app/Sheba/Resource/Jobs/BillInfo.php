@@ -54,6 +54,7 @@ class BillInfo
         $bill['paid'] = (double)$partnerOrder->paid;
         $bill['due'] = (double)$partnerOrder->due;
         $bill['vat'] = (double)$partnerOrder->vat;
+        $bill['vat_percentage'] = config('sheba.category_vat_in_percentage');
         $bill['grand_total'] = (double)$partnerOrder->grandTotal;
         $bill['total_material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
