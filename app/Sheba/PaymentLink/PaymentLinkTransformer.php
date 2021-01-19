@@ -187,4 +187,12 @@ class PaymentLinkTransformer
             ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
+
+    public function partialInfo() {
+        $user       = $this->getPaymentReceiver();
+        return [
+            'name'   => $user->name,
+            'mobile' => $user->getContactNumber()
+        ];
+    }
 }
