@@ -49,8 +49,6 @@ class RechargeComplete extends PaymentComplete
     {
         /** @var HasWalletTransaction $user */
         $user = $this->payment->payable->user;
-        dump($this->payment->paymentDetails->last()->method);
-        dd($user = $this->payment->created_by_type);
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
             ->where('service_type', $user = $this->payment->created_by_type)
