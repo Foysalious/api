@@ -89,11 +89,13 @@ class PaymentLinkController extends Controller
     {
         try {
             $link = $paymentLinkRepository->findByIdentifier($identifier);
+            if($link && !(int)$link->getIsActive()) {
+                return api_response($request,$link,203,['info'=>$link->partialInfo()]);
+            }
             if ($link && (int)$link->getIsActive()) {
                return api_response($request,$link,200,['link'=>$link->toArray()]);
-            } else {
-                return api_response($request, null, 404);
             }
+            return api_response($request, null, 404);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
