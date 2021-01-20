@@ -52,9 +52,8 @@ class PaymentLinkController extends Controller
                 $store_default_link   = $this->creator->save();
                 $default_payment_link = $link->defaultPaymentLinkData($store_default_link, 0);
             }
-            $data = $link->getPaymentLinkVideo($request->user);
-            $data = $link->setPaymentLinkVideo($data)->dashboard();
-            return api_response($request, $default_payment_link, 200, ["data" => $data]);
+            $dashboard = $link->dashboard();
+            return api_response($request, $dashboard, 200, ["data" => $dashboard]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);

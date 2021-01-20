@@ -1,23 +1,18 @@
 <?php namespace Sheba\PaymentLink;
 
-use App\Repositories\PartnerRepository;
+use App\Http\Controllers\TrainingVideoController;
+use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
 
 class PaymentLink
 {
     private $defaultPaymentLink;
 
-    private $paymentLinkVideo;
+    private $trainingVideoRepo;
 
-    public function __construct()
+    public function __construct(TrainingVideoRepository $contract)
     {
+        $this->trainingVideoRepo = $contract;
     }
-
-    public function setPaymentLinkVideo($payment_link_video)
-    {
-        $this->paymentLinkVideo = $payment_link_video;
-        return $this;
-    }
-
 
     /**
      * @param $default_payment_link
@@ -39,26 +34,23 @@ class PaymentLink
     }
 
     /**
-     * @param $partner
      * @return array|mixed|null
      */
-    public function getPaymentLinkVideo($partner)
+    public function getPaymentLinkVideo()
     {
-        $feature_video = (new PartnerRepository($partner))->featureVideos('payment_link');
-        return (isset($feature_video) && isset($feature_video[0])) ? $feature_video[0] : null;
+        $data = $this->trainingVideoRepo->getByScreen('payment_link');
+        return (new TrainingVideoController())->formatResponse($data);
     }
 
     public function dashboard()
     {
-        $data = [
+        return [
             "default_payment_link"           => $this->defaultPaymentLink,
-            "payment_link_video"             => $this->paymentLinkVideo,
+            "payment_link_video"             => $this->getPaymentLinkVideo(),
             "faq_page"                       => PaymentLinkStatics::faq_webview(),
             "transaction_message"            => PaymentLinkStatics::get_transaction_message(),
             "payment_link_tax"               => PaymentLinkStatics::get_payment_link_tax(),
             "payment_link_charge_percentage" => PaymentLinkStatics::get_payment_link_commission()
         ];
-//        $data = array_merge($data, []);
-        return $data;
     }
 }
