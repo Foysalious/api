@@ -81,8 +81,8 @@ class PrimeBank extends Bank
 
     private function getAccount()
     {
-        $account = $this->partner->neoBankAccount;
-        return $account && count($account) > 0 ? $account[0]['account_no'] : null;
+        $account = $this->partner->neoBankAccount()->where('bank_id',$this->id)->first();
+        return !empty($account) ?$account->account_no:null;
     }
 
     public function accountDetailInfo()

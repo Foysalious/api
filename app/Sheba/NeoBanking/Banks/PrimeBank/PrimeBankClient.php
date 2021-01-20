@@ -57,7 +57,7 @@ class PrimeBankClient extends ApiClient
     private function call($method, $uri, $data = null,$headers=[])
     {
         $options = $data ? $this->getOptions($data) : ['json'=>[]];
-        /** @var TPProxyClient $client */
+        /** @var SbsProxyClient $client */
         $client = app(SbsProxyClient::class);
         if (!isset($options['json'])) {
             return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
