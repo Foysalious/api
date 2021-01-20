@@ -273,4 +273,18 @@ class Creator
         }
         return $this;
     }
+
+    public function getErrorMessage($data) {
+        $status = $data->status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+        $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক ' .$status. ' করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        $title =  'লিংকটি ' .$status. ' করা সম্ভব হয়নি';
+        return ["message" => $message,"title" => $title];
+    }
+
+    public function getSuccessMessage($data) {
+        $message = $data->status === "active" ? 'অভিনন্দন! লিঙ্কটি আবার সক্রিয় হয়ে গিয়েছে। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।'
+            : "এই লিঙ্ক দিয়ে আপনি বর্তমানে কোন টাকা গ্রহণ করতে পারবেন না, তবে আপনি যেকোনো মুহূর্তে লিঙ্কটি আবার সক্রিয় করতে পারবেন।";
+        $title =  $data->status === "active" ? "লিঙ্কটি সক্রিয় হয়েছে" : "লিঙ্কটি নিষ্ক্রিয় হয়েছে";
+        return ["message" => $message,"title" => $title];
+    }
 }

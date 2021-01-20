@@ -210,16 +210,16 @@ class PaymentLinkController extends Controller
             $this->creator->setStatus($request->status)->setPaymentLinkId($link);
             $payment_link_status_change = $this->creator->editStatus();
             if ($payment_link_status_change) {
-                return api_response($request, 1, 200);
+                return api_response($request, 1, 200, $this->creator->getSuccessMessage($request));
             } else {
-                return api_response($request, null, 500);
+                return api_response($request, null, 500, $this->creator->getErrorMessage($request));
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 500, $this->creator->getErrorMessage($request));
         }
     }
 
