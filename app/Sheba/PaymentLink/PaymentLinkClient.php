@@ -26,10 +26,15 @@ class PaymentLinkClient
     {
         try {
             $user_type = $request->type;
-            $user_id = $request->user->id;
+            $user_id = 38015;
+//            $user_id = $request->user->id;
             $search_value = $request->search;
+            $limit = $request->limit;
+            $offset = $request->offset;
+            $order = $request->order;
+            $linkType = $request->linkType;
 
-            $url = "$this->baseUrl?userType=$user_type&userId=$user_id&search=$search_value";
+            $url = "$this->baseUrl?userType=$user_type&userId=$user_id&search=$search_value&limit=$limit&offset=$offset&order=$order&linkType=$linkType";
             $response = $this->client->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
             if ($response['code'] == 200)
