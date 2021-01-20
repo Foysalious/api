@@ -224,7 +224,6 @@ class Creator
         ];
 
         /** $first_approver */
-        ksort($this->approvers);
         $first_approver = reset($this->approvers);
 
         $leave = null;
