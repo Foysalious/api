@@ -144,23 +144,16 @@ class PaymentLinkController extends Controller
                 if(!$request->has('emi_month')) {
                     $this->creator->sentSms();
                 }
-                $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
-                $title = "লিঙ্ক তৈরি সফল হয়েছে";
-                return api_response($request, $payment_link, 200,
-                    ['payment_link' => $payment_link,"message" => $message,"title" => $title]);
+                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
-                $message = "দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।";
-                $title = "লিঙ্ক তৈরি হয়নি";
-                return api_response($request, null, 500,["message" => $message,"title" => $title]);
+                return api_response($request, null, 500,$this->creator->getErrorMessage());
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            $message = "দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।";
-            $title = "লিঙ্ক তৈরি হয়নি";
-            return api_response($request, null, 500,["message" => $message,"title" => $title]);
+            return api_response($request, null, 500,$this->creator->getErrorMessage());
         }
     }
 
@@ -210,16 +203,16 @@ class PaymentLinkController extends Controller
             $this->creator->setStatus($request->status)->setPaymentLinkId($link);
             $payment_link_status_change = $this->creator->editStatus();
             if ($payment_link_status_change) {
-                return api_response($request, 1, 200, $this->creator->getSuccessMessage($request));
+                return api_response($request, 1, 200, $this->creator->getSuccessMessage($request->status));
             } else {
-                return api_response($request, null, 500, $this->creator->getErrorMessage($request));
+                return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+            return api_response($request, $message, 400, ['message' => $message, 'title' => "validation fail"]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500, $this->creator->getErrorMessage($request));
+            return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
         }
     }
 
