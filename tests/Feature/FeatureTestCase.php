@@ -15,7 +15,6 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 
 class FeatureTestCase extends TestCase
 {
-
     use DatabaseMigrations;
 
     protected $token;
@@ -54,10 +53,10 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /*DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        /*\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
         $this->beforeApplicationDestroyed(function () {
-            DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+            \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         });*/
     }
 
