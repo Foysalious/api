@@ -58,7 +58,7 @@ class Creator
      * @param array $approver_id
      * @return $this
      */
-    public function setApproverId(array $approver_id)
+    public function setApprover($approver_id)
     {
         $this->approverId = $approver_id;
         return $this;
@@ -72,12 +72,11 @@ class Creator
 
     public function create()
     {
-        foreach ($this->approverId as $approver_id) {
             $data = $this->withCreateModificationField([
                 'requestable_type' => $this->requestableType,
                 'requestable_id' => $this->requestableId,
                 'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
-                'approver_id' => $approver_id
+                'approver_id' => $this->approverId
             ]);
             $approval_request = $this->approvalRequestRepo->create($data);
             if (!$this->isLeaveAdjustment) {
@@ -87,7 +86,7 @@ class Creator
                 } catch (Exception $e) {
                 }
             }
-        }
+
     }
 
     /**

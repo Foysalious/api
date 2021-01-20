@@ -184,9 +184,9 @@ class Creator
         return $this;
     }
 
-    public function setApproverId($approver_id)
+    public function setApprover($approver_id)
     {
-        $this->approvers = [$approver_id];
+        $this->approvers = $approver_id;
         return $this;
     }
 
@@ -237,7 +237,7 @@ class Creator
             $this->setModifier($this->businessMember->member);
             $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
             $this->approval_request_creator->setBusinessMember($this->businessMember)
-                ->setApproverId($this->approvers)
+                ->setApprover($this->approvers)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
                 ->create();

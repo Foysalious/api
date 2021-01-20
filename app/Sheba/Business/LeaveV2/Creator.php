@@ -175,9 +175,9 @@ class Creator
         return $this;
     }
 
-    public function setApproverId($approver_id)
+    public function setApprover($approver_id)
     {
-        $this->approvers = [$approver_id];
+        $this->approvers = $approver_id;
         return $this;
     }
 
@@ -223,12 +223,16 @@ class Creator
             'left_days' => $this->getLeftDays()
         ];
 
+        /** $first_approver */
+        ksort($this->approvers);
+        $first_approver = reset($this->approvers);
+
         $leave = null;
-        DB::transaction(function () use ($data, &$leave) {
+        DB::transaction(function () use ($data, &$leave, $first_approver) {
             $this->setModifier($this->businessMember->member);
             $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
             $this->approval_request_creator->setBusinessMember($this->businessMember)
-                ->setApproverId($this->approvers)
+                ->setApprover($first_approver)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
                 ->create();
