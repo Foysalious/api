@@ -4,7 +4,7 @@ class  PaymentLinkStatics
 {
     public static function faq_webview()
     {
-        return config('sheba.partners_url')."api/emi-faq";
+        return config('sheba.partners_url')."/api/payment-link-faq";
     }
 
     public static function get_payment_link_tax()
