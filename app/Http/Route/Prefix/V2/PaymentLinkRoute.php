@@ -14,6 +14,7 @@ class PaymentLinkRoute
             $api->get('/dashboard', 'PaymentLink\PaymentLinkController@getDashboard');
             $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
             $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
+            $api->get('/transactions', 'PaymentLink\PaymentLinkController@transactionList');
         });
         $api->group(['prefix' => 'payment-links'], function ($api) {
             $api->get('/{link}', 'PaymentLink\PaymentLinkController@show');

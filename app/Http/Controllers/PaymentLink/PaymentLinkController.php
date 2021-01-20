@@ -1,12 +1,14 @@
 <?php namespace App\Http\Controllers\PaymentLink;
 
 use App\Http\Controllers\Controller;
+use App\Models\Payable;
+use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -142,16 +144,16 @@ class PaymentLinkController extends Controller
                 if (!$request->has('emi_month')) {
                     $this->creator->sentSms();
                 }
-                return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
+                return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
-                return api_response($request, null, 500);
+                return api_response($request, null, 500,$this->creator->getErrorMessage());
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 500,$this->creator->getErrorMessage());
         }
     }
 
@@ -201,16 +203,16 @@ class PaymentLinkController extends Controller
             $this->creator->setStatus($request->status)->setPaymentLinkId($link);
             $payment_link_status_change = $this->creator->editStatus();
             if ($payment_link_status_change) {
-                return api_response($request, 1, 200);
+                return api_response($request, 1, 200, $this->creator->getSuccessMessage($request->status));
             } else {
-                return api_response($request, null, 500);
+                return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
+            return api_response($request, $message, 400, ['message' => $message, 'title' => "validation fail"]);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return api_response($request, null, 500, $this->creator->getErrorMessage($request->status));
         }
     }
 
@@ -297,6 +299,36 @@ class PaymentLinkController extends Controller
             }
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function transactionList(Request $request, Payable $payable)
+    {
+        try {
+            $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
+            if (is_array($payment_links_list) && count($payment_links_list) > 0) {
+                $transactionList = [];
+                foreach ($payment_links_list as $link) {
+                    $transactions = DB::table('payments as pa')
+                        ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
+                        ->where('type', 'payment_link')
+                        ->where('type_id', $link['linkId'])
+                        ->get()
+                    ;
+
+                    foreach ($transactions as $transaction) {
+                        array_push($transactionList, $transaction);
+                    }
+                }
+
+                return api_response($request, null, 200, ['transactions' => $transactionList]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            dd($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

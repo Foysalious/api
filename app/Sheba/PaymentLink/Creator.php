@@ -271,6 +271,7 @@ class Creator
         return $this;
     }
 
+
     private function sendSms($sender_mobile, $message)
     {
         /** @var Sms $sms */
@@ -283,5 +284,29 @@ class Creator
             return false;
         }
         return true;
+    }
+
+    public function getErrorMessage($status = false) {
+        if($status) {
+            $type = $status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+            $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক ' .$type. ' করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+            $title =  'লিংকটি ' .$type. ' করা সম্ভব হয়নি';
+            return ["message" => $message,"title" => $title];
+        }
+        $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        $title =  'লিঙ্ক তৈরি হয়নি';
+        return ["message" => $message,"title" => $title];
+    }
+
+    public function getSuccessMessage($status = false) {
+        if ($status) {
+            $message = $status === "active" ? 'অভিনন্দন! লিঙ্কটি আবার সক্রিয় হয়ে গিয়েছে। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।'
+                : "এই লিঙ্ক দিয়ে আপনি বর্তমানে কোন টাকা গ্রহণ করতে পারবেন না, তবে আপনি যেকোনো মুহূর্তে লিঙ্কটি আবার সক্রিয় করতে পারবেন।";
+            $title =  $status === "active" ? "লিঙ্কটি সক্রিয় হয়েছে" : "লিঙ্কটি নিষ্ক্রিয় হয়েছে";
+            return ["message" => $message,"title" => $title];
+        }
+        $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
+        $title = "লিঙ্ক তৈরি সফল হয়েছে";
+        return ["message" => $message,"title" => $title];
     }
 }
