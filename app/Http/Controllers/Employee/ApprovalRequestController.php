@@ -46,17 +46,25 @@ class ApprovalRequestController extends Controller
      */
     public function index(Request $request, ApprovalRequestRepositoryInterface $approval_request_repo)
     {
-        $this->validate($request, ['type' => 'sometimes|string|in:' . implode(',', Type::get())]);
+        $this->validate($request, [
+                'type' => 'sometimes|string|in:' . implode(',', Type::get()),
+                'limit' => 'numeric', 'offset' => 'numeric'
+            ]
+        );
         /** @var Business $business */
         $business = $this->getBusiness($request);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
+        list($offset, $limit) = calculatePagination($request);
+
         if ($request->has('type'))
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
         else
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
+
+        if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
 
         foreach ($approval_requests as $approval_request) {
             /** @var Leave $requestable */
