@@ -2,6 +2,8 @@
 
 use App\Models\Location;
 use Sheba\Dal\Category\Category;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
+use Sheba\Dal\LocationService\LocationService;
 use Sheba\Dal\Service\Service;
 use Sheba\Services\Type as ServiceType;
 use Tests\Feature\FeatureTestCase;
@@ -18,6 +20,12 @@ class CategoryShowTest extends FeatureTestCase
         parent::setUp();
 
         $this->location = Location::find(1);
+        $this->truncateTables([
+            Category::class,
+            Service::class,
+            CategoryLocation::class,
+            LocationService::class
+        ]);
         $master_category = factory(Category::class)->create();
 
         $this->secondaryCategory = factory(Category::class)->create([

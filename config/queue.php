@@ -56,7 +56,7 @@ return [
             'expire' => 60
         ],
         'topup' => [
-            'driver' => 'redis',
+            'driver' => env('TOP_UP_QUEUE_DRIVER', 'redis'),
             'connection' => 'default',
             'queue' => 'topup',
             'expire' => 60
