@@ -103,7 +103,7 @@ class LeaveAdjustmentController extends Controller
             ->setIsHalfDay($request->is_half_day)
             ->setHalfDayConfigure($request->half_day_configuration)
             ->setNote($request->note)
-            ->setApproverId($request->approver_id);
+            ->setApprover($request->approver_id);
 
         if ($leave_creator->hasError())
             return api_response($request, null, $leave_creator->getErrorCode(), ['message' => $leave_creator->getErrorMessage()]);
@@ -230,7 +230,7 @@ class LeaveAdjustmentController extends Controller
                     ->setIsHalfDay($value->$is_half_day)
                     ->setHalfDayConfigure($value->$half_day_configuration)
                     ->setNote($value->$note)
-                    ->setApproverId($value->$approver_id);
+                    ->setApprover($value->$approver_id);
 
                 $leave = $leave->create();
                 $leave = $leave->fresh();

@@ -9,15 +9,14 @@ use App\Models\Profile;
 use App\Transformers\AttachmentTransformer;
 use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\CustomSerializer;
-
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\BusinessBasicInformation;
-use Sheba\Business\ApprovalRequest\Updater;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
@@ -144,10 +143,10 @@ class ApprovalRequestController extends Controller
 
     /**
      * @param Request $request
-     * @param Updater $updater
+     * @param UpdaterV2 $updater
      * @return JsonResponse
      */
-    public function updateStatus(Request $request, Updater $updater)
+    public function updateStatus(Request $request, UpdaterV2 $updater)
     {
         $this->validate($request, [
             'type' => 'required|string',
@@ -155,24 +154,26 @@ class ApprovalRequestController extends Controller
             'status' => 'required|string',
         ]);
 
+        /**
+         *  $type leave, support, expense
+         */
         $type = $request->type;
+        /**
+         * $type_ids Approval Request Ids
+         */
         $type_ids = json_decode($request->type_id);
 
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
 
-        $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)
-            ->each(function ($approval_request) use ($business_member, $updater, $request) {
-                /** @var ApprovalRequest $approval_request */
-                if ($approval_request->approver_id != $business_member->id) return;
-                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+        /** @var ApprovalRequest $approval_request */
+        $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
+        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
 
-                /*if ($error = $updater->hasError())
-                    return api_response($request, $error, 400, ['message' => $error]);*/
-
-                $updater->setStatus($request->status)->change();
-            });
+        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+        $updater->setStatus($request->status)->change();
 
         return api_response($request, null, 200);
     }
 }
+

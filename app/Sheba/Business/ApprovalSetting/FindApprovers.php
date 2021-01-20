@@ -93,6 +93,7 @@ class FindApprovers
                 }
             }
         }
+        ksort($this->approvers);
         return $this->approvers;
     }
 
