@@ -160,7 +160,7 @@ class ExpenseController extends Controller
 
     public function downloadPdf(Request $request, ExpensePdf $pdf)
     {
-        $business_member = BusinessMember::where('business_id', $request->business_member->business_id)->where('member_id', 17)->first();
+        $business_member = BusinessMember::where('business_id', $request->business_member->business_id)->where('member_id', $request->member_id)->first();
         return $pdf->generate($business_member, $request->month, $request->year);
     }
 
