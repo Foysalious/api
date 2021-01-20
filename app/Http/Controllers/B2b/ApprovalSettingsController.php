@@ -86,9 +86,11 @@ class ApprovalSettingsController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
         $approval_settings_list = $manager->createData($resource)->toArray()['data'];
-        $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
-        $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
-
+        $is_default_already_exist = array_key_exists(1, array_flip(array_column($approval_settings_list, 'is_default')));
+        if (!$is_default_already_exist) {
+            $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
+            $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
+        }
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
