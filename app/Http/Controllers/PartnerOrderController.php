@@ -232,6 +232,7 @@ class PartnerOrderController extends Controller
                 'due' => (double)$partner_order->dueWithLogistic,
                 'vat' => (double)$partner_order->vat,
                 'vat_percentage' => config('sheba.category_vat_in_percentage'),
+                'is_vat_applicable' => $job->category->is_vat_applicable,
                 'invoice' => $partner_order->invoice,
                 'sheba_commission' => ramp((double)$partner_order->profit),
                 'partner_commission' => (double)$partner_order->totalCost,
