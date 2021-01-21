@@ -66,8 +66,7 @@ class FindApprovers
                     $this->getHeadOfDepartment($business_member);
                     if ($this->headOfDepartment) $this->approvers[$approver->order] = $this->headOfDepartment->id;
                 }
-
-                if ($approver->type == Types::EMPLOYEE) {
+                if ($approver['type'] == Types::EMPLOYEE) {
                     $this->approvers[$approver->order] = (int)$approver->type_id;
                 }
             }
