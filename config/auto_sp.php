@@ -17,6 +17,7 @@ return [
             'max_revenue' => 5,
             'package' => 5,
             'avg_rating' => 10,
+            'commission' => 10
         ]
     ],
     'new_customer_order_count' => 2

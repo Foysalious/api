@@ -16,6 +16,17 @@ abstract class Strategy
     protected $minRevenue;
     protected $minRating;
     protected $maxRating;
+    protected $categoryId;
+
+    /**
+     * @param $category_id
+     * @return Strategy
+     */
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
+        return $this;
+    }
 
     public function setMaxRevenue($maxRevenue)
     {
