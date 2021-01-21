@@ -93,6 +93,7 @@ class FindApprovers
                 }
             }
         }
+        $this->approvers = array_unique($this->approvers);
         ksort($this->approvers);
         return $this->approvers;
     }
@@ -135,6 +136,30 @@ class FindApprovers
             $profile = $member->profile;
             array_push($default_approvers, [
                 'name' => $profile->name,
+                'status' => null
+            ]);
+        }
+        return $default_approvers;
+    }
+
+    /**
+     * @param $approvers
+     * @return array
+     */
+    public function getApproversAllInfo($approvers)
+    {
+        $default_approvers = [];
+        foreach ($approvers as $approver) {
+            $business_member = BusinessMember::find($approver);
+            $member = $business_member->member;
+            $profile = $member->profile;
+            $role = $business_member->role;
+            array_push($default_approvers, [
+                'name' => $profile->name,
+                'designation' => $role ? $role->name : null,
+                'department' => $role ? $role->businessDepartment->name : null,
+                'phone' => $profile->mobile,
+                'profile_pic' => $profile->pro_pic,
                 'status' => null
             ]);
         }
