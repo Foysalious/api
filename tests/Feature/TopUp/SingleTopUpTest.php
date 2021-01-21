@@ -211,4 +211,39 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }
 
+
+    public function testMaximumAmountValueBlocksTopup () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 1112,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+       // $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The amount may not be greater than 1000.", $data['message']);
+    }
+
+    public function testMinimumAmountValueBlocksTopup () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 9,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        // $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The amount must be at least 10.", $data['message']);
+    }
+
 }
