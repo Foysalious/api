@@ -115,10 +115,12 @@ class ApprovalSettingRequester
 
     public function checkValidation()
     {
-        foreach ($this->modules as $module) {
-            if (!in_array($module, Modules::get())) array_push($this->validModules, $module);
+        if (!$this->modules) {
+            foreach ($this->modules as $module) {
+                if (!in_array($module, Modules::get())) array_push($this->validModules, $module);
+            }
+            if (count($this->validModules) > 0) $this->setError(420, (implode(', ', $this->validModules)) . ' is not valid module.');
         }
-        if (count($this->validModules) > 0) $this->setError(420, (implode(', ', $this->validModules)) . ' is not valid module.');
 
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
             ->where('target_type', $this->targetType);
