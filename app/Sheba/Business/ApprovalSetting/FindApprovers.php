@@ -100,7 +100,7 @@ class FindApprovers
     /**
      * @param $business_member
      */
-    public function getHeadOfDepartment($business_member)
+    private function getHeadOfDepartment($business_member)
     {
         /** @var BusinessMember $manager */
         $manager = $business_member->manager()->first();
@@ -120,5 +120,24 @@ class FindApprovers
             $this->getHeadOfDepartment($manager);
         }
         return;
+    }
+
+    /**
+     * @param $approvers
+     * @return array
+     */
+    public function getApproversInfo($approvers)
+    {
+        $default_approvers = [];
+        foreach ($approvers as $approver) {
+            $business_member = BusinessMember::find($approver);
+            $member = $business_member->member;
+            $profile = $member->profile;
+            array_push($default_approvers, [
+                'name' => $profile->name,
+                'status' => null
+            ]);
+        }
+        return $default_approvers;
     }
 }
