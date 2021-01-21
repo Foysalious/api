@@ -78,7 +78,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
             'payments' => function ($q) {
                 $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
             }
-        ])->select('id', 'type', 'type_id', 'amount');
+        ])->select('id', 'type', 'type_id', 'amount')->orderBy('created_at', 'desc');
     }
 
     public function payment($payment)

@@ -4,8 +4,8 @@ use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
 
 class TrainingVideoController extends Controller
 {
-    public function index(Request $request, TrainingVideoRepository $video_repository){
-
+    public function index(Request $request, TrainingVideoRepository $video_repository)
+    {
         $data = ($request->has('key')) ? $video_repository->getByScreen($request->key) : $video_repository->getPublished();
         $link = $this->formatResponse($data);
         return api_response($request, $link,200,['data' => $link]);

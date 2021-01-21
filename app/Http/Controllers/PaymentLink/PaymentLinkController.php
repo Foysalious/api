@@ -50,12 +50,12 @@ class PaymentLinkController extends Controller
         try {
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
-                $default_payment_link = $link->defaultPaymentLinkData($default_payment_link);
+                $link->defaultPaymentLinkData($default_payment_link);
             } else {
                 $request->merge(['isDefault' => 1]);
                 $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
                 $store_default_link   = $this->creator->save();
-                $default_payment_link = $link->defaultPaymentLinkData($store_default_link, 0);
+                $link->defaultPaymentLinkData($store_default_link, 0);
             }
             $dashboard = $link->dashboard();
             return api_response($request, $dashboard, 200, ["data" => $dashboard]);
