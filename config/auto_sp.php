@@ -14,7 +14,7 @@ return [
             'spro_app_usage' => 20,
             'ota' => 25,
             'complain' => 10,
-            'max_revenue' => 15,
+            'max_revenue' => 5,
             'package' => 5,
             'avg_rating' => 10,
         ]
