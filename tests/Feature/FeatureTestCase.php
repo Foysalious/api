@@ -65,6 +65,7 @@ class FeatureTestCase extends TestCase
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
+
     }
 
     private function createAccounts()
@@ -84,9 +85,9 @@ class FeatureTestCase extends TestCase
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        $this->resource = factory(Resource::class)->create([
+        /*$this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
-        ]);
+        ]);*/
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -105,9 +106,7 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => [
-                'id' => $this->resource->id
-            ],
+            'resource' => null,
             'member' => [
                 'id' => $this->member->id
             ],
