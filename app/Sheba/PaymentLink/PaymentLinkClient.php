@@ -26,8 +26,7 @@ class PaymentLinkClient
     {
         try {
             $user_type = $request->type;
-            $user_id = 38015;
-//            $user_id = $request->user->id;
+            $user_id = $request->user->id;
             $search_value = $request->search;
             $limit = $request->limit;
             $offset = $request->offset;
