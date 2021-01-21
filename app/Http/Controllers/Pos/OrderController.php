@@ -561,7 +561,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()
+                    'vat'         => $pos_order->getTotalVat(),
+                    'delivery_charge' => $pos_order->delivery_charge
                 ] : null
             ];
             if ($pos_order->customer) {

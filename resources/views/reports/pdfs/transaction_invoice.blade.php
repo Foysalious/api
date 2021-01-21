@@ -174,6 +174,10 @@
                         <td align="right" style="color: #383d46"><span style="width: 13px">@include('reports.pdfs.taka_sign')</span> {{number_format($pos_order['discount'],2)}}</td>
                     </tr>
                     <tr>
+                        <td colspan="3" align="right" style="color: #9b9b9b">Delivery Charge</td>
+                        <td align="right" style="color: #383d46"><span style="width: 13px">@include('reports.pdfs.taka_sign')</span> {{number_format($pos_order['delivery_charge'],2)}}</td>
+                    </tr>
+                    <tr>
                         <td colspan="3" align="right" style="color: #9b9b9b">Total Payable</td>
                         <td align="right" style="color: #383d46"><span style="width: 13px">@include('reports.pdfs.taka_sign')</span> {{number_format($pos_order['grand_total'],2)}}</td>
                     </tr>
