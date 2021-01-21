@@ -19,7 +19,7 @@ class WebstoreSettingsTransformer extends TransformerAbstract
             'address' => $partner->address,
             'wallet' => $partner->wallet,
             'single_sms_cost' => Infobip::SINGLE_SMS_COST,
-            'is_sms_active' => $partner->is_sms_active
+            'is_webstore_sms_active' => $partner->is_sms_active
         ];
     }
 }
