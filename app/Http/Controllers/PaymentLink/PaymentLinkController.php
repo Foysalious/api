@@ -7,6 +7,7 @@ use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
+use App\Transformers\PaymentLinkTransactionDetailsTransformer;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
@@ -33,6 +34,7 @@ class PaymentLinkController extends Controller
     private $paymentLinkRepo;
     private $creator;
     private $paymentDetailTransformer;
+    private $paymentLinkTransactionDetailTransformer;
 
     public function __construct(PaymentLinkClient $payment_link_client, PaymentLinkRepository $payment_link_repo, Creator $creator)
     {
@@ -40,6 +42,7 @@ class PaymentLinkController extends Controller
         $this->paymentLinkRepo          = $payment_link_repo;
         $this->creator                  = $creator;
         $this->paymentDetailTransformer = new PaymentDetailTransformer();
+        $this->paymentLinkTransactionDetailTransformer = new PaymentLinkTransactionDetailsTransformer();
     }
 
     public function getDashboard(Request $request, PaymentLink $link)
@@ -93,7 +96,7 @@ class PaymentLinkController extends Controller
                 return api_response($request,$link,203,['info'=>$link->partialInfo()]);
             }
             if ($link && (int)$link->getIsActive()) {
-               return api_response($request,$link,200,['link'=>$link->toArray()]);
+                return api_response($request,$link,200,['link'=>$link->toArray()]);
             }
             return api_response($request, null, 404);
         } catch (ValidationException $e) {
@@ -307,28 +310,51 @@ class PaymentLinkController extends Controller
     public function transactionList(Request $request, Payable $payable)
     {
         try {
+            $filter = $search_value = $request->transaction_search;
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
             if (is_array($payment_links_list) && count($payment_links_list) > 0) {
                 $transactionList = [];
                 foreach ($payment_links_list as $link) {
-                    $transactions = DB::table('payments as pa')
+                    $transactionQuery = DB::table('payments as pa')
+                        ->select('pa.id as payment_id', 'pb.id as payable_id', 'customerProfile.name', 'pb.type_id')
                         ->join('payables as pb', 'pa.payable_id', '=', 'pb.id')
-                        ->where('type', 'payment_link')
+                        ->leftJoin('customers as cus', function ($join) {
+                            $join->on('pb.user_id', '=',  'cus.id')
+                                ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'));
+                        })
+                        ->leftJoin('profiles as customerProfile', function ($join) {
+                            $join->on('cus.profile_id', '=',  'customerProfile.id')
+                                ->on('pb.user_type', '=', DB::raw('"App\\\Models\\\Customer"'))
+                            ;
+                        })
                         ->where('type_id', $link['linkId'])
-                        ->get()
+                        ->where('type', 'payment_link')
                     ;
 
+                    $transactions = $transactionQuery->get();
+
                     foreach ($transactions as $transaction) {
-                        array_push($transactionList, $transaction);
+                        $payment = $this->paymentLinkRepo->payment($transaction->payment_id);
+                        $transactionFormatted = $this->paymentLinkTransactionDetailTransformer->transform($payment, $link);
+                        array_push($transactionList, $transactionFormatted);
                     }
                 }
+
+                if($filter) {
+                    $transactionList = array_filter($transactionList, function($item) use ($filter){
+                        return preg_match("/$filter/i", (string) $item['link_id']) || preg_match("/$filter/i", $item['customer_name']);
+                    });
+                }
+
+                usort($transactionList, function($a, $b) {
+                    return $b['payment_id'] - $a['payment_id'];
+                });
 
                 return api_response($request, null, 200, ['transactions' => $transactionList]);
             } else {
                 return api_response($request, 1, 404);
             }
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
