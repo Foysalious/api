@@ -1,9 +1,11 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
+use App\Exceptions\NotFoundException;
 use App\Models\Partner;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\WebstoreSettingsTransformer;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
@@ -16,6 +18,7 @@ use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
+use Throwable;
 
 class WebstoreSettingsController extends Controller
 {
@@ -128,9 +131,17 @@ class WebstoreSettingsController extends Controller
 
     public function toggleSmsActivation(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
-        $partner = $request->partner;
-        $webstoreSettingsUpdateRequest->setPartner($partner)->toggleSmsActivation();
-        return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $webstoreSettingsUpdateRequest->setPartner($partner)->toggleSmsActivation();
+            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        } catch (ModelNotFoundException $e) {
+                return api_response($request, null, 404, ["message" => "Partner Not found."]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function updateAddress(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
