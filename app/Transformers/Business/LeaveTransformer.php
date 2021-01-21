@@ -118,15 +118,6 @@ class LeaveTransformer extends TransformerAbstract
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }
-        foreach ($remainingApprovers as $approver) {
-            $business_member = BusinessMember::find($approver);
-            $member = $business_member->member;
-            $profile = $member->profile;
-            array_push($default_approvers, [
-                'name' => $profile->name,
-                'status' => null
-            ]);
-        }
         $all_approvers = array_merge($approvers, $default_approvers);
         return $all_approvers;
     }
