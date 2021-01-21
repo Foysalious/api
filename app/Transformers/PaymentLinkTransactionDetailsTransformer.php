@@ -9,8 +9,9 @@ class PaymentLinkTransactionDetailsTransformer
     public function transform($payment, $link)
     {
         return [
-          'link_id' => $link['linkId'],
-            'type' => $link['type'],
+            'link_id' => $link['linkId'],
+            'payment_id' => $payment->id,
+            'link_type' => $link['type'],
             'user_id' => $link['userId'],
             'user_type' => $link['userType'],
             'link' => $link['link'],
@@ -20,7 +21,6 @@ class PaymentLinkTransactionDetailsTransformer
             'is_default' => $link['isDefault'],
             'customer_name' => $payment->payable->getName(),
             'customer_number' => $payment->payable->getMobile(),
-            'payment_id' => $payment->id,
             'payment_code' => '#' . $payment->id,
             'amount' => $payment->payable->amount,
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),

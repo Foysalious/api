@@ -350,7 +350,11 @@ class PaymentLinkController extends Controller
                     return $b['payment_id'] - $a['payment_id'];
                 });
 
-                return api_response($request, null, 200, ['transactions' => $transactionList]);
+                list($offset, $limit) = calculatePagination($request);
+                $links = collect($transactionList)->slice($offset)->take($limit);
+                $data = array_values($links->toArray());
+
+                return api_response($request, null, 200, [ 'data' => $data ]);
             } else {
                 return api_response($request, 1, 404);
             }
