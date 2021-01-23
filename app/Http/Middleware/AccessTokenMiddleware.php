@@ -16,6 +16,8 @@ class AccessTokenMiddleware
     protected $authorizationToken;
     /** @var AuthorizationTokenRepositoryInterface */
     private $authorizeTokenRepository;
+    /** @var AuthUser */
+    protected $authUser;
 
     /**
      * AccessTokenMiddleware constructor.
@@ -29,19 +31,27 @@ class AccessTokenMiddleware
     public function handle($request, Closure $next)
     {
         try {
-            $token = JWTAuth::getToken();
-            if (!$token) return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
-            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
-            $access_token = $this->findAccessToken($token);
-            if (!$access_token) throw new AccessTokenDoesNotExist();
-            if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token' && !$access_token->isValid()) throw new AccessTokenNotValidException();
-            $this->setAuthorizationToken($access_token);
-            $request->merge(['access_token' => $access_token, 'auth_user' => AuthUser::create()]);
+            $token = $this->getToken();
         } catch (JWTException $e) {
             return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
         }
+
+        if (!$token) return api_response($request, null, 401, ['message' => "Your session has expired. Try Login"]);
+        if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token') JWTAuth::getPayload($token);
+        $access_token = $this->findAccessToken($token);
+        if (!$access_token) throw new AccessTokenDoesNotExist();
+        if ($request->url() != config('sheba.api_url') . '/v2/top-up/get-topup-token' && !$access_token->isValid()) throw new AccessTokenNotValidException();
+        $this->setAuthorizationToken($access_token);
+        $this->authUser = AuthUser::create();
+        $request->merge(['access_token' => $access_token, 'auth_user' => $this->authUser]);
+
         $this->setExtraDataToRequest($request);
         return $next($request);
+    }
+
+    protected function getToken()
+    {
+        return JWTAuth::getToken();
     }
 
     /**
