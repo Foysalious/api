@@ -89,7 +89,6 @@ class CustomerController extends Controller
             $data['total_payable_amount']  = $entry_repo->setPartner($request->partner)->getTotalPayableAmountByCustomer($customer->profile_id)['total_payables'];
 //            $data['is_customer_editable']  = $customer->isEditable();
             $data['is_customer_editable']  = true;
-            $partner_pos_customer = PartnerPosCustomer::where('customer_id', $customer->id)->where('partner_id', $partner)->first();
             $data['note']                  = $partner_pos_customer->note;
             $data['is_supplier']                  = $partner_pos_customer->is_supplier;
             return api_response($request, $customer, 200, ['customer' => $data]);
