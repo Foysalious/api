@@ -53,6 +53,26 @@ class TopUpOrder extends Model implements PayableType
         return $this->status == Statuses::SUCCESSFUL;
     }
 
+    public function isProcessed()
+    {
+        return $this->isFailed() || $this->isSuccess();
+    }
+
+    public function scopeProcessed($query)
+    {
+        return $query->statuses(Statuses::getProcessed());
+    }
+
+    public function scopeStatus($query, $status)
+    {
+        return $query->whereIn('status', $status);
+    }
+
+    public function scopeStatuses($query, $statuses)
+    {
+        return $query->whereIn('status', $statuses);
+    }
+
     public function scopeBetween($query, $from, $to)
     {
         return $query->whereBetween('created_at', [$from, $to]);

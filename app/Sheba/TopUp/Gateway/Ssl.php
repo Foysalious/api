@@ -2,6 +2,7 @@
 
 use App\Models\TopUpOrder;
 use Exception;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Vendor\Internal\SslVrClient;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -91,6 +92,6 @@ class Ssl implements Gateway
 
     public static function getInitialStatusStatically()
     {
-        return config('topup.status.pending.sheba');
+        return Statuses::PENDING;
     }
 }

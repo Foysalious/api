@@ -231,3 +231,14 @@ if (!function_exists('convertSemverToInt')) {
         return (int)str_replace('.', '', $semver);
     }
 }
+
+if (!function_exists('isStringInt')) {
+    /**
+     * @param string $value
+     * @return bool
+     */
+    function isStringInt($value)
+    {
+        return preg_match('/^\d+$/', $value);
+    }
+}
