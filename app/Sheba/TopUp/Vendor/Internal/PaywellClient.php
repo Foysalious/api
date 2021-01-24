@@ -106,26 +106,15 @@ class PaywellClient
     private function getOperatorId($mobile_number): string
     {
         $mobile_number = formatMobile($mobile_number);
-        if (preg_match("/^(\+88017)/", $mobile_number) || preg_match("/^(\+88013)/", $mobile_number)) {
-            return 'GP';
-        }
-        elseif (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) {
-            return 'BL';
-        }
-        elseif (preg_match("/^(\+88018)/", $mobile_number)) {
-            return 'RB';
-        }
-        elseif (preg_match("/^(\+88016)/", $mobile_number)) {
-            return 'AT';
-        }
-        elseif (preg_match("/^(\+88015)/", $mobile_number)) {
-            return 'TT';
-        }
-        else {
-            throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
-        }
-    }
 
+        if (preg_match("/^(\+88017)/", $mobile_number) || preg_match("/^(\+88013)/", $mobile_number)) return 'GP';
+        if (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) return 'BL';
+        if (preg_match("/^(\+88018)/", $mobile_number)) return 'RB';
+        if (preg_match("/^(\+88016)/", $mobile_number)) return 'AT';
+        if (preg_match("/^(\+88015)/", $mobile_number)) return 'TT';
+
+        throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
+    }
 
     public function enquiry($topup_order_id)
     {

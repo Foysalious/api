@@ -1,7 +1,9 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Payment\PayableType;
+use Sheba\TopUp\Gateway\Names;
 
 class TopUpOrder extends Model implements PayableType
 {
@@ -19,28 +21,36 @@ class TopUpOrder extends Model implements PayableType
         return $this->belongsTo(TopUpVendor::class);
     }
 
+    public function isAgentPartner()
+    {
+        return $this->agent_type == Partner::class;
+    }
+
+    public function isAgentAffiliate()
+    {
+        return $this->agent_type == Affiliate::class;
+    }
+
     public function getAgentNameAttribute()
     {
-        $agent_type = explode('\\', $this->agent_type)[2];
-        if ($agent_type == 'Partner') return $this->agent->name;
-        elseif ($agent_type == 'Affiliate') return $this->agent->profile->name;
+        if ($this->isAgentPartner()) return $this->agent->name;
+        elseif ($this->isAgentAffiliate()) return $this->agent->profile->name;
     }
 
     public function getAgentMobileAttribute()
     {
-        $agent_type = explode('\\', $this->agent_type)[2];
-        if ($agent_type == 'Partner') return $this->agent->contact_no;
-        elseif ($agent_type == 'Affiliate') return $this->agent->profile->mobile;
+        if ($this->isAgentPartner()) return $this->agent->contact_no;
+        elseif ($this->isAgentAffiliate()) return $this->agent->profile->mobile;
     }
 
     public function isFailed()
     {
-        return $this->status == 'Failed';
+        return $this->status == Statuses::FAILED;
     }
 
     public function isSuccess()
     {
-        return $this->status == 'Success';
+        return $this->status == Statuses::SUCCESSFUL;
     }
 
     public function scopeBetween($query, $from, $to)
@@ -57,7 +67,14 @@ class TopUpOrder extends Model implements PayableType
     {
         return getOriginalMobileNumber($this->payee_mobile);
     }
-    public function isRobiWalletTopUp(){
+
+    public function isRobiWalletTopUp()
+    {
         return !!$this->is_robi_topup_wallet;
+    }
+
+    public function isViaPaywell()
+    {
+        return $this->gateway == Names::PAYWELL;
     }
 }

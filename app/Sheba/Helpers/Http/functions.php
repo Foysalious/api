@@ -17,7 +17,6 @@ if (!function_exists('api_response')) {
      */
     function api_response($request, $internal_response, $response_code, array $external_response = null)
     {
-
         $public_response = (new ShebaResponse)->$response_code;
         if ($external_response != null) {
             $public_response = array_merge($public_response, $external_response);

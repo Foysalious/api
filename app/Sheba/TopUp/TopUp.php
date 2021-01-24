@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
 use DB;
 use Sheba\Reward\ActionRewardDispatcher;
@@ -82,7 +83,6 @@ class TopUp
         $response = $this->response->getSuccess();
 
         try {
-
             DB::transaction(function () use ($response, $topup_order) {
                 $this->setModifier($this->agent);
                 $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
@@ -92,7 +92,7 @@ class TopUp
                 $this->isSuccessful = true;
             });
 
-            if ($topup_order["agent_type"] == "App\\Models\\Partner") {
+            if ($topup_order->isAgentPartner()) {
                 app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
             }
 
@@ -116,13 +116,9 @@ class TopUp
      */
     public function getError()
     {
-        if ($this->validator->hasError()) {
-            return $this->validator->getError();
-        } else if (!$this->response->hasSuccess()) {
-            return $this->response->getError();
-        } else {
-            if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
-        }
+        if ($this->validator->hasError()) return $this->validator->getError();
+        if (!$this->response->hasSuccess()) return $this->response->getError();
+        if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
         return new TopUpErrorResponse();
     }
 
@@ -143,16 +139,19 @@ class TopUp
             logErrorWithExtra($e, ['topup' => $topup_order->getDirty()]);
             throw $e;
         }
-
     }
 
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
     {
-        $topup_order->status = config('topup.status.failed.sheba');
+        $topup_order->status = Statuses::FAILED;
         $topup_order->transaction_details = $response->toJson();
         return $this->updateTopUpOrder($topup_order);
     }
 
+    /**
+     * @param TopUpOrder $topup_order
+     * @return TopUpOrder
+     */
     private function updateTopUpOrder(TopUpOrder $topup_order)
     {
         $this->withUpdateModificationField($topup_order);
@@ -165,15 +164,15 @@ class TopUp
     /**
      * @param TopUpOrder $top_up_order
      * @param TopUpFailResponse $top_up_fail_response
-     * @return bool
      * @throws Exception
      */
     public function processFailedTopUp(TopUpOrder $top_up_order, TopUpFailResponse $top_up_fail_response)
     {
-        if ($top_up_order->isFailed()) return true;
+        if ($top_up_order->isFailed()) return;
+
         DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
             $this->model = $top_up_order->vendor;
-            $top_up_order->status = config('topup.status.failed')['sheba'];
+            $top_up_order->status = Statuses::FAILED;
             $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
             $this->setModifier($this->agent);
             $this->withUpdateModificationField($top_up_order);
@@ -188,16 +187,13 @@ class TopUp
     /**
      * @param TopUpOrder $top_up_order
      * @param SuccessResponse $success_response
-     * @return bool
      */
     public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
     {
-        if ($top_up_order->isSuccess()) {
-            return true;
-        }
+        if ($top_up_order->isSuccess()) return;
 
         DB::transaction(function () use ($top_up_order, $success_response) {
-            $top_up_order->status = config('topup.status.successful')['sheba'];
+            $top_up_order->status = Statuses::SUCCESSFUL;
             $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
             $top_up_order->update();
         });
