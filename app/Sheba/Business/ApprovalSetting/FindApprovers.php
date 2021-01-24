@@ -77,7 +77,7 @@ class FindApprovers
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
                     if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-                    $this->approvers[$approver->order] = $line_manager->id;
+                    if ($line_manager) $this->approvers[$approver->order] = $line_manager->id;
                 }
                 if ($approver->type == Types::HOD) {
                     /** @var BusinessDepartment $department */

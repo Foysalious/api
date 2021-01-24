@@ -57,19 +57,21 @@ class ApprovalRequestController extends Controller
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
 
         foreach ($approval_requests as $approval_request) {
-            /** @var Leave $requestable */
-            $requestable = $approval_request->requestable;
-            /** @var Member $member */
-            $member = $requestable->businessMember->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
+           if ($approval_request->requestable) {
+               /** @var Leave $requestable */
+               $requestable = $approval_request->requestable;
+               /** @var Member $member */
+               $member = $requestable->businessMember->member;
+               /** @var Profile $profile */
+               $profile = $member->profile;
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
-            $approval_request = $manager->createData($resource)->toArray()['data'];
+               $manager = new Manager();
+               $manager->setSerializer(new CustomSerializer());
+               $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+               $approval_request = $manager->createData($resource)->toArray()['data'];
 
-            array_push($approval_requests_list, $approval_request);
+               array_push($approval_requests_list, $approval_request);
+           }
         }
 
         if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, [
