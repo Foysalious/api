@@ -10,11 +10,13 @@ class BillUpdate
 
     private $servicePriceCalculation;
     private $billInfo;
+    private $vat_percentage;
 
     public function __construct(ServicePriceCalculation $servicePriceCalculation, BillInfo $billInfo)
     {
         $this->servicePriceCalculation = $servicePriceCalculation;
         $this->billInfo = $billInfo;
+        $this->vat_percentage = (double) config('sheba.category_vat_in_percentage');
     }
 
     public function getUpdatedBillForServiceAdd(Job $job)
@@ -27,6 +29,7 @@ class BillUpdate
         $bill = $this->billInfo->getBill($job);
         $bill['total'] += $price['total_discounted_price'];
         $bill['due'] += $price['total_discounted_price'];
+        $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_service_price'] += $price['total_original_price'];
         $bill['discount'] += $price['total_discount'];
         $bill['services'] = array_merge($bill['services'], $this->formatService($new_service));
@@ -41,6 +44,7 @@ class BillUpdate
         $total_material_price = $this->calculateTotalMaterialPrice($new_materials);
         $bill['total'] += (double) $total_material_price;
         $bill['due'] += (double) $total_material_price;
+        $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_material_price'] += (double) $total_material_price;
         $materials = $bill['materials']->toArray();
         $bill['materials'] = array_merge($materials, $this->formatMaterial(collect($new_materials)->toArray()));
@@ -56,6 +60,7 @@ class BillUpdate
         $increased_amount = $this->calculateIncreasedAmount($updated_service_price, $job->servicePrice);
         $bill['total'] = $bill['total'] + $increased_amount;
         $bill['due'] = $bill['due'] + $increased_amount;
+        $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_service_price'] = $updated_service_price;
         $bill['services'] = $services;
         $bill['service_list'] = $this->updateServiceOfServiceList($bill['service_list'], $quantity);
