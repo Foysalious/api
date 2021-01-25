@@ -28,7 +28,9 @@ class BillUpdate
         $new_service = $setServiceLocation->createServiceList()->toArray();
         $bill = $this->billInfo->getBill($job);
         $bill['total'] += $price['total_discounted_price'];
+        $bill['due'] = $bill['due'] - $bill['vat'];
         $bill['due'] += $price['total_discounted_price'];
+        $bill['due'] += $bill['due']*$this->vat_percentage/100;
         $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_service_price'] += $price['total_original_price'];
         $bill['discount'] += $price['total_discount'];
@@ -43,7 +45,9 @@ class BillUpdate
         $new_materials = json_decode(\request('materials'));
         $total_material_price = $this->calculateTotalMaterialPrice($new_materials);
         $bill['total'] += (double) $total_material_price;
+        $bill['due'] = $bill['due'] - $bill['vat'];
         $bill['due'] += (double) $total_material_price;
+        $bill['due'] += $bill['due']*$this->vat_percentage/100;
         $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_material_price'] += (double) $total_material_price;
         $materials = $bill['materials']->toArray();
@@ -59,7 +63,7 @@ class BillUpdate
         $updated_service_price = $this->calculateUpdatedTotalServicePrice($services);
         $increased_amount = $this->calculateIncreasedAmount($updated_service_price, $job->servicePrice);
         $bill['total'] = $bill['total'] + $increased_amount;
-        $bill['due'] = $bill['due'] + $increased_amount;
+        $bill['due'] = $bill['due'] + $increased_amount + $increased_amount*$this->vat_percentage/100;
         $bill['vat'] = $bill['total']*$this->vat_percentage/100;
         $bill['total_service_price'] = $updated_service_price;
         $bill['services'] = $services;
