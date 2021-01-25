@@ -41,6 +41,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
      */
     public function transform($business_member)
     {
+
         $this->businessMember = $business_member;
         $leavesInCurrentFiscalYear = $this->businessMember->getCurrentFiscalYearLeaves();
         /** @var Member $member */
