@@ -23,7 +23,7 @@ class Updater
     private $approvalSettingRepo;
 
     /**
-     * @var ApproverRequester
+     * @var ApprovalSettingRequester
      */
     private $approvalSettingRequester;
     /**
@@ -116,8 +116,8 @@ class Updater
         $this->makeData();
         DB::transaction(function () {
             $this->approvalSettingRepo->update($this->approvalSettings, $this->approvalSettingData);
-            $this->updateApprovalSettingModules();
-            $this->updateApprovalSettingApprover();
+            if ($this->approvalSettingRequester->getApprovers()) $this->updateApprovalSettingApprover();
+            if ($this->approvalSettingRequester->getModules()) $this->updateApprovalSettingModules();
         });
     }
 
