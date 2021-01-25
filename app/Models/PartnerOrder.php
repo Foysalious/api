@@ -320,6 +320,7 @@ class PartnerOrder extends BaseModel implements PayableType, UpdatesReport
         $this->totalLogisticPaid = 0;
         $this->totalLogisticDue = 0;
         $this->totalLogisticDueWithoutDiscount = 0;
+        $this->vat = 0;
     }
 
     public function calculateStatus()
