@@ -1,6 +1,7 @@
 <?php namespace Tests\Feature\TopUp;
 
 
+use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
@@ -36,6 +37,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
         ]);
+
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -247,7 +249,6 @@ class SingleTopUpTest extends FeatureTestCase
     }
 
     public function testTopupInvalidVendorId () {
-
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
             'vendor_id' => 10,
@@ -318,6 +319,12 @@ class SingleTopUpTest extends FeatureTestCase
 
     public function testTopupInsufficientBalance () {
 
+
+        $walletBalanceUpdate = Affiliate::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 100]);
+
+       // dd($walletBalanceUpdate); //same as log
+
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
             'vendor_id' => $this->topUpVendor->id,
@@ -333,7 +340,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("You don't have sufficient balance to recharge.", $data['message']);
     }
 
-    public function testTopupInputNullAmountValue() {
+    public function testTopupInputWithoutAmountValue() {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
@@ -350,7 +357,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The amount field is required.", $data['message']);
     }
 
-    public function testTopupInputWithoutAmountValue() {
+    public function testTopupInputNullAmountValue() {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
@@ -435,60 +442,50 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The password field is required.", $data['message']);
     }
 
-    public function testTopupWithInvalidNumber() {
 
-        $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '019561',
-            'vendor_id' => $this->topUpVendor->id,
-            'connection_type' => 'prepaid',
-            'amount' => 10
-            // 'password' => '12349'
+   public function testTopupWithPendingUser() {
 
-        ], [
-            'Authorization' => "Bearer $this->token"
-        ]);
-        $data = $response->decodeResponseJson();
-        $this->assertEquals(400, $data['code']);
-        $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
-    }
-
-   /* public function testTopupWithWrongPin() {
+       $verificationStatus = Affiliate::find(1);;
+       $verificationStatus->update(["verification_status" => 'pending']);
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 10,
-            'password' => '12348'
-
-        ], [
-            'Authorization' => "Bearer $this->token"
-        ]);
-        $data = $response->decodeResponseJson();
-        $this->assertEquals(403, $data['code']);
-        $this->assertEquals("Pin Mismatch", $data['message']);
-        $this->assertEquals(1, $data['login_wrong_pin_count']);
-    }*/
-
-
-    public function testTopupTestWithoutMobileNumber () {
-
-        $response = $this->post('/v2/top-up/affiliate', [
-            'vendor_id' => $this->topUpVendor->id,
-            'connection_type' => 'prepaid',
-            'amount' => 19,
             'password' => '12349'
 
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(400, $data['code']);
-        $this->assertEquals("The mobile field is required.", $data['message']);
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You are not verified to do this operation.", $data['message']);
+    }
+
+    public function testTopupWithRejecteddUser() {
+
+        $verificationStatus = Affiliate::find(1);;
+        $verificationStatus->update(["verification_status" => 'rejected']);
+       // dd($verificationStatus);
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
 
 
-    public function testTopupTestNullMobileNumber () {
+    // passing null Mobile number
+    public function testTopupNullNumber () {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '',
@@ -501,11 +498,12 @@ class SingleTopUpTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        //dd($data);
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.", $data['message']);
     }
 
-    public function testTopupTestWithoutMobileNumberAndPin () {
+    public function testTopupTestWithoutNumberNpin () {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'vendor_id' => $this->topUpVendor->id,
@@ -517,10 +515,10 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("The mobile field is required.The password field is required", $data['message']);
+        $this->assertEquals("The mobile field is required.The password field is required.", $data['message']);
     }
 
-    public function testTopupTestNullMobileNumberAndPin () {
+    public function testTopupNullPinAndNumber () {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'Mobile' => ' ',
@@ -534,7 +532,7 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
-        $this->assertEquals("The mobile field is required.The password field is required", $data['message']);
+        $this->assertEquals("The mobile field is required.The password field is required.", $data['message']);
     }
 
 
