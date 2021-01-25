@@ -7,19 +7,15 @@ use Exception;
 
 class PaymentLinkClient
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $baseUrl;
-    /**
-     * @var Client
-     */
+    /** @var Client */
     private $client;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
         $this->baseUrl = config('sheba.payment_link_url') . '/api/v1/payment-links';
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     public function paymentLinkList(Request $request)
@@ -40,7 +36,6 @@ class PaymentLinkClient
         }
     }
 
-
     public function defaultPaymentLink(Request $request)
     {
         try {
@@ -57,7 +52,6 @@ class PaymentLinkClient
             return null;
         }
     }
-
 
     /**
      * @param $data
@@ -140,6 +134,24 @@ class PaymentLinkClient
     public function getPaymentLinkByTargetIdType($id, $type)
     {
         $uri = $this->baseUrl . '?targetId=' . $id . '&targetType=' . $type;
+        $response = $this->client->get($uri)->getBody()->getContents();
+        return json_decode($response, true);
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return mixed
+     */
+    public function getPaymentLinksByTargets(array $targets)
+    {
+        $targets = array_map(function (Target $target) {
+            return [
+                "targetType" => $target->getType(),
+                "targetId" => $target->getId(),
+            ];
+        }, $targets);
+
+        $uri = $this->baseUrl . '?targets=' . json_encode($targets);
         $response = $this->client->get($uri)->getBody()->getContents();
         return json_decode($response, true);
     }

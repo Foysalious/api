@@ -191,10 +191,8 @@ class Creator
             'interest'              => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge
         ];
-        if ($this->isDefault)
-            unset($this->data['reason']);
-        if (!$this->targetId)
-            unset($this->data['targetId'], $this->data['targetType']);
+        if ($this->isDefault) unset($this->data['reason']);
+        if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
     }
 
     public function getPaymentLinkData()

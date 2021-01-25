@@ -2,6 +2,7 @@
 
 
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\Target;
 use Sheba\PaymentLink\UrlTransformer;
 
 interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
@@ -34,4 +35,17 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
      * @return PaymentLinkTransformer|null
      */
     public function find($id);
+
+    /**
+     * @param $id
+     * @param $type
+     * @return mixed
+     */
+    public function getPaymentLinkByTargetIdType($id, $type);
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksGroupedByTargets(array $targets);
 }
