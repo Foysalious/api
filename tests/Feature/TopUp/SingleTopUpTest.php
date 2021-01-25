@@ -250,7 +250,7 @@ class SingleTopUpTest extends FeatureTestCase
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
-            'vendor_id' => $this->topUpVendor->id,
+            'vendor_id' => 10,
             'connection_type' => 'prepaid',
             'amount' => 19,
             'password' => '12349'
@@ -263,10 +263,44 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The selected vendor id is invalid.", $data['message']);
     }
 
-    public function testTopupInternationalNumberInput () {
+
+    public function testTopupNullVendorId () {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
+            'vendor_id' => '',
+            'connection_type' => 'prepaid',
+            'amount' => 19,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The vendor id field is required.", $data['message']);
+    }
+
+    public function testTopupTestWithoutVendorId () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'connection_type' => 'prepaid',
+            'amount' => 19,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The vendor id field is required.", $data['message']);
+    }
+
+    public function testTopupInternationalNumberInput () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+16469804741',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 19,
@@ -279,6 +313,8 @@ class SingleTopUpTest extends FeatureTestCase
         // $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
+
+    //has to update affiliate wallet balance
 
     public function testTopupInsufficientBalance () {
 
@@ -314,13 +350,47 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The amount field is required.", $data['message']);
     }
 
+    public function testTopupInputWithoutAmountValue() {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => ' ',
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The amount field is required.", $data['message']);
+    }
+
     public function testTopupInputNullConnectionType() {
 
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01956154440',
             'vendor_id' => $this->topUpVendor->id,
-           // 'connection_type' => 'prepaid',
+            'connection_type' => ' ',
              'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The connection type field is required.", $data['message']);
+    }
+
+    public function testTopupInputWithoutConnectionType() {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            // 'connection_type' => 'prepaid',
+            'amount' => 10,
             'password' => '12349'
 
         ], [
@@ -348,6 +418,23 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The password field is required.", $data['message']);
     }
 
+    public function testTopupWithoutNullPin() {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => ' '
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The password field is required.", $data['message']);
+    }
+
     public function testTopupWithInvalidNumber() {
 
         $response = $this->post('/v2/top-up/affiliate', [
@@ -365,10 +452,10 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The mobile is an invalid bangladeshi number .", $data['message']);
     }
 
-    public function testTopupWithWrongPin() {
+   /* public function testTopupWithWrongPin() {
 
         $response = $this->post('/v2/top-up/affiliate', [
-            'mobile' => '019561',
+            'mobile' => '01956154440',
             'vendor_id' => $this->topUpVendor->id,
             'connection_type' => 'prepaid',
             'amount' => 10,
@@ -381,6 +468,75 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("Pin Mismatch", $data['message']);
         $this->assertEquals(1, $data['login_wrong_pin_count']);
+    }*/
+
+
+    public function testTopupTestWithoutMobileNumber () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 19,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.", $data['message']);
     }
+
+
+    public function testTopupTestNullMobileNumber () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 19,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.", $data['message']);
+    }
+
+    public function testTopupTestWithoutMobileNumberAndPin () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 19
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.The password field is required", $data['message']);
+    }
+
+    public function testTopupTestNullMobileNumberAndPin () {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'Mobile' => ' ',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 19,
+            'password' => ' '
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The mobile field is required.The password field is required", $data['message']);
+    }
+
+
 
 }
