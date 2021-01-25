@@ -327,7 +327,7 @@ class Job extends BaseModel implements MorphCommentable
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $vat_percentage = (double) config('sheba.category_vat_in_percentage');
         $this->vat = ($this->grossPrice * $vat_percentage) / 100;
-        $this->vat = $this->category->is_vat_enabled ? ceil($this->vat) : 0;
+        $this->vat = $this->category->is_vat_applicable ? ceil($this->vat) : 0;
         $this->totalPrice += $this->vat;
         $this->service_unit_price = formatTaka($this->service_unit_price);
         $this->ownDiscountContributionSheba = formatTaka(($this->ownDiscount * $this->ownShebaContribution) / 100);
