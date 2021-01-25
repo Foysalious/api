@@ -22,6 +22,9 @@
         </whitelist>
     </filter>
     <php>
-        <env name="DB_DATABASE" value="sheba_testing" />
+        <env name="DB_DATABASE" value="sheba_testing"/>
     </php>
+    <logging>
+        <log type="junit" target="results/phpunit/logfile.xml" logIncompleteSkipped="true"/>
+    </logging>
 </phpunit>
