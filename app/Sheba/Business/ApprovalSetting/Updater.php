@@ -136,7 +136,7 @@ class Updater
 
     private function updateApprovalSettingModules()
     {
-        $this->approvalSettings->modules()->delete();
+        #$this->approvalSettings->modules()->delete();
         $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
         $this->approvalSettingModuleUpdater->setModuleRequester($this->moduleRequester)->setApprovalSetting($this->approvalSettings)->update();
     }
