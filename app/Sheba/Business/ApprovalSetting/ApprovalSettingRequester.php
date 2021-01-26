@@ -82,6 +82,7 @@ class ApprovalSettingRequester
     {
         $this->modules = $modules;
         if ($this->modules) $this->modules = json_decode($this->modules, 1);
+        $this->checkValidModule();
         return $this;
     }
 
@@ -113,7 +114,7 @@ class ApprovalSettingRequester
         return $this->approvers;
     }
 
-    public function checkValidation()
+    private function checkValidModule()
     {
         if (!$this->modules) {
             foreach ($this->modules as $module) {
@@ -121,7 +122,10 @@ class ApprovalSettingRequester
             }
             if (count($this->validModules) > 0) $this->setError(420, (implode(', ', $this->validModules)) . ' is not valid module.');
         }
+    }
 
+    public function checkValidation()
+    {
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
             ->where('target_type', $this->targetType);
         if ($this->targetId) $approval_settings = $approval_settings->where('target_id', $this->targetId);

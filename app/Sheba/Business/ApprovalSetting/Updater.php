@@ -116,8 +116,8 @@ class Updater
         $this->makeData();
         DB::transaction(function () {
             $this->approvalSettingRepo->update($this->approvalSettings, $this->approvalSettingData);
-            $this->updateApprovalSettingApprover();
             $this->updateApprovalSettingModules();
+            $this->updateApprovalSettingApprover();
         });
     }
 
