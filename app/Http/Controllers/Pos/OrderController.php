@@ -291,7 +291,6 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-        try {
             /** @var PosOrder $order */
             $new           = 1;
             $order         = PosOrder::with('items')->find($request->order);
@@ -306,10 +305,6 @@ class OrderController extends Controller
                 'msg'   => 'Order Updated Successfully',
                 'order' => $order
             ]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
