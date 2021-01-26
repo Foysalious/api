@@ -45,7 +45,7 @@ class MakeDefaultApprovalSetting
                 "approval_setting_id" => null,
                 "name" => "Leave"
             ],
-            [
+ /*           [
                 "id" => null,
                 "approval_setting_id" => null,
                 "name" => "Support"
@@ -54,7 +54,7 @@ class MakeDefaultApprovalSetting
                 "id" => null,
                 "approval_setting_id" => null,
                 "name" => "Expense"
-            ]
+            ]*/
         ];
     }
 

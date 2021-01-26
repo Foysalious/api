@@ -116,8 +116,8 @@ class Updater
         $this->makeData();
         DB::transaction(function () {
             $this->approvalSettingRepo->update($this->approvalSettings, $this->approvalSettingData);
-            if ($this->approvalSettingRequester->getApprovers()) $this->updateApprovalSettingApprover();
-            if ($this->approvalSettingRequester->getModules()) $this->updateApprovalSettingModules();
+            $this->updateApprovalSettingApprover();
+            $this->updateApprovalSettingModules();
         });
     }
 
@@ -136,7 +136,7 @@ class Updater
 
     private function updateApprovalSettingModules()
     {
-        #$this->approvalSettings->modules()->delete();
+        $this->approvalSettings->modules()->delete();
         $this->moduleRequester->setModules($this->approvalSettingRequester->getModules());
         $this->approvalSettingModuleUpdater->setModuleRequester($this->moduleRequester)->setApprovalSetting($this->approvalSettings)->update();
     }
