@@ -45,6 +45,8 @@ use Sheba\Voucher\Contracts\CanApplyVoucher;
 use Sheba\Voucher\VoucherCodeGenerator;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\Service\Service;
+use Sheba\Dal\PartnerNeoBankingInfo\Model as PartnerNeoBankingInfo;
+use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
@@ -234,7 +236,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function commission($service_id)
     {
         $service_category = Service::find($service_id)->category;
-        $commissions = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
+        $commissions      = (new CommissionCalculator())->setCategory($service_category)->setPartner($this);
         return $commissions->getServiceCommission();
     }
 
@@ -307,8 +309,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getContactResource()
     {
-        if ($operation_resource = $this->getFirstOperationResource())
-            return $operation_resource;
         if ($admin_resource = $this->getFirstAdminResource())
             return $admin_resource;
         return null;
@@ -468,7 +468,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function resourcesInCategory($category)
     {
-        $category = $category instanceof Category ? $category->id : $category;
+        $category             = $category instanceof Category ? $category->id : $category;
         $partner_resource_ids = [];
         $this->handymanResources()->verified()->get()->map(function ($resource) use (&$partner_resource_ids) {
             $partner_resource_ids[$resource->pivot->id] = $resource;
@@ -510,6 +510,15 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->bankInfos()->where('purpose', Purposes::PARTNER_WALLET_WITHDRAWAL);
     }
 
+    public function neoBankAccount()
+    {
+        return $this->hasMany(PartnerNeoBankingAccount::class);
+    }
+
+    public function neoBankInfo()
+    {
+        return $this->hasOne(PartnerNeoBankingInfo::class,'partner_id','id');
+    }
 
     public function affiliation()
     {
@@ -564,8 +573,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function subscribe($package, $billing_type)
     {
-        $package = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
-        $discount = $package->runningDiscount($billing_type);
+        $package     = $package ? (($package) instanceof PartnerSubscriptionPackage ? $package : PartnerSubscriptionPackage::find($package)) : $this->subscription;
+        $discount    = $package->runningDiscount($billing_type);
         $discount_id = $discount ? $discount->id : null;
         $this->subscriber()->getPackage($package)->subscribe($billing_type, $discount_id);
     }
@@ -744,9 +753,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function hasCoverageOn(Coords $coords)
     {
-        $geo = json_decode($this->geo_informations);
+        $geo           = json_decode($this->geo_informations);
         $partner_coord = new Coords(floatval($geo->lat), floatval($geo->lng));
-        $distance = (new Distance(DistanceStrategy::$VINCENTY))->linear();
+        $distance      = (new Distance(DistanceStrategy::$VINCENTY))->linear();
         return $distance->to($coords)->from($partner_coord)->isWithin($geo->radius * 1000);
     }
 
@@ -892,7 +901,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function hasCreditForSubscription(PartnerSubscriptionPackage $package, $billingType, $billingCycle = 1)
     {
         $this->totalPriceRequiredForSubscription = $package->originalPrice($billingType) - (double)$package->discountPrice($billingType, $billingCycle);
-        $this->totalCreditForSubscription = $this->getTotalCreditExistsForSubscription();
+        $this->totalCreditForSubscription        = $this->getTotalCreditExistsForSubscription();
         return $this->totalCreditForSubscription >= $this->totalPriceRequiredForSubscription;
     }
 
@@ -902,7 +911,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getTotalCreditExistsForSubscription()
     {
         list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
-        return round($bonus_wallet + $wallet + $remaining) - $threshold;
+        return round($bonus_wallet + $wallet) - $threshold;
     }
 
     /**
