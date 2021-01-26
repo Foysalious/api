@@ -13,7 +13,9 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Helpers\TimeFrame;
+use Sheba\PaymentLink\Target;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PosOrderList
 {
@@ -28,9 +30,13 @@ class PosOrderList
     protected $type;
     protected $orderStatus;
 
+    /** @var PaymentLinkRepositoryInterface */
+    private $paymentLinkRepo;
+
     public function __construct()
     {
         $this->sales_channel = SalesChannels::POS;
+        $this->paymentLinkRepo = app(PaymentLinkRepositoryInterface::class);
     }
 
     /**
@@ -124,6 +130,8 @@ class PosOrderList
             return $fractal->createData($resource)->toArray()['data'];
         }
         $final_orders = collect();
+        $payment_link_targets = [];
+
         foreach ($orders as $index => $order) {
             $order->isRefundable();
             $order_data = $order->calculate();
@@ -131,8 +139,14 @@ class PosOrderList
             $manager->setSerializer(new CustomSerializer());
             $resource        = new Item($order_data, new PosOrderTransformer());
             $order_formatted = $manager->createData($resource)->toArray()['data'];
+            if (array_key_exists('payment_link_target', $order_formatted)) {
+                $payment_link_targets[] = $order_formatted['payment_link_target'];
+            }
             $final_orders->push($order_formatted);
         }
+
+        $this->mapPaymentLinkData($final_orders, $payment_link_targets);
+
         if (!empty($this->status))
             $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
         $final_orders = $final_orders->groupBy('date')->toArray();
@@ -217,5 +231,21 @@ class PosOrderList
     {
         $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
+    }
+
+    private function mapPaymentLinkData(&$final_orders, $payment_link_targets)
+    {
+        $payment_links = $this->paymentLinkRepo->getPaymentLinksGroupedByTargets($payment_link_targets);
+
+        $final_orders->map(function ($order) use ($payment_links) {
+            if (array_key_exists('payment_link_target', $order)) {
+                $key = $order['payment_link_target']->toString();
+                if (array_key_exists($key, $payment_links)) {
+                    (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_links[$key][0]);
+                }
+                unset($order['payment_link_target']);
+            }
+            return $order;
+        });
     }
 }

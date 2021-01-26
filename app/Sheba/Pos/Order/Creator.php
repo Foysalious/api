@@ -260,7 +260,7 @@ class Creator
               ->setParty($profile)
               ->setAmount($amount)
               ->setAmountCleared($order->getPaid())
-              ->setHead(AutomaticIncomes::POS)
+              ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES )
               ->setSourceType(class_basename($order))
               ->setInterest($order->interest)
               ->setSourceId($order->id)

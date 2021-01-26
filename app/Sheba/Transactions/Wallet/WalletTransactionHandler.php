@@ -43,7 +43,6 @@ class WalletTransactionHandler extends WalletTransaction
             } catch (\Throwable $e) {
                 WalletTransaction::throwException($e);
             }
-            \Log::info("wallet -----real----". json_encode($transaction));
             return $transaction;
         } catch (\Throwable $e) {
             WalletTransaction::throwException($e);
