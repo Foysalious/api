@@ -1,11 +1,12 @@
 <?php namespace Tests\Feature\TopUp;
 
-
 use App\Models\Affiliate;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Factory\TopupBlacklistNumbersFactory;
 use Illuminate\Support\Facades\Schema;
+use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Verification\VerifyPin;
 use Tests\Feature\FeatureTestCase;
@@ -20,6 +21,7 @@ class SingleTopUpTest extends FeatureTestCase
     private $topUpOtfSettings;
     private $topUpVendorOtf;
     private $topUpStatusChangeLog;
+    private $topBlocklistNumbers;
 
     public function setUp()
     {
@@ -29,6 +31,7 @@ class SingleTopUpTest extends FeatureTestCase
             TopUpVendorCommission::class,
             TopUpOTFSettings::class,
             TopUpOrder::class,
+            TopUpBlacklistNumber::class,
         ]);
         $this->logIn();
 
@@ -50,6 +53,15 @@ class SingleTopUpTest extends FeatureTestCase
         $this->topUpStatusChangeLog= factory(TopUpVendorOTFChangeLog::class)->create([
             'otf_id' => $this->topUpVendorOtf->id
         ]);
+
+        /*
+         * TODO
+         * create topup topBlocklistNumbers table
+         */
+
+        $this->topBlocklistNumbers= factory(TopUpBlacklistNumber::class)->create();
+       // dd($this->topBlocklistNumbers);
+
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
             ->setMethods(['verify'])
@@ -533,6 +545,24 @@ class SingleTopUpTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The mobile field is required.The password field is required.", $data['message']);
+    }
+
+    public function testTopupTestBlockNumber () {
+
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678987656',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
 
 
