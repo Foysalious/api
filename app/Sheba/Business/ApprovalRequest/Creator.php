@@ -84,9 +84,7 @@ class Creator
             'requestable_type' => $this->requestableType,
             'requestable_id' => $this->requestableId,
             'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
-            'approver_id' => $this->approverId,
-            'created_by' => $this->createdBy->id,
-            'created_by_name' => $this->getName(),
+            'approver_id' => $this->approverId
         ]);
         $approval_request = $this->approvalRequestRepo->create($data);
         if (!$this->isLeaveAdjustment) {
@@ -128,16 +126,4 @@ class Creator
         ]);
     }
 
-    private function getName()
-    {
-        try {
-            if ($this->createdBy->profile) {
-                return $this->createdBy->profile->name;
-            } else {
-                return null;
-            }
-        } catch (QueryException $e) {
-            return false;
-        }
-    }
 }
