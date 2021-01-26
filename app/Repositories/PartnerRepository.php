@@ -375,18 +375,5 @@ class PartnerRepository
     {
         $this->partner->update($data);
     }
-
-    public function toggleSmsActivation()
-    {
-        $this->partner->is_sms_active = !(int)$this->partner->is_sms_active;
-        $this->partner->save();
-    }
-
-    public function updateAddress($address)
-    {
-        $this->partner->address = $address;
-        $this->partner->save();
-    }
-
 }
 
