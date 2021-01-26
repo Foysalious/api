@@ -293,8 +293,8 @@ class PaymentLinkController extends Controller
     {
         try {
             $payment_link_payment_details = $this->paymentLinkRepo->paymentLinkDetails($link);
-            $payment                      = $this->paymentLinkRepo->payment($payment);
-            if ($payment_link_payment_details) {
+            $payment                      = $payment_link_payment_details ? $this->paymentLinkRepo->payment($payment) : null;
+            if ($payment && $payment_link_payment_details) {
                 $payment_detail  = $payment->paymentDetails ? $payment->paymentDetails->last() : null;
                 $payment_details = $this->paymentDetailTransformer->transform($payment, $payment_detail, $payment_link_payment_details);
                 return api_response($request, $payment_details, 200, ['payment_details' => $payment_details]);
