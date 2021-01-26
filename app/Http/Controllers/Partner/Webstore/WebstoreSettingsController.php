@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers\Partner\Webstore;
 
-use App\Exceptions\NotFoundException;
 use App\Models\Partner;
 use App\Sheba\Partner\Webstore\WebstoreBannerSettings;
 use App\Transformers\CustomSerializer;
@@ -12,7 +11,6 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
 use Sheba\ModificationFields;
 use Sheba\Partner\Webstore\WebstoreSettingsUpdateRequest;
@@ -143,12 +141,4 @@ class WebstoreSettingsController extends Controller
             return api_response($request, null, 500);
         }
     }
-
-    public function updateAddress(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
-    {
-        $partner = $request->partner;
-        $webstoreSettingsUpdateRequest->setPartner($partner)->setAddress($request->address)->updateAddress();
-        return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
-    }
-
 }
