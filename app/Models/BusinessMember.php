@@ -208,7 +208,7 @@ class BusinessMember extends Model
     {
         $time_frame = $this->getBusinessFiscalPeriod();
 
-        $leaves = $this->leaves()->accepted()->between($time_frame)->with('leaveType')->whereHas('leaveType', function ($leave_type) {
+        $leaves = $this->leaves()->between($time_frame)->with('leaveType')->whereHas('leaveType', function ($leave_type) {
             return $leave_type->withTrashed();
         })->get();
         return $leaves;
