@@ -67,7 +67,8 @@ class Updater
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
                 $item = $this->new ? $this->itemRepo->findFromOrder($this->order, $service['id']) : $this->itemRepo->findByService($this->order, $service['id']);
-                if ($service['quantity'] > $item->service->stock) throw new NotEnoughStockException("Not enough stock", 403);
+                if ($item->service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $item->service->stock)
+                    throw new NotEnoughStockException("Not enough stock", 403);
                 $service_data['quantity'] = $service['quantity'];
                 if ($item->discount && $item->quantity) {
                     $service_discount_data['amount'] = ($item->discount->amount / $item->quantity) * $service['quantity'];
