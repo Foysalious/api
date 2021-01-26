@@ -4,6 +4,7 @@ use App\Jobs\Business\SendLeavePushNotificationToEmployee;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use Exception;
+use Illuminate\Database\QueryException;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -24,6 +25,7 @@ class Creator
     private $pushNotificationHandler;
     private $member;
     private $isLeaveAdjustment;
+    private $createdBy;
 
     /**
      * Creator constructor.
@@ -70,23 +72,30 @@ class Creator
         return $this;
     }
 
+    public function setCreatedBy($created_by)
+    {
+        $this->createdBy = $created_by;
+        return $this;
+    }
+
     public function create()
     {
-            $data = $this->withCreateModificationField([
-                'requestable_type' => $this->requestableType,
-                'requestable_id' => $this->requestableId,
-                'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
-                'approver_id' => $this->approverId
-            ]);
-            $approval_request = $this->approvalRequestRepo->create($data);
-            if (!$this->isLeaveAdjustment) {
-                try {
-                    $this->sendPushToApprover($approval_request);
-                    $this->sendShebaNotificationToApprover($approval_request);
-                } catch (Exception $e) {
-                }
+        $data = $this->withCreateModificationField([
+            'requestable_type' => $this->requestableType,
+            'requestable_id' => $this->requestableId,
+            'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
+            'approver_id' => $this->approverId,
+            'created_by' => $this->createdBy->id,
+            'created_by_name' => $this->getName(),
+        ]);
+        $approval_request = $this->approvalRequestRepo->create($data);
+        if (!$this->isLeaveAdjustment) {
+            try {
+                $this->sendPushToApprover($approval_request);
+                $this->sendShebaNotificationToApprover($approval_request);
+            } catch (Exception $e) {
             }
-
+        }
     }
 
     /**
@@ -117,5 +126,18 @@ class Creator
             'event_type' => get_class($approval_request),
             'event_id' => $approval_request->id
         ]);
+    }
+
+    private function getName()
+    {
+        try {
+            if ($this->createdBy->profile) {
+                return $this->createdBy->profile->name;
+            } else {
+                return null;
+            }
+        } catch (QueryException $e) {
+            return false;
+        }
     }
 }

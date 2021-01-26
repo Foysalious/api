@@ -11,6 +11,7 @@ use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
@@ -220,7 +221,6 @@ class Creator
             'is_half_day' => $this->isHalfDay,
             'half_day_configuration' => $this->isHalfDay ? $this->halfDayConfigure : null,
             'total_days' => $this->setTotalDays(),
-            'left_days' => $this->getLeftDays()
         ];
 
         /** $first_approver */
@@ -234,6 +234,7 @@ class Creator
                 ->setApprover($first_approver)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
+                ->setCreatedBy($this->createdBy)
                 ->create();
             $this->createAttachments($leave);
         });
