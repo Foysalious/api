@@ -107,17 +107,4 @@ class WebstoreSettingsUpdateRequest
         $repo->updateWebstoreSettings($data);
 
     }
-
-    public function toggleSmsActivation()
-    {
-        $repo = new PartnerRepository($this->partner);
-        $repo->toggleSmsActivation();
-    }
-
-    public function updateAddress()
-    {
-        $repo = new PartnerRepository($this->partner);
-        $repo->updateAddress($this->address);
-    }
-
 }

@@ -1657,6 +1657,7 @@ class PartnerController extends Controller
             $this->validate($request, ['address' => 'required|string']);
             $partner = $request->partner;
             $updater->setPartner($partner)->setAddress($request->address)->update();
+            return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
         } catch (ValidationException $e) {
             return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
         } catch (ModelNotFoundException $e) {
@@ -1664,7 +1665,23 @@ class PartnerController extends Controller
         } catch (\Throwable $e) {
             return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
-        return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
+    }
+
+    public function toggleSmsActivation(Request $request, $partner, Updater $updater)
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
+            $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
+            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        } catch (ValidationException $e) {
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
+        }
     }
 }
 

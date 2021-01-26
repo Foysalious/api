@@ -116,19 +116,4 @@ class WebstoreSettingsController extends Controller
         $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
         return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
-
-    public function toggleSmsActivation(Request $request, $partner, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
-    {
-        try {
-            /** @var Partner $partner */
-            $partner = $request->partner;
-            $webstoreSettingsUpdateRequest->setPartner($partner)->toggleSmsActivation();
-            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
-        } catch (ModelNotFoundException $e) {
-                return api_response($request, null, 404, ["message" => "Partner Not found."]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
 }
