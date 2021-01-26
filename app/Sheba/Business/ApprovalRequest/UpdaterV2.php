@@ -41,7 +41,7 @@ class UpdaterV2
      * @var array
      */
     private $remainingApprovers;
-    private $requestableMember;
+    private $requestableBusinessMember;
 
     /**
      * Updater constructor.
@@ -85,11 +85,10 @@ class UpdaterV2
         $this->requestable = $this->approvalRequest->requestable;
         $this->requestableType = ApprovalRequestType::getByModel($this->requestable);
 
-        /** @var BusinessMember $requestable_business_member */
-        $requestable_business_member = $this->requestable->businessMember;
-        $this->requestableMember = $requestable_business_member->member;
-        $approval_setting = $this->findApprovalSetting->getApprovalSetting($requestable_business_member, $this->requestableType);
-        $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $requestable_business_member);
+        /** @var BusinessMember */
+        $this->requestableBusinessMember = $this->requestable->businessMember;
+        $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->requestableBusinessMember, $this->requestableType);
+        $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->requestableBusinessMember);
         $requestable_approval_request_ids = $this->requestable->requests()->pluck('approver_id', 'id')->toArray();
         $this->remainingApprovers = array_diff($this->approvers, $requestable_approval_request_ids);
         return $this;
@@ -112,10 +111,9 @@ class UpdaterV2
             if (count($this->remainingApprovers) > 0) {
                 /** $first_approver */
                 $first_approver = reset($this->remainingApprovers);
-                $this->approvalRequestCreator->setBusinessMember($this->businessMember)
+                $this->approvalRequestCreator->setBusinessMember($this->requestableBusinessMember)
                     ->setApprover($first_approver)
                     ->setRequestable($this->requestable)
-                    ->setCreatedBy($this->requestableMember)
                     ->create();
             }
             if (count($this->remainingApprovers) == 0) {
