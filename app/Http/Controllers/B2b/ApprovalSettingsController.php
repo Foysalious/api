@@ -206,8 +206,8 @@ class ApprovalSettingsController extends Controller
             ->setTargetType($request->target_type)
             ->setTargetId($request->target_id)
             ->setNote($request->note)
-            ->setApprovers($request->approvers);
-           # ->checkValidation();
+            ->setApprovers($request->approvers)
+            ->checkValidation();
 
         if ($this->approvalSettingsRequester->hasError()) {
             return api_response($request, null, $this->approvalSettingsRequester->getErrorCode(), ['message' => $this->approvalSettingsRequester->getErrorMessage()]);
