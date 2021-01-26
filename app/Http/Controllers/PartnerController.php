@@ -5,6 +5,7 @@ use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Sheba\UserRequestInformation;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -48,6 +49,7 @@ use Sheba\ModificationFields;
 use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Partner\QRCode\AccountType;
+use Sheba\Partner\Updater;
 use Sheba\Reward\PartnerReward;
 use Sheba\UserAgentInformation;
 use Throwable;
@@ -1647,6 +1649,22 @@ class PartnerController extends Controller
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function updateAddress(Request $request, $partner, Updater $updater)
+    {
+        try {
+            $this->validate($request, ['address' => 'required|string']);
+            $partner = $request->partner;
+            $updater->setPartner($partner)->setAddress($request->address)->update();
+        } catch (ValidationException $e) {
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        } catch (ModelNotFoundException $e) {
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
+        }
+        return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
     }
 }
 
