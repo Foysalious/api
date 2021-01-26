@@ -1,6 +1,12 @@
 <?php
 
 Route::get('/', function () {
+
+    $top_up_order = \App\Models\TopUpOrder::find();
+    app(\Sheba\TopUp\TopUp::class)->setAgent($this->agent)
+        ->setVendor(app(\Sheba\TopUp\Vendor\VendorFactory::class)->getById($this->vendorId))
+        ->recharge($top_up_order);
+
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
 $api = app('Dingo\Api\Routing\Router');

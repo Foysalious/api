@@ -87,12 +87,17 @@ if (!function_exists('getValidationErrorMessage')) {
 if (!function_exists('decodeGuzzleResponse')) {
     /**
      * @param      $response
-     * @param bool $assoc
-     * @return array
+     * @param      bool $assoc
+     * @return     object|array|string|null
      */
     function decodeGuzzleResponse($response, $assoc = true)
     {
-        return json_decode($response->getBody()->getContents(), $assoc);
+        $string = $response->getBody()->getContents();
+        $result = json_decode($string, $assoc);
+        if (json_last_error() != JSON_ERROR_NONE && $string != "") {
+            $result = $string;
+        }
+        return $result;
     }
 }
 
