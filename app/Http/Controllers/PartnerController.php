@@ -1591,10 +1591,13 @@ class PartnerController extends Controller
             $updater->setPartner($partner)->setAddress($request->address)->update();
             return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(), 400);
         } catch (ModelNotFoundException $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(), 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(),500);
         }
     }
@@ -1608,10 +1611,13 @@ class PartnerController extends Controller
             $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
             return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
         } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(), 400);
         } catch (ModelNotFoundException $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(), 404);
         } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
             return response($e->getMessage(),500);
         }
     }
