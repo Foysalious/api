@@ -61,7 +61,13 @@ class CustomerOrderController extends Controller
                 }]);
             }]);
             if (count($customer->orders) > 0) {
-                $all_jobs = $this->getInformation($customer->orders);
+                $all_orders = $customer->orders;
+                if($status) {
+                    $all_orders = $all_orders->filter(function ($order, $key) use ($status) {
+                        return $order->getStatus() === $status;
+                    });
+                }
+                $all_jobs = $this->getInformation($all_orders);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
                     return $job['cancelled_date'] != null || $job['status'] == 'Served';
                 });
@@ -81,9 +87,6 @@ class CustomerOrderController extends Controller
                 $all_jobs = $all_jobs->filter(function ($job) use ($search) {
                     return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
                 });
-            }
-            if ($status) {
-                $all_jobs = $all_jobs->where('status', $status);
             }
             if ($search || $status) {
                 $all_orders = $all_jobs->values()->splice($offset, $limit);
