@@ -1660,13 +1660,13 @@ class PartnerController extends Controller
             return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(), 400);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
         } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(), 404);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(),500);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
     }
 
@@ -1680,13 +1680,13 @@ class PartnerController extends Controller
             return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(), 400);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
         } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(), 404);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
-            return response($e->getMessage(),500);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
     }
 }
