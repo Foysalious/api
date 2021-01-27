@@ -8,6 +8,7 @@ use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\AuthorizationToken\AuthorizationTokenRepositoryInterface;
 use Sheba\OAuth2\AuthUser;
+use Sheba\Portals\Portals;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Closure;
 use Tymon\JWTAuth\Facades\JWTAuth;
