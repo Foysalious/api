@@ -454,8 +454,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The password field is required.", $data['message']);
     }
 
-
-   public function testTopupWithPendingUser() {
+    public function testTopupWithPendingUser() {
 
        $verificationStatus = Affiliate::find(1);;
        $verificationStatus->update(["verification_status" => 'pending']);
@@ -495,8 +494,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
 
-
-    // passing null Mobile number
     public function testTopupNullNumber () {
 
         $response = $this->post('/v2/top-up/affiliate', [
@@ -548,8 +545,6 @@ class SingleTopUpTest extends FeatureTestCase
     }
 
     public function testTopupTestBlockNumber () {
-
-
         $response = $this->post('/v2/top-up/affiliate', [
             'mobile' => '01678987656',
             'vendor_id' => $this->topUpVendor->id,
@@ -563,6 +558,97 @@ class SingleTopUpTest extends FeatureTestCase
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
+    }
+
+    public function testSuccessfulTopupDeductAmountFromAgentWallet()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 800,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->affiliate->reload();
+        /*
+         * Initial wallet balance = 10000 -> AffiliateFactory
+         * Vendor Commission = 1% -> TopupVendorCommissionFactory
+         * Wallet balance should be = 10000 - 800 + (800 % 1) = 9208
+         */
+        $this->assertEquals(9208, $this->affiliate->wallet);
+
+       // dd($this->affiliate);
+    }
+
+
+    public function testTopupOtfShebaOtfCommissionCheck()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->affiliate->reload();
+
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals(11.4,$top_up_order->otf_sheba_commission);
+
+       // dd($this->affiliate);
+    }
+
+    public function testTopupOtfOtfAgentCommissionCheck()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->affiliate->reload();
+
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals(.6,$top_up_order->otf_agent_commission);
+
+        // dd($this->affiliate);
+    }
+
+    public function testTopupOtfOtfvendorIDnCheck()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01678242955',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->affiliate->reload();
+
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals(1,$top_up_order->vendor_id);
+
+        // dd($this->affiliate);
     }
 
 
