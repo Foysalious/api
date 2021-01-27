@@ -328,6 +328,7 @@ class Route
                     });
                 });
             });
+            $api->get('test/autosp', 'ShebaController@testAutoSpRun');
         });
         return $api;
     }

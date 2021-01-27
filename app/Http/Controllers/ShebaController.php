@@ -3,7 +3,10 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\Customer;
+use App\Models\PartnerOrder;
 use Sheba\AppVersion\AppVersionManager;
+use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -377,5 +380,16 @@ class ShebaController extends Controller
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+    }
+
+    public function testAutoSpRun()
+    {
+        $partner_order = PartnerOrder::find(186280);
+        $customer = Customer::find(189931);
+        $partnersFromList = [
+                                0 => 38571
+                            ];
+        dispatch(new InitiateAutoSpAssign($partner_order, $customer, $partnersFromList));
+        return 1;
     }
 }
