@@ -20,9 +20,7 @@ class Handler extends ExceptionHandler
      */
     protected $dontReport = [
         AuthorizationException::class,
-        HttpException::class,
-        ValidationException::class,
-        DoNotReportException::class
+        HttpException::class
     ];
 
     /**
