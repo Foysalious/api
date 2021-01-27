@@ -177,7 +177,8 @@ class PartnerController extends Controller
                 $banner = [
                     'image_link' => $partner->webstoreBanner->banner->image_link,
                     'title'  => $partner->webstoreBanner->title,
-                    'description' => $partner->webstoreBanner->description
+                    'description' => $partner->webstoreBanner->description,
+                    'is_published' => $partner->webstoreBanner->is_published
                 ];
             $info->put('banner', $banner);
             $working_info = [];
