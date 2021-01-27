@@ -63,7 +63,7 @@ class MakeDefaultApprovalSetting
         return [
             [
                 "id" => null,
-                "type" => "Lm",
+                "type" => "lm",
                 "type_id" => null,
                 "name" => null,
                 "employee_id" => null,
@@ -73,7 +73,7 @@ class MakeDefaultApprovalSetting
             ],
             [
                 "id" => null,
-                "type" => "Hod",
+                "type" => "hod",
                 "type_id" => null,
                 "name" => null,
                 "employee_id" => null,
