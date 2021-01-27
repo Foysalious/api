@@ -100,7 +100,7 @@ class PaywellClient
     }
 
     /**
-     * @param $mobile_number
+     * @param $vendor_id
      * @return string
      */
     private function getOperatorId($vendor_id): string
