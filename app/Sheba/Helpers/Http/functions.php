@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Requests\ApiRequest;
+use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Helpers\Http\ShebaRequestHeader;
@@ -153,5 +154,16 @@ if (!function_exists('getIp')) {
             }
         }
         return request()->ip();
+    }
+}
+
+if (!function_exists('isTimeoutException')) {
+    /**
+     * @param ConnectException $exception
+     * @return bool
+     */
+    function isTimeoutException(ConnectException $exception)
+    {
+        return starts_with($exception->getMessage(), "cURL error 28: ");
     }
 }

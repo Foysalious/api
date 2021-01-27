@@ -2,7 +2,9 @@
 
 use Exception;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\TopUp\Exception\GatewayTimeout;
 
 class SslVrClient
 {
@@ -31,6 +33,7 @@ class SslVrClient
      * @param $data
      * @return object
      * @throws \Exception
+     * @throws GatewayTimeout
      */
     public function call($data)
     {
@@ -53,6 +56,10 @@ class SslVrClient
             $proxy_response = json_decode($proxy_response);
             if ($proxy_response->code != 200) throw new Exception("VR proxy server error: ". $proxy_response->message);
             return $proxy_response->vr_response;
+        } catch (ConnectException $e) {
+            if (isTimeoutException($e)) throw new GatewayTimeout($e->getMessage());
+
+            throw $e;
         } catch (GuzzleException $e) {
             throw new Exception("VR proxy server error: ". $e->getMessage());
         }

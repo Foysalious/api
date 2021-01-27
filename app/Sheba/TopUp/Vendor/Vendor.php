@@ -4,10 +4,14 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpRechargeHistory;
 use App\Models\TopUpVendor;
 use Carbon\Carbon;
+use Exception;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
+use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
+use Sheba\TopUp\Vendor\Response\TopUpGatewayTimeoutResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 abstract class Vendor
@@ -33,10 +37,19 @@ abstract class Vendor
         return $this->model->is_published;
     }
 
-    public function recharge(TopUpOrder $topup_order)
+    /**
+     * @param TopUpOrder $topup_order
+     * @return TopUpResponse
+     * @throws Exception
+     */
+    public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
         $this->resolveGateway($topup_order);
-        return $this->topUpGateway->recharge($topup_order);
+        try {
+            return $this->topUpGateway->recharge($topup_order);
+        } catch (GatewayTimeout $e) {
+            return (new GenericGatewayErrorResponse())->setErrorResponse(new TopUpGatewayTimeoutResponse());
+        }
     }
 
     public function getTopUpInitialStatus()

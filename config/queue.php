@@ -56,7 +56,7 @@ return [
             'expire' => 60
         ],
         'topup' => [
-            'driver' => 'sync',
+            'driver' => 'redis',
             'connection' => 'default',
             'queue' => 'topup',
             'expire' => 60

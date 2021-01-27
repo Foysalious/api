@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\SslVrClient;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -22,7 +23,8 @@ class Ssl implements Gateway
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
+     * @throws Exception
+     * @throws GatewayTimeout
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
