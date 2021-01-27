@@ -1,5 +1,7 @@
 <?php namespace Sheba\AutoSpAssign\Sorting\Parameter;
 
+use App\Models\Partner;
+
 class Commission extends Parameter
 {
 
@@ -10,6 +12,6 @@ class Commission extends Parameter
 
     protected function getValueForPartner()
     {
-        $this->partner->categroyCommission($this->categoryId);
+        return Partner::find($this->partner->getId())->categoryCommission($this->categoryId);
     }
 }

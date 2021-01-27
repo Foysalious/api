@@ -311,6 +311,7 @@ class Route
                 $api->get('validate', 'NagadController@validatePayment');
             });
             $api->get('profiles', 'Profile\ProfileController@getDetail')->middleware('jwtGlobalAuth');
+            $api->get('test/autosp', 'ShebaController@testAutoSpRun');
         });
         return $api;
     }
