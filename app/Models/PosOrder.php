@@ -142,8 +142,7 @@ class PosOrder extends Model
     }
 
     private function _setPaymentStatus() {
-        $this->payment_status = $status = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
-        $this->update(['payment_status' => $status]);
+        $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
         return $this;
     }
 
