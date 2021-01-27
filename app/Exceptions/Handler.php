@@ -22,7 +22,6 @@ class Handler extends ExceptionHandler
         AuthorizationException::class,
         HttpException::class,
         ValidationException::class,
-        DoNotReportException::class
     ];
 
     /**
