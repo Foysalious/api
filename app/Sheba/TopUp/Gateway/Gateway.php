@@ -20,4 +20,6 @@ interface Gateway
     public static function getInitialStatusStatically();
 
     public function getShebaCommission();
+
+    public function getName();
 }

@@ -1,11 +1,13 @@
 <?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Payment\PayableType;
 use Sheba\TopUp\Gateway\Names;
 
-class TopUpOrder extends Model implements PayableType
+class TopUpOrder extends BaseModel implements PayableType
 {
     protected $guarded = ['id'];
     protected $table = 'topup_orders';
@@ -48,6 +50,11 @@ class TopUpOrder extends Model implements PayableType
         return $this->status == Statuses::FAILED;
     }
 
+    public function isFailedDueToGatewayTimeout()
+    {
+        return $this->isFailed() && $this->failed_reason == FailedReason::GATEWAY_TIMEOUT;
+    }
+
     public function isSuccess()
     {
         return $this->status == Statuses::SUCCESSFUL;
@@ -81,6 +88,11 @@ class TopUpOrder extends Model implements PayableType
     public function scopeOperator($query, $vendor_id)
     {
         return $query->where('vendor_id', $vendor_id);
+    }
+
+    public function scopeGateway($query, $gateway)
+    {
+        return $query->where('gateway', $gateway);
     }
 
     public function getOriginalMobile()

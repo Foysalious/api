@@ -96,4 +96,9 @@ class Ssl implements Gateway
     {
         return Statuses::PENDING;
     }
+
+    public function getName()
+    {
+        return Names::SSL;
+    }
 }

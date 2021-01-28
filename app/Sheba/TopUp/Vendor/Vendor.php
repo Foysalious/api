@@ -10,6 +10,7 @@ use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
+use Sheba\TopUp\GatewayTimeoutHandler;
 use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpGatewayTimeoutResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -19,6 +20,18 @@ abstract class Vendor
     protected $model;
     /** @var Gateway */
     protected $topUpGateway;
+
+    /** @var GatewayFactory */
+    private $gatewayFactory;
+
+    /** @var GatewayTimeoutHandler */
+    private $gatewayTimeoutHandler;
+
+    public function __construct(GatewayFactory $factory, GatewayTimeoutHandler $timeout_handler)
+    {
+        $this->gatewayFactory = $factory;
+        $this->gatewayTimeoutHandler = $timeout_handler;
+    }
 
     public function setModel(TopUpVendor $model)
     {
@@ -48,6 +61,7 @@ abstract class Vendor
         try {
             return $this->topUpGateway->recharge($topup_order);
         } catch (GatewayTimeout $e) {
+            $this->gatewayTimeoutHandler->handle();
             return (new GenericGatewayErrorResponse())->setErrorResponse(new TopUpGatewayTimeoutResponse());
         }
     }
@@ -79,15 +93,16 @@ abstract class Vendor
         // $this->createNewRechargeHistory($amount);
     }
 
-    private function resolveGateway(TopUpOrder $topUpOrder)
+    private function resolveGateway(TopUpOrder $top_up_order)
     {
-        $gateway_factory = new GatewayFactory();
-        $gateway_factory->setGatewayName($topUpOrder->gateway)->setVendorId($topUpOrder->vendor_id);
-        $this->setTopUpGateway($gateway_factory->get());
+        $this->gatewayFactory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
+        $this->setTopUpGateway($this->gatewayFactory->get());
+        $this->gatewayTimeoutHandler->setTopUpOrder($top_up_order);
     }
 
     private function setTopUpGateway(Gateway $topup_gateway)
     {
         $this->topUpGateway = $topup_gateway;
+        $this->gatewayTimeoutHandler->setGateway($this->topUpGateway);
     }
 }

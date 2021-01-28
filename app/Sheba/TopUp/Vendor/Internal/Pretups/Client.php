@@ -132,8 +132,6 @@ class Client
      */
     private function call($input)
     {
-        $this->vpnUrl = "http://12.12.12.12";
-
         try {
             $result = $this->httpClient->request('POST', $this->vpnUrl, [
                 'form_params' => [
