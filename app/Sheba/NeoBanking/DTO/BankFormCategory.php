@@ -138,6 +138,6 @@ abstract class BankFormCategory
 
     public function getBengaliPercentage()
     {
-        return convertNumbersToBangla($this->percentage, false);
+        return convertNumbersToBangla(100, false);
     }
 }
