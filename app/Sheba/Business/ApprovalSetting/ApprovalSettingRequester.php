@@ -126,6 +126,8 @@ class ApprovalSettingRequester
 
     public function checkValidation()
     {
+        if ($this->targetType == Targets::GENERAL_MODULE) $this->setError(420, 'This approval flow is already present in this system. Please select different options to add new flow.');
+        
         $approval_settings = $this->approvalSettingsRepo->where('business_id', $this->business->id)
             ->where('target_type', $this->targetType);
         if ($this->targetId) $approval_settings = $approval_settings->where('target_id', $this->targetId);
