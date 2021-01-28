@@ -67,7 +67,7 @@ class ApprovalSettingsController extends Controller
         if (!$business_member) return api_response($request, null, 401);
 
         list($offset, $limit) = calculatePagination($request);
-        $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id);
+        $approval_settings = $this->approvalSettingsRepo->where('business_id', $business->id)->orderBy('id', 'desc');
 
 
         if ($request->has('type') && $request->has('target_id')) {
@@ -85,12 +85,24 @@ class ApprovalSettingsController extends Controller
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($approval_settings->get(), new ApprovalSettingListTransformer());
-        $approval_settings_list = $manager->createData($resource)->toArray()['data'];
+        $approval_settings = $manager->createData($resource)->toArray()['data'];
+
+        $approval_settings_list_with_global = [];
+        foreach ($approval_settings as $item) {
+            if ($item['is_default'] == 1) $approval_settings_list_with_global[] = $item;
+        }
+        $approval_settings_list_without_global = [];
+        foreach ($approval_settings as $item) {
+            if ($item['is_default'] == 0) $approval_settings_list_without_global[] = $item;
+        }
+        $approval_settings_list = array_merge($approval_settings_list_with_global, $approval_settings_list_without_global);
         $is_default_already_exist = array_key_exists(1, array_flip(array_column($approval_settings_list, 'is_default')));
+
         if (!$is_default_already_exist) {
             $default_approval_setting = $this->defaultApprovalSetting->getApprovalSettings();
             $approval_settings_list = array_merge([$default_approval_setting], $approval_settings_list);
         }
+
         if ($request->has('search')) $approval_settings_list = collect($this->searchWithEmployee($approval_settings_list, $request->search))->values();
         $total_approval_settings = count($approval_settings_list);
         if ($request->has('limit')) $approval_settings_list = collect($approval_settings_list)->splice($offset, $limit);
