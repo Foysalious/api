@@ -47,7 +47,6 @@ class NIDSelfie extends BankFormCategory
 
     public function percentageCalculation()
     {
-        return 100;
         $this->bank->loadInfo();
         $this->setBankAccountData($this->bank->getBankInfo());
         $this->percentage = (empty($this->bankAccountData->getByCode($this->code))) ? 0 : 100;
