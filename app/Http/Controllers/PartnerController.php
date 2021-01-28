@@ -1586,13 +1586,14 @@ class PartnerController extends Controller
     public function updateAddress(Request $request, $partner, Updater $updater)
     {
         try {
-            $this->validate($request, ['address' => 'required|string']);
+            $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
             $partner = $request->partner;
             $updater->setPartner($partner)->setAddress($request->address)->update();
             return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
         } catch (ValidationException $e) {
             app('sentry')->captureException($e);
-            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return response()->json(['code' => 400, 'message' => $message], 400);
         } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
             return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
