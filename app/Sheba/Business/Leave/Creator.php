@@ -124,6 +124,9 @@ class Creator
         $this->business = $this->businessMember->business;
         if ($this->isLeaveAdjustment) return $this;
 
+        $line_manager = $this->businessMember->manager()->first();
+        if (!$line_manager) $this->setError(422, 'Manager not set yet!');
+
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
             return $this;
