@@ -5,10 +5,12 @@ pipeline {
         stage('LAST COMMIT DETAILS') {
             when { branch 'master-test' }
             steps {
-                lastCommitUserName  = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
-                lastCommitUserEmail = sh(script: 'git log -1 --pretty=%ae', returnStdout: true).trim()
-                echo "last commit user:${lastCommitUserName}."
-                echo "last commit user email:${lastCommitUserEmail}."
+                script {
+                    LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    LAST_COMMIT_USER_EMAIL = sh(script: 'git log -1 --pretty=%ae', returnStdout: true).trim()
+                    echo "last commit user:${LAST_COMMIT_USER_NAME}."
+                    echo "last commit user email:${LAST_COMMIT_USER_EMAIL}."
+                }
             }
         }
         stage('RUN TEST RESULT') {
