@@ -140,6 +140,7 @@ class AffiliateController extends Controller
                 'total_unseen_notifications' => $affiliate->notifications()->where('is_seen', 0)->count(),
 
             ];
+            $affiliate->update(["last_login" => Carbon::now()]);
             return api_response($request, $info, 200, ['info' => $info]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
