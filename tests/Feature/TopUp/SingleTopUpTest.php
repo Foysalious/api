@@ -1,6 +1,8 @@
 <?php namespace Tests\Feature\TopUp;
 
 use App\Models\Affiliate;
+use App\Models\AffiliateTransaction;
+use App\Models\Profile;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
@@ -32,6 +34,9 @@ class SingleTopUpTest extends FeatureTestCase
             TopUpOTFSettings::class,
             TopUpOrder::class,
             TopUpBlacklistNumber::class,
+            AffiliateTransaction::class,
+            Profile::class,
+            Affiliate::class,
         ]);
         $this->logIn();
 
@@ -651,6 +656,103 @@ class SingleTopUpTest extends FeatureTestCase
         // dd($this->affiliate);
     }
 
+    public function testSuccessfulTopupAgentGenerateTransaction()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
 
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $affiliate_transactions=AffiliateTransaction::first();
+       // dd($affiliate_transactions);
+
+        /*
+      * Initial wallet balance = 10000 -> AffiliateFactory
+      * Vendor Commission = 1% -> TopupVendorCommissionFactory
+      * Topup Amount should be = 100 - (100 % 1) = 99
+      */
+        $this->assertEquals($this->affiliate->id,$affiliate_transactions->affiliate_id);
+        $this->assertEquals(99,$affiliate_transactions->amount);
+
+
+
+    }
+
+    public function testTopupSpecificUserAgentCommission()
+    {
+        // create a profile
+
+        $this->profile = factory(Profile::class)->create([
+            'name' => "Khairun",
+            'mobile' =>'+880162001109',
+            'email' =>'khairun@sheba.xyz',
+            'password' =>bcrypt('12345'),
+            'is_blacklisted'=> 0,
+            'mobile_verified'=>1,
+            'email_verified'=>1,
+            'nid_verification_request_count'=>0,
+            'blood_group'=>'O+'
+        ]);
+
+
+
+        // create an affiliate
+
+        $this->affiliate = factory(Affiliate::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+
+
+
+        // set specific commission against this affiliate
+
+        $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
+            'topup_vendor_id' => $this->topUpVendor->id,
+            'agent_commission' =>  '0',
+            'ambassador_commission' => '0',
+            'type' =>'App\Models\Affiliate',
+            'type_id' => 2
+
+             ]);
+
+        //dd($this->topUpVendorCommission);
+        // set fixed commission for regular user (all ready set)
+        // topup function call for regular user
+
+        // check regular agent wallet balance
+        // check specific agent wallet balance
+        // calculate affiliate commission
+
+        // top up function call for specific user
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $topUpVendorCommission=TopUpVendorCommission::first();
+        dd($topUpVendorCommission);
+
+        $this->assertEquals($this->affiliate->id,$topUpVendorCommission->type_id);
+
+      //  $this->assertEquals(100,$topUpVendorCommission->amount);
+
+
+
+    }
 
 }
