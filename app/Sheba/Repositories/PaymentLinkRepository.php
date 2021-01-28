@@ -140,7 +140,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
         $links = [];
         foreach ($response['links'] as $link) {
-            $link = $this->paymentLinkTransformer->setResponse(json_decode(json_encode($link)));
+            $link = (new PaymentLinkTransformer())->setResponse(json_decode(json_encode($link)));
             array_push_on_array($links, $link->getUnresolvedTarget()->toString(), $link);
         }
         return $links;

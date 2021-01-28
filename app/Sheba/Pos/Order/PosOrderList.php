@@ -237,7 +237,7 @@ class PosOrderList
     {
         $payment_links = $this->paymentLinkRepo->getPaymentLinksGroupedByTargets($payment_link_targets);
 
-        $final_orders->map(function ($order) use ($payment_links) {
+        $final_orders = $final_orders->map(function ($order) use ($payment_links) {
             if (array_key_exists('payment_link_target', $order)) {
                 $key = $order['payment_link_target']->toString();
                 if (array_key_exists($key, $payment_links)) {
