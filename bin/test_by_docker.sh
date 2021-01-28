@@ -38,6 +38,5 @@ else
 fi
 
 # shellcheck disable=SC2124
-test_run_script="docker exec -it ${CONTAINER_NAME} php vendor/bin/phpunit --filter ${suite}"
+test_run_script="docker exec ${CONTAINER_NAME} php vendor/bin/phpunit --filter ${suite}"
 eval "${test_run_script}"
-echo $?

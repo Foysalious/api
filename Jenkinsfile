@@ -19,25 +19,23 @@ pipeline {
                 script {
                     sshPublisher(publishers: [
                         sshPublisherDesc(configName: 'development-server',
-                            transfers: [
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh SingleTopUpTest',
-                                    execTimeout: 120000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: '',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: ''
-                                )
-                            ],
+                            transfers: [sshTransfer(
+                                cleanRemote: false,
+                                excludes: '',
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh SingleTopUpTest',
+                                execTimeout: 120000,
+                                flatten: false,
+                                makeEmptyDirs: false,
+                                noDefaultExcludes: false,
+                                patternSeparator: '[, ]+',
+                                remoteDirectory: '',
+                                remoteDirectorySDF: false,
+                                removePrefix: '',
+                                sourceFiles: ''
+                            )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
-                            verbose: false
+                            verbose: true
                         )]
                     )
                 }
@@ -48,7 +46,7 @@ pipeline {
             steps {
                 sshagent(['development-server-ssh']) {
                     // sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml /var/lib/jenkins/sheba/test-results/api"
-                    sh "scp sheba@192.168.12.119:/var/www/api/results/phpunit/api-test-result.xml /var/jenkins_home/sheba/test-results/api"
+                    sh "scp sheba@192.168.12.119:/var/www/api/results/phpunit/api-test-result.xml ."
                 }
             }
         }
@@ -58,25 +56,23 @@ pipeline {
                 script {
                     sshPublisher(publishers: [
                         sshPublisherDesc(configName: 'stage-server',
-                            transfers: [
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: '',
-                                    execTimeout: 120000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: '/var/www/tech_alerts/public',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: '/var/lib/jenkins/sheba/test-results/api/api-test-result.xml'
-                                )
-                            ],
+                            transfers: [sshTransfer(
+                                cleanRemote: false,
+                                excludes: '',
+                                execCommand: '',
+                                execTimeout: 120000,
+                                flatten: false,
+                                makeEmptyDirs: false,
+                                noDefaultExcludes: false,
+                                patternSeparator: '[, ]+',
+                                remoteDirectory: 'tech_alerts/public',
+                                remoteDirectorySDF: false,
+                                removePrefix: '',
+                                sourceFiles: 'api-test-result.xml'
+                            )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
-                            verbose: false
+                            verbose: true
                         )]
                     )
                 }
