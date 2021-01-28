@@ -17,6 +17,21 @@ class TopUpSuccessResponse
         $this->$name = $value;
     }
 
+    public function getTopUpStatus()
+    {
+        return $this->topUpStatus;
+    }
+
+    public function getTransactionId()
+    {
+        return $this->transactionId;
+    }
+
+    public function getTransactionDetailsAsString()
+    {
+        return json_encode($this->transactionDetails);
+    }
+
     /**
      * @return string|null
      */

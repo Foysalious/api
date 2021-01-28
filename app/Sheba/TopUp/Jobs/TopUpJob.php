@@ -49,28 +49,27 @@ class TopUpJob extends Job implements ShouldQueue
      */
     public function handle()
     {
-        if ($this->attempts() < 2) {
-            $vendor_factory = app(VendorFactory::class);
-            $this->vendor = $vendor_factory->getById($this->vendorId);
-            $this->topUp = app(TopUp::class);
-            $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
+        if ($this->attempts() >= 2) return;
 
+        $vendor_factory = app(VendorFactory::class);
+        $this->vendor = $vendor_factory->getById($this->vendorId);
+        $this->topUp = app(TopUp::class);
+        $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
-            $this->topUp->recharge($this->topUpOrder);
+        $this->topUp->recharge($this->topUpOrder);
 
-            event(new TopUpCompletedEvent([
-                'id' => $this->topUpOrder->id,
-                'agent_id' => $this->topUpOrder->agent_id,
-                'agent_type' => $this->topUpOrder->agent_type,
-                'status' => $this->topUpOrder->status,
-                'bulk_request_id' => $this->topUpOrder->bulk_request_id,
-            ]));
+        event(new TopUpCompletedEvent([
+            'id' => $this->topUpOrder->id,
+            'agent_id' => $this->topUpOrder->agent_id,
+            'agent_type' => $this->topUpOrder->agent_type,
+            'status' => $this->topUpOrder->status,
+            'bulk_request_id' => $this->topUpOrder->bulk_request_id,
+        ]));
 
-            if ($this->topUp->isNotSuccessful()) {
-                $this->takeUnsuccessfulAction();
-            } else {
-                $this->takeSuccessfulAction();
-            }
+        if ($this->topUp->isNotSuccessful()) {
+            $this->takeUnsuccessfulAction();
+        } else {
+            $this->takeSuccessfulAction();
         }
     }
 

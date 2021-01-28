@@ -1,6 +1,9 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
+use App\Models\Business;
+use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
@@ -12,6 +15,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\TopUp;
@@ -43,31 +47,27 @@ class TopUpController extends Controller
 
     public function getVendor(Request $request)
     {
-        try {
-            if ($request->for == 'customer') $agent = "App\\Models\\Customer";
-            elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
-            else $agent = "App\\Models\\Affiliate";
-            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-            $error_message = "Currently, we’re supporting";
-            foreach ($vendors as $vendor) {
-                $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-                $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-                array_add($vendor, 'asset', $asset_name);
-                array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
-                array_add($vendor, 'is_prepaid_available', 1);
-                array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-                if ($vendor->is_published) $error_message .= ',' . $vendor->name;
-            }
-            $regular_expression = array(
-                'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
-                'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
-                'error_message' => $error_message . '.'
-            );
-            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if ($request->for == 'customer') $agent = Customer::class;
+        elseif ($request->for == 'partner') $agent = Partner::class;
+        else $agent = Affiliate::class;
+
+        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+        $error_message = "Currently, we’re supporting";
+        foreach ($vendors as $vendor) {
+            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
+            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
+            array_add($vendor, 'asset', $asset_name);
+            array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
+            array_add($vendor, 'is_prepaid_available', 1);
+            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
+            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
         }
+        $regular_expression = array(
+            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
+            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
+            'error_message' => $error_message . '.'
+        );
+        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -76,11 +76,11 @@ class TopUpController extends Controller
      * @param Creator $creator
      * @param UserAgentInformation $userAgentInformation
      * @return JsonResponse
+     * @throws \Exception
      */
     public function topUp(Request $request, TopUpRequest $top_up_request, Creator $creator, UserAgentInformation $userAgentInformation)
     {
-        try{
-            $this->validate($request, [
+        $this->validate($request, [
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
             'vendor_id' => 'required|exists:topup_vendors,id',
@@ -88,32 +88,26 @@ class TopUpController extends Controller
             'is_robi_topup' => 'sometimes|in:0,1'
         ]);
 
-            $agent = $this->getAgent($request);
-            $userAgentInformation->setRequest($request);
+        $agent = $this->getAgent($request);
+        $userAgentInformation->setRequest($request);
 
-            if ($this->hasLastTopupWithinIntervalTime($agent))
-                return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
+        if ($this->hasLastTopupWithinIntervalTime($agent))
+            return api_response($request, null, 400, ['message' => 'Wait another minute to topup']);
 
-            $top_up_request->setAmount($request->amount)
-                ->setMobile($request->mobile)->setType($request->connection_type)
-                ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
-                ->setUserAgent($userAgentInformation->getUserAgent());
+        $top_up_request->setAmount($request->amount)
+            ->setMobile($request->mobile)->setType($request->connection_type)
+            ->setAgent($agent)->setVendorId($request->vendor_id)->setRobiTopupWallet($request->is_robi_topup)
+            ->setUserAgent($userAgentInformation->getUserAgent());
 
-            if ($top_up_request->hasError())
-                return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
+        if ($top_up_request->hasError())
+            return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
 
-            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
-            if ($topup_order) {
-                dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
-                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        if (!$topup_order) return api_response($request, null, 500);
+
+        dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+        return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
     }
 
     private function affiliateLogout(Affiliate $affiliate)
@@ -127,51 +121,44 @@ class TopUpController extends Controller
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @return JsonResponse
+     * @throws \Exception
      */
     public function bulkTopUp(Request $request, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator)
     {
-        try {
-            $this->validate($request, ['file' => 'required|file']);
+        $this->validate($request, ['file' => 'required|file']);
 
-            $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
-            $extension = $request->file('file')->getClientOriginalExtension();
+        $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
+        $extension = $request->file('file')->getClientOriginalExtension();
 
-            if (!in_array($extension, $valid_extensions)) {
-                return api_response($request, null, 400, ['message' => 'File type not support']);
-            }
-
-            $agent = $this->getAgent($request);
-            $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
-            $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-
-            $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
-            $total = $data->count();
-            $bulk_request = $this->storeBulkRequest($agent);
-
-            $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
-                $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-                $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
-                $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-                $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-
-                if (!$value->$operator_field) return;
-
-                $vendor_id = $vendor->getIdByName($value->$operator_field);
-                $request = $top_up_request->setType($value->$type_field)
-                    ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
-                $topup_order = $creator->setTopUpRequest($request)->create();
-                if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
-            });
-
-            $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
-            return api_response($request, null, 200, ['message' => $response_msg]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        if (!in_array($extension, $valid_extensions)) {
+            return api_response($request, null, 400, ['message' => 'File type not support']);
         }
+
+        $agent = $this->getAgent($request);
+        $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
+        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+
+        $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
+        $total = $data->count();
+        $bulk_request = $this->storeBulkRequest($agent);
+
+        $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
+            $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+            $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+            $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+            $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+
+            if (!$value->$operator_field) return;
+
+            $vendor_id = $vendor->getIdByName($value->$operator_field);
+            $request = $top_up_request->setType($value->$type_field)
+                ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
+            $topup_order = $creator->setTopUpRequest($request)->create();
+            if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
+        });
+
+        $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
+        return api_response($request, null, 200, ['message' => $response_msg]);
     }
 
     public function storeBulkRequest($agent)
@@ -181,7 +168,6 @@ class TopUpController extends Controller
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
         $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
         $topup_bulk_request->save();
-
         return $topup_bulk_request;
     }
 
@@ -195,30 +181,10 @@ class TopUpController extends Controller
 
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
     {
-        try {
-            $data = $request->all();
-            $success_response->setResponse($data);
-            $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
-
-            /**
-             * USE ONLY FOR TEMPORARY CHECK
-             *
-             * $topup_success_namespace = 'Topup:Success_'. Carbon::now()->timestamp . str_random(6);
-             * Redis::set($topup_success_namespace, json_encode($data));
-             */
-
-            return api_response($request, 1, 200);
-        } catch (QueryException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
-        } catch (Throwable $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $data = $request->all();
+        $success_response->setResponse($data);
+        $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+        return api_response($request, 1, 200);
     }
 
     private function getAgent(Request $request)
@@ -229,16 +195,14 @@ class TopUpController extends Controller
         elseif ($request->vendor) return $request->vendor;
     }
 
-    public function getFullAgentType($type)
+    private function getFullAgentType($type)
     {
-        $agent = '';
-
-        if ($type == 'customer') $agent = "App\\Models\\Customer";
-        elseif ($type == 'partner') $agent = "App\\Models\\Partner";
-        elseif ($type == 'business') $agent = "App\\Models\\Business";
-        elseif ($type == 'Company') $agent = "App\\Models\\Business";
-
-        return $agent;
+        switch ($type) {
+            case 'customer': return Customer::class;
+            case 'partner': return Partner::class;
+            case 'business': case 'Company': return Business::class;
+            default: return '';
+        }
     }
 
     /**
@@ -248,33 +212,26 @@ class TopUpController extends Controller
      * @param TopUp $top_up
      * @param TopUpRequest $top_up_request
      * @return JsonResponse
+     * @throws \Exception
      */
     public function topUpTest(Request $request, VendorFactory $vendor, TopUp $top_up, TopUpRequest $top_up_request)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd',
-                'connection_type' => 'required|in:prepaid,postpaid',
-                'vendor_id' => 'required|exists:topup_vendors,id',
-                'amount' => 'required|min:10|max:1000|numeric'
-            ]);
+        $this->validate($request, [
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric'
+        ]);
 
-            $agent = $this->getAgent($request);
-            if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
-            $vendor = $vendor->getById($request->vendor_id);
-            $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
-            $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
+        $agent = $this->getAgent($request);
+        if ($agent->wallet < (double)$request->amount) return api_response($request, null, 403, ['message' => "You don't have sufficient balance to recharge."]);
+        $vendor = $vendor->getById($request->vendor_id);
+        $topUprequest = $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type);
+        $top_up->setAgent($agent)->setVendor($vendor)->recharge($topUprequest);
 
-            if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
+        if (!$vendor->isPublished()) return api_response($request, null, 403, ['message' => 'Sorry, we don\'t support this operator at this moment']);
 
-            return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, null, 200, ['message' => "Recharge Request Successful"]);
     }
 
     public function restartQueue()
@@ -304,10 +261,6 @@ class TopUpController extends Controller
             'vendor_id' => 'required|exists:topup_vendors,id',
         ]);
 
-        if ($request->for == 'customer') $agent = "App\\Models\\Customer";
-        elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
-        else $agent = "App\\Models\\Affiliate";
-
         $vendor = TopUpVendor::select('id', 'name', 'gateway','is_published')->where('id', $request->vendor_id)->published()->first();
         if (!$vendor) {
             $message = "Vendor not found";
@@ -317,6 +270,7 @@ class TopUpController extends Controller
         $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
         $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
 
+        $agent = $this->getFullAgentType($request->for);
         $otf_settings = $topup_otf_settings->builder()->where([
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
@@ -349,10 +303,6 @@ class TopUpController extends Controller
             'otf_id' => 'required|integer'
         ]);
 
-        if ($request->for == 'customer') $agent = "App\\Models\\Customer";
-        elseif ($request->for == 'partner') $agent = "App\\Models\\Partner";
-        else $agent = "App\\Models\\Affiliate";
-
         $vendor = TopUpVendor::select('id', 'name', 'gateway', 'is_published')
             ->where('id', $request->vendor_id)
             ->published()->first();
@@ -365,6 +315,7 @@ class TopUpController extends Controller
         $topup_otf_settings = app(TopUpOTFSettingsRepo::class);
         $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
 
+        $agent = $this->getFullAgentType($request->for);
         $otf_settings = $topup_otf_settings->builder()->where([
             ['topup_vendor_id', $request->vendor_id], ['type', $agent]
         ])->first();
@@ -384,13 +335,14 @@ class TopUpController extends Controller
             return api_response($request, $otf_list, 200, ['message' => $otf_list]);
         }
     }
-
-    public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
+    
+    public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up, PaywellClient $paywell_client)
     {
-        $topup_order = app(TopUpOrder::class)->find($request->topup_order_id);
+        /** @var TopUpOrder $topup_order */
+        $topup_order = TopUpOrder::find($request->topup_order_id);
 
-        if($topup_order->gateway == 'paywell' && $topup_order->status == 'Pending'){
-            $response = app(PaywellClient::class)->enquiry($request->topup_order_id);
+        if($topup_order->isViaPaywell() && $topup_order->status == Statuses::PENDING) {
+            $response = $paywell_client->enquiry($request->topup_order_id);
             if ($response->status_code == "200") {
                 $success_response->setResponse($response);
                 $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
@@ -399,13 +351,13 @@ class TopUpController extends Controller
                 $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
             }
             return api_response($response, json_encode($response), 200);
-        } else {
-            $response = [
-                'recipient_msisdn' => $topup_order->payee_mobile,
-                'status_name' => $topup_order->status,
-                'status_code' => '',
-            ];
-            return api_response(json_encode($response), json_encode($response), 200);
         }
+
+        $response = [
+            'recipient_msisdn' => $topup_order->payee_mobile,
+            'status_name' => $topup_order->status,
+            'status_code' => '',
+        ];
+        return api_response(json_encode($response), json_encode($response), 200);
     }
 }

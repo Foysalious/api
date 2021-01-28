@@ -4,9 +4,11 @@ use App\Models\TopUpOrder;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
 use InvalidArgumentException;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerTimeout;
 use Sheba\TPProxy\TPRequest;
 
 class PaywellClient
@@ -48,6 +50,7 @@ class PaywellClient
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws Exception
+     * @throws GatewayTimeout
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
@@ -75,7 +78,11 @@ class PaywellClient
             ->setHeaders($headers)
             ->setInput($request_data);
 
-        $response = $this->httpClient->call($this->tpRequest);
+        try {
+            $response = $this->httpClient->call($this->tpRequest);
+        } catch (TPProxyServerTimeout $e) {
+            throw new GatewayTimeout($e->getMessage());
+        }
 
         $topup_response = app(PaywellResponse::class);
         $topup_response->setResponse($response->data);
@@ -105,21 +112,16 @@ class PaywellClient
      */
     private function getOperatorId($vendor_id): string
     {
-        if ($vendor_id == 2) {
-            return 'RB';
-        } elseif ($vendor_id == 3) {
-            return 'AT';
-        } elseif ($vendor_id == 4) {
-            return 'GP';
-        } elseif ($vendor_id == 5) {
-            return 'BL';
-        } elseif ($vendor_id == 6) {
-            return 'TT';
-        } else {
-            throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
-        }
-    }
+        $mobile_number = formatMobile($mobile_number);
 
+        if (preg_match("/^(\+88017)/", $mobile_number) || preg_match("/^(\+88013)/", $mobile_number)) return 'GP';
+        if (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) return 'BL';
+        if (preg_match("/^(\+88018)/", $mobile_number)) return 'RB';
+        if (preg_match("/^(\+88016)/", $mobile_number)) return 'AT';
+        if (preg_match("/^(\+88015)/", $mobile_number)) return 'TT';
+
+        throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
+    }
 
     public function enquiry($topup_order_id)
     {

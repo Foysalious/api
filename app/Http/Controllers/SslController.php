@@ -4,14 +4,19 @@ use App\Models\Payment;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use Sheba\Payment\PaymentManager;
-use Sheba\TopUp\Vendor\Internal\SslClient;
-use Throwable;
+use Sheba\TopUp\Gateway\Ssl;
 
 class SslController extends Controller
 {
+    /** @var Ssl */
+    private $ssl;
+
+    public function __construct(Ssl $ssl)
+    {
+        $this->ssl = $ssl;
+    }
+
     public function validatePayment(Request $request, PaymentManager $payment_manager)
     {
         $redirect_url = config('sheba.front_url');
@@ -33,33 +38,29 @@ class SslController extends Controller
         return redirect($redirect_url);
     }
 
-    public function validateTopUp(Request $request, SslClient $ssl)
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function validateTopUp(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'vr_guid' => 'required',
-                'guid' => 'required',
-            ]);
-            $response = $ssl->getRecharge($request->guid, $request->vr_guid);
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'vr_guid' => 'required',
+            'guid'    => 'required',
+        ]);
+        $response = $this->ssl->getRecharge($request->guid, $request->vr_guid);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
-    public function checkBalance(Request $request, SslClient $ssl)
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function checkBalance(Request $request)
     {
-        try {
-            $response = $ssl->getBalance();
-            return api_response($request, $response, 200, ['data' => $response]);
-        } catch (Throwable $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $response = $this->ssl->getBalance();
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 }

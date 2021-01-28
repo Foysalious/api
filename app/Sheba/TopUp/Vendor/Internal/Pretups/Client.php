@@ -3,7 +3,9 @@
 use App\Models\TopUpOrder;
 use Exception;
 use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\PretupsResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Carbon\Carbon;
@@ -86,7 +88,7 @@ class Client
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws Exception
-     * @throws GuzzleException
+     * @throws GatewayTimeout
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
@@ -125,22 +127,29 @@ class Client
     /**
      * @param $input
      * @return array
-     * @throws GuzzleException
      * @throws Exception
+     * @throws GatewayTimeout
      */
     private function call($input)
     {
-        $result = $this->httpClient->request('POST', $this->vpnUrl, [
-            'form_params' => [
-                'url' => $this->url,
-                'input' => $input
-            ],
-            'timeout' => 60,
-            'read_timeout' => 60,
-            'connect_timeout' => 60
-        ]);
-        $vpn_response = $result->getBody()->getContents();
+        try {
+            $result = $this->httpClient->request('POST', $this->vpnUrl, [
+                'form_params' => [
+                    'url' => $this->url,
+                    'input' => $input
+                ],
+                'timeout' => 5,
+                'read_timeout' => 5,
+                'connect_timeout' => 5
+            ]);
+        } catch (ConnectException $e) {
+            if (isTimeoutException($e)) throw new GatewayTimeout($e->getMessage());
+            throw $e;
+        } catch (GuzzleException $e) {
+            throw new Exception("VPN server error: ". $e->getMessage());
+        }
 
+        $vpn_response = $result->getBody()->getContents();
         if (!$vpn_response) throw new Exception("Vpn server not working.");
         $vpn_response = json_decode($vpn_response);
         if ($vpn_response->code != 200) throw new Exception("Vpn server error: ". $vpn_response->message);

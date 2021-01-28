@@ -62,11 +62,26 @@ class VerifyPin
         return $this;
     }
 
+    /**
+     * @throws DoNotReportException
+     * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     public function verify()
     {
         $this->authenticateWithPassword();
     }
 
+    /**
+     * @throws \Exception
+     * @throws DoNotReportException
+     * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function authenticateWithPassword()
     {
         try {
@@ -80,11 +95,13 @@ class VerifyPin
     /**
      * @throws DoNotThrowException
      * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
      */
     private function getAuthenticateRequests()
     {
-        $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
-        $data = json_decode($result->getBody(), true);
+        $data = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
         $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
 
         if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
@@ -111,6 +128,12 @@ class VerifyPin
         return count($request_status);
     }
 
+    /**
+     * @throws DoNotReportException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function sessionOut()
     {
         $this->logout();
@@ -118,6 +141,11 @@ class VerifyPin
         throw new DoNotThrowException("You have been logged out", 401);
     }
 
+    /**
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function logout()
     {
         $this->accountServer->logout($this->request->access_token->token, BlacklistedReason::TOPUP_LOGOUT);
