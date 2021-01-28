@@ -55,35 +55,6 @@ class NeoBankingGigatechController extends Controller
     public function getGigatechKycStatus(Request $request) {
         try {
             $this->validate($request, ['mobile' => 'required|mobile:bd','bank_code' => 'required|string']);
-            $data = [
-                "status" => "success",
-                "status_code"=>4004,
-                "data" => [
-                    "status"=>"passed",
-                    "detail" => [
-                        "nid_no"=>123122324243131,
-                        "dob"=>"1980/12/12",
-                        "applicant_name_eng"=>"ABDUR RAHIM",
-                        "applicant_name_eng_score"=>85,
-                        "applicant_name_ben"=>"আ র রিহম",
-                        "applicant_name_ben_score"=>85,
-                        "father_name"=>"ক সর রিহম",
-                        "father_name_score"=>85,
-                        "mother_name"=>"রিহমা খাতন",
-                        "mother_name_score"=>85,
-                        "spouse_name"=>"none",
-                        "spouse_name_score"=> 0,
-                        "pres_address"=>"বাড়ী ৩, মাহা দপর, ঢাকা",
-                        "pres_address_score"=>85,
-                        "textual_info_match"=>true,
-                        "applicant_photo_from_card"=>"",
-                        "applicant_photo_card_ec_match"=>true,
-                        "applicant_photo_from_app"=>"",
-                        "Applicant_photo_app_ec_match"=>true
-                    ]
-                ]
-            ];
-            return api_response($request, $data, 200, ['data' => $data]);
             $bank             = $request->bank_code;
             $data['mobile'] = $request->mobile;
             $result             = (array)(new NeoBanking())->setBank($bank)->getGigatechKycStatus($data);
