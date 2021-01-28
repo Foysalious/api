@@ -12,5 +12,5 @@ resources/assets/nagad/*
 .composer/cache/.htaccess
 .sentryclirc
 composer-auth.json
-
 results/phpunit/
+.env.testing
