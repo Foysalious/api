@@ -157,6 +157,22 @@ class PaymentLinkClient
     }
 
     /**
+     * @param $targets Target[]
+     * @return mixed
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $targets = array_filter(array_map(function (Target $target) {
+            if ($target->getType() != TargetType::POS_ORDER) return null;
+            return $target->getId();
+        }, $targets));
+
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
+        $response = $this->client->get($uri)->getBody()->getContents();
+        return json_decode($response, true);
+    }
+
+    /**
      * @param $identifier
      * @return \stdClass|null
      */

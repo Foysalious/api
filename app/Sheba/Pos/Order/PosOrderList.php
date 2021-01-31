@@ -112,6 +112,7 @@ class PosOrderList
     {
         /** @var PosOrder $orders */
         $orders = $this->getFilteredOrders();
+
         if ($this->sales_channel == SalesChannels::WEBSTORE) {
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
@@ -217,7 +218,7 @@ class PosOrderList
 
     private function mapPaymentLinkData(&$final_orders, $payment_link_targets)
     {
-        $payment_links = $this->paymentLinkRepo->getPaymentLinksGroupedByTargets($payment_link_targets);
+        $payment_links = $this->paymentLinkRepo->getPaymentLinksByPosOrders($payment_link_targets);
 
         $final_orders = $final_orders->map(function ($order) use ($payment_links) {
             if (array_key_exists('payment_link_target', $order)) {
