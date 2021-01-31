@@ -131,11 +131,6 @@ class Creator
         /** @Var ApprovalSetting $approval_setting */
         $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->businessMember, Modules::LEAVE);
 
-        if (!$approval_setting) {
-            $line_manager = $this->businessMember->manager()->first();
-            if (!$line_manager) $this->setError(422, 'No approval flow is defined for you due to wrong approval flow setup');
-        }
-
         $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->businessMember);
         return $this;
     }
