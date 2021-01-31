@@ -31,6 +31,8 @@ class CategoryRepository
             $services = $services->publishedForAll()->get();
         } else if ((int)request()->get('is_business')) {
             $services = $services->publishedForBusiness()->get();
+        } else if ((int)request()->get('is_ddn')) {
+            $services = $services->publishedForDDN()->get();
         } else if ((int)request()->get('is_b2b')) {
             $services = $services->publishedForB2B()->get();
         } else {
