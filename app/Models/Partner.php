@@ -59,7 +59,8 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     protected $guarded = ['id', 'original_created_at'];
     protected $dates = [
         'last_billed_date',
-        'billing_start_date'
+        'billing_start_date',
+        'original_created_at'
     ];
     protected $casts = [
         'wallet' => 'double',
