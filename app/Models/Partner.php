@@ -55,7 +55,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
     public $creditBreakdown;
-    protected $guarded = ['id'];
+    protected $guarded = ['id', 'original_created_at'];
     protected $dates = [
         'last_billed_date',
         'billing_start_date'
