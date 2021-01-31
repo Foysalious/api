@@ -136,6 +136,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     public function getPaymentLinksGroupedByTargets(array $targets)
     {
         $response = $this->paymentLinkClient->getPaymentLinksByTargets($targets);
+
+        return $this->formatPaymentLinkTransformers($response);
+    }
+
+    private function formatPaymentLinkTransformers($response)
+    {
         if ($response['code'] != 200) return [];
 
         $links = [];
@@ -144,5 +150,16 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
             array_push_on_array($links, $link->getUnresolvedTarget()->toString(), $link);
         }
         return $links;
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $response = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
+
+        return $this->formatPaymentLinkTransformers($response);
     }
 }
