@@ -685,31 +685,35 @@ class SingleTopUpTest extends FeatureTestCase
 
     }
 
+
+    public function testTopupGeneralUserAgentCommission()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $top_up_order=TopUpOrder::first();
+
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals(1,$top_up_order->agent_commission);
+
+
+    }
+
+
+
     public function testTopupSpecificUserAgentCommission()
     {
-        // create a profile
 
-        $this->profile = factory(Profile::class)->create([
-            'name' => "Khairun",
-            'mobile' =>'+880162001109',
-            'email' =>'khairun@sheba.xyz',
-            'password' =>bcrypt('12345'),
-            'is_blacklisted'=> 0,
-            'mobile_verified'=>1,
-            'email_verified'=>1,
-            'nid_verification_request_count'=>0,
-            'blood_group'=>'O+'
-        ]);
-
-
-
-        // create an affiliate
-
-        $this->affiliate = factory(Affiliate::class)->create([
-            'profile_id' => $this->profile->id
-        ]);
-
-
+        $this->logInWithMobileNEmail("+880162001019");
 
         // set specific commission against this affiliate
 
@@ -744,15 +748,175 @@ class SingleTopUpTest extends FeatureTestCase
         ]);
         $data = $response->decodeResponseJson();
 
-        $topUpVendorCommission=TopUpVendorCommission::first();
-        dd($topUpVendorCommission);
+        $top_up_order=TopUpOrder::first();
 
-        $this->assertEquals($this->affiliate->id,$topUpVendorCommission->type_id);
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals(0,$top_up_order->agent_commission);
 
-      //  $this->assertEquals(100,$topUpVendorCommission->amount);
+    }
 
 
 
+    //In bondhu app we don't store any lat/lng information
+
+
+    public function testTopupTransactionStoreAgentLatLng()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals(null ,$Top_up_orders->lat);
+        $this->assertEquals(null ,$Top_up_orders->lng);
+
+
+
+    }
+
+    public function testTopupTransactionStoreAgentIP()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals("127.0.0.1" ,$Top_up_orders->ip);
+
+    }
+
+    public function testTopupTransactionStoreUserAgentType()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals("App\Models\Affiliate" ,$Top_up_orders->agent_type);
+    }
+
+
+
+    public function testAffiliateSuccessfulTopupTransactionStoreAmbassadorCommission()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals(0 ,$Top_up_orders->ambassador_commission);
+    }
+
+
+    public function testTopupTransactionStoreUserAgentInformation()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals("Symfony/3.X" ,$Top_up_orders->user_agent);
+    }
+
+
+
+    public function testTopupTransactionStoreTransactionID()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->affiliate->id,$Top_up_orders->agent_id);
+        $this->assertEquals("123456" ,$Top_up_orders->transaction_id);
+    }
+
+    public function testBlockUserCannotTopup() {
+
+        $isBlacklisted = Profile::find(1);
+        $isBlacklisted->is_blacklisted = 1;
+        $isBlacklisted->save();
+        //dd($isBlacklisted);
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' =>'prepaid',
+            'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("Your profile has been blacklisted.", $data['message']);
     }
 
 }
