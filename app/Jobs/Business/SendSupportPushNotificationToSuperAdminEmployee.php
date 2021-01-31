@@ -38,6 +38,7 @@ class SendSupportPushNotificationToSuperAdminEmployee extends Job implements Sho
         if ($this->attempts() < 2) {
             $topic = config('sheba.push_notification_topic_name.employee') . $this->businessMember->member->id;
             $channel = config('sheba.push_notification_channel_name.employee');
+            $sound  = config('sheba.push_notification_sound.employee');
             $data = [
                 "title" => 'New support created',
                 "message" => $this->title,
@@ -47,7 +48,7 @@ class SendSupportPushNotificationToSuperAdminEmployee extends Job implements Sho
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ];
-            $this->pushNotification->send($data, $topic, $channel);
+            $this->pushNotification->send($data, $topic, $channel, $sound);
         }
     }
 }

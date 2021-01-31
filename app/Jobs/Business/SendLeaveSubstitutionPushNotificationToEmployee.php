@@ -40,6 +40,7 @@ class SendLeaveSubstitutionPushNotificationToEmployee extends Job implements Sho
 
             $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
             $channel = config('sheba.push_notification_channel_name.employee');
+            $sound  = config('sheba.push_notification_sound.employee');
             $start_date = $this->leave->start_date->format('d/m/Y');
             $end_date = $this->leave->end_date->format('d/m/Y');
             $notification_data = [
@@ -52,7 +53,7 @@ class SendLeaveSubstitutionPushNotificationToEmployee extends Job implements Sho
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ];
 
-            $this->pushNotification->send($notification_data, $topic, $channel);
+            $this->pushNotification->send($notification_data, $topic, $channel, $sound);
         }
     }
 }

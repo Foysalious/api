@@ -1,7 +1,7 @@
 <?php namespace Sheba\Map;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 
-class MapClientNoResultException extends ApiValidationException
+class MapClientNoResultException extends DoNotReportException
 {
 }

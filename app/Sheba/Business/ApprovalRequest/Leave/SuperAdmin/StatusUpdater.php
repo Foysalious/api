@@ -122,6 +122,7 @@ class StatusUpdater
     {
         $topic = config('sheba.push_notification_topic_name.employee') . (int)$business_member->member->id;
         $channel = config('sheba.push_notification_channel_name.employee');
+        $sound  = config('sheba.push_notification_sound.employee');
         $start_date = $this->leave->start_date->format('d/m/Y');
         $end_date = $this->leave->end_date->format('d/m/Y');
         $notification_data = [
@@ -134,6 +135,6 @@ class StatusUpdater
             "click_action" => "FLUTTER_NOTIFICATION_CLICK"
         ];
 
-        $this->pushNotificationHandler->send($notification_data, $topic, $channel);
+        $this->pushNotificationHandler->send($notification_data, $topic, $channel, $sound);
     }
 }

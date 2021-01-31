@@ -59,6 +59,7 @@ class ServiceTransformer extends TransformerAbstract
             'category_id' => $cross_sale_service->category_id,
             'service_id' => $cross_sale_service->service_id
         ] : null;
+        $this->minMaxPrice->setService($service);
         if($this->locationService) {
             $delivery_charge = $this->deliveryCharge->setCategory($category)->setLocation($this->locationService->location)->get();
             $discount_checking_params = (new JobDiscountCheckingParams())->setDiscountableAmount($delivery_charge);
@@ -76,7 +77,7 @@ class ServiceTransformer extends TransformerAbstract
             $prices = json_decode($this->locationService->prices);
             $this->priceCalculation->setLocationService($this->locationService);
             $this->upsellCalculation->setLocationService($this->locationService);
-            $this->minMaxPrice->setService($service)->setLocationService($this->locationService);
+            $this->minMaxPrice->setLocationService($this->locationService);
         }
         $reviews = $category->reviews()->selectRaw("count(DISTINCT(reviews.id)) as total_ratings,avg(reviews.rating) as avg_rating")->groupBy('reviews.category_id')->first();
         return [
