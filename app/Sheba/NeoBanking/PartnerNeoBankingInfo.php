@@ -68,8 +68,9 @@ class PartnerNeoBankingInfo
 
     public function postByCode($code, $data)
     {
-        $data['updated_at']                        = Carbon::now()->format('Y-m-d H:s:i');
-        $this->information_for_bank_account[$code] = $data;
+        $data['updated_at']                         = Carbon::now()->format('Y-m-d H:s:i');
+        if($code == 'personal' && isset($data['birth_date'])) $data['birth_date'] = Carbon::parse($data['birth_date'])->format('d-m-Y');
+        $this->information_for_bank_account[$code]  = $data;
         return $this->partner->neoBankInfo ? $this->partner->neoBankInfo->update(['information_for_bank_account' => json_encode($this->information_for_bank_account)]) : $this->partner->neoBankInfo()->create(['information_for_bank_account' => json_encode($this->information_for_bank_account), 'partner_id' => $this->partner->id, 'is_gigatech_verified' => 0]);
     }
 }
