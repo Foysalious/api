@@ -166,21 +166,14 @@ class LeaveController extends Controller
             'status' => 'required|string',
         ]);
 
-        /**
-         *  $type leave, support, expense
-         */
-        $type = $request->type;
-
         /** type_id approval_request id*/
         $type_ids = json_decode($request->type_id);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
 
-
-
         /** @var ApprovalRequest $approval_request */
-        $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
+        $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids,Type::LEAVE)->first();
         if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
 
         $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
