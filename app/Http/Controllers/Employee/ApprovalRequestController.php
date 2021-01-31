@@ -74,11 +74,10 @@ class ApprovalRequestController extends Controller
            }
         }
 
-        if (count($approval_requests_list) > 0) return api_response($request, $approval_requests_list, 200, [
+        return api_response($request, $approval_requests_list, 200, [
             'request_lists' => $approval_requests_list,
             'type_lists' => [Type::LEAVE]
         ]);
-        else return api_response($request, null, 404);
     }
 
     /**

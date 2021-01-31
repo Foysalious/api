@@ -108,11 +108,10 @@ class LeaveController extends Controller
             return $leave_request_report->setLeave($leaves)->get();
         }
 
-        if (count($leaves) > 0) return api_response($request, $leaves, 200, [
+        return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
             'total_leave_requests' => $total_leave_approval_requests,
         ]);
-        else return api_response($request, null, 404);
     }
 
     /**

@@ -203,4 +203,14 @@ class BusinessMember extends Model
         $date = $date->toDateString();
         return $this->leaves()->accepted()->whereRaw("('$date' BETWEEN start_date AND end_date)")->first();
     }
+
+    public function getCurrentFiscalYearLeaves()
+    {
+        $time_frame = $this->getBusinessFiscalPeriod();
+
+        $leaves = $this->leaves()->between($time_frame)->with('leaveType')->whereHas('leaveType', function ($leave_type) {
+            return $leave_type->withTrashed();
+        })->get();
+        return $leaves;
+    }
 }
