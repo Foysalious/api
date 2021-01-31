@@ -124,15 +124,18 @@ class Creator
         $this->business = $this->businessMember->business;
         if ($this->isLeaveAdjustment) return $this;
 
-        $line_manager = $this->businessMember->manager()->first();
-        if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
             return $this;
         }
         /** @Var ApprovalSetting $approval_setting */
         $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->businessMember, Modules::LEAVE);
+
+        if (!$approval_setting) {
+            $line_manager = $this->businessMember->manager()->first();
+            if (!$line_manager) $this->setError(422, 'No approval flow is defined for you due to wrong approval flow setup');
+        }
+
         $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->businessMember);
         return $this;
     }
