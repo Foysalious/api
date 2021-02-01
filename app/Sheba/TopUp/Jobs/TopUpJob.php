@@ -18,8 +18,6 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    const QUEUE_NAME = 'topup:high';
-
     /** @var TopUp */
     protected $topUp;
     /** @var VendorFactory */
@@ -27,20 +25,20 @@ class TopUpJob extends Job implements ShouldQueue
     /** @var FailedJobProviderInterface */
     private $failedJobLogger;
 
-    protected $agent;
     protected $vendorId;
+    /** @var TopUpAgent */
+    protected $agent;
     /** @var Vendor */
     protected $vendor;
     /** @var TopUpOrder */
     protected $topUpOrder;
 
-    public function __construct($agent, $vendor, TopUpOrder $top_up_order)
+    public function __construct(TopUpOrder $top_up_order)
     {
-        $this->agent = $agent;
         $this->topUpOrder = $top_up_order;
-        $this->vendorId = $vendor;
-        $this->connection = 'topup';
-        $this->queue = self::QUEUE_NAME;
+        $this->agent = $this->topUpOrder->agent;
+        $this->vendorId = $this->topUpOrder->vendor_id;
+        $this->connection = $this->getConnectionName();
     }
 
     /**
@@ -64,6 +62,21 @@ class TopUpJob extends Job implements ShouldQueue
         } catch (Exception $e) {
             $this->handleException($e);
         }
+    }
+
+    /**
+     * @return string
+     */
+    private function getConnectionName()
+    {
+        $connections = config('topup_queues.agent_connections');
+        $agent_type = strtolower(class_basename($this->agent));
+        if (!array_key_exists($agent_type, $connections)) return $connections['default'];
+
+        $agent_connections = $connections[$agent_type];
+        if (!array_key_exists($this->agent->id, $agent_connections)) return $connections['default'];
+
+        return $agent_connections[$this->agent->id];
     }
 
     /**

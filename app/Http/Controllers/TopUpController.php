@@ -109,7 +109,7 @@ class TopUpController extends Controller
 
         if (!$topup_order) return api_response($request, null, 500);
 
-        dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+        dispatch((new TopUpJob($topup_order)));
         return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
     }
 
@@ -157,7 +157,7 @@ class TopUpController extends Controller
             $request = $top_up_request->setType($value->$type_field)
                 ->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id);
             $topup_order = $creator->setTopUpRequest($request)->create();
-            if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
+            if (!$top_up_request->hasError()) dispatch(new TopUpExcelJob($topup_order, $file_path, $key + 2, $total, $bulk_request));
         });
 
         $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
