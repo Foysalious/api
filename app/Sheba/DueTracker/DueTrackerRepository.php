@@ -457,7 +457,6 @@ class DueTrackerRepository extends BaseRepository
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-        dd($data);
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
@@ -486,7 +485,6 @@ class DueTrackerRepository extends BaseRepository
             ]);
             $log = " BDT has been deducted for sending deposit details";
         }
-        dd($sms);
 
         return [$sms, $log];
     }
