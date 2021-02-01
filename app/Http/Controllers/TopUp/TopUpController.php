@@ -2,6 +2,7 @@
 
 use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
+use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
@@ -335,6 +336,7 @@ class TopUpController extends Controller
         switch ($type) {
             case 'customer': return Customer::class;
             case 'partner': return Partner::class;
+            case 'affiliate': return Affiliate::class;
             case 'business': case 'Company': return Business::class;
             default: return '';
         }

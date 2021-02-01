@@ -203,6 +203,7 @@ class TopUpController extends Controller
         switch ($type) {
             case 'customer': return Customer::class;
             case 'partner': return Partner::class;
+            case 'affiliate': return Affiliate::class;
             case 'business': case 'Company': return Business::class;
             default: return '';
         }
