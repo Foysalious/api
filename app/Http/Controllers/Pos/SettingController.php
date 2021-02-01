@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
 use Throwable;
 
@@ -19,24 +20,26 @@ class SettingController extends Controller
     /**
      * @param Request $request
      * @param Creator $creator
+     * @param PosSettingRepository $repository
      * @return JsonResponse
      */
-    public function getSettings(Request $request, Creator $creator)
+    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
             $settings = PartnerPosSetting::byPartner($partner->id)->first();
             if (!$settings) {
-                $data = ['partner_id' => $partner->id,];
+                $data = ['partner_id' => $partner->id];
                 $creator->setData($data)->create();
                 $settings = PartnerPosSetting::byPartner($partner->id)->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             removeRelationsAndFields($settings);
+            $repository->getTrainingVideoData($settings);
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -46,21 +49,15 @@ class SettingController extends Controller
             $partnerPosSetting = PartnerPosSetting::where('partner_id', $request->partner->id)->first();
             $data = [];
             $this->setModifier($request->manager_resource);
-            if($request->has('vat_percentage')) {
-                $data["vat_percentage"] = $request->vat_percentage;
-            }
 
-            if($request->has('sms_invoice')) {
-                $data["sms_invoice"] = $request->sms_invoice;
-            }
+            if($request->has('vat_percentage')) $data["vat_percentage"] = $request->vat_percentage;
+            if($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
+            if($request->has('auto_printing')) $data["auto_printing"] = $request->auto_printing;
 
-            if($request->has('auto_printing')) {
-                $data["auto_printing"] = $request->auto_printing;
-            }
             $partnerPosSetting->update($this->withUpdateModificationField($data));
             return api_response($request, null, 200);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
