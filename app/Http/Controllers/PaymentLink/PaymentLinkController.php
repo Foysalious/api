@@ -351,7 +351,8 @@ class PaymentLinkController extends Controller
                     return $b['payment_id'] - $a['payment_id'];
                 });
 
-                list($offset, $limit) = calculatePagination($request);
+                $limit = $request->transaction_limit;
+                $offset = $request->transaction_offset;
                 $links = collect($transactionList)->slice($offset)->take($limit);
                 $data = array_values($links->toArray());
 
