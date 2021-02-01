@@ -1,4 +1,5 @@
 <?php namespace App\Http\Controllers;
+
 use Illuminate\Http\Request;
 use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
 
