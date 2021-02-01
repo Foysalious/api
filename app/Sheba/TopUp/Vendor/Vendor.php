@@ -71,15 +71,6 @@ abstract class Vendor
         return $this->topUpGateway->getInitialStatus();
     }
 
-    protected function createNewRechargeHistory($amount, $vendor_id = null)
-    {
-        $recharge_history = new TopUpRechargeHistory();
-        $recharge_history->recharge_date = Carbon::now();
-        $recharge_history->vendor_id = $vendor_id ?: $this->model->id;
-        $recharge_history->amount = $amount;
-        $recharge_history->save();
-    }
-
     public function deductAmount($amount)
     {
         $this->model->amount -= $amount;
@@ -90,7 +81,6 @@ abstract class Vendor
     {
         $this->model->amount += $amount;
         $this->model->update();
-        // $this->createNewRechargeHistory($amount);
     }
 
     private function resolveGateway(TopUpOrder $top_up_order)
