@@ -73,8 +73,9 @@ class PaymentLinkController extends Controller
                 $payment_links_list = array_where($payment_links_list, function ($key, $link) {
                     return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
                 });
-                list($offset, $limit) = calculatePagination($request);
-                $links         = collect($payment_links_list)->slice($offset)->take($limit);
+//                list($offset, $limit) = calculatePagination($request);
+//                $links         = collect($payment_links_list)->slice($offset)->take($limit);
+                $links         = collect($payment_links_list);
                 $fractal       = new Manager();
                 $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
