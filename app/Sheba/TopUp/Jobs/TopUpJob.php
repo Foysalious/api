@@ -4,13 +4,12 @@ use App\Jobs\Job;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use Exception;
+use Illuminate\Queue\Failed\FailedJobProviderInterface;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpAgent;
-use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
 use Sheba\TopUp\TopUpCompletedEvent;
@@ -21,16 +20,19 @@ class TopUpJob extends Job implements ShouldQueue
 
     const QUEUE_NAME = 'topup:high';
 
+    /** @var TopUp */
+    protected $topUp;
+    /** @var VendorFactory */
+    private $vendorFactory;
+    /** @var FailedJobProviderInterface */
+    private $failedJobLogger;
+
     protected $agent;
     protected $vendorId;
     /** @var Vendor */
     protected $vendor;
-
     /** @var TopUpOrder */
     protected $topUpOrder;
-
-    /** @var TopUp */
-    protected $topUp;
 
     public function __construct($agent, $vendor, TopUpOrder $top_up_order)
     {
@@ -44,16 +46,32 @@ class TopUpJob extends Job implements ShouldQueue
     /**
      * Execute the job.
      *
+     * @param VendorFactory $vendor_factory
+     * @param TopUp $top_up
+     * @param FailedJobProviderInterface|null $logger
      * @return void
+     */
+    public function handle(VendorFactory $vendor_factory, TopUp $top_up, FailedJobProviderInterface $logger = null)
+    {
+        if ($this->attempts() > 1) return;
+
+        $this->vendorFactory = $vendor_factory;
+        $this->topUp = $top_up;
+        $this->failedJobLogger = $logger;
+
+        try {
+            $this->_handle();
+        } catch (Exception $e) {
+            $this->handleException($e);
+        }
+    }
+
+    /**
      * @throws Exception
      */
-    public function handle()
+    private function _handle()
     {
-        if ($this->attempts() >= 2) return;
-
-        $vendor_factory = app(VendorFactory::class);
-        $this->vendor = $vendor_factory->getById($this->vendorId);
-        $this->topUp = app(TopUp::class);
+        $this->vendor = $this->vendorFactory->getById($this->vendorId);
         $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
 
         $this->topUp->recharge($this->topUpOrder);
@@ -102,14 +120,6 @@ class TopUpJob extends Job implements ShouldQueue
     }
 
     /**
-     * @return TopUpRequest
-     */
-    public function getTopUpRequest()
-    {
-        return $this->topUpRequest;
-    }
-
-    /**
      * @return TopUpVendor
      */
     public function getVendor()
@@ -123,5 +133,13 @@ class TopUpJob extends Job implements ShouldQueue
     public function getAgent()
     {
         return $this->topUpOrder->agent;
+    }
+
+    private function handleException(Exception $e)
+    {
+        $id = $this->failedJobLogger->log($this->connection, $this->queue, $this->job->getRawBody());
+        logErrorWithExtra($e, [
+            config('queue.failed.table') . ".id" => $id
+        ]);
     }
 }
