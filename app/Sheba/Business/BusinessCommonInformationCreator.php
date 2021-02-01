@@ -10,6 +10,8 @@ use App\Sheba\Business\Weekend\Creator as InitialWeekendBusinessCommonInformatio
 use Sheba\Business\AttendanceType\AttendanceType;
 use Sheba\Business\LeaveType\DefaultType;
 use Sheba\Business\OfficeTiming\OfficeTime;
+use Sheba\Business\PayrollSetting\ Requester as PayrollSettingRequester;
+use Sheba\Business\PayrollSetting\Creator as PayrollCreator;
 use Sheba\ModificationFields;
 use App\Models\Business;
 use App\Models\Member;
@@ -47,6 +49,14 @@ class BusinessCommonInformationCreator
     public $business;
     /** @var Member $member */
     public $member;
+    /**
+     * @var OfficeTimingCreateRequest
+     */
+    private $payrollSettingRequester;
+    /**
+     * @var PayrollCreator
+     */
+    private $payrollCreator;
 
     /**
      * BusinessCommonInformationCreator constructor.
@@ -59,6 +69,8 @@ class BusinessCommonInformationCreator
      * @param AttendanceTypeCreateRequest $attendance_type_create_request
      * @param BusinessGovtHolidayCreatorRequest $business_govt_holiday_creator_request
      * @param LeaveTypeCreator $leave_type_creator
+     * @param PayrollSettingRequester $payroll_setting_requester
+     * @param PayrollCreator $payroll_creator
      */
     public function __construct(InitialOfficeTimeBusinessCommonInformationCreator $initialize_office_hour,
                                 InitialWeekendBusinessCommonInformationCreator $initialize_weekend,
@@ -68,7 +80,9 @@ class BusinessCommonInformationCreator
                                 WeekendCreateRequest $weekend_create_request,
                                 AttendanceTypeCreateRequest $attendance_type_create_request,
                                 BusinessGovtHolidayCreatorRequest $business_govt_holiday_creator_request,
-                                LeaveTypeCreator $leave_type_creator)
+                                LeaveTypeCreator $leave_type_creator,
+                                PayrollSettingRequester $payroll_setting_requester,
+                                PayrollCreator $payroll_creator)
     {
         $this->officeHoursCreator = $initialize_office_hour;
         $this->weekendCreator = $initialize_weekend;
@@ -76,11 +90,13 @@ class BusinessCommonInformationCreator
         $this->businessGovtHolidayCreator = $initialize_holiday;
 
         $this->officeTimingCreateRequest = $office_timing_create_request;
+        $this->payrollSettingRequester = $payroll_setting_requester;
         $this->weekendCreateRequest = $weekend_create_request;
         $this->attendanceTypeCreateRequest = $attendance_type_create_request;
         $this->businessGovtHolidayCreatorRequest = $business_govt_holiday_creator_request;
 
         $this->leaveTypeCreator = $leave_type_creator;
+        $this->payrollCreator = $payroll_creator;
     }
 
     /**
@@ -105,6 +121,11 @@ class BusinessCommonInformationCreator
 
     public function create()
     {
+        /** Business Payroll Setting */
+        $this->payrollSettingRequester->setBusiness($this->business);
+        $this->payrollCreator->setPayrollSettingRequest($this->payrollSettingRequester)->create();
+
+
         /** Business Leave Types */
         foreach (DefaultType::getWithKeys() as $key => $value) {
             $this->leaveTypeCreator->setBusiness($this->business)
