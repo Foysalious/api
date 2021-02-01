@@ -307,4 +307,8 @@ class Creator
         $title = "লিঙ্ক তৈরি সফল হয়েছে";
         return ["message" => $message,"title" => $title];
     }
+    
+    public function getPaymentLink() {
+        return $this->paymentLinkCreated->link;
+    }
 }
