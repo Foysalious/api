@@ -25,6 +25,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -456,7 +457,7 @@ class DueTrackerRepository extends BaseRepository
         if ($request->type == 'due') {
             $data['payment_link'] = $request->payment_link;
         }
-
+        dd($data);
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
@@ -485,6 +486,7 @@ class DueTrackerRepository extends BaseRepository
             ]);
             $log = " BDT has been deducted for sending deposit details";
         }
+        dd($sms);
 
         return [$sms, $log];
     }
@@ -523,5 +525,4 @@ class DueTrackerRepository extends BaseRepository
 
         ];
     }
-
 }

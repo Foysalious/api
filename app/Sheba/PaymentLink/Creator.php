@@ -273,4 +273,8 @@ class Creator
         }
         return $this;
     }
+
+    public function getPaymentLink() {
+        return $this->paymentLinkCreated->link;
+    }
 }
