@@ -61,11 +61,11 @@ class WalletTransactionHandler extends WalletTransaction
         /** @noinspection PhpUndefinedMethodInspection */
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
-            $this->$typeMethod();
+            $wallet = $this->$typeMethod();
             $data = array_merge($data, [
                 'type'      => ucfirst($this->type),
                 'amount'    => $this->amount,
-                'balance'   => $this->getCalculatedBalance(),
+                'balance'   => $wallet,
                 'log'       => $this->log,
                 'created_at'=> Carbon::now(),
                 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null

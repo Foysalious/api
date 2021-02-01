@@ -911,7 +911,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function getTotalCreditExistsForSubscription()
     {
         list($remaining, $wallet, $bonus_wallet, $threshold) = $this->getCreditBreakdown();
-        return round($bonus_wallet + $wallet + $remaining) - $threshold;
+        return round($bonus_wallet + $wallet) - $threshold;
     }
 
     /**
