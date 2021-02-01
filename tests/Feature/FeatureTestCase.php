@@ -1,6 +1,8 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Customer;
 use App\Models\Member;
 use App\Models\Profile;
@@ -28,6 +30,14 @@ class FeatureTestCase extends TestCase
     protected $resource;
     /** @var Member */
     protected $member;
+    /**
+     * @var $business
+     */
+    private $business;
+    /**
+     * @var $business_member
+     */
+    private $business_member;
 
     public function setUp()
     {
@@ -74,7 +84,9 @@ class FeatureTestCase extends TestCase
             Affiliate::class,
             Customer::class,
             Member::class,
-            Resource::class
+            Resource::class,
+            Business::class,
+            BusinessMember::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
@@ -89,6 +101,11 @@ class FeatureTestCase extends TestCase
         ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
+        ]);
+        $this->business = factory(Business::class)->create();
+        $this->business_member = factory(BusinessMember::class)->create([
+            'business_id' => $this->business->id,
+            'member_id' => $this->member->id
         ]);
     }
 
@@ -111,7 +128,12 @@ class FeatureTestCase extends TestCase
             'member' => [
                 'id' => $this->member->id
             ],
-            'business_member' => null,
+            'business_member' => [
+                'id' => $this->business_member->id,
+                'business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'is_super'=>1
+            ],
             'affiliate' => [
                 'id' => $this->affiliate->id
             ],
