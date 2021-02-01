@@ -19,7 +19,7 @@ class Kernel extends ConsoleKernel
         ProductUpload::class,
         SetReleaseVersion::class,
         AlgoliaSync::class,
-        UploadSwaggerJson::class
+        UploadSwaggerJson::class,
         TopUpTestCommand::class
     ];
 
