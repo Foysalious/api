@@ -1445,7 +1445,18 @@ class PartnerController extends Controller
     public function getBusinessTypes(Request $request)
     {
         try {
-            return api_response($request, null, 200, ['partner_business_types' => constants('PARTNER_BUSINESS_TYPE')]);
+            $this->validate($request,[
+                'language' => 'sometimes|required|in:en,bn'
+            ]);
+
+            $lan_type = 'bn';
+            if($request->has('language'))
+                $lan_type= $request->language;
+            $business_types = [];
+            collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types,$lan_type) {
+                array_push($business_types, $type[$lan_type]);
+            });
+            return api_response($request, null, 200, ['partner_business_types' => $business_types]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
