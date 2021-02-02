@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\Target;
 use Sheba\PaymentLink\UrlTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use stdClass;
@@ -21,11 +22,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      * PaymentLinkRepository constructor.
      * @param PaymentLinkTransformer $paymentLinkTransformer
      * @param UrlTransformer $urlTransformer
+     * @param PaymentLinkClient $client
      */
-    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer)
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer, PaymentLinkClient $client)
     {
         parent::__construct();
-        $this->paymentLinkClient = new PaymentLinkClient();
+        $this->paymentLinkClient = $client;
         $this->paymentLinkTransformer = $paymentLinkTransformer;
         $this->urlTransformer = $urlTransformer;
 
@@ -125,5 +127,39 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     {
         $response = json_decode(json_encode($this->paymentLinkClient->createShortUrl($url)));
         return $response && $response->code == 200 ? $this->urlTransformer->setResponse($response->url) : null;
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksGroupedByTargets(array $targets)
+    {
+        $response = $this->paymentLinkClient->getPaymentLinksByTargets($targets);
+
+        return $this->formatPaymentLinkTransformers($response);
+    }
+
+    private function formatPaymentLinkTransformers($response)
+    {
+        if ($response['code'] != 200) return [];
+
+        $links = [];
+        foreach ($response['links'] as $link) {
+            $link = (new PaymentLinkTransformer())->setResponse(json_decode(json_encode($link)));
+            array_push_on_array($links, $link->getUnresolvedTarget()->toString(), $link);
+        }
+        return $links;
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $response = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
+
+        return $this->formatPaymentLinkTransformers($response);
     }
 }
