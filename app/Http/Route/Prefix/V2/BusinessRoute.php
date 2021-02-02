@@ -352,6 +352,9 @@ class BusinessRoute
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
+                $api->group(['prefix' => 'payroll-payrun'], function ($api) {
+                    $api->get('/', 'B2b\PayrollPayrunController@index');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
