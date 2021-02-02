@@ -1,8 +1,9 @@
 <?php namespace Sheba\Business\PayrollComponent;
 
+use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequest;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
-use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequest;
+use Sheba\Dal\PayrollComponent\Components;
 
 class Creator
 {
@@ -12,6 +13,7 @@ class Creator
     private $payrollSetting;
     private $payrollComponentRepository;
     private $payrollComponentRequester;
+    private $payrollComponentData = [];
 
 
     public function __construct(PayrollComponentRepository $payroll_component_repository)
@@ -33,15 +35,19 @@ class Creator
 
     public function create()
     {
-        $this->payrollComponentRepository->create($this->payComponentData());
+        $this->payrollComponentData();
+        $this->payrollComponentRepository->insert($this->payrollComponentData);
     }
 
-    private function payComponentData()
+    private function payrollComponentData()
     {
-        return [
-            'payroll_setting_id' => $this->payrollSetting->id,
-            'name' => $this->payrollComponentRequester->getName(),
-            'setting' => $this->payrollComponentRequester->setting(),
-        ];
+        foreach (Components::get() as $key => $component) {
+            $this->payrollComponentData[] = [
+                'payroll_setting_id' => $this->payrollSetting->id,
+                'name' => $component,
+                'setting' => json_encode(['percentage' => 0]),
+            ];
+        }
+        return $this->payrollComponentData;
     }
 }

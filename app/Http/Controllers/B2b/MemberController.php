@@ -28,6 +28,7 @@ use DB;
 class MemberController extends Controller
 {
     use ModificationFields, FilesAttachment;
+
     /** BusinessMemberRequester $businessMemberRequester */
     private $businessMemberRequester;
     /** BusinessMemberCreator $businessMemberCreator */
@@ -76,16 +77,16 @@ class MemberController extends Controller
                 ->setGeoInformation(json_encode(['lat' => (double)$request->lat, 'lng' => (double)$request->lng]))
                 ->setAddress($request->address)
                 ->setPhone($request->mobile);
-            #DB::beginTransaction();
-            #if (count($member->businesses) > 0) {
-            #    $business = $member->businesses->first();
-            #    $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
-            #} else {
+            DB::beginTransaction();
+            if (count($member->businesses) > 0) {
+                $business = $member->businesses->first();
+                $business_updater->setBusiness($business)->setBusinessCreatorRequest($business_creator_request)->update();
+            } else {
                 $business = $business_creator->setBusinessCreatorRequest($business_creator_request)->create();
                 $common_info_creator->setBusiness($business)->setMember($member)->create();
                 $this->createBusinessMember($business, $member);
-           # }
-           # DB::commit();
+            }
+            DB::commit();
             return api_response($request, null, 200, ['business_id' => $business->id]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
