@@ -7,19 +7,15 @@ use Exception;
 
 class PaymentLinkClient
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $baseUrl;
-    /**
-     * @var Client
-     */
+    /** @var Client */
     private $client;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
         $this->baseUrl = config('sheba.payment_link_url') . '/api/v1/payment-links';
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     public function paymentLinkList(Request $request)
@@ -40,7 +36,6 @@ class PaymentLinkClient
         }
     }
 
-
     public function defaultPaymentLink(Request $request)
     {
         try {
@@ -57,7 +52,6 @@ class PaymentLinkClient
             return null;
         }
     }
-
 
     /**
      * @param $data
@@ -142,6 +136,51 @@ class PaymentLinkClient
         $uri = $this->baseUrl . '?targetId=' . $id . '&targetType=' . $type;
         $response = $this->client->get($uri)->getBody()->getContents();
         return json_decode($response, true);
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return array
+     */
+    public function getPaymentLinksByTargets(array $targets)
+    {
+        if (empty($targets)) return [];
+
+        $targets = array_map(function (Target $target) {
+            return [
+                "targetType" => $target->getType(),
+                "targetId" => $target->getId(),
+            ];
+        }, $targets);
+
+        $uri = $this->baseUrl . '?targets=' . json_encode($targets);
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return array
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $targets = array_filter(array_map(function (Target $target) {
+            if ($target->getType() != TargetType::POS_ORDER) return null;
+            return $target->getId();
+        }, $targets));
+
+        if (empty($targets)) return [];
+
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
+
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
     }
 
     /**
