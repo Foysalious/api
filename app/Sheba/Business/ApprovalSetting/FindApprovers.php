@@ -57,7 +57,7 @@ class FindApprovers
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
                     if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-                    $this->approvers[$approver->order] = $line_manager->id;
+                    $this->approvers[$approver['order']] = $line_manager->id;
                 }
                 if ($approver['type'] == Types::HOD) {
                     /** @var BusinessDepartment $department */
@@ -67,7 +67,7 @@ class FindApprovers
                     if ($this->headOfDepartment) $this->approvers[$approver->order] = $this->headOfDepartment->id;
                 }
                 if ($approver['type'] == Types::EMPLOYEE) {
-                    $this->approvers[$approver->order] = (int)$approver->type_id;
+                    $this->approvers[$approver['order']] = (int)$approver->type_id;
                 }
             }
         } else {

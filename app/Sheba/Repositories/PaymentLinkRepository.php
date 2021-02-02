@@ -135,21 +135,19 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      */
     public function getPaymentLinksGroupedByTargets(array $targets)
     {
-        $response = $this->paymentLinkClient->getPaymentLinksByTargets($targets);
+        $links = $this->paymentLinkClient->getPaymentLinksByTargets($targets);
 
-        return $this->formatPaymentLinkTransformers($response);
+        return $this->formatPaymentLinkTransformers($links);
     }
 
-    private function formatPaymentLinkTransformers($response)
+    private function formatPaymentLinkTransformers($links)
     {
-        if ($response['code'] != 200) return [];
-
-        $links = [];
-        foreach ($response['links'] as $link) {
+        $result = [];
+        foreach ($links as $link) {
             $link = (new PaymentLinkTransformer())->setResponse(json_decode(json_encode($link)));
-            array_push_on_array($links, $link->getUnresolvedTarget()->toString(), $link);
+            array_push_on_array($result, $link->getUnresolvedTarget()->toString(), $link);
         }
-        return $links;
+        return $result;
     }
 
     /**
@@ -158,8 +156,8 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      */
     public function getPaymentLinksByPosOrders(array $targets)
     {
-        $response = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
+        $links = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
 
-        return $this->formatPaymentLinkTransformers($response);
+        return $this->formatPaymentLinkTransformers($links);
     }
 }

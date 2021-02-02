@@ -140,10 +140,12 @@ class PaymentLinkClient
 
     /**
      * @param $targets Target[]
-     * @return mixed
+     * @return array
      */
     public function getPaymentLinksByTargets(array $targets)
     {
+        if (empty($targets)) return [];
+
         $targets = array_map(function (Target $target) {
             return [
                 "targetType" => $target->getType(),
@@ -152,13 +154,16 @@ class PaymentLinkClient
         }, $targets);
 
         $uri = $this->baseUrl . '?targets=' . json_encode($targets);
-        $response = $this->client->get($uri)->getBody()->getContents();
-        return json_decode($response, true);
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
     }
 
     /**
      * @param $targets Target[]
-     * @return mixed
+     * @return array
      */
     public function getPaymentLinksByPosOrders(array $targets)
     {
@@ -167,9 +172,15 @@ class PaymentLinkClient
             return $target->getId();
         }, $targets));
 
+        if (empty($targets)) return [];
+
         $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
-        $response = $this->client->get($uri)->getBody()->getContents();
-        return json_decode($response, true);
+
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
     }
 
     /**
