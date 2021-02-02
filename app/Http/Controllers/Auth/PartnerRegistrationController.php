@@ -327,7 +327,7 @@ class PartnerRegistrationController extends Controller
 
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
-        ini_set('max_execution_time', 220);
+        ini_set('max_execution_time', 420);
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
