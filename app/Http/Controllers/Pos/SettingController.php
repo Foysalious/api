@@ -44,7 +44,8 @@ class SettingController extends Controller
         }
     }
 
-    public function storePosSetting(Request $request) {
+    public function storePosSetting(Request $request)
+    {
         try {
             $partnerPosSetting = PartnerPosSetting::where('partner_id', $request->partner->id)->first();
             $data = [];
@@ -53,6 +54,8 @@ class SettingController extends Controller
             if($request->has('vat_percentage')) $data["vat_percentage"] = $request->vat_percentage;
             if($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
             if($request->has('auto_printing')) $data["auto_printing"] = $request->auto_printing;
+            if($request->has('printer_name')) $data["printer_name"] = $request->printer_name;
+            if($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
             $partnerPosSetting->update($this->withUpdateModificationField($data));
             return api_response($request, null, 200);
