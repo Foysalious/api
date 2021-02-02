@@ -1,18 +1,16 @@
 <?php namespace Sheba\Business\ApprovalRequest;
 
-use App\Jobs\Business\SendLeavePushNotificationToEmployee;
-use App\Models\BusinessMember;
-use App\Models\Member;
-use Exception;
-use Illuminate\Database\QueryException;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
+use App\Jobs\Business\SendLeavePushNotificationToEmployee;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
-use Sheba\Dal\Leave\Model as Leave;
-use Sheba\ModificationFields;
 use Sheba\PushNotificationHandler;
+use App\Models\BusinessMember;
+use Sheba\ModificationFields;
+use App\Models\Member;
+use Exception;
 
-class Creator
+class CreatorV2
 {
     use ModificationFields;
 
@@ -25,7 +23,6 @@ class Creator
     private $pushNotificationHandler;
     private $member;
     private $isLeaveAdjustment;
-    private $createdBy;
 
     /**
      * Creator constructor.
@@ -60,7 +57,7 @@ class Creator
      * @param array $approver_id
      * @return $this
      */
-    public function setApprover($approver_id)
+    public function setApproverId(array $approver_id)
     {
         $this->approverId = $approver_id;
         return $this;
@@ -72,26 +69,22 @@ class Creator
         return $this;
     }
 
-    public function setCreatedBy($created_by)
-    {
-        $this->createdBy = $created_by;
-        return $this;
-    }
-
     public function create()
     {
-        $data = $this->withCreateModificationField([
-            'requestable_type' => $this->requestableType,
-            'requestable_id' => $this->requestableId,
-            'status' => $this->isLeaveAdjustment ? Status::ACCEPTED : Status::PENDING,
-            'approver_id' => $this->approverId
-        ]);
-        $approval_request = $this->approvalRequestRepo->create($data);
-        if (!$this->isLeaveAdjustment) {
-            try {
-                $this->sendPushToApprover($approval_request);
-                $this->sendShebaNotificationToApprover($approval_request);
-            } catch (Exception $e) {
+        foreach ($this->approverId as $approver_id) {
+            $data = $this->withCreateModificationField([
+                'requestable_type' => $this->requestableType,
+                'requestable_id' => $this->requestableId,
+                'status' => Status::PENDING,
+                'approver_id' => $approver_id
+            ]);
+            $approval_request = $this->approvalRequestRepo->create($data);
+            if (!$this->isLeaveAdjustment) {
+                try {
+                    $this->sendPushToApprover($approval_request);
+                    $this->sendShebaNotificationToApprover($approval_request);
+                } catch (Exception $e) {
+                }
             }
         }
     }
@@ -125,5 +118,4 @@ class Creator
             'event_id' => $approval_request->id
         ]);
     }
-
 }
