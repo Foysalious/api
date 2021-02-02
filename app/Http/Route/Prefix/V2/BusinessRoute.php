@@ -355,6 +355,10 @@ class BusinessRoute
                 $api->group(['prefix' => 'payroll-payrun'], function ($api) {
                     $api->get('/', 'B2b\PayrollPayrunController@index');
                 });
+                $api->group(['prefix' => 'payroll'], function ($api) {
+                    $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
+                    $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
+                });
             });
         });
         $api->group(['prefix' => 'members', 'middleware' => ['member.auth']], function ($api) {
