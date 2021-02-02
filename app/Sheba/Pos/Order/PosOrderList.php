@@ -135,7 +135,7 @@ class PosOrderList
             $final_orders->push($order_formatted);
         }
 
-        $this->mapPaymentLinkData($final_orders, $payment_link_targets);
+        if (!empty($payment_link_targets)) $this->mapPaymentLinkData($final_orders, $payment_link_targets);
 
         if (!empty($this->status))
             $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
