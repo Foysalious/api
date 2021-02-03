@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Factory ;
+<?php namespace Factory ;
 
 
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;

@@ -6,8 +6,10 @@ use App\Models\Profile;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use Carbon\Carbon;
 use Factory\TopupBlacklistNumbersFactory;
 use Illuminate\Support\Facades\Schema;
+use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Verification\VerifyPin;
@@ -922,5 +924,20 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Recharge Request Successful", $data['message']);
     }*/
+    public function testResponseCodeWhenAuthorizationTokenChanges()
+    {
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"."jgfjh"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(401 ,$data['code']);
+    }
 
 }
