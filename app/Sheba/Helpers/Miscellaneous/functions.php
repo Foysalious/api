@@ -232,6 +232,19 @@ if (!function_exists('convertSemverToInt')) {
     }
 }
 
+if (!function_exists('array_push_on_array')) {
+    /**
+     * @param array $array
+     * @param $key
+     * @param $value
+     */
+    function array_push_on_array(array &$array, $key, $value)
+    {
+        if (!array_key_exists($key, $array)) $array[$key] = [];
+
+        $array[$key][] = $value;
+    }
+}
 if (!function_exists('hasSameValues')) {
     /**
      * @param array $a
