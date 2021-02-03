@@ -1550,9 +1550,12 @@ class PartnerController extends Controller
                 ];
             });
             return api_response($request, null, 200, ['partner_business_types' => $business_types_with_count]);
-        } catch (Throwable $e) {
+        } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
     }
 
