@@ -1510,6 +1510,7 @@ class PartnerController extends Controller
         }
     }
 
+
     /**
      * @param Request $request
      * @return JsonResponse
@@ -1517,12 +1518,44 @@ class PartnerController extends Controller
     public function getBusinessTypes(Request $request)
     {
         try {
-            return api_response($request, null, 200, ['partner_business_types' => constants('PARTNER_BUSINESS_TYPE')]);
+            $business_types = [];
+            collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+                array_push($business_types, $type['bn']);
+            });
+            return api_response($request, null, 200, ['partner_business_types' => $business_types]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBusinessTypesForTradeFair(Request $request)
+    {
+        try {
+            $business_types = constants('PARTNER_BUSINESS_TYPE');
+            $converted_business_types = [];
+            foreach($business_types as $business_type)
+            {
+                $converted_business_types[$business_type['bn']] = $business_type['en'];
+            }
+            $business_type_with_count = Partner::where('is_webstore_published',1)->whereNotNull('business_type')->groupBy('business_type')->select('business_type', DB::raw('count(*) as total'))->get()->toArray();
+            $business_types_with_count = collect($business_type_with_count)->map(function($type) use($converted_business_types){
+                return [
+                    'business_type' => $converted_business_types[$type['business_type']],
+                    'count' => $type['total']
+                ];
+            });
+            return api_response($request, null, 200, ['partner_business_types' => $business_types_with_count]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
 
     /**
      * @param Request $request
