@@ -17,7 +17,7 @@ class PartnerPosService extends BaseModel
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
     protected $dates = ['deleted_at'];
 
-    public static $savedEventClass = PartnerPosServiceSaved::class;
+//    public static $savedEventClass = PartnerPosServiceSaved::class;
     public static $autoIndex = false;
 
     public $algoliaSettings = [
