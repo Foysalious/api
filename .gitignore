@@ -8,3 +8,9 @@ npm-debug.log
 build/config.gypi
 resources/assets/ok-wallet/*
 resources/assets/nagad/*
+.composer/.htaccess
+.composer/cache/.htaccess
+.sentryclirc
+composer-auth.json
+results/phpunit/
+.env.testing

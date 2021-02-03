@@ -2,6 +2,7 @@
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Http\Request;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
@@ -30,8 +31,12 @@ class AccessTokenMiddleware
         $this->authorizeTokenRepository = $authorize_token_repository;
     }
 
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
+        if ($this->runningUnitTests()) {
+            JWTAuth::setRequest($request);
+        }
+        
         $sheba_headers = getShebaRequestHeader($request);
         $is_digigo = $sheba_headers->getPortalName() == Portals::EMPLOYEE_APP;
         $now = Carbon::now()->timestamp;
@@ -107,5 +112,11 @@ class AccessTokenMiddleware
     protected function getAuthorizationToken()
     {
         return $this->authorizationToken;
+    }
+
+    private function runningUnitTests()
+    {
+        $app = app();
+        return $app->runningInConsole() && $app->runningUnitTests();
     }
 }

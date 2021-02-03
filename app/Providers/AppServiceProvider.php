@@ -3,9 +3,7 @@
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
-
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
-use Sheba\Dev\DevelopmentEnvironmentChecker;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
 use Sheba\Partner\HomePageSettingV3\Providers\ServiceProvider as PartnerHomeSettingServiceProviderV3;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\CURServiceProvider;

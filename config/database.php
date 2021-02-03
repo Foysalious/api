@@ -37,7 +37,12 @@ return [
             'driver' => 'mongodb',
             'database' => env('MONGO_DB_DATABASE', 'sheba'),
             'dsn' => env('MONGO_DB_DSN')
-        ]
+        ],
+        'sqlite_testing' => [
+            'driver'   => 'sqlite',
+            'database' => ':memory:',
+            'prefix'   => '',
+        ],
     ],
     'migrations' => 'migrations',
     'redis' => [

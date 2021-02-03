@@ -100,6 +100,7 @@ class TopUp
             }
 
         } catch (Throwable $e) {
+            // dd($e->getLine(),$e->getFile(),$e->getMessage());
             logError($e);
         }
 

@@ -245,6 +245,18 @@ if (!function_exists('array_push_on_array')) {
         $array[$key][] = $value;
     }
 }
+if (!function_exists('hasSameValues')) {
+    /**
+     * @param array $a
+     * @param array $b
+     * @return bool
+     */
+    function hasSameValues(array $a, array $b)
+    {
+        return array_diff($a, $b) === array_diff($b, $a);
+    }
+}
+
 if (!function_exists('isStringInt')) {
     /**
      * @param string $value

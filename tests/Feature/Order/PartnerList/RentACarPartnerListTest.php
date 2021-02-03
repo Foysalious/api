@@ -28,7 +28,7 @@ class RentACarPartnerListTest extends FeatureTestCase
         ];
     }
 
-    public function testHalfDay()
+    /*public function testHalfDay()
     {
         $client = new Client([
             'base_uri' => $this->baseUrl
@@ -238,5 +238,5 @@ class RentACarPartnerListTest extends FeatureTestCase
             'time' => key($valid_times)
 
         ])->seeJsonStructure($this->list);
-    }
+    }*/
 }
