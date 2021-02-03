@@ -59,7 +59,7 @@ class PaywellClient
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
-            "operator" => $this->getOperatorId($topup_order->payee_mobile)
+            "operator" => $this->getOperatorId($topup_order->vendor_id)
         ];
 
         $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
@@ -100,28 +100,22 @@ class PaywellClient
     }
 
     /**
-     * @param $mobile_number
+     * @param $vendor_id
      * @return string
      */
-    private function getOperatorId($mobile_number): string
+    private function getOperatorId($vendor_id): string
     {
-        $mobile_number = formatMobile($mobile_number);
-        if (preg_match("/^(\+88017)/", $mobile_number) || preg_match("/^(\+88013)/", $mobile_number)) {
-            return 'GP';
-        }
-        elseif (preg_match("/^(\+88019)/", $mobile_number) || preg_match("/^(\+88014)/", $mobile_number)) {
-            return 'BL';
-        }
-        elseif (preg_match("/^(\+88018)/", $mobile_number)) {
+        if ($vendor_id == 2) {
             return 'RB';
-        }
-        elseif (preg_match("/^(\+88016)/", $mobile_number)) {
+        } elseif ($vendor_id == 3) {
             return 'AT';
-        }
-        elseif (preg_match("/^(\+88015)/", $mobile_number)) {
+        } elseif ($vendor_id == 4) {
+            return 'GP';
+        } elseif ($vendor_id == 5) {
+            return 'BL';
+        } elseif ($vendor_id == 6) {
             return 'TT';
-        }
-        else {
+        } else {
             throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
         }
     }

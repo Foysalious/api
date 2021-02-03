@@ -4,8 +4,7 @@ use App\Models\PosOrder;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use League\Fractal\TransformerAbstract;
-use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
-use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\PaymentLink\PaymentLinkTransformer;
 
 class PosOrderTransformer extends TransformerAbstract
 {
@@ -17,8 +16,8 @@ class PosOrderTransformer extends TransformerAbstract
      */
     public function transform(PosOrder $order)
     {
-        $refundable=$order->isRefundable();
-        $refund_status=$order->getRefundStatus();
+        $refundable = $order->isRefundable();
+        $refund_status = $order->getRefundStatus();
         $data = [
             'id' => $order->id,
             'previous_order_id' => $order->previous_order_id,
@@ -33,32 +32,20 @@ class PosOrderTransformer extends TransformerAbstract
             'vat' => (double)$order->getTotalVat(),
             'discount_amount' => (double)$order->getTotalDiscount(),
             'paid' => $order->getPaid(),
-            'status'=>$order->getPaymentStatus(),
+            'status'=> $order->getPaymentStatus(),
             'due' => $order->getDue(),
             'customer' => null,
             'address' => $order->address,
-            'is_refundable' =>$refundable&&empty($refund_status) ,
+            'is_refundable' => $refundable && empty($refund_status),
             'refund_status' => $refund_status,
             'return_orders' => null,
             'partner_wise_order_id' => $order->partner_wise_order_id,
             'partner_wise_previous_order_id' => $order->previousOrder ? $order->previousOrder->partner_wise_order_id : null,
             'sales_channel' => $order->sales_channel
         ];
-        if ($data['due'] > 0) {
-            $repo = app(PaymentLinkRepositoryInterface::class);
-            $response = $repo->getPaymentLinkByTargetIdType($data['id']);
-            if ($response['code'] == 200) {
-                $details = $response['links'][0];
-                $data['payment_link'] = [
-                    'id' => $details['linkId'],
-                    'status' => $details['isActive'] ? 'active' : 'inactive',
-                    'link' => $details['link'],
-                    'amount' => $details['amount'],
-                    'created_at' => date('d-m-Y h:s A', $details['createdAt'] / 1000)
-                ];
 
-            }
-        }
+        if ($data['due'] > 0) $data['payment_link_target'] = $order->getPaymentLinkTarget();
+
         return $data;
     }
 
@@ -100,5 +87,16 @@ class PosOrderTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
+    }
+
+    public function addPaymentLinkDataToOrder(&$order, PaymentLinkTransformer $payment_link)
+    {
+        $order['payment_link'] = [
+            'id' => $payment_link->getLinkID(),
+            'status' => $payment_link->getIsActive() ? 'active' : 'inactive',
+            'link' => $payment_link->getLink(),
+            'amount' => $payment_link->getAmount(),
+            'created_at' => $payment_link->getCreatedAt()->format('d-m-Y h:s A')
+        ];
     }
 }

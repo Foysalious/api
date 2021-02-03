@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
+use Carbon\Carbon;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
@@ -101,6 +102,14 @@ class PaymentLinkTransformer
     }
 
     /**
+     * @return Target
+     */
+    public function getUnresolvedTarget()
+    {
+        return new Target($this->response->targetType, $this->response->targetId);
+    }
+
+    /**
      * @return mixed
      */
     public function getTarget()
@@ -161,6 +170,11 @@ class PaymentLinkTransformer
     public function getFailUrl()
     {
         return $this->target->fail_url . '?transaction_id=' . $this->target->transaction_id;
+    }
+
+    public function getCreatedAt()
+    {
+        return Carbon::createFromTimestampMs($this->response->createdAt);
     }
 
     public function toArray()
