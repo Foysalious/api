@@ -68,7 +68,7 @@ class PaymentLinkController extends Controller
     public function index(Request $request)
     {
         try {
-            $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
+            $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
             if ($payment_links_list) {
                 $payment_links_list = array_where($payment_links_list, function ($key, $link) {
                     return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
@@ -311,7 +311,7 @@ class PaymentLinkController extends Controller
     {
         try {
             $filter = $search_value = $request->transaction_search;
-            $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
+            $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
             if (is_array($payment_links_list) && count($payment_links_list) > 0) {
                 $transactionList = [];
                 foreach ($payment_links_list as $link) {
