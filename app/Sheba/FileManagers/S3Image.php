@@ -2,10 +2,13 @@
 
 
 use Intervention\Image\Image;
+use Intervention\Image\Facades\Image as ImageFacade;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class S3Image
 {
+    use CdnFileManager;
+
     private $url;
     private $pathInfo;
     /** @var Image */
@@ -29,9 +32,19 @@ class S3Image
         return $this->pathInfo['filename'];
     }
 
+    public function getNameWithExtension()
+    {
+        return $this->getName() . "." . $this->getExtension();
+    }
+
     public function getExtension()
     {
         return $this->pathInfo['extension'];
+    }
+
+    public function getExtensionFromMime()
+    {
+        return getExtensionFromMime($this->getImage()->mime());
     }
 
     public function getFolder()
@@ -59,7 +72,28 @@ class S3Image
         if ($this->image) return $this->image;
 
         $file = $this->file ?: $this->url;
-        $this->setImage(Image::make($file));
+        $this->setImage(ImageFacade::make($file));
         return $this->image;
+    }
+
+    /**
+     * @param null $dir
+     * @return Image
+     */
+    public function download($dir = null)
+    {
+        $dir = $dir ?: getTempDownloadFolder();
+        $image = $this->getImage();
+        $name = $this->getName() . "." . $this->getExtensionFromMime();
+        return $image->save($dir . $name);
+    }
+
+    /**
+     * @param Image $image
+     */
+    public function replaceImage(Image $image)
+    {
+        $this->saveImageToCDN($image, $this->getFolder(), $this->getNameWithExtension());
+        $this->setImage($image);
     }
 }
