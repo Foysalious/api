@@ -46,7 +46,7 @@
     "ext-intl": "*",
     "algolia/algoliasearch-laravel": "^1.7",
     "mpdf/mpdf": "^8.0",
-    "darkaonline/l5-swagger": "~3.0"
+    "darkaonline/l5-swagger": "~3.0",
     "fideloper/proxy": "^3.3"
   },
   "require-dev": {
