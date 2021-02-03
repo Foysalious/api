@@ -11,6 +11,7 @@ use Sheba\Business\Bid\Bidder;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\TradeFair\Model as TradeFair;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
@@ -1035,6 +1036,11 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function webstoreBanner()
     {
         return $this->hasOne(PartnerWebstoreBanner::class);
+    }
+
+    public function tradeFair()
+    {
+        return $this->hasOne(TradeFair::class,'partner_id');
     }
 
 }
