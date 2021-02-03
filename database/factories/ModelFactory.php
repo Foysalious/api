@@ -8,6 +8,7 @@ use Factory\ProfileFactory;
 use Factory\AffiliateFactory;
 use Factory\AuthorizationRequestFactory;
 use Factory\AuthorizationTokenFactory;
+use Factory\TopupBlacklistNumbersFactory;
 use Factory\TopUpVendorFactory;
 use Factory\TopUpVendorCommissionFactory;
 use Factory\TopUpOTFSettingsFactory;
@@ -32,7 +33,8 @@ $factory_classes = [
     TopUpVendorOTFChangeLogFactory::class,
     CustomerFactory::class,
     ResourceFactory::class,
-    MemberFactory::class
+    MemberFactory::class,
+    TopupBlacklistNumbersFactory::class
 
 ];
 
