@@ -61,7 +61,13 @@ class CustomerOrderController extends Controller
                 }]);
             }]);
             if (count($customer->orders) > 0) {
-                $all_jobs = $this->getInformation($customer->orders);
+                $all_orders = $customer->orders;
+                if($status) {
+                    $all_orders = $all_orders->filter(function ($order, $key) use ($status) {
+                        return $order->getStatus() === $status;
+                    });
+                }
+                $all_jobs = $this->getInformation($all_orders);
                 $cancelled_served_jobs = $all_jobs->filter(function ($job) {
                     return $job['cancelled_date'] != null || $job['status'] == 'Served';
                 });
@@ -81,9 +87,6 @@ class CustomerOrderController extends Controller
                 $all_jobs = $all_jobs->filter(function ($job) use ($search) {
                     return (false !== stristr($job['order_code'], $search) || false !== stristr($job['category_name'], $search));
                 });
-            }
-            if ($status) {
-                $all_jobs = $all_jobs->where('status', $status);
             }
             if ($search || $status) {
                 $all_orders = $all_jobs->values()->splice($offset, $limit);
@@ -196,7 +199,7 @@ class CustomerOrderController extends Controller
             'schedule_date_for_b2b' => $job->schedule_date ? (Carbon::parse($job->schedule_date))->format('d/m/y') : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
-            'cancelled_date' => $partnerOrder->cancelled_at,
+            'cancelled_date' => $partnerOrder->cancelled_at ? $partnerOrder->cancelled_at->format('Y-m-d') : null,
             'schedule_date_readable' => (Carbon::parse($job->schedule_date))->format('M j, Y'),
             'preferred_time' => $job->preferred_time ? humanReadableShebaTime($job->preferred_time) : null,
             'readable_status' => constants('JOB_STATUSES_SHOW')[$job->status]['customer'],
