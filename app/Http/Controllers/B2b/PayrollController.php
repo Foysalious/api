@@ -3,6 +3,7 @@
 use App\Models\BusinessMember;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
+use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -15,14 +16,17 @@ class PayrollController extends Controller
     private $payrollSettingRepository;
     private $payrollSettingRequester;
     private $payrollSettingUpdater;
+    private $payrollComponentUpdater;
 
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollSettingRequester $payroll_setting_requester,
-                                PayrollSettingUpdater $payroll_setting_updater)
+                                PayrollSettingUpdater $payroll_setting_updater,
+                                PayrollComponentUpdater $payroll_component_updater)
     {
         $this->payrollSettingRepository = $payroll_setting_repository;
         $this->payrollSettingRequester = $payroll_setting_requester;
         $this->payrollSettingUpdater = $payroll_setting_updater;
+        $this->payrollComponentUpdater = $payroll_component_updater;
     }
 
     public function updatePaySchedule($business, $payroll_setting, Request $request)
@@ -49,7 +53,7 @@ class PayrollController extends Controller
         $this->setModifier($business_member->member);
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
-
+        $this->payrollComponentUpdater->setPayrollSetting($payroll_setting)->setGrossComponents($request->gross_components)->updateGrossComponents();
         return api_response($request, null, 200);
     }
 }
