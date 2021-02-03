@@ -23,6 +23,7 @@ class IndexRoute
             $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
             $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
             $api->post('address', 'PartnerController@updateAddress');
+            $api->get('webstore/trade-fair-stores', 'Partner\Webstore\TradeFairController@getStores');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
