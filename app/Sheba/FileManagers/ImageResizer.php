@@ -87,6 +87,12 @@ class ImageResizer
 
         foreach ($this->sizes as $size) {
             $resized_image = $original_image->resize($size->getWidth(), $size->getHeight());
+
+            /**
+             * Webp format is not supported by PHP installation.
+             * For now, it is encoded in original extension.
+             * It is converted later/below in background.
+             */
             $webp_image = $resized_image->encode($ext);
             $org_ext_resized_image = $resized_image->encode($ext);
 
@@ -104,10 +110,14 @@ class ImageResizer
         $folder = $this->image->getFolder();
 
         foreach ($this->getWebpImages() as $webp_filename => $webp_image) {
-            $this->saveImageToCDN($webp_image, $folder, $webp_filename);
+            $url = $this->saveImageToCDN($webp_image, $folder, $webp_filename);
+            $image = new S3Image($url);
+            dispatch(new TinifyImage($image));
+            dispatch(new WebpConverter($image));
         }
         foreach ($this->getOriginalExtImages() as $org_ext_filename => $org_ext_image) {
-            $this->saveImageToCDN($org_ext_image, $folder, $org_ext_filename);
+            $url = $this->saveImageToCDN($org_ext_image, $folder, $org_ext_filename);
+            dispatch(new TinifyImage(new S3Image($url)));
         }
     }
 }
