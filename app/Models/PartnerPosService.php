@@ -1,17 +1,35 @@
 <?php namespace App\Models;
 
+use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use Sheba\Dal\PartnerPosService\Events\PartnerPosServiceSaved;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Sheba\Dal\BaseModel;
+use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 
-class PartnerPosService extends Model
+
+class PartnerPosService extends BaseModel
 {
-    use SoftDeletes;
+    use SoftDeletes, AlgoliaEloquentTrait;
 
     protected $guarded = ['id'];
-    protected $casts   = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
-    protected $dates   = ['deleted_at'];
+    protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
+    protected $dates = ['deleted_at'];
+
+    public static $savedEventClass = PartnerPosServiceSaved::class;
+    public static $autoIndex = false;
+
+    public $algoliaSettings = [
+        'searchableAttributes' => [
+            'name',
+            'description',
+        ],
+        'attributesForFaceting' => ['partner'],
+        'unretrievableAttributes' => [
+            'partner'
+        ]
+    ];
 
     public function subCategory()
     {
@@ -23,9 +41,19 @@ class PartnerPosService extends Model
         return $this->belongsTo(PosCategory::class, 'pos_category_id');
     }
 
+    public function imageGallery()
+    {
+        return $this->hasMany(PartnerPosServiceImageGallery::class);
+    }
+
     public function scopePublished($query)
     {
         return $query->where('publication_status', 1);
+    }
+
+    public function scopePublishedForShop($query)
+    {
+        return $query->where('is_published_for_shop', 1);
     }
 
     /**
@@ -88,6 +116,16 @@ class PartnerPosService extends Model
         return $this->runningDiscounts()->first();
     }
 
+    public function getDiscountPercentage()
+    {
+        if($this->price == 0)
+            return 0;
+        $discount = $this->discount();
+        if ($discount->is_amount_percentage)
+            return $discount->amount;
+        return round((($discount->amount / $this->price) * 100), 1);
+    }
+
     public function runningDiscounts()
     {
         $now = Carbon::now();
@@ -106,5 +144,21 @@ class PartnerPosService extends Model
     public function logs()
     {
         return $this->hasMany(PartnerPosServiceLog::class);
+    }
+
+    public function getAlgoliaRecord()
+    {
+        return [
+            'id' => (int) $this->id,
+            'partner_id' => (int) $this->partner_id,
+            'category_id' => (int) $this->pos_category_id,
+            'category_name' => $this->category->name,
+            'name' => $this->name,
+            'stock' => (double)$this->stock,
+            'description' => $this->description,
+            'publication_status' => (int)$this->publication_status,
+            'is_published_for_shop' => (int)$this->is_published_for_shop,
+            'app_thumb' => $this->app_thumb,
+        ];
     }
 }

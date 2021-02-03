@@ -42,9 +42,10 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
         if ($this->attempts() < 2) {
             $topic = config('sheba.push_notification_topic_name.employee') . $this->member->id;
             $channel = config('sheba.push_notification_channel_name.employee');
+            $sound  = config('sheba.push_notification_sound.employee');
             $name = $this->profile->name ?: null;
             $data = [
-                "title" => "leave cancel",
+                "title" => "Leave Cancel",
                 "message" => $name . " canceled his leave",
                 "event_type" => 'leave',
                 "event_id" => $this->leave->id,
@@ -52,7 +53,7 @@ class SendCancelPushNotificationToApprovers extends Job implements ShouldQueue
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ];
-            $this->pushNotification->send($data, $topic, $channel);
+            $this->pushNotification->send($data, $topic, $channel, $sound);
         }
     }
 }

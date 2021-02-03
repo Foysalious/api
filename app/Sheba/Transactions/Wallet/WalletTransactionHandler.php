@@ -61,11 +61,11 @@ class WalletTransactionHandler extends WalletTransaction
         /** @noinspection PhpUndefinedMethodInspection */
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
-            $this->$typeMethod();
+            $wallet = $this->$typeMethod();
             $data = array_merge($data, [
                 'type'      => ucfirst($this->type),
                 'amount'    => $this->amount,
-                'balance'   => $this->getCalculatedBalance(),
+                'balance'   => $wallet,
                 'log'       => $this->log,
                 'created_at'=> Carbon::now(),
                 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
@@ -112,7 +112,7 @@ class WalletTransactionHandler extends WalletTransaction
             'gateway'        => $this->transaction_details ? $this->transaction_details->getGateway() : null,
             'gateway_trx_id' => $this->transaction_details ? $this->transaction_details->getTransactionID() : null,
             'amount'         => $this->amount,
-            'created_at'     => Carbon::now()->format('Y-m-d H:s:i')
+            'created_at'     => Carbon::now()->format('Y-m-d H:i:s')
         ];
         if ($isJob) {
             dispatch((new FraudTransactionJob())->setData($data));

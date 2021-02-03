@@ -15,14 +15,14 @@ class PartnerPackage implements Package
         $this->partner = $partner;
     }
 
-    public function subscribe($billing_type, $discount_id)
+    public function subscribe($billing_type, $discount_id, $additional_days = 0)
     {
-        $this->partner->package_id = $this->package->id;
-        $this->partner->billing_type = $billing_type;
-        $this->partner->discount_id = $discount_id;
-        $this->partner->subscription_rules = $this->package->rules;
+        $this->partner->package_id         = $this->package->id;
+        $this->partner->billing_type       = $billing_type;
+        $this->partner->discount_id        = $discount_id;
+        $this->partner->subscription_rules = $this->package->new_rules;
+        $this->partner->next_billing_date  = $this->package->calculateNextBillingDate($billing_type, $additional_days);
         $this->partner->update();
-
         $this->upgradeCommission($this->package->commission);
     }
 
