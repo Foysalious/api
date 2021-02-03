@@ -2,6 +2,7 @@
 
 use Factory\Factory;
 use Factory\CategoryFactory;
+use Factory\PartnerSubscriptionPackageFactory;
 use Factory\ServiceFactory;
 use Factory\LocationFactory;
 use Factory\ProfileFactory;
@@ -35,6 +36,7 @@ $factory_classes = [
     ResourceFactory::class,
     MemberFactory::class,
     TopupBlacklistNumbersFactory::class
+    PartnerSubscriptionPackageFactory::class
 
 ];
 
