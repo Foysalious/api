@@ -90,6 +90,7 @@ class BusinessRoute
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
+                    $api->post('/salary', 'B2b\CoWorkerController@salaryInfoStore');
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
                     $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
@@ -99,6 +100,7 @@ class BusinessRoute
                         $api->post('/personal-info', 'B2b\CoWorkerController@personalInfoEdit');
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
+                        $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
                         $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');

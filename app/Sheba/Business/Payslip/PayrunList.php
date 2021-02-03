@@ -56,6 +56,7 @@ class PayrunList
             ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
             ->whereIn('business_member_id', $business_member_ids);
         $this->playslipList = $payslip->get();
+
     }
 
     private function getBusinessMemberIds()
