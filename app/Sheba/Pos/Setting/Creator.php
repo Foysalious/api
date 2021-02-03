@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Setting;
 
+use App\Models\PartnerPosSetting;
 use Sheba\Pos\Repositories\PosSettingRepository;
 
 class Creator
@@ -24,5 +25,12 @@ class Creator
     {
         $setting_data = ['partner_id' => $this->data['partner_id']];
         return $this->settingRepo->save($setting_data);
+    }
+
+    public function createPartnerPosSettings($partner)
+    {
+        $data = ['partner_id' => $partner->id];
+        $this->setData($data)->create();
+        return PartnerPosSetting::byPartner($partner->id)->first();
     }
 }

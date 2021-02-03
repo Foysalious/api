@@ -29,11 +29,7 @@ class SettingController extends Controller
             /** @var Partner $partner */
             $partner = $request->partner;
             $settings = PartnerPosSetting::byPartner($partner->id)->first();
-            if (!$settings) {
-                $data = ['partner_id' => $partner->id];
-                $creator->setData($data)->create();
-                $settings = PartnerPosSetting::byPartner($partner->id)->first();
-            }
+            if (!$settings) $settings = $creator->createPartnerPosSettings($partner);
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             removeRelationsAndFields($settings);
             $repository->getTrainingVideoData($settings);
@@ -44,10 +40,13 @@ class SettingController extends Controller
         }
     }
 
-    public function storePosSetting(Request $request)
+    public function storePosSetting(Request $request, Creator $creator)
     {
         try {
-            $partnerPosSetting = PartnerPosSetting::where('partner_id', $request->partner->id)->first();
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $partnerPosSetting = PartnerPosSetting::where('partner_id', $partner->id)->first();
+            if (!$partnerPosSetting) $partnerPosSetting = $creator->createPartnerPosSettings($partner);
             $data = [];
             $this->setModifier($request->manager_resource);
 
