@@ -4,6 +4,7 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -1478,9 +1479,12 @@ class PartnerController extends Controller
                 ];
             });
             return api_response($request, null, 200, ['partner_business_types' => $business_types_with_count]);
-        } catch (Throwable $e) {
+        } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
     }
 
