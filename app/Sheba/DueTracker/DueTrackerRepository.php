@@ -448,22 +448,13 @@ class DueTrackerRepository extends BaseRepository
      */
     public function sendSMS(Request $request)
     {
+        if(!config('sms.is_on')) return;
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
-        $data     = [
-            'type'          => $request->type,
-            'partner_name'  => $request->partner->name,
-            'customer_name' => $customer->profile->name,
-            'mobile'        => $customer->profile->mobile,
-            'amount'        => $request->amount,
-        ];
-
-        if ($request->type == 'due') {
-            $data['payment_link'] = $request->payment_link;
-        }
+        $data = $this->setSmsData($request, $customer);
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
@@ -528,6 +519,17 @@ class DueTrackerRepository extends BaseRepository
                 'answer'   => 'হ্যাঁ আসবে।'
             ]
 
+        ];
+    }
+
+    private function setSmsData($request, $customer) {
+        return [
+            'type'          => $request->type,
+            'partner_name'  => $request->partner->name,
+            'customer_name' => $customer->profile->name,
+            'mobile'        => $customer->profile->mobile,
+            'amount'        => $request->amount,
+            'payment_link'  => $request->type == 'due' ? $request->payment_link : null
         ];
     }
 }
