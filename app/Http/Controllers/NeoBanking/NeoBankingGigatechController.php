@@ -46,7 +46,7 @@ class NeoBankingGigatechController extends Controller
             }
             $data = (array)$response->data;
             if (isset($data['app_base_url'])) $data['app_base_url'] = 'https://gt-proxy.sheba.xyz';
-            return api_response($request, null, 200, ['data' => $response->data]);
+            return api_response($request, null, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
