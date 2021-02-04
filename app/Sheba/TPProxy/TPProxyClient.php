@@ -5,9 +5,9 @@ use GuzzleHttp\Exception\GuzzleException;
 
 class TPProxyClient
 {
+    protected $proxyUrl;
     /** @var HttpClient */
     private $httpClient;
-    protected $proxyUrl;
 
     public function __construct(HttpClient $client)
     {
@@ -25,14 +25,8 @@ class TPProxyClient
         try {
             $response = $this->httpClient->post($this->proxyUrl, [
                 'form_params' => [
-                    'url' => $request->getUrl(),
-                    'method' => $request->getMethod(),
-                    'input' => $request->getInput(),
-                    'headers' => $request->getHeaders()
-                ],
-                'timeout' => 120,
-                'read_timeout' => 300,
-                'connect_timeout' => 120
+                    'url' => $request->getUrl(), 'method' => $request->getMethod(), 'input' => $request->getInput(), 'headers' => $request->getHeaders()
+                ], 'timeout' => 120, 'read_timeout' => 300, 'connect_timeout' => 120
             ]);
             $proxy_response = $response->getBody()->getContents();
             if (!$proxy_response) throw new TPProxyServerError();
@@ -54,12 +48,11 @@ class TPProxyClient
      * @return mixed
      * @throws TPProxyServerError
      */
-    function callWithFile($url, $method, $options)
+    public function callWithFile($url, $method, $options)
     {
         $options = array_merge($options, [
-            'timeout' => 120,
-            'read_timeout' => 300,
-            'connect_timeout' => 120]);
+            'timeout' => 120, 'read_timeout' => 300, 'connect_timeout' => 120
+        ]);
         $options['multipart'][] = ['name' => 'url', 'contents' => $url];
         $res = $this->httpClient->post($this->proxyUrl . '/file_request.php', $options);
         $proxy_response = $res->getBody()->getContents();
