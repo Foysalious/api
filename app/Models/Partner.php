@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
@@ -51,7 +52,7 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
-    use Wallet, TopUpTrait, MovieTicketTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait,AlgoliaEloquentTrait;
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
