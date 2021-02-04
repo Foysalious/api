@@ -368,12 +368,12 @@ class CoWorkerController extends Controller
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
         $salary = $this->salaryRepositry->where('business_member_id', $business_member->id)->first();
+        $old_salary = $salary->gross_salary;
         $this->setModifier($manager_member);
 
         $salary_request = $this->coWorkerSalaryRequester->setBusiness($business)->setBusinessMember($business_member)->setGrossSalary($request->gross_salary);
-        $updater->setSalary($salary)->setBusinessMember($business_member)->setSalaryRequester($salary_request)->update();
+        $updater->setSalary($salary)->setOldSalary($old_salary)->setManagerMember($manager_member)->setSalaryRequester($salary_request)->update();
 
         return api_response($request, null, 200);
     }

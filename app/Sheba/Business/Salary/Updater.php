@@ -1,16 +1,15 @@
 <?php namespace App\Sheba\Business\Salary;
 
 use App\Models\BusinessMember;
+use App\Models\Member;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use App\Sheba\Business\SalaryLog\Requester;
 use App\Sheba\Business\SalaryLog\Creator;
-use Sheba\ModificationFields;
 
 class Updater
 {
-    use ModificationFields;
     private $salaryRequest;
     /** @var SalaryRepository */
     private $salaryRepositry;
@@ -25,6 +24,8 @@ class Updater
     private $salaryLogRequester;
     /** @var Creator */
     private $salaryLogCreator;
+    private $managerMember;
+    private $oldSalary;
 
     /**
      * Updater constructor.
@@ -41,12 +42,6 @@ class Updater
         $this->salaryLogCreator = $salary_log_creator;
     }
 
-    public function setBusinessMember(BusinessMember $business_member)
-    {
-        dd($this->businessMember);
-        $this->businessMember = $business_member;
-        return $this;
-    }
     /** @param $salary_request */
     public function setSalaryRequester($salary_request)
     {
@@ -57,6 +52,18 @@ class Updater
     public function setSalary($salary)
     {
         $this->salary = $salary;
+        return $this;
+    }
+
+    public function setOldSalary($old_salary)
+    {
+        $this->oldSalary = $old_salary;
+        return $this;
+    }
+
+    public function setManagerMember(Member $manager_member)
+    {
+        $this->managerMember = $manager_member;
         return $this;
     }
 
@@ -76,10 +83,8 @@ class Updater
 
     private function SalaryLogCreate($salary)
     {
-        dd($this->businessMember);
-        $this->setModifier($this->businessMember);
-        $this->salaryLogRequester->setBusinessMember($this->businessMember)->setSalaryRequest($this->salaryRequest)->setSalary($salary);
-        $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
+        $this->salaryLogRequester->setBusinessMember($this->salaryRequest->getBusinessMember())->setSalaryRequest($this->salaryRequest)->setSalary($salary);
+        $this->salaryLogCreator->setOldSalary($this->oldSalary)->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
 
 }
