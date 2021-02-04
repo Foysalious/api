@@ -2,6 +2,7 @@
 
 use App\Models\Customer;
 use Closure;
+use Illuminate\Http\Request;
 use JWTAuth;
 use App\Exceptions\NotFoundException;
 
@@ -10,11 +11,11 @@ class CustomerAuthMiddleware extends AccessTokenMiddleware
     /**
      * Handle an incoming request.
      *
-     * @param  \Illuminate\Http\Request $request
+     * @param Request $request
      * @param  \Closure $next
      * @return mixed
      */
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         $token = $this->getToken();
 

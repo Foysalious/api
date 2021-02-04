@@ -1,6 +1,7 @@
 <?php namespace App\Http\Middleware;
 
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
@@ -30,7 +31,7 @@ class AccessTokenMiddleware
         $this->authorizeTokenRepository = $authorize_token_repository;
     }
 
-    public function handle($request, Closure $next)
+    public function handle(Request $request, Closure $next)
     {
         $sheba_headers = getShebaRequestHeader($request);
         $is_digigo = $sheba_headers->getPortalName() == Portals::EMPLOYEE_APP;
