@@ -54,7 +54,6 @@ class TradeFairController extends Controller
     public function getStoresByBusinessType(Request $request, TradeFair $trade_fair)
     {
         try{
-
             $business_types = constants('PARTNER_BUSINESS_TYPE');
             $en_business_types = [];
             collect($business_types)->each(function ($type) use (&$en_business_types) {
