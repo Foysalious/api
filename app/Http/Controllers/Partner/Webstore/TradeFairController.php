@@ -28,15 +28,8 @@ class TradeFairController extends Controller
             }
             $partners = array_column($partners, 'id');
             $trade_fair_data = $trade_fair->makeData($partners,$mapped_partner_business_type);
-            $data = [];
-            $stores = [];
-            $trade_fair_data = collect($trade_fair_data)->groupBy('business_type');
-            foreach ($trade_fair_data as $key => $value) {
-                $stores['business_type'] = $key;
-                $stores['stores'] = $value;
-                array_push($data, $stores);
-            }
-            return api_response($request, null, 200, ['data' => $data]);
+
+            return api_response($request, null, 200, ['data' => $trade_fair_data]);
         } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
             return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
