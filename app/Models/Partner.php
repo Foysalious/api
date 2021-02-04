@@ -129,6 +129,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     ];
     private $resourceTypes;
 
+    public static $autoIndex = false;
+
+    public $algoliaSettings = [
+        'searchableAttributes' => [
+            'name',
+            'business_type',
+            'description',
+        ]
+    ];
+
     public function __construct($attributes = [])
     {
         parent::__construct($attributes);
@@ -1042,6 +1052,23 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function tradeFair()
     {
         return $this->hasOne(TradeFair::class,'partner_id');
+    }
+
+    public function getAlgoliaRecord()
+    {
+
+        $business_types = constants('PARTNER_BUSINESS_TYPE');
+        $converted_business_types = [];
+        foreach ($business_types as $business_type) {
+            $converted_business_types[$business_type['bn']] = $business_type['en'];
+        }
+
+        return [
+            'id' => (int) $this->id,
+            'name' => $this->name,
+            'business_type' => $converted_business_types[$this->business_type],
+            'description' => $this->tradeFair ? $this->tradeFair->description :null,
+        ];
     }
 
 }
