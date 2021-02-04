@@ -1,5 +1,6 @@
 <?php namespace App\Models;
 
+use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
@@ -52,7 +53,7 @@ use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 
 class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, TransportAgent, CanApplyVoucher, MovieAgent, Rechargable, Bidder, HasWalletTransaction, HasReferrals, PayableUser
 {
-    use Wallet, TopUpTrait, MovieTicketTrait;
+    use Wallet, TopUpTrait, MovieTicketTrait,AlgoliaEloquentTrait;
 
     public $totalCreditForSubscription;
     public $totalPriceRequiredForSubscription;
@@ -129,6 +130,16 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         'updated_at'
     ];
     private $resourceTypes;
+
+    public static $autoIndex = false;
+
+    public $algoliaSettings = [
+        'searchableAttributes' => [
+            'name',
+            'business_type',
+            'description',
+        ]
+    ];
 
     public function __construct($attributes = [])
     {
@@ -1051,6 +1062,23 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function tradeFair()
     {
         return $this->hasOne(TradeFair::class,'partner_id');
+    }
+
+    public function getAlgoliaRecord()
+    {
+
+        $business_types = constants('PARTNER_BUSINESS_TYPE');
+        $converted_business_types = [];
+        foreach ($business_types as $business_type) {
+            $converted_business_types[$business_type['bn']] = $business_type['en'];
+        }
+
+        return [
+            'id' => (int) $this->id,
+            'name' => $this->name,
+            'business_type' => $converted_business_types[$this->business_type],
+            'description' => $this->tradeFair ? $this->tradeFair->description :null,
+        ];
     }
 
 }
