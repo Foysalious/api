@@ -4,8 +4,10 @@
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TradeFair\Model as TradeFair;
 use Sheba\ModificationFields;
 
@@ -15,7 +17,7 @@ class TradeFairController extends Controller
 
     /**
      * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function getStores(Request $request)
     {
@@ -64,6 +66,60 @@ class TradeFairController extends Controller
             }
 
             return api_response($request, null, 200, ['data' => $data]);
+        } catch (ModelNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getStoresByBusinessType(Request $request)
+    {
+        try{
+
+            $business_types = constants('PARTNER_BUSINESS_TYPE');
+            $en_business_types = [];
+            collect($business_types)->each(function ($type) use (&$en_business_types) {
+                array_push($en_business_types, $type['en']);
+            });
+            $converted_business_types = [];
+            foreach ($business_types as $business_type) {
+                $converted_business_types[$business_type['en']] = $business_type['bn'];
+            }
+            $en_business_types = implode(',', $en_business_types);
+
+            $this->validate($request, [
+                'business_type' => "required|in:$en_business_types"
+            ]);
+
+            $business_type = $request->business_type;
+
+            $partners = Partner::has('tradeFair')->with('tradeFair')->where('is_webstore_published', 1)
+                ->where('business_type', $converted_business_types[$business_type])
+                ->select('id')->get();
+
+            $stores = [];
+            $partners->each(function ($partner) use (&$stores) {
+                array_push($stores, [
+                    'partner_id' => $partner->id,
+                    'stall_id' => $partner->tradeFair->stall_id,
+                    'description' => $partner->tradeFair->description,
+                    'discount' => $partner->tradeFair->discount,
+                    'is_published' => $partner->tradeFair->is_published
+                ]);
+            });
+
+            return api_response($request, null, 200, ['stores' => $stores]);
+
+        }catch (ValidationException $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
         } catch (ModelNotFoundException $e) {
             app('sentry')->captureException($e);
             return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
