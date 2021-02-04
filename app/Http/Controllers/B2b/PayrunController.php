@@ -2,11 +2,13 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Request;
+use Illuminate\Http\Request;
+use App\Models\Business;
 use App\Models\BusinessMember;
 use Sheba\Dal\Payslip\PayslipRepository;
+use App\Sheba\Business\Payslip\PayrunList;
 
-class PayrollPayrunController extends Controller
+class PayrunController extends Controller
 {
     /**
      * @var PayslipRepository
@@ -21,13 +23,27 @@ class PayrollPayrunController extends Controller
     {
         $this->PayslipRepo = $payslip_repo;
     }
-    /** @param Request $request */
-    public function index(Request $request)
+
+    /**
+     * @param Request $request
+     * @param PayrunList $payrunlist
+     */
+    public function index(Request $request, PayrunList $payrunlist)
     {
+        /** @var Business $business */
+        $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+
         if (!$business_member) return api_response($request, null, 401);
 
         list($offset, $limit) = calculatePagination($request);
+
+        $payslip = $payrunlist->setBusiness($business)->get();
+
+        $count = count($payslip);
+
+        return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
+
     }
 }

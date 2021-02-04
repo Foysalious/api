@@ -7,6 +7,8 @@ class Requester
 
     private $business;
     private $paymentSchedule;
+    private $isEnable;
+    private $payDay;
 
     public function setBusiness(Business $business)
     {
@@ -28,5 +30,27 @@ class Requester
     public function getPaymentSchedule()
     {
         return $this->paymentSchedule;
+    }
+
+    public function setIsEnable($is_enable)
+    {
+        $this->isEnable = $is_enable;
+        return $this;
+    }
+
+    public function getIsEnable()
+    {
+        return $this->isEnable;
+    }
+
+    public function setPayDay($pay_day)
+    {
+        $this->payDay = $pay_day;
+        return $this;
+    }
+
+    public function getPayDay()
+    {
+        return $this->payDay;
     }
 }
