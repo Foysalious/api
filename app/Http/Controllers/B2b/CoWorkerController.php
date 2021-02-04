@@ -20,6 +20,10 @@ use Sheba\Business\CoWorker\Requests\BasicRequest;
 use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
+use Sheba\Dal\SalaryLog\SalaryLogRepository;
+use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
+use App\Sheba\Business\SalaryLog\Formatter as SalarayLogFormatter;
+use App\Sheba\Business\Salary\Formatter as SalarayFormatter;
 use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Reports\ExcelHandler;
@@ -376,6 +380,22 @@ class CoWorkerController extends Controller
         $updater->setSalary($salary)->setOldSalary($old_salary)->setManagerMember($manager_member)->setSalaryRequester($salary_request)->update();
 
         return api_response($request, null, 200);
+    }
+
+    public function salaryInformation($business, $member_id, Request $request, SalarayLogFormatter $salary_log_formatter, SalarayFormatter $salary_formatter, SalaryLogRepository $salary_log_repository, PayrollSettingRepository $payroll_setting_repository)
+    {
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        $salary = $this->salaryRepositry->where('business_member_id', $business_member->id)->first();
+        $payroll_setting_with_components = $payroll_setting_repository->where('business_id', $business->id)->with(['components'])->first();
+
+        $salary_logs = $salary_log_repository->where('salary_id', $salary->id)->orderBy('created_at', 'DESC')->get();
+        $calculated_salary = $salary_formatter->setSalary($salary)->setPayrollSetting($payroll_setting_with_components)->calculate();
+        $salary_log = $salary_log_formatter->setSalaryLogs($salary_logs)->format();
+        $salary_breakdown = array_merge($calculated_salary, $salary_log);
+
+        return api_response($request, $salary_breakdown, 200, ['data' => $salary_breakdown]);
     }
 
     /**

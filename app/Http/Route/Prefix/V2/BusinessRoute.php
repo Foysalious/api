@@ -101,6 +101,7 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
+                        $api->get('/salary-info', 'B2b\CoWorkerController@salaryInformation');
                         $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
