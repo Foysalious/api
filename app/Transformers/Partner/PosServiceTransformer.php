@@ -16,7 +16,16 @@ class PosServiceTransformer extends TransformerAbstract
             'vat_percentage' => (double)$pos_service->vat_percentage,
             'unit' => $pos_service->unit,
             'stock' => $pos_service->stock,
-            'category_id' => $pos_service->pos_category_id
+            'category_id' => $pos_service->subCategory->parent->id,
+            'discount_applicable' => $pos_service->discount() ? 1 : 0,
+            'discounted_amount' => $pos_service->discount() ? $pos_service->getDiscountedAmount() : 0,
+            'discount_percentage' => $pos_service->discount() ? $pos_service->getDiscountPercentage() : 0,
+            'image_gallery' => $pos_service->imageGallery ? $pos_service->imageGallery->map(function($image){
+                return [
+                    'id' =>   $image->id,
+                    'image_link' => $image->image_link
+                ];
+            }) : []
         ];
     }
 }

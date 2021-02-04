@@ -4,6 +4,7 @@ use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Sheba\Algolia\AlgoliaSync;
 
 class Kernel extends ConsoleKernel
 {
@@ -14,7 +15,8 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         ProductUpload::class,
-        SetReleaseVersion::class
+        SetReleaseVersion::class,
+        AlgoliaSync::class
     ];
 
     /**

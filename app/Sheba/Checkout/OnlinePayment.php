@@ -139,7 +139,7 @@ class OnlinePayment
     {
         try {
             $client = new Client();
-            $res = $client->request('POST', env('SHEBA_BACKEND_URL') . '/api/partner-order/' . $partnerOrder->id . '/collect',
+            $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $partnerOrder->id . '/collect',
                 [
                     'form_params' => array_merge([
                         'customer_id' => $partnerOrder->order->customer->id,
