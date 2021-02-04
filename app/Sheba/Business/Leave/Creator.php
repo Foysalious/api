@@ -11,9 +11,19 @@ use App\Sheba\Attachments\Attachments;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Exception;
+use Illuminate\Database\QueryException;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\ApprovalRequest\Creator as ApprovalRequestCreator;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
+use Sheba\Business\ApprovalSetting\MakeDefaultApprovalSetting;
 use Sheba\Dal\ApprovalFlow\Type;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
+use Sheba\Dal\ApprovalSetting\ApprovalSettingRepository;
+use Sheba\Dal\ApprovalSetting\Targets;
+use Sheba\Dal\ApprovalSettingApprover\Types;
+use Sheba\Dal\ApprovalSettingModule\Modules;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\EloquentImplementation as LeaveRepository;
@@ -45,8 +55,7 @@ class Creator
     /** @var ApprovalRequestCreator $approval_request_creator */
     private $approval_request_creator;
     /** @var array $approvers */
-    private $approvers;
-    private $managers = [];
+    private $approvers = [];
     /** @var TimeFrame $timeFrame */
     private $timeFrame;
     private $note;
@@ -64,6 +73,10 @@ class Creator
     private $business;
     private $businessHoliday;
     private $businessWeekend;
+    /** @var FindApprovalSettings $findApprovalSetting */
+    private $findApprovalSetting;
+    /** @var FindApprovers $findApprovers */
+    private $findApprovers;
 
     /**
      * Creator constructor.
@@ -90,6 +103,9 @@ class Creator
         $this->pushNotificationHandler = $push_notification_handler;
         $this->businessHoliday = $business_holiday_repo;
         $this->businessWeekend = $business_weekend_repo;
+        $this->findApprovalSetting = app(FindApprovalSettings::class);
+        $this->findApprovers = app(FindApprovers::class);
+        $this->approvers = [];
     }
 
     public function setTitle($title)
@@ -108,37 +124,15 @@ class Creator
         $this->business = $this->businessMember->business;
         if ($this->isLeaveAdjustment) return $this;
 
-        $this->getManager($this->businessMember);
-
         if ($this->substitute == $this->businessMember->id) {
             $this->setError(422, 'You can\'t be your own substitute!');
             return $this;
         }
+        /** @Var ApprovalSetting $approval_setting */
+        $approval_setting = $this->findApprovalSetting->getApprovalSetting($this->businessMember, Modules::LEAVE);
 
-        if (empty($this->managers)) {
-            $this->setError(422, 'Manager not set yet!');
-            return $this;
-        }
-
-        /** @var BusinessDepartment $department */
-        $department = $this->businessMember->department();
-        if (!$department) {
-            $this->setError(422, 'Department not set yet!');
-            return $this;
-        }
-
-        $approval_flow = $department->approvalFlowBy(Type::LEAVE);
-        if (!$approval_flow) {
-            $this->setError(422, 'Approval flow not set yet!');
-            return $this;
-        }
-
-        $this->approvers = $this->calculateApprovers($approval_flow, $department);
-        if (empty($this->approvers)) {
-            $this->setError(422, 'No Approver set yet!');
-            return $this;
-        }
-
+        $this->approvers = $this->findApprovers->calculateApprovers($approval_setting, $this->businessMember);
+        if (count($this->approvers) == 0) $this->setError(422, 'No approval flow is defined for you due to wrong approval flow setup.');
         return $this;
     }
 
@@ -184,9 +178,9 @@ class Creator
         return $this;
     }
 
-    public function setApproverId($approver_id)
+    public function setApprover($approver_id)
     {
-        $this->approvers = [$approver_id];
+        $this->approvers = $approver_id;
         return $this;
     }
 
@@ -232,14 +226,18 @@ class Creator
             'left_days' => $this->getLeftDays()
         ];
 
+        /** $first_approver */
+        $first_approver = reset($this->approvers);
+
         $leave = null;
-        DB::transaction(function () use ($data, &$leave) {
+        DB::transaction(function () use ($data, &$leave, $first_approver) {
             $this->setModifier($this->businessMember->member);
             $leave = $this->leaveRepository->create($this->withCreateModificationField($data));
             $this->approval_request_creator->setBusinessMember($this->businessMember)
-                ->setApproverId($this->approvers)
+                ->setApprover($first_approver)
                 ->setRequestable($leave)
                 ->setIsLeaveAdjustment($this->isLeaveAdjustment)
+                ->setCreatedBy($this->createdBy)
                 ->create();
             $this->createAttachments($leave);
         });
@@ -294,36 +292,6 @@ class Creator
     private function sendPushToSubstitute(Leave $leave)
     {
         dispatch(new SendLeaveSubstitutionPushNotificationToEmployee($leave));
-    }
-
-    private function getManager($business_member)
-    {
-        $manager = $business_member->manager()->first();
-        if ($manager) {
-            array_push($this->managers, $manager->id);
-            $this->getManager($manager);
-        }
-        return;
-    }
-
-    /**
-     * @param $approval_flow
-     * @param $department
-     * @return array
-     */
-    private function calculateApprovers($approval_flow, $department)
-    {
-        $approvers = $approval_flow->approvers()->pluck('id')->toArray();
-        $approver_within_my_manager = array_intersect($approvers, $this->managers);
-
-        $my_department_users = [];
-        BusinessRole::where('business_department_id', $department->id)->get()->each(function ($Business_role) use (&$my_department_users) {
-            $my_department_users = array_merge($my_department_users, $Business_role->members()->pluck('id')->toArray());
-        });
-        $my_department_users = array_unique($my_department_users);
-        $other_departments_approver = array_diff($approvers, $my_department_users);
-
-        return array_diff($approver_within_my_manager + $other_departments_approver, [$this->businessMember->id]);
     }
 
     private function getLeftDays()

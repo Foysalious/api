@@ -4,6 +4,12 @@ namespace App\Providers;
 
 use Illuminate\Contracts\Events\Dispatcher as DispatcherContract;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
+use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
+use Sheba\Business\BusinessMember\Events\BusinessMemberDeleted;
+use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
+use Sheba\Business\BusinessMember\Listeners\BusinessMemberCreatedListener;
+use Sheba\Business\BusinessMember\Listeners\BusinessMemberUpdatedListener;
+use Sheba\Business\BusinessMember\Listeners\BusinessMemberDeletedListener;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
 use Sheba\TopUp\Listeners\TopUpRequestOfBlockedNumber;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
@@ -23,6 +29,15 @@ class EventServiceProvider extends ServiceProvider
         ProfilePasswordUpdated::class => [
             ProfilePasswordUpdatedListener::class
         ],
+        BusinessMemberCreated::class => [
+            BusinessMemberCreatedListener::class
+        ],
+        BusinessMemberUpdated::class => [
+            BusinessMemberUpdatedListener::class
+        ],
+        BusinessMemberDeleted::class => [
+            BusinessMemberDeletedListener::class
+        ]
     ];
 
     /**

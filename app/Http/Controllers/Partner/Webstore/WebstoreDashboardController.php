@@ -13,8 +13,8 @@ class WebstoreDashboardController extends Controller
     public function getDashboard($partner, Request $request, WebstoreDashboard $webstoreDashboard, TimeFrame $time_frame)
     {
         $this->validate($request, [
-            'frequency' => 'required|string|in:day,week,month,year',
-            'date'      => 'required_if:frequency,day|date',
+            'frequency' => 'required|string|in:day,week,month,quarter,year',
+            'date'      => 'required_if:frequency,day,quarter|date',
             'week'      => 'required_if:frequency,week|numeric',
             'month'     => 'required_if:frequency,month|numeric',
             'year'      => 'required_if:frequency,month,year|numeric',
@@ -32,9 +32,9 @@ class WebstoreDashboardController extends Controller
      */
     private function makeTimeFrame(Request $request, TimeFrame $time_frame)
     {
+        $date = Carbon::parse($request->date);
         switch ($request->frequency) {
             case "day":
-                $date = Carbon::parse($request->date);
                 $time_frame = $time_frame->forADay($date);
                 break;
             case "week":
@@ -45,6 +45,9 @@ class WebstoreDashboardController extends Controller
                 break;
             case "year":
                 $time_frame = $time_frame->forAYear($request->year);
+                break;
+            case "quarter":
+                $time_frame = $time_frame->forAQuarter($date);
                 break;
             default:
                 echo "Invalid time frame";
