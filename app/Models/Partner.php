@@ -13,6 +13,7 @@ use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\ArtisanLeave\ArtisanLeave;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\Complain\Model as Complain;
+use Sheba\Dal\Partner\Events\PartnerSaved;
 use Sheba\Dal\TradeFair\Model as TradeFair;
 use Sheba\Dal\PartnerBankInformation\Purposes;
 use Sheba\Dal\PartnerOrderPayment\PartnerOrderPayment;
@@ -131,6 +132,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     ];
     private $resourceTypes;
 
+    public static $savedEventClass = PartnerSaved::class;
     public static $autoIndex = false;
 
     public $algoliaSettings = [
