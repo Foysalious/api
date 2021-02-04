@@ -33,7 +33,7 @@ class PayrollController extends Controller
     }
 
 
-    public function index(Request $request)
+    public function getPayrollSettings(Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -42,6 +42,12 @@ class PayrollController extends Controller
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
         $payroll_components = $payroll_setting->components;
+        $payroll_setting_data = [
+
+        ];
+        foreach ($payroll_components as $payroll_component){
+
+        }
 
         return api_response($request, null, 200);
     }
