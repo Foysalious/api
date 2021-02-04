@@ -298,7 +298,7 @@ class Job extends BaseModel implements MorphCommentable
      */
     public function calculate($price_only = false)
     {
-        $is_old_order = $this->id > config('sheba.last_job_before_commission');
+        $is_old_order = $this->id < config('sheba.last_job_before_commission');
         /**
          * CALCULATING COMMISSION RATES
          */
