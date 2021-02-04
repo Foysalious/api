@@ -41,10 +41,11 @@ class Creator
 
     private function payrollComponentData()
     {
-        foreach (Components::get() as $key => $component) {
+        foreach (Components::getDefaultComponents() as $key => $component) {
             $this->payrollComponentData[] = [
                 'payroll_setting_id' => $this->payrollSetting->id,
-                'name' => $component,
+                'name' => $component['key'],
+                'type' => $component['type'],
                 'setting' => json_encode(['percentage' => 0]),
             ];
         }
