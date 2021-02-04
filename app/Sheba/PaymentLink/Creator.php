@@ -214,6 +214,7 @@ class Creator
 
     public function sentSms()
     {
+        if(!config('sms.is_on')) return;
         if ($this->getPayerInfo()) {
             /** @var PaymentLinkClient $paymentLinkClient */
             $paymentLinkClient = app(PaymentLinkClient::class);
@@ -225,11 +226,7 @@ class Creator
             $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
             $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
             $mobile = $this->getPayerInfo()['payer']['mobile'];
-
-            /** @var Sms $sms */
-            $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
-            $sms->shoot();
+            $this->sendSms($mobile, $message);
         }
     }
 
@@ -274,5 +271,19 @@ class Creator
 
     public function getPaymentLink() {
         return $this->paymentLinkCreated->link;
+    }
+
+    private function sendSms($sender_mobile, $message)
+    {
+        /** @var Sms $sms */
+        $sms = app(Sms::class);
+        $sms = $sms->setVendor('infobip')->to($sender_mobile)->msg($message);
+        try {
+            $sms->shoot();
+        } catch (\Throwable $e) {
+            logError($e);
+            return false;
+        }
+        return true;
     }
 }

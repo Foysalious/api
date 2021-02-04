@@ -8,10 +8,13 @@ class SmsHandler
 {
     /** @var Sms $sms */
     private $sms;
+    /** @var bool */
+    private $isOff;
 
     public function __construct(Sms $sms)
     {
         $this->sms = $sms->setVendor('infobip');
+        $this->isOff = !config('sms.is_on');
     }
 
     /**
@@ -21,6 +24,7 @@ class SmsHandler
      */
     public function sendBulkMessages($to, $message)
     {
+        if ($this->isOff) return;
         $sms = $this->sms->to($to)->msg($message);
         $sms->shoot();
         return $sms->getVendorResponse();
