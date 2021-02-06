@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Sheba\AccessToken\Exception\AccessTokenNotValidException;
 use Sheba\AccessToken\Exception\AccessTokenDoesNotExist;
+use Sheba\Dal\AccessTokenRequest\Portals;
 use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\AuthorizationToken\AuthorizationTokenRepositoryInterface;
 use Sheba\OAuth2\AuthUser;
