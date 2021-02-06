@@ -33,7 +33,7 @@ class FeatureTestCase extends TestCase
     /**
      * @var $business
      */
-    private $business;
+    protected $business;
     /**
      * @var $business_member
      */
@@ -63,11 +63,11 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /*\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
         $this->beforeApplicationDestroyed(function () {
             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });*/
+        });
     }
 
     protected function logIn()
