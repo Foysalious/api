@@ -1,9 +1,12 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
+use Sheba\Dal\ApprovalSetting\ApprovalSetting;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -27,6 +30,26 @@ class PayrollController extends Controller
         $this->payrollSettingRequester = $payroll_setting_requester;
         $this->payrollSettingUpdater = $payroll_setting_updater;
         $this->payrollComponentUpdater = $payroll_component_updater;
+    }
+
+
+    public function getPayrollSettings(Request $request)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var PayrollSetting $payroll_setting */
+        $payroll_setting = $business->payrollSetting;
+        $payroll_components = $payroll_setting->components;
+        $payroll_setting_data = [
+
+        ];
+        foreach ($payroll_components as $payroll_component){
+
+        }
+
+        return api_response($request, null, 200);
     }
 
     public function updatePaySchedule($business, $payroll_setting, Request $request)

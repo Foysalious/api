@@ -12,7 +12,7 @@ class Updater
 {
     private $salaryRequest;
     /** @var SalaryRepository */
-    private $salaryRepositry;
+    private $salaryRepository;
     private $businessMember;
     private $salaryData = [];
     private $salary;
@@ -29,14 +29,14 @@ class Updater
 
     /**
      * Updater constructor.
-     * @param SalaryRepository $salary_repositry
+     * @param SalaryRepository $salary_repository
      * @param SalaryLogRepository $salary_log_repository
      * @param Requester $salary_log_requester
      * @param Creator $salary_log_creator
      */
-    public function __construct(SalaryRepository $salary_repositry, SalaryLogRepository $salary_log_repository, Requester $salary_log_requester, Creator $salary_log_creator)
+    public function __construct(SalaryRepository $salary_repository, SalaryLogRepository $salary_log_repository, Requester $salary_log_requester, Creator $salary_log_creator)
     {
-        $this->salaryRepositry = $salary_repositry;
+        $this->salaryRepository = $salary_repository;
         $this->SalaryLogRepository = $salary_log_repository;
         $this->salaryLogRequester = $salary_log_requester;
         $this->salaryLogCreator = $salary_log_creator;
@@ -71,8 +71,8 @@ class Updater
     {
         $this->makeData();
         DB::transaction(function () {
-            $this->salaryRepositry->update($this->salary, $this->salaryData);
-            $this->SalaryLogCreate($this->salary);
+            $this->salaryRepository->update($this->salary, $this->salaryData);
+            $this->salaryLogCreate($this->salary);
         });
     }
 
@@ -81,7 +81,7 @@ class Updater
         $this->salaryData['gross_salary'] = $this->salaryRequest->getGrossSalary();
     }
 
-    private function SalaryLogCreate($salary)
+    private function salaryLogCreate($salary)
     {
         $this->salaryLogRequester->setBusinessMember($this->salaryRequest->getBusinessMember())->setSalaryRequest($this->salaryRequest)->setSalary($salary);
         $this->salaryLogCreator->setOldSalary($this->oldSalary)->setSalaryLogRequester($this->salaryLogRequester)->create();

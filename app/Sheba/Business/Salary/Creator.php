@@ -1,6 +1,5 @@
 <?php namespace App\Sheba\Business\Salary;
 
-
 use App\Models\BusinessMember;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -12,15 +11,15 @@ class Creator
     private $salaryData = [];
     private $businessMember;
     /** @var SalaryRepository */
-    private $salaryRepositry;
+    private $salaryRepository;
 
     /**
      * Updater constructor.
-     * @param SalaryRepository $salary_repositry
+     * @param SalaryRepository $salary_repository
      */
-    public function __construct(SalaryRepository $salary_repositry)
+    public function __construct(SalaryRepository $salary_repository)
     {
-        $this->salaryRepositry = $salary_repositry;
+        $this->salaryRepository = $salary_repository;
     }
 
     /** @param $salary_request */
@@ -41,7 +40,7 @@ class Creator
         $this->makeData();
         $salary = null;
         DB::transaction(function () use ($salary) {
-            $salary = $this->salaryRepositry->create($this->salaryData);
+            $salary = $this->salaryRepository->create($this->salaryData);
         });
         return $salary;
     }
