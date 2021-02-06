@@ -396,10 +396,7 @@ class TopUpController extends Controller
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
-
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $user = $auth_user->getBusiness();
+        
         list($offset, $limit) = calculatePagination($request);
 
         /** @var AuthUser $auth_user */
