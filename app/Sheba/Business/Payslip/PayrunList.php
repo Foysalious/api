@@ -54,7 +54,7 @@ class PayrunList
         $business_member_ids = $this->getBusinessMemberIds();
         $payslip = $this->PayslipRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
-            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
+            ->whereIn('business_member_id', $business_member_ids)->with(['role', 'businessMember' => function ($q){
                 /*$q->with(['role' => function ($q) {
                     $q->select('business_roles.id', 'business_department_id', 'name')->with([
                         'businessDepartment' => function ($q) {
