@@ -385,24 +385,6 @@ class TopUpController extends Controller
         return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
     }
 
-        $topup_bulk_requests = TopUpBulkRequest::pending()->agent($agent)
-            ->withCount('orders', 'processedOrders')
-            ->having('orders_count', '>', 0)
-            ->orderBy('id', 'desc')->get()
-            ->map(function (TopUpBulkRequest $topup_bulk_request) {
-                return [
-                    'id' => $topup_bulk_request->id,
-                    'agent_id' => $topup_bulk_request->agent_id,
-                    'agent_type' => strtolower(class_basename($topup_bulk_request->agent_type)),
-                    'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->orders_count,
-                    'total_processed' => $topup_bulk_request->processed_orders_count,
-                ];
-            })->toArray();
-
-        return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
-    }
-
     /**
      * @param Request $request
      * @param $user
