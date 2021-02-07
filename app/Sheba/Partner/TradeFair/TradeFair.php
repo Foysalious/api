@@ -49,13 +49,13 @@ class TradeFair
     public function makeData($partners, $mapped_partner_business_type)
     {
         $converted_business_types = $this->convertPartnerBusinessType('bn');
-        $trade_fair_data = TradeFairModel::whereIn('partner_id', $partners)->with('partner.webstoreBanner')->get()->map(function ($shop) use ($mapped_partner_business_type, $converted_business_types) {
+        $trade_fair_data = TradeFairModel::whereIn('partner_id', $partners)->with('partner','partner.webstoreBanner')->get()->map(function ($shop) use ($mapped_partner_business_type, $converted_business_types) {
             return [
                 'stall_id' => $shop->stall_id,
                 'partner_id' => $shop->partner_id,
-                'partner_name' => $shop->name,
-                'delivery_charge' => $shop->delivery_charge,
-                'banner' =>  $shop->webstoreBanner ? [
+                'partner_name' => $shop->partner->name,
+                'delivery_charge' => $shop->partner->delivery_charge,
+                'banner' =>  $shop->partner->webstoreBanner ? [
                     'image_link' => $shop->webstoreBanner->banner->image_link,
                     'small_image_link' => $shop->webstoreBanner->banner->small_image_link,
                     'title'  => $shop->webstoreBanner->title,
