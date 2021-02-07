@@ -20,6 +20,7 @@ use Factory\ResourceFactory;
 use Factory\MemberFactory;
 use Factory\BusinessFactory;
 use Factory\BusinessMemberFactory;
+use Factory\BusinessHolidayFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -40,7 +41,8 @@ $factory_classes = [
     TopupBlacklistNumbersFactory::class
     PartnerSubscriptionPackageFactory::class
     BusinessFactory::class,
-    BusinessMemberFactory::class
+    BusinessMemberFactory::class,
+    BusinessHolidayFactory::class
 
 ];
 
