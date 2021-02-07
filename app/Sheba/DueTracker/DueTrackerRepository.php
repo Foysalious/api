@@ -454,7 +454,7 @@ class DueTrackerRepository extends BaseRepository
             'amount'        => $request->amount,
         ];
 
-        if ($request->type == 'due') {
+        if ($request->has('payment_link')) {
             $data['payment_link'] = $request->payment_link;
         }
         list($sms, $log) = $this->getSms($data);
@@ -522,5 +522,32 @@ class DueTrackerRepository extends BaseRepository
             ]
 
         ];
+    }
+
+    /**
+     * @param Request $request
+     * @param PaymentLinkCreator $paymentLinkCreator
+     * @return mixed
+     * @throws \Exception
+     */
+    public function createPaymentLink(Request $request, $paymentLinkCreator ) {
+        $purpose = 'Due Collection';
+        $customer = PosCustomer::find($request->customer_id);
+        $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
+            ->setReason($purpose)
+            ->setUserName($request->partner->name)
+            ->setUserId($request->partner->id)
+            ->setUserType('partner')
+            ->setTargetType('due_tracker')
+            ->setTargetId(1)
+            ->setPayerId($customer->id)
+            ->setPayerType('pos_customer')
+            ->save();
+
+        if ($payment_link_store) {
+            return $paymentLinkCreator->getPaymentLink();
+        }
+
+        throw new \Exception('payment link creation fail');
     }
 }

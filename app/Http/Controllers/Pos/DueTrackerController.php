@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\PartnerPosCustomer;
-use App\Models\PosCustomer;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -273,7 +272,7 @@ class DueTrackerController extends Controller
             $request->merge(['customer_id' => $customer_id]);
             $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
             if ($request->type == 'due') {
-                $request['payment_link'] = $this->createPaymentLink($request);
+                $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
             if(config('sms.is_on')) $dueTrackerRepository->sendSMS($request);
             return api_response($request, true, 200);
@@ -356,28 +355,5 @@ class DueTrackerController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
-    }
-
-    private function createPaymentLink($request)
-    {
-        $purpose = 'Due Collection';
-        $customer = PosCustomer::find($request->customer_id);
-        $payment_link_store = $this->paymentLinkCreator
-            ->setAmount($request->amount)
-            ->setReason($purpose)
-            ->setUserName($request->partner->name)
-            ->setUserId($request->partner->id)
-            ->setUserType('partner')
-            ->setTargetType('due_tracker')
-            ->setTargetId(1)
-            ->setPayerId($customer->id)
-            ->setPayerType('pos_customer')
-            ->save();
-
-        if ($payment_link_store) {
-            return $this->paymentLinkCreator->getPaymentLink();
-        }
-
-        throw new \Exception('payment link creation fail');
     }
 }
