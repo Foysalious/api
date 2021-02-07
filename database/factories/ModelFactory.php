@@ -35,7 +35,7 @@ $factory_classes = [
     CustomerFactory::class,
     ResourceFactory::class,
     MemberFactory::class,
-    TopupBlacklistNumbersFactory::class
+    TopupBlacklistNumbersFactory::class,
     PartnerSubscriptionPackageFactory::class
 
 ];
