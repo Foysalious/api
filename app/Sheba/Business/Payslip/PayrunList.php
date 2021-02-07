@@ -82,8 +82,8 @@ class PayrunList
                'id' =>  $playslip->id,
                'business_member_id' => $playslip->business_member_id,
                'department' => $playslip->businessMember->department()->name,
-               'gross_salary' => floatval($gross_salary[0]),
-               'net_payable' => floatval($gross_salary[0])
+               'gross_salary' => floatval($gross_salary),
+               'net_payable' => floatval($gross_salary)
             ]);
         }
         return $data;
@@ -91,6 +91,6 @@ class PayrunList
 
     private function getGrossSalary($business_member_id)
     {
-        return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary');
+        return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary', 'business_member_id')->first();
     }
 }
