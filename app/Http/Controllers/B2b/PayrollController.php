@@ -1,16 +1,20 @@
 <?php namespace App\Http\Controllers\B2b;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
 use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
-use Sheba\Dal\ApprovalSetting\ApprovalSetting;
-use Sheba\Dal\PayrollSetting\PayrollSetting;
+use App\Transformers\Business\PayrollSettingsTransformer;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
+use App\Transformers\CustomSerializer;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use League\Fractal\Resource\Item;
+use Illuminate\Http\JsonResponse;
+use App\Models\BusinessMember;
 use Sheba\ModificationFields;
+use Illuminate\Http\Request;
+use League\Fractal\Manager;
+use App\Models\Business;
 
 class PayrollController extends Controller
 {
@@ -21,6 +25,13 @@ class PayrollController extends Controller
     private $payrollSettingUpdater;
     private $payrollComponentUpdater;
 
+    /**
+     * PayrollController constructor.
+     * @param PayrollSettingRepository $payroll_setting_repository
+     * @param PayrollSettingRequester $payroll_setting_requester
+     * @param PayrollSettingUpdater $payroll_setting_updater
+     * @param PayrollComponentUpdater $payroll_component_updater
+     */
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollSettingRequester $payroll_setting_requester,
                                 PayrollSettingUpdater $payroll_setting_updater,
@@ -33,6 +44,10 @@ class PayrollController extends Controller
     }
 
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function getPayrollSettings(Request $request)
     {
         /** @var Business $business */
@@ -41,17 +56,21 @@ class PayrollController extends Controller
         $business_member = $request->business_member;
         /** @var PayrollSetting $payroll_setting */
         $payroll_setting = $business->payrollSetting;
-        $payroll_components = $payroll_setting->components;
-        $payroll_setting_data = [
 
-        ];
-        foreach ($payroll_components as $payroll_component){
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $member = new Item($payroll_setting, new PayrollSettingsTransformer());
+        $payroll_setting = $manager->createData($member)->toArray()['data'];
 
-        }
-
-        return api_response($request, null, 200);
+        return api_response($request, null, 200, ['payroll_setting' => $payroll_setting]);
     }
 
+    /**
+     * @param $business
+     * @param $payroll_setting
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function updatePaySchedule($business, $payroll_setting, Request $request)
     {
         $this->validate($request, [
@@ -69,6 +88,12 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
+    /**
+     * @param $business
+     * @param $payroll_setting
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function updateSalaryBreakdown($business, $payroll_setting, Request $request)
     {
         /** @var BusinessMember $business_member */
