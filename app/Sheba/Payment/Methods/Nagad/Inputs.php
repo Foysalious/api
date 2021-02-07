@@ -134,6 +134,10 @@ class Inputs
 
     static function orderID()
     {
-        return 'SHEBA' . time();
+        try {
+            return 'S' . time() . randomString(4, 1, 1);
+        } catch (\Exception $e) {
+            return 'SHEBA' . time();
+        }
     }
 }

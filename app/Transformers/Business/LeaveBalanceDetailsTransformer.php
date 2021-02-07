@@ -42,15 +42,8 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
     public function transform($business_member)
     {
 
-        $this->businessMember = $business_member->load([
-            'leaves' => function ($leave) {
-                return $leave->with([
-                    'leaveType' => function ($leave_type) {
-                        return $leave_type->withTrashed();
-                    }
-                ]);
-            }
-        ]);
+        $this->businessMember = $business_member;
+        $leavesInCurrentFiscalYear = $this->businessMember->getCurrentFiscalYearLeaves();
         /** @var Member $member */
         $member = $business_member->member;
         /** @var Profile $profile */
@@ -58,7 +51,7 @@ class LeaveBalanceDetailsTransformer extends TransformerAbstract
         /** @var BusinessRole $role */
         $role = $business_member->role;
         /** @var Leave $leaves */
-        $leaves = $business_member->leaves;
+        $leaves = $leavesInCurrentFiscalYear;
         /** @var Business $business */
         $business = $this->businessMember->business;
 

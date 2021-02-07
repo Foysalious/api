@@ -1,13 +1,16 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
@@ -15,10 +18,15 @@ use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 class ApprovalRequestTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
+
     /** @var Profile $profile */
     private $profile;
     /** @var Business $business */
     private $business;
+    /**
+     * @var string
+     */
+    private $requestableType;
 
     public function __construct(Profile $profile, Business $business)
     {
@@ -37,6 +45,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable);
         $business_member = $requestable->businessMember;
+
         return [
             'id' => $approval_request->id,
             'type' => Type::LEAVE,
@@ -44,6 +53,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'leave' => [
                 'id' => $requestable->id,
+                'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id,
                 'department' => $business_member->role->businessDepartment->name,
                 'title' => $requestable->title,
@@ -62,7 +72,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
                 'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
-                'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y') ,
+                'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note
             ],
@@ -73,14 +83,36 @@ class ApprovalRequestTransformer extends TransformerAbstract
     private function getApprover($requestable)
     {
         $approvers = [];
-        $requestable->requests->each(function ($approval_request) use (&$approvers) {
+        $all_approvers = [];
+        /** @var BusinessMember $leave_business_member */
+        $this->requestableType = ApprovalRequestType::getByModel($requestable);
+        $requestable_business_member = $requestable->businessMember;
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
+        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
+        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
+        $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
+
+        foreach ($requestable->requests as $approval_request) {
+            $business_member = $approval_request->approver;
+            $member = $business_member->member;
+            $profile = $member->profile;
+            array_push($approvers, [
+                'name' => $profile->name,
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+            ]);
+        }
+        $all_approvers = array_merge($approvers, $default_approvers);
+
+        return $all_approvers;
+        /*$requestable->requests->each(function ($approval_request) use (&$approvers) {
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
             $profile = $member->profile;
             $approvers[] = $this->approvarWithStatus($approval_request, $profile);
 
         });
-        return $approvers;
+        return $approvers;*/
     }
 
     /**

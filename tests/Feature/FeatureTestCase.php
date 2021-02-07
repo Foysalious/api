@@ -75,6 +75,7 @@ class FeatureTestCase extends TestCase
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
+
     }
 
     private function createAccounts()
@@ -90,15 +91,22 @@ class FeatureTestCase extends TestCase
         ]);
 
         $this->profile = factory(Profile::class)->create();
+        $this->createClientAccounts();
+
+    }
+
+    private function createClientAccounts()
+    {
+
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        $this->resource = factory(Resource::class)->create([
+        /*$this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
-        ]);
+        ]);*/
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -108,6 +116,30 @@ class FeatureTestCase extends TestCase
             'member_id' => $this->member->id
         ]);
     }
+
+    private function createAccountWithMobileNEmail($mobile,$email=null)
+    {
+        $this->profile = factory(Profile::class)->create([
+
+            'mobile' =>$mobile,
+            'email' =>$email,
+
+        ]);
+
+
+
+        $this->createClientAccounts();
+    }
+
+
+    protected function logInWithMobileNEmail($mobile,$email=null)
+    {
+        $this->createAccountWithMobileNEmail($mobile,$email);
+        $this->token = $this->generateToken();
+        $this->createAuthTables();
+
+    }
+
 
     protected function generateToken()
     {
@@ -122,9 +154,7 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => [
-                'id' => $this->resource->id
-            ],
+            'resource' => null,
             'member' => [
                 'id' => $this->member->id
             ],

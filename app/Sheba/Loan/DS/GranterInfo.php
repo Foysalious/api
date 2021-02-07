@@ -31,15 +31,20 @@ class GranterInfo
             unset($data['net_worth']);
         }
         $data['mobile'] = formatMobile($data['mobile']);
-        $profile        = Profile::where('mobile', $data['mobile'])->first();
-        if (!empty($profile))
-            return $profile;
+        $profile        = $this->checkProfile($data['mobile']);
+        if (!empty($profile)) return $profile;
         $profile                 = new Profile($data);
         $profile->remember_token = str_random(255);
         $this->withCreateModificationField($profile);
+        if(!empty($this->checkProfile($profile->mobile))) return $profile;
         $profile->save();
         return $profile;
     }
 
     protected function update() { }
+
+    private function checkProfile($mobile)
+    {
+        return Profile::where('mobile', $mobile)->first();
+    }
 }

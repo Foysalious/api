@@ -2,12 +2,14 @@
 
 use Factory\Factory;
 use Factory\CategoryFactory;
+use Factory\PartnerSubscriptionPackageFactory;
 use Factory\ServiceFactory;
 use Factory\LocationFactory;
 use Factory\ProfileFactory;
 use Factory\AffiliateFactory;
 use Factory\AuthorizationRequestFactory;
 use Factory\AuthorizationTokenFactory;
+use Factory\TopupBlacklistNumbersFactory;
 use Factory\TopUpVendorFactory;
 use Factory\TopUpVendorCommissionFactory;
 use Factory\TopUpOTFSettingsFactory;
@@ -35,6 +37,8 @@ $factory_classes = [
     CustomerFactory::class,
     ResourceFactory::class,
     MemberFactory::class,
+    TopupBlacklistNumbersFactory::class
+    PartnerSubscriptionPackageFactory::class
     BusinessFactory::class,
     BusinessMemberFactory::class
 

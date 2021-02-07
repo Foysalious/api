@@ -42,6 +42,7 @@ abstract class Handler
                 'message' => $this->exception->getMessage(),
                 'file' => $this->exception->getFile(),
                 'line' => $this->exception->getLine(),
+                // 'trace' => $this->exception->getTrace()
             ];
         }
         return response()->json($response);

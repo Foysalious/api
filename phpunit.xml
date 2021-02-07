@@ -25,6 +25,6 @@
         <env name="DB_DATABASE" value="sheba_testing"/>
     </php>
     <logging>
-        <log type="junit" target="results/phpunit/logfile.xml" logIncompleteSkipped="true"/>
+        <log type="junit" target="results/phpunit/api-test-result.xml" logIncompleteSkipped="true"/>
     </logging>
 </phpunit>

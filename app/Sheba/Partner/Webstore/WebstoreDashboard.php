@@ -56,6 +56,9 @@ class WebstoreDashboard
         $order_stats['pending_order'] = $this->partner->posOrders()->webstoreOrders()->pending()->count();
         $order_stats['processing_order'] = $this->partner->posOrders()->webstoreOrders()->processing()->count();
         $order_stats['shipped_order'] = $this->partner->posOrders()->webstoreOrders()->shipped()->count();
+        $order_stats['completed_order'] = $this->partner->posOrders()->webstoreOrders()->completed()->count();
+        $order_stats['declined_order'] = $this->partner->posOrders()->webstoreOrders()->declined()->count();
+        $order_stats['cancelled_order'] = $this->partner->posOrders()->webstoreOrders()->cancelled()->count();
         return $order_stats;
     }
 
