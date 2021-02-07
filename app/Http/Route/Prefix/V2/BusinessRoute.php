@@ -358,6 +358,9 @@ class BusinessRoute
                 $api->group(['prefix' => 'payrun'], function ($api) {
                     $api->get('/', 'B2b\PayrunController@index');
                 });
+                $api->group(['prefix' => 'payreport'], function ($api) {
+                    $api->get('/', 'B2b\PayreportController@index');
+                });
                 $api->group(['prefix' => 'payroll'], function ($api) {
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
                     $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
