@@ -63,16 +63,16 @@ class ServiceGroupController extends Controller
                 $services = [];
                 $service_group->services->load('category.parent');
                 foreach ($service_group->services as $service) {
-                    $service_variable = $service->flashPrice();
+                    //$service_variable = $service->flashPrice();
                     $service = [
                         'master_category_id' => $service->category->parent->id,
                         'category_name' => $service->category->parent->name,
                         "id" => $service->id,
                         "service_name" => $service->name,
                         'image' => $service->app_thumb,
-                        "original_price" => $service_variable['price'],
-                        "discounted_price" => $service_variable['discounted_price'],
-                        "discount" => $service_variable['discount'],
+                        "original_price" => 1000,
+                        "discounted_price" => 500,
+                        "discount" => 50,
                         'total_stock' => (int)$service->stock,
                         'stock_left' => (int)$service->stock_left
                     ];
