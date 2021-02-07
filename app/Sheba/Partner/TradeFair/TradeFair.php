@@ -56,10 +56,10 @@ class TradeFair
                 'partner_name' => $shop->partner->name,
                 'delivery_charge' => $shop->partner->delivery_charge,
                 'banner' =>  $shop->partner->webstoreBanner ? [
-                    'image_link' => $shop->webstoreBanner->banner->image_link,
-                    'small_image_link' => $shop->webstoreBanner->banner->small_image_link,
-                    'title'  => $shop->webstoreBanner->title,
-                    'description' => $shop->webstoreBanner->description
+                    'image_link' => $shop->partner->webstoreBanner->banner->image_link,
+                    'small_image_link' => $shop->partner->webstoreBanner->banner->small_image_link,
+                    'title'  => $shop->partner->webstoreBanner->title,
+                    'description' => $shop->partner->webstoreBanner->description
                 ] : null,
                 'description' => $shop->description,
                 'discount' => $shop->discount,
