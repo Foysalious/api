@@ -75,9 +75,10 @@ class OrderController extends Controller
     /**
      * @param Request $request
      * @param PosOrderRepo $posOrder
+     * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
-    public function show(Request $request, PosOrderRepo $posOrder)
+    public function show(Request $request, PosOrderRepo $posOrder, PaymentLinkTransformer $payment_link)
     {
         /** @var PosOrder $order */
         $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->withTrashed()->find($request->order);
@@ -90,9 +91,9 @@ class OrderController extends Controller
         $order    = $manager->createData($resource)->toArray();
         if (array_key_exists('payment_link_target', $order['data'])) {
             $payment_link_target[] = $order['data']['payment_link_target'];
-            $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
+            $payment_link_data = $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
+            (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
         }
-
         return api_response($request, null, 200, ['order' => $order]);
     }
 
