@@ -110,7 +110,10 @@ class IndexRoute
                     });
                 });
                 $api->resources(['customers' => 'Pos\CustomerController']);
-                $api->get('settings', 'Pos\SettingController@getSettings');
+                $api->group(['prefix' => 'settings'], function ($api) {
+                    $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->post('/', 'Pos\SettingController@storePosSetting');
+                });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
                 $api->group(['prefix' => 'reports'], function ($api) {
                     $api->get('product-wise', 'Pos\ReportsController@product');
@@ -149,6 +152,8 @@ class IndexRoute
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
+                $api->get('/all-packages', 'Partner\PartnerSubscriptionController@allPackages');
+                $api->get('/current-package', 'Partner\PartnerSubscriptionController@currentPackage');
                 $api->post('/', 'Partner\PartnerSubscriptionController@store');
                 $api->post('/upgrade', 'Partner\PartnerSubscriptionController@update');
                 $api->post('/purchase', 'Partner\PartnerSubscriptionController@purchase');
@@ -271,7 +276,7 @@ class IndexRoute
             });
             $api->group(['prefix' => 'withdrawals'], function ($api) {
                 $api->get('/', 'Partner\\PartnerWithdrawalRequestV2Controller@index');
-                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store');
+                $api->post('/', 'Partner\\PartnerWithdrawalRequestV2Controller@store')->middleware('apiRequestLog');
                 $api->put('{withdrawals}', 'Partner\\PartnerWithdrawalRequestV2Controller@update');
                 $api->get('{withdrawals}/cancel', 'Partner\\PartnerWithdrawalRequestV2Controller@cancel');
                 $api->post('bank-info', 'Partner\\PartnerWithdrawalRequestV2Controller@storeBankInfo');

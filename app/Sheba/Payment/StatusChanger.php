@@ -36,6 +36,7 @@ class StatusChanger
         ]);
         $this->payment->status = Statuses::INITIATION_FAILED;
         $this->payment->transaction_details = $error_details;
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }
@@ -53,6 +54,7 @@ class StatusChanger
         ]);
         $this->payment->status = Statuses::VALIDATED;
         $this->payment->transaction_details = $success_details;
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }
@@ -70,6 +72,7 @@ class StatusChanger
         ]);
         $this->payment->status = Statuses::VALIDATION_FAILED;
         $this->payment->transaction_details = $error_details;
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->update();
         return $this->payment;
     }

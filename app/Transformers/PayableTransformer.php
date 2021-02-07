@@ -23,7 +23,7 @@ class PayableTransformer extends TransformerAbstract
                 ]
             ],
             "note" => $payable['note'],
-            "created_at" => Carbon::parse($payable['created_at'])->format('Y-m-d h:s:i A')
+            "created_at" => Carbon::parse($payable['created_at'])->format('Y-m-d h:i:s A')
         ];
     }
 }

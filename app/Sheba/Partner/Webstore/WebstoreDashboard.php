@@ -3,6 +3,7 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Pos\Repositories\PosOrderRepository;
 
@@ -55,6 +56,9 @@ class WebstoreDashboard
         $order_stats['pending_order'] = $this->partner->posOrders()->webstoreOrders()->pending()->count();
         $order_stats['processing_order'] = $this->partner->posOrders()->webstoreOrders()->processing()->count();
         $order_stats['shipped_order'] = $this->partner->posOrders()->webstoreOrders()->shipped()->count();
+        $order_stats['completed_order'] = $this->partner->posOrders()->webstoreOrders()->completed()->count();
+        $order_stats['declined_order'] = $this->partner->posOrders()->webstoreOrders()->declined()->count();
+        $order_stats['cancelled_order'] = $this->partner->posOrders()->webstoreOrders()->cancelled()->count();
         return $order_stats;
     }
 
@@ -67,7 +71,7 @@ class WebstoreDashboard
 
         });
         $webstore_sales_count = $webstore_orders->count();
-        $webstore_sales = $webstore_orders->sum('sale');
+        $webstore_sales = $webstore_orders->where('status', OrderStatuses::COMPLETED)->sum('sale');
 
         $sales_stats['total_order'] = $webstore_sales_count;
         $sales_stats['total_sales'] = $webstore_sales;

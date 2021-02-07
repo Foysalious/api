@@ -178,7 +178,7 @@ class JobList
     {
         $jobs->load(['partnerOrder' => function ($q) {
             $q->with(['order' => function ($q) {
-                $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile')->with(['deliveryAddress' => function ($q) {
+                $q->select('id', 'sales_channel', 'delivery_address_id', 'delivery_mobile', 'business_id')->with(['deliveryAddress' => function ($q) {
                     $q->select('id', 'name', 'address', 'mobile', 'location_id')->with(['location' => function ($q) {
                         $q->select('id', 'name');
                     }]);
@@ -226,14 +226,48 @@ class JobList
             $formatted_job->put('schedule_date', $job->schedule_date);
             $formatted_job->put('schedule_date_time', Carbon::parse($job->schedule_date . ' ' . $job->preferred_time_start)->toDateTimeString());
             $formatted_job->put('closed_at_date', $job->partnerOrder->closed_at != null ? $job->partnerOrder->closed_at->format('Y-m-d') : null);
+
+            $formatted_job->put('due', (double) $job->partnerOrder->due);
+            $formatted_job->put('has_pending_due', $this->hasDueJob($job) ? 1 : 0);
             $formatted_job->put('can_process', 0);
             $formatted_job->put('can_serve', 0);
             $formatted_job->put('can_collect', 0);
-            $formatted_job->put('due', 0);
-            if ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job)) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
+            $latest_pending_due_of_partner = $this->latestDueJob($job);
+            $formatted_job->put('pending_due', $latest_pending_due_of_partner
+                ? [
+                    'resource_id' => $latest_pending_due_of_partner->resource_id,
+                    'job_id' => $latest_pending_due_of_partner->id
+                ]
+                : null
+            );
+
+            $formatted_job->put('is_b2b', $this->isB2BJob($job) ? 1 : 0);
+            if ($this->isB2BJob($job) || ($this->firstJobFromList && $this->shouldICheckActions($this->firstJobFromList, $job))) $formatted_job = $this->actionCalculator->calculateActionsForThisJob($formatted_job, $job);
             $formatted_jobs->push($formatted_job);
         }
         return $formatted_jobs;
+    }
+
+    private function isB2BJob($job)
+    {
+        return $job->partnerOrder->order->sales_channel === 'B2B';
+    }
+
+    private function hasDueJob($job)
+    {
+        return $job->partnerOrder->cancelled_at === null
+            && $job->partnerOrder->closed_at !== null
+            && $job->partnerOrder->closed_and_paid_at == null;
+    }
+
+    private function latestDueJob($job)
+    {
+        $partner = $job->partnerOrder->partner;
+        if(!$partner) return null;
+        $partner_order = $partner->partnerOrders()->NotB2bOrder()->closedButNotPaid()->notCancelled()->first();
+        if(empty($partner_order)) return null;
+        if($partner_order->getActiveJob()->id === $job->id) return null;
+        return $partner_order->getActiveJob();
     }
 
 
@@ -299,14 +333,17 @@ class JobList
     public function getNextJobsInfo()
     {
         $jobs = $this->jobRepository->getOngoingJobsForResource($this->resource->id)->tillNow()->get();
+        $jobs = $jobs->filter(function ($job) {
+            return $job->partnerOrder->order->sales_channel !== 'B2B';
+        });
         $jobs = $this->loadNecessaryRelations($jobs);
         $jobs = $this->rearrange->rearrange($jobs);
         if (count($jobs) == 0) return null;
         $this->setFirstJobFromList($jobs->first());
         $next_jobs_count = $jobs->where('schedule_date', $this->firstJobFromList->schedule_date)
             ->where('preferred_time', $this->firstJobFromList->preferred_time)->count();
-        $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
         if ($next_jobs_count == 0) return null;
+        $preferred_time = Carbon::parse($this->firstJobFromList->preferred_time_start)->format('h:i A') . ' - ' . Carbon::parse($this->firstJobFromList->preferred_time_end)->format('h:i A');
         return ['preferred_time' => $preferred_time, 'jobs_count' => $next_jobs_count];
     }
 }

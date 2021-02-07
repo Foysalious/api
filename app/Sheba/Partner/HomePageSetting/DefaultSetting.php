@@ -24,8 +24,8 @@ class DefaultSetting
         ];
         $online_sheba = [
             "key" => "online_sheba",
-            "name_en" => "Online Sheba",
-            "name_bn" => "অনলাইন বিক্রি",
+            "name_en" => "Online Store",
+            "name_bn" => "অনলাইন স্টোর",
             "is_on_homepage" => 1
         ];
 

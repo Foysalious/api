@@ -45,16 +45,16 @@ class WebstoreOrderSmsHandler
      */
     private function getSms() {
         if ($this->order->status == OrderStatuses::PROCESSING) {
-            $sms = (new SmsHandlerRepo('pos-order-accept-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
+            $sms = (new SmsHandlerRepo('pos-order-accept-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
         } elseif ($this->order->status == OrderStatuses::CANCELLED || $this->order->status == OrderStatuses::DECLINED) {
-            $sms = (new SmsHandlerRepo('pos-order-cancelled-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
+            $sms = (new SmsHandlerRepo('pos-order-cancelled-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
         } elseif ($this->order->status == OrderStatuses::SHIPPED) {
-            $sms = (new SmsHandlerRepo('pos-order-shipped-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
+            $sms = (new SmsHandlerRepo('pos-order-shipped-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
         } elseif ($this->order->status == OrderStatuses::COMPLETED) {
-            $sms = (new SmsHandlerRepo('pos-order-delivered-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->id]);
+            $sms = (new SmsHandlerRepo('pos-order-delivered-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage(['order_id' => $this->order->partner_wise_order_id]);
         } else {
             $sms = (new SmsHandlerRepo('pos-order-place-customer'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
-                'order_id' => $this->order->id,
+                'order_id' => $this->order->partner_wise_order_id,
                 'net_bill' => $this->order->getNetBill(),
                 'payment_status' => $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া'
             ]);
