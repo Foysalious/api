@@ -171,4 +171,9 @@ class CustomerController extends Controller
         return 0;
 
     }
+    public function getProfileCompletion($customer,Request $request)
+    {
+        dd($request->all());
+        $customer = $request->customer;
+    }
 }
