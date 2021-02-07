@@ -198,7 +198,6 @@ class TopUpController extends Controller
      * @param VendorFactory $vendor
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
-     * @param TopUpExcelDataFormatError $top_up_excel_data_format_error
      * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
      * @throws Exception
@@ -260,7 +259,7 @@ class TopUpController extends Controller
                 return;
             }
 
-            dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
+            dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $key + 2, $total, $bulk_request));
         });
 
         unlink($file_path);

@@ -18,6 +18,7 @@ class ReadExcelAndProcessData
     private $filePath;
     /** @var TopUpAgent $agent */
     private $agent;
+    private $fileExt;
 
     /**
      * @param TopUpAgent $agent
@@ -36,7 +37,8 @@ class ReadExcelAndProcessData
     public function setExcel(UploadedFile $file): ReadExcelAndProcessData
     {
         $file = Excel::selectSheets(TopUpExcel::SHEET)->load($file)->save();
-        $this->filePath = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
+        $this->fileExt = $file->ext;
+        $this->filePath = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $this->fileExt;
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($this->filePath, function (LaravelExcelReader $reader) {
             $reader->formatDates(false)->ignoreEmpty();
         })->get();
@@ -79,7 +81,7 @@ class ReadExcelAndProcessData
      */
     public function saveTopupFileToCDN(): string
     {
-        $file_name = Carbon::now()->timestamp . "_bulk_topup_excel_". strtolower(class_basename($this->agent)) . "_" . $this->agent->id . ".xlsx";
+        $file_name = Carbon::now()->timestamp . "_bulk_topup_excel_". strtolower(class_basename($this->agent)) . "_" . $this->agent->id . "." . $this->fileExt;
         return $this->saveFileToCDN($this->filePath, getBulkTopUpFolder(), $file_name);
     }
 }
