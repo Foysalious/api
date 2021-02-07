@@ -150,6 +150,8 @@ class IndexRoute
             $api->group(['prefix'=>'top-up'],function($api){
                 $api->get('/history', 'TopUp\\TopUpController@topUpHistory');
             });
+            $api->post('top-up-otf', 'TopUpController@topUpOTF');
+            $api->post('top-up-otf-details', 'TopUpController@topUpOTFDetails');
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/', 'Partner\PartnerSubscriptionController@index');
