@@ -40,7 +40,9 @@ class PayreportController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $payslip = $payreportlist->setBusiness($business)->get();
+        $payslip = $payreportlist->setBusiness($business)
+            ->setSearch($request->search)
+            ->get();
 
         $count = count($payslip);
 

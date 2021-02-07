@@ -21,6 +21,7 @@ class PayreportList
      * @var SalaryRepository
      */
     private $SalaryRepository;
+    private $search;
 
     /**
      * PayrunList constructor.
@@ -38,6 +39,16 @@ class PayreportList
     public function setBusiness(Business $business)
     {
         $this->business = $business;
+        return $this;
+    }
+
+    /**
+     * @param $search
+     * @return $this
+     */
+    public function setSearch($search)
+    {
+        $this->search = $search;
         return $this;
     }
 
@@ -93,12 +104,26 @@ class PayreportList
                 'net_payable' => floatval($gross_salary[0])
             ]);
         }
+        if ($this->search)
+            $data = collect($this->searchWithEmployeeName($data))->values();
+
         return $data;
     }
 
     private function getGrossSalary($business_member_id)
     {
         return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary');
+    }
+
+    /**
+     * @param $data
+     * @return array
+     */
+    private function searchWithEmployeeName($data)
+    {
+        return array_where($data, function ($key, $value) {
+            return str_contains(strtoupper($value['employee_name']), strtoupper($this->search));
+        });
     }
 
 }
