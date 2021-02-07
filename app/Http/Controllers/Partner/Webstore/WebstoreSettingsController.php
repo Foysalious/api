@@ -70,7 +70,7 @@ class WebstoreSettingsController extends Controller
             $partner_banner_setting = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
             if (!$partner_banner_setting) {
                 PartnerWebstoreBanner::create($this->withCreateModificationField([
-                    'banner_id' => WebstoreBanner::first()->id,
+                    'banner_id' => config('partner.webstore_default_banner_id'),
                     'partner_id' => $partner_id,
                     'title' => '',
                     'description' => '',
