@@ -72,9 +72,9 @@ class WebstoreSettingsController extends Controller
                 PartnerWebstoreBanner::create($this->withCreateModificationField([
                     'banner_id' => WebstoreBanner::first()->id,
                     'partner_id' => $partner_id,
-                    'title' => 'Sample title',
-                    'description' => 'this is your sample description',
-                    'is_published' => 0
+                    'title' => '',
+                    'description' => '',
+                    'is_published' => 1
                 ]));
             }
         }
