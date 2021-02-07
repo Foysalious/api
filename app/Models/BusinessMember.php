@@ -9,6 +9,7 @@ use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\BusinessMemberLeaveType\Model as BusinessMemberLeaveType;
+use Sheba\Dal\Salary\Salary;
 use Sheba\Helpers\TimeFrame;
 use Sheba\Business\BusinessMember\Events\BusinessMemberCreated;
 use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
@@ -45,6 +46,11 @@ class BusinessMember extends Model
     public function role()
     {
         return $this->belongsTo(BusinessRole::class, 'business_role_id');
+    }
+
+    public function salary()
+    {
+        return $this->hasOne(Salary::class);
     }
 
     public function department()

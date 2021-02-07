@@ -1,15 +1,19 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
+use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdown;
 use League\Fractal\TransformerAbstract;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
+    private $business;
     private $isInactiveFilterApplied;
 
-    public function __construct($is_inactive_filter_applied)
+    public function __construct(Business $business, $is_inactive_filter_applied)
     {
+        $this->business = $business;
         $this->isInactiveFilterApplied = $is_inactive_filter_applied;
     }
 
@@ -20,12 +24,14 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     public function transform(Member $member)
     {
         $business_member = ($this->isInactiveFilterApplied) ? $member->businessMemberGenerated : $member->businessMember;
+
         return [
             'basic_info' => $this->getBasicInfo($member, $business_member),
             'official_info' => $this->getOfficialInfo($business_member),
             'personal_info' => $this->getPersonalInfo($business_member),
             'financial_info' => $this->getFinancialInfo($member),
             'emergency_info' => $this->getEmergencyInfo($member),
+            'salary_info' => $this->getSalaryInfo($business_member),
             'profile_completion' => $this->profileCompletion($member, $business_member),
         ];
     }
@@ -44,7 +50,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         if ($profile->email) $count++;
         if ($department) $count++;
         if ($designation) $count++;
-        $basic_info_completion = round((($count / 4) * 20), 0);
+        $basic_info_completion = round((($count / 4) * 17), 0);
         return [
             'id' => $member->id,
             'status' => $business_member->status,
@@ -71,7 +77,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $business_member->grade ||
             $business_member->employee_type ||
             $business_member->previous_institution) $count++;
-        $official_info_completion = round((($count / 1) * 20), 0);
+        $official_info_completion = round((($count / 1) * 17), 0);
 
         return [
             'employee_id' => $business_member->employee_id,
@@ -96,7 +102,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $profile->nid_image_front ||
             $profile->nid_image_back) $count++;
 
-        $personal_info_completion = round((($count / 1) * 20), 0);
+        $personal_info_completion = round((($count / 1) * 17), 0);
 
         return [
             'mobile' => $business_member->mobile,
@@ -127,7 +133,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $bank_name ||
             $account_no) $count++;
 
-        $financial_info_completion = round((($count / 1) * 20), 0);
+        $financial_info_completion = round((($count / 1) * 17), 0);
 
         return [
             'tin_no' => $profile->tin_no,
@@ -146,7 +152,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $member->emergency_contract_person_number ||
             $member->emergency_contract_person_relationship) $count++;
 
-        $emergency_info_completion = round((($count / 1) * 20), 0);
+        $emergency_info_completion = round((($count / 1) * 17), 0);
 
         return [
             'emergency_contract_person_name' => $member->emergency_contract_person_name,
@@ -154,6 +160,21 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'emergency_contract_person_relationship' => $member->emergency_contract_person_relationship,
             'emergency_info_completion' => $emergency_info_completion
         ];
+    }
+
+    private function getSalaryInfo($business_member)
+    {
+        $payroll_setting = $this->business->payrollSetting;
+        $gross_salary_breakdown = (new GrossSalaryBreakdown())->salaryBreakdown($payroll_setting);
+
+        $count = 0;
+        $salary = $business_member->salary;
+        if ($salary && $salary->gross_salary) $count++;
+        $salary_completion = round((($count / 1) * 17), 0);
+        $gross_salary_breakdown['gross_salary'] = $salary ? $salary->gross_salary : null;
+        $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
+
+        return $gross_salary_breakdown;
     }
 
     private function profileCompletion($member, $business_member)
@@ -164,14 +185,16 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $personal_info_completion = $this->getPersonalInfo($business_member)['personal_info_completion'];
         $financial_info_completion = $this->getFinancialInfo($member)['financial_info_completion'];
         $emergency_info_completion = $this->getEmergencyInfo($member)['emergency_info_completion'];
+        $gross_salary_info_completion = $this->getSalaryInfo($business_member)['gross_salary_completion'];
 
         if ($basic_info_completion) $count++;
         if ($official_info_completion) $count++;
         if ($personal_info_completion) $count++;
         if ($financial_info_completion) $count++;
         if ($emergency_info_completion) $count++;
+        if ($gross_salary_info_completion) $count++;
 
-        return round((($count / 5) * 100), 0);
+        return round((($count / 6) * 100), 0);
     }
 
     private function getManagerDetails($manager_id)
