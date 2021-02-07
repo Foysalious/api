@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
+use Sheba\ModificationFields;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
 use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
@@ -45,6 +46,8 @@ use Firebase\JWT\JWT;
 
 class TopUpController extends Controller
 {
+    use ModificationFields;
+
     public function getVendor(Request $request)
     {
         try {
@@ -207,6 +210,8 @@ class TopUpController extends Controller
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
 
         $agent = $request->user;
+        $this->setModifier($agent);
+
         $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
             ->setRequest($request)
@@ -215,9 +220,7 @@ class TopUpController extends Controller
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
         $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
-        $validator
-            ->linkWith(new SheetNameValidator())
-            ->linkWith($data_validator);
+        $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 
         $bulk_request = $this->storeBulkRequest($agent);
@@ -243,7 +246,8 @@ class TopUpController extends Controller
                 ->setBulkId($bulk_request->id)
                 ->setMobile(BDMobileFormatter::format($value->$mobile_field))
                 ->setAmount($value->$amount_field)
-                ->setAgent($agent)->setVendorId($vendor_id)
+                ->setAgent($agent)
+                ->setVendorId($vendor_id)
                 ->setName($value->$name_field);
 
             $topup_order = $creator->setTopUpRequest($request)->create();
@@ -275,31 +279,41 @@ class TopUpController extends Controller
         $topup_bulk_request->agent_id = $agent->id;
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
         $topup_bulk_request->status = RequestStatus::PENDING;
+        $this->withCreateModificationField($topup_bulk_request);
         $topup_bulk_request->save();
 
         return $topup_bulk_request;
     }
 
-    public function getFullAgentType($type)
+    /**
+     * @param $type
+     * @return string
+     */
+    public function getFullAgentType($type): string
     {
         $agent = '';
 
-        if ($type == 'customer') $agent = "App\\Models\\Customer"; elseif ($type == 'partner') $agent = "App\\Models\\Partner";
+        if ($type == 'customer') $agent = "App\\Models\\Customer";
+        elseif ($type == 'partner') $agent = "App\\Models\\Partner";
         elseif ($type == 'business') $agent = "App\\Models\\Business";
         elseif ($type == 'Company') $agent = "App\\Models\\Business";
 
         return $agent;
     }
 
+    /**
+     * @param $request_id
+     * @param $mobile
+     * @param $vendor_id
+     */
     public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
     {
         $topup_bulk_request = new TopUpBulkRequestNumber();
         $topup_bulk_request->topup_bulk_request_id = $request_id;
         $topup_bulk_request->mobile = $mobile;
         $topup_bulk_request->vendor_id = $vendor_id;
+        $this->withCreateModificationField($topup_bulk_request);
         $topup_bulk_request->save();
-
-        return $topup_bulk_request->id;
     }
 
     public function activeBulkTopUps(Request $request)
