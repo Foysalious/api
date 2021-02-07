@@ -551,7 +551,7 @@ class CoWorkerController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $member = new Item($member, new CoWorkerDetailTransformer($is_inactive_filter_applied));
+        $member = new Item($member, new CoWorkerDetailTransformer($business, $is_inactive_filter_applied));
         $employee = $manager->createData($member)->toArray()['data'];
 
         if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);
