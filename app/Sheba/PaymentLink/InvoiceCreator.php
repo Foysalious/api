@@ -66,8 +66,8 @@ class InvoiceCreator
                 'grand_total' => $pos_order->getTotalBill(),
                 'paid' => $pos_order->getPaid(), 'due' => $pos_order->getDue(),
                 'status' => $pos_order->getPaymentStatus(),
-                'vat' => $pos_order->getTotalVat()] : null,
-                'delivery_charge' => $pos_order->delivery_charge
+                'vat' => $pos_order->getTotalVat(),
+                'delivery_charge' => $pos_order->delivery_charge] : null
         ];
 
         return $pdf_handler->setData($info)->setName($this->payment->transaction_id)->setViewFile('transaction_invoice')->save();
