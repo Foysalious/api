@@ -93,7 +93,11 @@ class OrderController extends Controller
         if (array_key_exists('payment_link_target', $order['data'])) {
             $payment_link_target[] = $order['data']['payment_link_target'];
             $payment_link_data = $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
-            (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
+            if($payment_link_data)
+            {
+                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
+                unset($order['payment_link_target']);
+            }
         }
         return api_response($request, null, 200, ['order' => $order]);
     }
