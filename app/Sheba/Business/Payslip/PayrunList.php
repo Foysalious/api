@@ -5,6 +5,7 @@ use App\Models\Business;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Salary\SalaryRepository;
+use Sheba\Dal\Payslip\Status;
 
 class PayrunList
 {
@@ -54,6 +55,7 @@ class PayrunList
         $business_member_ids = $this->getBusinessMemberIds();
         $payslip = $this->PayslipRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
+            ->where('status', Status::PENDING)
             ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
                     $q->with(['role' => function ($q) {
                         $q->select('business_roles.id', 'business_department_id', 'name')->with([
