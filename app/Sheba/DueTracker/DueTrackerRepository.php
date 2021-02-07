@@ -448,13 +448,17 @@ class DueTrackerRepository extends BaseRepository
      */
     public function sendSMS(Request $request)
     {
-        if(!config('sms.is_on')) return;
+//        if(!config('sms.is_on')) return;
+
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
         $data = $this->setSmsData($request, $customer);
+        if ($request->has('payment_link')) {
+            $data['payment_link'] = $request->payment_link;
+        }
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
@@ -531,5 +535,32 @@ class DueTrackerRepository extends BaseRepository
             'amount'        => $request->amount,
             'payment_link'  => $request->type == 'due' ? $request->payment_link : null
         ];
+    }
+    
+    /**
+     * @param Request $request
+     * @param PaymentLinkCreator $paymentLinkCreator
+     * @return mixed
+     * @throws \Exception
+     */
+    public function createPaymentLink(Request $request, $paymentLinkCreator ) {
+        $purpose = 'Due Collection';
+        $customer = PosCustomer::find($request->customer_id);
+        $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
+            ->setReason($purpose)
+            ->setUserName($request->partner->name)
+            ->setUserId($request->partner->id)
+            ->setUserType('partner')
+            ->setTargetType('due_tracker')
+            ->setTargetId(1)
+            ->setPayerId($customer->id)
+            ->setPayerType('pos_customer')
+            ->save();
+
+        if ($payment_link_store) {
+            return $paymentLinkCreator->getPaymentLink();
+        }
+
+        throw new \Exception('payment link creation fail');
     }
 }
