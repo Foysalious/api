@@ -42,6 +42,8 @@ class PayreportController extends Controller
 
         $payslip = $payreportlist->setBusiness($business)
             ->setSearch($request->search)
+            ->setSortKey($request->sort)
+            ->setSortColumn($request->sort_column)
             ->get();
 
         $count = count($payslip);

@@ -22,6 +22,8 @@ class PayreportList
      */
     private $SalaryRepository;
     private $search;
+    private $sortColumn;
+    private $sort;
 
     /**
      * PayrunList constructor.
@@ -49,6 +51,26 @@ class PayreportList
     public function setSearch($search)
     {
         $this->search = $search;
+        return $this;
+    }
+
+    /**
+     * @param $sort
+     * @return $this
+     */
+    public function setSortKey($sort)
+    {
+        $this->sort = $sort;
+        return $this;
+    }
+
+    /**
+     * @param $column
+     * @return $this
+     */
+    public function setSortColumn($column)
+    {
+        $this->sortColumn = $column;
         return $this;
     }
 
@@ -81,6 +103,7 @@ class PayreportList
                     ]);
                 }]);
             }]);
+
         $this->playslipList = $payslip->get();
     }
 
@@ -100,19 +123,23 @@ class PayreportList
                 'employee_name' => $playslip->businessMember->member->profile->name,
                 'business_member_id' => $playslip->business_member_id,
                 'department' => $playslip->businessMember->department()->name,
-                'gross_salary' => floatval($gross_salary[0]),
-                'net_payable' => floatval($gross_salary[0])
+                'gross_salary' => floatval($gross_salary),
+                'net_payable' => floatval($gross_salary)
             ]);
         }
         if ($this->search)
             $data = collect($this->searchWithEmployeeName($data))->values();
+
+        if ($this->sort && $this->sortColumn) {
+            $data = $this->sortByColumn($data, $this->sortColumn, $this->sort)->values();
+        }
 
         return $data;
     }
 
     private function getGrossSalary($business_member_id)
     {
-        return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary');
+        return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary', 'business_member_id')->first();
     }
 
     /**
@@ -123,6 +150,14 @@ class PayreportList
     {
         return array_where($data, function ($key, $value) {
             return str_contains(strtoupper($value['employee_name']), strtoupper($this->search));
+        });
+    }
+
+    private function sortByColumn($data, $column, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($data)->$sort_by(function ($value, $key) use ($column){
+            return strtoupper($value[$column]);
         });
     }
 
