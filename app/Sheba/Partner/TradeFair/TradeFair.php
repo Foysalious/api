@@ -68,7 +68,7 @@ class TradeFair
             $stores['stores'] = $value;
             array_push($data, $stores);
         }
-        return $trade_fair_data;
+        return $data;
 
     }
 
