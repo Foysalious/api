@@ -54,16 +54,15 @@ class PayrunList
         $business_member_ids = $this->getBusinessMemberIds();
         $payslip = $this->PayslipRepositoryInterface->builder()
             ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
-            ->whereIn('business_member_id', $business_member_ids)->with(['role', 'businessMember' => function ($q){
-                /*$q->with(['role' => function ($q) {
-                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                        'businessDepartment' => function ($q) {
-                            $q->select('business_departments.id', 'business_id', 'name');
-                        }
-                    ]);
-                }]);*/
+            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
+                    $q->with(['role' => function ($q) {
+                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                            'businessDepartment' => function ($q) {
+                                $q->select('business_departments.id', 'business_id', 'name');
+                            }
+                        ]);
+                    }]);
             }]);
-        dd($payslip->get());
         $this->playslipList = $payslip->get();
     }
 
@@ -80,9 +79,9 @@ class PayrunList
             array_push($data,[
                'id' =>  $playslip->id,
                'business_member_id' => $playslip->business_member_id,
-               'department' => $playslip->businessDepartment/* ? $playslip->businessDepartment->role ? $playslip->businessDepartment->role->name : null : null*/,
-               'gross_salary' => $gross_salary[0],
-               'net_payable' => $gross_salary[0]
+               'department' => $playslip->businessMember->department()->name,
+               'gross_salary' => floatval($gross_salary[0]),
+               'net_payable' => floatval($gross_salary[0])
             ]);
         }
         return $data;
