@@ -91,7 +91,7 @@ class TopUpExcelJob extends TopUpJob
             $file_path = $this->saveFileToCDN($this->file, getBulkTopUpFolder(), $file_name);
             unlink($this->file);
 
-            $this->updateBulkTopUpStatus(Statuses::COMPLETED);
+            $this->updateBulkTopUpStatus(Statuses::COMPLETED, $file_path);
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
             $this->sms->shoot($this->agent->getMobile(), $msg);
@@ -100,10 +100,12 @@ class TopUpExcelJob extends TopUpJob
 
     /**
      * @param $status
+     * @param $file
      */
-    public function updateBulkTopUpStatus($status)
+    public function updateBulkTopUpStatus($status, $file)
     {
         $this->bulk->status = $status;
+        $this->bulk->file = $file;
         $this->withUpdateModificationField($this->bulk);
         $this->bulk->save();
     }
