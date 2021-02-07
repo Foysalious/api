@@ -1,5 +1,6 @@
 <?php namespace App\Transformers\Business;
 
+use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdown;
 use Sheba\Business\PayrollComponent\Components\MedicalAllowance;
 use Sheba\Business\PayrollComponent\Components\BasicSalary;
 use Sheba\Business\PayrollComponent\Components\Conveyance;
@@ -42,23 +43,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function grossSalaryBreakdown($payroll_setting)
     {
-        /** @var PayrollComponent $payroll_components */
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
-        foreach ($payroll_components as $payroll_component) {
-            if ($payroll_component->name == Components::BASIC_SALARY) {
-                $this->payrollComponentData[Components::BASIC_SALARY] = (new BasicSalary($payroll_component))->getPercentage();
-            }
-            if ($payroll_component->name == Components::HOUSE_RENT) {
-                $this->payrollComponentData[Components::HOUSE_RENT] = (new HouseRent($payroll_component))->getPercentage();
-            }
-            if ($payroll_component->name == Components::MEDICAL_ALLOWANCE) {
-                $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = (new MedicalAllowance($payroll_component))->getPercentage();
-            }
-            if ($payroll_component->name == Components::CONVEYANCE) {
-                $this->payrollComponentData[Components::CONVEYANCE] = (new Conveyance($payroll_component))->getPercentage();
-            }
-        }
-
+        $this->payrollComponentData = (new GrossSalaryBreakdown())->salaryBreakdown($payroll_setting);
         $count = 0;
         if ($this->payrollComponentData['basic_salary'] > 0) $count++;
         if ($this->payrollComponentData['house_rent'] > 0) $count++;
@@ -66,7 +51,6 @@ class PayrollSettingsTransformer extends TransformerAbstract
         if ($this->payrollComponentData['conveyance'] > 0) $count++;
         $salary_breakdown_completion = round((($count / 4) * 50), 0);
         $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
-
         return $this->payrollComponentData;
     }
 
