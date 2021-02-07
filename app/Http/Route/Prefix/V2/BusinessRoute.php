@@ -355,7 +355,7 @@ class BusinessRoute
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
-                $api->group(['prefix' => 'payslip'], function ($api) {
+                $api->group(['prefix' => 'payrun'], function ($api) {
                     $api->get('/', 'B2b\PayrunController@index');
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
