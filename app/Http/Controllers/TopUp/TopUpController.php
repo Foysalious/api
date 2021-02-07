@@ -204,8 +204,7 @@ class TopUpController extends Controller
      * @throws Exception
      */
     public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
-                              Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error,
-                              TopUpSpecialAmount $special_amount): JsonResponse
+                              Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
 
@@ -266,7 +265,7 @@ class TopUpController extends Controller
 
         unlink($file_path);
         $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
-        
+
         return api_response($request, null, 200, ['message' => $response_msg]);
     }
 
