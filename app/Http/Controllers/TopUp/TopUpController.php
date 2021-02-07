@@ -223,7 +223,7 @@ class TopUpController extends Controller
         $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
         $validator->check();
 
-        $bulk_request = $this->storeBulkRequest($agent);
+        $bulk_request = $this->storeBulkRequest($agent, $data_validator->getBulkExcelCdnFilePath());
 
         $data = $data_validator->getData();
         $total = $data_validator->getTotal();
@@ -264,21 +264,24 @@ class TopUpController extends Controller
             dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
         });
 
+        unlink($file_path);
         $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
-
+        
         return api_response($request, null, 200, ['message' => $response_msg]);
     }
 
     /**
      * @param $agent
+     * @param $bulk_excel_file_path
      * @return TopUpBulkRequest
      */
-    public function storeBulkRequest($agent): TopUpBulkRequest
+    public function storeBulkRequest($agent, $bulk_excel_file_path): TopUpBulkRequest
     {
         $topup_bulk_request = new TopUpBulkRequest();
         $topup_bulk_request->agent_id = $agent->id;
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
         $topup_bulk_request->status = RequestStatus::PENDING;
+        $topup_bulk_request->file = $bulk_excel_file_path;
         $this->withCreateModificationField($topup_bulk_request);
         $topup_bulk_request->save();
 

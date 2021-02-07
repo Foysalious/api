@@ -30,6 +30,8 @@ class DataFormatValidator extends Validator
     private $total;
     /** @var string $filePath */
     private $filePath;
+    /** @var string $bulkExcelCdnFilePath */
+    private $bulkExcelCdnFilePath;
 
     public function __construct()
     {
@@ -74,7 +76,7 @@ class DataFormatValidator extends Validator
      */
     public function check(): bool
     {
-        $this->excel->setExcel($this->file);
+        $this->excel->setAgent($this->agent)->setExcel($this->file);
         $this->total = $this->excel->getTotal();
         $this->data = $this->excel->getData();
         $this->filePath = $this->excel->getFilePath();
@@ -114,12 +116,15 @@ class DataFormatValidator extends Validator
         });
 
         $agent_wallet = floatval($this->agent->wallet);
-        if ($total_recharge_amount > $agent_wallet) throw new InvalidTotalAmount($total_recharge_amount, $agent_wallet, 'You do not have sufficient balance to recharge.', 403);
+        if ($total_recharge_amount > $agent_wallet)
+            throw new InvalidTotalAmount($total_recharge_amount, $agent_wallet, 'You do not have sufficient balance to recharge.', 403);
 
         if ($halt_top_up) {
             $top_up_excel_data_format_errors = $this->excelDataFormatError->takeCompletedAction();
             throw new InvalidTopupData($top_up_excel_data_format_errors, 'Check The Excel Data Format Properly.', 420);
         }
+
+        $this->bulkExcelCdnFilePath = $this->excel->saveTopupFileToCDN();
 
         return parent::check();
     }
@@ -212,5 +217,13 @@ class DataFormatValidator extends Validator
     public function getFilePath(): string
     {
         return $this->filePath;
+    }
+
+    /**
+     * @return string
+     */
+    public function getBulkExcelCdnFilePath(): string
+    {
+        return $this->bulkExcelCdnFilePath;
     }
 }

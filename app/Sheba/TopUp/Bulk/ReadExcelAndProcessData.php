@@ -1,16 +1,33 @@
 <?php namespace Sheba\TopUp\Bulk;
 
+use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
+use Sheba\FileManagers\CdnFileManager;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Excel;
 
 class ReadExcelAndProcessData
 {
+    use CdnFileManager;
+
     private $total;
     private $data;
     /** @var string $filePath */
     private $filePath;
+    /** @var TopUpAgent $agent */
+    private $agent;
+
+    /**
+     * @param TopUpAgent $agent
+     * @return $this
+     */
+    public function setAgent(TopUpAgent $agent): ReadExcelAndProcessData
+    {
+        $this->agent = $agent;
+        return $this;
+    }
 
     /**
      * @param UploadedFile $file
@@ -55,5 +72,14 @@ class ReadExcelAndProcessData
     public function getFilePath(): string
     {
         return $this->filePath;
+    }
+
+    /**
+     * @return string
+     */
+    public function saveTopupFileToCDN(): string
+    {
+        $file_name = Carbon::now()->timestamp . "_bulk_topup_excel_". strtolower(class_basename($this->agent)) . "_" . $this->agent->id . ".xlsx";
+        return $this->saveFileToCDN($this->filePath, getBulkTopUpFolder(), $file_name);
     }
 }

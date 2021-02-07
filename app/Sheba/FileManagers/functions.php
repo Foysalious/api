@@ -1134,6 +1134,7 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
     }
 
 }
+
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
     function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
     {
