@@ -41,7 +41,7 @@ class Creator
         $this->salaryLogData['salary_id'] = $this->salaryLogRequester->getSalary()->id;
         $this->salaryLogData['new'] = $this->salaryLogRequester->getSalaryRequest()->getGrossSalary();
         $this->salaryLogData['old'] = $this->oldSalary;
-        $this->salaryLogData['log'] = $this->getMember().' changed Salary '. $this->oldSalary . ' to '.$this->salaryLogRequester->getSalaryRequest()->getGrossSalary();
+        $this->salaryLogData['log'] = $this->getMember().' changed Salary '. (float) $this->oldSalary . ' to '.(float) $this->salaryLogRequester->getSalaryRequest()->getGrossSalary();
     }
 
     private function getMember()

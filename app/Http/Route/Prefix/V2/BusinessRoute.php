@@ -90,7 +90,6 @@ class BusinessRoute
                 $api->group(['prefix' => 'employees'], function ($api) {
                     $api->get('/', 'B2b\CoWorkerController@index');
                     $api->post('/', 'B2b\CoWorkerController@basicInfoStore');
-                    $api->post('/salary', 'B2b\CoWorkerController@salaryInfoStore');
                     $api->get('/roles', 'B2b\CoWorkerController@getRoles');
                     $api->post('/change-status', 'B2b\CoWorkerController@bulkStatusUpdate');
                     $api->post('/invite', 'B2b\CoWorkerController@sendInvitation');
@@ -101,7 +100,6 @@ class BusinessRoute
                         $api->post('/financial-info', 'B2b\CoWorkerController@financialInfoEdit');
                         $api->post('/emergency-info', 'B2b\CoWorkerController@emergencyInfoEdit');
                         $api->post('/salary-info', 'B2b\CoWorkerController@salaryInfoEdit');
-                        $api->get('/salary-info', 'B2b\CoWorkerController@salaryInformation');
                         $api->post('/status', 'B2b\CoWorkerController@statusUpdate');
                         $api->get('/', 'B2b\CoWorkerController@show');
                         $api->post('/', 'B2b\CoWorkerController@update');
@@ -355,10 +353,10 @@ class BusinessRoute
                     $api->get('{approval_flow}', 'B2b\ApprovalFlowController@show');
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
-                $api->group(['prefix' => 'payrun'], function ($api) {
+                $api->group(['prefix' => 'pay-run'], function ($api) {
                     $api->get('/', 'B2b\PayrunController@index');
                 });
-                $api->group(['prefix' => 'payreport'], function ($api) {
+                $api->group(['prefix' => 'pay-report'], function ($api) {
                     $api->get('/', 'B2b\PayreportController@index');
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
