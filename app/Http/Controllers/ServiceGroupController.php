@@ -16,6 +16,36 @@ use Illuminate\Support\Facades\DB;
 
 class ServiceGroupController extends Controller
 {
+    public function index(Request $request)
+    {
+        $service_group_list = [];
+
+        $service_groups = ServiceGroup::select('id','name', 'thumb', 'app_thumb','short_description')->with(['services' => function ($query) {
+            $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
+        }])->get();
+
+        if(count($service_groups) === 0) return api_response($request, 1, 404);
+
+        $service_groups->each(function ($service_group) use (&$service_group_list){
+            $services = $service_group->services->toArray();
+
+            array_push($service_group_list, [
+                'id' => $service_group->id,
+                'name' => $service_group->name,
+                'thumb' => $service_group->thumb,
+                'app_thumb' => $service_group->app_thumb,
+                'short_description' => $service_group->short_description,
+                'services' => $services
+            ]);
+            foreach($services as $service){
+                unset($service['pivot']);
+            }
+
+        });
+
+
+        return api_response($request, $service_group_list, 200, ['service_groups' => $service_group_list]);
+    }
     public function show($service_group, Request $request)
     {
         try {
@@ -63,16 +93,16 @@ class ServiceGroupController extends Controller
                 $services = [];
                 $service_group->services->load('category.parent');
                 foreach ($service_group->services as $service) {
-                    $service_variable = $service->flashPrice();
+                    //$service_variable = $service->flashPrice();
                     $service = [
                         'master_category_id' => $service->category->parent->id,
                         'category_name' => $service->category->parent->name,
                         "id" => $service->id,
                         "service_name" => $service->name,
                         'image' => $service->app_thumb,
-                        "original_price" => $service_variable['price'],
-                        "discounted_price" => $service_variable['discounted_price'],
-                        "discount" => $service_variable['discount'],
+                        "original_price" => 1000,
+                        "discounted_price" => 500,
+                        "discount" => 50,
                         'total_stock' => (int)$service->stock,
                         'stock_left' => (int)$service->stock_left
                     ];

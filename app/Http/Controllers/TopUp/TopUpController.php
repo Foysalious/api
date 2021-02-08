@@ -87,7 +87,14 @@ class TopUpController extends Controller
         $validation_data = [
             'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required'
         ];
-        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ? 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit : 'required|min:10|max:1000|numeric';
+
+        if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit;
+        } elseif ($this->isBusiness($agent) && $this->isPostpaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10';
+        } else {
+            $validation_data['amount'] = 'required|min:10|max:1000|numeric';
+        }
 
         $this->validate($request, $validation_data);
 
@@ -145,6 +152,12 @@ class TopUpController extends Controller
     public function isPrepaid($connection_type)
     {
         return $connection_type == ConnectionType::PREPAID;
+    }
+
+    public function isPostpaid($connection_type)
+    {
+        if ($connection_type == ConnectionType::POSTPAID) return true;
+        return false;
     }
 
     /**
@@ -344,47 +357,69 @@ class TopUpController extends Controller
         return $topup_bulk_request->id;
     }
 
-    public function activeBulkTopUps(Request $request)
+    /**
+     * @param Request $request
+     * @param $user
+     * @return JsonResponse
+     */
+    public function activeBulkTopUps(Request $request, $user)
     {
-        $agent = ($this->getFullAgentType($request->type))::find($request->user->id);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else return api_response($request, null, 400);
 
-        $topup_bulk_requests = TopUpBulkRequest::pending()->agent($agent)
-            ->withCount('orders', 'processedOrders')
-            ->having('orders_count', '>', 0)
-            ->orderBy('id', 'desc')->get()
-            ->map(function (TopUpBulkRequest $topup_bulk_request) {
-                return [
+        $final = [];
+        TopUpBulkRequest::where([
+            ['status', 'pending'],
+            ['agent_id', $agent->id],
+            ['agent_type', get_class($agent)]
+        ])->with('numbers')
+            ->where('status', 'pending')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->filter(function ($topup_bulk_request) {
+                return $topup_bulk_request->numbers->count() > 0;
+            })->map(function ($topup_bulk_request) use (&$final) {
+                array_push($final, [
                     'id' => $topup_bulk_request->id,
                     'agent_id' => $topup_bulk_request->agent_id,
-                    'agent_type' => strtolower(class_basename($topup_bulk_request->agent_type)),
+                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->orders_count,
-                    'total_processed' => $topup_bulk_request->processed_orders_count,
-                ];
-            })->toArray();
+                    'total_numbers' => $topup_bulk_request->numbers->count(),
+                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
+                        return in_array(strtolower($number->status), ['successful', 'failed']);
+                    })->count()
+                ]);
+            });
 
-        return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
+        return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
     }
 
     /**
      * @param Request $request
+     * @param $user
      * @param TopUpHistoryExcel $history_excel
      * @param TopUpDataFormat $topUp_data_format
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
+    public function topUpHistory(Request $request, $user, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
+        
+        list($offset, $limit) = calculatePagination($request);
 
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
-        $user = $auth_user->getBusiness();
-        list($offset, $limit) = calculatePagination($request);
-        $model = $this->getFullAgentType($request->type);
-        $user = $request->has('partner') ? $request->partner : $request->user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else return api_response($request, null, 400);
 
-        $topups = $model::find($user->id)->topups();
+        $topups = $agent->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
         if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);

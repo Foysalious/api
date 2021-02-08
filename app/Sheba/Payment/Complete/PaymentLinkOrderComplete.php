@@ -80,7 +80,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->dispatchReward();
             $this->storeEntry();
         }catch (\Throwable $e){
-            dd($e);
             logError($e);
         }
         return $this->payment;

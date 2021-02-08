@@ -32,6 +32,7 @@ use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
+use Sheba\Pos\Order\PosOrder as PosOrderRepo;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -71,11 +72,14 @@ class OrderController extends Controller
         return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
     }
 
+
     /**
      * @param Request $request
+     * @param PosOrderRepo $posOrder
+     * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
-    public function show(Request $request)
+    public function show(Request $request, PosOrderRepo $posOrder, PaymentLinkTransformer $payment_link)
     {
         /** @var PosOrder $order */
         $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->withTrashed()->find($request->order);
@@ -86,6 +90,15 @@ class OrderController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($order, new PosOrderTransformer());
         $order    = $manager->createData($resource)->toArray();
+        if (array_key_exists('payment_link_target', $order['data'])) {
+            $payment_link_target[] = $order['data']['payment_link_target'];
+            $payment_link_data = $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
+            if($payment_link_data)
+            {
+                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
+                unset($order['payment_link_target']);
+            }
+        }
         return api_response($request, null, 200, ['order' => $order]);
     }
 

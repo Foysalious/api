@@ -280,8 +280,8 @@ class ProfileRepository
     public function registerMobile($info)
     {
         $data = [
-            'mobile' => $info['mobile'],
-            'portal_name' => $info['portal_name'],
+            'mobile'          => $info['mobile'],
+            'portal_name'     => isset($info['portal_name']) ? $info['portal_name'] : $info['from'],
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
         ];

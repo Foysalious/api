@@ -6,7 +6,7 @@ use Tests\Feature\FeatureTestCase;
 
 class RentACarOrderPlaceTest extends FeatureTestCase
 {
-    public function testHalfDay()
+    /*public function testHalfDay()
     {
         $client = new Client([
             'base_uri' => $this->baseUrl
@@ -202,7 +202,7 @@ class RentACarOrderPlaceTest extends FeatureTestCase
         ]);
         $partner = $this->getPartner($client, $services, $valid_times);
         $this->orderPlace($services, $partner, $valid_times);
-    }
+    }*/
 
     private function getPartner($client, $services, $valid_times)
     {

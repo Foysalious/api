@@ -811,6 +811,63 @@
             "time": "2017-07-18T21:11:11+00:00"
         },
         {
+            "name": "fideloper/proxy",
+            "version": "3.3.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/fideloper/TrustedProxy.git",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/fideloper/TrustedProxy/zipball/9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "reference": "9cdf6f118af58d89764249bbcc7bb260c132924f",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/contracts": "~5.0",
+                "php": ">=5.4.0"
+            },
+            "require-dev": {
+                "illuminate/http": "~5.0",
+                "mockery/mockery": "~0.9.3",
+                "phpunit/phpunit": "^5.7"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.3-dev"
+                },
+                "laravel": {
+                    "providers": [
+                        "Fideloper\\Proxy\\TrustedProxyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Fideloper\\Proxy\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Chris Fidao",
+                    "email": "fideloper@gmail.com"
+                }
+            ],
+            "description": "Set trusted proxies for Laravel",
+            "keywords": [
+                "load balancing",
+                "proxy",
+                "trusted proxy"
+            ],
+            "time": "2017-06-15T17:19:42+00:00"
+        },
+        {
             "name": "firebase/php-jwt",
             "version": "v5.2.0",
             "source": {
@@ -1533,7 +1590,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3265,7 +3322,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "0d678ea50c98855e882b962bbfe25d3e126d5c18"
+                "reference": "6c367a14c8b8dd6ff657739c7f41c06824419d8e"
             },
             "require": {
                 "php": ">=5.4"
@@ -3293,14 +3350,14 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-02-02T06:06:36+00:00"
+            "time": "2021-02-04T09:21:09+00:00"
         },
         {
             "name": "sheba/notification",
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_notification.git",
+                "url": "https://bitbucket.org/startern/sheba_notification.git",
                 "reference": "5c77770b2cea422d4ad8d909b6bd22d152bde39d"
             },
             "require": {
@@ -3332,7 +3389,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_report.git",
+                "url": "https://bitbucket.org/startern/sheba_report.git",
                 "reference": "548e3494488c089f2a5b6e0b43ccbb0882a70f7d"
             },
             "require": {
@@ -3361,7 +3418,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
+                "url": "https://bitbucket.org/startern/sheba_sms.git",
                 "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
             },
             "require": {
@@ -3390,7 +3447,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_voucher.git",
+                "url": "https://bitbucket.org/startern/sheba_voucher.git",
                 "reference": "935f243725f82caf0e5d717627ead59c076f581f"
             },
             "require": {
