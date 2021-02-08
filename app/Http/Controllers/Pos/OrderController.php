@@ -157,7 +157,7 @@ class OrderController extends Controller
          */
         try {
             if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
                 $this->sendOrderPlacePushNotificationToPartner($order);
             }
         } catch (Throwable $e) {
@@ -263,20 +263,20 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-        /** @var PosOrder $order */
-        $new           = 1;
-        $order         = PosOrder::with('items')->find($request->order);
-        $is_returned   = ($this->isReturned($order, $request, $new));
-        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-        /** @var RefundNature $refund */
-        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-        $refund->setNew($new)->update();
-        $order->payment_status = $order->calculate()->getPaymentStatus();
-        return api_response($request, null, 200, [
-            'msg'   => 'Order Updated Successfully',
-            'order' => $order
-        ]);
+            /** @var PosOrder $order */
+            $new           = 1;
+            $order         = PosOrder::with('items')->find($request->order);
+            $is_returned   = ($this->isReturned($order, $request, $new));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $refund->setNew($new)->update();
+            $order->payment_status = $order->calculate()->getPaymentStatus();
+            return api_response($request, null, 200, [
+                'msg'   => 'Order Updated Successfully',
+                'order' => $order
+            ]);
     }
 
     /**
@@ -290,7 +290,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
-        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
+        if ($order->partner->is_webstore_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
                 dispatch(new WebstoreOrderSms($order));
             } catch (Throwable $e) {
@@ -459,7 +459,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()
+                    'vat'         => $pos_order->getTotalVat(),
+                    'delivery_charge' => $pos_order->delivery_charge
                 ] : null
             ];
             if ($pos_order->customer) {
@@ -504,7 +505,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()
+                    'vat'         => $pos_order->getTotalVat(),
+                    'delivery_charge' => $pos_order->delivery_charge
                 ] : null
             ];
             if ($pos_order->customer) {
