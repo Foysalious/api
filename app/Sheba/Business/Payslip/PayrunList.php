@@ -2,6 +2,10 @@
 
 
 use App\Models\Business;
+use App\Transformers\Business\PayRunListTransformer;
+use League\Fractal\Manager;
+use League\Fractal\Resource\Collection;
+use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -12,33 +16,32 @@ class PayrunList
 
     /*** @var Business */
     private $business;
-    private $businessMemberId;
     /*** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     /*** @var PayslipRepository */
-    private $PayslipRepositoryInterface;
-    private $playslipList;
-    /**
-     * @var SalaryRepository
-     */
-    private $SalaryRepository;
+    private $payslipRepositoryInterface;
+    /** @var SalaryRepository */
+    private $salaryRepository;
+    private $businessMemberIds;
+    private $payslipList;
 
     /**
      * PayrunList constructor.
      * @param BusinessMemberRepositoryInterface $business_member_repository
      * @param PayslipRepository $payslip_repository_interface
-     * @param SalaryRepository $slary_repository
+     * @param SalaryRepository $salary_repository
      */
-    public function __construct(BusinessMemberRepositoryInterface $business_member_repository, PayslipRepository $payslip_repository_interface, SalaryRepository $slary_repository)
+    public function __construct(BusinessMemberRepositoryInterface $business_member_repository, PayslipRepository $payslip_repository_interface, SalaryRepository $salary_repository)
     {
         $this->businessMemberRepository = $business_member_repository;
-        $this->PayslipRepositoryInterface = $payslip_repository_interface;
-        $this->SalaryRepository = $slary_repository;
+        $this->payslipRepositoryInterface = $payslip_repository_interface;
+        $this->salaryRepository = $salary_repository;
     }
 
     public function setBusiness(Business $business)
     {
         $this->business = $business;
+        $this->businessMemberIds = $this->business->getAccessibleBusinessMember()->pluck('id')->toArray();
         return $this;
     }
 
@@ -51,54 +54,17 @@ class PayrunList
 
     private function runPayslipQuery()
     {
-        $business_member_ids = [];
-        $business_member_ids = $this->getBusinessMemberIds();
-        $payslip = $this->PayslipRepositoryInterface->builder()
-            ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
-            ->where('status', Status::PENDING)
-            ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
-                $q->with(['member' => function ($q) {
-                    $q->select('id', 'profile_id')
-                        ->with([
-                            'profile' => function ($q) {
-                                $q->select('id', 'name');
-                            }]);
-                },'role' => function ($q) {
-                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                        'businessDepartment' => function ($q) {
-                            $q->select('business_departments.id', 'business_id', 'name');
-                        }
-                    ]);
-                }]);
-            }]);
-        $this->playslipList = $payslip->get();
-    }
-
-    private function getBusinessMemberIds()
-    {
-        return $this->businessMemberRepository->where('business_id', $this->business->id)->pluck('id')->toArray();
+        $payslip = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::PENDING);
+        $this->payslipList = $payslip->get();
     }
 
     private function getData()
     {
-        $data = [];
-        foreach ($this->playslipList as $playslip) {
-            $gross_salary = $this->getGrossSalary($playslip->business_member_id);
-            array_push($data,[
-               'id' =>  $playslip->id,
-               'employee_id' => $playslip->businessMember->employee_id,
-               'employee_name' => $playslip->businessMember->member->profile->name,
-               'business_member_id' => $playslip->business_member_id,
-               'department' => $playslip->businessMember->department()->name,
-               'gross_salary' => floatval($gross_salary),
-               'net_payable' => floatval($gross_salary)
-            ]);
-        }
-        return $data;
-    }
+        $manager = new Manager();
+        $manager->setSerializer(new ArraySerializer());
+        $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
+        $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
 
-    private function getGrossSalary($business_member_id)
-    {
-        return $this->SalaryRepository->where('business_member_id', $business_member_id)->pluck('gross_salary', 'business_member_id')->first();
+        return $payslip_list;
     }
 }

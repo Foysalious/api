@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Business;
 use App\Models\BusinessMember;
@@ -10,31 +11,32 @@ use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
-class PayrunController extends Controller
+class PayRunController extends Controller
 {
     /**
      * @var PayslipRepository
      */
-    private $PayslipRepo;
+    private $payslipRepo;
     private $businessMemberRepository;
 
     /**
-     * PayrollPayrunController constructor.
+     * PayRunController constructor.
      * @param PayslipRepository $payslip_repo
      * @param BusinessMemberRepositoryInterface $business_member_repository
      */
     public function __construct(PayslipRepository $payslip_repo,
                                 BusinessMemberRepositoryInterface $business_member_repository)
     {
-        $this->PayslipRepo = $payslip_repo;
+        $this->payslipRepo = $payslip_repo;
         $this->businessMemberRepository = $business_member_repository;
     }
 
     /**
      * @param Request $request
-     * @param PayrunList $payrunlist
+     * @param PayrunList $payrun_list
+     * @return JsonResponse
      */
-    public function index(Request $request, PayrunList $payrunlist)
+    public function index(Request $request, PayrunList $payrun_list)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -45,9 +47,11 @@ class PayrunController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $payslip = $payrunlist->setBusiness($business)->get();
+        $payslip = $payrun_list->setBusiness($business)->get();
 
         $count = count($payslip);
+
+        $payslip = collect($payslip)->splice($offset, $limit);
 
         return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
 
