@@ -118,6 +118,8 @@ class PartnerPosService extends BaseModel
 
     public function getDiscountPercentage()
     {
+        if($this->price == 0)
+            return 0;
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;

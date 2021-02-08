@@ -267,11 +267,12 @@ class DueTrackerRepository extends BaseRepository
     }
 
     public function removePosOrderPayment($pos_order_id, $amount){
-       return PosOrderPayment::where('pos_order_id', $pos_order_id)
-           ->where('amount', $amount)
-           ->where('transaction_type', 'Credit')
-           ->first()
-           ->delete();
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 
     private function createStoreData(Request $request)
