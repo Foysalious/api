@@ -4,17 +4,24 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdown;
+use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
+use Sheba\Dal\Salary\SalaryRepository;
+use Sheba\Dal\SalaryLog\SalaryLogRepository;
 use League\Fractal\TransformerAbstract;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
     private $business;
     private $isInactiveFilterApplied;
+    private $SalaryRepository;
+    private $SalaryLogRepository;
 
     public function __construct(Business $business, $is_inactive_filter_applied)
     {
         $this->business = $business;
         $this->isInactiveFilterApplied = $is_inactive_filter_applied;
+        $this->SalaryRepository = app(SalaryRepository::class);
+        $this->SalaryLogRepository = app(SalaryLogRepository::class);
     }
 
     /**
@@ -171,7 +178,8 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         $salary = $business_member->salary;
         if ($salary && $salary->gross_salary) $count++;
         $salary_completion = round((($count / 1) * 17), 0);
-        $gross_salary_breakdown['gross_salary'] = $salary ? $salary->gross_salary : null;
+        $gross_salary_breakdown['gross_salary'] = $salary ? floatval($salary->gross_salary) : null;
+        $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
 
         return $gross_salary_breakdown;
@@ -221,5 +229,13 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             'department' => $role ? $role->businessDepartment->name : null,
             'designation' => $role ? $role->name : null
         ];
+    }
+
+    private function getSalaryLog($business_member)
+    {
+        $salary = $business_member->salary;
+        if(!$salary) return [];
+        $salary_logs = $salary->logs;
+        return (new SalaryLogFormatter())->setSalaryLogs($salary_logs)->format();
     }
 }
