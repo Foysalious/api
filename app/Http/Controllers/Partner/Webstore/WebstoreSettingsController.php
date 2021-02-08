@@ -78,7 +78,7 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return api_response($request, null,200, ['message' => 'Webstore Settings Updated Successfully']);
+        return api_response($request, null,200, ['message' => 'Successful']);
 
     }
 
