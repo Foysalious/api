@@ -6,6 +6,7 @@ use Sheba\ModificationFields;
 class Creator
 {
     use ModificationFields;
+
     /** @var Requester */
     private $salaryLogRequester;
     private $salaryLogData = [];
@@ -24,12 +25,6 @@ class Creator
         return $this;
     }
 
-    public function setOldSalary($old_salary)
-    {
-        $this->oldSalary = $old_salary;
-        return $this;
-    }
-
     public function create()
     {
         $this->makeData();
@@ -39,14 +34,15 @@ class Creator
     private function makeData()
     {
         $this->salaryLogData['salary_id'] = $this->salaryLogRequester->getSalary()->id;
-        $this->salaryLogData['new'] = $this->salaryLogRequester->getSalaryRequest()->getGrossSalary();
-        $this->salaryLogData['old'] = $this->oldSalary;
-        $this->salaryLogData['log'] = $this->getMember().' changed Salary '. (float) $this->oldSalary . ' to '.(float) $this->salaryLogRequester->getSalaryRequest()->getGrossSalary();
+        $this->salaryLogData['new'] = $this->salaryLogRequester->getGrossSalary();
+        $this->salaryLogData['old'] = $this->salaryLogRequester->getOldSalary();
+        $this->salaryLogData['log'] = $this->getManagerMember() . ' changed Salary ' . (float)$this->salaryLogRequester->getOldSalary() . ' to ' . (float)$this->salaryLogRequester->getGrossSalary();
     }
 
-    private function getMember()
+    private function getManagerMember()
     {
-        $member = $this->salaryLogRequester->getBusinessMember()->member;
-        return $member ? $member->profile ? $member->profile->name : null : null;
+        $member = $this->salaryLogRequester->getManagerMember();
+        $profile = $member->profile;
+        return $profile ? $profile->name : null;
     }
 }
