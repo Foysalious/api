@@ -47,7 +47,13 @@ class PayRunController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $payslip = $payrun_list->setBusiness($business)->get();
+        $payslip = $payrun_list->setBusiness($business)
+            ->setMonthYear($request->month_year)
+            ->setDepartmentID($request->department_id)
+            ->setSearch($request->search)
+            ->setSortKey($request->sort)
+            ->setSortColumn($request->sort_column)
+            ->get();
 
         $count = count($payslip);
 

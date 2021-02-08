@@ -2,7 +2,6 @@
 
 
 use App\Models\Business;
-use App\Models\BusinessMember;
 use App\Models\Member;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
