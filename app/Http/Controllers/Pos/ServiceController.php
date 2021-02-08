@@ -109,7 +109,8 @@ class ServiceController extends Controller
             return api_response($request, $service, 200, ['service' => $service, 'partner' => [
                 'id'   => $partner->id,
                 'name' => $partner->name,
-                'logo' => $partner->logo
+                'logo' => $partner->logo,
+                'is_webstore_published' => $partner->is_webstore_published ? : 0
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
