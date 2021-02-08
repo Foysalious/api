@@ -19,33 +19,30 @@ class ServiceGroupController extends Controller
     public function index(Request $request)
     {
         $service_group_list = [];
-
-        $service_groups = ServiceGroup::select('id','name', 'thumb', 'app_thumb','short_description')->with(['services' => function ($query) {
-            $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
-        }])->get();
-
-        if(count($service_groups) === 0) return api_response($request, 1, 404);
-
-        $service_groups->each(function ($service_group) use (&$service_group_list){
-            $services = $service_group->services->toArray();
-
+        $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->with([
+            'services' => function ($query) {
+                $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
+            }
+        ])->get();
+        if (count($service_groups) === 0)
+            return api_response($request, 1, 404);
+        $service_groups->each(function ($service_group) use (&$service_group_list) {
+            $services = $service_group->services;
+            $services_without_pivot_data = $services->each(function ($service) {
+                removeRelationsFromModel($service);
+            });
             array_push($service_group_list, [
                 'id' => $service_group->id,
                 'name' => $service_group->name,
                 'thumb' => $service_group->thumb,
                 'app_thumb' => $service_group->app_thumb,
                 'short_description' => $service_group->short_description,
-                'services' => $services
+                'services' => $services_without_pivot_data
             ]);
-            foreach($services as $service){
-                unset($service['pivot']);
-            }
-
         });
-
-
-        return api_response($request, $service_group_list, 200, ['service_groups' => $service_group_list]);
+        return api_response($request, null, 200, ['service_groups' => $service_group_list]);
     }
+
     public function show($service_group, Request $request)
     {
         try {
