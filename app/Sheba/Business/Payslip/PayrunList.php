@@ -2,6 +2,8 @@
 
 
 use App\Models\Business;
+use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Transformers\Business\PayRunListTransformer;
 use Carbon\Carbon;
 use League\Fractal\Manager;
@@ -173,7 +175,11 @@ class PayrunList
     private function filterByDepartment($department_id, $data)
     {
         return $data->filter(function ($payslip) use ($department_id) {
-//           dd($payslip);
+            /** @var BusinessMember $business_member */
+            $business_member = $payslip->businessMember;
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            if ($role) return $role->businessDepartment->id == $department_id;
         });
     }
 }
