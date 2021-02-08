@@ -124,7 +124,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
     private function notify()
     {
-        if (1) {
+        if ($this->target) {
             $payment      = $this->payment;
             $payment_link = $this->paymentLink;
             dispatch(new SendPaymentLinkSms($payment, $payment_link));
