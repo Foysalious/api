@@ -248,10 +248,10 @@ class PartnerRepository
      */
     private function _deleteOldLogo($delete_both = true)
     {
-        if ( !preg_match('default', $this->partner->logo)) {
+        if ( !preg_match('/default/', $this->partner->logo)) {
             $old_logo = substr($this->partner->logo, strlen(env('S3_URL')));
             $this->deleteImageFromCDN($old_logo);
-            if ($delete_both && (!preg_match('default', $this->partner->logo_original))) {
+            if ($delete_both && (!preg_match('/default/', $this->partner->logo_original))) {
                 $old_logo_original = substr($this->partner->logo_original, strlen(env('S3_URL')));
                 $this->deleteImageFromCDN($old_logo_original);
             }
