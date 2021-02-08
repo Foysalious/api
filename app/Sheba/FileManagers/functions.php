@@ -1,5 +1,6 @@
 <?php
 
+use Intervention\Image\File;
 use Sheba\FileManagers\ImageResizer;
 use Sheba\FileManagers\ImageSize;
 use Sheba\FileManagers\S3Image;
@@ -1268,7 +1269,8 @@ if (!function_exists('getExtensionFromMime')) {
      * @param $mime
      * @return string
      */
-    function getExtensionFromMime($mime) {
+    function getExtensionFromMime($mime)
+    {
         $mime_map = [
             'video/3gpp2'                                                               => '3g2',
             'video/3gp'                                                                 => '3gp',
@@ -1457,5 +1459,28 @@ if (!function_exists('getExtensionFromMime')) {
         ];
 
         return isset($mime_map[$mime]) ? $mime_map[$mime] : false;
+    }
+}
+
+if (!function_exists('getFullNameWithoutExtension')) {
+    /**
+     * @param File $file
+     * @return string
+     */
+    function getFullNameWithoutExtension(File $file)
+    {
+        return $file->dirname . "/" . $file->filename;
+    }
+}
+
+if (!function_exists('getNameWithExtension')) {
+    /**
+     * @param $path
+     * @return mixed|string
+     */
+    function getNameWithExtension($path)
+    {
+        $info = pathinfo($path);
+        return $info['basename'];
     }
 }
