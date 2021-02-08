@@ -7,6 +7,7 @@ class PaymentLinkRoute
                      'middleware' => ['paymentLink.auth']
         ], function ($api) {
             $api->get('/', 'PaymentLink\PaymentLinkController@index');
+            $api->get('/partner-payment-links', 'PaymentLink\PaymentLinkController@partnerPaymentLinks');
             $api->post('/', 'PaymentLink\PaymentLinkController@store');
             $api->post('/due-collection', 'PaymentLink\PaymentLinkController@createPaymentLinkForDueCollection');
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
