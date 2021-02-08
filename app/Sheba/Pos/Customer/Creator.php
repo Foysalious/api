@@ -146,6 +146,7 @@ class Creator {
         $this->data['mobile'] = $this->profile ? $this->profile->mobile : formatMobileAux($this->data['mobile']);
         $this->data['email']  = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
         $this->data['note']   = isset($this->data['note']) ? $this->data['note'] : null;
+        $this->data['is_supplier']   = isset($this->data['is_supplier']) ? (int) $this->data['is_supplier'] : 0;
     }
 
     /**
