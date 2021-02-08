@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HomepageSetting;
 use App\Models\HyperLocal;
@@ -13,6 +12,7 @@ use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 
 class ServiceGroupController extends Controller
 {
@@ -24,12 +24,14 @@ class ServiceGroupController extends Controller
                 $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
             }
         ])->get();
+
         if (count($service_groups) === 0)
             return api_response($request, 1, 404);
         $service_groups->each(function ($service_group) use (&$service_group_list) {
             $services = $service_group->services;
             $services_without_pivot_data = $services->each(function ($service) {
                 removeRelationsFromModel($service);
+                $service['slug'] = $service->getSlug();
             });
             array_push($service_group_list, [
                 'id' => $service_group->id,
@@ -38,6 +40,7 @@ class ServiceGroupController extends Controller
                 'app_thumb' => $service_group->app_thumb,
                 'short_description' => $service_group->short_description,
                 'services' => $services_without_pivot_data
+
             ]);
         });
         return api_response($request, null, 200, ['service_groups' => $service_group_list]);
