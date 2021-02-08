@@ -68,6 +68,29 @@ class PaymentLinkController extends Controller
     public function index(Request $request)
     {
         try {
+            $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
+            if ($payment_links_list) {
+                $payment_links_list = array_where($payment_links_list, function ($key, $link) {
+                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
+                });
+                list($offset, $limit) = calculatePagination($request);
+                $links         = collect($payment_links_list)->slice($offset)->take($limit);
+                $fractal       = new Manager();
+                $resources     = new Collection($links, new PaymentLinkArrayTransform());
+                $payment_links = $fractal->createData($resources)->toArray()['data'];
+                return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
+            } else {
+                return api_response($request, 1, 404);
+            }
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function partnerPaymentLinks(Request $request)
+    {
+        try {
             $payment_links_list = $this->paymentLinkRepo->getPartnerPaymentLinkList($request);
             if ($payment_links_list) {
                 $payment_links_list = array_where($payment_links_list, function ($key, $link) {
