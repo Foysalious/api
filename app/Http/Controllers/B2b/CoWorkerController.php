@@ -357,8 +357,6 @@ class CoWorkerController extends Controller
      */
     public function salaryInfoEdit($business, $member_id, Request $request)
     {
-        $validation_data = ['gross_salary' => 'required'];
-        $this->validate($request, $validation_data);
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
         $business = $request->business;
