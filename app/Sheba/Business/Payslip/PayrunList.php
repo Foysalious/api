@@ -57,13 +57,19 @@ class PayrunList
             ->select('id', 'business_member_id', 'schedule_date', 'status', 'salary_breakdown', 'created_at')
             ->where('status', Status::PENDING)
             ->whereIn('business_member_id', $business_member_ids)->with(['businessMember' => function ($q){
-                    $q->with(['role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }]);
+                $q->with(['member' => function ($q) {
+                    $q->select('id', 'profile_id')
+                        ->with([
+                            'profile' => function ($q) {
+                                $q->select('id', 'name');
+                            }]);
+                },'role' => function ($q) {
+                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                        'businessDepartment' => function ($q) {
+                            $q->select('business_departments.id', 'business_id', 'name');
+                        }
+                    ]);
+                }]);
             }]);
         $this->playslipList = $payslip->get();
     }
@@ -80,6 +86,8 @@ class PayrunList
             $gross_salary = $this->getGrossSalary($playslip->business_member_id);
             array_push($data,[
                'id' =>  $playslip->id,
+               'employee_id' => $playslip->businessMember->employee_id,
+               'employee_name' => $playslip->businessMember->member->profile->name,
                'business_member_id' => $playslip->business_member_id,
                'department' => $playslip->businessMember->department()->name,
                'gross_salary' => floatval($gross_salary),
