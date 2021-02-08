@@ -354,11 +354,11 @@ class BusinessRoute
                     $api->post('{approval_flow}', 'B2b\ApprovalFlowController@update');
                 });
                 $api->group(['prefix' => 'pay-run'], function ($api) {
-                    $api->get('/', 'B2b\PayrunController@index');
+                    $api->get('/', 'B2b\PayRunController@index');
                     $api->get('/pending-months','B2b\PayrunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
-                    $api->get('/', 'B2b\PayreportController@index');
+                    $api->get('/', 'B2b\PayReportController@index');
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');

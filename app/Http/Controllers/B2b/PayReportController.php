@@ -1,35 +1,33 @@
 <?php namespace App\Http\Controllers\B2b;
 
-
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Sheba\Business\Payslip\PayreportList;
+use App\Sheba\Business\Payslip\PayReportList;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\Payslip\PayslipRepository;
 
-class PayreportController extends Controller
+class PayReportController extends Controller
 {
-    /**
-     * @var PayslipRepository
-     */
-    private $PayslipRepo;
+    /** @var PayslipRepository */
+    private $payslipRepo;
 
     /**
-     * PayrollPayrunController constructor.
+     * PayReportController constructor.
      * @param PayslipRepository $payslip_repo
      */
     public function __construct(PayslipRepository $payslip_repo)
     {
-        $this->PayslipRepo = $payslip_repo;
+        $this->payslipRepo = $payslip_repo;
     }
 
     /**
      * @param Request $request
-     * @param PayreportList $payreportlist
-     * @return \Illuminate\Http\JsonResponse
+     * @param PayReportList $pay_report_list
+     * @return JsonResponse
      */
-    public function index(Request $request, PayreportList $payreportlist)
+    public function index(Request $request, PayReportList $pay_report_list)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -40,13 +38,15 @@ class PayreportController extends Controller
 
         list($offset, $limit) = calculatePagination($request);
 
-        $payslip = $payreportlist->setBusiness($business)
+        $payslip = $pay_report_list->setBusiness($business)
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
             ->get();
 
         $count = count($payslip);
+
+        $payslip = collect($payslip)->splice($offset, $limit);
 
         return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
 

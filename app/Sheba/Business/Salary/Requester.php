@@ -73,6 +73,7 @@ class Requester
     public function setGrossSalary($gross_salary)
     {
         $this->grossSalary = $gross_salary;
+        if (!$this->grossSalary) $this->grossSalary = 0;
         return $this;
     }
 
