@@ -47,7 +47,7 @@ class Creator
 
     private function makeData()
     {
-        $this->salaryData['business_member_id'] = $this->businessMember->id;
+        $this->salaryData['business_member_id'] = $this->salaryRequest->getBusinessMember()->id;
         $this->salaryData['gross_salary'] = $this->salaryRequest->getGrossSalary();
     }
 

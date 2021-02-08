@@ -5,7 +5,10 @@ class Requester
 {
     private $salary;
     private $businessMember;
-    private $salaryRequest;
+    private $grossSalary;
+    private $oldSalary;
+    private $profile;
+    private $managerMember;
 
     public function setBusinessMember($business_member)
     {
@@ -18,17 +21,6 @@ class Requester
         return $this->businessMember;
     }
 
-    public function setSalaryRequest($salary_request)
-    {
-        $this->salaryRequest = $salary_request;
-        return $this;
-    }
-
-    public function getSalaryRequest()
-    {
-        return $this->salaryRequest;
-    }
-
     public function setSalary($salary)
     {
         $this->salary = $salary;
@@ -38,5 +30,38 @@ class Requester
     public function getSalary()
     {
         return $this->salary;
+    }
+
+    public function setGrossSalary($gross_salary)
+    {
+        $this->grossSalary = $gross_salary;
+        return $this;
+    }
+
+    public function getGrossSalary()
+    {
+        return $this->grossSalary;
+    }
+
+    public function setOldSalary($old_salary)
+    {
+        $this->oldSalary = $old_salary;
+        return $this;
+    }
+
+    public function getOldSalary()
+    {
+        return $this->oldSalary;
+    }
+
+    public function setManagerMember($manager_member)
+    {
+        $this->managerMember = $manager_member;
+        return $this;
+    }
+
+    public function getManagerMember()
+    {
+        return $this->managerMember;
     }
 }

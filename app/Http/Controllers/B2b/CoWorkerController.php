@@ -351,31 +351,21 @@ class CoWorkerController extends Controller
 
     /**
      * @param $business
-     * @param $business_member_id
+     * @param $member_id
      * @param Request $request
-     * @param CoWorkerSalaryCreator $creator
-     * @param CoWorkerSalaryUpdater $updater
      * @return JsonResponse
      */
-    public function salaryInfoEdit($business, $business_member_id, Request $request, CoWorkerSalaryCreator $creator, CoWorkerSalaryUpdater $updater)
+    public function salaryInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = ['gross_salary' => 'required'];
         $this->validate($request, $validation_data);
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
         $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        $salary = $business_member->salary;
-        if (!$salary){
-            $this->coWorkerSalaryRequester->setBusiness($business)->setBusinessMember($business_member)->setGrossSalary($request->gross_salary);
-            $creator->setSalaryRequester($this->coWorkerSalaryRequester)->setBusinessMember($business_member)->create();
-            return api_response($request, null, 200);
-        }
-        $old_salary = $salary->gross_salary;
-        $salary_request = $this->coWorkerSalaryRequester->setBusiness($business)->setBusinessMember($business_member)->setGrossSalary($request->gross_salary);
-        $updater->setSalary($salary)->setOldSalary($old_salary)->setManagerMember($manager_member)->setSalaryRequester($salary_request)->update();
-
+        $this->coWorkerSalaryRequester->setMember($member_id)
+            ->setGrossSalary($request->gross_salary)
+            ->setManagerMember($manager_member)
+            ->createOrUpdate();
         return api_response($request, null, 200);
     }
 
