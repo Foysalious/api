@@ -161,4 +161,9 @@ class PartnerPosService extends BaseModel
             'app_thumb' => $this->app_thumb,
         ];
     }
+
+    public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id)->where('publication_status',1)->where('is_published_for_shop',1);
+    }
 }

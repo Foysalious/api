@@ -17,6 +17,7 @@ class WebstoreSettingsUpdateRequest
     protected $partner;
     protected $data;
     protected $hasWebstore;
+    protected $address;
 
     /**
      * @param Partner $partner
@@ -64,7 +65,7 @@ class WebstoreSettingsUpdateRequest
      */
     public function setSubDomain($subDomain)
     {
-        $this->subDomain = $subDomain;
+        $this->subDomain = str_replace(' ', '', $subDomain);
         return $this;
     }
 
@@ -75,6 +76,16 @@ class WebstoreSettingsUpdateRequest
     public function setDeliveryCharge($deliveryCharge)
     {
         $this->deliveryCharge = $deliveryCharge;
+        return $this;
+    }
+
+    /**
+     * @param $address
+     * @return WebstoreSettingsUpdateRequest
+     */
+    public function setAddress($address)
+    {
+        $this->address = $address;
         return $this;
     }
 
@@ -96,5 +107,4 @@ class WebstoreSettingsUpdateRequest
         $repo->updateWebstoreSettings($data);
 
     }
-
 }
