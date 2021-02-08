@@ -194,6 +194,7 @@ class PaymentLinkTransformer
                     'id'    => $user->id,
                 ],
                 'payer'               => $payer ? [
+                    'id'     => $payer->id,
                     'name'   => $payer->name,
                     'mobile' => $payer->mobile
                 ] : null,
