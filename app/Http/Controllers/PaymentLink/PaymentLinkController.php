@@ -110,7 +110,7 @@ class PaymentLinkController extends Controller
                 $pos_order = PosOrder::find($request->pos_order_id);
                 if($payment_link = $this->isAlreadyCreated($pos_order))
                 {
-                    return api_response($request, $payment_link->toArray(), 200, ['payment_link' => $payment_link->getPaymentLinkData()]);
+                    return api_response($request, $payment_link->getPaymentLinkData(), 200, ['payment_link' => $payment_link->getPaymentLinkData()]);
                 }
 
                 $customer = PosCustomer::find($pos_order->customer_id);
