@@ -63,11 +63,12 @@ class FindApprovers
                     /** @var BusinessDepartment $department */
                     $department = $business_member->department();
                     if (!$department) $this->setError(422, 'Department not set yet!');
+
                     $this->getHeadOfDepartment($business_member);
-                    if ($this->headOfDepartment) $this->approvers[$approver->order] = $this->headOfDepartment->id;
+                    if ($this->headOfDepartment) $this->approvers[$approver['order']] = $this->headOfDepartment->id;
                 }
                 if ($approver['type'] == Types::EMPLOYEE) {
-                    $this->approvers[$approver['order']] = (int)$approver->type_id;
+                    $this->approvers[$approver['order']] = (int)$approver['type_id'];
                 }
             }
         } else {
