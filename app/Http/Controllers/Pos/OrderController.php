@@ -89,6 +89,9 @@ class OrderController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($order, new PosOrderTransformer());
         $order    = $manager->createData($resource)->toArray();
+
+        if(empty($order['data']['payments']))
+            $order['data']['payment_method'] = 'cod';
         if (array_key_exists('payment_link_target', $order['data'])) {
             $payment_link_target[] = $order['data']['payment_link_target'];
             $payment_link_data = $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
