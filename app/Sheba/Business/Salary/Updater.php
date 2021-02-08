@@ -52,18 +52,7 @@ class Updater
     public function setSalary($salary)
     {
         $this->salary = $salary;
-        return $this;
-    }
-
-    public function setOldSalary($old_salary)
-    {
-        $this->oldSalary = $old_salary;
-        return $this;
-    }
-
-    public function setManagerMember(Member $manager_member)
-    {
-        $this->managerMember = $manager_member;
+        $this->oldSalary = $this->salary->gross_salary;
         return $this;
     }
 
@@ -72,7 +61,7 @@ class Updater
         $this->makeData();
         DB::transaction(function () {
             $this->salaryRepository->update($this->salary, $this->salaryData);
-            $this->salaryLogCreate($this->salary);
+            $this->salaryLogCreate();
         });
     }
 
@@ -81,10 +70,15 @@ class Updater
         $this->salaryData['gross_salary'] = $this->salaryRequest->getGrossSalary();
     }
 
-    private function salaryLogCreate($salary)
+    private function salaryLogCreate()
     {
-        $this->salaryLogRequester->setBusinessMember($this->salaryRequest->getBusinessMember())->setSalaryRequest($this->salaryRequest)->setSalary($salary);
-        $this->salaryLogCreator->setOldSalary($this->oldSalary)->setSalaryLogRequester($this->salaryLogRequester)->create();
+        $this->salary->fresh();
+        $this->salaryLogRequester->setBusinessMember($this->salaryRequest->getBusinessMember())
+            ->setGrossSalary($this->salaryRequest->getGrossSalary())
+            ->setOldSalary($this->oldSalary)
+            ->setManagerMember($this->salaryRequest->getManagerMember())
+            ->setSalary($this->salary);
+        $this->salaryLogCreator->setSalaryLogRequester($this->salaryLogRequester)->create();
     }
 
 }
