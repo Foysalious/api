@@ -47,7 +47,8 @@
     "algolia/algoliasearch-laravel": "^1.7",
     "mpdf/mpdf": "^8.0",
     "darkaonline/l5-swagger": "~3.0",
-    "fideloper/proxy": "^3.3"
+    "fideloper/proxy": "^3.3",
+    "rosell-dk/webp-convert": "^2.4"
   },
   "require-dev": {
     "fzaninotto/faker": "~1.4",

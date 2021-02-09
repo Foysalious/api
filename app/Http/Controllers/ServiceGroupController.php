@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use Sheba\Dal\Category\Category;
 use App\Models\CategoryGroup;
 use App\Models\HomepageSetting;
 use App\Models\HyperLocal;
@@ -13,9 +12,40 @@ use App\Sheba\Queries\Category\StartPrice;
 use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
 
 class ServiceGroupController extends Controller
 {
+    public function index(Request $request)
+    {
+        $service_group_list = [];
+        $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->with([
+            'services' => function ($query) {
+                $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
+            }
+        ])->get();
+
+        if (count($service_groups) === 0)
+            return api_response($request, 1, 404);
+        $service_groups->each(function ($service_group) use (&$service_group_list) {
+            $services = $service_group->services;
+            $services_without_pivot_data = $services->each(function ($service) {
+                removeRelationsFromModel($service);
+                $service['slug'] = $service->getSlug();
+            });
+            array_push($service_group_list, [
+                'id' => $service_group->id,
+                'name' => $service_group->name,
+                'thumb' => $service_group->thumb,
+                'app_thumb' => $service_group->app_thumb,
+                'short_description' => $service_group->short_description,
+                'services' => $services_without_pivot_data
+
+            ]);
+        });
+        return api_response($request, null, 200, ['service_groups' => $service_group_list]);
+    }
+
     public function show($service_group, Request $request)
     {
         try {

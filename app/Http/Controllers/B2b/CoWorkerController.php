@@ -349,55 +349,22 @@ class CoWorkerController extends Controller
         return api_response($request, null, 404);
     }
 
-    public function salaryInfoStore(Request $request, CoWorkerSalaryCreator $creator)
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function salaryInfoEdit($business, $member_id, Request $request)
     {
-        $validation_data = ['gross_salary' => 'required'];
-        $this->validate($request, $validation_data);
         $manager_member = $request->manager_member;
-        $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-
         $this->setModifier($manager_member);
-
-        $this->coWorkerSalaryRequester->setBusiness($business)->setBusinessMember($business_member)->setGrossSalary($request->gross_salary);
-        $creator->setSalaryRequester($this->coWorkerSalaryRequester)->setBusinessMember($business_member)->create();
-
-        return api_response($request, null, 200);
-    }
-
-    public function salaryInfoEdit($business, $member_id, Request $request, CoWorkerSalaryUpdater $updater)
-    {
-        $validation_data = ['gross_salary' => 'required'];
-        $this->validate($request, $validation_data);
-        $manager_member = $request->manager_member;
         $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        $salary = $this->salaryRepositry->where('business_member_id', $business_member->id)->first();
-        $old_salary = $salary->gross_salary;
-        $this->setModifier($manager_member);
-
-        $salary_request = $this->coWorkerSalaryRequester->setBusiness($business)->setBusinessMember($business_member)->setGrossSalary($request->gross_salary);
-        $updater->setSalary($salary)->setOldSalary($old_salary)->setManagerMember($manager_member)->setSalaryRequester($salary_request)->update();
-
+        $this->coWorkerSalaryRequester->setMember($member_id)
+            ->setGrossSalary($request->gross_salary)
+            ->setManagerMember($manager_member)
+            ->createOrUpdate();
         return api_response($request, null, 200);
-    }
-
-    public function salaryInformation($business, $member_id, Request $request, SalarayLogFormatter $salary_log_formatter, SalarayFormatter $salary_formatter, SalaryLogRepository $salary_log_repository, PayrollSettingRepository $payroll_setting_repository)
-    {
-        $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        $salary = $this->salaryRepositry->where('business_member_id', $business_member->id)->first();
-        $payroll_setting_with_components = $payroll_setting_repository->where('business_id', $business->id)->with(['components'])->first();
-
-        $salary_logs = $salary_log_repository->where('salary_id', $salary->id)->orderBy('created_at', 'DESC')->get();
-        $calculated_salary = $salary_formatter->setSalary($salary)->setPayrollSetting($payroll_setting_with_components)->calculate();
-        $salary_log = $salary_log_formatter->setSalaryLogs($salary_logs)->format();
-        $salary_breakdown = array_merge($calculated_salary, $salary_log);
-
-        return api_response($request, $salary_breakdown, 200, ['data' => $salary_breakdown]);
     }
 
     /**

@@ -40,7 +40,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function getPartnerPaymentLinkList(Request $request)
     {
-        return $this->paymentLinkClient->partnerPaymentLinkList($request);
+        return $this->paymentLinkClient->paymentLinkList($request);
     }
 
     /**

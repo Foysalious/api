@@ -42,6 +42,11 @@ class PaymentLinkTransformer
         return $this->response->link;
     }
 
+    public function getType()
+    {
+        return $this->response->type;
+    }
+
     public function getLinkIdentifier()
     {
         return $this->response->linkIdentifier;
@@ -194,6 +199,7 @@ class PaymentLinkTransformer
                     'id'    => $user->id,
                 ],
                 'payer'               => $payer ? [
+                    'id'     => $payer->id,
                     'name'   => $payer->name,
                     'mobile' => $payer->mobile
                 ] : null,
@@ -209,4 +215,48 @@ class PaymentLinkTransformer
             'mobile' => $user->getContactNumber()
         ];
     }
+
+    public function getPaymentLinkData()
+    {
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+
+        return array_merge([
+            'link_id'                 => $this->getLinkID(),
+            'reason'                  => $this->getReason(),
+            'type'                    => $this->getType(),
+            'status'                  => $this->response->isActive == 1 ? 'active' : 'inactive',
+            'amount'                  => $this->getAmount(),
+            'link'                    => $this->response->link,
+            'emi_month'               => $this->response->emiMonth,
+            'interest'                => $this->response->interest,
+            'bank_transaction_charge' => $this->response->bankTransactionCharge
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo()
+    {
+        $payerInfo = [];
+        if ($this->response->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['phone']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
+    }
+
+
 }
