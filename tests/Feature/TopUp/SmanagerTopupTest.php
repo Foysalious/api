@@ -395,10 +395,173 @@ class SmanagerTopupTest extends FeatureTestCase
         $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
 
+    public function testTopupMinimumAmountResponse()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 8,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The amount must be at least 10.", $data['message']);
+    }
+
+    public function testTopupMaximumAmountResponse()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 1200,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The amount may not be greater than 1000.", $data['message']);
+    }
+
+    public function testTopupResponseInsufficientBalance() {
 
 
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 10]);
 
 
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 100,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You don't have sufficient balance to recharge.", $data['message']);
+    }
+
+    public function testTopupResponseWithRejectedUser() {
+
+        $verificationStatus = Resource::find(1);;
+        $verificationStatus->update(["status" => 'rejected']);
+        // dd($verificationStatus);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You are not verified to do this operation.", $data['message']);
+    }
+
+    public function testTopupResponseWithPendingUser() {
+
+        $verificationStatus = Resource::find(1);;
+        $verificationStatus->update(["status" => 'Pending']);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01956154440',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You are not verified to do this operation.", $data['message']);
+    }
+
+    public function testOnePartnerTopUpRequestCreateOneTopUpOrder()
+    {
+
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $this->assertEquals(1, TopUpOrder::count());
+    }
+    public function testTopUpOrderDataMatchesOnTopUpOrderTable()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals(1,$top_up_order->id);
+        $this->assertEquals('Successful',$top_up_order->status);
+        $this->assertEquals('+8801620011019',$top_up_order->payee_mobile);
+        $this->assertEquals('prepaid',$top_up_order->payee_mobile_type);
+        $this->assertEquals('10',$top_up_order->amount);
+        $this->assertEquals('1',$top_up_order->vendor_id);
+        $this->assertEquals('App\Models\Partner',$top_up_order->agent_type);
+        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
+        $this->assertEquals('1.12',$top_up_order->agent_commission);
+    }
+
+    public function testSuccessfulTopupDeductAmountFromPartnerWallet()
+    {
+
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 800,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->partner->reload();
+        /*
+         * Initial wallet balance = 10000 -> PartnerFactory
+         * Vendor Commission = 1% -> TopupVendorCommissionFactory
+         * Wallet balance should be = 10000 - 800 + (800 % 1) = 9208
+         */
+        $this->assertEquals(9208, $this->partner->wallet);
+
+        dd($this->partner);
+    }
 
 }
 
