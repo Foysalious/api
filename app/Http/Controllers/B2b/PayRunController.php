@@ -2,10 +2,10 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Models\Business;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use App\Models\Business;
 use App\Models\BusinessMember;
 use Sheba\Dal\Payslip\PayslipRepository;
 use App\Sheba\Business\Payslip\PayrunList;
@@ -47,6 +47,8 @@ class PayRunController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
+        $payroll_setting = $business->payrollSetting;
+
         list($offset, $limit) = calculatePagination($request);
 
         $payslip = $payrun_list->setBusiness($business)
@@ -64,15 +66,17 @@ class PayRunController extends Controller
 
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
 
-        return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
+        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'payslip' => $payslip, 'total' => $count]);
 
     }
+
 
     /**
      * @param Request $request
      * @param PendingMonths $pendingMonths
+     * @return JsonResponse
      */
-    public function pendingMonths(Request $request, PendingMonths $pendingMonths)
+    public function pendingMonths(Request $request, PendingMonths $pending_months)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -81,8 +85,8 @@ class PayRunController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
-        $pending_months = $pendingMonths->setBusiness($business)->get();
+        $get_pending_months = $pending_months->setBusiness($business)->get();
 
-        return api_response($request, null, 200, ['pending_months' => $pending_months]);
+        return api_response($request, null, 200, ['pending_months' => $get_pending_months]);
     }
 }

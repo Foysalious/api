@@ -12,7 +12,7 @@ class PendingMonths
     /*** @var BusinessMemberRepositoryInterface */
     private $businessMemberRepository;
     /*** @var PayslipRepository */
-    private $PayslipRepositoryInterface;
+    private $payslipRepositoryInterface;
 
 
     /**
@@ -24,7 +24,7 @@ class PendingMonths
                                 PayslipRepository $payslip_repository_interface)
     {
         $this->businessMemberRepository = $business_member_repository;
-        $this->PayslipRepositoryInterface = $payslip_repository_interface;
+        $this->payslipRepositoryInterface = $payslip_repository_interface;
     }
 
     /**
@@ -42,8 +42,8 @@ class PendingMonths
      */
     public function get()
     {
-        $business_member_ids = $this->getBusinessMemberIds();
-        $month_year = $this->PayslipRepositoryInterface->builder()
+        $business_member_ids = $this->business->getAccessibleBusinessMember()->pluck('id')->toArray();
+        $month_year = $this->payslipRepositoryInterface->builder()
             ->selectRaw('DATE_FORMAT(schedule_date, "%m-%Y") as formatted_date')
             ->where('status', Status::PENDING)
             ->whereIn('business_member_id', $business_member_ids)
@@ -52,21 +52,14 @@ class PendingMonths
         return $this->getFormattedData(array_flatten($month_year));
     }
 
-    /**
-     * @return mixed
-     */
-    private function getBusinessMemberIds()
-    {
-        return $this->businessMemberRepository->where('business_id', $this->business->id)->pluck('id')->toArray();
-    }
 
     /**
-     * @param $datas
+     * @param $values
      * @return array
      */
-    private function getFormattedData($datas) {
+    private function getFormattedData($values) {
         $months_years = [];
-        foreach ($datas as $data) {
+        foreach ($values as $data) {
             $split_data = explode("-", $data);
             $monthName = date('F', mktime(0, 0, 0, $split_data[0], 10));
             array_push($months_years,[
