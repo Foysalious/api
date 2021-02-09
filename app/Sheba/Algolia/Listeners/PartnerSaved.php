@@ -10,8 +10,10 @@ class PartnerSaved
     {
         /** @var Partner $partner */
         $partner = $event->model;
-        if($partner->is_webstore_published == 1)
-        $partner->pushToIndex();
+        if ($partner->is_webstore_published == 1)
+            $partner->pushToIndex();
+        if ($partner->is_webstore_published == 0)
+            $partner->removeFromIndex();
     }
 
 }
