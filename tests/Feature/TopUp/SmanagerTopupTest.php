@@ -4,8 +4,6 @@
 namespace Tests\Feature\TopUp;
 
 
-use App\Models\Affiliate;
-use App\Models\AffiliateTransaction;
 use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -69,7 +67,7 @@ class SmanagerTopupTest extends FeatureTestCase
          */
 
         $this->topBlocklistNumbers = factory(TopUpBlacklistNumber::class)->create();
-        // dd($this->topBlocklistNumbers);
+         //dd($this->topBlocklistNumbers);
 
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
@@ -376,6 +374,25 @@ class SmanagerTopupTest extends FeatureTestCase
         //dd($data);
         $this->assertEquals(401, $data['code']);
         $this->assertEquals("Your session has expired. Try Login", $data['message']);
+    }
+
+    public function testTopupBlacklistNumberResponse()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01678987656',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 10,
+            'password' => 12345,
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
 
 
