@@ -160,7 +160,7 @@ class PaymentLinkController extends Controller
 
             if ($request->has('pos_order_id')) {
                 $pos_order = PosOrder::find($request->pos_order_id);
-                if($payment_link = $this->isAlreadyCreated($pos_order))
+                if($payment_link = $this->isAlreadyCreated($pos_order,$request->amount))
                 {
                     return api_response($request, $payment_link->getPaymentLinkData(), 200, ['payment_link' => $payment_link->getPaymentLinkData()]);
                 }
@@ -193,18 +193,15 @@ class PaymentLinkController extends Controller
         }
     }
 
-    private function isAlreadyCreated($order)
+    private function isAlreadyCreated(PosOrder $order, $amount)
     {
-        $order->calculate();
-        $manager = new Manager();
-        $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($order, new PosOrderTransformer());
-        $order = $manager->createData($resource)->toArray();
-        if (array_key_exists('payment_link_target', $order['data'])) {
-            $payment_link_target[] = $order['data']['payment_link_target'];
-            return (new PosOrderRepo())->mapPaymentLinkData($order['data'], $payment_link_target) ? : false;
-
+        $payment_link_target[] = $order->getPaymentLinkTarget();
+        $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
+        foreach ($links as $link) {
+            if ($link->getAmount() == $amount)
+                return $link;
         }
+        return false;
     }
 
     public function createPaymentLinkForDueCollection(Request $request)
