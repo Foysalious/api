@@ -68,11 +68,13 @@ class PayRunController extends Controller
 
     }
 
+
     /**
      * @param Request $request
      * @param PendingMonths $pendingMonths
+     * @return JsonResponse
      */
-    public function pendingMonths(Request $request, PendingMonths $pendingMonths)
+    public function pendingMonths(Request $request, PendingMonths $pending_months)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -81,8 +83,8 @@ class PayRunController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
-        $pending_months = $pendingMonths->setBusiness($business)->get();
+        $get_pending_months = $pending_months->setBusiness($business)->get();
 
-        return api_response($request, null, 200, ['pending_months' => $pending_months]);
+        return api_response($request, null, 200, ['pending_months' => $get_pending_months]);
     }
 }
