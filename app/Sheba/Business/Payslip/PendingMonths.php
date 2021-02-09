@@ -47,6 +47,7 @@ class PendingMonths
             ->selectRaw('DATE_FORMAT(schedule_date, "%m-%Y") as formatted_date')
             ->where('status', Status::PENDING)
             ->whereIn('business_member_id', $business_member_ids)
+            ->orderBy('schedule_date', 'DESC')
             ->distinct()
             ->get()->toArray();
         return $this->getFormattedData(array_flatten($month_year));
