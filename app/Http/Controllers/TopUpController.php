@@ -10,9 +10,11 @@ use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
 use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopupOrder\Statuses;
@@ -171,14 +173,32 @@ class TopUpController extends Controller
         return $topup_bulk_request;
     }
 
+    /**
+     * @param Request $request
+     * @param SslFailResponse $error_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
         $data = $request->all();
         $error_response->setResponse($data);
-        $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+        $topup_order = $error_response->getTopUpOrder();
+        $top_up->processFailedTopUp($topup_order, $error_response);
+
+        $topup_success_namespace = 'Topup::Failed:failed_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($topup_success_namespace, json_encode($data));
+
         return api_response($request, 1, 200);
     }
 
+    /**
+     * @param Request $request
+     * @param SslSuccessResponse $success_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
     {
         $data = $request->all();
