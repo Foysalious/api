@@ -38,6 +38,8 @@ class PayReportController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
+        $payroll_setting = $business->payrollSetting;
+
         list($offset, $limit) = calculatePagination($request);
 
         $payslip = $pay_report_list->setBusiness($business)
@@ -54,7 +56,7 @@ class PayReportController extends Controller
 
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_report')->get();
 
-        return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
+        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'payslip' => $payslip, 'total' => $count]);
 
     }
 }
