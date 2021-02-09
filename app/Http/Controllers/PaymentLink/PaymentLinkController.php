@@ -145,9 +145,12 @@ class PaymentLinkController extends Controller
     {
         $payment_link_target[] = $order->getPaymentLinkTarget();
         $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
-        foreach ($links as $link) {
-            if ($link->getAmount() == $amount)
-                return $link;
+        if($links)
+        {
+            foreach ($links as $link) {
+                if ($link->getAmount() == $amount)
+                    return $link;
+            }
         }
         return false;
     }
