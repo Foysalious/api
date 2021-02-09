@@ -3,6 +3,9 @@
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Member;
+use App\Models\Partner;
+use App\Models\PartnerResource;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -28,6 +31,12 @@ class FeatureTestCase extends TestCase
     protected $resource;
     /** @var Member */
     protected $member;
+    /** @var Partner */
+    protected $partner;
+    /** @var PartnerResource */
+    protected $partnerResource;
+    /** @var PartnerSubscriptionPackage */
+    protected $partnerSubscriptionPackage;
 
     public function setUp()
     {
@@ -75,7 +84,11 @@ class FeatureTestCase extends TestCase
             Affiliate::class,
             Customer::class,
             Member::class,
-            Resource::class
+            Resource::class,
+            Partner::class,
+            PartnerSubscriptionPackage::class,
+            PartnerResource::class
+
         ]);
 
         $this->profile = factory(Profile::class)->create();
@@ -89,12 +102,23 @@ class FeatureTestCase extends TestCase
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
+        $this->resource = factory(Resource::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $this->partnerSubscriptionPackage = factory(PartnerSubscriptionPackage::class)->create();
+        $this->partner = factory(Partner::class)->create([
+            'package_id' => $this->partnerSubscriptionPackage->package_id
+        ]);
+       // dd($this->partner);
+        $this->partnerResource = factory(PartnerResource::class)->create([
+            'partner_id' => $this->partner->id,
+            'resource_id' => $this->resource->id
+        ]);
+      //  dd($this->partnerResource);
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        /*$this->resource = factory(Resource::class)->create([
-            'profile_id' => $this->profile->id
-        ]);*/
+
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -139,7 +163,18 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => null,
+            'resource' => [
+                'id' => $this->resource->id,
+                'partner' =>[
+                    'id' => $this->partner->id,
+                    'name'=>'Khairun Nahar',
+                    'sub_domain'=>'test-shop',
+                    'logo'=>'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/partners/logos/1572954290_sk_food.png'
+                ]
+
+            ],
+
+
             'member' => [
                 'id' => $this->member->id
             ],

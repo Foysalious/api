@@ -18,6 +18,8 @@ use Factory\TopUpVendorOTFChangeLogFactory;
 use Factory\CustomerFactory;
 use Factory\ResourceFactory;
 use Factory\MemberFactory;
+use Factory\PartnerFactory;
+use Factory\PartnerResourceFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -35,8 +37,10 @@ $factory_classes = [
     CustomerFactory::class,
     ResourceFactory::class,
     MemberFactory::class,
-    TopupBlacklistNumbersFactory::class
-    PartnerSubscriptionPackageFactory::class
+    TopupBlacklistNumbersFactory::class,
+    PartnerSubscriptionPackageFactory::class,
+    PartnerResourceFactory::class,
+    PartnerFactory::class
 
 ];
 
