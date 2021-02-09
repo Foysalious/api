@@ -49,7 +49,7 @@ class NewOrderLIstTest extends FeatureTestCase
         $this->job_service = factory(JobService::class)->create();
     }
 
-    public function testWithoutFliterResponseCode()
+    public function testWithoutFilterResponseCode()
     {
         $response=$this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token);
         $data = $response->decodeResponseJson();
