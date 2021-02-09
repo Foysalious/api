@@ -26,6 +26,7 @@ class PosOrder
         if (array_key_exists($key, $payment_link)) {
             return $payment_link[$key];
         }
+        return false;
     }
 
 }

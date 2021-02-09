@@ -49,6 +49,7 @@ use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
+use Sheba\Transactions\Types;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -91,17 +92,21 @@ class OrderController extends Controller
         $resource = new Item($order, new PosOrderTransformer());
         $order    = $manager->createData($resource)->toArray();
 
-        /*if(empty($order['data']['payments']))
-            $order['data']['payment_method'] = 'cod';
-        if (array_key_exists('payment_link_target', $order['data'])) {
-            $payment_link_target[] = $order['data']['payment_link_target'];
-            $payment_link_data = $posOrder->mapPaymentLinkData($order['data'], $payment_link_target);
-            if($payment_link_data)
-            {
-                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
-                unset($order['payment_link_target']);
-            }
-        }*/
+        $order['data']['payment_method'] = empty($order['data']['payments']) ? 'cod' : collect($order['data']['payments'])->where('transaction_type',Types::CREDIT)->sortByDesc('created_at')->first()['method'];
+
+       if (array_key_exists('payment_link_target', $order['data'])) {
+
+           $payment_link_target[] = $order['data']['payment_link_target'];
+           $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
+           if($links)
+           {
+               foreach ($links as $link) {
+                   if ($link->getAmount() == $order['data']['price'])
+                       (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
+               }
+               unset($order['data']['payment_link_target']);
+           }
+        }
         return api_response($request, null, 200, ['order' => $order]);
     }
 
