@@ -75,6 +75,11 @@ class PayRunController extends Controller
     {
         /** @var Business $business */
         $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+
+        if (!$business_member) return api_response($request, null, 401);
+
         $pending_months = $pendingMonths->setBusiness($business)->get();
 
         return api_response($request, null, 200, ['pending_months' => $pending_months]);
