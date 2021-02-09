@@ -54,6 +54,7 @@ class TradeFair
                 'stall_id' => $shop->stall_id,
                 'partner_id' => $shop->partner_id,
                 'partner_name' => $shop->partner->name,
+                'sub_domain'  => $shop->partner->sub_domain,
                 'delivery_charge' => $shop->partner->delivery_charge,
                 'banner' =>  $shop->partner->webstoreBanner ? [
                     'image_link' => $shop->partner->webstoreBanner->banner->image_link,
