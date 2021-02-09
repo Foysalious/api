@@ -34,9 +34,9 @@ class Creator
     private function makeData()
     {
         $this->salaryLogData['salary_id'] = $this->salaryLogRequester->getSalary()->id;
-        $this->salaryLogData['new'] = $this->salaryLogRequester->getGrossSalary();
-        $this->salaryLogData['old'] = $this->salaryLogRequester->getOldSalary();
-        $this->salaryLogData['log'] = $this->getManagerMember() . ' changed Salary ' . (float)$this->salaryLogRequester->getOldSalary() . ' to ' . (float)$this->salaryLogRequester->getGrossSalary();
+        $this->salaryLogData['new'] = floatValFormat($this->salaryLogRequester->getGrossSalary());
+        $this->salaryLogData['old'] = floatValFormat($this->salaryLogRequester->getOldSalary());
+        $this->salaryLogData['log'] = $this->getManagerMember() . ' changed Salary ' . floatValFormat($this->salaryLogRequester->getOldSalary()) . ' to ' . floatValFormat($this->salaryLogRequester->getGrossSalary());
     }
 
     private function getManagerMember()

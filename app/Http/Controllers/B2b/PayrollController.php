@@ -4,6 +4,7 @@ use Sheba\Business\PayrollSetting\Requester as PayrollSettingRequester;
 use Sheba\Business\PayrollSetting\Updater as PayrollSettingUpdater;
 use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
 use App\Transformers\Business\PayrollSettingsTransformer;
+use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use App\Transformers\CustomSerializer;
@@ -75,7 +76,8 @@ class PayrollController extends Controller
     {
         $this->validate($request, [
             'is_enable' => 'required|integer',
-            'pay_day' => 'required|integer'
+            'pay_day_type' => 'required|in:' . implode(',', PayDayType::get()),
+            'pay_day' => 'required_if:pay_day_type,fixed_date'
         ]);
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
@@ -83,7 +85,7 @@ class PayrollController extends Controller
 
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
-        $this->payrollSettingRequester->setIsEnable($request->is_enable)->setPayDay($request->pay_day);
+        $this->payrollSettingRequester->setIsEnable($request->is_enable)->setPayDayType($request->pay_day_type)->setPayDay($request->pay_day);
         $this->payrollSettingUpdater->setPayrollSetting($payroll_setting)->setPayrollSettingRequest($this->payrollSettingRequester)->update();
         return api_response($request, null, 200);
     }
