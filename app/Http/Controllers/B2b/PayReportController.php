@@ -44,10 +44,12 @@ class PayReportController extends Controller
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
+            ->setMonthYear($request->month_year)
+            ->setDepartmentID($request->department_id)
             ->get();
 
         $count = count($payslip);
-
+        if($request->limit == 'all') $limit = $count;
         $payslip = collect($payslip)->splice($offset, $limit);
 
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_report')->get();

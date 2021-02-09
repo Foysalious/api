@@ -54,7 +54,7 @@ class PayrunList
     }
 
     /**
-     * @param $search
+     * @param $month_year
      * @return $this
      */
     public function setMonthYear($month_year)
@@ -64,7 +64,7 @@ class PayrunList
     }
 
     /**
-     * @param $sort
+     * @param $department_id
      * @return $this
      */
     public function setDepartmentID($department_id)
