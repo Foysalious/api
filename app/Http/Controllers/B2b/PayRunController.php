@@ -2,6 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
+use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\Business;
@@ -34,9 +35,10 @@ class PayRunController extends Controller
     /**
      * @param Request $request
      * @param PayrunList $payrun_list
+     * @param PaySlipExcel $pay_slip_excel
      * @return JsonResponse
      */
-    public function index(Request $request, PayrunList $payrun_list)
+    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -58,6 +60,8 @@ class PayRunController extends Controller
         $count = count($payslip);
 
         $payslip = collect($payslip)->splice($offset, $limit);
+
+        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
 
         return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
 

@@ -44,6 +44,8 @@ class PayReportController extends Controller
             ->setSearch($request->search)
             ->setSortKey($request->sort)
             ->setSortColumn($request->sort_column)
+            ->setMonthYear($request->month_year)
+            ->setDepartmentID($request->department_id)
             ->get();
 
         $count = count($payslip);

@@ -1,7 +1,10 @@
 <?php namespace App\Sheba\Business\Payslip;
 
 use App\Models\Business;
+use App\Models\BusinessMember;
+use App\Models\BusinessRole;
 use App\Transformers\Business\PayReportListTransformer;
+use Carbon\Carbon;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
@@ -24,6 +27,8 @@ class PayReportList
     private $sortColumn;
     private $sort;
     private $businessMemberIds;
+    private $monthYear;
+    private $departmentID;
 
     /**
      * PayReportList constructor.
@@ -73,6 +78,26 @@ class PayReportList
         return $this;
     }
 
+    /**
+     * @param $month_year
+     * @return $this
+     */
+    public function setMonthYear($month_year)
+    {
+        $this->monthYear = $month_year;
+        return $this;
+    }
+
+    /**
+     * @param $department_id
+     * @return $this
+     */
+    public function setDepartmentID($department_id)
+    {
+        $this->departmentID = $department_id;
+        return $this;
+    }
+
     public function get()
     {
         $this->runPayslipQuery();
@@ -84,6 +109,14 @@ class PayReportList
     {
         $payslip = $this->payslipRepositoryInterface->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED);
         $this->payslipList = $payslip->get();
+
+        if ($this->monthYear) {
+            $this->payslipList = $this->filterByMonthYear($this->monthYear, $this->payslipList);
+        }
+
+        if ($this->departmentID) {
+            $this->payslipList = $this->filterByDepartment($this->departmentID, $this->payslipList);
+        }
     }
 
     private function getData()
@@ -119,6 +152,29 @@ class PayReportList
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($data)->$sort_by(function ($value, $key) use ($column){
             return strtoupper($value[$column]);
+        });
+    }
+
+    private function filterByMonthYear($month_year, $data)
+    {
+        $split_data = explode("-", $month_year);
+        $first_date = Carbon::create($split_data[1], $split_data[0])->startOfMonth();
+        $last_date = Carbon::create($split_data[1], $split_data[0])->lastOfMonth()->endOfDay();
+
+        return $data->filter(function ($payslip) use ($first_date, $last_date) {
+            $schedule_date = Carbon::parse($payslip->schedule_date);
+            return $schedule_date->gte($first_date) && $schedule_date->lte($last_date);
+        });
+    }
+
+    private function filterByDepartment($department_id, $data)
+    {
+        return $data->filter(function ($payslip) use ($department_id) {
+            /** @var BusinessMember $business_member */
+            $business_member = $payslip->businessMember;
+            /** @var BusinessRole $role */
+            $role = $business_member->role;
+            if ($role) return $role->businessDepartment->id == $department_id;
         });
     }
 
