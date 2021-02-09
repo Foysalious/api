@@ -9,12 +9,13 @@ class PayRunListTransformer extends TransformerAbstract
     public function transform(Payslip $payslip)
     {
         $gross_salary = $this->getGrossSalary($payslip->businessMember);
+        $department = $payslip->businessMember->department();
         return [
             'id' =>  $payslip->id,
             'employee_id' => $payslip->businessMember->employee_id,
             'employee_name' => $payslip->businessMember->member->profile->name,
             'business_member_id' => $payslip->business_member_id,
-            'department' => $payslip->businessMember->department()->name,
+            'department' => $department ? $department->name : null,
             'gross_salary' => floatval($gross_salary),
             'net_payable' => floatval($gross_salary)
         ];
