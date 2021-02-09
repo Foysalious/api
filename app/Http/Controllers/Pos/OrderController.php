@@ -90,7 +90,7 @@ class OrderController extends Controller
         $resource = new Item($order, new PosOrderTransformer());
         $order    = $manager->createData($resource)->toArray();
 
-        if(empty($order['data']['payments']))
+        /*if(empty($order['data']['payments']))
             $order['data']['payment_method'] = 'cod';
         if (array_key_exists('payment_link_target', $order['data'])) {
             $payment_link_target[] = $order['data']['payment_link_target'];
@@ -100,7 +100,7 @@ class OrderController extends Controller
                 (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_link_data);
                 unset($order['payment_link_target']);
             }
-        }
+        }*/
         return api_response($request, null, 200, ['order' => $order]);
     }
 
