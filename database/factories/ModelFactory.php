@@ -2,7 +2,9 @@
 
 use Factory\Factory;
 use Factory\CategoryFactory;
+use Factory\JobFactory;
 use Factory\PartnerFactory;
+use Factory\PartnerOrderFactory;
 use Factory\PartnerResourceFactory;
 use Factory\ServiceFactory;
 use Factory\LocationFactory;
@@ -20,6 +22,10 @@ use Factory\ResourceFactory;
 use Factory\MemberFactory;
 use Factory\PartnerPackageFactory;
 use Factory\OrderFactory;
+use Factory\PartnerOrderRequestFactory;
+use Factory\CustomerDeliveryAddress;
+use Factory\ScheduleSlotsFactory;
+use Factory\JobServiceFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -41,8 +47,12 @@ $factory_classes = [
     PartnerResourceFactory::class,
     PartnerPackageFactory::class,
     OrderFactory::class,
-
-
+    PartnerOrderFactory::class,
+    JobFactory::class,
+    PartnerOrderRequestFactory::class,
+    CustomerDeliveryAddress::class,
+    ScheduleSlotsFactory::class,
+    JobServiceFactory::class
 
 
 ];
