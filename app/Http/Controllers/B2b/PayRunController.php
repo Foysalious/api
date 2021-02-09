@@ -47,8 +47,6 @@ class PayRunController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
-        $payroll_setting = $business->payrollSetting;
-
         list($offset, $limit) = calculatePagination($request);
 
         $payslip = $payrun_list->setBusiness($business)
@@ -66,14 +64,14 @@ class PayRunController extends Controller
 
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
 
-        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'payslip' => $payslip, 'total' => $count]);
+        return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
 
     }
 
 
     /**
      * @param Request $request
-     * @param PendingMonths $pendingMonths
+     * @param PendingMonths $pending_months
      * @return JsonResponse
      */
     public function pendingMonths(Request $request, PendingMonths $pending_months)
@@ -85,8 +83,10 @@ class PayRunController extends Controller
 
         if (!$business_member) return api_response($request, null, 401);
 
+        $payroll_setting = $business->payrollSetting;
+
         $get_pending_months = $pending_months->setBusiness($business)->get();
 
-        return api_response($request, null, 200, ['pending_months' => $get_pending_months]);
+        return api_response($request, null, 200, ['is_enable' => $payroll_setting->is_enable, 'pending_months' => $get_pending_months]);
     }
 }
