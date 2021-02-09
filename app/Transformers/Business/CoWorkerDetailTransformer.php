@@ -1,16 +1,19 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\Business;
-use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdown;
+use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use App\Sheba\Business\SalaryLog\Formatter as SalaryLogFormatter;
-use Sheba\Dal\Salary\SalaryRepository;
 use Sheba\Dal\SalaryLog\SalaryLogRepository;
+use Sheba\Dal\PayrollComponent\Components;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\Salary\SalaryRepository;
+use App\Models\BusinessMember;
+use App\Models\Business;
+use App\Models\Member;
 
 class CoWorkerDetailTransformer extends TransformerAbstract
 {
+    const THRESHOLD = 17;
+
     private $business;
     private $isInactiveFilterApplied;
     private $SalaryRepository;
@@ -57,7 +60,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
         if ($profile->email) $count++;
         if ($department) $count++;
         if ($designation) $count++;
-        $basic_info_completion = round((($count / 4) * 17), 0);
+        $basic_info_completion = round((($count / 4) * self::THRESHOLD), 0);
         return [
             'id' => $member->id,
             'status' => $business_member->status,
@@ -84,7 +87,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $business_member->grade ||
             $business_member->employee_type ||
             $business_member->previous_institution) $count++;
-        $official_info_completion = round((($count / 1) * 17), 0);
+        $official_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
             'employee_id' => $business_member->employee_id,
@@ -109,7 +112,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $profile->nid_image_front ||
             $profile->nid_image_back) $count++;
 
-        $personal_info_completion = round((($count / 1) * 17), 0);
+        $personal_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
             'mobile' => $business_member->mobile,
@@ -140,7 +143,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $bank_name ||
             $account_no) $count++;
 
-        $financial_info_completion = round((($count / 1) * 17), 0);
+        $financial_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
             'tin_no' => $profile->tin_no,
@@ -159,7 +162,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
             $member->emergency_contract_person_number ||
             $member->emergency_contract_person_relationship) $count++;
 
-        $emergency_info_completion = round((($count / 1) * 17), 0);
+        $emergency_info_completion = round((($count / 1) * self::THRESHOLD), 0);
 
         return [
             'emergency_contract_person_name' => $member->emergency_contract_person_name,
@@ -172,13 +175,19 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     private function getSalaryInfo($business_member)
     {
         $payroll_setting = $this->business->payrollSetting;
-        $gross_salary_breakdown = (new GrossSalaryBreakdown())->salaryBreakdown($payroll_setting);
+        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
 
         $count = 0;
         $salary = $business_member->salary;
         if ($salary && $salary->gross_salary) $count++;
-        $salary_completion = round((($count / 1) * 17), 0);
-        $gross_salary_breakdown['gross_salary'] = $salary ? floatval($salary->gross_salary) : null;
+        $salary_completion = round((($count / 1) * self::THRESHOLD), 0);
+
+        $gross_salary_breakdown[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
+        $gross_salary_breakdown[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
+        $gross_salary_breakdown[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
+        $gross_salary_breakdown[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
+
+        $gross_salary_breakdown['gross_salary'] = $salary ? floatValFormat($salary->gross_salary) : null;
         $gross_salary_breakdown['gross_salary_log'] = $this->getSalaryLog($business_member);
         $gross_salary_breakdown['gross_salary_completion'] = $salary_completion;
 
@@ -234,7 +243,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     private function getSalaryLog($business_member)
     {
         $salary = $business_member->salary;
-        if(!$salary) return [];
+        if (!$salary) return [];
         $salary_logs = $salary->logs;
         return (new SalaryLogFormatter())->setSalaryLogs($salary_logs)->format();
     }

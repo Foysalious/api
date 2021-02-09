@@ -27,7 +27,6 @@ use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
-use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
 use App\Transformers\CustomSerializer;
 use Sheba\Business\CoWorker\Statuses;

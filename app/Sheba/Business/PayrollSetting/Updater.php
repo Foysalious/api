@@ -38,6 +38,7 @@ class Updater
     {
         return [
             'is_enable' => $this->payrollSettingRequest->getIsEnable(),
+            'pay_day_type' => $this->payrollSettingRequest->getPayDayType(),
             'pay_day' => $this->payrollSettingRequest->getPayDay()
         ];
     }

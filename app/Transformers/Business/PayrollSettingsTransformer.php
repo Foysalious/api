@@ -1,15 +1,10 @@
 <?php namespace App\Transformers\Business;
 
-use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdown;
-use Sheba\Business\PayrollComponent\Components\MedicalAllowance;
-use Sheba\Business\PayrollComponent\Components\BasicSalary;
-use Sheba\Business\PayrollComponent\Components\Conveyance;
-use Sheba\Business\PayrollComponent\Components\HouseRent;
-use Sheba\Dal\PayrollComponent\PayrollComponent;
-use Sheba\Dal\PayrollSetting\PayrollSetting;
+use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
+use Sheba\Dal\PayrollSetting\PayDayType;
 use League\Fractal\TransformerAbstract;
-use Sheba\Dal\PayrollComponent\Type;
 
 class PayrollSettingsTransformer extends TransformerAbstract
 {
@@ -43,13 +38,15 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function grossSalaryBreakdown($payroll_setting)
     {
-        $this->payrollComponentData = (new GrossSalaryBreakdown())->salaryBreakdown($payroll_setting);
+        $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
         $count = 0;
-        if ($this->payrollComponentData['basic_salary'] > 0) $count++;
-        if ($this->payrollComponentData['house_rent'] > 0) $count++;
-        if ($this->payrollComponentData['medical_allowance'] > 0) $count++;
-        if ($this->payrollComponentData['conveyance'] > 0) $count++;
-        $salary_breakdown_completion = round((($count / 4) * 50), 0);
+        if (($payroll_percentage_breakdown->basicSalary > 0) || ($payroll_percentage_breakdown->houseRent > 0) || ($payroll_percentage_breakdown->medicalAllowance > 0) || ($payroll_percentage_breakdown->conveyance > 0)) $count++;
+        $salary_breakdown_completion = round((($count / 1) * 50), 0);
+
+        $this->payrollComponentData[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
+        $this->payrollComponentData[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
+        $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
+        $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
         $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
         return $this->payrollComponentData;
     }
@@ -61,15 +58,16 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function paySchedule($payroll_setting)
     {
         $count = 0;
-        if ($payroll_setting->payment_schedule) $count++;
-        if ($payroll_setting->pay_day) $count++;
         if ($payroll_setting->is_enable) $count++;
-        $pay_schedule_completion = round((($count / 3) * 50), 0);
+        $pay_schedule_completion = round((($count / 1) * 50), 0);
 
         $this->payScheduleData = [
             'is_enable' => $payroll_setting->is_enable,
             'payment_schedule' => $payroll_setting->payment_schedule,
-            'pay_day' => $payroll_setting->pay_day,
+            'pay_day' => [
+                'type' => $payroll_setting->pay_day_type,
+                'date' => $payroll_setting->pay_day_type == PayDayType::FIXED_DATE ? $payroll_setting->pay_day : null,
+            ],
             'pay_schedule_completion' => $pay_schedule_completion
         ];
         return $this->payScheduleData;
