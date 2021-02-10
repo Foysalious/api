@@ -37,6 +37,7 @@ class SendLeavePushNotificationToEmployee extends Job implements ShouldQueue
         if ($this->attempts() < 2) {
             $topic = config('sheba.push_notification_topic_name.employee') . (int)$this->businessMember->member->id;
             $channel = config('sheba.push_notification_channel_name.employee');
+            $sound  = config('sheba.push_notification_sound.employee');
             $notification_data = [
                 "title" => 'Leave request',
                 "message" => "$this->leaveApplicant requested for a leave which needs your approval",
@@ -47,7 +48,7 @@ class SendLeavePushNotificationToEmployee extends Job implements ShouldQueue
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ];
 
-            $this->pushNotification->send($notification_data, $topic, $channel);
+            $this->pushNotification->send($notification_data, $topic, $channel, $sound);
         }
     }
 }

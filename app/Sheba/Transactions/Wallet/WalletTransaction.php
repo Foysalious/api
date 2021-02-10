@@ -35,6 +35,7 @@ class WalletTransaction
         /** @noinspection PhpUndefinedFieldInspection */
         $this->model->wallet -= $this->amount;
         $this->model->update();
+        return $this->model->wallet;
     }
 
     /**
@@ -47,5 +48,6 @@ class WalletTransaction
         /** @noinspection PhpUndefinedFieldInspection */
         $this->model->wallet += $this->amount;
         $this->model->update();
+        return $this->model->wallet;
     }
 }

@@ -12,6 +12,7 @@ use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
 use App\Sheba\Affiliate\PushNotification\TopUpFailed;
 use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
+use Sheba\PartnerOrderRequest\Events\OrderRequestEvent;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
 
@@ -64,7 +65,7 @@ class NotificationRepository
             $topic   = config('sheba.push_notification_topic_name.manager') . $partner_order->partner_id;
             $channel = config('sheba.push_notification_channel_name.manager');
             $sound   = config('sheba.push_notification_sound.manager');
-            (new PushNotificationHandler())->send([
+            $payload=[
                 "title"      => 'New Order',
                 "message"    => "প্রিয় $partner->name আপনার একটি নতুন অর্ডার রয়েছে " . $partner_order->code() . ", অনুগ্রহ করে ম্যানেজার অ্যাপ থেকে অর্ডারটি একসেপ্ট করুন",
                 "event_type" => 'PartnerOrder',
@@ -72,7 +73,10 @@ class NotificationRepository
                 "link"       => "new_order",
                 "sound"      => "notification_sound",
                 "channel_id" => $channel
-            ], $topic, $channel, $sound);
+            ];
+            (new PushNotificationHandler())->send($payload, $topic, $channel, $sound);
+
+            event(new OrderRequestEvent(['user_type' => 'partner', 'user_id' => $partner->id, 'payload' => $payload]));
         }
     }
 
@@ -271,7 +275,7 @@ class NotificationRepository
     public function sendInsufficientNotification(Partner $partner, $package, $package_type, $grade, $withMessage = true)
     {
         $title     = ' অপর্যাপ্ত  ব্যলেন্স';
-        $type      = BillingType::BN()[$package_type];
+        $type      = $package->titleTypeBn($package_type);
         $gradeType = $grade == PartnerSubscriptionChange::UPGRADE ? " এর" : $grade == PartnerSubscriptionChange::RENEWED ? " নাবায়ন এর" : " এর";
         $message   = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);

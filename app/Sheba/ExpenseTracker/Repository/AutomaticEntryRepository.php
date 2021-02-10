@@ -26,7 +26,9 @@ class AutomaticEntryRepository extends BaseRepository
     private $paymentId;
     private $interest;
     private $bankTransactionCharge;
-
+    private $isWebstoreOrder = 0;
+    private $isPaymentLink = 0;
+    private $isDueTrackerPaymentLink=0;
     /**
      * @param mixed $paymentMethod
      * @return AutomaticEntryRepository
@@ -124,6 +126,22 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
+     * @param $isWebstoreOrder
+     * @return AutomaticEntryRepository
+     */
+    public function setIsWebstoreOrder($isWebstoreOrder)
+    {
+        $this->isWebstoreOrder = $isWebstoreOrder;
+        return $this;
+    }
+
+    public function setIsPaymentLink($isPaymentLink)
+    {
+        $this->isPaymentLink = $isPaymentLink;
+        return $this;
+    }
+
+    /**
      * @param $head
      * @throws InvalidHeadException
      */
@@ -147,10 +165,10 @@ class AutomaticEntryRepository extends BaseRepository
     public function setCreatedAt(Carbon $created_at)
     {
         try {
-            $this->createdAt = $created_at->format('Y-m-d H:s:i');
+            $this->createdAt = $created_at->format('Y-m-d H:i:s');
             return $this;
         } catch (Throwable $e) {
-            $this->createdAt = Carbon::now()->format('Y-m-d H:s:i');
+            $this->createdAt = Carbon::now()->format('Y-m-d H:i:s');
             $this->notifyBug($e);
             return $this;
         }
@@ -215,21 +233,29 @@ class AutomaticEntryRepository extends BaseRepository
     }
 
     /**
+     * @param $data
+     * @return $this
+     */
+    public function setIsDueTrackerPaymentLink($data=1){
+        $this->isDueTrackerPaymentLink=$data;
+        return $this;
+    }
+    /**
      * @return mixed
      * @throws Exception
      */
     private function getData()
     {
         $created_from               = $this->withBothModificationFields((new RequestIdentification())->get());
-        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:s:i');
-        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:s:i');
+        $created_from['created_at'] = $created_from['created_at']->format('Y-m-d H:i:s');
+        $created_from['updated_at'] = $created_from['updated_at']->format('Y-m-d H:i:s');
         $data                       = [
-            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:s:i'),
+            'created_at'              => $this->createdAt ?: Carbon::now()->format('Y-m-d H:i:s'),
             'created_from'            => json_encode($created_from),
             'amount'                  => $this->amount,
             'amount_cleared'          => $this->amountCleared,
             'head_name'               => $this->head,
-            'note'                    => 'Automatically Placed from Sheba',
+            'note'                    => $this->isPaymentLink ? 'Automatically Placed from Sheba payment link':'Automatically Placed from Sheba',
             'source_type'             => $this->sourceType,
             'source_id'               => $this->sourceId,
             'type'                    => $this->for,
@@ -237,7 +263,10 @@ class AutomaticEntryRepository extends BaseRepository
             'payment_id'              => $this->paymentId,
             'emi_month'               => $this->emiMonth,
             'interest'                => $this->interest,
-            'bank_transaction_charge' => $this->bankTransactionCharge
+            'bank_transaction_charge' => $this->bankTransactionCharge,
+            'is_webstore_order'       => $this->isWebstoreOrder,
+            'is_payment_link'         => $this->isPaymentLink,
+            'is_due_tracker_payment_link'=>$this->isDueTrackerPaymentLink
         ];
         if (empty($data['amount']))
             $data['amount'] = 0;

@@ -87,7 +87,7 @@ class PartnerRepository
             $data['picture']                 = $resource->profile->pro_pic;
             $avg_rating                      = $resource->reviews->avg('rating');
             $data['rating']                  = $avg_rating != null ? round($avg_rating, 2) : null;
-            $data['joined_at']               = $resource->pivot->created_at->timestamp;
+            $data['joined_at']               = $resource->pivot->created_at ? $resource->pivot->created_at->timestamp : null;
             $data['resource_type']           = $resource->pivot->resource_type;
             $data['is_verified']             = $resource->is_verified;
             $data['is_available']            = $resource->is_tagged;
@@ -248,10 +248,10 @@ class PartnerRepository
      */
     private function _deleteOldLogo($delete_both = true)
     {
-        if ($this->partner->logo != getPartnerDefaultLogo()) {
+        if ( !preg_match('/default/', $this->partner->logo)) {
             $old_logo = substr($this->partner->logo, strlen(env('S3_URL')));
             $this->deleteImageFromCDN($old_logo);
-            if ($delete_both && ($this->partner->logo_original != getPartnerDefaultLogo())) {
+            if ($delete_both && (!preg_match('/default/', $this->partner->logo_original))) {
                 $old_logo_original = substr($this->partner->logo_original, strlen(env('S3_URL')));
                 $this->deleteImageFromCDN($old_logo_original);
             }
@@ -369,6 +369,11 @@ class PartnerRepository
         return array_map(function($item)use($details){
             return ['key'=>$item,'details'=>$details[$item]];
         }, $screens);
+    }
+
+    public function updateWebstoreSettings($data)
+    {
+        $this->partner->update($data);
     }
 }
 
