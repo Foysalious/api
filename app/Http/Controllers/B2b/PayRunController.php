@@ -59,10 +59,10 @@ class PayRunController extends Controller
 
         $count = count($payslip);
 
+        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
+
         if($request->limit == 'all') $limit = $count;
         $payslip = collect($payslip)->splice($offset, $limit);
-
-        if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
 
         return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
 
