@@ -12,6 +12,7 @@ class Commission extends Parameter
 
     protected function getValueForPartner()
     {
+        //will be moved to app/Sheba/AutoSpAssign/Finder.php
         return Partner::find($this->partner->getId())->categoryCommission($this->categoryId);
     }
 }
