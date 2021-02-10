@@ -61,8 +61,7 @@ abstract class Vendor
         try {
             return $this->topUpGateway->recharge($topup_order);
         } catch (GatewayTimeout $e) {
-            $this->gatewayTimeoutHandler->handle();
-            return (new GenericGatewayErrorResponse())->setErrorResponse(new TopUpGatewayTimeoutResponse());
+            return $this->handleGatewayTimeout();
         }
     }
 
@@ -94,5 +93,14 @@ abstract class Vendor
     {
         $this->topUpGateway = $topup_gateway;
         $this->gatewayTimeoutHandler->setGateway($this->topUpGateway);
+    }
+
+    /**
+     * @return GenericGatewayErrorResponse
+     */
+    protected function handleGatewayTimeout()
+    {
+        $this->gatewayTimeoutHandler->handle();
+        return (new GenericGatewayErrorResponse())->setErrorResponse(new TopUpGatewayTimeoutResponse());
     }
 }
