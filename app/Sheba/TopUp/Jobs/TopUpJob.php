@@ -150,7 +150,8 @@ class TopUpJob extends Job implements ShouldQueue
 
     private function handleException(Exception $e)
     {
-        $id = $this->failedJobLogger->log($this->connection, $this->queue, $this->job->getRawBody());
+        $payload = $this->job->getRawBody();
+        $id = $this->failedJobLogger->log($this->connection, $this->queue ?: "default", $payload);
         logErrorWithExtra($e, [
             config('queue.failed.table') . ".id" => $id
         ]);
