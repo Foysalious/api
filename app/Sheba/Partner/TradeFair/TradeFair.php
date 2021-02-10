@@ -28,7 +28,7 @@ class TradeFair
      * @param $index
      * @return array
      */
-    public function convertPartnerBusinessType($index)
+    public function convertPartnerBusinessType($index = 'en')
     {
         $business_types = constants('PARTNER_BUSINESS_TYPE');
         $converted_business_types = [];
@@ -87,7 +87,8 @@ class TradeFair
      */
     public function getStoresByBusinessType($business_type)
     {
-        $converted_business_types = $this->convertPartnerBusinessType('en');
+        $converted_business_types = $this->convertPartnerBusinessType();
+
         $partners = Partner::has('tradeFair')->with('tradeFair')->where('is_webstore_published', 1)
             ->where('business_type', $converted_business_types[$business_type])
             ->select('id')->get();
@@ -95,11 +96,20 @@ class TradeFair
         $stores = [];
         $partners->each(function ($partner) use (&$stores) {
             array_push($stores, [
-                'partner_id' => $partner->id,
                 'stall_id' => $partner->tradeFair->stall_id,
+                'partner_id' => $partner->id,
+                'partner_name' => $partner->name,
+                'sub_domain'  => $partner->sub_domain,
+                'delivery_charge' => $partner->delivery_charge,
+                'banner' =>  $partner->webstoreBanner ? [
+                'image_link' => $partner->webstoreBanner->banner->image_link,
+                'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
+                'title'  => $partner->webstoreBanner->title,
+                'description' => $partner->webstoreBanner->description
+            ] : null,
                 'description' => $partner->tradeFair->description,
-                'discount' => $partner->tradeFair->discount,
-                'is_published' => $partner->tradeFair->is_published
+                'discount' =>  $partner->tradeFair->discount,
+                'is_published' => $partner->tradeFair->is_published,
             ]);
         });
         return $stores;

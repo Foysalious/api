@@ -48,6 +48,7 @@ class TradeFairController extends Controller
     {
         try{
             $business_types = constants('PARTNER_BUSINESS_TYPE');
+
             $en_business_types = [];
             collect($business_types)->each(function ($type) use (&$en_business_types) {
                 array_push($en_business_types, $type['en']);
