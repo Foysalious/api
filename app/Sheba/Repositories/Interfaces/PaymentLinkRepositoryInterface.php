@@ -54,6 +54,7 @@ interface PaymentLinkRepositoryInterface extends BaseRepositoryInterface
      * @return PaymentLinkTransformer[][]
      */
     public function getPaymentLinksByPosOrders(array $targets);
+    public function getPaymentLinksByPosOrder($target);
     public function getActivePaymentLinksByPosOrders(array $targets);
     public function getActivePaymentLinkByPosOrder($target);
 }

@@ -165,6 +165,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return $this->formatPaymentLinkTransformers($links);
     }
 
+    public function getPaymentLinksByPosOrder($target)
+    {
+        return $this->getPaymentLinksByPosOrders([$target]);
+    }
+
     public function getActivePaymentLinksByPosOrders(array $targets)
     {
         $links = $this->paymentLinkClient->getActivePaymentLinksByPosOrders($targets);

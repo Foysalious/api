@@ -184,6 +184,7 @@ class PaymentLinkController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, null, 500,$this->creator->getErrorMessage());
         }
@@ -192,7 +193,11 @@ class PaymentLinkController extends Controller
     private function deActivatePreviousLink(PosOrder $order)
     {
         $payment_link_target = $order->getPaymentLinkTarget();
-        $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
+        $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($payment_link_target);
+        $key = $payment_link_target->toString();
+        $links = null;
+        if(array_key_exists($key,$payment_link))
+            $links = $payment_link[$key];
         if($links)
         {
             foreach ($links as $link) {
