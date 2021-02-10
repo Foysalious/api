@@ -1,14 +1,14 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\Affiliate;
+use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
-use Sheba\TopUp\Commission\Customer;
-use Sheba\TopUp\Commission\Partner;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
