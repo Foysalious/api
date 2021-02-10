@@ -58,7 +58,6 @@ class ServiceGroupController extends Controller
             $services_without_pivot_data = $services->each(function ($service) use($location) {
                 removeRelationsFromModel($service);
                 $service['slug'] = $service->getSlug();
-                //dd($service->locationServices()->where('locations.id',$location));
             });
             array_push($service_group_list, [
                 'id' => $service_group->id,
@@ -84,6 +83,7 @@ class ServiceGroupController extends Controller
 
     public function show($service_group, Request $request)
     {
+        $single_service_group = ServiceGroup::find($service_group);
         try {
             $this->validate($request, [
                 'location' => 'sometimes|numeric',
@@ -97,9 +97,8 @@ class ServiceGroupController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-
-
             if ($location) {
+                if ($single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
                     return $q->published()/*->orderBy('service_group_service.order')
                         ->whereHas('locations', function ($q) use ($location) {
@@ -107,9 +106,16 @@ class ServiceGroupController extends Controller
                         });*/->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             } else {
+                    return api_response($request, 1, 404);
+                }
+            }else {
+                if($single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
                 $service_group = ServiceGroup::with(['services' => function ($q) {
                     $q->published()/*->orderBy('service_group_service.order')*/ ->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
+            } else {
+                    return api_response($request, 1, 404);
+                }
             }
 
             if ($service_group) {
@@ -129,7 +135,6 @@ class ServiceGroupController extends Controller
                 $services = [];
                 $service_group->services->load('category.parent');
                 foreach ($service_group->services as $service) {
-                    //$service_variable = $service->flashPrice();
                     $service = [
                         'master_category_id' => $service->category->parent->id,
                         'category_name' => $service->category->parent->name,
