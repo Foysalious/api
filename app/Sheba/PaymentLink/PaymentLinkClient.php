@@ -203,7 +203,7 @@ class PaymentLinkClient
 
         if (empty($targets)) return [];
 
-        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets) . '&isActive=' . 1;
 
         $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
 

@@ -160,12 +160,8 @@ class PaymentLinkController extends Controller
 
             if ($request->has('pos_order_id')) {
                 $pos_order = PosOrder::find($request->pos_order_id);
-                if($payment_link = $this->isAlreadyCreated($pos_order,$request->amount))
-                {
-                    return api_response($request, $payment_link->getPaymentLinkData(), 200, ['payment_link' => $payment_link->getPaymentLinkData()]);
-                }
-
-                $customer = PosCustomer::find($pos_order->customer_id);
+                 $this->deActivatePreviousLink($pos_order);
+                 $customer = PosCustomer::find($pos_order->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
 
@@ -193,18 +189,16 @@ class PaymentLinkController extends Controller
         }
     }
 
-    private function isAlreadyCreated(PosOrder $order, $amount)
+    private function deActivatePreviousLink(PosOrder $order)
     {
-        $payment_link_target[] = $order->getPaymentLinkTarget();
+        $payment_link_target = $order->getPaymentLinkTarget();
         $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
         if($links)
         {
             foreach ($links as $link) {
-                if ($link->getAmount() == $amount)
-                    return $link;
+                $this->creator->setStatus('deactivate')->setPaymentLinkId($link->getLinkID())->editStatus();
             }
         }
-        return false;
     }
 
     public function createPaymentLinkForDueCollection(Request $request)

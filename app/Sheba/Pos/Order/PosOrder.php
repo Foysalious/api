@@ -21,10 +21,10 @@ class PosOrder
      */
     public function getPaymentLinks($payment_link_target)
     {
-        $payment_link = $this->paymentLinkRepo->getPaymentLinksByPosOrders($payment_link_target);
-        $key = $payment_link_target[0]->toString();
+        $payment_link = $this->paymentLinkRepo->getPaymentLinksByPosOrders([$payment_link_target]);
+        $key = $payment_link_target->toString();
         if (array_key_exists($key, $payment_link)) {
-            return $payment_link[$key];
+            return $payment_link[$key][0];
         }
         return false;
     }

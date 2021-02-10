@@ -96,14 +96,11 @@ class OrderController extends Controller
 
        if (array_key_exists('payment_link_target', $order['data'])) {
 
-           $payment_link_target[] = $order['data']['payment_link_target'];
-           $links = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
-           if($links)
+           $payment_link_target = $order['data']['payment_link_target'];
+           $link = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
+           if($link)
            {
-               foreach ($links as $link) {
-                   if ($link->getAmount() == $order['data']['price'])
-                       (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
-               }
+               (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
                unset($order['data']['payment_link_target']);
            }
         }
