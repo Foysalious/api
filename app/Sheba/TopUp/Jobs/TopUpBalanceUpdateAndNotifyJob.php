@@ -10,6 +10,7 @@ use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
@@ -23,8 +24,6 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     /**  @var Gateway */
     protected $topUpGatewayFactory;
     protected $response;
-    /** @var  Ssl */
-    protected $ssl;
 
     public function __construct(TopUpOrder $topup_order, $response)
     {
@@ -35,11 +34,9 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 
     public function handle(Ssl $ssl)
     {
-        $this->ssl = $ssl;
+        if ($this->attempts() >= 2 || $this->isMock()) return;
 
-        if ($this->attempts() >= 2) return;
-
-        $this->balance = $this->isSSL() ? $this->ssl->getBalance()->available_credit : $this->getBalance();
+        $this->balance = $this->isSSL() ? $ssl->getBalance()->available_credit : $this->getBalance();
         $this->topUpGateway->update([
             'balance' => $this->balance
         ]);
@@ -85,6 +82,11 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     {
         $str = substr($message, strpos($message, 'balance') + 7);
         return (int) filter_var($str, FILTER_SANITIZE_NUMBER_INT);
+    }
+
+    private function isMock()
+    {
+        return $this->topup_order->vendor_id == VendorFactory::MOCK;
     }
 
     private function isSSL()
