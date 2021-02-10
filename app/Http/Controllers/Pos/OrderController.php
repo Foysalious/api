@@ -80,7 +80,7 @@ class OrderController extends Controller
      * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
-    public function show(Request $request, PosOrderRepo $posOrder, PaymentLinkTransformer $payment_link)
+    public function show(Request $request, PaymentLinkTransformer $payment_link)
     {
         /** @var PosOrder $order */
         $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->withTrashed()->find($request->order);
