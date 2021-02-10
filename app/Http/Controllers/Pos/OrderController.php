@@ -44,6 +44,7 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\PdfHandler;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
@@ -96,7 +97,7 @@ class OrderController extends Controller
        if (array_key_exists('payment_link_target', $order['data'])) {
 
            $payment_link_target = $order['data']['payment_link_target'];
-           $link = (new PosOrderRepo())->getPaymentLinks($payment_link_target);
+           $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
            if($link)
            {
                (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);

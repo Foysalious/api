@@ -174,6 +174,24 @@ class PaymentLinkClient
 
         if (empty($targets)) return [];
 
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
+
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
+    }
+
+    public function getActivePaymentLinksByPosOrders(array $targets)
+    {
+        $targets = array_filter(array_map(function (Target $target) {
+            if ($target->getType() != TargetType::POS_ORDER) return null;
+            return $target->getId();
+        }, $targets));
+
+        if (empty($targets)) return [];
+
         $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets) . '&isActive=' . 1;
 
         $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
@@ -182,6 +200,12 @@ class PaymentLinkClient
 
         return $response['links'];
     }
+
+    public function getActivePaymentLinkByPosOrder($target)
+    {
+       return $this->getActivePaymentLinksByPosOrders([$target]);
+    }
+
 
     /**
      * @param $identifier
