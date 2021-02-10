@@ -1058,20 +1058,29 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getAlgoliaRecord()
     {
-
         $business_types = constants('PARTNER_BUSINESS_TYPE');
         $converted_business_types = [];
         foreach ($business_types as $business_type) {
             $converted_business_types[$business_type['bn']] = $business_type['en'];
         }
 
+        $this->load([
+            'categories' => function ($q) {
+                $q->wherePivot('is_verified', 1);
+            }
+        ]);
+
+        $master_cat_names = Category::select('name')->whereIn('id', $this->categories->pluck('parent_id')->unique()->toArray())->get()->pluck('name')->toArray();
+
         return [
-            'id' => (int) $this->id,
+            'id' => $this->id,
             'name' => $this->name,
+            'slug' => $this->sub_domain,
+            'logo' => $this->logo,
+            'categories' => $master_cat_names,
             'business_type' => $converted_business_types[$this->business_type],
             'description' => $this->tradeFair ? $this->tradeFair->description :null,
             'in_trade_fair' => $this->tradeFair ? 1 :0,
         ];
     }
-
 }
