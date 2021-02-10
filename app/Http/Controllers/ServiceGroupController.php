@@ -18,20 +18,47 @@ class ServiceGroupController extends Controller
 {
     public function index(Request $request)
     {
+        try{
+        $this->validate($request, [
+            'location' => 'sometimes|numeric',
+            'lat' => 'sometimes|numeric',
+            'lng' => 'required_with:lat',
+            'for' => 'sometimes'
+        ]);
+        $location = null;
+        if ($request->has('location')) {
+            $location = Location::find($request->location)->id;
+        } else if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
+        }
         $service_group_list = [];
-        $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->with([
-            'services' => function ($query) {
-                $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
-            }
-        ])->get();
+        if ($location) {
+            $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->publishedFor($request->for)->with([
+                'services' => function ($query) use ($location) {
+                    $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->whereHas('locations', function ($q) use ($location) {
+                        $q->where('locations.id', $location);
+                    })->published();
+                }
+            ])->whereHas('locations', function ($q) use ($location) {
+                $q->where('locations.id', $location);
+            })->get();
+        } else {
+            $service_groups = ServiceGroup::select('id', 'name', 'thumb', 'app_thumb', 'short_description')->publishedFor($request->for)->with([
+                'services' => function ($query){
+                    $query->select('id', 'category_id', 'name', 'thumb', 'app_thumb')->published();
+                }
+            ])->get();
+        }
 
         if (count($service_groups) === 0)
             return api_response($request, 1, 404);
-        $service_groups->each(function ($service_group) use (&$service_group_list) {
+        $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
             $services = $service_group->services;
-            $services_without_pivot_data = $services->each(function ($service) {
+            $services_without_pivot_data = $services->each(function ($service) use($location) {
                 removeRelationsFromModel($service);
                 $service['slug'] = $service->getSlug();
+                //dd($service->locationServices()->where('locations.id',$location));
             });
             array_push($service_group_list, [
                 'id' => $service_group->id,
@@ -44,6 +71,15 @@ class ServiceGroupController extends Controller
             ]);
         });
         return api_response($request, null, 200, ['service_groups' => $service_group_list]);
+    }
+        catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+    }
+        catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function show($service_group, Request $request)
