@@ -32,10 +32,12 @@ $agent_connections = [
     "default" => "topup_default"
 ];
 
+$queue_driver = env('TOPUP_QUEUE_DRIVER');
+
 $connections = [];
 foreach ($connection_names as $connection_name => $agent_ids) {
     $connections[$connection_name] = [
-        'driver' => 'redis',
+        'driver' => $queue_driver,
         'connection' => 'default',
         'queue' => 'default',
         'expire' => 60
