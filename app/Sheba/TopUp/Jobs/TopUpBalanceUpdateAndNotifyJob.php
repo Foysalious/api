@@ -9,7 +9,7 @@ use Illuminate\Queue\SerializesModels;
 use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\Names;
-use Sheba\TopUp\Vendor\Internal\SslVrClient;
+use Sheba\TopUp\Gateway\Ssl;
 
 class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
@@ -23,7 +23,8 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     /**  @var Gateway */
     protected $topUpGatewayFactory;
     protected $response;
-    protected $sslClient;
+    /** @var  Ssl */
+    protected $ssl;
 
     public function __construct(TopUpOrder $topup_order, $response)
     {
@@ -32,23 +33,20 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
         $this->response = $response;
     }
 
-    public function handle()
+    public function handle(Ssl $ssl)
     {
-        if ($this->attempts() < 2) {
-            if ($this->topup_order->gateway == Names::SSL) {
-                $this->sslClient = app(SslVrClient::class);
-                $this->balance = $this->sslClient->getBalance()->available_credit;
-            } else {
-                $this->balance = $this->getBalance();
-            }
+        $this->ssl = $ssl;
 
-            $this->topUpGateway->update([
-                'balance' => $this->balance
-            ]);
-            if($this->checkIfLessThanThreshold($this->topUpGateway, $this->balance)) {
-                $this->sendSmsToGatewaySmsReceivers($this->topUpGateway, $this->balance);
-            }
-        }
+        if ($this->attempts() >= 2) return;
+
+        $this->balance = $this->isSSL() ? $this->ssl->getBalance()->available_credit : $this->getBalance();
+        $this->topUpGateway->update([
+            'balance' => $this->balance
+        ]);
+
+        if($this->isAboveThreshold($this->topUpGateway, $this->balance)) return;
+
+        $this->sendSmsToGatewaySmsReceivers($this->topUpGateway, $this->balance);
     }
 
     private function getGatewayModel()
@@ -58,11 +56,12 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 
     private function getBalance()
     {
-        if ($this->topup_order->gateway == Names::ROBI || $this->topup_order->gateway == Names::AIRTEL || $this->topup_order->gateway == Names::BANGLALINK) {
-            return $this->parseBalanceFromResponseMessage($this->response);
-        } else {
-            return $this->topUpGateway->balance;
-        }
+        return $this->isPretups() ? $this->parseBalanceFromResponseMessage($this->response) : $this->topUpGateway->balance;
+    }
+
+    private function isAboveThreshold($gateway, $balance)
+    {
+        return !$this->checkIfLessThanThreshold($gateway, $balance);
     }
 
     private function checkIfLessThanThreshold($gateway, $balance)
@@ -86,5 +85,17 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     {
         $str = substr($message, strpos($message, 'balance') + 7);
         return (int) filter_var($str, FILTER_SANITIZE_NUMBER_INT);
+    }
+
+    private function isSSL()
+    {
+        return $this->topup_order->gateway == Names::SSL;
+    }
+
+    private function isPretups()
+    {
+        return $this->topup_order->gateway == Names::ROBI ||
+            $this->topup_order->gateway == Names::AIRTEL ||
+            $this->topup_order->gateway == Names::BANGLALINK;
     }
 }
