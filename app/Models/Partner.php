@@ -1080,7 +1080,7 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             'name' => $this->name,
             'business_type' => $converted_business_types[$this->business_type],
             'description' => $this->tradeFair ? $this->tradeFair->description :null,
-            'has_store_in_trade_fair' => $this->tradeFair ? 1 :0,
+            'in_trade_fair' => $this->tradeFair ? 1 :0,
         ];
     }
 
