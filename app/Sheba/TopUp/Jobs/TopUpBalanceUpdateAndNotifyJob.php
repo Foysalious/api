@@ -8,9 +8,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Sheba\Dal\TopUpGateway\Model as TopUpGateway;
 use Sheba\TopUp\Gateway\Gateway;
-use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
-use Sheba\TopUp\Vendor\Internal\SslClient;
+use Sheba\TopUp\Vendor\Internal\SslVrClient;
 
 class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
 {
@@ -37,7 +36,7 @@ class TopUpBalanceUpdateAndNotifyJob extends Job implements ShouldQueue
     {
         if ($this->attempts() < 2) {
             if ($this->topup_order->gateway == Names::SSL) {
-                $this->sslClient = app(SslClient::class);
+                $this->sslClient = app(SslVrClient::class);
                 $this->balance = $this->sslClient->getBalance()->available_credit;
             } else {
                 $this->balance = $this->getBalance();
