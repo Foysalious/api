@@ -116,7 +116,6 @@ class BusinessRoute
                         });
                         $api->post('/change-status-by-super-admin', 'B2b\LeaveController@statusUpdateBySuperAdmin');
                         $api->post('/status', 'B2b\LeaveController@updateStatus');
-                        $api->post('/bulk-status-update', 'B2b\LeaveController@updateBulkStatus');
                         $api->post('/leave-info-edit', 'B2b\LeaveController@infoUpdateBySuperAdmin');
                     });
                     $api->group(['prefix' => 'balance'], function ($api) {
