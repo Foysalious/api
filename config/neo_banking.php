@@ -145,8 +145,13 @@ return [
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
-                'field_type' => 'radioGroup',
+                'field_type' => 'header',
                 'title'      => 'লিঙ্গ',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => '',
                 'name'       => 'gender',
                 'id'         => 'gender',
                 'mandatory'  => true,
