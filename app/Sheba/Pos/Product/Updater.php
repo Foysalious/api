@@ -106,7 +106,9 @@ class Updater
     {
         foreach ($files as $file) {
             $filename = substr($file, strlen(env('S3_URL')));
-            (new FileRepository())->deleteFileFromCDN($filename);
+            if (!preg_match('/default/', $filename)) {
+                (new FileRepository())->deleteFileFromCDN($filename);
+            }
         }
     }
 
