@@ -13,8 +13,7 @@ class ExpenseTransformer extends TransformerAbstract
     {
         $member = $expense->member;
         $business_member = $member->businessMember;
-        $role = $business_member ? $business_member->role : null;
-        $department = $role ? $role->businessDepartment : null;
+        $department = $business_member->department();
 
         return [
             "id" => $expense->id,

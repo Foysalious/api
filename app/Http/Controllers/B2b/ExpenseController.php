@@ -3,17 +3,12 @@
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Models\TopUpOrder;
 use App\Transformers\Business\ExpenseTransformer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Sheba\Attachments\FilesAttachment;
-use Sheba\Business\CoWorker\Statuses;
-use Sheba\Dal\Expense\Expense;
 use Sheba\Employee\ExpensePdf;
 use Sheba\ModificationFields;
 use Sheba\Employee\ExpenseRepo;
@@ -62,33 +57,18 @@ class ExpenseController extends Controller
                 });
             });
         }
-
+        
         $members_ids = $business_members->pluck('member_id')->toArray();
-        $expenses = Expense::whereIn('member_id', $members_ids)->with([
-            'member' => function ($query) {
-                $query->select('members.id', 'members.profile_id')->with([
-                    'profile' => function ($query) {
-                        $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
-                    },
-                    'businessMember' => function ($q) {
-                        $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
-                            'role' => function ($q) {
-                                $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                                    'businessDepartment' => function ($q) {
-                                        $q->select('business_departments.id', 'business_id', 'name');
-                                    }
-                                ]);
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->select('id', 'member_id', 'amount', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
-            ->groupby('year', 'month', 'member_id')
-            ->orderBy('created_at', 'desc');
+
+        $expenses = $this->expense_repo->getExpenseByMember($members_ids);
+
+        if ($request->has('employee_id') && in_array($request->employee_id, $members_ids)) {
+            $expenses->where('member_id', $request->employee_id);
+        }
 
         $start_date = date('Y-m-01');
         $end_date = date('Y-m-t');
+
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->has('start_date') ? $request->start_date : null;
             $end_date = $request->has('end_date') ? $request->end_date : null;
@@ -96,85 +76,14 @@ class ExpenseController extends Controller
         if (($start_date && $end_date) && !$request->has('key')) {
             $expenses->whereBetween('created_at', [$start_date . ' 00:00:00', $end_date . ' 23:59:59']);
         }
-
         $fractal = new Manager();
         $resource = new Collection($expenses->get(), new ExpenseTransformer());
         $expenses = $fractal->createData($resource)->toArray()['data'];
 
-
-        if ($request->has('sort_by_employee_id')) $expenses = $this->sortByEmployeeId($expenses, $request->sort_by_employee_id)->values();
-        if ($request->has('sort_by_name')) $expenses = $this->sortByName($expenses, $request->sort_by_name)->values();
-        if ($request->has('sort_by_department')) $expenses = $this->sortByDepartment($expenses, $request->sort_by_department)->values();
-        if ($request->has('sort_by_amount')) $expenses = $this->sortByAmount($expenses, $request->sort_by_amount)->values();
-        if ($request->has('search')) $expenses = $this->searchWithEmployeeName($expenses, $request);
-
         $total_expense_count = count($expenses);
+
         if ($request->has('limit')) $expenses = collect($expenses)->splice($offset, $limit);
         return api_response($request, $expenses, 200, ['expenses' => $expenses, 'total_expenses_count' => $total_expense_count]);
-    }
-
-    /**
-     * @param $expenses
-     * @param Request $request
-     * @return mixed
-     */
-    private function searchWithEmployeeName($expenses, Request $request)
-    {
-        return $expenses->filter(function ($expense) use ($request) {
-            return str_contains(strtoupper($expense['employee_name']), strtoupper($request->search));
-        });
-    }
-
-    /**
-     * @param $expenses
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByEmployeeId($expenses, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($expenses)->$sort_by(function ($expense, $key) {
-            return strtoupper($expense['employee_id']);
-        });
-    }
-
-    /**
-     * @param $expenses
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByName($expenses, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($expenses)->$sort_by(function ($expense, $key) {
-            return strtoupper($expense['employee_name']);
-        });
-    }
-
-    /**
-     * @param $expenses
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByDepartment($expenses, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($expenses)->$sort_by(function ($expense, $key) {
-            return strtoupper($expense['employee_department']);
-        });
-    }
-
-    /**
-     * @param $expenses
-     * @param string $sort
-     * @return mixed
-     */
-    private function sortByAmount($expenses, $sort = 'asc')
-    {
-        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
-        return collect($expenses)->$sort_by(function ($expense, $key) {
-            return strtoupper($expense['amount']);
-        });
     }
 
 
