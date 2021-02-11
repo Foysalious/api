@@ -1,8 +1,6 @@
 <?php namespace App\Transformers\Business;
 
-use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Models\Profile;
+use Illuminate\Support\Facades\DB;
 use League\Fractal\TransformerAbstract;
 use App\Models\Business;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -11,7 +9,6 @@ use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
-use Sheba\Dal\Leave\Model as Leave;
 
 class LeaveApprovalRequestListTransformer extends TransformerAbstract
 {
@@ -78,9 +75,15 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
 
         foreach ($requestable->requests as $approval_request) {
-            $business_member = $approval_request->approver;
+            /*$business_member = $approval_request->approver;
             $member = $business_member->member;
-            $profile = $member->profile;
+            $profile = $member->profile;*/
+            $profile = DB::table('approval_requests')
+                ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
+                ->join('members', 'members.id', '=', 'business_member.member_id')
+                ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+                ->where('approval_requests.id', '=', $approval_request->id)
+                ->first();
             array_push($approvers, [
                 'name' => $profile->name,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
