@@ -82,7 +82,7 @@ abstract class Vendor
         $this->model->update();
     }
 
-    private function resolveGateway(TopUpOrder $top_up_order)
+    protected function resolveGateway(TopUpOrder $top_up_order)
     {
         $this->gatewayFactory->setGatewayName($top_up_order->gateway)->setVendorId($top_up_order->vendor_id);
         $this->setTopUpGateway($this->gatewayFactory->get());
