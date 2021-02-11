@@ -341,6 +341,14 @@ return [
             ],
             [
                 'field_type'    => 'editText',
+                'title'         => "ট্রেড লাইেন্স প্রদান কারি কর্তৃপক্ষ *",
+                'name'          => 'issue_authority',
+                'id'            => 'issue_authority',
+                'hint'          => '',
+                'error_message' => 'ট্রেড লাইেন্স প্রদান কারি কর্তৃপক্ষ পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
                 'title'         => "অনুমোদনকারী প্রতিষ্ঠান *",
                 'name'          => 'grantor_organization',
                 'id'            => 'grantor_organization',
@@ -453,7 +461,7 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'সম্ভব্য মাসিক জমার পরিমান',
+                'title'         => 'সম্ভব্য মাসিক জমার পরিমান *',
                 'name'          => 'monthly_earning',
                 'id'            => 'monthly_earning',
                 'hint'          => 'উদাহরণ: 10000',
@@ -463,7 +471,7 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'সম্ভব্য মাসিক উত্তলনের পরিমান',
+                'title'         => 'সম্ভব্য মাসিক উত্তলনের পরিমান *',
                 'name'          => 'expected_monthly_withdrew',
                 'id'            => 'expected_monthly_withdrew',
                 'hint'          => 'উদাহরণ: 10000',
@@ -590,15 +598,6 @@ return [
                 'title'      => 'অভিভাবকের জাতীয় পরিচয়পত্রের নাম্বার ',
                 'name'       => 'nominee_guardian_nid',
                 'id'         => 'nominee_guardian_nid',
-                'hint'       => 'এখানে লিখুন',
-                'mandatory'  => false,
-                'input_type' => 'number'
-            ],
-            [
-                'field_type' => 'editText',
-                'title'      => 'need field name',
-                'name'       => 'minor_guardian_doc_no',
-                'id'         => 'minor_guardian_doc_no',
                 'hint'       => 'এখানে লিখুন',
                 'mandatory'  => false,
                 'input_type' => 'number'
