@@ -145,6 +145,14 @@ return [
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
+                'field_type'    => 'date',
+                'title'         => 'জন্ম তারিখ *',
+                'name'          => 'birth_date',
+                'id'            => 'birth_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+            ],
+            [
                 'field_type'    => 'editText',
                 'title'         => 'বাবার নাম  *',
                 'name'          => 'father_name',
@@ -444,6 +452,22 @@ return [
             ],
             [
                 'field_type'    => 'editText',
+                'title'         => 'নমিনীর পিতার নাম *',
+                'name'          => 'nominee_father_name',
+                'id'            => 'nominee_father_name',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'নমিনীর পিতার নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'নমিনীর মায়ের নাম *',
+                'name'          => 'nominee_mother_name',
+                'id'            => 'nominee_mother_name',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'নমিনীর মায়ের নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
                 'title'         => 'জাতীয় পরিচয়পত্র/পাসপোর্ট/জন্ম নিবন্ধন নাম্বার *',
                 'name'          => 'identification_number',
                 'id'            => 'identification_number',
@@ -514,6 +538,15 @@ return [
                 'title'      => 'অভিভাবকের জাতীয় পরিচয়পত্রের নাম্বার ',
                 'name'       => 'nominee_guardian_nid',
                 'id'         => 'nominee_guardian_nid',
+                'hint'       => 'এখানে লিখুন',
+                'mandatory'  => false,
+                'input_type' => 'number'
+            ],
+            [
+                'field_type' => 'editText',
+                'title'      => '',
+                'name'       => 'minor_guardian_doc_no',
+                'id'         => 'minor_guardian_doc_no',
                 'hint'       => 'এখানে লিখুন',
                 'mandatory'  => false,
                 'input_type' => 'number'
