@@ -13,6 +13,8 @@ class Mock extends Vendor
 {
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
+        $this->resolveGateway($topup_order);
+
         if ($topup_order->payee_mobile == "+8801700999999") return $this->handleGatewayTimeout();
 
         $is_success = $topup_order->payee_mobile != "+8801700888888";
