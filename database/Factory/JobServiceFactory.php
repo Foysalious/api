@@ -1,16 +1,21 @@
 <?php namespace Factory;
 
-use App\Models\JobService;
+
+use Sheba\Dal\JobService\JobService;
+
 class JobServiceFactory extends Factory
 {
 
     protected function getModelClass()
     {
-        // TODO: Implement getModelClass() method.
+        return JobService::class;
     }
 
     protected function getData()
     {
-        // TODO: Implement getData() method.
+        return array_merge($this->commonSeeds, [
+            'unit_price'=>200,
+            'min_price'=>5,
+        ]);
     }
 }

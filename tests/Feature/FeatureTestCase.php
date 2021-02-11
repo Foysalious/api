@@ -84,7 +84,8 @@ class FeatureTestCase extends TestCase
             Affiliate::class,
             Customer::class,
             Member::class,
-            Resource::class
+            Resource::class,
+            Partner::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
