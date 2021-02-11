@@ -146,7 +146,7 @@ return [
             ],
             [
                 'field_type' => 'radioGroup',
-                'title'      => '',
+                'title'      => 'লিঙ্গ',
                 'name'       => 'gender',
                 'id'         => 'gender',
                 'mandatory'  => true,
@@ -591,7 +591,7 @@ return [
             ],
             [
                 'field_type' => 'editText',
-                'title'      => '',
+                'title'      => 'need field name',
                 'name'       => 'minor_guardian_doc_no',
                 'id'         => 'minor_guardian_doc_no',
                 'hint'       => 'এখানে লিখুন',
