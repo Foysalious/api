@@ -145,12 +145,29 @@ return [
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
-                'field_type'    => 'date',
-                'title'         => 'জন্ম তারিখ *',
-                'name'          => 'birth_date',
-                'id'            => 'birth_date',
-                'hint'          => 'উদাহরণ: 01/01/2000',
-                'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
+                'field_type' => 'radioGroup',
+                'title'      => '',
+                'name'       => 'gender',
+                'id'         => 'gender',
+                'mandatory'  => true,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'male',
+                        'id'         => 'male',
+                        'title'      => 'পুরুষ',
+                        'mandatory'  => false,
+                        'value'      => "Male"
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'female',
+                        'id'         => 'female',
+                        'title'      => 'নারী',
+                        'mandatory'  => false,
+                        'value'      => "Female"
+                    ]
+                ]
             ],
             [
                 'field_type'    => 'editText',
@@ -301,6 +318,16 @@ return [
             ],
             [
                 'field_type'    => 'date',
+                'title'         => 'ট্রেড লাইসেন্স মেয়াদ উত্তির্নের তারিখ *',
+                'name'          => 'trade_license_expire_date',
+                'id'            => 'trade_license_expire_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'ট্রেড লাইসেন্স মেয়াদ উত্তির্নের তারিখ পূরণ আবশ্যক',
+                'input_type'    => 'number',
+                'mandatory'     => true,
+            ],
+            [
+                'field_type'    => 'date',
                 'title'         => 'নিবন্ধনের তারিখ *',
                 'name'          => 'trade_licence_date',
                 'id'            => 'trade_licence_date',
@@ -419,6 +446,26 @@ return [
                 'mandatory'     => false,
                 'input_type'    => 'number'
             ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'সম্ভব্য মাসিক জমার পরিমান',
+                'name'          => 'monthly_earning',
+                'id'            => 'monthly_earning',
+                'hint'          => 'উদাহরণ: 10000',
+                'error_message' => 'সম্ভব্য মাসিক জমার পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
+                'input_type'    => 'number'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'সম্ভব্য মাসিক উত্তলনের পরিমান',
+                'name'          => 'expected_monthly_withdrew',
+                'id'            => 'expected_monthly_withdrew',
+                'hint'          => 'উদাহরণ: 10000',
+                'error_message' => 'সম্ভব্য মাসিক উত্তলনের পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
+                'input_type'    => 'number'
+            ]
         ],
         'nominee'     => [
             [
