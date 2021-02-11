@@ -84,6 +84,7 @@ class ServiceGroupController extends Controller
     public function show($service_group, Request $request)
     {
         $single_service_group = ServiceGroup::find($service_group);
+        //dd($single_service_group->is_published_for_app);
         try {
             $this->validate($request, [
                 'location' => 'sometimes|numeric',
@@ -97,9 +98,10 @@ class ServiceGroupController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
-            $loc_is_published = Location::find($location)->publication_status;
+            //$loc_is_published = Location::find($location)->publication_status;
+            //dd($single_service_group->is_published_for_app);
             if ($location) {
-                if ($loc_is_published==1 && $single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
+                if ($single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
                     return $q->published()/*->orderBy('service_group_service.order')
                         ->whereHas('locations', function ($q) use ($location) {
