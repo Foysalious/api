@@ -145,7 +145,7 @@ class NewOrderLIstTest extends FeatureTestCase
         $this->assertEquals("Successful",$data['message']);
         $this->assertEquals(0,count($data['orders']));
     }
-    public function testCustomerNameAvalailableOnResponse()
+    public function testCustomerNameAvailableOnResponse()
     {
 
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
@@ -154,5 +154,146 @@ class NewOrderLIstTest extends FeatureTestCase
         $this->assertEquals("Successful",$data['message']);
         $this->assertEquals(0,count($data['orders']));
     }
+    /*
+    New order request data:
+            created_at_readable
+            category_mame
+            address
+            schedule_at
+            total_price
+    Order Details data:
+            code
+            schedule_time_start
+            schedule_time_end
+    */
+    // test if api responded with created at readable time key
+    public function testCreatedAtReadableTimeKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("created_at_readable",$data['orders'][0]);
+    }
 
+    // test if api responded with order service category key
+    public function testCategoryNameKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("category_name",$data['orders'][0]);
+    }
+
+    // test if api responded with customer address key
+    public function testAddressKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("address",$data['orders'][0]);
+    }
+
+    // test if api responded with schedule_at key
+    public function testScheduleAtKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("schedule_at",$data['orders'][0]);
+    }
+
+    // test if api responded with total price key
+    public function testTotalPriceKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("total_price",$data['orders'][0]);
+    }
+
+    // test if api responded with order code key
+    public function testOrderCodeKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("code",$data['orders'][0]);
+    }
+
+    // test if api responded with schedule start time key
+    public function testScheduleTimeStartKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("schedule_time_start",$data['orders'][0]);
+    }
+
+    // test if api responded with schedule end time key
+    public function testScheduleTimeEndKeyPresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertArrayHasKey("schedule_time_end",$data['orders'][0]);
+    }
+
+    //test if api responded with readable time value
+    public function testCreatedAtReadableTimeValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals("1 second ago",$data['orders'][0]['created_at_readable']);
+    }
+
+    // test if api responded with order service category value
+    public function testCategoryNameValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals("Category #545682",$data['orders'][0]['category_name']);
+    }
+
+    // test if api responded with customer address value
+    public function testAddressValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals("Road#10, Avenue#9, House#1222&1223 Mirpur DOHS, Dhaka.",$data['orders'][0]['address']);
+    }
+
+    // test if api responded with schedule_at value
+    public function testScheduleAtValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals("1613216407",$data['orders'][0]['schedule_at']);
+    }
+
+    // test if api responded with total price value
+    public function testTotalPriceValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals("7200",$data['orders'][0]['total_price']);
+    }
+
+    // test if api responded with order code value
+    public function testOrderCodeValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals("D-008001-0001",$data['orders'][0]['code']);
+    }
+
+    // test if api responded with schedule start time value
+    public function testScheduleTimeStartValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals("17:40:07",$data['orders'][0]['schedule_time_start']);
+    }
+
+    // test if api responded with schedule end time value
+    public function testScheduleTimeEndValuePresentOnResponse()
+    {
+        $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals("18:40:07",$data['orders'][0]['schedule_time_end']);
+    }
 }
