@@ -36,6 +36,8 @@ class CriticalAppVersionMiddleware
         $app = $this->userAgentInfo->getApp();
         $version = $this->userAgentInfo->getVersionCode();
 
+        dd($this->appVersionManager->hasCriticalUpdate($app, $version));
+
         if ($app && $version && $this->appVersionManager->hasCriticalUpdate($app, $version)) {
             return api_response($request, null, 410);
         }
