@@ -1,10 +1,19 @@
 <?php namespace Sheba\AppVersion;
 
-use App\Models\AppVersion;
+
 use Illuminate\Support\Facades\Redis;
+use Sheba\Dal\AppVersion\AppVersionRepository;
 
 class AppVersionManager
 {
+    /** @var AppVersionRepository */
+    private $repo;
+
+    public function __construct(AppVersionRepository $repo)
+    {
+        $this->repo = $repo;
+    }
+
     /**
      * @param $app
      * @param $version
@@ -12,7 +21,7 @@ class AppVersionManager
      */
     public function getVersionForApp($app, $version)
     {
-        $versions = AppVersion::app($app)->version($version)->get();
+        $versions = $this->repo->getByAppAndVersion($app, $version);
 
         $data = new AppVersionDTO();
         if (!$versions->isEmpty()) $data->setVersion($versions->last());
@@ -27,7 +36,7 @@ class AppVersionManager
      */
     public function hasCriticalUpdate($app, $version)
     {
-        return AppVersion::app($app)->version($version)->critical()->count() > 0;
+        return $this->repo->hasCriticalUpdate($app, $version);
     }
 
     public function getAllAppVersions()
