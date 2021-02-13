@@ -1,13 +1,15 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Redis;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -188,27 +190,42 @@ class TopUpController extends Controller
         return $topup_bulk_request;
     }
 
+    /**
+     * @param Request $request
+     * @param SslFailResponse $error_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
         $data = $request->all();
         $error_response->setResponse($data);
-        $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+        $topup_order = $error_response->getTopUpOrder();
+        $top_up->processFailedTopUp($topup_order, $error_response);
+
+        $topup_success_namespace = 'Topup::Failed:failed_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($topup_success_namespace, json_encode($data));
+
         return api_response($request, 1, 200);
     }
 
+    /**
+     * @param Request $request
+     * @param SslSuccessResponse $success_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
     {
         try {
             $data = $request->all();
             $success_response->setResponse($data);
-            $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+            $topup_order = $success_response->getTopUpOrder();
+            $top_up->processSuccessfulTopUp($topup_order, $success_response);
 
-            /**
-             * USE ONLY FOR TEMPORARY CHECK
-             *
-             * $topup_success_namespace = 'Topup:Success_'. Carbon::now()->timestamp . str_random(6);
-             * Redis::set($topup_success_namespace, json_encode($data));
-             */
+            $topup_success_namespace = 'Topup::Success:success_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+            Redis::set($topup_success_namespace, json_encode($data));
 
             return api_response($request, 1, 200);
         } catch (QueryException $e) {
@@ -326,7 +343,7 @@ class TopUpController extends Controller
 
         if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
-            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
+            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->orderBy('cashback_amount', 'DESC')->get();
 
             foreach ($otf_list as $otf) {
                 array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
@@ -387,12 +404,20 @@ class TopUpController extends Controller
             return api_response($request, $otf_list, 200, ['message' => $otf_list]);
         }
     }
-    
+
+    /**
+     * @param Request $request
+     * @param PaywellSuccessResponse $success_response
+     * @param PaywellFailResponse $fail_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up)
     {
         $topup_order = app(TopUpOrder::class)->find($request->topup_order_id);
 
-        if($topup_order->gateway == 'paywell' && $topup_order->status == 'Pending'){
+        if ($topup_order->gateway == 'paywell' && $topup_order->status == 'Pending') {
             $response = app(PaywellClient::class)->enquiry($request->topup_order_id);
             if ($response->status_code == "200") {
                 $success_response->setResponse($response);
@@ -406,7 +431,7 @@ class TopUpController extends Controller
             $response = [
                 'recipient_msisdn' => $topup_order->payee_mobile,
                 'status_name' => $topup_order->status,
-                'status_code' => '',
+                'status_code' => ''
             ];
             return api_response(json_encode($response), json_encode($response), 200);
         }

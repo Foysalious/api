@@ -12,6 +12,7 @@ use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
@@ -67,7 +68,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'type' => Type::LEAVE,
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
-            'super_admin_override_status' => $this->checkLeaveStatus($requestable),
+            'super_admin_section_show' => $this->isLeaveCancelled($requestable),
+            'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
             'leave' => [
                 'id' => $requestable->id,
                 'employee_id' => $requestable->businessMember->employee_id,
@@ -116,12 +118,19 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         });
     }
 
-    private function checkLeaveStatus($requestable)
+    private function isLeaveCancelled($requestable)
     {
         /** @var Leave $requestable */
-        if ($requestable->isAllRequestAccepted() || $requestable->isAllRequestRejected() || $requestable->status === 'canceled') return 0;
+        if ($requestable->status === Status::CANCELED) return 0;
         if (($this->leaveLogRepo->statusUpdatedBySuperAdmin($requestable->id))) return 0;
         return 1;
+    }
+
+    private function isLeaveApprovedOrRejected($requestable)
+    {
+        /** @var Leave $requestable */
+        $result = $requestable->where('id', $requestable->id)->whereIn('status', [Status::ACCEPTED, Status::REJECTED])->first();
+        return $result ? 0 : 1;
     }
 
     private function getLeaveLogDetails($requestable)

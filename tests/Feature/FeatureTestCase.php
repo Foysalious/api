@@ -3,6 +3,9 @@
 use App\Models\Affiliate;
 use App\Models\Customer;
 use App\Models\Member;
+use App\Models\Partner;
+use App\Models\PartnerResource;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -28,6 +31,12 @@ class FeatureTestCase extends TestCase
     protected $resource;
     /** @var Member */
     protected $member;
+    /** @var Partner */
+    protected $partner;
+    /** @var PartnerResource */
+    protected $partner_resource;
+//    @var ParnerSubscriptionPackage
+    protected $partner_package;
 
     public function setUp()
     {
@@ -75,10 +84,18 @@ class FeatureTestCase extends TestCase
             Affiliate::class,
             Customer::class,
             Member::class,
-            Resource::class
+            Resource::class,
+            Partner::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
+        $this->createClientAccounts();
+
+    }
+
+    private function createClientAccounts()
+    {
+
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -88,10 +105,44 @@ class FeatureTestCase extends TestCase
         $this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
         ]);
+        $this->partner_package = factory(PartnerSubscriptionPackage::class)->create();
+        $this->partner = factory(Partner::class)->create([
+                'package_id' => $this->partner_package->id
+        ]);
+        $this->partner_resource = factory(PartnerResource::class)->create([
+            'resource_id' => $this->resource->id,
+            'partner_id' => $this->partner->id
+        ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
+
+
     }
+
+    private function createAccountWithMobileNEmail($mobile,$email=null)
+    {
+        $this->profile = factory(Profile::class)->create([
+
+            'mobile' =>$mobile,
+            'email' =>$email,
+
+        ]);
+
+
+
+        $this->createClientAccounts();
+    }
+
+
+    protected function logInWithMobileNEmail($mobile,$email=null)
+    {
+        $this->createAccountWithMobileNEmail($mobile,$email);
+        $this->token = $this->generateToken();
+        $this->createAuthTables();
+
+    }
+
 
     protected function generateToken()
     {
