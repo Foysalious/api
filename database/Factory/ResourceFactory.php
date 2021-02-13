@@ -15,7 +15,7 @@ class ResourceFactory extends Factory
     {
         return array_merge($this->commonSeeds, [
             'father_name' => $this->faker->name,
-            'remember_token' => $this->faker->randomLetter,
+            'remember_token' => randomString(60,1,1),
             'status' => 'Verified',
             'is_verified' => 1,
             'wallet' => '10000',

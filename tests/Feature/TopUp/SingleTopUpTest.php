@@ -6,10 +6,6 @@ use App\Models\Profile;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
-use Carbon\Carbon;
-use Factory\TopupBlacklistNumbersFactory;
-use Illuminate\Support\Facades\Schema;
-use Sheba\Dal\AuthorizationToken\AuthorizationToken;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Verification\VerifyPin;
@@ -38,7 +34,7 @@ class SingleTopUpTest extends FeatureTestCase
             TopUpBlacklistNumber::class,
             AffiliateTransaction::class,
             Profile::class,
-            Affiliate::class,
+            Affiliate::class
         ]);
         $this->logIn();
 
@@ -65,9 +61,7 @@ class SingleTopUpTest extends FeatureTestCase
          * TODO
          * create topup topBlocklistNumbers table
          */
-
         $this->topBlocklistNumbers= factory(TopUpBlacklistNumber::class)->create();
-       // dd($this->topBlocklistNumbers);
 
         $verify_pin_mock = $this->getMockBuilder(VerifyPin::class)
             ->setConstructorArgs([$this->app->make(AccountServer::class)])
@@ -461,8 +455,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals("The password field is required.", $data['message']);
     }
 
-    public function testTopupWithPendingUser() {
-
+   public function testTopupWithPendingUser() {
        $verificationStatus = Affiliate::find(1);;
        $verificationStatus->update(["verification_status" => 'pending']);
 
@@ -500,7 +493,7 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You are not verified to do this operation.", $data['message']);
     }
-
+    // passing null Mobile number
     public function testTopupNullNumber () {
 
         $response = $this->post('/v2/top-up/affiliate', [
@@ -566,7 +559,6 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("You can't recharge to a blocked number.", $data['message']);
     }
-
     public function testSuccessfulTopupDeductAmountFromAgentWallet()
     {
         $response = $this->post('/v2/top-up/affiliate', [
