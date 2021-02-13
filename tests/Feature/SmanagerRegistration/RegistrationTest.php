@@ -24,12 +24,13 @@ class RegistrationTest extends FeatureTestCase
     {
         parent::setUp();
         $this->truncateTables([
-            PartnerSubscriptionPackage::class,
+           PartnerSubscriptionPackage::class,
             Partner::class,
             Resource::class,
             PartnerResource::class,
             Tag::class
         ]);
+
 
         $this->logIn();
         $this->freeSubscription = factory(PartnerSubscriptionPackage::class)->create();

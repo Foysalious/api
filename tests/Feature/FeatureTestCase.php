@@ -85,9 +85,9 @@ class FeatureTestCase extends TestCase
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        /*$this->resource = factory(Resource::class)->create([
+        $this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
-        ]);*/
+        ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
@@ -106,7 +106,9 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => null,
+            'resource' => [
+                'id'=>$this->resource->id
+            ],
             'member' => [
                 'id' => $this->member->id
             ],
