@@ -61,7 +61,7 @@ class RegistrationTest extends FeatureTestCase
         $partner_registration=Partner::all();
         $today = Carbon::today();
         $next_billing_date = $today->copy()->addDays(30);
-        dd($partner_registration);
+       // dd($partner_registration);
         $this-> assertEquals(1,$partner_registration->id);
         $this-> assertEquals("ZUBAYER TEST",$partner_registration->name);
         $this-> assertEquals("zubayer-test",$partner_registration->sub_domain);
