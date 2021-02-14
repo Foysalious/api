@@ -11,6 +11,10 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
 
     private $email, $password, $template, $subject;
 
+    /**
+     * SendBusinessRequestEmail constructor.
+     * @param $email
+     */
     public function __construct($email)
     {
         $this->email = $email;
@@ -29,7 +33,7 @@ class SendBusinessRequestEmail extends Job implements ShouldQueue
             $email = $this->email;
 
             Mail::send($template, ['email' => $this->email, 'password' => $this->password], function ($m) use ($subject, $email) {
-                $m->from('mail@sheba.xyz', 'Sheba.xyz');
+                $m->from('noreply@sheba-business.com', 'Sheba Platform Limited');
                 $m->to($email)->subject($subject);
             });
         }

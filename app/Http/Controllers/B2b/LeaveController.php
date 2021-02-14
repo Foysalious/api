@@ -21,12 +21,16 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
+use Sheba\Business\ApprovalRequest\UpdaterV2;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -37,6 +41,8 @@ use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Business\Leave\SuperAdmin\Updater as LeaveUpdater;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
+use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
+use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
 class LeaveController extends Controller
 {
@@ -55,9 +61,10 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
+     * @param LeaveRequestExcel $leave_request_report
      * @return JsonResponse
      */
-    public function index(Request $request)
+    public function index(Request $request, LeaveRequestExcel $leave_request_report)
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
@@ -67,20 +74,15 @@ class LeaveController extends Controller
         $business = $request->business;
 
         list($offset, $limit) = calculatePagination($request);
-
         $leave_approval_requests = $this->approvalRequestRepo->getApprovalRequestByBusinessMemberFilterBy($business_member, Type::LEAVE);
         if ($request->has('status')) $leave_approval_requests = $leave_approval_requests->where('status', $request->status);
-
-        /*if ($request->has('department') || $request->has('employee') || $request->has('search')) {
-            $leave_approval_requests = $this->filterWithDepartmentOrEmployeeOrSearchWithEmployee($leave_approval_requests, $request);
-        }*/
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
-        if ($request->has('limit')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
+        if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
 
         $leaves = [];
         foreach ($leave_approval_requests as $approval_request) {
@@ -103,12 +105,14 @@ class LeaveController extends Controller
         if ($request->has('sort')) {
             $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
         }
+        if ($request->file == 'excel') {
+            return $leave_request_report->setLeave($leaves)->get();
+        }
 
-        if (count($leaves) > 0) return api_response($request, $leaves, 200, [
+        return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
             'total_leave_requests' => $total_leave_approval_requests,
         ]);
-        else return api_response($request, null, 404);
     }
 
     /**
@@ -116,19 +120,23 @@ class LeaveController extends Controller
      * @param $approval_request
      * @param Request $request
      * @param LeaveLogRepo $leave_log_repo
+     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         /** @var Business $business */
         $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
+
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+
         if ($business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
+
         $leave_requester_business_member = $requestable->businessMember;
         /** @var Member $member */
         $member = $leave_requester_business_member->member;
@@ -139,7 +147,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -149,10 +157,10 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
-     * @param Updater $updater
+     * @param UpdaterV2 $updater
      * @return JsonResponse
      */
-    public function updateStatus(Request $request, Updater $updater)
+    public function updateStatus(Request $request, UpdaterV2 $updater)
     {
         $this->validate($request, [
             'type_id' => 'required|string',
@@ -164,6 +172,14 @@ class LeaveController extends Controller
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+
+        /** @var ApprovalRequest $approval_request */
+
+        /*$approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids,Type::LEAVE)->first();
+        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
+
+        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+        $updater->setStatus($request->status)->change();*/
 
         $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, Type::LEAVE)
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
@@ -245,6 +261,16 @@ class LeaveController extends Controller
     private function getApprover($requestable)
     {
         $approvers = [];
+        $all_approvers = [];
+        /** @var BusinessMember $leave_business_member */
+        $this->requestableType = ApprovalRequestType::getByModel($requestable);
+        $requestable_business_member = $requestable->businessMember;
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
+        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
+        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
+        $default_approvers = (new FindApprovers())->getApproversAllInfo($remainingApprovers);
+
         foreach ($requestable->requests as $approval_request) {
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
@@ -256,10 +282,11 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }
-        return $approvers;
+        $all_approvers = array_merge($approvers, $default_approvers);
+        return $all_approvers;
     }
 
     /**

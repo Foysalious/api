@@ -1,7 +1,10 @@
 <?php namespace Sheba\Pos\Product;
 
+use App\Models\Partner;
+use App\Models\PartnerPosService;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGallery;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
@@ -9,6 +12,7 @@ use Sheba\ModificationFields;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;
+use Sheba\Subscription\Partner\Access\AccessManager;
 
 class Creator
 {
@@ -94,6 +98,9 @@ class Creator
 
     }
 
+    /**
+     * @throws \Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage
+     */
     private function format()
     {
         $this->data['stock']            = (isset($this->data['stock']) && $this->data['stock'] > 0) ? (double)$this->data['stock'] : null;
@@ -102,12 +109,50 @@ class Creator
         $this->data['wholesale_price']  = (isset($this->data['wholesale_price']) && $this->data['wholesale_price'] > 0) ? (double)$this->data['wholesale_price'] : 0.00;
         $this->data['price']            = (isset($this->data['price']) && $this->data['price'] > 0) ? (double)$this->data['price'] : null;
         $this->data['publication_status']            = isset($this->data['publication_status'])  ?  $this->data['publication_status'] : 1;
-        $this->data['is_published_for_shop']            = isset($this->data['is_published_for_shop'])  ?  $this->data['is_published_for_shop'] : 0;
+        if (isset($this->data['is_published_for_shop']) && $this->data['is_published_for_shop'] == 1) {
+            if (PartnerPosService::webstorePublishedServiceByPartner($this->data['partner_id'])->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $this->getPartner($this->data['partner_id'])->subscription->getAccessRules());
+        } else {
+            $this->data['is_published_for_shop'] = 0;
+        }
 
+    }
+
+    private function getPartner($partner_id)
+    {
+        return Partner::find($this->data['partner_id']);
     }
 
     private function hasFile($filename)
     {
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
+    }
+
+    public function syncPartnerPosCategory($partner_pos_service)
+    {
+        $data = [];
+        $partner_id = $partner_pos_service->partner_id;
+        $master_cat_id = $partner_pos_service->master_category_id;
+        $sub_cat_id = $partner_pos_service->sub_category_id;
+
+        $partner_categories = PartnerPosCategory::where('partner_id',$partner_id)->whereIn('category_id',[$master_cat_id,$sub_cat_id])->pluck('category_id')->toArray();
+
+        if(empty($partner_categories) || !in_array($master_cat_id,$partner_categories))
+        {
+            array_push($data,$this->withCreateModificationField([
+                'partner_id' => $partner_id,
+                'category_id' => $master_cat_id,
+            ]));
+        }
+        if(empty($partner_categories) || !in_array($sub_cat_id,$partner_categories))
+        {
+            array_push($data,$this->withCreateModificationField([
+                'partner_id' => $partner_id,
+                'category_id' => $sub_cat_id,
+            ]));
+        }
+
+        if(!empty($data))
+            PartnerPosCategory::insert($data);
     }
 }

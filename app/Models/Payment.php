@@ -52,6 +52,11 @@ class Payment extends Model
         return $query->where('valid_till', '>', Carbon::now());
     }
 
+    public function scopeNotResolved($query)
+    {
+        return $query->whereIn('status', array(Statuses::INITIATED, Statuses::VALIDATED));
+    }
+
     /**
      *
      * Other functions

@@ -17,6 +17,7 @@ use Sheba\Dal\WithdrawalRequest\RequesterTypes;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Partner\PartnerStatuses;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
@@ -29,6 +30,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
     public function index($partner, Request $request)
     {
         try {
+            $is_partner_blacklisted = false;
             $withdrawalRequests = $request->partner->withdrawalRequests->each(function ($item, $key) {
                 $item['amount']       = (double)$item->amount;
                 $item['requested_by'] = $item->created_by_name;
@@ -60,9 +62,15 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             {
                 $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলনের জন্য আবেদন করতে পারবেন না।';
             }
+
+            if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
+                $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
+                $is_partner_blacklisted = true;
+            }
+
             $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
                 return api_response($request, $withdrawalRequests, 200,
-                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message]);
+                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message, 'is_black_listed' => $is_partner_blacklisted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -87,6 +95,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
 
         /** @var Partner $partner */
         $partner = $request->partner;
+        if($partner->status === PartnerStatuses::BLACKLISTED || $partner->status === PartnerStatuses::PAUSED) {
+            return api_response($request, null, 402, ['message' => 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।']);
+        }
         if ($request->payment_method != 'bank') {
             if (
                 ($request->header('portal-name') && $request->header('portal-name') == 'partner-portal') ||
@@ -101,9 +112,12 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
             }
 
-            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
-                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
-            }
+            /**
+             Given mobile no and opt number( always 1st admin) not same
+             */
+//            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
+//                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
+//            }
         }
 
 
@@ -119,7 +133,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         }
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
-            $message = "You don't have sufficient balance";
+            $message = "পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।";
             return api_response($request, null, 403, ['message' => $message]);
         }
         $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
@@ -131,6 +145,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'created_by_type' => class_basename($request->manager_resource),
             'created_by'      => $request->manager_resource->id,
             'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+            'api_request_id' => $request->api_request ? $request->api_request->id : null
         ]));
 
         return api_response($request, $new_withdrawal, 200);

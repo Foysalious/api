@@ -198,7 +198,7 @@ class ProfileController extends Controller
         $profile = Profile::where('mobile', $mobile)->first();
         if (!$profile) return api_response($request, null, 404, ['message' => 'Profile not found with this number']);
         $password = str_random(6);
-        $smsSent = $sms->setVendor('sslwireless')->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
+        $sms->shoot($mobile, "আপনার পাসওয়ার্ডটি পরিবর্তিত হয়েছে $password ,দয়া করে লগইন করতে এই পাসওয়ার্ডটি ব্যবহার করুন");
         $profile->update(['password' => bcrypt($password)]);
         event(new ProfilePasswordUpdated($profile));
         return api_response($request, true, 200, ['message' => 'Your password is sent to your mobile number. Please use that password to login']);

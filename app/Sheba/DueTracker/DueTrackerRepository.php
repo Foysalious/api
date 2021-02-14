@@ -16,6 +16,7 @@ use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\DueTracker\Exceptions\InvalidPartnerPosCustomer;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -46,6 +47,10 @@ class DueTrackerRepository extends BaseRepository
                 'clear'
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
+        }
+        if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
+        {
+            $list = $list->where('is_supplier', 1)->values();
         }
         if ($request->has('q') && !empty($request->q)) {
             $query = trim($request->q);
@@ -101,9 +106,11 @@ class DueTrackerRepository extends BaseRepository
                 $item['customer_name'] = $profile ? $profile->name : "Unknown";
             }
 
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
             $item['customer_id']     = $customerId;
+            $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
             return $item;
         });
         return $list;
@@ -136,7 +143,13 @@ class DueTrackerRepository extends BaseRepository
         $list   = $due_list->map(function ($item) {
             $item['created_at'] = Carbon::parse($item['created_at'])->format('Y-m-d h:i A');
             $item['entry_at']   = Carbon::parse($item['entry_at'])->format('Y-m-d h:i A');
-            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' ? PosOrder::getPartnerWiseOrderId($item['source_id']) : null;
+            $pos_order = PosOrder::withTrashed()->find($item['source_id']);
+            $item['partner_wise_order_id'] = $item['source_type'] === 'PosOrder' && $pos_order ? $pos_order->partner_wise_order_id: null;
+            if ($pos_order && $pos_order->sales_channel === SalesChannels::WEBSTORE) {
+                $item['source_type'] = 'WebstoreOrder';
+                $item['head'] = 'Webstore sales';
+                $item['head_bn'] = 'ওয়েবস্টোর সেলস';
+            }
             return $item;
         });
 
@@ -158,7 +171,8 @@ class DueTrackerRepository extends BaseRepository
                 'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
+                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
+                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
             ],
             'partner'    => $this->getPartnerInfo($partner),
             'other_info' => [
@@ -248,21 +262,24 @@ class DueTrackerRepository extends BaseRepository
     {
         /** @var PosOrder $order */
         $order = PosOrder::find($pos_order_id);
-        $order->calculate();
-        if ($order->getDue() > 0) {
-            $payment_data['pos_order_id'] = $pos_order_id;
-            $payment_data['amount']       = $amount_cleared;
-            $payment_data['method']       = $payment_method;
-            $this->paymentCreator->credit($payment_data);
+        if(isset($order)) {
+            $order->calculate();
+            if ($order->getDue() > 0) {
+                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['amount']       = $amount_cleared;
+                $payment_data['method']       = $payment_method;
+                $this->paymentCreator->credit($payment_data);
+            }
         }
     }
 
     public function removePosOrderPayment($pos_order_id, $amount){
-       return PosOrderPayment::where('pos_order_id', $pos_order_id)
-           ->where('amount', $amount)
-           ->where('transaction_type', 'Credit')
-           ->first()
-           ->delete();
+        $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
+            ->where('amount', $amount)
+            ->where('transaction_type', 'Credit')
+            ->first();
+
+        return $payment ? $payment->delete() : false;
     }
 
     private function createStoreData(Request $request)
