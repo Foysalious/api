@@ -49,6 +49,10 @@ class DueTrackerRepository extends BaseRepository
             ])) {
             $list = $list->where('balance_type', $request->balance_type)->values();
         }
+        if($request->has('filter_by_supplier') && $request->filter_by_supplier == 1)
+        {
+            $list = $list->where('is_supplier', 1)->values();
+        }
         if ($request->has('q') && !empty($request->q)) {
             $query = trim($request->q);
             $list  = $list->filter(function ($item) use ($query) {
@@ -103,9 +107,11 @@ class DueTrackerRepository extends BaseRepository
                 $item['customer_name'] = $profile ? $profile->name : "Unknown";
             }
 
+
             $item['customer_mobile'] = $profile ? $profile->mobile : null;
             $item['avatar']          = $profile ? $profile->pro_pic : null;
             $item['customer_id']     = $customerId;
+            $item['is_supplier'] = isset($posProfile) ? $posProfile->is_supplier : 0;
             return $item;
         });
         return $list;
@@ -166,7 +172,8 @@ class DueTrackerRepository extends BaseRepository
                 'name'              => !empty($partner_pos_customer) && $partner_pos_customer->nick_name ? $partner_pos_customer->nick_name : $customer->profile->name,
                 'mobile'            => $customer->profile->mobile,
                 'avatar'            => $customer->profile->pro_pic,
-                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null
+                'due_date_reminder' => !empty($partner_pos_customer) ? $partner_pos_customer->due_date_reminder : null,
+                'is_supplier' => !empty($partner_pos_customer) ? $partner_pos_customer->is_supplier : 0
             ],
             'partner'    => $this->getPartnerInfo($partner),
             'other_info' => [
