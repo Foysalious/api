@@ -224,12 +224,12 @@ class PosOrderList
 
     private function mapPaymentLinkData(&$final_orders, $payment_link_targets)
     {
-        $payment_links = $this->paymentLinkRepo->getPaymentLinksByPosOrders($payment_link_targets);
+        $payment_links = $this->paymentLinkRepo->getActivePaymentLinksByPosOrders($payment_link_targets);
 
         $final_orders = $final_orders->map(function ($order) use ($payment_links) {
             if (array_key_exists('payment_link_target', $order)) {
                 $key = $order['payment_link_target']->toString();
-                if (array_key_exists($key, $payment_links)) {
+                if (array_key_exists($key, $payment_links) && $payment_links[$key][0]) {
                     (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_links[$key][0]);
                 }
                 unset($order['payment_link_target']);
