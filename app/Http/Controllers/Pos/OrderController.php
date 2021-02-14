@@ -32,6 +32,7 @@ use Sheba\Pos\Jobs\WebstoreOrderSms;
 use Sheba\Pos\Order\Creator;
 use Sheba\Pos\Order\Deleter as PosOrderDeleter;
 use Sheba\Pos\Order\PosOrderList;
+use Sheba\Pos\Order\PosOrder as PosOrderRepo;
 use Sheba\Pos\Order\QuickCreator;
 use Sheba\Pos\Order\RefundNatures\NatureFactory;
 use Sheba\Pos\Order\RefundNatures\Natures;
@@ -43,11 +44,13 @@ use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Profile\Creator as ProfileCreator;
 use Sheba\Reports\PdfHandler;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PartnerRepository;
 use Sheba\RequestIdentification;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Subscription\Partner\Access\AccessManager;
 use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
+use Sheba\Transactions\Types;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -70,11 +73,14 @@ class OrderController extends Controller
         return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);
     }
 
+
     /**
      * @param Request $request
+     * @param PosOrderRepo $posOrder
+     * @param PaymentLinkTransformer $payment_link
      * @return JsonResponse
      */
-    public function show(Request $request)
+    public function show(Request $request, PaymentLinkTransformer $payment_link)
     {
         /** @var PosOrder $order */
         $order = PosOrder::with('items.service.discounts', 'customer', 'payments', 'logs', 'partner')->withTrashed()->find($request->order);
@@ -85,6 +91,19 @@ class OrderController extends Controller
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($order, new PosOrderTransformer());
         $order    = $manager->createData($resource)->toArray();
+
+        $order['data']['payment_method'] = empty($order['data']['payments']) ? 'cod' : collect($order['data']['payments'])->where('transaction_type',Types::CREDIT)->sortByDesc('created_at')->first()['method'];
+
+       if (array_key_exists('payment_link_target', $order['data'])) {
+
+           $payment_link_target = $order['data']['payment_link_target'];
+           $link = app(PaymentLinkRepositoryInterface::class)->getActivePaymentLinkByPosOrder($payment_link_target);
+           if($link)
+           {
+               (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $link);
+               unset($order['data']['payment_link_target']);
+           }
+        }
         return api_response($request, null, 200, ['order' => $order]);
     }
 
@@ -157,7 +176,7 @@ class OrderController extends Controller
          */
         try {
             if ($order->sales_channel == SalesChannels::WEBSTORE) {
-                if ($partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
+                if ($partner->is_webstore_sms_active && $partner->wallet >= 1) $this->sendOrderPlaceSmsToCustomer($order);
                 $this->sendOrderPlacePushNotificationToPartner($order);
             }
         } catch (Throwable $e) {
@@ -263,20 +282,20 @@ class OrderController extends Controller
     public function update(Request $request, Updater $updater)
     {
         $this->setModifier($request->manager_resource);
-        /** @var PosOrder $order */
-        $new           = 1;
-        $order         = PosOrder::with('items')->find($request->order);
-        $is_returned   = ($this->isReturned($order, $request, $new));
-        $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
-        $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
-        /** @var RefundNature $refund */
-        $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
-        $refund->setNew($new)->update();
-        $order->payment_status = $order->calculate()->getPaymentStatus();
-        return api_response($request, null, 200, [
-            'msg'   => 'Order Updated Successfully',
-            'order' => $order
-        ]);
+            /** @var PosOrder $order */
+            $new           = 1;
+            $order         = PosOrder::with('items')->find($request->order);
+            $is_returned   = ($this->isReturned($order, $request, $new));
+            $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
+            $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
+            /** @var RefundNature $refund */
+            $refund = NatureFactory::getRefundNature($order, $request->all(), $refund_nature, $return_nature);
+            $refund->setNew($new)->update();
+            $order->payment_status = $order->calculate()->getPaymentStatus();
+            return api_response($request, null, 200, [
+                'msg'   => 'Order Updated Successfully',
+                'order' => $order
+            ]);
     }
 
     /**
@@ -290,7 +309,7 @@ class OrderController extends Controller
         $this->setModifier($request->manager_resource);
         $order = PosOrder::with('items')->find($request->order);
         $statusChanger->setOrder($order)->setStatus($request->status)->setModifier($request->manager_resource)->changeStatus();
-        if ($order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
+        if ($order->partner->is_webstore_sms_active && $order->partner->wallet >= 1 && $order->sales_channel == SalesChannels::WEBSTORE) {
             try {
                 dispatch(new WebstoreOrderSms($order));
             } catch (Throwable $e) {
@@ -459,7 +478,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()
+                    'vat'         => $pos_order->getTotalVat(),
+                    'delivery_charge' => $pos_order->delivery_charge
                 ] : null
             ];
             if ($pos_order->customer) {
@@ -504,7 +524,8 @@ class OrderController extends Controller
                     'paid'        => $pos_order->getPaid(),
                     'due'         => $pos_order->getDue(),
                     'status'      => $pos_order->getPaymentStatus(),
-                    'vat'         => $pos_order->getTotalVat()
+                    'vat'         => $pos_order->getTotalVat(),
+                    'delivery_charge' => $pos_order->delivery_charge
                 ] : null
             ];
             if ($pos_order->customer) {
