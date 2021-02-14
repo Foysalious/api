@@ -100,6 +100,11 @@ class WalletTransactionHandler extends WalletTransaction
      */
     private function storeFraudDetectionTransaction($isJob = true)
     {
+        /**
+         * TEMPORARY OFF FRAUD TRANSACTION
+         */
+        return;
+
         /** @noinspection PhpUndefinedFieldInspection */
         $data = [
             'user_type'      => strtolower(class_basename($this->model)),
@@ -133,7 +138,6 @@ class WalletTransactionHandler extends WalletTransaction
     public function storeFraudOnly()
     {
         try {
-
             if (empty($this->type) || empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
             }
@@ -170,6 +174,7 @@ class WalletTransactionHandler extends WalletTransaction
         } catch (Exception $e) {
             WalletTransaction::throwException($e);
         }
+
         return null;
     }
 
