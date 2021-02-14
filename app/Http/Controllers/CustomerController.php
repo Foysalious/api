@@ -54,9 +54,10 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
-
+    //123
     public function update($customer, Request $request)
     {
+
         try {
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
