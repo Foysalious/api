@@ -103,7 +103,7 @@ class CustomerController extends Controller
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
                 'value' => 'required|string',
-//                'code' => 'required|string',
+                //'code' => 'required|string',
                 'email' => 'required|email|unique:profiles,email,' . $profile->id
             ]);
             $profile->email = $request->email;
