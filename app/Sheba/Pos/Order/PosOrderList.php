@@ -188,7 +188,7 @@ class PosOrderList
 
     private function getFilteredOrders()
     {
-        $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner', 'customer.partnerPosCustomer')->byPartner($this->partner->id);
+        $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
         if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
@@ -198,13 +198,17 @@ class PosOrderList
     private function filteredBySearchQuery($orders_query, $search_query)
     {
         $partner_id = $this->partner->id;
-        $orders_query = $orders_query->whereHas('customer.partnerPosCustomer', function ($q) use ($search_query, $partner_id){
-            $q->where('partner_pos_customers.partner_id', $partner_id);
-            $q->where('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
-        })->orWhereHas('customer.profile', function ($query) use ($search_query) {
-            $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+        $orders_query = $orders_query->where(function ($query) use($search_query, $partner_id){
+            $query->whereHas('customer.profile', function ($query) use ($search_query) {
+                $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+            })->orWhereHas('customer.partnerPosCustomer', function($query) use ($search_query, $partner_id) {
+                $query->where('partner_id', $partner_id);
+                $query->where(function ($q) use ($search_query) {
+                    $q->orWhere('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
+                });
+            });
         });
         $orders_query = $orders_query->orWhere([
             [
