@@ -12,6 +12,7 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
 use App\Sheba\TopUp\TopUpExcelDataFormatError;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
@@ -422,7 +423,11 @@ class TopUpController extends Controller
         $topups = $agent->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
-        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
+        if (isset($request->from) && $request->from !== "null") {
+            $from_date = Carbon::parse($request->from);
+            $to_date = strlen($request->to) < 11 ? Carbon::parse($request->to)->endOfDay() : Carbon::parse($request->to);
+            $topups = $topups->whereBetween('created_at', [$from_date, $to_date]);
+        }
         if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
         if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
