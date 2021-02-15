@@ -94,7 +94,6 @@ class CustomerController extends Controller
     }
     public function update_modified ($customer, Request $request)
     {
-
         try {
             $customer = $request->customer;
             $profile = $customer->profile;
