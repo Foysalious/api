@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -39,7 +40,7 @@ abstract class Pretups
 
     public static function getInitialStatusStatically()
     {
-        return config('topup.status.successful.sheba');
+        return Statuses::SUCCESSFUL;
     }
 
     abstract protected function getPin();

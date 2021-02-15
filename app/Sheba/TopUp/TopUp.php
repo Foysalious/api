@@ -135,7 +135,7 @@ class TopUp
     private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
         try {
-            $topup_order->status = $response->getTransactionId();
+            $topup_order->status = $response->getTopUpStatus();
             $topup_order->transaction_id = $response->getTransactionId();
             $topup_order->transaction_details = $response->getTransactionDetailsAsString();
             return $this->updateTopUpOrder($topup_order);
