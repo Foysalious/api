@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\DoNotReportException;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
@@ -11,11 +10,9 @@ use App\Repositories\NotificationRepository;
 use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -203,7 +200,12 @@ class TopUpController extends Controller
     {
         $data = $request->all();
         $success_response->setResponse($data);
-        $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+        $topup_order = $success_response->getTopUpOrder();
+        $top_up->processSuccessfulTopUp($topup_order, $success_response);
+
+        $topup_success_namespace = 'Topup::Success:success_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($topup_success_namespace, json_encode($data));
+
         return api_response($request, 1, 200);
     }
 
@@ -356,7 +358,17 @@ class TopUpController extends Controller
             return api_response($request, $otf_list, 200, ['message' => $otf_list]);
         }
     }
-    
+
+
+    /**
+     * @param Request $request
+     * @param PaywellSuccessResponse $success_response
+     * @param PaywellFailResponse $fail_response
+     * @param TopUp $top_up
+     * @param PaywellClient $paywell_client
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up, PaywellClient $paywell_client)
     {
         /** @var TopUpOrder $topup_order */
