@@ -54,19 +54,18 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
-    //123
     public function update($customer, Request $request)
     {
 
         try {
             $this->validate($request, [
-                'field' => 'required|string|in:name,birthday,gender,address',
+                'field' => 'required|string|in:name,dob,gender,address',
                 'value' => 'required|string'
             ]);
             $customer = $request->customer;
             $field = $request->field;
             $profile = $customer->profile;
-            if ($field == 'birthday') {
+            if ($field == 'dob') {
                 $this->validate($request, [
                     'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 ]);
@@ -98,32 +97,19 @@ class CustomerController extends Controller
 
         try {
             $customer = $request->customer;
-            $field = $request->field;
             $profile = $customer->profile;
             $this->validate($request, [
-                'field' => 'required|string|in:name,birthday,gender,address',
-                'value' => 'required|string',
-                //'code' => 'required|string',
+                'name' => 'required|string',
+                'gender'=>'required|string|in:Male,Female,Other',
+                'address'=>'required|string',
+                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 'email' => 'required|email|unique:profiles,email,' . $profile->id
             ]);
+            $profile->name = ucwords($request->name);
+            $profile->gender = $request->gender;
+            $profile->address = $request->address;
+            $profile->dob = $request->dob;
             $profile->email = $request->email;
-            if ($field == 'birthday') {
-                $this->validate($request, [
-                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                ]);
-                $profile->dob = $request->value;
-            } elseif ($field == 'gender') {
-                $this->validate($request, [
-                    'value' => 'required|string|in:Male,Female,Other',
-                ]);
-                $profile->gender = $request->value;
-            } else {
-                $this->validate($request, [
-                    'value' => 'required|string'
-                ]);
-                $value = $field == 'name' ? ucwords($request->value) : $request->value;
-                $profile->$field = trim($value);
-            }
             $profile->update();
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
