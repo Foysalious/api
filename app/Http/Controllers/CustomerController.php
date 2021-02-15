@@ -56,7 +56,6 @@ class CustomerController extends Controller
     }
     public function update($customer, Request $request)
     {
-
         try {
             $this->validate($request, [
                 'field' => 'required|string|in:name,dob,gender,address',
@@ -92,17 +91,18 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function update_modified ($customer, Request $request)
     {
         try {
             $customer = $request->customer;
             $profile = $customer->profile;
             $this->validate($request, [
-                'name' => 'required|string',
-                'gender'=>'required|string|in:Male,Female,Other',
-                'address'=>'required|string',
-                'dob' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'email' => 'required|email|unique:profiles,email,' . $profile->id
+                'name' => 'string',
+                'gender'=>'string|in:Male,Female,Other',
+                'address'=>'string',
+                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'email' => 'email|unique:profiles,email,' . $profile->id
             ]);
             $profile->name = ucwords($request->name);
             $profile->gender = $request->gender;
