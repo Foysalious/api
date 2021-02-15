@@ -52,8 +52,8 @@ foreach ($connection_names as $connection_name => $agent_ids) {
 
     $agent_type = explode("_", $connection_name)[1];
 
-    if (str_contains("_chunk_", $connection_name)) {
-        $value = $agent_ids + ["connection_name" => $connection_name];
+    if (str_contains($connection_name, "_chunk_")) {
+        $value = array_merge($agent_ids, ["connection_name" => $connection_name]);
         array_push_on_array($agent_connections[$agent_type], "chunk", $value);
         continue;
     }
