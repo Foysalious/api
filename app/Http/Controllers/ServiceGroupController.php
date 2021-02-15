@@ -85,7 +85,6 @@ class ServiceGroupController extends Controller
     public function show($service_group, Request $request)
     {
         $single_service_group = ServiceGroup::find($service_group);
-        //dd($single_service_group->is_published_for_app);
         try {
             $this->validate($request, [
                 'location' => 'sometimes|numeric',
