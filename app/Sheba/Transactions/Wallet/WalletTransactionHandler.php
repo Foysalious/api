@@ -61,11 +61,11 @@ class WalletTransactionHandler extends WalletTransaction
         /** @noinspection PhpUndefinedMethodInspection */
         DB::transaction(function () use ($data, &$transaction) {
             $typeMethod = sprintf("%sWallet", $this->type);
-            $this->$typeMethod();
+            $wallet = $this->$typeMethod();
             $data = array_merge($data, [
                 'type'      => ucfirst($this->type),
                 'amount'    => $this->amount,
-                'balance'   => $this->getCalculatedBalance(),
+                'balance'   => $wallet,
                 'log'       => $this->log,
                 'created_at'=> Carbon::now(),
                 'transaction_details' => $this->transaction_details ? $this->transaction_details->toString() : null
@@ -100,6 +100,11 @@ class WalletTransactionHandler extends WalletTransaction
      */
     private function storeFraudDetectionTransaction($isJob = true)
     {
+        /**
+         * TEMPORARY OFF FRAUD TRANSACTION
+         */
+        return;
+
         /** @noinspection PhpUndefinedFieldInspection */
         $data = [
             'user_type'      => strtolower(class_basename($this->model)),
@@ -133,7 +138,6 @@ class WalletTransactionHandler extends WalletTransaction
     public function storeFraudOnly()
     {
         try {
-
             if (empty($this->type) || empty($this->amount) || empty($this->model)) {
                 throw new InvalidWalletTransaction();
             }
@@ -170,6 +174,7 @@ class WalletTransactionHandler extends WalletTransaction
         } catch (Exception $e) {
             WalletTransaction::throwException($e);
         }
+
         return null;
     }
 

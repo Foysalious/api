@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Exceptions\DoNotReportException;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
@@ -8,15 +7,14 @@ use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Carbon\Carbon;
-use Illuminate\Database\QueryException;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
-use Sheba\TopUp\Exception\TopUpExceptions;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
@@ -26,16 +24,12 @@ use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Sheba\TopUp\Verification\VerifyPin;
 use Sheba\UserAgentInformation;
 use Storage;
 use Excel;
 use Throwable;
-
 use Hash;
 use App\Models\Affiliate;
-use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-use Sheba\Dal\WrongPINCount\Contract as WrongPINCountRepo;
 use Sheba\ModificationFields;
 use Sheba\Dal\TopUpOTFSettings\Contract as TopUpOTFSettingsRepo;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
@@ -174,19 +168,42 @@ class TopUpController extends Controller
         return $topup_bulk_request;
     }
 
+    /**
+     * @param Request $request
+     * @param SslFailResponse $error_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function sslFail(Request $request, SslFailResponse $error_response, TopUp $top_up)
     {
         $data = $request->all();
         $error_response->setResponse($data);
-        $top_up->processFailedTopUp($error_response->getTopUpOrder(), $error_response);
+        $topup_order = $error_response->getTopUpOrder();
+        $top_up->processFailedTopUp($topup_order, $error_response);
+
+        $topup_success_namespace = 'Topup::Failed:failed_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($topup_success_namespace, json_encode($data));
+
         return api_response($request, 1, 200);
     }
 
+    /**
+     * @param Request $request
+     * @param SslSuccessResponse $success_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
     {
         $data = $request->all();
         $success_response->setResponse($data);
-        $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+        $topup_order = $success_response->getTopUpOrder();
+        $top_up->processSuccessfulTopUp($topup_order, $success_response);
+
+        $topup_success_namespace = 'Topup::Success:success_'. Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($topup_success_namespace, json_encode($data));
+
         return api_response($request, 1, 200);
     }
 
@@ -281,7 +298,7 @@ class TopUpController extends Controller
 
         if ($otf_settings->applicable_gateways != 'null' && in_array($vendor->gateway, json_decode($otf_settings->applicable_gateways)) == true) {
             $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $request->vendor_id], ['type', $agent]])->first();
-            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->get();
+            $otf_list = $topup_vendor_otf->builder()->where('topup_vendor_id', $request->vendor_id)->where('sim_type', 'like', '%' . $request->sim_type . '%')->where('status', 'Active')->orderBy('cashback_amount', 'DESC')->get();
 
             foreach ($otf_list as $otf) {
                 array_add($otf, 'regular_commission', round(min(($vendor_commission->agent_commission / 100) * $otf->amount, 50), 2));
@@ -339,7 +356,17 @@ class TopUpController extends Controller
             return api_response($request, $otf_list, 200, ['message' => $otf_list]);
         }
     }
-    
+
+
+    /**
+     * @param Request $request
+     * @param PaywellSuccessResponse $success_response
+     * @param PaywellFailResponse $fail_response
+     * @param TopUp $top_up
+     * @param PaywellClient $paywell_client
+     * @return JsonResponse
+     * @throws Exception
+     */
     public function paywellStatusUpdate(Request $request, PaywellSuccessResponse $success_response, PaywellFailResponse $fail_response, TopUp $top_up, PaywellClient $paywell_client)
     {
         /** @var TopUpOrder $topup_order */
