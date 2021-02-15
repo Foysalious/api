@@ -39,6 +39,7 @@ class TopUpJob extends Job implements ShouldQueue
         $this->agent = $this->topUpOrder->agent;
         $this->vendorId = $this->topUpOrder->vendor_id;
         $this->connection = $this->getConnectionName();
+        $this->queue = $this->connection;
     }
 
     /**
@@ -160,7 +161,7 @@ class TopUpJob extends Job implements ShouldQueue
     private function handleException(Exception $e)
     {
         $payload = $this->job->getRawBody();
-        $id = $this->failedJobLogger->log($this->connection, $this->queue ?: "default", $payload);
+        $id = $this->failedJobLogger->log($this->connection, $this->queue, $payload);
         logErrorWithExtra($e, [
             config('queue.failed.table') . ".id" => $id
         ]);
