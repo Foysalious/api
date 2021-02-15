@@ -31,9 +31,9 @@ class TPProxyClient
                     'input' => $request->getInput(),
                     'headers' => $request->getHeaders()
                 ],
-                'timeout' => 120,
-                'read_timeout' => 300,
-                'connect_timeout' => 120
+                'timeout' => 60,
+                'read_timeout' => 60,
+                'connect_timeout' => 60
             ]);
             $proxy_response = $response->getBody()->getContents();
             if (!$proxy_response) throw new TPProxyServerError();
