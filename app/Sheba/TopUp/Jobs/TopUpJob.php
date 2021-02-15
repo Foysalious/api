@@ -74,9 +74,18 @@ class TopUpJob extends Job implements ShouldQueue
         if (!array_key_exists($agent_type, $connections)) return $connections['default'];
 
         $agent_connections = $connections[$agent_type];
-        if (!array_key_exists($this->agent->id, $agent_connections)) return $connections['default'];
+        if (array_key_exists($this->agent->id, $agent_connections)) return $agent_connections[$this->agent->id];
 
-        return $agent_connections[$this->agent->id];
+        if (array_key_exists("chunk", $agent_connections)) {
+            $chunks = $agent_connections["chunk"];
+            foreach ($chunks as $chunk) {
+                if ($this->agent->id >= $chunk['from'] && $this->agent->id <= $chunk['to']) {
+                    return $chunk['connection_name'];
+                }
+            }
+        }
+
+        return $agent_connections['default'];
     }
 
     /**
