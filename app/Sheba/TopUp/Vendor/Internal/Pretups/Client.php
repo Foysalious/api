@@ -138,9 +138,9 @@ class Client
                     'url' => $this->url,
                     'input' => $input
                 ],
-                'timeout' => 5,
-                'read_timeout' => 5,
-                'connect_timeout' => 5
+                'timeout' => 60,
+                'read_timeout' => 60,
+                'connect_timeout' => 60
             ]);
         } catch (ConnectException $e) {
             if (isTimeoutException($e)) throw new GatewayTimeout($e->getMessage());
