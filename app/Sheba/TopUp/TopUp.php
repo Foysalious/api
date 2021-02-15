@@ -16,7 +16,6 @@ use Sheba\TopUp\Vendor\Response\TopUpSuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpSystemErrorResponse;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
-use Throwable;
 
 class TopUp
 {
@@ -48,6 +47,7 @@ class TopUp
     {
         $this->agent = $agent;
         $this->validator->setAgent($agent);
+        $this->setModifier($this->agent);
         return $this;
     }
 
@@ -84,23 +84,19 @@ class TopUp
         $response = $this->response->getSuccess();
 
         try {
-            DB::transaction(function () use ($response, $topup_order) {
-                $this->setModifier($this->agent);
+            DB::transaction(function () use ($response, &$topup_order) {
                 $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);
-                $top_up_commission = $this->agent->getCommission();
-                $top_up_commission->setTopUpOrder($topup_order)->disburse();
+                $this->agent->getCommission()->setTopUpOrder($topup_order)->disburse();
                 $this->vendor->deductAmount($topup_order->amount);
-                $this->isSuccessful = true;
             });
-
-            if ($topup_order->isAgentPartner()) {
-                app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
-            }
-
-        } catch (Throwable $e) {
-            logError($e);
+        } catch (Exception $e) {
+            $this->markOrderAsSystemError($topup_order, $e);
         }
 
+        if ($topup_order->isAgentPartner()) {
+            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $topup_order);
+        }
+        $this->isSuccessful = true;
     }
 
     /**
@@ -127,19 +123,13 @@ class TopUp
      * @param TopUpOrder           $topup_order
      * @param TopUpSuccessResponse $response
      * @return TopUpOrder
-     * @throws Throwable
      */
     private function updateSuccessfulTopOrder(TopUpOrder $topup_order, TopUpSuccessResponse $response)
     {
-        try {
-            $topup_order->status = $response->getTopUpStatus();
-            $topup_order->transaction_id = $response->getTransactionId();
-            $topup_order->transaction_details = $response->getTransactionDetailsAsString();
-            return $this->updateTopUpOrder($topup_order);
-        } catch (Throwable $e) {
-            logErrorWithExtra($e, ['topup' => $topup_order->getDirty()]);
-            throw $e;
-        }
+        $topup_order->status = $response->getTopUpStatus();
+        $topup_order->transaction_id = $response->getTransactionId();
+        $topup_order->transaction_details = $response->getTransactionDetailsAsString();
+        return $this->updateTopUpOrder($topup_order);
     }
 
     private function updateFailedTopOrder(TopUpOrder $topup_order, TopUpErrorResponse $response)
@@ -172,34 +162,53 @@ class TopUp
     {
         if ($top_up_order->isFailed()) return;
 
-        DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
-            $this->model = $top_up_order->vendor;
-            $top_up_order->status = Statuses::FAILED;
-            $top_up_order->failed_reason = FailedReason::GATEWAY_ERROR;
-            $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
-            $this->setModifier($this->agent);
-            $this->withUpdateModificationField($top_up_order);
-            $top_up_order->update();
-            $this->refund($top_up_order);
-            $vendor = new VendorFactory();
-            $vendor = $vendor->getById($top_up_order->vendor_id);
-            $vendor->refill($top_up_order->amount);
-        });
+        try {
+            DB::transaction(function () use ($top_up_order, $top_up_fail_response) {
+                $this->model = $top_up_order->vendor;
+                $top_up_order->status = Statuses::FAILED;
+                $top_up_order->failed_reason = FailedReason::GATEWAY_ERROR;
+                $top_up_order->transaction_details = json_encode($top_up_fail_response->getFailedTransactionDetails());
+                $this->setModifier($this->agent);
+                $this->withUpdateModificationField($top_up_order);
+                $top_up_order->update();
+                $this->refund($top_up_order);
+                $vendor = new VendorFactory();
+                $vendor = $vendor->getById($top_up_order->vendor_id);
+                $vendor->refill($top_up_order->amount);
+            });
+        } catch (Exception $e) {
+            $this->markOrderAsSystemError($top_up_order, $e);
+            throw $e;
+        }
     }
 
     /**
      * @param TopUpOrder $top_up_order
      * @param SuccessResponse $success_response
+     * @throws Exception
      */
     public function processSuccessfulTopUp(TopUpOrder $top_up_order, SuccessResponse $success_response)
     {
         if ($top_up_order->isSuccess()) return;
 
-        DB::transaction(function () use ($top_up_order, $success_response) {
-            $top_up_order->status = Statuses::SUCCESSFUL;
-            $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
-            $top_up_order->update();
-        });
+        try {
+            DB::transaction(function () use ($top_up_order, $success_response) {
+                $top_up_order->status = Statuses::SUCCESSFUL;
+                $top_up_order->transaction_details = json_encode($success_response->getSuccessfulTransactionDetails());
+                $top_up_order->update();
+            });
+        } catch (Exception $e) {
+            $this->markOrderAsSystemError($top_up_order, $e);
+            throw $e;
+        }
+    }
+
+    private function markOrderAsSystemError(TopUpOrder $top_up_order, Exception $e)
+    {
+        logErrorWithExtra($e, ['topup' => $top_up_order->getDirty()]);
+        $top_up_order->update([
+            'status' => Statuses::SYSTEM_ERROR
+        ]);
     }
 
     /**
