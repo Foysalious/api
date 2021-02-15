@@ -85,7 +85,7 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
                 ->where('approval_requests.id', '=', $approval_request->id)
                 ->first();
             array_push($approvers, [
-                'name' => $profile->name,
+                'name' => $profile->name ? $profile->name : 'n/s',
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }

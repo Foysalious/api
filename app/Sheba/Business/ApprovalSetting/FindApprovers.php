@@ -123,17 +123,12 @@ class FindApprovers
     {
         $default_approvers = [];
         foreach ($approvers as $approver) {
-            $profile = DB::table('approval_requests')
-                ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
-                ->join('members', 'members.id', '=', 'business_member.member_id')
-                ->join('profiles', 'profiles.id', '=', 'members.profile_id')
-                ->where('business_member.id', '=', $approver)
-                ->first();
-           # $business_member = BusinessMember::find($approver);
-           # $member = $business_member->member;
-           # $profile = $member->profile;
+            $business_member = BusinessMember::find($approver);
+            $member = $business_member->member;
+            $profile = $member->profile;
+
             array_push($default_approvers, [
-                'name' => $profile->name,
+                'name' => $profile->name ? $profile->name : 'n/s',
                 'status' => null
             ]);
         }
