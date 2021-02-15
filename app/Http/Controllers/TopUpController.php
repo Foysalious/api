@@ -182,11 +182,8 @@ class TopUpController extends Controller
         $data = $request->all();
         $error_response->setResponse($data);
         $topup_order = $error_response->getTopUpOrder();
+        $this->logSslIpn("fail", $topup_order, $data);
         $top_up->processFailedTopUp($topup_order, $error_response);
-
-        $topup_success_namespace = 'Topup::Failed:failed_'. Carbon::now()->timestamp . '_' . $topup_order->id;
-        Redis::set($topup_success_namespace, json_encode($data));
-
         return api_response($request, 1, 200);
     }
 
@@ -195,18 +192,23 @@ class TopUpController extends Controller
      * @param SslSuccessResponse $success_response
      * @param TopUp $top_up
      * @return JsonResponse
+     * @throws Exception
      */
     public function sslSuccess(Request $request, SslSuccessResponse $success_response, TopUp $top_up)
     {
         $data = $request->all();
         $success_response->setResponse($data);
         $topup_order = $success_response->getTopUpOrder();
+        $this->logSslIpn("success", $topup_order, $data);
         $top_up->processSuccessfulTopUp($topup_order, $success_response);
-
-        $topup_success_namespace = 'Topup::Success:success_'. Carbon::now()->timestamp . '_' . $topup_order->id;
-        Redis::set($topup_success_namespace, json_encode($data));
-
         return api_response($request, 1, 200);
+    }
+
+    private function logSslIpn($status, TopUpOrder $topup_order, $request_data)
+    {
+        $key = 'Topup::' . ($status == "fail" ? "Failed:failed": "Success:success") . "_";
+        $key .= Carbon::now()->timestamp . '_' . $topup_order->id;
+        Redis::set($key, json_encode($request_data));
     }
 
     private function getAgent(Request $request)
