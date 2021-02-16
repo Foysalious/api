@@ -149,8 +149,8 @@ class Route
             $api->group(['prefix' => 'customers/{customer}', 'middleware' => ['customer.auth']], function ($api) {
                 $api->get('/', 'CustomerController@index');
                 $api->group(['prefix' => 'edit'], function ($api) {
-                    $api->put('/', 'CustomerController@update');
-                    $api->put('ok', 'CustomerController@update_modified'); //DEMO ROUTE
+                    $api->put('/', 'CustomerController@update_modified');
+//                    $api->put('ok', 'CustomerController@update_modified'); //DEMO ROUTE
                     $api->put('email', 'CustomerController@updateEmail');
                     //$api->put('password', 'CustomerController@updatePassword');
                     $api->post('picture', 'CustomerController@updatePicture');
