@@ -63,10 +63,8 @@ class CustomerController extends Controller
             $profile = $customer->profile;
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
-                'value' => 'required|string',
-//                'email' => 'required|email|unique:profiles,email,' . $profile->id
+                'value' => 'required|string'
             ]);
-            //$code_data = $this->fbKit->authenticateKit($request->code);
             if ($field == 'birthday') {
                 $this->validate($request, [
                     'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
