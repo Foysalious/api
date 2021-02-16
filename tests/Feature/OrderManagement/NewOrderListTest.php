@@ -7,6 +7,8 @@ use App\Models\Order;
 use App\Models\PartnerOrder;
 use App\Models\Resource;
 use App\Models\ScheduleSlot;
+use Carbon\Carbon;
+use Sheba\CmDashboard\jobsComplainForCm;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryLocation\CategoryLocation;
 use Sheba\Dal\JobService\JobService;
@@ -55,6 +57,10 @@ class NewOrderLIstTest extends FeatureTestCase
      * @var $service
      */
     private $service;
+    /**
+     * @var $service
+     */
+    private $secondaryCategory;
 
 
     public function setUp()
@@ -108,7 +114,11 @@ class NewOrderLIstTest extends FeatureTestCase
             'service_id'=>$this->service->id,
             'service_variable_type'=>$this->service->variable_type,
             'service_variables'=>$this->service->variables,
-            'resource_id'=>$this->resource->id
+            'resource_id'=>$this->resource->id,
+            'schedule_date'=>"2021-02-16",
+            'preferred_time'=>"19:48:04-20:48:04",
+            'preferred_time_start'=>"19:48:04",
+            'preferred_time_end'=>"20:48:04"
         ]);
         $this->job_service = factory(JobService::class)->create([
             'job_id'=>$this->job->id,
@@ -119,12 +129,29 @@ class NewOrderLIstTest extends FeatureTestCase
         ]);
     }
 
-    public function testWithoutFilterResponseCode()
+    /*
+        Test Cases from here
+    */
+    public function testOrderRequestsWithoutFilterResponseCode()
     {
         $response=$this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token);
         $data = $response->decodeResponseJson();
         $this->assertEquals(400, $data['code']);
         $this->assertEquals("The filter field is required.", $data['message']);
+    }
+    public function testOrderRequestsWithInvalidFilterResponseCode()
+    {
+        $response=$this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=invalid");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(400, $data['code']);
+        $this->assertEquals("The selected filter is invalid.", $data['message']);
+    }
+    public function testOrderRequestsWithInvalidRememberTokenResponseCode()
+    {
+        $response=$this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=i3zuho3Tw1TxaRC7LIB5Py8KaT9mRtxffv1H1lqZu13rTNUHCXrhxD2h2Nor&limit=200&offset=0&filter=all");
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(404, $data['code']);
+        $this->assertEquals("Partner or Resource not found.", $data['message']);
     }
     public function testEmptyOrderListResponseCode()
     {
@@ -244,7 +271,7 @@ class NewOrderLIstTest extends FeatureTestCase
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
         $data = $response->decodeResponseJson();
         //dd($data);
-        $this->assertEquals("Category #545682",$data['orders'][0]['category_name']);
+        $this->assertEquals($this->secondaryCategory->name,$data['orders'][0]['category_name']);
     }
 
     // test if api responded with customer address value
@@ -261,8 +288,10 @@ class NewOrderLIstTest extends FeatureTestCase
     {
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
         $data = $response->decodeResponseJson();
-        //dd($data);
-        $this->assertEquals("1613216407",$data['orders'][0]['schedule_at']);
+        $time = $data['orders'][0]['schedule_at'] ;
+        $formatted_date = Carbon::createFromTimestamp($time)->toDateString();
+        //dd($formatted_date);
+        $this->assertEquals($this->job->schedule_date,$formatted_date);
     }
 
     // test if api responded with total price value
@@ -270,7 +299,8 @@ class NewOrderLIstTest extends FeatureTestCase
     {
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
         $data = $response->decodeResponseJson();
-        $this->assertEquals("7200",$data['orders'][0]['total_price']);
+        $price = $this->job_service->quantity*$this->job_service->unit_price;
+        $this->assertEquals($this->order->total_price,$price);
     }
 
     // test if api responded with order code value
@@ -286,7 +316,7 @@ class NewOrderLIstTest extends FeatureTestCase
     {
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
         $data = $response->decodeResponseJson();
-        $this->assertEquals("17:40:07",$data['orders'][0]['schedule_time_start']);
+        $this->assertEquals($this->job->preferred_time_start,$data['orders'][0]['schedule_time_start']);
     }
 
     // test if api responded with schedule end time value
@@ -294,6 +324,6 @@ class NewOrderLIstTest extends FeatureTestCase
     {
         $response = $this->get("/v1/partners/".$this->partner->id."/order-requests?remember_token=".$this->resource->remember_token."&filter=all");
         $data = $response->decodeResponseJson();
-        $this->assertEquals("18:40:07",$data['orders'][0]['schedule_time_end']);
+        $this->assertEquals($this->job->preferred_time_end,$data['orders'][0]['schedule_time_end']);
     }
 }
