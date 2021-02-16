@@ -54,45 +54,45 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
-    public function update($customer, Request $request)
-    {
-        try {
-            $this->validate($request, [
-                'field' => 'required|string|in:name,dob,gender,address',
-                'value' => 'required|string'
-            ]);
-            $customer = $request->customer;
-            $field = $request->field;
-            $profile = $customer->profile;
-            if ($field == 'dob') {
-                $this->validate($request, [
-                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                ]);
-                $profile->dob = $request->value;
-            } elseif ($field == 'gender') {
-                $this->validate($request, [
-                    'value' => 'required|string|in:Male,Female,Other',
-                ]);
-                $profile->gender = $request->value;
-            } else {
-                $this->validate($request, [
-                    'value' => 'required|string'
-                ]);
-                $value = $field == 'name' ? ucwords($request->value) : $request->value;
-                $profile->$field = trim($value);
-            }
-            $profile->update();
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
+//    public function update($customer, Request $request)
+//    {
+//        try {
+//            $this->validate($request, [
+//                'field' => 'required|string|in:name,dob,gender,address',
+//                'value' => 'required|string'
+//            ]);
+//            $customer = $request->customer;
+//            $field = $request->field;
+//            $profile = $customer->profile;
+//            if ($field == 'dob') {
+//                $this->validate($request, [
+//                    'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+//                ]);
+//                $profile->dob = $request->value;
+//            } elseif ($field == 'gender') {
+//                $this->validate($request, [
+//                    'value' => 'required|string|in:Male,Female,Other',
+//                ]);
+//                $profile->gender = $request->value;
+//            } else {
+//                $this->validate($request, [
+//                    'value' => 'required|string'
+//                ]);
+//                $value = $field == 'name' ? ucwords($request->value) : $request->value;
+//                $profile->$field = trim($value);
+//            }
+//            $profile->update();
+//            return api_response($request, 1, 200);
+//        } catch (ValidationException $e) {
+//            $message = getValidationErrorMessage($e->validator->errors()->all());
+//            return api_response($request, $message, 400, ['message' => $message]);
+//        } catch (\Throwable $e) {
+//            app('sentry')->captureException($e);
+//            return api_response($request, null, 500);
+//        }
+//    }
 
-    public function update_modified ($customer, Request $request)
+    public function update ($customer, Request $request)
     {
         try {
             $customer = $request->customer;
