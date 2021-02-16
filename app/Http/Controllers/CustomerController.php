@@ -58,13 +58,13 @@ class CustomerController extends Controller
     public function update($customer, Request $request)
     {
         try {
-            $customer = $request->customer;
-            $field = $request->field;
-            $profile = $customer->profile;
             $this->validate($request, [
                 'field' => 'required|string|in:name,birthday,gender,address',
                 'value' => 'required|string'
             ]);
+            $customer = $request->customer;
+            $field = $request->field;
+            $profile = $customer->profile;
             if ($field == 'birthday') {
                 $this->validate($request, [
                     'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
