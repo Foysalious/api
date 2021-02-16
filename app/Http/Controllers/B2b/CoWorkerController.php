@@ -466,6 +466,7 @@ class CoWorkerController extends Controller
         if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
 
         $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
         $employees = collect($employees)->splice($offset, $limit);
 
         if (count($employees) > 0) return api_response($request, $employees, 200, [
@@ -474,6 +475,8 @@ class CoWorkerController extends Controller
         ]);
         return api_response($request, null, 404);
     }
+
+
 
     /**
      * @param $business
@@ -807,7 +810,8 @@ class CoWorkerController extends Controller
         });
     }
 
-    private function filterByEmployeeType($employees, Request $request) {
+    private function filterByEmployeeType($employees, Request $request)
+    {
         $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
         return collect($employees)->filter(function ($employee) use ($is_super) {
             return $employee['is_super'] == $is_super;
@@ -857,5 +861,17 @@ class CoWorkerController extends Controller
             ]);
         }
         return $department_info;
+    }
+
+    /**
+     * @param Request $request
+     * @param $limit
+     * @param $total_employees
+     * @return mixed
+     */
+    private function getLimit(Request $request, $limit, $total_employees)
+    {
+        if ($request->has('limit') && $request->limit == 'all') return $total_employees;
+        return $limit;
     }
 }
