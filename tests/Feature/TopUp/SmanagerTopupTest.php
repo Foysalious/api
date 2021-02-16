@@ -559,9 +559,6 @@ class SmanagerTopupTest extends FeatureTestCase
          * Wallet balance should be = 10000 - 800 + (800 % 1) = 9208
          */
         $this->assertEquals(9208, $this->partner->wallet);
-
-        dd($this->partner);
     }
-
 }
 
