@@ -7,6 +7,6 @@ class MedicalAllowance extends GrossSalary
     public function getPercentage()
     {
         $salary_percentage = json_decode($this->payrollComponent->setting, 1);
-        return $salary_percentage['percentage'];
+        return (int)$salary_percentage['percentage'];
     }
 }

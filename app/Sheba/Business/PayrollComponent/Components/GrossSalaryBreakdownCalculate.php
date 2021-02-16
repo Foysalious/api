@@ -48,13 +48,11 @@ class GrossSalaryBreakdownCalculate
 
 
     /**
-     * @param null $salary
+     * @param float $gross_salary
      * @return GrossSalaryComponent
      */
-    public function totalAmountPerComponent($salary = null)
+    public function totalAmountPerComponent($gross_salary = 0.0)
     {
-        $gross_salary = 0.0;
-        if ($salary) $gross_salary = floatValFormat($salary->gross_salary);
         $this->totalAmountPerComponent->basicSalary = floatValFormat(($gross_salary * $this->componentPercentage->basicSalary) / 100);
         $this->totalAmountPerComponent->houseRent = floatValFormat(($gross_salary * $this->componentPercentage->houseRent) / 100);
         $this->totalAmountPerComponent->medicalAllowance = floatValFormat(($gross_salary * $this->componentPercentage->medicalAllowance) / 100);

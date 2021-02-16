@@ -4,6 +4,7 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\Attendance\Model as Attendance;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
@@ -218,5 +219,14 @@ class BusinessMember extends Model
             return $leave_type->withTrashed();
         })->get();
         return $leaves;
+    }
+
+    public function profile()
+    {
+        return DB::table('business_member')
+            ->join('members', 'members.id', '=', 'business_member.member_id')
+            ->join('profiles', 'profiles.id', '=', 'members.profile_id')
+            ->where('business_member.id', '=', $this->id)
+            ->first();
     }
 }

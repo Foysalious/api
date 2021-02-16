@@ -38,11 +38,10 @@ class Creator
     public function create()
     {
         $this->makeData();
-        $salary = null;
-        DB::transaction(function () use ($salary) {
-            $salary = $this->salaryRepository->create($this->salaryData);
+        DB::transaction(function () {
+            $this->salaryRepository->create($this->salaryData);
         });
-        return $salary;
+        return true;
     }
 
     private function makeData()
