@@ -63,6 +63,7 @@ class Updater
             $this->salaryRepository->update($this->salary, $this->salaryData);
             $this->salaryLogCreate();
         });
+        return true;
     }
 
     private function makeData()

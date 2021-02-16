@@ -355,6 +355,7 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'pay-run'], function ($api) {
                     $api->get('/', 'B2b\PayRunController@index');
+                    $api->post('/update', 'B2b\PayRunController@bulkUpdate');
                     $api->get('/pending-months','B2b\PayRunController@pendingMonths');
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {

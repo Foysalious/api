@@ -1,6 +1,7 @@
 <?php namespace App\Transformers\Business;
 
 use App\Models\BusinessMember;
+use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\Payslip\Payslip;
 
@@ -10,16 +11,16 @@ class PayRunListTransformer extends TransformerAbstract
     {
         $gross_salary = $this->getGrossSalary($payslip->businessMember);
         $business_member = $payslip->businessMember;
-        $member = $business_member->member;
         $department = $business_member->department();
         return [
             'id' =>  $payslip->id,
-            'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
-            'employee_name' => $member->profile->name ? $member->profile->name : Null,
             'business_member_id' => $payslip->business_member_id,
+            'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
+            'employee_name' => $business_member->profile()->name,
             'department' => $department ? $department->name : 'N/A',
-            'gross_salary' => floatval($gross_salary),
-            'net_payable' => floatval($gross_salary)
+            'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
+            'gross_salary' => floatValFormat($gross_salary),
+            'net_payable' => floatValFormat($gross_salary)
         ];
     }
 

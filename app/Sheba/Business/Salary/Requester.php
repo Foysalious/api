@@ -1,7 +1,5 @@
 <?php namespace App\Sheba\Business\Salary;
 
-
-use App\Models\Business;
 use App\Models\Member;
 use App\Sheba\Business\Salary\Creator as CoWorkerSalaryCreator;
 use App\Sheba\Business\Salary\Updater as CoWorkerSalaryUpdater;
@@ -10,15 +8,12 @@ use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 
 class Requester
 {
-    /** @var Business */
+
     private $business;
     private $grossSalary;
     private $businessMember;
     private $member;
     private $profile;
-    /**
-     * @var BusinessMemberRepositoryInterface
-     */
     private $businessMemberRepository;
     private $creator;
     private $updater;
@@ -47,6 +42,13 @@ class Requester
                 ->first();
         }
 
+        return $this;
+    }
+
+    public function setBusinessMember($business_member)
+    {
+        $this->businessMember = $this->businessMemberRepository->find($business_member);
+        $this->profile = $this->businessMember->profile();
         return $this;
     }
 
@@ -97,7 +99,7 @@ class Requester
         $salary = $this->businessMember->salary;
         if (!$salary) {
             $this->creator->setSalaryRequester($this)->create();
-        }else{
+        } else {
             $this->updater->setSalary($salary)->setSalaryRequester($this)->update();
         }
     }
