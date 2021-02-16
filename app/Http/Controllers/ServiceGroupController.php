@@ -57,8 +57,19 @@ class ServiceGroupController extends Controller
         $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
             $services = $service_group->services;
             $services_without_pivot_data = $services->each(function ($service) use($location) {
-                removeRelationsFromModel($service);
-                $service['slug'] = $service->getSlug();
+                if ($location)
+                {
+                    $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                    $service_discount = $location_service->discounts()->running()->first();
+                    removeRelationsFromModel($service);
+                    $service['slug'] = $service->getSlug();
+                    $service['has_discount'] = $service_discount ? 1 : 0;
+                }
+                else
+                {
+                    removeRelationsFromModel($service);
+                    $service['slug'] = $service->getSlug();
+                }
             });
             array_push($service_group_list, [
                 'id' => $service_group->id,
