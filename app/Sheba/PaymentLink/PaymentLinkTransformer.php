@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
+use Carbon\Carbon;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
@@ -39,6 +40,11 @@ class PaymentLinkTransformer
     public function getLink()
     {
         return $this->response->link;
+    }
+
+    public function getType()
+    {
+        return $this->response->type;
     }
 
     public function getLinkIdentifier()
@@ -101,16 +107,30 @@ class PaymentLinkTransformer
     }
 
     /**
+     * @return Target
+     */
+    public function getUnresolvedTarget()
+    {
+        return new Target($this->response->targetType, $this->response->targetId);
+    }
+
+    /**
      * @return mixed
      */
     public function getTarget()
     {
         if ($this->response->targetType) {
-            $model_name   = $this->resolveTargetClass();
+            $model_name = $this->resolveTargetClass();
+            if ($model_name == 'due_tracker') return null;
             $this->target = $model_name::find($this->response->targetId);
             return $this->target;
         } else
             return null;
+    }
+
+    public function isDueTrackerPaymentLink()
+    {
+        return $this->response->targetType == 'due_tracker' ? 1 : 0;
     }
 
     private function resolveTargetClass()
@@ -120,6 +140,7 @@ class PaymentLinkTransformer
             return $model_name . 'PosOrder';
         if ($this->response->targetType == 'external_payment')
             return "Sheba\\Dal\\ExternalPayment\\Model";
+        if ($this->response->targetType == 'due_tracker') return 'due_tracker';
     }
 
     private function getPaymentLinkPayer()
@@ -148,12 +169,17 @@ class PaymentLinkTransformer
 
     public function getSuccessUrl()
     {
-        return $this->target->success_url.'?transaction_id='.$this->target->transaction_id;
+        return $this->target->success_url . '?transaction_id=' . $this->target->transaction_id;
     }
 
     public function getFailUrl()
     {
-        return $this->target->fail_url.'?transaction_id='.$this->target->transaction_id;
+        return $this->target->fail_url . '?transaction_id=' . $this->target->transaction_id;
+    }
+
+    public function getCreatedAt()
+    {
+        return Carbon::createFromTimestampMs($this->response->createdAt);
     }
 
     public function toArray()
@@ -162,22 +188,67 @@ class PaymentLinkTransformer
         $payer      = $this->getPayer();
         $isExternal = $this->isExternalPayment();
         return [
-                   'id'                  => $this->getLinkID(),
-                   'identifier'          => $this->getLinkIdentifier(),
-                   'purpose'             => $this->getReason(),
-                   'amount'              => $this->getAmount(),
-                   'emi_month'           => $this->getEmiMonth(),
-                   'payment_receiver'    => [
-                       'name'  => $user->name,
-                       'image' => $user->logo,
-                       'id'    => $user->id,
-                   ],
-                   'payer'               => $payer ? [
-                       'name'   => $payer->name,
-                       'mobile' => $payer->mobile
-                   ] : null,
-                   'is_external_payment' => $isExternal,
-               ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
+                'id'                  => $this->getLinkID(),
+                'identifier'          => $this->getLinkIdentifier(),
+                'purpose'             => $this->getReason(),
+                'amount'              => $this->getAmount(),
+                'emi_month'           => $this->getEmiMonth(),
+                'payment_receiver'    => [
+                    'name'  => $user->name,
+                    'image' => $user->logo,
+                    'id'    => $user->id,
+                ],
+                'payer'               => $payer ? [
+                    'id'     => $payer->id,
+                    'name'   => $payer->name,
+                    'mobile' => $payer->mobile
+                ] : null,
+                'is_external_payment' => $isExternal,
+            ] + ($isExternal ? ['success_url' => $this->getSuccessUrl(), 'fail_url' => $this->getFailUrl()] : []);
 
     }
+
+    public function getPaymentLinkData()
+    {
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+
+        return array_merge([
+            'link_id'                 => $this->getLinkID(),
+            'reason'                  => $this->getReason(),
+            'type'                    => $this->getType(),
+            'status'                  => $this->response->isActive == 1 ? 'active' : 'inactive',
+            'amount'                  => $this->getAmount(),
+            'link'                    => $this->response->link,
+            'emi_month'               => $this->response->emiMonth,
+            'interest'                => $this->response->interest,
+            'bank_transaction_charge' => $this->response->bankTransactionCharge
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo()
+    {
+        $payerInfo = [];
+        if ($this->response->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['phone']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
+    }
+
+
 }

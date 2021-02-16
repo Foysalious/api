@@ -37,7 +37,12 @@ class SmsHandler {
         $sms_cost           = $sms->getCost();
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
-            $sms->shoot();
+            try{
+                $sms->shoot();
+            }catch(\Throwable $e)
+            {
+            }
+
             (new WalletTransactionHandler())->setModel($partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . " BDT has been deducted for sending pos order details sms (order id: {$this->order->id})")->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         }
 
@@ -51,7 +56,7 @@ class SmsHandler {
     private function getSms($service_break_down) {
         if ($this->order->getDue() > 0) {
             $sms = (new SmsHandlerRepo('pos-due-order-bills'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
-                'order_id'           => $this->order->id,
+                'order_id'           => $this->order->partner_wise_order_id,
                 'service_break_down' => $service_break_down,
                 'total_amount'       => $this->order->getNetBill(),
                 'total_due_amount'   => $this->order->getDue(),
@@ -59,7 +64,7 @@ class SmsHandler {
             ]);
         } else {
             $sms = (new SmsHandlerRepo('pos-order-bills'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
-                'order_id'           => $this->order->id,
+                'order_id'           => $this->order->partner_wise_order_id,
                 'service_break_down' => $service_break_down,
                 'total_amount'       => $this->order->getNetBill(),
                 'partner_name'       => $this->order->partner->name

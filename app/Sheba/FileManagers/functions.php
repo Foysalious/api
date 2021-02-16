@@ -568,6 +568,17 @@ if (!function_exists('getLoanFolder')) {
     }
 }
 
+if (!function_exists('getNeoBankingFolder')) {
+    function getNeoBankingFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) {
+            $url = env('S3_URL');
+        }
+        return $url . 'images/profiles/neo_banking_documents/';
+    }
+}
+
 if (!function_exists('getTradeLicenceDocumentsFolder')) {
 
     function getTradeLicenceDocumentsFolder($with_base_url = false)
@@ -1093,6 +1104,16 @@ if (!function_exists('getDueTrackerAttachmentsFolder')) {
         if ($with_base_url) $url = env('S3_URL');
 
         return $url . 'partner/due-list-attachments/';
+    }
+}
+
+if (!function_exists('getPosServiceImageGalleryFolder')) {
+    function getPosServiceImageGalleryFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) $url = env('S3_URL');
+
+        return $url . 'partner/pos-service-image-gallery/';
     }
 }
 

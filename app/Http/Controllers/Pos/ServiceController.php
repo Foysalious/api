@@ -20,6 +20,8 @@ use Sheba\Pos\Product\Updater as ProductUpdater;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Sheba\Reward\ActionRewardDispatcher;
+use Sheba\Subscription\Partner\Access\AccessManager;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
 use Sheba\Usage\Usage;
 use Throwable;
 
@@ -64,7 +66,13 @@ class ServiceController extends Controller
                         'warranty_unit' => $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null,
                         'show_image' => $service->show_image,
                         'shape' => $service->shape,
-                        'color' => $service->color
+                        'color' => $service->color,
+                        'image_gallery' => $service->imageGallery ? $service->imageGallery->map(function($image){
+                            return [
+                                'id' =>   $image->id,
+                                'image_link' => $image->image_link
+                            ];
+                        }) : []
                     ];
                 });
             if (!$services) return api_response($request, null, 404);
@@ -101,7 +109,8 @@ class ServiceController extends Controller
             return api_response($request, $service, 200, ['service' => $service, 'partner' => [
                 'id'   => $partner->id,
                 'name' => $partner->name,
-                'logo' => $partner->logo
+                'logo' => $partner->logo,
+                'is_webstore_published' => $partner->is_webstore_published ? : 0
             ]]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
@@ -116,20 +125,31 @@ class ServiceController extends Controller
      */
     public function store(Request $request, ProductCreator $creator)
     {
-        try {
-            $secondaries_categories = PosCategory::child()->pluck('id')->toArray();
+            $sub_categories = PosCategory::child()->pluck('id')->toArray();
+            $master_categories = PosCategory::parents()->pluck('id')->toArray();
             $this->validate($request, [
                 'name'        => 'required',
-                'category_id' => 'required|in:' . implode(',', $secondaries_categories),
-                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))
-
+                'category_id' => 'required_without:master_category_id',
+                'master_category_id' => 'required_without:category_id|in:' . implode(',', $master_categories),
+                'unit'        => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
+                'image_gallery' => 'sometimes|required'
             ]);
             $this->setModifier($request->manager_resource);
-            $partner_pos_service = $creator->setData($request->all())->create();
+
+            $is_valid_sub_category = (in_array($request->category_id,$sub_categories)) ? 1 : 0 ;
+            if(!$request->has('master_category_id') && !$is_valid_sub_category)
+                return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+            if($request->has('master_category_id') && !$is_valid_sub_category){
+                $request->request->remove('category_id');
+                $request->merge($this->resolveSubcategory($request->master_category_id));
+            }
+
+            $partner_pos_service = $creator->setData($request->except('master_category_id'))->create();
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) {
                 $this->createServiceDiscount($request, $partner_pos_service);
             }
+
             $partner_pos_service->unit          = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
 
@@ -138,7 +158,7 @@ class ServiceController extends Controller
                         $discounts_query->runningDiscounts()->select(['id', 'partner_pos_service_id', 'amount', 'is_amount_percentage', 'cap', 'start_date', 'end_date']);
                     }
                 ])->find($partner_pos_service->id);
-
+            $partner_pos_service->partner_id = $partner_pos_service_model->partner_id;
             $partner_pos_service->thumb = $partner_pos_service_model->thumb;
             $partner_pos_service->banner = $partner_pos_service_model->banner;
             $partner_pos_service->app_thumb = $partner_pos_service_model->app_thumb;
@@ -146,20 +166,52 @@ class ServiceController extends Controller
             $partner_pos_service->publication_status = $partner_pos_service_model->publication_status;
             $partner_pos_service->is_published_for_shop = $partner_pos_service_model->is_published_for_shop;
             $partner_pos_service->discounts = $partner_pos_service_model->discounts;
-
+            $partner_pos_service->master_category_id = $partner_pos_service_model->category->parent_id;
+            $partner_pos_service->master_category_name = $partner_pos_service_model->category->parent->name;
+            $partner_pos_service->sub_category_id = $partner_pos_service_model->category->id;
+            $partner_pos_service->image_gallery = $partner_pos_service_model->imageGallery ? $partner_pos_service_model->imageGallery->map(function($image){
+               return [
+                 'id' =>   $image->id,
+                   'image_link' => $image->image_link
+               ];
+            }) : [];
+            $creator->syncPartnerPosCategory($partner_pos_service);
             app()->make(ActionRewardDispatcher::class)->run('pos_inventory_create', $request->partner, $request->partner, $partner_pos_service);
             /**
              * USAGE LOG
              */
             (new Usage())->setUser($request->partner)->setType(Usage::Partner()::INVENTORY_CREATE)->create($request->manager_resource);
             return api_response($request, null, 200, ['msg' => 'Product Created Successfully', 'service' => $partner_pos_service]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+    }
+
+    /**
+     * @param $master_category
+     * @return array
+     */
+    private function resolveSubcategory($master_category)
+    {
+        $default_subcategory = PosCategory::where('name','Sub None Category')->where('parent_id',$master_category)->first();
+        if($default_subcategory)
+            return ['category_id' => $default_subcategory->id];
+        $sub_category = $this->createSubcategory($master_category);
+        return ['category_id' => $sub_category->id];
+    }
+
+    /**
+     * @param $master_category
+     * @return PosCategory
+     */
+    private function createSubcategory($master_category)
+    {
+        $master_category = PosCategory::where('id',$master_category)->first();
+        $master_category->parent_id = $master_category->id;
+        $master_category->name = 'Sub None Category';
+        $master_category->slug = 'sub-none-category';
+
+        $sub_category = collect($master_category)->all();
+
+      return  PosCategory::create($this->withCreateModificationField(array_except($sub_category , ['id','created_at','created_by','created_by_name','updated_at','updated_by','updated_by_name'])));
+
     }
 
     /**
@@ -185,8 +237,11 @@ class ServiceController extends Controller
      */
     public function update(Request $request, ProductUpdater $updater, PosServiceDiscountRepository $discount_repo)
     {
-        try {
-            $rules = ['unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS')))];
+            $rules = [
+                'unit' => 'sometimes|in:' . implode(',', array_keys(constants('POS_SERVICE_UNITS'))),
+                'image_gallery' => 'sometimes|required',
+                'deleted_images' => 'sometimes|required'
+            ];
 
             if ($request->has('discount_amount') && $request->discount_amount > 0) $rules += ['end_date' => 'required'];
             $this->validate($request, $rules);
@@ -194,7 +249,20 @@ class ServiceController extends Controller
             $partner_pos_service = PartnerPosService::find($request->service);
 
             if (!$partner_pos_service) return api_response($request, null, 400, ['msg' => 'Service Not Found']);
-            $updater->setService($partner_pos_service)->setData($request->all())->update();
+
+            if($request->has('master_category_id') || $request->has('category_id'))
+            {
+                $sub_categories = PosCategory::child()->pluck('id')->toArray();
+                $is_valid_sub_category = (in_array($request->category_id,$sub_categories)) ? 1 : 0 ;
+                if(!$request->has('master_category_id') && !$is_valid_sub_category)
+                    return api_response($request, null, 400, ['message' => 'The selected category id is invalid']);
+                if($request->has('master_category_id') && !$is_valid_sub_category){
+                    $request->request->remove('category_id');
+                    $request->merge($this->resolveSubcategory($request->master_category_id));
+                }
+            }
+
+            $updater->setService($partner_pos_service)->setData($request->except('master_category_id'))->update();
 
             if ($request->discount_id) {
                 $discount_data = [];
@@ -221,22 +289,20 @@ class ServiceController extends Controller
 
             $partner_pos_service->unit            = $partner_pos_service->unit ? constants('POS_SERVICE_UNITS')[$partner_pos_service->unit] : null;
             $partner_pos_service->warranty_unit   = $partner_pos_service->warranty_unit ? config('pos.warranty_unit')[$partner_pos_service->warranty_unit] : null;
+            $partner_pos_service->master_category_id = $partner_pos_service->category->parent_id;
+            $partner_pos_service->sub_category_id = $partner_pos_service->category->id;
             $partner_pos_service_arr              = $partner_pos_service->toArray();
+            $partner_pos_service_arr['image_gallery'] = $partner_pos_service->imageGallery ? $partner_pos_service->imageGallery->map(function($image){
+                return [
+                    'id' =>   $image->id,
+                    'image_link' => $image->image_link
+                ];
+            }) : [];
             $partner_pos_service_arr['discounts'] = [$partner_pos_service->discount()];
             return api_response($request, null, 200, [
                 'msg' => 'Product Updated Successfully',
                 'service' => $partner_pos_service_arr
             ]);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
-            $sentry->user_context(['request' => $request->all(), 'message' => $message]);
-            $sentry->captureException($e);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
     }
 
     /**
@@ -267,9 +333,14 @@ class ServiceController extends Controller
             $units     = [];
             $all_units = constants('POS_SERVICE_UNITS');
             foreach ($all_units as $key => $unit) {
-                array_push($units, $unit);
+                array_push($units, array_merge($unit,['key' => $key]));
             }
-            return api_response($request, $units, 200, ['units' => $units]);
+            $default_unit =[
+                'key' => 'piece',
+                'en' => constants('POS_SERVICE_UNITS')['piece']['en'],
+                'bn' => constants('POS_SERVICE_UNITS')['piece']['bn']
+            ];
+            return api_response($request, $units, 200, ['units' => $units,'default_unit' => $default_unit]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -300,12 +371,20 @@ class ServiceController extends Controller
      * @param $partner
      * @param $service
      * @return JsonResponse
+     * @throws AccessRestrictedExceptionForPackage
      */
     public function togglePublishForShopStatus(Request $request, $partner, $service)
     {
+        $rules = $request->partner->subscription_rules;
+        if (is_string($rules)) $rules = json_decode($rules, true);
         $posService = PartnerPosService::query()->where([['id', $service], ['partner_id', $partner]])->first();
         if (empty($posService)) {
             return api_response($request, null, 404, ['message' => 'Requested service not found .']);
+        }
+        if (!$posService->is_published_for_shop) {
+            if (PartnerPosService::webstorePublishedServiceByPartner($request->partner->id)->count() >= config('pos.maximum_publishable_product_in_webstore_for_free_packages'))
+                AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->PRODUCT_PUBLISH, $request->partner->subscription->getAccessRules());
+            if ($posService->stock == null || $posService->stock < 0) return api_response($request, null, 403, ['message' => 'পন্যের স্টক আপডেট করে ওয়েবস্টোরে পাবলিশ করুন']);
         }
         $posService->is_published_for_shop = !(int)$posService->is_published_for_shop;
         $posService->save();

@@ -99,9 +99,14 @@ class TopUpController extends Controller
             'vendor_id' => 'required|exists:topup_vendors,id',
             'password' => 'required'
         ];
-        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
-            'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
-            'required|min:10|max:1000|numeric';
+
+        if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit;
+        } elseif ($this->isBusiness($agent) && $this->isPostpaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10';
+        } else {
+            $validation_data['amount'] = 'required|min:10|max:1000|numeric';
+        }
 
         $this->validate($request, $validation_data);
 
@@ -152,6 +157,7 @@ class TopUpController extends Controller
 
         if ($topup_order) {
             dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
             return api_response($request, null, 500);
@@ -167,6 +173,12 @@ class TopUpController extends Controller
     public function isPrepaid($connection_type)
     {
         if ($connection_type == ConnectionType::PREPAID) return true;
+        return false;
+    }
+
+    public function isPostpaid($connection_type)
+    {
+        if ($connection_type == ConnectionType::POSTPAID) return true;
         return false;
     }
 
@@ -217,11 +229,15 @@ class TopUpController extends Controller
 
         $agent = $request->user;
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+
+        $sheet_names = Excel::load($request->file)->getSheetNames();
+        if (!in_array(TopUpExcel::SHEET, $sheet_names))
+            return api_response($request, null, 400, ['message' => 'The sheet name used in the excel file is incorrect. Please download the sample excel file for reference.']);
+
         $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
         $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
 
         $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
-
         $data = $data->filter(function ($row) {
             return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
         });

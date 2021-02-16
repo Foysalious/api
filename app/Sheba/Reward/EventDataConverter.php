@@ -166,6 +166,18 @@ class EventDataConverter
                                 'class' => 'Sheba\Reward\Event\Partner\Action\PosOrderCreate\Parameter\CreatedFrom'
                             ]
                         ]
+                    ],
+                    'top_up' => [
+                        'name' => 'Top Up',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type' => 'number',
+                                'min' => 1,
+                                'class' => 'Sheba\Reward\Event\Partner\Action\TopUp\Parameter\Amount'
+                            ]
+                        ]
                     ]
                 ],
                 'campaign' => [
@@ -193,7 +205,29 @@ class EventDataConverter
                                 'is_multi_selectable' => 1
                             ]
                         ]
-                    ]
+                    ],
+                    'pos_entry' => [
+                        'name' => 'Pos Entry',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Campaign\PosEntry\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Campaign\PosEntry\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                        ]
+                    ],
+                    'due_entry' => [
+                        'name' => 'Due Entry',
+                        'event_class' => 'Sheba\Reward\Event\Partner\Campaign\DueTrackerEntry\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Partner\Campaign\DueTrackerEntry\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                        ]
+                    ],
                 ]
             ],
             'customer' => [

@@ -91,6 +91,12 @@ trait FileManager
         return [$file, $filename];
     }
 
+    protected function makeNeoBankingFile($file, $name)
+    {
+        $filename = $this->uniqueFileName($file, $name);
+        return [$file, $filename];
+    }
+
     protected function makeVatRegistration($file, $name)
     {
         $filename = $this->uniqueFileName($file, $name);
@@ -150,6 +156,11 @@ trait FileManager
         return [$file, $filename];
     }
     protected function makePartnerProofOfBusiness($file, $name)
+    {
+        return [$file, $this->uniqueFileName($file, $name)];
+    }
+
+    protected function makeImageGallery($file, $name)
     {
         return [$file, $this->uniqueFileName($file, $name)];
     }

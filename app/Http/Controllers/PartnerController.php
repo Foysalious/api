@@ -4,6 +4,7 @@ use App\Exceptions\HyperLocationNotFoundException;
 use App\Exceptions\RentACar\DestinationCitySameAsPickupException;
 use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\DeliveryChargeUpdateRequest\DeliveryChargeUpdateRequest;
@@ -47,6 +48,7 @@ use Sheba\ModificationFields;
 use Sheba\Notification\Partner\PartnerNotificationHandler;
 use Sheba\Partner\LeaveStatus;
 use Sheba\Partner\QRCode\AccountType;
+use Sheba\Partner\Updater;
 use Sheba\Reward\PartnerReward;
 use Throwable;
 use Tymon\JWTAuth\Facades\JWTAuth;
@@ -161,15 +163,27 @@ class PartnerController extends Controller
                 'id',
                 'name',
                 'sub_domain',
-                'mobile',
                 'description',
                 'email',
                 'verified_at',
                 'status',
                 'logo',
                 'address',
+                'delivery_charge',
+                'is_webstore_published',
                 'created_at'
             ]);
+            $info->put('mobile', $partner->getContactNumber());
+            $banner = null;
+            if($partner->webstoreBanner)
+                $banner = [
+                    'image_link' => $partner->webstoreBanner->banner->image_link,
+                    'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
+                    'title'  => $partner->webstoreBanner->title,
+                    'description' => $partner->webstoreBanner->description,
+                    'is_published' => $partner->webstoreBanner->is_published
+                ];
+            $info->put('banner', $banner);
             $working_info = [];
             //$partner_not_available_days = array_diff( $this->days,$partner->workingHours->pluck('day')->toArray());
             foreach ($this->days as $day) {
@@ -1403,11 +1417,6 @@ class PartnerController extends Controller
             return api_response($request, null, 400, ['message' => $messages]);
         }
         $partner = Partner::find($partner);
-        if (!in_array($partner->status, [
-            'Unverified',
-            'Onboarded'
-        ]))
-            return api_response($request, null, 400, ['message' => 'Can not change logo after verification']);
         $repo = new PartnerRepository($partner);
         $logo = $repo->updateLogo($request);
         return api_response($request, $logo, 200, ['logo' => $logo]);
@@ -1572,6 +1581,46 @@ class PartnerController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function updateAddress(Request $request, $partner, Updater $updater)
+    {
+        try {
+            $this->validate($request, ['address' => 'required'], ['required' => 'ঠিকানা আবশ্যক']);
+            $partner = $request->partner;
+            $updater->setPartner($partner)->setAddress($request->address)->update();
+            return api_response($request, null, 200, ['message' => 'Address Updated Successfully']);
+        } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return response()->json(['code' => 400, 'message' => $message], 400);
+        } catch (ModelNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function toggleSmsActivation(Request $request, $partner, Updater $updater)
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $isWebstoreSmsActive = !(int)$partner->is_webstore_sms_active;
+            $updater->setPartner($partner)->setIsWebstoreSmsActive($isWebstoreSmsActive)->update();
+            return api_response($request, null, 200, ['message' => 'SMS Settings Updated Successfully']);
+        } catch (ValidationException $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 400, 'message' => $e->getMessage()], 400);
+        } catch (ModelNotFoundException $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 404, 'message' => $e->getMessage()], 404);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return response()->json(['code' => 500, 'message' => $e->getMessage()], 500);
         }
     }
 }

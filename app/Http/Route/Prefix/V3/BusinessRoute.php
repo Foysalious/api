@@ -4,6 +4,7 @@ class BusinessRoute
 {
     public function set($api)
     {
+        $api->get('test-mail', 'B2b\TestMailsController@testMail');
         $api->post('business/register', 'B2b\RegistrationController@registerV3')->middleware('jwtAuth');
         $api->post('business/email-verify', 'Profile\ProfileController@verifyEmailWithVerificationCode')->middleware('jwtAuth');
         $api->get('business/send-verification-code', 'Profile\ProfileController@sendEmailVerificationCode')->middleware('jwtAuth');
@@ -13,6 +14,17 @@ class BusinessRoute
                 $api->get('/topup-portal', 'B2b\BusinessesController@getTopUpPortalToken');
                 $api->post('/token-verify', 'B2b\BusinessesController@tokenVerify');
                 $api->get('vendors', 'B2b\BusinessesController@getVendorsListV3');
+                $api->group(['prefix' => 'approval-settings'], function ($api) {
+                    $api->get('/', 'B2b\ApprovalSettingsController@index');
+                    $api->get('/default', 'B2b\ApprovalSettingsController@showDefault');
+                    $api->get('/modules', 'B2b\ApprovalSettingsController@getModules');
+                    $api->post('/', 'B2b\ApprovalSettingsController@store');
+                    $api->group(['prefix' => '{setting}'], function ($api) {
+                        $api->get('/', 'B2b\ApprovalSettingsController@show');
+                        $api->post('/', 'B2b\ApprovalSettingsController@update');
+                        $api->delete('/', 'B2b\ApprovalSettingsController@delete');
+                    });
+                });
             });
         });
     }
