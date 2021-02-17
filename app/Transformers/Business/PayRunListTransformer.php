@@ -18,7 +18,7 @@ class PayRunListTransformer extends TransformerAbstract
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
             'employee_name' => $business_member->profile()->name,
             'department' => $department ? $department->name : 'N/A',
-            'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
+            'schedule_date' => $payslip->schedule_date->format('Y-m-d'),
             'gross_salary' => floatValFormat($gross_salary),
             'net_payable' => floatValFormat($gross_salary)
         ];

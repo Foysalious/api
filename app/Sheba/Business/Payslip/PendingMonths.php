@@ -44,7 +44,7 @@ class PendingMonths
     {
         $business_member_ids = $this->business->getAccessibleBusinessMember()->pluck('id')->toArray();
         $month_year = $this->payslipRepositoryInterface->builder()
-            ->selectRaw('DATE_FORMAT(schedule_date, "%m-%Y") as formatted_date')
+            ->selectRaw('DATE_FORMAT(schedule_date, "%Y-%m") as formatted_date')
             ->where('status', Status::PENDING)
             ->whereIn('business_member_id', $business_member_ids)
             ->orderBy('schedule_date', 'DESC')
@@ -58,14 +58,15 @@ class PendingMonths
      * @param $values
      * @return array
      */
-    private function getFormattedData($values) {
+    private function getFormattedData($values)
+    {
         $months_years = [];
         foreach ($values as $data) {
             $split_data = explode("-", $data);
             $monthName = date('F', mktime(0, 0, 0, $split_data[0], 10));
-            array_push($months_years,[
+            array_push($months_years, [
                 'value' => $data,
-                'viewValue' => $monthName.' '.$split_data[1]
+                'viewValue' => $monthName . ' ' . $split_data[1]
             ]);
         }
         return $months_years;
