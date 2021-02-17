@@ -23,4 +23,31 @@ class  PaymentLinkStatics
         $commission = en2bnNumber(self::get_payment_link_commission());
         return "ট্রানজেকশন চার্জ (৳$tax + $commission%)";
     }
+
+    public static function get_step_margin()
+    {
+        return config('payment_link.step_margin');
+    }
+
+    public static function get_minimum_percentage()
+    {
+        return config('payment_link.minimum_percentage');
+    }
+
+    public static function get_maximum_percentage()
+    {
+        return config('payment_link.maximum_percentage');
+    }
+
+    public static function customPaymentLinkData()
+    {
+        return [
+            "step"                           => self::get_step_margin(),
+            "minimum_percentage"             => self::get_minimum_percentage(),
+            "maximum_percentage"             => self::get_maximum_percentage(),
+            "transaction_message"            => self::get_transaction_message(),
+            "payment_link_tax"               => self::get_payment_link_tax(),
+            "payment_link_charge_percentage" => self::get_payment_link_commission()
+        ];
+    }
 }
