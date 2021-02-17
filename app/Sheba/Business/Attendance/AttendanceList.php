@@ -433,12 +433,17 @@ class AttendanceList
         }
 
         $present_and_on_leave_business_members = array_merge($data, $business_members_in_leave);
-        if ($this->statusFilter == self::ABSENT) {
-            $business_members_in_absence = $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members) ;
-            $present_and_on_leave_business_members = [];
+        if ($this->statusFilter == self::ABSENT || $this->statusFilter == self::ALL) {
+            $business_members_in_absence = $this->getBusinessMemberWhoAreAbsence($present_and_on_leave_business_members);
+            if ($this->statusFilter == self::ABSENT) $present_and_on_leave_business_members = [];
+            if ($this->statusFilter == self::ABSENT && $is_weekend_or_holiday) {
+                $present_and_on_leave_business_members = [];
+                $business_members_in_absence = [];
+            }
         } else {
             $business_members_in_absence = [];
         }
+
         $final_data = array_merge($present_and_on_leave_business_members, $business_members_in_absence);
 
         if ($this->search)
@@ -495,12 +500,12 @@ class AttendanceList
 
         $data = [];
         foreach ($business_members as $business_member) {
-            array_push($data, $this->getBusinessMemberData($business_member) + [
+                array_push($data, $this->getBusinessMemberData($business_member) + [
                     'id' => $business_member->id,
                     'check_in' => null,
                     'check_out' => null,
                     'active_hours' => null,
-                    'is_absent' => 1,
+                    'is_absent' => $is_weekend_or_holiday ? 0 : 1,
                     'is_on_leave' => 0,
                     'is_holiday' => $is_weekend_or_holiday ? 1 : 0,
                     'is_half_day_leave' => 0,
