@@ -289,7 +289,6 @@ class ShebaController extends Controller
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
         $amount       = $request->amount;
-
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
