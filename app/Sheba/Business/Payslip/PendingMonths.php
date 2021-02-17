@@ -63,10 +63,10 @@ class PendingMonths
         $months_years = [];
         foreach ($values as $data) {
             $split_data = explode("-", $data);
-            $monthName = date('F', mktime(0, 0, 0, $split_data[0], 10));
+            $monthName = date('F', mktime(0, 0, 0, $split_data[1], 10));
             array_push($months_years, [
                 'value' => $data,
-                'viewValue' => $monthName . ' ' . $split_data[1]
+                'viewValue' => $monthName . ' ' . $split_data[0]
             ]);
         }
         return $months_years;
