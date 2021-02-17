@@ -94,4 +94,8 @@ class SmsHandler
 
         throw new Exception("Variable doesn't match");
     }
+
+    public function getMsg() {
+        return $this->sms->getMsg();
+    }
 }

@@ -475,7 +475,7 @@ class DueTrackerRepository extends BaseRepository
         $sms->shoot();
         (new SendSmsLog())->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::DUE_TRACKER)
-            ->setSmsBody('Template message')
+            ->setSmsBody($sms->getMsg())
             ->setMobile($customer->profile->mobile)
             ->store();
 
