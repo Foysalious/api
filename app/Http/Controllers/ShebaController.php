@@ -299,7 +299,7 @@ class ShebaController extends Controller
 
         $emi_data = [
             "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get()
+            "banks" => Banks::get($amount)
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
