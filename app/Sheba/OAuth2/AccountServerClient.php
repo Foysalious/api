@@ -19,8 +19,7 @@ class AccountServerClient
     /**
      * @param $uri
      * @return array
-     * @throws AccountServerNotWorking
-     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
     public function get($uri)
     {
@@ -32,9 +31,7 @@ class AccountServerClient
      * @param $uri
      * @param null $data
      * @return array
-     * @throws AccountServerNotWorking
-     * @throws AccountServerAuthenticationError
-     * @throws WrongPinError
+     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
     private function call($method, $uri, $data = null)
     {
@@ -77,8 +74,7 @@ class AccountServerClient
      * @param $uri
      * @param $data
      * @return array
-     * @throws AccountServerNotWorking
-     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
     public function post($uri, $data)
     {

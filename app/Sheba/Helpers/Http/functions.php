@@ -119,7 +119,7 @@ if (!function_exists('getShebaRequestHeader')) {
         $header  = new ShebaRequestHeader();
 
         if ($request->hasHeader(ShebaRequestHeader::VERSION_CODE_KEY))
-            $header->setVersionCode(convertSemverToInt($request->header(ShebaRequestHeader::VERSION_CODE_KEY)));
+            $header->setVersionCode($request->header(ShebaRequestHeader::VERSION_CODE_KEY));
 
         if ($request->hasHeader(ShebaRequestHeader::PORTAL_NAME_KEY))
             $header->setPortalName($request->header(ShebaRequestHeader::PORTAL_NAME_KEY));
