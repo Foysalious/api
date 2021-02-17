@@ -1,6 +1,5 @@
 <?php namespace Sheba\EMI;
 
-use Sheba\EMI\Calculator;
 
 class Banks
 {
