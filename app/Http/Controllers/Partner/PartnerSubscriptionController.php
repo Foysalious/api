@@ -368,7 +368,7 @@ class PartnerSubscriptionController extends Controller
             $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'badge', 'features')->where('id', $package)->first();
             (new PartnerSubscription())->dataFormat($partner_subscription_packages, $partner, true);
         } else {
-            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->get();
+            $partner_subscription_packages = $partner_subscription_packages ->select('id', 'name', 'name_bn', 'show_name', 'show_name_bn', 'tagline', 'tagline_bn', 'rules', 'usps', 'badge', 'features')->where('status', Status::PUBLISHED)->orderBy('sort_order')->get();
             foreach ($partner_subscription_packages as $package)
                 (new PartnerSubscription())->dataFormat($package, $partner);
 
