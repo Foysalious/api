@@ -14,9 +14,11 @@ use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;
 use Sheba\Dal\TopUpVendorOTFChangeLog\Model as TopUpVendorOTFChangeLog;
+use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\OAuth2\AccountServer;
 use Sheba\TopUp\Verification\VerifyPin;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockExpenseClient;
 
 class SmanagerTopupTest extends FeatureTestCase
 {
@@ -45,13 +47,20 @@ class SmanagerTopupTest extends FeatureTestCase
 
         $this->topUpVendor = factory(TopUpVendor::class)->create();
         $this->topUpVendorCommission = factory(TopUpVendorCommission::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+            'topup_vendor_id' => $this->topUpVendor->id,
+            'agent_commission' => '1.00',
+            'type'=> "App\Models\Partner"
         ]);
+      //  dd($this->topUpVendorCommission);
 
 
         $this->topUpOtfSettings = factory(TopUpOTFSettings::class)->create([
-            'topup_vendor_id' => $this->topUpVendor->id
+            'topup_vendor_id' => $this->topUpVendor->id,
+            'applicable_gateways'=> '["ssl","airtel"]',
+            'type'=> 'App\Models\Partner',
+             'agent_commission'=> '5.03',
         ]);
+     //   dd($this->topUpOtfSettings);
 
         $this->topUpVendorOtf = factory(TopUpVendorOTF::class)->create([
             'topup_vendor_id' => $this->topUpVendor->id
@@ -78,6 +87,7 @@ class SmanagerTopupTest extends FeatureTestCase
         $verify_pin_mock->method('setRequest')->will($this->returnSelf());
 
         $this->app->instance(VerifyPin::class, $verify_pin_mock);
+        $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
 
     }
 
@@ -539,7 +549,7 @@ class SmanagerTopupTest extends FeatureTestCase
     public function testSuccessfulTopupDeductAmountFromPartnerWallet()
     {
 
-        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus = Profile::find(1);
         $resourceNIDStatus->update(["nid_verified" => 1]);
         $response = $this->post('/v2/top-up/partner', [
             'mobile' => '01620011019',
@@ -559,6 +569,107 @@ class SmanagerTopupTest extends FeatureTestCase
          * Wallet balance should be = 10000 - 800 + (800 % 1) = 9208
          */
         $this->assertEquals(9208, $this->partner->wallet);
+    }
+    public function testSuccessfulTopupOtfShebaOtfCommissionCheck()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+       // dd($data);
+         $this->partner->reload();
+
+        $top_up_order=TopUpOrder::first();
+        //dd($top_up_order);
+        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
+        $this->assertEquals(11.4,$top_up_order->otf_sheba_commission);
+
+    }
+
+    public function testSuccessfulTopupOtfAgentOtfCommissionCheck()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+       // dd($data);
+        $this->partner->reload();
+
+        $top_up_order=TopUpOrder::first();
+        //dd($top_up_order);
+        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
+        $this->assertEquals(11.4,$top_up_order->otf_agent_commission);
+
+    }
+
+    public function testManagerTopupOtfOtfvendorIDnCheck()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        // dd($data);
+        $this->partner->reload();
+
+        $top_up_order=TopUpOrder::first();
+        $this->assertEquals($this->partner->id,$top_up_order->agent_id);
+        $this->assertEquals(1,$top_up_order->vendor_id);
+
+    }
+
+    public function testTopupTransactionStoreAgentLatLng()
+    {
+        $resourceNIDStatus = Profile::find(1);;
+        $resourceNIDStatus->update(["nid_verified" => 1]);
+        $response = $this->post('/v2/top-up/partner', [
+            'mobile' => '01620011019',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 104,
+            'password' => '12349',
+
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+
+        $Top_up_orders=TopUpOrder::first();
+
+
+        $this->assertEquals($this->partner->id,$Top_up_orders->agent_id);
+        $this->assertEquals(null ,$Top_up_orders->lat);
+        $this->assertEquals(null ,$Top_up_orders->lng);
+
+
+
     }
 }
 
