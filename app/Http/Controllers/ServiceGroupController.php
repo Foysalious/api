@@ -51,7 +51,6 @@ class ServiceGroupController extends Controller
                 }
             ])->get();
         }
-
         if (count($service_groups) === 0)
             return api_response($request, 1, 404);
         $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
@@ -63,6 +62,7 @@ class ServiceGroupController extends Controller
                     removeRelationsFromModel($service);
                     $service['slug'] = $service->getSlug();
                     $service['has_discount'] = $service_discount ? 1 : 0;
+                    $service['discount_amount'] = $service_discount ? $service_discount['amount'] : 0;
                 }
                 else {
                     removeRelationsFromModel($service);
