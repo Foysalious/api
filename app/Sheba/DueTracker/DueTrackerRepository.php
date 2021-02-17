@@ -475,9 +475,8 @@ class DueTrackerRepository extends BaseRepository
         $sms->shoot();
         (new SendSmsLog())->setBusinessType(BusinessType::SMANAGER)
             ->setFeatureType(FeatureType::DUE_TRACKER)
-            ->setSmsBody('kdjfdsjk')
-            ->setMobile('01717671851')
-            ->setStatus('ok')
+            ->setSmsBody('Template message')
+            ->setMobile($customer->profile->mobile)
             ->store();
 
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
