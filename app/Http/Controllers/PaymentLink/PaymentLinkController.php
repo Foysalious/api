@@ -2,7 +2,6 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Payable;
-use App\Models\Payment;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
 use App\Transformers\CustomSerializer;
@@ -11,6 +10,7 @@ use App\Transformers\PaymentLinkArrayTransform;
 use App\Transformers\PaymentLinkTransactionDetailsTransformer;
 use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -24,6 +24,7 @@ use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
 use Sheba\PaymentLink\PaymentLinkClient;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Usage\Usage;
@@ -49,6 +50,11 @@ class PaymentLinkController extends Controller
         $this->paymentLinkTransactionDetailTransformer = new PaymentLinkTransactionDetailsTransformer();
     }
 
+    /**
+     * @param Request $request
+     * @param PaymentLink $link
+     * @return JsonResponse
+     */
     public function getDashboard(Request $request, PaymentLink $link)
     {
         try {
@@ -63,6 +69,21 @@ class PaymentLinkController extends Controller
             }
             $dashboard = $link->dashboard();
             return api_response($request, $dashboard, 200, ["data" => $dashboard]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function customLinkCreateData(Request $request)
+    {
+        try {
+            $data = PaymentLinkStatics::customPaymentLinkData();
+            return api_response($request, $data, 200, ["data" => $data]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
