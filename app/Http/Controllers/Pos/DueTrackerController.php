@@ -285,7 +285,7 @@ class DueTrackerController extends Controller
             return api_response($request, $message, 403, ['message' => $message]);
         } catch(InsufficientBalance $e) {
             $message = "Insufficient Balance";
-            return api_response($request, $message, 401, ['message' => $message]);
+            return api_response($request, $message, 402, ['message' => $message]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
