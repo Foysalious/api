@@ -1,6 +1,8 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Customer;
 use App\Models\Member;
 use App\Models\Partner;
@@ -37,6 +39,14 @@ class FeatureTestCase extends TestCase
     protected $partner_resource;
 //    @var ParnerSubscriptionPackage
     protected $partner_package;
+    /**
+     * @var $business
+     */
+    protected $business;
+    /**
+     * @var $business_member
+     */
+    private $business_member;
 
     public function setUp()
     {
@@ -62,11 +72,11 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /*\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
         $this->beforeApplicationDestroyed(function () {
             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });*/
+        });
     }
 
     protected function logIn()
@@ -85,7 +95,9 @@ class FeatureTestCase extends TestCase
             Customer::class,
             Member::class,
             Resource::class,
-            Partner::class
+            Partner::class,
+            Business::class,
+            BusinessMember::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
@@ -116,8 +128,11 @@ class FeatureTestCase extends TestCase
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
-
-
+        $this->business = factory(Business::class)->create();
+        $this->business_member = factory(BusinessMember::class)->create([
+            'business_id' => $this->business->id,
+            'member_id' => $this->member->id
+        ]);
     }
 
     private function createAccountWithMobileNEmail($mobile,$email=null)
@@ -161,7 +176,12 @@ class FeatureTestCase extends TestCase
             'member' => [
                 'id' => $this->member->id
             ],
-            'business_member' => null,
+            'business_member' => [
+                'id' => $this->business_member->id,
+                'business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'is_super'=>1
+            ],
             'affiliate' => [
                 'id' => $this->affiliate->id
             ],
