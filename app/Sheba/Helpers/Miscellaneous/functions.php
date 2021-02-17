@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Sheba\Reward\ActionRewardDispatcher;
 
 if (!function_exists('constants')) {
@@ -209,26 +210,15 @@ if (!function_exists('calculateAge')) {
      * @param $dob
      * @return int
      */
-    function calculateAge($dob){
-        if (!empty($dob)&&!is_null($dob)){
-            try{
-                return \Carbon\Carbon::parse($dob)->age;
-            }catch (Exception $e){
-                return 0;
-            }
-        }
-        return 0;
-    }
-}
-
-if (!function_exists('convertSemverToInt')) {
-    /**
-     * @param string $semver
-     * @return int
-     */
-    function convertSemverToInt($semver)
+    function calculateAge($dob)
     {
-        return (int)str_replace('.', '', $semver);
+        if (empty($dob)) return 0;
+
+        try {
+            return Carbon::parse($dob)->age;
+        } catch (Exception $e) {
+            return 0;
+        }
     }
 }
 

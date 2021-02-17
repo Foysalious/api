@@ -66,4 +66,22 @@ class AppVersionManager
         Redis::set('app_versions', json_encode($final));
         return $final;
     }
+
+    /**
+     * @param string $semver
+     * @return int
+     */
+    public function convertSemverToInt($semver)
+    {
+        return (int)str_replace('.', '', $semver);
+    }
+
+    /**
+     * @param int $version_code
+     * @return string
+     */
+    public function convertIntToSemver($version_code)
+    {
+        return implode(".", explode("", "" . $version_code));
+    }
 }

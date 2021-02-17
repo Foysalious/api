@@ -2,6 +2,7 @@
 
 
 use Illuminate\Http\Request;
+use Sheba\AppVersion\App;
 use Sheba\AppVersion\Apps;
 use Sheba\Portals\Portals;
 
@@ -10,10 +11,10 @@ class UserAgentInformation
     /** @var Request */
     private $request;
     private $ip;
-    private $versionCode;
     private $portalName;
-    private $platformName;
     private $userAgent;
+    /** @var App */
+    private $app;
 
     public function setRequest(Request $request)
     {
@@ -28,10 +29,10 @@ class UserAgentInformation
     private function resolve()
     {
         $sheba_request_header = getShebaRequestHeader($this->request);
+
         $this->setPortalName($sheba_request_header->getPortalName() ?: Portals::CUSTOMER_WEB);
+        $this->app = App::build($sheba_request_header);
         $this->setIp($this->request->ip());
-        $this->setVersionCode($sheba_request_header->getVersionCode());
-        $this->setPlatformName($sheba_request_header->getPlatformName());
         $this->setUserAgent($this->request->header('User-Agent'));
         $this->request = null;
     }
@@ -42,21 +43,9 @@ class UserAgentInformation
         return $this;
     }
 
-    private function setVersionCode($versionCode)
-    {
-        $this->versionCode = $versionCode;
-        return $this;
-    }
-
     private function setPortalName($portalName)
     {
         $this->portalName = $portalName;
-        return $this;
-    }
-
-    private function setPlatformName($platform)
-    {
-        $this->platformName = $platform;
         return $this;
     }
 
@@ -76,42 +65,17 @@ class UserAgentInformation
         return $this->ip;
     }
 
-    public function getVersionCode()
-    {
-        return $this->versionCode;
-    }
-
     public function getUserAgent()
     {
         return $this->userAgent;
     }
 
-    public function getPlatformName()
-    {
-        return $this->platformName;
-    }
-
+    /**
+     * @return App | null
+     */
     public function getApp()
     {
-        if ($this->portalName == Portals::CUSTOMER_APP) {
-            if ($this->platformName == 'ios') return Apps::CUSTOMER_APP_IOS;
-            return Apps::CUSTOMER_APP_ANDROID;
-        }
-
-        if ($this->portalName == Portals::EMPLOYEE_APP) {
-            if ($this->platformName == 'ios') return Apps::EMPLOYEE_APP_IOS;
-            return Apps::EMPLOYEE_APP_ANDROID;
-        }
-
-        if ($this->portalName == Portals::RESOURCE_APP) {
-            if ($this->platformName == 'ios') return Apps::RESOURCE_APP_IOS;
-            return Apps::RESOURCE_APP_ANDROID;
-        }
-
-        if ($this->portalName == Portals::BONDHU_APP) return Apps::BONDHU_APP_ANDROID;
-        if ($this->portalName == Portals::PARTNER_APP) return Apps::MANAGER_APP_ANDROID;
-
-        return null;
+        return $this->app;
     }
 
     public function getInformationArray()
