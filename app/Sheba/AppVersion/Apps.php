@@ -16,22 +16,25 @@ class Apps
     const EMPLOYEE_APP_ANDROID = 'employee_app_android';
     const EMPLOYEE_APP_IOS = 'employee_app_ios';
 
-    const CUSTOMER_MARKET_NAME = 'Sheba.xyz';
+    const CUSTOMER_MARKET_NAME = 'Sheba.XYZ';
     const MANAGER_MARKET_NAME = 'sManager';
     const RESOURCE_MARKET_NAME = 'sPro';
     const BONDHU_MARKET_NAME = 'sBondhu';
     const RIDER_MARKET_NAME = 'sDelivery';
-    const EMPLOYEE_MARKET_NAME = 'digigo';
+    const EMPLOYEE_MARKET_NAME = 'DigiGO';
 
     const CUSTOMER_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.customersapp';
     const CUSTOMER_APP_IOS_PACKAGE_NAME = 'xyz.sheba.app';
     const MANAGER_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.managerapp';
     const RESOURCE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.resource';
-    const RESOURCE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.resource.ios';
+    const RESOURCE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.spro';
     const BONDHU_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.bondhu';
     const RIDER_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.logistic';
     const EMPLOYEE_APP_ANDROID_PACKAGE_NAME = 'xyz.sheba.emanager';
     const EMPLOYEE_APP_IOS_PACKAGE_NAME = 'xyz.sheba.emanager.ios';
+
+    const ANDROID_PLATFORM = "android";
+    const IOS_PLATFORM = "ios";
 
 
     /**

@@ -8,7 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
-use Sheba\AppVersion\App;
+use Sheba\AppVersion\AppBuilder;
 use Sheba\Authentication\AuthUser;
 use Sheba\Portals\Portals;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -135,7 +135,7 @@ class FacebookController extends Controller
     private function isUsingShebaAccountKit()
     {
         $header = getShebaRequestHeader();
-        $app = App::build($header);
+        $app = AppBuilder::buildFromHeader($header);
 
         return $app ?
             $app->isUsingShebaAccountKit() :

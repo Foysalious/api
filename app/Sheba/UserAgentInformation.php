@@ -3,6 +3,7 @@
 
 use Illuminate\Http\Request;
 use Sheba\AppVersion\App;
+use Sheba\AppVersion\AppBuilder;
 use Sheba\AppVersion\Apps;
 use Sheba\Portals\Portals;
 
@@ -31,7 +32,7 @@ class UserAgentInformation
         $sheba_request_header = getShebaRequestHeader($this->request);
 
         $this->setPortalName($sheba_request_header->getPortalName() ?: Portals::CUSTOMER_WEB);
-        $this->app = App::build($sheba_request_header);
+        $this->app = AppBuilder::buildFromHeader($sheba_request_header);
         $this->setIp($this->request->ip());
         $this->setUserAgent($this->request->header('User-Agent'));
         $this->request = null;
