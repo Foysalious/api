@@ -35,7 +35,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'pro_pic' => $this->businessMember->profile()->pro_pic,
             'email' => $this->businessMember->profile()->email,
             'mobile' => $this->businessMember->profile()->mobile,
-            'join_date' => $this->businessMember->join_date->format('F Y'),
+            'join_date' => Carbon::parse($this->businessMember->join_date)->format('F Y'),
             'designation' => $this->role ? $this->role->name : null,
             'department' => $this->department ? $this->department->name : null,
         ];
