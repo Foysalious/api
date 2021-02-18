@@ -299,7 +299,7 @@ class ShebaController extends Controller
 
         $emi_data = [
             "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get($amount)
+            "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -313,7 +313,7 @@ class ShebaController extends Controller
             $icons_folder         = getEmiBankIconsFolder(true);
             $emi_data = [
                 "emi"   => $emi_calculator->getCharges($amount),
-                "banks" => Banks::get($icons_folder)
+                "banks" => (new Banks())->setAmount($amount)->get()
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
