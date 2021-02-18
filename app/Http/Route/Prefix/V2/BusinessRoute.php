@@ -360,7 +360,9 @@ class BusinessRoute
                 });
                 $api->group(['prefix' => 'pay-report'], function ($api) {
                     $api->get('/', 'B2b\PayReportController@index');
+                    $api->get('/last-disbursed-month', 'B2b\PayReportController@lastDisbursedMonth');
                     $api->get('/{id}', 'B2b\PayReportController@show');
+
                 });
                 $api->group(['prefix' => 'payroll'], function ($api) {
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
