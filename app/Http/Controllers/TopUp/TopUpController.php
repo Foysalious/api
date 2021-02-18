@@ -397,10 +397,9 @@ class TopUpController extends Controller
         ini_set('max_execution_time', 480);
 
         list($offset, $limit) = calculatePagination($request);
-        $model = $this->getFullAgentType($request->type);
         $user = $request->has('partner') ? $request->partner : $request->user;
 
-        $topups = $model::find($user->id)->topups();
+        $topups = $user->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
 
         if (isset($request->from) && $request->from !== "null") {
