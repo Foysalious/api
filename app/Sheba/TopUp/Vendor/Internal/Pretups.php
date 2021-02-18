@@ -1,7 +1,9 @@
 <?php namespace Sheba\TopUp\Vendor\Internal;
 
 use App\Models\TopUpOrder;
+use Exception;
 use GuzzleHttp\Exception\GuzzleException;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TopUp\Vendor\Internal\Pretups\Client as PretupsClient;
 
@@ -17,8 +19,8 @@ trait Pretups
     /**
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
-     * @throws \Exception
-     * @throws GuzzleException
+     * @throws Exception
+     * @throws GatewayTimeout
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {

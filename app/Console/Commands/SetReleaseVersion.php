@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Console\Commands;
+<?php namespace App\Console\Commands;
 
 use App\Sheba\Release\Release;
 use Illuminate\Console\Command;
@@ -24,8 +22,6 @@ class SetReleaseVersion extends Command
 
     /**
      * Execute the console command.
-     *
-     * @return mixed
      */
     public function handle()
     {
