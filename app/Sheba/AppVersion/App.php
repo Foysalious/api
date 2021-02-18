@@ -99,33 +99,12 @@ class App
      */
     public function isIos()
     {
-        return $this->getPlatformName() == 'ios';
+        return $this->getPlatformName() == Apps::IOS_PLATFORM;
     }
 
     public function getName()
     {
-        $portal_name = $this->getPortalName();
-        $is_ios = $this->isIos();
-
-        if ($portal_name == Portals::CUSTOMER_APP) {
-            if ($is_ios) return Apps::CUSTOMER_APP_IOS;
-            return Apps::CUSTOMER_APP_ANDROID;
-        }
-
-        if ($portal_name == Portals::EMPLOYEE_APP) {
-            if ($is_ios) return Apps::EMPLOYEE_APP_IOS;
-            return Apps::EMPLOYEE_APP_ANDROID;
-        }
-
-        if ($portal_name == Portals::RESOURCE_APP) {
-            if ($is_ios) return Apps::RESOURCE_APP_IOS;
-            return Apps::RESOURCE_APP_ANDROID;
-        }
-
-        if ($portal_name == Portals::BONDHU_APP) return Apps::BONDHU_APP_ANDROID;
-        if ($portal_name == Portals::PARTNER_APP) return Apps::MANAGER_APP_ANDROID;
-
-        return null;
+        return AppBuilder::getNameFromPortalAndPlatform($this->getPortalName(), $this->getPlatformName());
     }
 
     public function getMarketName()
@@ -163,18 +142,14 @@ class App
     }
 
     /**
-     * @param ShebaRequestHeader $header
-     * @return App|null
+     * @param $version_name
+     * @param $data
+     * @return mixed
      */
-    public static function build(ShebaRequestHeader $header)
+    public function createNewVersion($version_name, $data)
     {
-        if (Portals::isNotApp($header->getPortalName())) return null;
-
-        /** @var App $app */
-        $app = app(App::class);
-
-        return $app->setPortalName($header->getPortalName())
-            ->setPlatformName($header->getPlatformName())
-            ->setVersionName($header->getVersionCode());
+        $result = $this->versionManager->createNewVersion($this, $version_name, $data);
+        $this->setVersionName($version_name);
+        return $result;
     }
 }
