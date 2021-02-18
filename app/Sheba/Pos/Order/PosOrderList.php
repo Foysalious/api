@@ -31,6 +31,7 @@ class PosOrderList
 
     /** @var PaymentLinkRepositoryInterface */
     private $paymentLinkRepo;
+    protected $orderStatus;
 
     public function __construct()
     {
@@ -85,6 +86,16 @@ class PosOrderList
     public function setType($type)
     {
         $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param $orderStatus
+     * @return PosOrderList
+     */
+    public function setOrderStatus($orderStatus)
+    {
+        $this->orderStatus = $orderStatus;
         return $this;
     }
 
@@ -179,6 +190,7 @@ class PosOrderList
     {
         $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
+        if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
         return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
     }
@@ -236,5 +248,11 @@ class PosOrderList
             }
             return $order;
         });
+    }
+
+    private function filteredByOrderStatus($orders_query, $orderStatus)
+    {
+        $orders_query = $orders_query->where('status', $orderStatus);
+        return $orders_query;
     }
 }
