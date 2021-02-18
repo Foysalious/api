@@ -7,6 +7,7 @@ use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use App\Sheba\Business\Payslip\PayReportList;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Sheba\Business\Payslip\PayReport\PayReportDetails;
 use Sheba\Dal\Payslip\PayslipRepository;
 
@@ -67,6 +68,20 @@ class PayReportController extends Controller
     public function show($business, $payslip, Request $request, PayReportDetails $pay_report_details)
     {
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->setMonthYear($request->month_year)->get();
+        /*return view('pdfs.quotation_details', compact('pay_report_detail'));
+        return App::make('dompdf.wrapper')->loadView('pdfs.quotation_details', compact('bid_details'))->download("quotation_details.pdf");*/
         return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
+    }
+
+    public function lastDisbursedMonth(Request $request, PayReportList $pay_report_list)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+        $last_disbursed_month = $pay_report_list->setBusiness($business)->getDisbursedMonth();
+
+        return api_response($request, null, 200, ['last_disbursed_month' => $last_disbursed_month]);
     }
 }

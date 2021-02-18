@@ -99,6 +99,13 @@ class PayReportList
         return $this->getData();
     }
 
+    public function getDisbursedMonth()
+    {
+        $payslip = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->select('schedule_date')->orderBy('schedule_date', 'DESC')->first();
+        if (!$payslip) return null;
+        return $payslip->schedule_date->format('Y-m');
+    }
+
     private function runPayslipQuery()
     {
         $payslips = $this->payslipRepository->getPaySlipByStatus($this->businessMemberIds, Status::DISBURSED)->orderBy('id', 'DESC');
