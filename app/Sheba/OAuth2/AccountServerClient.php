@@ -58,6 +58,8 @@ class AccountServerClient
             $res = decodeGuzzleResponse($res);
             if ($res == null) return [];
 
+            if (!array_key_exists('code', $res)) return $res;
+            
             if ($res['code'] == 403 && in_array('login_wrong_pin_count', $res)) throw new WrongPinError($res['login_wrong_pin_count'], $res['remaining_hours_to_unblock'], $res['message'], $res['code']);
             if ($res['code'] > 399 && $res['code'] < 500) throw new AccountServerAuthenticationError($res['message'], $res['code']);
             if ($res['code'] != 200) throw new AccountServerNotWorking($res['message']);
