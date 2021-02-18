@@ -53,6 +53,7 @@ class PayReportDetails
      */
     public function get()
     {
+        if (!$this->payslip) return [];
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Item($this->payslip, new PayReportDetailsTransformer($this->businessMember));
