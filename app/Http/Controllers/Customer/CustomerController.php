@@ -170,4 +170,12 @@ class CustomerController extends Controller
         return 0;
 
     }
+    public function getProfileCompletion($customer, Request $request)
+    {
+        $customer = $request->customer;
+        $data = [];
+        $data['is_completed'] = $customer->is_completed;
+        return api_response($request, $data, 200, ['data' => $data]);
+
+    }
 }
