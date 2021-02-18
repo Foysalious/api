@@ -1,20 +1,21 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\Dal\TopupOrder\Statuses;
-
-class PaywellResponse extends TopUpResponse
+class GenericGatewayErrorResponse extends TopUpResponse
 {
+    /**
+     * @return bool
+     */
     public function hasSuccess(): bool
     {
-        return $this->response && ($this->response->status == 200 || $this->response->status == 100);
+        return false;
     }
 
-    /**setResponse
+    /**
      * @return mixed
      */
     public function getTransactionId()
     {
-        return $this->response->trans_id;
+        return "";
     }
 
     /**
@@ -22,7 +23,7 @@ class PaywellResponse extends TopUpResponse
      */
     public function getErrorCode()
     {
-        return $this->response->status;
+        return "";
     }
 
     /**
@@ -30,11 +31,11 @@ class PaywellResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return $this->response->message;
+        return 'Error message not given.';
     }
 
     public function resolveTopUpSuccessStatus()
     {
-        return ($this->response->status == 100) ? Statuses::PENDING : Statuses::SUCCESSFUL;
+        return "";
     }
 }

@@ -232,6 +232,32 @@ if (!function_exists('convertSemverToInt')) {
     }
 }
 
+if (!function_exists('isStringInt')) {
+    /**
+     * @param string $value
+     * @return bool
+     */
+    function isStringInt($value)
+    {
+        return preg_match('/^\d+$/', $value);
+    }
+}
+
+if (!function_exists('simplifyExceptionTrace')) {
+    /**
+     * @param \Exception $e
+     * @return array
+     */
+    function simplifyExceptionTrace(\Exception $e)
+    {
+        return collect(explode(PHP_EOL, $e->getTraceAsString()))->mapWithKeys(function ($trace) {
+            $trace = explode(": ", preg_replace('/^(#\d+ )(.*)$/', '$2', $trace));
+            if (count($trace) == 1) $trace[1] = "";
+            return [$trace[0] => $trace[1]];
+        })->all();
+    }
+}
+
 if (!function_exists('array_push_on_array')) {
     /**
      * @param array $array

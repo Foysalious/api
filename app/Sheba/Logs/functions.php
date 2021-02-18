@@ -29,8 +29,6 @@ if (!function_exists('logErrorWithExtra')) {
      */
     function logErrorWithExtra($exception, array $extra)
     {
-        $log = (new ErrorLog())->setException($exception);
-        if (!empty($extra)) $log->setExtra($extra);
-        $log->send();
+        logError($exception, null, null, $extra);
     }
 }
