@@ -1,14 +1,15 @@
 <?php namespace Sheba\TopUp;
 
 use App\Models\Affiliate;
+use App\Models\Customer;
+use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\Transactions\Wallet\RobiTopUpWalletTransactionHandler;
+use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
-use Sheba\TopUp\Commission\Customer;
-use Sheba\TopUp\Commission\Partner;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -95,9 +96,9 @@ abstract class TopUpCommission
         $this->topUpOrder->otf_sheba_commission = isset($otf_details['sheba_commisssion']) ? $otf_details['sheba_commisssion'] : 0;
         $this->topUpOrder->save();
 
-        if($this->topUpOrder->otf_agent_commission > 0){
+        if ($this->topUpOrder->otf_agent_commission > 0) {
             $log_message = $this->amount . "tk " . $otf_details['otf_name'] . " - OTF TopUp has been recharged to " . $this->topUpOrder->payee_mobile;
-        }else{
+        } else {
             $log_message = $this->amount . " has been topped up to " . $this->topUpOrder->payee_mobile;
         }
 
@@ -162,64 +163,71 @@ abstract class TopUpCommission
         $this->refundUser($amount_after_commission, $log,$this->topUpOrder->isRobiWalletTopUp());
     }
 
-    private function refundUser($amount, $log,$isRobiTopUp=false)
+    private function refundUser($amount, $log, $isRobiTopUp=false)
     {
         if ($amount == 0) return;
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         *  $this->agent->creditWallet($amount);
-         $this->agent->walletTransaction(['amount' => $amount, 'type' => 'Credit', 'log' => $log]);*/
+
         /** @var HasWalletTransaction $model */
         $model = $this->agent;
-        if(!$isRobiTopUp)
-        (new WalletTransactionHandler())->setModel($model)->setSource(TransactionSources::TOP_UP)->setType(Types::credit())
-            ->setAmount($amount)->setLog($log)->dispatch();
-        if($isRobiTopUp)
-            (new RobiTopupWalletTransactionHandler())->setModel($model)->setAmount($amount)->setLog($log)->setType(Types::credit())->store();
+
+        if (!$isRobiTopUp)
+            (new WalletTransactionHandler())
+                ->setModel($model)
+                ->setSource(TransactionSources::TOP_UP)
+                ->setType(Types::credit())
+                ->setAmount($amount)
+                ->setLog($log)
+                ->dispatch();
+        else {
+            (new RobiTopupWalletTransactionHandler())
+                ->setModel($model)
+                ->setAmount($amount)
+                ->setLog($log)
+                ->setType(Types::credit())
+                ->store();
+        }
 
     }
 
     private function getVendorOTFDetails($vendor_id, $amount, $gateway, $con_type)
     {
-        $otf_details = [];
+        if (!$this->isAgentEligibleForOtf()) return [];
 
-        $topupotfsettings = app(TopUpOTFSettingsRepo::class);
-        $topupvendorotf = app(TopUpVendorOTFRepo::class);
+        $otf_settings = app(TopUpOTFSettingsRepo::class);
+        $otf_repo = app(TopUpVendorOTFRepo::class);
+        $otf_setting = $otf_settings->builder()->where([
+            ['topup_vendor_id', $vendor_id],
+            ['type', get_class($this->agent)]
+        ])->first();
 
-        $agent_fullname = null;
+        if (! ($otf_setting && $this->isGatewayEligibleForOtf($otf_setting, $gateway)) ) return [];
 
-        if ($this->agent instanceof Affiliate){
 
-            $agent_fullname = 'App\\Models\\Affiliate';
+        $otf = $otf_repo->builder()->where('topup_vendor_id', $vendor_id)
+            ->where('amount', $amount)->where('sim_type', 'like', '%' . $con_type . '%')
+            ->where('status', 'Active')->first();
 
-        }elseif ($this->agent instanceof Partner) {
+        if(!$otf) return [];
 
-            $agent_fullname = 'App\\Models\\Partner';
+        $agent_commission = round(($otf_setting->agent_commission / 100) * $otf->cashback_amount, 2);
+        return [
+            'otf_id' => $otf->id,
+            'agent_commisssion' => $agent_commission,
+            'sheba_commisssion' => $otf->cashback_amount - $agent_commission,
+            'otf_name' => $otf->name_en
+        ];
+    }
 
-        }elseif ($this->agent instanceof Customer){
+    private function isAgentEligibleForOtf()
+    {
+        return $this->agent instanceof Affiliate ||
+            $this->agent instanceof Partner ||
+            $this->agent instanceof Customer;
+    }
 
-            $agent_fullname = 'App\\Models\\Customer';
-
-        }
-
-        if ($agent_fullname){
-            $otf_settings = $topupotfsettings->builder()->where([['topup_vendor_id', $vendor_id], ['type', $agent_fullname]])->first();
-
-            if($otf_settings->applicable_gateways != 'null' && in_array($gateway, json_decode($otf_settings->applicable_gateways)) == true){
-
-                $otf_exists = $topupvendorotf->builder()->where('topup_vendor_id', $vendor_id)->where('amount', $amount)->where('sim_type', 'like', '%' . $con_type . '%')->where('status', 'Active')->first();
-
-                if($otf_exists){
-                    $agen_comm = round(($otf_settings->agent_commission / 100) * $otf_exists->cashback_amount, 2);
-
-                    $otf_details['otf_id'] = $otf_exists->id;
-                    $otf_details['agent_commisssion'] = $agen_comm;
-                    $otf_details['sheba_commisssion'] = $otf_exists->cashback_amount - $agen_comm;
-                    $otf_details['otf_name'] = $otf_exists->name_en;
-                }
-            }
-        }
-
-        return $otf_details;
+    private function isGatewayEligibleForOtf(TopUpOTFSettings $otf_setting, $gateway)
+    {
+        return $otf_setting->applicable_gateways != 'null' &&
+            in_array($gateway, json_decode($otf_setting->applicable_gateways));
     }
 }

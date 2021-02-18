@@ -124,7 +124,7 @@ trait ModificationFields
         $this->modifier = Session::get('modifier');
 
         $id = 0;
-        $name = "";
+        $name = app()->runningInConsole() ? "automatic" : "";
         $time = Carbon::now();
 
         if ($this->modifierModelName == "User" || Auth::user()) {
