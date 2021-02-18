@@ -78,7 +78,7 @@ class JobServiceController extends Controller
             if ($job->partner_order->calculate(true)->due < (floatval($request->discount) - floatval($job_service->discount))) {
                 return "Discount can't be greater than due";
             }
-            if ($job->partner_order->order->vocuher_id) {
+            if ($job->partner_order->order->voucher_id) {
                 return "Discount can't be added because a Promo is already Applied";
             }
         }
