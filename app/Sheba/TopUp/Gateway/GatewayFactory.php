@@ -33,4 +33,13 @@ class GatewayFactory
         if ($this->gatewayName == Names::PAYWELL) return app(Paywell::class);
         else return app(Ssl::class);
     }
+
+    /**
+     * @param Gateway $gateway
+     * @return string
+     */
+    public static function getNameFromGateway(Gateway $gateway)
+    {
+        return $gateway->getName();
+    }
 }

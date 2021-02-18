@@ -30,26 +30,15 @@ class ProfileController extends Controller
      */
     public function checkVerification(Request $request, $partner, ProfileUpdateRepository $pro_repo)
     {
-        try {
-            $data = $pro_repo->checkNid($request);
-            return api_response($request, null, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
-        }
+        $data = $pro_repo->checkNid($request);
+        return api_response($request, null, 200, ['data' => $data]);
     }
 
     public function checkFirstTimeUser(Request $request, ResourceRepository $resourceRepository)
     {
-        try {
-            $data = $resourceRepository->getFirstTimeUserData($request);
-            return api_response($request, null, 200, ['data' => $data]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500, ['message' => $e->getMessage(), 'trace' => $e->getTrace()]);
-        }
+        $data = $resourceRepository->getFirstTimeUserData($request);
+        return api_response($request, null, 200, ['data' => $data]);
     }
-
 
     /**
      * @param Request $request
@@ -123,7 +112,6 @@ class ProfileController extends Controller
         $profile->update();
     }
 
-
     /**
      * @param $resource
      */
@@ -157,16 +145,13 @@ class ProfileController extends Controller
                 'log' => null,
                 'reason' => 're-submitted NID',
             ];
-            return (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
+            (new AffiliateRepository())->saveStatusChangeLog($affiliate, $log_data);
         }
-
     }
-
 
     /**
      * @return string
      */
-
     private function isAlreadyExistNid($nid_no)
     {
         return Profile::where('nid_no', $nid_no)->first();

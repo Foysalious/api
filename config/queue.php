@@ -1,5 +1,7 @@
 <?php
 
+$top_up_queues = (require __DIR__ . DIRECTORY_SEPARATOR . 'topup_queues.php')['connections'];
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -55,12 +57,6 @@ return [
             'queue' => 'api_queue',
             'expire' => 60
         ],
-        'topup' => [
-            'driver' => 'redis',
-            'connection' => 'default',
-            'queue' => 'topup',
-            'expire' => 60
-        ],
         'sms_campaign' => [
             'driver' => 'redis',
             'connection' => 'default',
@@ -73,7 +69,7 @@ return [
             'queue' => 'report',
             'expire' => 60
         ]
-    ],
+    ] + $top_up_queues,
 
     /*
     |--------------------------------------------------------------------------
