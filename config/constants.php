@@ -1364,4 +1364,5 @@ return [
         'অন্যান্য'
     ],
     "PARTNER_ORDER_TARGET_TYPE" => 'PARTNER_ORDER_DETAILS',
+    'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS')
 ];

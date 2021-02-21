@@ -9,6 +9,8 @@ class AccountServerClient
     private $httpClient;
     /** @var string */
     private $baseUrl;
+    /** @var string */
+    private $token;
 
     public function __construct(Client $client)
     {
@@ -17,31 +19,52 @@ class AccountServerClient
     }
 
     /**
+     * @param $token
+     * @return $this
+     */
+    public function setToken($token)
+    {
+        $this->token = $token;
+        return $this;
+    }
+
+    /**
      * @param $uri
+     * @param $headers
      * @return array
      * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
-    public function get($uri)
+    public function get($uri, $headers = null)
     {
-        return $this->call('get', $uri);
+        return $this->call('get', $uri, null, $headers);
     }
 
     /**
      * @param $method
      * @param $uri
      * @param null $data
+     * @param null $headers
      * @return array
      * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
-    private function call($method, $uri, $data = null)
+    private function call($method, $uri, $data = null, $headers = null)
     {
         try {
-            $res = decodeGuzzleResponse($this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
+            $res = $this->httpClient->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $headers));
+            $res = decodeGuzzleResponse($res);
+            if ($res == null) return [];
+
+            if (!array_key_exists('code', $res)) return $res;
+            
             if ($res['code'] == 403 && in_array('login_wrong_pin_count', $res)) throw new WrongPinError($res['login_wrong_pin_count'], $res['remaining_hours_to_unblock'], $res['message'], $res['code']);
             if ($res['code'] > 399 && $res['code'] < 500) throw new AccountServerAuthenticationError($res['message'], $res['code']);
             if ($res['code'] != 200) throw new AccountServerNotWorking($res['message']);
             return $res;
         } catch (GuzzleException $e) {
+            $res = $e->getResponse();
+            $http_code = $res->getStatusCode();
+            $message = decodeGuzzleResponse($res);
+            if ($http_code > 399 && $http_code < 500) throw new AccountServerAuthenticationError($message, $http_code);
             throw new AccountServerNotWorking($e->getMessage());
         }
     }
@@ -57,15 +80,21 @@ class AccountServerClient
 
     /**
      * @param null $data
+     * @param null $headers
      * @return mixed
      */
-    private function getOptions($data = null)
+    private function getOptions($data = null, $headers = null)
     {
-        $headers = getShebaRequestHeader();
+        $sheba_headers = getShebaRequestHeader();
         $options = [];
 
-        if (!$headers->isEmpty()) $options['headers'] = $headers->toArray();
         if ($data) $options['form_params'] = $data;
+
+        $options['headers'] = [];
+        if ($this->token)  $options['headers'] += ['Authorization' => 'Bearer ' . $this->token];
+        if ($headers) $options['headers'] += $headers;
+        if (!$sheba_headers->isEmpty()) $options['headers'] += $sheba_headers->toArray();
+        if (empty($options['headers'])) unset($options['headers']);
 
         return $options;
     }
@@ -73,11 +102,12 @@ class AccountServerClient
     /**
      * @param $uri
      * @param $data
+     * @param $headers
      * @return array
      * @throws AccountServerNotWorking|AccountServerAuthenticationError|WrongPinError
      */
-    public function post($uri, $data)
+    public function post($uri, $data, $headers = null)
     {
-        return $this->call('post', $uri, $data);
+        return $this->call('post', $uri, $data, $headers);
     }
 }

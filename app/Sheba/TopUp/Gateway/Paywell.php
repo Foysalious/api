@@ -2,6 +2,8 @@
 
 use App\Models\TopUpOrder;
 use Exception;
+use Sheba\Dal\TopupOrder\Statuses;
+use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\PaywellClient;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -19,6 +21,7 @@ class Paywell implements Gateway
      * @param TopUpOrder $topup_order
      * @return TopUpResponse
      * @throws Exception
+     * @throws GatewayTimeout
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
@@ -37,6 +40,11 @@ class Paywell implements Gateway
 
     public static function getInitialStatusStatically()
     {
-        return config('topup.status.successful.sheba');
+        return Statuses::SUCCESSFUL;
+    }
+
+    public function getName()
+    {
+        return Names::PAYWELL;
     }
 }
