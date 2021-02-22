@@ -1,5 +1,7 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
+use Sheba\Dal\TopupOrder\Statuses;
+
 class MockResponse extends TopUpResponse
 {
     /**
@@ -36,6 +38,6 @@ class MockResponse extends TopUpResponse
 
     public function resolveTopUpSuccessStatus()
     {
-        return config('topup.status.successful.sheba');
+        return Statuses::SUCCESSFUL;
     }
 }
