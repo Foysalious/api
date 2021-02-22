@@ -3,8 +3,6 @@
 use App\Models\PosCustomer;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
-use App\Sheba\Sms\SendSmsLog;
-use Sheba\Dal\SmsSendingLog\Model as SmsSendingLog;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -232,16 +230,12 @@ class Creator
 
             /** @var Sms $sms */
             $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
-            $sms->shoot();
-
-            (new SendSmsLog())
-                ->setMobile($mobile)
-                ->setSmsBody($message)
-                ->setSmsCost((double)$sms->getCost())
+            $sms = $sms->setVendor('infobip')
+                ->to($mobile)
+                ->msg($message)
                 ->setFeatureType(FeatureType::PAYMENT_LINK)
-                ->setBusinessType(BusinessType::SMANAGER)
-                ->store();
+                ->setBusinessType(BusinessType::SMANAGER);
+            $sms->shoot();
         }
     }
 

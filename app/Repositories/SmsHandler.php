@@ -14,6 +14,9 @@ class SmsHandler
     /** @var bool */
     private $isOff;
 
+    private $businessType;
+    private $featureType;
+
     /** @var Sms */
     public function __construct($event_name)
     {
@@ -97,5 +100,27 @@ class SmsHandler
 
     public function getMsg() {
         return $this->sms->getMsg();
+    }
+
+
+    /**
+     * @param $businessType
+     * @return $this
+     */
+    public function setBusinessType($businessType)
+    {
+        $this->sms->setBusinessType($businessType);
+        return $this;
+    }
+
+
+    /**
+     * @param $featureType
+     * @return $this
+     */
+    public function setFeatureType($featureType)
+    {
+        $this->sms->setFeatureType($featureType);
+        return $this;
     }
 }
