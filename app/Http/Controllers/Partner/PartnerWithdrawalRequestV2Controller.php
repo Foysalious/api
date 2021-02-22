@@ -145,7 +145,8 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'created_by_type' => class_basename($request->manager_resource),
             'created_by'      => $request->manager_resource->id,
             'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-            'api_request_id' => $request->api_request ? $request->api_request->id : null
+            'api_request_id' => $request->api_request ? $request->api_request->id : null,
+            'wallet_balance' => $partner->wallet
         ]));
 
         return api_response($request, $new_withdrawal, 200);
