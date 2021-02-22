@@ -22,6 +22,7 @@ class VerifyPin
     private $managerResource;
     /** @var AccountServer */
     private $accountServer;
+    private $purpose;
 
     /**
      * VerifyPin constructor.
@@ -63,6 +64,16 @@ class VerifyPin
     }
 
     /**
+     * @param $purpose
+     * @return VerifyPin
+     */
+    public function setPurpose($purpose)
+    {
+        $this->purpose = $purpose;
+        return $this;
+    }
+
+    /**
      * @throws DoNotReportException
      * @throws PinMismatchException
      * @throws \Sheba\OAuth2\AccountServerAuthenticationError
@@ -85,9 +96,9 @@ class VerifyPin
     private function authenticateWithPassword()
     {
         try {
-            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
-        } catch (ClientException $e) {
-            if ($e->getCode() != 403) throw new DoNotThrowException();
+            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, $this->purpose);
+        } catch (\Exception $e) {
+            if ($e->getCode() != 403) throw $e;
             $this->getAuthenticateRequests();
         }
     }

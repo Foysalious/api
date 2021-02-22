@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\BusinessMember;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\Payslip\PayslipRepository;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
@@ -110,7 +111,7 @@ class PayRunController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
-        $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
 
         $this->payrunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
         return api_response($request, null, 200);
