@@ -152,7 +152,6 @@ class DiscountCalculation
         $this->isDiscountPercentage = $this->serviceDiscount->is_percentage;
         $this->shebaContribution = $this->serviceDiscount->sheba_contribution;
         $this->partnerContribution = $this->serviceDiscount->partner_contribution;
-
         if (!$this->serviceDiscount->isPercentage())
             return $this->originalPrice - ($this->discount * $this->quantity);
 
