@@ -1,6 +1,6 @@
 <?php namespace Sheba\AppVersion;
 
-use App\Models\AppVersion;
+use Sheba\Dal\AppVersion\AppVersion;
 use Sheba\PresentableDTO;
 
 class AppVersionDTO extends PresentableDTO
