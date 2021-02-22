@@ -19,7 +19,7 @@ use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\TopUp\Exception\PinMismatchException;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 
 class PayRunController extends Controller
 {

@@ -25,7 +25,7 @@ use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
