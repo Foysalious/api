@@ -154,7 +154,7 @@ return [
                 'title'      => '',
                 'name'       => 'gender',
                 'id'         => 'gender',
-                'mandatory'  => true,
+                'mandatory'  => false,
                 'views'      => [
                     [
                         'field_type' => 'radioButton',
@@ -162,7 +162,7 @@ return [
                         'id'         => 'male',
                         'title'      => 'পুরুষ',
                         'mandatory'  => false,
-                        'value'      => "Male"
+                        'value'      => 1
                     ],
                     [
                         'field_type' => 'radioButton',
@@ -170,7 +170,7 @@ return [
                         'id'         => 'female',
                         'title'      => 'নারী',
                         'mandatory'  => false,
-                        'value'      => "Female"
+                        'value'      => 0
                     ]
                 ]
             ],
