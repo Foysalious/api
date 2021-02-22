@@ -32,6 +32,7 @@ class PosOrderList
 
     /** @var PaymentLinkRepositoryInterface */
     private $paymentLinkRepo;
+    protected $orderStatus;
 
     public function __construct()
     {
@@ -96,6 +97,16 @@ class PosOrderList
     public function setType($type)
     {
         $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param $orderStatus
+     * @return PosOrderList
+     */
+    public function setOrderStatus($orderStatus)
+    {
+        $this->orderStatus = $orderStatus;
         return $this;
     }
 
@@ -254,5 +265,11 @@ class PosOrderList
             }
             return $order;
         });
+    }
+
+    private function filteredByOrderStatus($orders_query, $orderStatus)
+    {
+        $orders_query = $orders_query->where('status', $orderStatus);
+        return $orders_query;
     }
 }

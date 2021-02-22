@@ -110,10 +110,10 @@ class PartnerRegistrationController extends Controller
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-               /* $affiliate = $profile->affiliate;
-                if (!$affiliate) {
-                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                }*/
+                /* $affiliate = $profile->affiliate;
+                 if (!$affiliate) {
+                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                 }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -229,9 +229,10 @@ class PartnerRegistrationController extends Controller
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
 
         $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
-        if ($is_unicode) $name = uniqid("partner-no-name-");
+        if ($is_unicode) $name = "partner-no-name";
 
-        $base_name    = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        if ($name == "partner-no-name") $base_name = $name = uniqid("partner-no-name-");
         $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         if (in_array($name, array_merge($blacklist, $already_used))) {
 //            $name = $base_name . uniqid();
