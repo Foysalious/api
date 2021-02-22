@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\InventoryService\Repository;
 
+use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
@@ -12,7 +13,7 @@ class InventoryServiceClient
     public function __construct(Client $client)
     {
         $this->client = $client;
-        $this->baseUrl = rtrim(config('expense_tracker.api_url'), '/');
+        $this->baseUrl = rtrim(config('inventory_service.api_url'), '/');
     }
 
     public function get($uri)
@@ -23,16 +24,18 @@ class InventoryServiceClient
     private function call($method, $uri, $data = null)
     {
         try {
+
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-            if ($res['code'] != 200)
-                throw new ExpenseTrackingServerError($res['message']);
+
+           /* if ($res['code'] != 200)
+                throw new InventoryServiceServerError($res['message']);*/
             unset($res['code'], $res['message']);
             return $res;
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
             if ($res['code'] == 400)
-                throw new ExpenseTrackingServerError($res['message']);
-            throw new ExpenseTrackingServerError($e->getMessage());
+                throw new InventoryServiceServerError($res['message']);
+            throw new InventoryServiceServerError($e->getMessage());
         }
     }
 
