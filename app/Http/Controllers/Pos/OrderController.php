@@ -68,6 +68,7 @@ class OrderController extends Controller
         $posOrderList = $posOrderList->setPartner($partner)->setStatus($status)->setOffset($offset)->setLimit($limit);
         if ($request->has('sales_channel')) $posOrderList = $posOrderList->setSalesChannel($request->sales_channel);
         if ($request->has('type')) $posOrderList = $posOrderList->setType($request->type);
+        if ($request->has('order_status')) $posOrderList = $posOrderList->setOrderStatus($request->order_status);
         if ($request->has('q') && $request->q !== "null") $posOrderList = $posOrderList->setQuery($request->q);
         $orders_formatted = $posOrderList->get();
         return api_response($request, $orders_formatted, 200, ['orders' => $orders_formatted]);

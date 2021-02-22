@@ -28,16 +28,15 @@ class TopUpExcelJob extends TopUpJob
     /** @var TopUpBulkRequest */
     private $bulk;
 
-    public function __construct($agent, $vendor, TopUpOrder $topup_order, $file, $row, $total_row, TopUpBulkRequest $bulk)
+    public function __construct(TopUpOrder $topup_order, $file, $row, $total_row, TopUpBulkRequest $bulk)
     {
-        parent::__construct($agent, $vendor, $topup_order);
+        parent::__construct($topup_order);
 
         $this->file = $file;
         $this->row = $row;
         $this->totalRow = $total_row;
         $this->sms = new Sms();
         $this->bulk = $bulk;
-        $this->queue = 'topup:low';
     }
 
     /**
