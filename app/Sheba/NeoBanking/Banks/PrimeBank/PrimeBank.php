@@ -21,6 +21,7 @@ class PrimeBank extends Bank
 {
 
     private $apiClient;
+    const CPV_PENDING_UNSIGNED    = "cpv_pending_unsigned";
 
     public function __construct()
     {
@@ -37,9 +38,13 @@ class PrimeBank extends Bank
     {
         $account = $this->getAccount();
         if ($account) {
-            $status = (new PrimeBankClient())->setPartner($this->partner)->get('api/v1/status/'.$account);
+            $headers = ['CLIENT-ID:'. config('neo_banking.sbs_client_id'), 'CLIENT-SECRET:'.  config('neo_banking.sbs_client_secret')];
+            $status = (new PrimeBankClient())->setPartner($this->partner)->get("api/v1/client/account/$account/status", $headers);
             return $this->formatAccountData($status, $account);
         } else {
+            if($this->hasAccountWithNullId()) {
+                return $this->pendingAccountData($this->partner, $account);
+            }
             return $this->formatEmptyData();
         }
 
@@ -81,8 +86,19 @@ class PrimeBank extends Bank
 
     private function getAccount()
     {
-        $account = $this->partner->neoBankAccount()->where('bank_id',$this->id)->first();
-        return !empty($account) ?$account->account_no:null;
+        $account = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
+        return !empty($account) ? $account->account_no : null;
+    }
+
+    private function hasAccountWithNullId()
+    {
+        $account = $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
+        return ($account && $account->account_no == null);
+    }
+
+    private function getAccountDetails()
+    {
+        return $this->partner->neoBankAccount()->where('bank_id', $this->id)->first();
     }
 
     public function accountDetailInfo()
@@ -175,6 +191,16 @@ class PrimeBank extends Bank
         $data['status_message'] = null;
         $data['status_message_type'] = null;
 
+        return $data;
+    }
+
+    public function pendingAccountData($status, $account) {
+        $data['has_account'] = 1;
+        $data['applicant_name'] = $status->name;
+        $data['account_no'] = $account;
+        $data['account_status'] = self::CPV_PENDING_UNSIGNED;
+        $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');
+        $data['status_message_type'] = "pending";
         return $data;
     }
 
