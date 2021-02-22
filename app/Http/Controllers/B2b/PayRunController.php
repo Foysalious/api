@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\B2b;
 
+use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Member;
@@ -7,12 +8,17 @@ use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\BusinessMember;
-use Sheba\Business\Payslip\PayRun\Updater;
+use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\Payslip\PayslipRepository;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\WrongPinError;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
+use Sheba\TopUp\Exception\PinMismatchException;
+use Sheba\TopUp\Verification\VerifyPin;
 
 class PayRunController extends Controller
 {
@@ -20,16 +26,19 @@ class PayRunController extends Controller
 
     private $payslipRepo;
     private $businessMemberRepository;
+    private $payrunUpdater;
 
     /**
      * PayRunController constructor.
      * @param PayslipRepository $payslip_repo
      * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @param PayRunUpdater $payrun_updater
      */
-    public function __construct(PayslipRepository $payslip_repo, BusinessMemberRepositoryInterface $business_member_repository)
+    public function __construct(PayslipRepository $payslip_repo, BusinessMemberRepositoryInterface $business_member_repository, PayRunUpdater $payrun_updater)
     {
         $this->payslipRepo = $payslip_repo;
         $this->businessMemberRepository = $business_member_repository;
+        $this->payrunUpdater = $payrun_updater;
     }
 
     /**
@@ -80,10 +89,38 @@ class PayRunController extends Controller
 
     /**
      * @param Request $request
-     * @param Updater $payrun_updater
+     * @param VerifyPin $verifyPin
+     * @return JsonResponse
+     * @throws DoNotReportException
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     * @throws PinMismatchException
+     */
+    public function disburse(Request $request, VerifyPin $verifyPin)
+    {
+        $this->validate($request, [
+            'schedule_date' => 'required|date|date_format:Y-m-d'
+        ]);
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        /** @var Member $manager_member */
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+
+        $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+
+        $this->payrunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param Request $request
      * @return JsonResponse
      */
-    public function bulkUpdate(Request $request, Updater $payrun_updater)
+    public function bulkUpdate(Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -93,7 +130,7 @@ class PayRunController extends Controller
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
-        $payrun_updater->setData($request->data)->setManagerMember($manager_member)->update();
+        $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
         return api_response($request, null, 200);
     }
 }
