@@ -477,6 +477,7 @@ class DueTrackerRepository extends BaseRepository
             ->setFeatureType(FeatureType::DUE_TRACKER)
             ->setSmsBody($sms->getMsg())
             ->setMobile($customer->profile->mobile)
+            ->setSmsCost((double)$sms_cost)
             ->store();
 
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();

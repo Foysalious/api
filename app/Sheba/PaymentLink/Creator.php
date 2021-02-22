@@ -238,6 +238,7 @@ class Creator
             (new SendSmsLog())
                 ->setMobile($mobile)
                 ->setSmsBody($message)
+                ->setSmsCost((double)$sms->getCost())
                 ->setFeatureType(FeatureType::PAYMENT_LINK)
                 ->setBusinessType(BusinessType::SMANAGER)
                 ->store();

@@ -13,6 +13,7 @@ class SendSmsLog
     private $mobileNumber;
     private $status;
     private $smsSendingLog;
+    private $smsCost;
 
     /**
      * @param $businessType
@@ -87,7 +88,18 @@ class SendSmsLog
             "business_name" => $this->businessType,
             "sms_template" => $this->smsTemplate,
             "mobile_number" => $this->mobileNumber,
-            "sms_status" => $this->status
+            "sms_status" => $this->status,
+            "sms_cost" => $this->smsCost
         ];
+    }
+
+    /**
+     * @param $smsCost
+     * @return $this
+     */
+    public function setSmsCost($smsCost)
+    {
+        $this->smsCost = $smsCost;
+        return $this;
     }
 }
