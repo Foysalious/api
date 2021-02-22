@@ -19,7 +19,11 @@ class HolidayList
     public function getHolidays(Request $request)
     {
         $holiday_list = [];
-        $business_holidays = $this->business_holidays_repo->getAllByBusiness($this->business);
+        $previous_year = Carbon::now()->subYear()->format('Y');
+        $previous_year_last_date = Carbon::parse($previous_year.'-12'.'-31')->endOfDay();
+        $business_holidays = $this->business_holidays_repo->getAllByBusiness($this->business)->filter(function ($holiday) use ($previous_year_last_date) {
+            return $previous_year_last_date->lt($holiday->start_date);
+        });
         if($request->has('search')) $business_holidays = $this->searchWithHolidayName($business_holidays,$request);
         foreach ($business_holidays as $holiday) {
             $diff_in_days = $holiday->start_date->diffInDays($holiday->end_date);
