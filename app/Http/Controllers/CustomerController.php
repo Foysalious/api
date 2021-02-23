@@ -120,6 +120,7 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function checkIsCompleted($profile,$customer)
     {
         if($profile->name && $profile->gender && $profile->dob)
