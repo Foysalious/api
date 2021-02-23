@@ -291,7 +291,6 @@ class JobController extends Controller
             $q->with('service');
         }]);
         $job->calculate(true);
-
         if (count($job->jobServices) == 0) {
             $services = array();
             $service_list = array();
@@ -325,14 +324,16 @@ class JobController extends Controller
                 ));
             }
         }
+        $methods_with_amounts=[];
         $partnerOrder = $job->partnerOrder;
+        $payments = $partnerOrder->payments;
+        foreach($payments as $payment) array_push($methods_with_amounts,array(
+            'method' => $payment['method'],
+            'amount' => $payment['amount']
+        ));
         $partnerOrder->calculate(true);
-//        $methods = PartnerOrderPayment::select('method');
-//        dd($methods);
-
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
-
         $voucher = $partnerOrder->order->voucher ? [
             'code' => $partnerOrder->order->voucher->code,
             'amount' => $partnerOrder->order->voucher->amount
@@ -357,8 +358,7 @@ class JobController extends Controller
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
-        $bill['payment methods'] = ['wallet'=>100
-                                    ,'credit'=>100];
+        $bill['payment methods'] = $methods_with_amounts;
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;
