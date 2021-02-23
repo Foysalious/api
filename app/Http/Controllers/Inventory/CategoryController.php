@@ -21,6 +21,22 @@ class CategoryController extends Controller
         return api_response($request, null, 200, $products);
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     * @throws \Exception
+     */
+    public function store(Request $request)
+    {
+        $this->validate($request, [
+            'name' => 'required|string',
+        ]);
+        $partner_id = $request->partner->id;
+        $modifier = $request->manager_resource->profile->name;
+        $this->categoryRepository->setModifier($modifier)->setPartner($partner_id)->setCategoryName($request->name)->store();
+        return api_response($request, null, 200);
+    }
+
 
 
 

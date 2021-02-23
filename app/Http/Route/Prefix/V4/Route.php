@@ -23,6 +23,7 @@ class Route
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Inventory\CategoryController@index');
+                    $api->post('/', 'Inventory\CategoryController@store');
 
                 });
             });
