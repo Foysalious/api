@@ -119,6 +119,7 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
+
     public function updateEmail($customer, Request $request)
     {
         try {
