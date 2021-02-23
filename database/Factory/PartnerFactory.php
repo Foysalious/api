@@ -1,7 +1,4 @@
-<?php
-
-
-namespace Factory;
+<?php namespace Factory;
 
 
 use App\Models\Partner;
@@ -18,6 +15,7 @@ class PartnerFactory extends Factory
     {
         return array_merge($this->commonSeeds, [
             'name'=> $this->faker->name,
+            'sub_domain'=>"test-sp",
             'package_id'=>2,
             'mobile' => '+8801666777555',
             'password' => bcrypt(89079),
