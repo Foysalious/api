@@ -1,6 +1,6 @@
 <?php namespace Sheba\OAuth2;
 
-use App\Exceptions\DoNotThrowException;
+use App\Exceptions\DoNotReportException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use GuzzleHttp\Exception\ClientException;
@@ -113,7 +113,7 @@ class VerifyPin
     }
 
     /**
-     * @throws DoNotThrowException
+     * @throws DoNotReportException
      * @throws PinMismatchException
      * @throws \Sheba\OAuth2\AccountServerAuthenticationError
      * @throws \Sheba\OAuth2\AccountServerNotWorking
@@ -158,7 +158,7 @@ class VerifyPin
     {
         $this->logout();
         $this->resetRememberToken();
-        throw new DoNotThrowException("You have been logged out", 401);
+        throw new DoNotReportException("You have been logged out", 401);
     }
 
     /**
