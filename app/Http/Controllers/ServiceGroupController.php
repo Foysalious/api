@@ -157,9 +157,6 @@ class ServiceGroupController extends Controller
                             'image' => $service->app_thumb,
                             'app_thumb' => $service->app_thumb,
                             'thumb' => $service->thumb,
-                            "original_price" => 1000,
-                            "discounted_price" => 500,
-                            "discount" => 10,
                             'has_discount'=> $service_discount ? 1 : 0,
                             'total_stock' => (int)$service->stock,
                             'stock_left' => (int)$service->stock_left
