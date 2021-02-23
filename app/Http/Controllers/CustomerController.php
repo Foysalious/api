@@ -110,6 +110,7 @@ class CustomerController extends Controller
             $profile->dob = $request->dob;
             $profile->email = $request->email;
             $profile->update();
+            $this->checkIsCompleted($profile,$customer);
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -117,6 +118,16 @@ class CustomerController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function checkIsCompleted($profile,$customer)
+    {
+        if($profile->name && $profile->gender && $profile->dob)
+        {
+            DB::table('customers')
+                ->where('id', $customer->id)
+                ->update(array('is_completed' => 1));
         }
     }
 
