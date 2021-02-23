@@ -12,6 +12,7 @@ class AutomaticIncomes
     const PAYMENT_LINK = 'Payment link';
     const OTHER_INCOME = 'Other Income';
     const DUE_TRACKER  = 'Due Tracker';
+    const WEBSTORE_SALES = 'Webstore sales';
 
     public static function heads()
     {

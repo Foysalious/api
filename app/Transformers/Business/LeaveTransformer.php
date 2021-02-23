@@ -7,6 +7,8 @@ use App\Models\Profile;
 use App\Transformers\AttachmentTransformer;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
@@ -98,6 +100,15 @@ class LeaveTransformer extends TransformerAbstract
     private function getApprover(Leave $leave)
     {
         $approvers = [];
+        $all_approvers = [];
+        /** @var BusinessMember $leave_business_member */
+        $leave_business_member = $leave->businessMember;
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($leave_business_member, 'leave');
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $leave_business_member);
+        $leave_approval_request_ids = $leave->requests()->pluck('approver_id', 'id')->toArray();
+        $remainingApprovers = array_diff($find_approvers, $leave_approval_request_ids);
+        $default_approvers  = (new FindApprovers())->getApproversInfo($remainingApprovers);
+
         foreach ($leave->requests as $approval_request) {
             $business_member = $approval_request->approver;
             $member = $business_member->member;
@@ -107,7 +118,7 @@ class LeaveTransformer extends TransformerAbstract
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }
-
-        return $approvers;
+        $all_approvers = array_merge($approvers, $default_approvers);
+        return $all_approvers;
     }
 }

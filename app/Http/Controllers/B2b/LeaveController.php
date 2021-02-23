@@ -21,12 +21,16 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
+use Sheba\Business\ApprovalRequest\UpdaterV2;
+use Sheba\Business\ApprovalSetting\FindApprovalSettings;
+use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -105,11 +109,10 @@ class LeaveController extends Controller
             return $leave_request_report->setLeave($leaves)->get();
         }
 
-        if (count($leaves) > 0) return api_response($request, $leaves, 200, [
+        return api_response($request, $leaves, 200, [
             'leaves' => $leaves,
             'total_leave_requests' => $total_leave_approval_requests,
         ]);
-        else return api_response($request, null, 404);
     }
 
     /**
@@ -154,10 +157,10 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
-     * @param Updater $updater
+     * @param UpdaterV2 $updater
      * @return JsonResponse
      */
-    public function updateStatus(Request $request, Updater $updater)
+    public function updateStatus(Request $request, UpdaterV2 $updater)
     {
         $this->validate($request, [
             'type_id' => 'required|string',
@@ -169,6 +172,14 @@ class LeaveController extends Controller
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+
+        /** @var ApprovalRequest $approval_request */
+
+        /*$approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids,Type::LEAVE)->first();
+        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
+
+        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+        $updater->setStatus($request->status)->change();*/
 
         $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, Type::LEAVE)
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
@@ -250,6 +261,16 @@ class LeaveController extends Controller
     private function getApprover($requestable)
     {
         $approvers = [];
+        $all_approvers = [];
+        /** @var BusinessMember $leave_business_member */
+        $this->requestableType = ApprovalRequestType::getByModel($requestable);
+        $requestable_business_member = $requestable->businessMember;
+        $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
+        $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
+        $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
+        $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
+        $default_approvers = (new FindApprovers())->getApproversAllInfo($remainingApprovers);
+
         foreach ($requestable->requests as $approval_request) {
             $business_member = $this->getBusinessMemberById($approval_request->approver_id);
             $member = $business_member->member;
@@ -261,10 +282,11 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
             ]);
         }
-        return $approvers;
+        $all_approvers = array_merge($approvers, $default_approvers);
+        return $all_approvers;
     }
 
     /**

@@ -41,4 +41,28 @@ class Portals
 
         return $types[$portal];
     }
+
+    /**
+     * @param $portal
+     * @return bool
+     */
+    public static function isApp($portal)
+    {
+        return in_array($portal, [
+            Portals::CUSTOMER_APP,
+            Portals::EMPLOYEE_APP,
+            Portals::RESOURCE_APP,
+            Portals::BONDHU_APP,
+            Portals::PARTNER_APP
+        ]);
+    }
+
+    /**
+     * @param $portal
+     * @return bool
+     */
+    public static function isNotApp($portal)
+    {
+        return !self::isApp($portal);
+    }
 }
