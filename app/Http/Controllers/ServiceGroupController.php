@@ -51,6 +51,7 @@ class ServiceGroupController extends Controller
                 }
             ])->get();
         }
+
         if (count($service_groups) === 0)
             return api_response($request, 1, 404);
         $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
@@ -111,7 +112,7 @@ class ServiceGroupController extends Controller
                 $loc_is_published = Location::find($location)->publication_status;
                 if ($loc_is_published==1 && $single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
-                    return $q->published()/*->orderBy('service_group_service.order');*/
+                    return $q->published()
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location);
                         })->orderBy('stock_left');
@@ -170,9 +171,6 @@ class ServiceGroupController extends Controller
                         "id" => $service->id,
                         "service_name" => $service->name,
                         'image' => $service->app_thumb,
-                        "original_price" => 1000,
-                        "discounted_price" => 500,
-                        "discount" => 10,
                         'total_stock' => (int)$service->stock,
                         'stock_left' => (int)$service->stock_left
                     ];
