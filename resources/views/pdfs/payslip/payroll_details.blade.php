@@ -121,14 +121,12 @@
 
 <table  class="tableHeadRegular header" style="width: 100%;  margin-bottom: 20px; padding: 0px; background-color: #fff;border: none " >
     <tr>
-        <td style=""><p style="padding-left:17px; margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 20px; color: #000000;">Employee Salary</p></td>
-        <td style="text-align: right">
-            @if($pay_report_detail['employee_info']['company_logo'])
-                <img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="75"/>
-            @else
-                <p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$pay_report_detail['employee_info']['company_name']}}</p>
-            @endif
-        </td>
+        <td style="padding-top: 27px"><p style="padding-left:17px; margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 20px; color: #000000;">Employee Salary</p></td>
+        @if($pay_report_detail['employee_info']['company_logo'])
+            <td style="text-align: right"><img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="65"/></td>
+        @else
+            <td style="text-align: right; padding-top: 27px"><p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$pay_report_detail['employee_info']['company_name']}}</p></td>
+        @endif
     </tr>
     <tr>
         <td><hr style=" color: #d1d7e6; width: 720px"></td>
