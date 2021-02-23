@@ -11,20 +11,18 @@ class PartnerFactory extends Factory
 
     protected function getModelClass()
     {
-        // TODO: Implement getModelClass() method.
-        return Partner::class;
+        return Partner::class; // TODO: Implement getModelClass() method.
     }
 
     protected function getData()
     {
-        // TODO: Implement getData() method.
-
         return array_merge($this->commonSeeds, [
-            'name'=>'Khairun Nahar',
-            'sub_domain'=>'test-shop',
-            'logo'=>"https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/partners/logos/1572954290_sk_food.png",
-            'wallet'=>10000
-
-        ]);
+            'name'=> $this->faker->name,
+            'package_id'=>2,
+            'mobile' => '+8801666777555',
+            'password' => bcrypt(89079),
+            'status' => 'Verified',
+            'wallet' => 50000
+        ]);// TODO: Implement getData() method.
     }
 }

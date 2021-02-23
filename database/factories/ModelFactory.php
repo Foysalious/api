@@ -3,6 +3,10 @@
 use Factory\Factory;
 use Factory\CategoryFactory;
 use Factory\PartnerSubscriptionPackageFactory;
+use Factory\JobFactory;
+use Factory\PartnerFactory;
+use Factory\PartnerOrderFactory;
+use Factory\PartnerResourceFactory;
 use Factory\ServiceFactory;
 use Factory\LocationFactory;
 use Factory\ProfileFactory;
@@ -18,8 +22,14 @@ use Factory\TopUpVendorOTFChangeLogFactory;
 use Factory\CustomerFactory;
 use Factory\ResourceFactory;
 use Factory\MemberFactory;
-use Factory\PartnerFactory;
-use Factory\PartnerResourceFactory;
+use Factory\OrderFactory;
+use Factory\PartnerOrderRequestFactory;
+use Factory\CustomerDeliveryAddressFactory;
+use Factory\ScheduleSlotsFactory;
+use Factory\JobServiceFactory;
+use Factory\BusinessFactory;
+use Factory\BusinessMemberFactory;
+use Factory\BusinessHolidayFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -39,9 +49,18 @@ $factory_classes = [
     MemberFactory::class,
     TopupBlacklistNumbersFactory::class,
     PartnerSubscriptionPackageFactory::class,
+    PartnerFactory::class,
     PartnerResourceFactory::class,
-    PartnerFactory::class
-
+    OrderFactory::class,
+    PartnerOrderFactory::class,
+    JobFactory::class,
+    PartnerOrderRequestFactory::class,
+    CustomerDeliveryAddressFactory::class,
+    ScheduleSlotsFactory::class,
+    JobServiceFactory::class,
+    BusinessFactory::class,
+    BusinessMemberFactory::class,
+    BusinessHolidayFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {

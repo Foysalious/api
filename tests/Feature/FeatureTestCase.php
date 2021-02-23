@@ -1,6 +1,8 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Customer;
 use App\Models\Member;
 use App\Models\Partner;
@@ -34,9 +36,17 @@ class FeatureTestCase extends TestCase
     /** @var Partner */
     protected $partner;
     /** @var PartnerResource */
-    protected $partnerResource;
-    /** @var PartnerSubscriptionPackage */
-    protected $partnerSubscriptionPackage;
+    protected $partner_resource;
+//    @var ParnerSubscriptionPackage
+    protected $partner_package;
+    /**
+     * @var $business
+     */
+    protected $business;
+    /**
+     * @var $business_member
+     */
+    private $business_member;
 
     public function setUp()
     {
@@ -62,11 +72,11 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /*\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
         $this->artisan('migrate');
         $this->beforeApplicationDestroyed(function () {
             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });*/
+        });
     }
 
     protected function logIn()
@@ -86,9 +96,8 @@ class FeatureTestCase extends TestCase
             Member::class,
             Resource::class,
             Partner::class,
-            PartnerSubscriptionPackage::class,
-            PartnerResource::class
-
+            Business::class,
+            BusinessMember::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
@@ -102,28 +111,28 @@ class FeatureTestCase extends TestCase
         $this->affiliate = factory(Affiliate::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        $this->resource = factory(Resource::class)->create([
-            'profile_id' => $this->profile->id
-        ]);
-        $this->partnerSubscriptionPackage = factory(PartnerSubscriptionPackage::class)->create();
-        $this->partner = factory(Partner::class)->create([
-            'package_id' => $this->partnerSubscriptionPackage->package_id
-        ]);
-       // dd($this->partner);
-        $this->partnerResource = factory(PartnerResource::class)->create([
-            'partner_id' => $this->partner->id,
-            'resource_id' => $this->resource->id
-        ]);
-      //  dd($this->partnerResource);
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-
+        $this->resource = factory(Resource::class)->create([
+            'profile_id' => $this->profile->id
+        ]);
+        $this->partner_package = factory(PartnerSubscriptionPackage::class)->create();
+        $this->partner = factory(Partner::class)->create([
+                'package_id' => $this->partner_package->id
+        ]);
+        $this->partner_resource = factory(PartnerResource::class)->create([
+            'resource_id' => $this->resource->id,
+            'partner_id' => $this->partner->id
+        ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
-
-
+        $this->business = factory(Business::class)->create();
+        $this->business_member = factory(BusinessMember::class)->create([
+            'business_id' => $this->business->id,
+            'member_id' => $this->member->id
+        ]);
     }
 
     private function createAccountWithMobileNEmail($mobile,$email=null)
@@ -163,22 +172,16 @@ class FeatureTestCase extends TestCase
             'customer' =>[
                 'id' => $this->customer->id
             ],
-            'resource' => [
-                'id' => $this->resource->id,
-                'partner' =>[
-                    'id' => $this->partner->id,
-                    'name'=>'Khairun Nahar',
-                    'sub_domain'=>'test-shop',
-                    'logo'=>'https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/partners/logos/1572954290_sk_food.png'
-                ]
-
-            ],
-
-
+            'resource' => null,
             'member' => [
                 'id' => $this->member->id
             ],
-            'business_member' => null,
+            'business_member' => [
+                'id' => $this->business_member->id,
+                'business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'is_super'=>1
+            ],
             'affiliate' => [
                 'id' => $this->affiliate->id
             ],

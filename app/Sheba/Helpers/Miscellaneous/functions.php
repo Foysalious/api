@@ -1,5 +1,6 @@
 <?php
 
+use Carbon\Carbon;
 use Sheba\Reward\ActionRewardDispatcher;
 
 if (!function_exists('constants')) {
@@ -209,26 +210,41 @@ if (!function_exists('calculateAge')) {
      * @param $dob
      * @return int
      */
-    function calculateAge($dob){
-        if (!empty($dob)&&!is_null($dob)){
-            try{
-                return \Carbon\Carbon::parse($dob)->age;
-            }catch (Exception $e){
-                return 0;
-            }
+    function calculateAge($dob)
+    {
+        if (empty($dob)) return 0;
+
+        try {
+            return Carbon::parse($dob)->age;
+        } catch (Exception $e) {
+            return 0;
         }
-        return 0;
     }
 }
 
-if (!function_exists('convertSemverToInt')) {
+if (!function_exists('isStringInt')) {
     /**
-     * @param string $semver
-     * @return int
+     * @param string $value
+     * @return bool
      */
-    function convertSemverToInt($semver)
+    function isStringInt($value)
     {
-        return (int)str_replace('.', '', $semver);
+        return preg_match('/^\d+$/', $value);
+    }
+}
+
+if (!function_exists('simplifyExceptionTrace')) {
+    /**
+     * @param \Exception $e
+     * @return array
+     */
+    function simplifyExceptionTrace(\Exception $e)
+    {
+        return collect(explode(PHP_EOL, $e->getTraceAsString()))->mapWithKeys(function ($trace) {
+            $trace = explode(": ", preg_replace('/^(#\d+ )(.*)$/', '$2', $trace));
+            if (count($trace) == 1) $trace[1] = "";
+            return [$trace[0] => $trace[1]];
+        })->all();
     }
 }
 
@@ -243,16 +259,5 @@ if (!function_exists('array_push_on_array')) {
         if (!array_key_exists($key, $array)) $array[$key] = [];
 
         $array[$key][] = $value;
-    }
-}
-if (!function_exists('hasSameValues')) {
-    /**
-     * @param array $a
-     * @param array $b
-     * @return bool
-     */
-    function hasSameValues(array $a, array $b)
-    {
-        return array_diff($a, $b) === array_diff($b, $a);
     }
 }

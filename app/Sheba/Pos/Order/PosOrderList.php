@@ -31,6 +31,7 @@ class PosOrderList
 
     /** @var PaymentLinkRepositoryInterface */
     private $paymentLinkRepo;
+    protected $orderStatus;
 
     public function __construct()
     {
@@ -85,6 +86,16 @@ class PosOrderList
     public function setType($type)
     {
         $this->type = $type;
+        return $this;
+    }
+
+    /**
+     * @param $orderStatus
+     * @return PosOrderList
+     */
+    public function setOrderStatus($orderStatus)
+    {
+        $this->orderStatus = $orderStatus;
         return $this;
     }
 
@@ -179,16 +190,23 @@ class PosOrderList
     {
         $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
+        if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
         return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
     }
 
     private function filteredBySearchQuery($orders_query, $search_query)
     {
-        $orders_query = $orders_query->whereHas('customer.profile', function ($query) use ($search_query) {
-            $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+        $partner_id = $this->partner->id;
+        $orders_query = $orders_query->where(function ($query) use($search_query, $partner_id){
+            $query->whereHas('customer.profile', function ($query) use ($search_query) {
+                $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+            })->orWhereHas('customer.partnerPosCustomer', function($query) use ($search_query, $partner_id) {
+                $query->where('partner_id', $partner_id);
+                $query->where('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
+            });
         });
         $orders_query = $orders_query->orWhere([
             [
@@ -218,17 +236,23 @@ class PosOrderList
 
     private function mapPaymentLinkData(&$final_orders, $payment_link_targets)
     {
-        $payment_links = $this->paymentLinkRepo->getPaymentLinksByPosOrders($payment_link_targets);
+        $payment_links = $this->paymentLinkRepo->getActivePaymentLinksByPosOrders($payment_link_targets);
 
         $final_orders = $final_orders->map(function ($order) use ($payment_links) {
             if (array_key_exists('payment_link_target', $order)) {
                 $key = $order['payment_link_target']->toString();
-                if (array_key_exists($key, $payment_links)) {
+                if (array_key_exists($key, $payment_links) && $payment_links[$key][0]) {
                     (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_links[$key][0]);
                 }
                 unset($order['payment_link_target']);
             }
             return $order;
         });
+    }
+
+    private function filteredByOrderStatus($orders_query, $orderStatus)
+    {
+        $orders_query = $orders_query->where('status', $orderStatus);
+        return $orders_query;
     }
 }

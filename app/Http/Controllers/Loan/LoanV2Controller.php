@@ -324,17 +324,6 @@ class LoanV2Controller extends Controller
         }
     }
 
-    public function claimList(Request $request, $loan_id, Loan $loan)
-    {
-        try {
-
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function getFinanceInformation($partner, Request $request)
     {
         try {
