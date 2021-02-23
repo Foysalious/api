@@ -13,6 +13,7 @@ use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -21,7 +22,7 @@ use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -120,7 +121,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -214,7 +215,7 @@ class TopUpController extends Controller
             return api_response($request, null, 400, ['message' => 'File type not support']);
 
         $agent = $request->user;
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $sheet_names = Excel::load($request->file)->getSheetNames();
         if (!in_array(TopUpExcel::SHEET, $sheet_names))
