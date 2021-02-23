@@ -1,6 +1,8 @@
 <?php namespace Sheba\TopUp\Jobs;
 
 use App\Models\TopUpOrder;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Excel;
 use Exception;
 use Maatwebsite\Excel\Readers\LaravelExcelReader;
@@ -85,7 +87,9 @@ class TopUpExcelJob extends TopUpJob
 
             $msg = "Your top up request has been processed. You can find the results here: " . $file_path;
 
-            $this->sms->shoot($this->agent->getMobile(), $msg);
+            $this->sms->setFeatureType(FeatureType::TOP_UP)
+                ->setBusinessType(BusinessType::BONDHU)
+                ->shoot($this->agent->getMobile(), $msg);
         }
     }
 

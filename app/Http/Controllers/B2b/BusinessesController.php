@@ -8,6 +8,8 @@ use App\Models\Partner;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Sheba\BankingInfo\GeneralBanking;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Transformers\Business\VendorDetailsTransformer;
 use App\Transformers\Business\VendorListTransformer;
 use App\Transformers\CustomSerializer;
@@ -71,7 +73,10 @@ class BusinessesController extends Controller
                 $data = ['business_id' => $business->id, 'mobile' => $mobile];
                 BusinessJoinRequest::create($data);
                 $invited_vendor++;
-                $this->sms->shoot(
+                $this->sms
+                    ->setFeatureType(FeatureType::BUSINESS)
+                    ->setBusinessType(BusinessType::B2B)
+                    ->shoot(
                     $number,
                     "You have been invited to serve corporate client. Just click the link- http://bit.ly/ShebaManagerApp. 
                     sheba.xyz will help you to grow and manage your business. by $business->name"

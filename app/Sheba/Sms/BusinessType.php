@@ -11,4 +11,5 @@ class BusinessType
     const BONDHU        = 'sBondhu';
     const MARKETPLACE   = 'sheba_xyz';
     const B2B           = 'sBusiness';
+    const COMMON        = 'common';
 }
