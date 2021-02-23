@@ -108,6 +108,9 @@ class ServiceGroupController extends Controller
                 $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
                 if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
             }
+
+            if(is_null($single_service_group->locations()->where('location_id',$location)->first())) return api_response($request, 1, 404);
+
             if ($location) {
                 $loc_is_published = Location::find($location)->publication_status;
                 if ($loc_is_published==1 && $single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
