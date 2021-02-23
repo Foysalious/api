@@ -24,7 +24,6 @@ class InventoryServiceClient
     private function call($method, $uri, $data = null)
     {
         try {
-
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
 
            /* if ($res['code'] != 200)
