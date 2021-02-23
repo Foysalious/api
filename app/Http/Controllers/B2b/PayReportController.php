@@ -68,8 +68,10 @@ class PayReportController extends Controller
     public function show($business, $payslip, Request $request, PayReportDetails $pay_report_details)
     {
         $pay_report_detail = $pay_report_details->setPayslip($payslip)->setMonthYear($request->month_year)->get();
-        /*return view('pdfs.quotation_details', compact('pay_report_detail'));
-        return App::make('dompdf.wrapper')->loadView('pdfs.quotation_details', compact('bid_details'))->download("quotation_details.pdf");*/
+
+        if($request->file=='pdf')
+            return App::make('dompdf.wrapper')->loadView('pdfs.payslip.payroll_details', compact('pay_report_detail'))->download("payroll_details.pdf");
+
         return api_response($request, null, 200, ['pay_report_detail' => $pay_report_detail]);
     }
 
