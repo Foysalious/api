@@ -198,10 +198,15 @@ class PrimeBank extends Bank
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->name;
         $data['account_no'] = $account;
-        $data['account_status'] = self::CPV_PENDING_UNSIGNED;
+        $data['account_status'] = $this->mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
         $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');
         $data['status_message_type'] = "pending";
         return $data;
+    }
+
+    private function mapAccountFullStatus($key)
+    {
+        return (config('neo_banking_account_status')['status'][$key]);
     }
 
 }
