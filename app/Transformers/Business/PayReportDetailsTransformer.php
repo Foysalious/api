@@ -37,6 +37,7 @@ class PayReportDetailsTransformer extends TransformerAbstract
         return [
             'business_member_id' => $this->businessMember->id,
             'company_name' => $this->businessMember->business->name,
+            'company_logo' => $this->businessMember->business->logo,
             'employee_id' => $this->businessMember->employee_id,
             'name' => $profile->name,
             'pro_pic' => $profile->pro_pic,
