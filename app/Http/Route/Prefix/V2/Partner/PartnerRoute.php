@@ -23,6 +23,7 @@ class PartnerRoute
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
             $api->get('trade-fair/stores', 'Partner\Webstore\TradeFairController@getStores');
             $api->get('trade-fair/stores-by-business-type', 'Partner\Webstore\TradeFairController@getStoresByBusinessType');
+            $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
