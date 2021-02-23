@@ -289,6 +289,8 @@ class JobController extends Controller
         $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
             $q->with('service');
         }]);
+        $methods = PartnerOrder::
+        dd($job->partner_order_id);
         $job->calculate(true);
 
         if (count($job->jobServices) == 0) {
@@ -351,6 +353,8 @@ class JobController extends Controller
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
+        $bill['payment methods'] = ['wallet'=>100
+                                    ,'credit'=>100];
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;
