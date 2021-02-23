@@ -23,20 +23,7 @@ class InventoryServiceClient
 
     private function call($method, $uri, $data = null)
     {
-        try {
-
-            $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-
-           /* if ($res['code'] != 200)
-                throw new InventoryServiceServerError($res['message']);*/
-            unset($res['code'], $res['message']);
-            return $res;
-        } catch (GuzzleException $e) {
-            $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400)
-                throw new InventoryServiceServerError($res['message']);
-            throw new InventoryServiceServerError($e->getMessage());
-        }
+        return  json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(),true);
     }
 
     private function makeUrl($uri)
