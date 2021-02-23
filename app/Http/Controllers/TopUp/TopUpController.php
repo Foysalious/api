@@ -15,6 +15,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
@@ -24,7 +25,7 @@ use Sheba\OAuth2\AuthUser;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -119,7 +120,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
@@ -205,10 +206,8 @@ class TopUpController extends Controller
         if (!in_array($extension, $valid_extensions))
             return api_response($request, null, 400, ['message' => 'File type not support']);
 
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        $agent = $auth_user->getBusiness();
-        $verifyPin->setAgent($auth_user->getBusiness())->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $agent = $request->user;
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $sheet_names = Excel::load($request->file)->getSheetNames();
         if (!in_array(TopUpExcel::SHEET, $sheet_names))

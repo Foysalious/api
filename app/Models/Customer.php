@@ -28,7 +28,7 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
 {
     use TopUpTrait, MovieTicketTrait, Wallet, ReportUpdater, VoucherGeneratorTrait;
 
-    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app'];
+    protected $fillable = ['name', 'mobile', 'email', 'password', 'fb_id', 'mobile_verified', 'email_verified', 'address', 'gender', 'dob', 'pro_pic', 'wallet', 'created_by', 'created_by_name', 'updated_by', 'updated_by_name', 'remember_token', 'reference_code', 'referrer_id', 'profile_id', 'has_rated_customer_app','is_completed'];
     protected $hidden = ['password', 'remember_token',];
     protected $casts = ['wallet' => 'double'];
     private $firstOrder;

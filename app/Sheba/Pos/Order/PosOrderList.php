@@ -28,7 +28,6 @@ class PosOrderList
     protected $sales_channel;
     protected $q;
     protected $type;
-    protected $orderStatus;
 
     /** @var PaymentLinkRepositoryInterface */
     private $paymentLinkRepo;
@@ -57,16 +56,6 @@ class PosOrderList
     public function setStatus($status)
     {
         $this->status = $status;
-        return $this;
-    }
-
-    /**
-     * @param $orderStatus
-     * @return PosOrderList
-     */
-    public function setOrderStatus($orderStatus)
-    {
-        $this->orderStatus = $orderStatus;
         return $this;
     }
 
@@ -242,12 +231,6 @@ class PosOrderList
         if ($type == 'new') $orders_query = $orders_query->where('status', OrderStatuses::PENDING);
         if ($type == 'running') $orders_query = $orders_query->whereIn('status', [OrderStatuses::PROCESSING, OrderStatuses::SHIPPED]);
         if ($type == 'completed') $orders_query = $orders_query->whereIn('status', [OrderStatuses::COMPLETED, OrderStatuses::CANCELLED, OrderStatuses::DECLINED]);
-        return $orders_query;
-    }
-
-    private function filteredByOrderStatus($orders_query, $orderStatus)
-    {
-        $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
     }
 

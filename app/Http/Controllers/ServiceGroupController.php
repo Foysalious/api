@@ -155,6 +155,8 @@ class ServiceGroupController extends Controller
                             "id" => $service->id,
                             "service_name" => $service->name,
                             'image' => $service->app_thumb,
+                            'app_thumb' => $service->app_thumb,
+                            'thumb' => $service->thumb,
                             "original_price" => 1000,
                             "discounted_price" => 500,
                             "discount" => 10,
