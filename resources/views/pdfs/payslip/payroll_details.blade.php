@@ -123,7 +123,11 @@
     <tr>
         <td style=""><p style="padding-left:17px; margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 20px; color: #000000;">Employee Salary</p></td>
         <td style="text-align: right">
-            <p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$pay_report_detail['employee_info']['company_name']}}</p>
+            @if($pay_report_detail['employee_info']['company_logo'])
+                <img src="{{ $pay_report_detail['employee_info']['company_logo'] }}" height="75"/>
+            @else
+                <p style="margin-top: -3px; margin-bottom: 0px; opacity: 0.8; font-family: Lato; font-size: 24px; font-weight: 300; color: #000000;">{{$pay_report_detail['employee_info']['company_name']}}</p>
+            @endif
         </td>
     </tr>
     <tr>
