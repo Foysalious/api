@@ -22,6 +22,14 @@ class InventoryServiceClient
         return $this->call('get', $uri);
     }
 
+    /**
+     * @param $method
+     * @param $uri
+     * @param null $data
+     * @return mixed
+     * @throws GuzzleException
+     * @throws InventoryServiceServerError
+     */
     private function call($method, $uri, $data = null)
     {
         try {
@@ -31,7 +39,7 @@ class InventoryServiceClient
             $http_code = $res->getStatusCode();
             $message = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
             if ($http_code > 399 && $http_code < 500) throw new InventoryServiceServerError($message, $http_code);
-            throw new InventoryServiceServerError($e->getMessage());
+            throw new InventoryServiceServerError($e->getMessage(),500);
         }
     }
 
