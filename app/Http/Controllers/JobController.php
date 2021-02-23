@@ -324,13 +324,8 @@ class JobController extends Controller
                 ));
             }
         }
-        $methods_with_amounts=[];
         $partnerOrder = $job->partnerOrder;
-        $payments = $partnerOrder->payments;
-        foreach($payments as $payment) array_push($methods_with_amounts,array(
-            'method' => $payment['method'],
-            'amount' => $payment['amount']
-        ));
+        $methods_with_amounts = $partnerOrder->payments()->select('method','amount')->get()->toArray();
         $partnerOrder->calculate(true);
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
