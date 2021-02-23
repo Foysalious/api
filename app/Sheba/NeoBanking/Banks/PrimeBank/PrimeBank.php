@@ -2,6 +2,7 @@
 
 use App\Sheba\NeoBanking\Banks\BankAccountInfoWithTransaction;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use Carbon\Carbon;
 use Exception;
 use GuzzleHttp\Exception\GuzzleException;
 use ReflectionException;
@@ -13,8 +14,12 @@ use Sheba\NeoBanking\Banks\CategoryGetter;
 use Sheba\NeoBanking\Banks\Completion;
 use Sheba\NeoBanking\DTO\BankFormCategory;
 use Sheba\NeoBanking\DTO\BankFormCategoryList;
+use Sheba\NeoBanking\Exceptions\AccountCreateException;
+use Sheba\NeoBanking\Exceptions\AccountNotFoundException;
+use Sheba\NeoBanking\Exceptions\AccountNumberAlreadyExistException;
 use Sheba\NeoBanking\Exceptions\InvalidBankCode;
 use Sheba\NeoBanking\Exceptions\InvalidListInsertion;
+use Sheba\NeoBanking\Statics\BankStatics;
 use Sheba\TPProxy\TPProxyServerError;
 
 class PrimeBank extends Bank
@@ -71,6 +76,23 @@ class PrimeBank extends Bank
     public function accountCreate()
     {
         return (new AccountCreate())->setBank($this)->setNaoBankingData($this->partner->neoBankInfo)->setPartner($this->partner)->setMobile($this->mobile)->makeData()->create()->store();
+    }
+
+    /**
+     * @param $account_no
+     * @throws AccountNotFoundException
+     * @throws AccountNumberAlreadyExistException
+     */
+    public function storeAccountNumber($account_no)
+    {
+        $neoBankAccount = $this->partner->neoBankAccount()->first();
+        if(!isset($neoBankAccount)) throw new AccountNotFoundException();
+        if($neoBankAccount->account_no !== null) throw new AccountNumberAlreadyExistException();
+        $neoBankAccount->account_no = $account_no;
+        $neoBankAccount->updated_at = Carbon::now();
+        $neoBankAccount->updated_by = 0;
+        $neoBankAccount->updated_by_name = "SBS - Prime Bank";
+        $neoBankAccount->save();
     }
 
     /**
@@ -198,15 +220,9 @@ class PrimeBank extends Bank
         $data['has_account'] = 1;
         $data['applicant_name'] = $status->name;
         $data['account_no'] = $account;
-        $data['account_status'] = $this->mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
+        $data['account_status'] = BankStatics::mapAccountFullStatus(self::CPV_PENDING_UNSIGNED);
         $data['status_message'] = config('neo_banking.cpv_pending_account_null_message');
         $data['status_message_type'] = "pending";
         return $data;
     }
-
-    private function mapAccountFullStatus($key)
-    {
-        return (config('neo_banking_account_status')['status'][$key]);
-    }
-
 }
