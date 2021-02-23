@@ -13,6 +13,7 @@ use Illuminate\Contracts\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Dal\UniversalSlug\Model as UniversalSlugModel;
+use Sheba\Dal\LocationService\LocationService;
 
 class ServiceGroupController extends Controller
 {
@@ -56,8 +57,18 @@ class ServiceGroupController extends Controller
         $service_groups->each(function ($service_group) use (&$service_group_list,$location) {
             $services = $service_group->services;
             $services_without_pivot_data = $services->each(function ($service) use($location) {
-                removeRelationsFromModel($service);
-                $service['slug'] = $service->getSlug();
+                if ($location) {
+                    $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                    $service_discount = $location_service->discounts()->running()->first();
+                    removeRelationsFromModel($service);
+                    $service['slug'] = $service->getSlug();
+                    $service['has_discount'] = $service_discount ? 1 : 0;
+                    $service['discount_amount'] = $service_discount ? $service_discount['amount'] : 0;
+                }
+                else {
+                    removeRelationsFromModel($service);
+                    $service['slug'] = $service->getSlug();
+                }
             });
             array_push($service_group_list, [
                 'id' => $service_group->id,
@@ -84,7 +95,6 @@ class ServiceGroupController extends Controller
     public function show($service_group, Request $request)
     {
         $single_service_group = ServiceGroup::find($service_group);
-        //dd($single_service_group->is_published_for_app);
         try {
             $this->validate($request, [
                 'location' => 'sometimes|numeric',
@@ -102,10 +112,10 @@ class ServiceGroupController extends Controller
                 $loc_is_published = Location::find($location)->publication_status;
                 if ($loc_is_published==1 && $single_service_group->is_published_for_app==1 && $single_service_group->is_published_for_web==1){
                 $service_group = ServiceGroup::with(['services' => function ($q) use ($location) {
-                    return $q->published()/*->orderBy('service_group_service.order')
+                    return $q->published()
                         ->whereHas('locations', function ($q) use ($location) {
                             $q->where('locations.id', $location);
-                        });*/->orderBy('stock_left');
+                        })->orderBy('stock_left');
                 }])->where('id', $service_group)->select('id', 'name', 'app_thumb')->first();
             } else {
                     return api_response($request, 1, 404);
@@ -137,19 +147,35 @@ class ServiceGroupController extends Controller
                 $services = [];
                 $service_group->services->load('category.parent');
                 foreach ($service_group->services as $service) {
+                    if ($location) {
+                        $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                        $service_discount = $location_service->discounts()->running()->first();
+                        $service = [
+                            'master_category_id' => $service->category->parent->id,
+                            'category_name' => $service->category->parent->name,
+                            "id" => $service->id,
+                            "service_name" => $service->name,
+                            'image' => $service->app_thumb,
+                            'app_thumb' => $service->app_thumb,
+                            'thumb' => $service->thumb,
+                            'has_discount'=> $service_discount ? 1 : 0,
+                            'total_stock' => (int)$service->stock,
+                            'stock_left' => (int)$service->stock_left
+                        ];
+                        array_push($services, $service);
+                    }
+                    else {
                     $service = [
                         'master_category_id' => $service->category->parent->id,
                         'category_name' => $service->category->parent->name,
                         "id" => $service->id,
                         "service_name" => $service->name,
                         'image' => $service->app_thumb,
-                        "original_price" => 1000,
-                        "discounted_price" => 500,
-                        "discount" => 50,
                         'total_stock' => (int)$service->stock,
                         'stock_left' => (int)$service->stock_left
                     ];
                     array_push($services, $service);
+                }
                 }
 
                 $service_group = [
