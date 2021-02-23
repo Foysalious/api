@@ -940,4 +940,31 @@ class SingleTopUpTest extends FeatureTestCase
         $this->assertEquals(401 ,$data['code']);
     }
 
+
+    //Gateway timeout Automation
+
+    public function testTopUpOrderGatewayTimeoutResponseCodeAndMessage()
+    {
+
+        $response = $this->post('/v2/top-up/affiliate', [
+            'mobile' => '+8801700999999',
+            'vendor_id' => $this->topUpVendor->id,
+            'connection_type' => 'prepaid',
+            'amount' => 112,
+            'password' => '12349'
+
+        ], [
+            'Authorization' => "Bearer $this->token"
+        ]);
+        $data = $response->decodeResponseJson();
+        $top_up_order=TopUpOrder::first();
+
+        $this->assertEquals($this->affiliate->id,$top_up_order->agent_id);
+        $this->assertEquals("Failed",$top_up_order->status);
+        $this->assertEquals("gateway_timeout",$top_up_order->failed_reason);
+        // $this->assertEquals(200, $data['code']);
+        //   $this->assertEquals("Recharge Request Successful", $data['message']);
+    }
+
+
 }
