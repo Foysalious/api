@@ -110,11 +110,12 @@ class CustomerController extends Controller
             $profile->dob = $request->dob;
             $profile->email = $request->email;
             $profile->update();
-            if($profile->name && $profile->gender && $profile->dob && $request->dob)
+            if($profile->name && $profile->gender && $profile->dob)
             {
-                $customer->is_completed = 1;
+                DB::table('customers')
+                    ->where('id', $customer->id)
+                    ->update(array('is_completed' => 1));
             }
-//            $customer->save();
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
