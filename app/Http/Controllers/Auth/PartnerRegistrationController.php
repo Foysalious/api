@@ -110,10 +110,10 @@ class PartnerRegistrationController extends Controller
                 if (!$resource) {
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
                 }
-               /* $affiliate = $profile->affiliate;
-                if (!$affiliate) {
-                    $this->profileRepository->registerAvatarByKit('affiliate', $profile);
-                }*/
+                /* $affiliate = $profile->affiliate;
+                 if (!$affiliate) {
+                     $this->profileRepository->registerAvatarByKit('affiliate', $profile);
+                 }*/
             } else {
                 $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
@@ -229,9 +229,10 @@ class PartnerRegistrationController extends Controller
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
 
         $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
-        if ($is_unicode) $name = "Partner No Name";
+        if ($is_unicode) $name = "partner-no-name";
 
-        $base_name    = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
+        if ($name == "partner-no-name") $base_name = $name = uniqid("partner-no-name-");
         $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
         if (in_array($name, array_merge($blacklist, $already_used))) {
 //            $name = $base_name . uniqid();
@@ -328,40 +329,48 @@ class PartnerRegistrationController extends Controller
     public function registerByProfile(Request $request, ErrorLog $error_log)
     {
         ini_set('max_execution_time', 220);
-
-        $this->validate($request, [
-            'company_name' => 'required|string',
-            'from' => 'string|in:' . implode(',', constants('FROM')),
-            'geo' => 'string',
-            'name' => 'string',
-            'number' => 'string',
-            'address' => 'string',
-            'business_type' => 'string',
-            'has_webstore' => 'sometimes|numeric|between:0,1'
-        ]);
-        $profile = $request->profile;
-        if (!$profile->resource)
-            $resource = Resource::create([
-                'profile_id'     => $profile->id,
-                'remember_token' => str_random(60),
-                'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
-            ]); else $resource = $profile->resource;
-        $this->setModifier($resource);
-        $request['package_id']   = config('sheba.partner_lite_packages_id');
-        $request['billing_type'] = 'monthly';
-        $request->merge(['number' => $profile->mobile]);
-        if ($request->has('name'))
-            $profile->update(['name' => $request->name]);
-        if ($request->has('gender'))
-            $profile->update(['gender' => $request->gender]);
-        if ($resource->partnerResources->count() == 0) {
-            $data    = $this->makePartnerCreateData($request);
-            $partner = $this->createPartner($resource, $data);
-            (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
-            $info = $this->profileRepository->getProfileInfo('resource', $profile);
-            return api_response($request, null, 200, ['info' => $info]);
-        } else {
-            return api_response($request, null, 403, ['message' => 'You already have a company.']);
+        try {
+            $this->validate($request, [
+                'company_name'  => 'required|string',
+                'from'          => 'string|in:' . implode(',', constants('FROM')),
+                'geo'           => 'string',
+                'name'          => 'string',
+                'number'        => 'string',
+                'address'       => 'string',
+                'business_type' => 'string',
+                'has_webstore'  => 'sometimes|numeric|between:0,1'
+            ]);
+            $profile = $request->profile;
+            if (!$profile->resource)
+                $resource = Resource::create([
+                    'profile_id'     => $profile->id,
+                    'remember_token' => str_random(60),
+                    'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
+                ]); else $resource = $profile->resource;
+            $this->setModifier($resource);
+            $request['package_id']   = config('sheba.partner_lite_packages_id');
+            $request['billing_type'] = 'monthly';
+            $request->merge(['number' => $profile->mobile]);
+            if ($request->has('name'))
+                $profile->update(['name' => $request->name]);
+            if ($request->has('gender'))
+                $profile->update(['gender' => $request->gender]);
+            if ($resource->partnerResources->count() == 0) {
+                $data    = $this->makePartnerCreateData($request);
+                $partner = $this->createPartner($resource, $data);
+                (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
+                $info = $this->profileRepository->getProfileInfo('resource', $profile);
+                return api_response($request, null, 200, ['info' => $info]);
+            } else {
+                return api_response($request, null, 403, ['message' => 'You already have a company.']);
+            }
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            $error_log->setException($e)->setRequest($request)->setErrorMessage($message)->send();
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (Throwable $e) {
+            $error_log->setException($e)->send();
+            return api_response($request, null, 500);
         }
     }
 
