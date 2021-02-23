@@ -48,6 +48,7 @@ use Sheba\Payment\PaymentManager;
 use Sheba\Payment\ShebaPaymentValidator;
 use Sheba\Services\FormatServices;
 use Sheba\UserAgentInformation;
+use Sheba\Dal\PartnerOrderPayment;
 use Throwable;
 
 class JobController extends Controller
@@ -289,8 +290,6 @@ class JobController extends Controller
         $job = $request->job->load(['partnerOrder.order', 'category', 'service', 'jobServices' => function ($q) {
             $q->with('service');
         }]);
-        $methods = PartnerOrder::
-        dd($job->partner_order_id);
         $job->calculate(true);
 
         if (count($job->jobServices) == 0) {
@@ -328,6 +327,8 @@ class JobController extends Controller
         }
         $partnerOrder = $job->partnerOrder;
         $partnerOrder->calculate(true);
+//        $methods = PartnerOrderPayment::select('method');
+//        dd($methods);
 
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
