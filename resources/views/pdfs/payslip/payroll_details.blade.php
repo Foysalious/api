@@ -42,13 +42,13 @@
             /*font-family: Lato;*/
             font-weight: normal;
             opacity: 0.8;
-            font-size: 10px;
+            font-size: 12px;
             text-align: left;
         }
         .tableHeadRegular{
             opacity: 0.8;
             font-family: Lato;
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             padding: 9px 20px;
             text-align: left;
@@ -56,13 +56,13 @@
         }
 
         .tQuestion{
-            font-size: 10px;
+            font-size: 12px;
             font-weight: bold;
             font-family: Lato;
             opacity: 0.8;
         }
         .tAnswer{
-            font-size: 10px;
+            font-size: 12px;
             opacity: 0.6;
             font-weight: normal;
             font-family: Lato;
@@ -104,7 +104,7 @@
         }
 
         .footer__row-info td {
-            font-size: 10px;
+            font-size: 12px;
             text-align: center;
             color: #000000;
         }
@@ -138,39 +138,39 @@
         <td style="width: 50%; border : none; vertical-align: top;">
             <table style="width: 50%; border : none">
                 <tr>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">Salary of</td>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Salary of</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['salary_info']['salary_month'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee ID</td>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee ID</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['employee_id'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee Name</td>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Employee Name</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 13px; font-weight: bold; color: #000000; opacity: 1">{{ $pay_report_detail['employee_info']['name'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Department</td>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['department'] }}</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Department</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['department'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Designation</td>
-                    <td style="font-family: Lato; padding-bottom: 13px;  font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['designation'] }}</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Designation</td>
+                    <td style="font-family: Lato; padding-bottom: 13px;  font-size: 12px; color: #000000; opacity: 0.8">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['designation'] }}</td>
                 </tr>
                 <tr>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">Email</td>
-                    <td style="vertical-align: top; font-family: Lato; font-size: 10px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">Email</td>
+                    <td style="vertical-align: top; font-family: Lato; font-size: 12px; color: #000000; opacity: 0.8; padding-bottom: 13px">:</td>
                     <td style="padding-left: 10px;  padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['email'] }}</td>
                 </tr>
                 <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">Mobile Number</td>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['mobile'] }}</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">Mobile Number</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8">{{ $pay_report_detail['employee_info']['mobile'] }}</td>
                 </tr>
             </table>
         </td>
@@ -184,20 +184,20 @@
         <td style="width: 100%; border : none; ">
             <table style="width: 67%; border : none">
                 <tr>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8; width: 39.2%;">
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 45%;">
                         Net Payable
                     </td>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 1; width: 3%">
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 1; width: 3%">
                         :
                     </td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 11px; font-weight: bold; color: #000000; opacity: 1;">
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 1;">
                         {{ $pay_report_detail['salary_info']['net_payable'] }}
                     </td>
                 </tr>
                 <tr >
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">In Words</td>
-                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 10px; color: #000000; opacity: 0.8">:</td>
-                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 10px; font-weight: bold; color: #000000; opacity: 0.8;width:100%;">
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 45%;">In Words</td>
+                    <td style="font-family: Lato; padding-bottom: 13px; font-size: 12px; color: #000000; opacity: 0.8; width: 3%">:</td>
+                    <td style="padding-left: 10px; padding-bottom: 13px; font-family: Lato; font-size: 12px; font-weight: bold; color: #000000; opacity: 0.8;width:100%;">
                         {{ $pay_report_detail['salary_info']['net_payable_in_word'] }}
                     </td>
                 </tr>
@@ -210,10 +210,10 @@
 
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
-        <td style="width:80%;font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
-            Addition
+        <td style="width:80%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
+            Additions
         </td>
-        <td style="width:20%; font-size: 10px; text-align: right; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
+        <td style="width:20%; font-size: 12px; text-align: right; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
             Amount
         </td>
     </tr>
@@ -222,10 +222,10 @@
     <tbody>
     @foreach($pay_report_detail['addition']['breakdown'] as $key => $value)
         <tr style="width: 100%">
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;width:80%">
+            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;width:500px">
                 {{ ucfirst($key) }}
             </td>
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:120px;text-align: right">
                 {{ $value }}
             </td>
         </tr>
@@ -234,10 +234,10 @@
 
     <tfoot>
     <tr>
-        <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             Total
         </td>
-        <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             {{ $pay_report_detail['addition']['total'] }}
         </td>
     </tr>
@@ -250,10 +250,10 @@
 
     <thead>
     <tr class="tableHeadRegular" style="background: #f8f8fb; width: 100%">
-        <td style="width:80%;font-size: 10px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
+        <td style="width:80%;font-size: 12px; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
             Deduction
         </td>
-        <td style="width:20%; font-size: 10px; text-align: right; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
+        <td style="width:20%; font-size: 12px; text-align: right; opacity: 0.8; font-weight: bold; font-family: Lato; padding: 10px;border: solid 1px #d2d8e6;">
             Amount
         </td>
     </tr>
@@ -262,10 +262,10 @@
     <tbody>
     @foreach($pay_report_detail['deduction']['breakdown'] as $key => $value)
         <tr style="width: 100%">
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;width:80%">
+            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px 10px;border: solid 1px #d2d8e6;width:500px">
                 {{ ucfirst($key) }}
             </td>
-            <td style="font-size: 10px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+            <td style="font-size: 12px; opacity: 0.8; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:120px;text-align: right">
                 {{ $value }}
             </td>
         </tr>
@@ -274,10 +274,10 @@
 
     <tfoot>
     <tr>
-        <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             Total
         </td>
-        <td style="font-size: 10px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
+        <td style="font-size: 12px; font-weight: bold; opacity: 0.8; font-weight: bold; font-family: Lato; text-align: right; padding: 5px;border-right: solid 1px #d2d8e6;width: 100%">
             {{ $pay_report_detail['deduction']['total'] }}
         </td>
     </tr>
@@ -290,34 +290,34 @@
 
     <tbody>
     <tr style="width: 100%">
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
             Gross Salary
         </td>
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
             {{ $pay_report_detail['salary_info']['gross_salary'] }}
         </td>
     </tr>
     <tr style="width: 100%">
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
-            Addition
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
+            Total Addition
         </td>
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
             {{ $pay_report_detail['addition']['total'] }}
         </td>
     </tr>
     <tr style="width: 100%">
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
-            Deduction
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
+            Total Deduction
         </td>
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
             {{ $pay_report_detail['deduction']['total'] }}
         </td>
     </tr>
     <tr style="width: 100%">
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px 10px;width:80%;text-align: right;">
             Net Payable
         </td>
-        <td style="font-size: 10px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
+        <td style="font-size: 12px; opacity: 1; font-weight: normal; font-family: Lato; padding: 5px;border: solid 1px #d2d8e6;width:20%;text-align: right">
             {{ $pay_report_detail['salary_info']['net_payable'] }}
         </td>
     </tr>
