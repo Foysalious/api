@@ -21,6 +21,10 @@ class Route
                         $api->post('/toggle-publish-for-shop', 'Inventory\ProductController@togglePublishForShopStatus');
                     });
                 });
+                $api->group(['prefix' => 'categories'], function ($api) {
+                    $api->get('/', 'Inventory\CategoryController@index');
+
+                });
             });
         });
     }

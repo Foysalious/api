@@ -11,11 +11,10 @@ class ProductRepositry extends BaseRepository
     public function getAllProducts($partner_id)
     {
         try {
-            $url = 'api/v1/partners/'.$partner_id.'/products';
+            $url = 'api/v1/partners/' . $partner_id . '/products';
             return $this->client->get($url);
         } catch (\Exception $e) {
-            if ($e->getCode() == 404)
-                if ($e->getCode() != 403) throw $e;
+            if ($e->getCode() != 403) throw $e;
         }
     }
 

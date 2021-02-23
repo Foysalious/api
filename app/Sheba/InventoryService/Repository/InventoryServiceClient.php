@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\InventoryService\Repository;
 
+
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -23,7 +24,15 @@ class InventoryServiceClient
 
     private function call($method, $uri, $data = null)
     {
-        return  json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(),true);
+        try {
+            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
+        } catch (GuzzleException $e) {
+            $res = $e->getResponse();
+            $http_code = $res->getStatusCode();
+            $message = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
+            if ($http_code > 399 && $http_code < 500) throw new InventoryServiceServerError($message, $http_code);
+            throw new InventoryServiceServerError($e->getMessage());
+        }
     }
 
     private function makeUrl($uri)
