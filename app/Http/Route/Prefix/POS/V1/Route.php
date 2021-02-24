@@ -13,6 +13,7 @@ class Route
                     $api->group(['prefix' => '{products}'], function ($api) {
                         $api->get('/', 'Inventory\ProductController@show');
                         $api->put('/', 'Inventory\ProductController@update');
+                        $api->delete('/', 'Inventory\ProductController@destroy');
                     });
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
