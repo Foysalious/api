@@ -1,7 +1,8 @@
 <?php namespace App\Sheba\InventoryService\Services;
 
 
-use App\Sheba\InventoryService\Repository\InventoryServiceClient;
+use App\Sheba\InventoryService\InventoryServerClient;
+
 
 class ProductService
 {
@@ -10,7 +11,7 @@ class ProductService
      * @return array|object|string|null
      */
 
-    public function __construct(InventoryServiceClient $client)
+    public function __construct(InventoryServerClient $client)
     {
         $this->client = $client;
     }
