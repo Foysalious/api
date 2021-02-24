@@ -268,7 +268,7 @@ class TopUpController extends Controller
                 return;
             }
 
-            dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $key + 2, $total, $bulk_request));
+            dispatch(new TopUpExcelJob($agent, $topup_order, $key + 2, $total, $bulk_request));
         });
 
         unlink($file_path);
