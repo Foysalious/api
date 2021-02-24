@@ -31,15 +31,9 @@ class PartnerTransactionController extends Controller
                 $bonuses->push($this->formatBonusTransaction($bonus_log));
             }
             $transactions = collect(array_merge($transactions->toArray(), $bonuses->toArray()));
-            $balance = 0;
-            $transactions = $transactions->sortBy('created_at')->map(function ($transaction, $key) use ($partner, &$balance) {
+            $transactions = $transactions->map(function ($transaction) {
                 $transaction['amount'] = (double)$transaction['amount'];
-//                if ($transaction['type'] == 'Credit') {
-//                    $transaction['balance'] = $balance += $transaction['amount'];
-//                } else {
-//                    $transaction['balance'] = $balance -= $transaction['amount'];
-//                }
-//                $transaction['balance'] = round($transaction['balance'], 2);
+                if (isset($transaction['balance'])) $transaction['balance'] = round($transaction['balance'], 2);
                 return $transaction;
             })->sortByDesc('created_at');
             if ($request->has('month') && $request->has('year')) {
