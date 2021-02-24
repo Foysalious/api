@@ -16,9 +16,15 @@ class Route
                     $api->post('/{category_id}', 'Inventory\CategoryController@update');
                     $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
                 });
-
                 $api->group(['prefix' => 'units'], function ($api) {
                     $api->get('/', "Inventory\UnitController@index");
+                });
+                $api->group(['prefix' => 'options'], function ($api) {
+                    $api->get('/', "Inventory\OptionController@index");
+                    $api->post('/', "Inventory\OptionController@store");
+                    $api->group(['prefix' => '{options}'], function ($api) {
+                        $api->put('/', "Inventory\OptionController@update");
+                    });
                 });
             });
         });

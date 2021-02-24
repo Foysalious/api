@@ -7,9 +7,6 @@ class HttpExceptionHandler extends Handler
 
     public function render()
     {
-        $response = [
-            'message' => $this->getMessage(),
-        ];
-        return response()->json($response, $this->getCode());
+        return response()->json($this->getMessage(), $this->getCode());
     }
 }
