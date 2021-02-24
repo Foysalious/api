@@ -58,7 +58,7 @@ class CategoryService
     public function makeUpdateData()
     {
         $data = [];
-        $data['name'] = $this->categoryName;
+        $data['name'] =  $this->categoryName;
         $data['modifier']  = $this->modifier;
         return $data;
 
@@ -74,6 +74,12 @@ class CategoryService
     {
         $data = $this->makeUpdateData();
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
+    }
+
+    public function delete()
+    {
+        $data = $this->makeUpdateData();
+        return $this->client->delete('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
     }
 
 }
