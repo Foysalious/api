@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Sheba\InventoryService\Repository\UnitRepository;
+use App\Sheba\InventoryService\Repository\UnitService;
 use Illuminate\Http\Request;
 
 
@@ -11,7 +11,7 @@ class UnitController extends Controller
 {
 
     Private $unitRepository;
-    public function __construct(UnitRepository $unit_repo)
+    public function __construct(UnitService $unit_repo)
     {
         $this->unitRepository = $unit_repo;
     }
