@@ -2,22 +2,22 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Sheba\InventoryService\Repository\ProductRepositry;
+use App\Sheba\InventoryService\Services\ProductService;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
 {
-    Private $productRepository;
+    Private $productService;
 
-    public function __construct(ProductRepositry $product_repo)
+    public function __construct(ProductService $product_service)
     {
-        $this->productRepository = $product_repo;
+        $this->productService = $product_service;
     }
 
     public function index(Request $request)
     {
-        $partner = $request->partner;
-        $products = $this->productRepository->getAllProducts($partner->id);
+        $partner = $request->auth_user->getPartner();
+        $products = $this->productService->getAllProducts($partner->id);
         return api_response($request, null, 200, $products);
     }
 
