@@ -34,7 +34,7 @@ class BusinessSmsHandler
             $message = str_replace("{{" . $variable . "}}", $value, $message);
         }
         $sms = $this->sms
-            ->setFeatureType(FeatureType::COMMON)
+            ->setFeatureType(FeatureType::BUSINESS)
             ->setBusinessType(FeatureType::BUSINESS)
             ->to($mobile)
             ->msg($message);
