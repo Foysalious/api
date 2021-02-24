@@ -33,10 +33,26 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $partner_id = $request->partner->id;
-        $modifier = $request->manager_resource->profile->name;
-        $this->categoryService->setModifier($modifier)->setPartner($partner_id)->setCategoryName($request->name)->store();
-        return api_response($request, null, 200);
+        $partner = $request->auth_user->getPartner();
+        $modifier = $request->auth_user->getResource()->profile->name;
+        $response = $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryName($request->name)->store();
+        return api_response($request, null, 200, $response);
+    }
+
+    public function update(Request $request,$partner_id,$category_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $modifier = $request->auth_user->getResource()->profile->name;
+        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->update();
+        return api_response($request, null, 200, $response);
+    }
+
+    public function delete(Request $request,$partner_id,$category_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $modifier = $request->auth_user->getResource()->profile->name;
+        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
+        return api_response($request, null, 200, $response);
     }
 
 }
