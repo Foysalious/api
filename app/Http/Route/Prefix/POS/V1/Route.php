@@ -20,6 +20,9 @@ class Route
                     $api->get('/', "Inventory\UnitController@index");
                 });
             });
+            $api->group(['prefix' => 'collections'], function($api){
+                $api->get('/', 'Inventory\CollectionController@index');
+            });
         });
     }
 }
