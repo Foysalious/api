@@ -31,16 +31,15 @@ class TopUpExcelJob extends TopUpJob
     /**
      * TopUpExcelJob constructor.
      * @param $agent
-     * @param $vendor
      * @param TopUpOrder $topup_order
      * @param $row
      * @param $total_row
      * @param TopUpBulkRequest $bulk
      */
-    public function __construct($agent, $vendor, TopUpOrder $topup_order, $row, $total_row, TopUpBulkRequest $bulk)
+    public function __construct($agent, TopUpOrder $topup_order, $row, $total_row, TopUpBulkRequest $bulk)
     {
         $this->setModifier($agent);
-        parent::__construct($agent, $vendor, $topup_order);
+        parent::__construct($topup_order);
 
         $this->file = $this->getFile($bulk);
         $this->row = $row;
