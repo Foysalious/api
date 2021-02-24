@@ -9,6 +9,11 @@ class Route
             $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['accessToken']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
+                    $api->post('/', 'Inventory\ProductController@store');
+                    $api->group(['prefix' => '{products}'], function ($api) {
+                        $api->get('/', 'Inventory\ProductController@show');
+                        $api->put('/', 'Inventory\ProductController@update');
+                    });
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Inventory\CategoryController@index');
