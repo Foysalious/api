@@ -20,12 +20,12 @@ class PartnerTransactionController extends Controller
         try {
             $partner = $request->partner;
             list($offset, $limit) = calculatePagination($request);
-            $transactions = $partner->transactions()->select('id', 'partner_id', 'type', 'amount', 'log', 'created_at', 'partner_order_id')->get()->map(function ($transaction) {
+            $transactions = $partner->transactions()->select('id', 'partner_id', 'type', 'balance', 'amount', 'log', 'created_at', 'partner_order_id')->get()->map(function ($transaction) {
                 $transaction['is_bonus'] = 0;
                 $transaction['valid_till'] = null;
                 return $transaction;
             });
-            $bonus_logs = $partner->bonusLogs()->with('spentOn')->get();
+            $bonus_logs = $partner->bonusLogs()->where('valid_till', '<=', Carbon::now()->toDateTimeString())->with('spentOn')->get();
             $bonuses = collect();
             foreach ($bonus_logs as $bonus_log) {
                 $bonuses->push($this->formatBonusTransaction($bonus_log));
@@ -34,12 +34,12 @@ class PartnerTransactionController extends Controller
             $balance = 0;
             $transactions = $transactions->sortBy('created_at')->map(function ($transaction, $key) use ($partner, &$balance) {
                 $transaction['amount'] = (double)$transaction['amount'];
-                if ($transaction['type'] == 'Credit') {
-                    $transaction['balance'] = $balance += $transaction['amount'];
-                } else {
-                    $transaction['balance'] = $balance -= $transaction['amount'];
-                }
-                $transaction['balance'] = round($transaction['balance'], 2);
+//                if ($transaction['type'] == 'Credit') {
+//                    $transaction['balance'] = $balance += $transaction['amount'];
+//                } else {
+//                    $transaction['balance'] = $balance -= $transaction['amount'];
+//                }
+//                $transaction['balance'] = round($transaction['balance'], 2);
                 return $transaction;
             })->sortByDesc('created_at');
             if ($request->has('month') && $request->has('year')) {
