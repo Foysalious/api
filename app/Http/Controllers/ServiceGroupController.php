@@ -163,19 +163,23 @@ class ServiceGroupController extends Controller
                             'thumb' => $service->thumb,
                             'has_discount'=> $service_discount ? 1 : 0,
                             'total_stock' => (int)$service->stock,
-                            'stock_left' => (int)$service->stock_left
+                            'stock_left' => (int)$service->stock_left,
+                            'slug' => $service->getSlug()
                         ];
                         array_push($services, $service);
                     }
-                    else {
+                else {
                     $service = [
                         'master_category_id' => $service->category->parent->id,
                         'category_name' => $service->category->parent->name,
                         "id" => $service->id,
                         "service_name" => $service->name,
                         'image' => $service->app_thumb,
+                        'app_thumb' => $service->app_thumb,
+                        'thumb' => $service->thumb,
                         'total_stock' => (int)$service->stock,
-                        'stock_left' => (int)$service->stock_left
+                        'stock_left' => (int)$service->stock_left,
+                        'slug' => $service->getSlug()
                     ];
                     array_push($services, $service);
                 }

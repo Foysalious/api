@@ -582,6 +582,7 @@ if (!function_exists('getTradeLicenceImagesFolder')) {
         return $url . 'images/profiles/trade_license_attachment_';
     }
 }
+
 if (!function_exists('getLoanFolder')) {
     /**
      * @param false $with_base_url
@@ -1225,6 +1226,7 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
     }
 
 }
+
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
 
     /**
@@ -1513,5 +1515,15 @@ if (!function_exists('getNameWithExtension')) {
     {
         $info = pathinfo($path);
         return $info['basename'];
+    }
+}
+
+if (!function_exists('getStorageExportFolder')) {
+    /**
+     * @return string
+     */
+    function getStorageExportFolder(): string
+    {
+        return storage_path('exports') . "/";
     }
 }
