@@ -16,6 +16,10 @@ class Route
                     $api->post('/{category_id}', 'Inventory\CategoryController@update');
 
                 });
+
+                $api->group(['prefix' => 'units'], function ($api) {
+                    $api->get('/', "Inventory\UnitController@index");
+                });
             });
         });
     }
