@@ -47,4 +47,12 @@ class CategoryController extends Controller
         return api_response($request, null, 200, $response);
     }
 
+    public function delete(Request $request,$partner_id,$category_id)
+    {
+        $partner = $request->auth_user->getPartner();
+        $modifier = $request->auth_user->getResource()->profile->name;
+        $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
+        return api_response($request, null, 200, $response);
+    }
+
 }
