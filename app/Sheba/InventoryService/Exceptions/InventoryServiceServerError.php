@@ -1,11 +1,10 @@
 <?php namespace App\Sheba\InventoryService\Exceptions;
 
-use App\Exceptions\DoNotReportException;
-use Exception;
+use App\Exceptions\ApiException;
 use Throwable;
 
 
-class InventoryServiceServerError extends DoNotReportException
+class InventoryServiceServerError extends ApiException
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
