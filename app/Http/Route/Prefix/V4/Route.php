@@ -6,11 +6,11 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v4', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->group(['prefix' => 'partners/{partner}'], function($api){
-                $api->group(['prefix' => 'collections'], function($api){
-                    $api->get('/', 'Inventory\CollectionController@index');
-                });
+
+            $api->group(['prefix' => 'collections'], function($api){
+                $api->get('/', 'Inventory\CollectionController@index');
             });
+
             $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
