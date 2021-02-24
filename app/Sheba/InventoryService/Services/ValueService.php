@@ -3,16 +3,17 @@
 
 use App\Sheba\InventoryService\InventoryServerClient;
 
-class OptionService
+class ValueService
 {
     public $partnerId;
     public $modifier;
     public $name;
     public $client;
     public $optionId;
+    public $valueId;
 
     /**
-     * OptionService constructor.
+     * ValueService constructor.
      * @param $client
      */
     public function __construct(InventoryServerClient $client)
@@ -21,18 +22,8 @@ class OptionService
     }
 
     /**
-     * @param mixed $optionId
-     * @return OptionService
-     */
-    public function setOptionId($optionId)
-    {
-        $this->optionId = $optionId;
-        return $this;
-    }
-
-    /**
      * @param mixed $partnerId
-     * @return OptionService
+     * @return ValueService
      */
     public function setPartnerId($partnerId)
     {
@@ -42,7 +33,7 @@ class OptionService
 
     /**
      * @param mixed $modifier
-     * @return OptionService
+     * @return ValueService
      */
     public function setModifier($modifier)
     {
@@ -52,7 +43,7 @@ class OptionService
 
     /**
      * @param mixed $name
-     * @return OptionService
+     * @return ValueService
      */
     public function setName($name)
     {
@@ -60,10 +51,24 @@ class OptionService
         return $this;
     }
 
-    public function getOptions()
+    /**
+     * @param mixed $valueId
+     * @return ValueService
+     */
+    public function setValueId($valueId)
     {
-        $url = 'api/v1/partners/'.$this->partnerId.'/options';
-        return $this->client->get($url);
+        $this->valueId = $valueId;
+        return $this;
+    }
+
+    /**
+     * @param mixed $optionId
+     * @return ValueService
+     */
+    public function setOptionId($optionId)
+    {
+        $this->optionId = $optionId;
+        return $this;
     }
 
     private function makeData()
@@ -78,12 +83,14 @@ class OptionService
     public function store()
     {
         $data = $this->makeData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/options', $data);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/options/'.$this->optionId.'/values', $data);
     }
 
     public function update()
     {
         $data = $this->makeData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/options/'.$this->optionId, $data);
+        return $this->client->put('api/v1/partners/'.$this->partnerId.'/values/'.$this->valueId, $data);
     }
+
+
 }

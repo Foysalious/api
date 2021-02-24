@@ -24,6 +24,12 @@ class Route
                     $api->post('/', "Inventory\OptionController@store");
                     $api->group(['prefix' => '{options}'], function ($api) {
                         $api->put('/', "Inventory\OptionController@update");
+                        $api->post('values', "Inventory\ValueController@store");
+                    });
+                });
+                $api->group(['prefix' => 'values'], function ($api) {
+                    $api->group(['prefix' => '{values}'], function ($api) {
+                        $api->put('/', "Inventory\ValueController@update");
                     });
                 });
             });
