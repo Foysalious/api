@@ -1,12 +1,19 @@
-<?php namespace App\Sheba\InventoryService\Repository;
+<?php namespace App\Sheba\InventoryService\Services;
 
 
-class CategoryRepository extends BaseRepository
+use App\Sheba\InventoryService\InventoryServerClient;
+
+class CategoryService
 {
-
     public $partnerId;
     public $modifier;
     public $categoryName;
+    public $client;
+
+    public function __construct(InventoryServerClient $client)
+    {
+        $this->client = $client;
+    }
 
     public function setModifier($modifier)
     {
@@ -26,17 +33,12 @@ class CategoryRepository extends BaseRepository
         return $this;
     }
 
-
     public function getAllMasterCategories($partner_id)
     {
-        try {
-            $url = 'api/v1/partners/'.$partner_id.'/categories';
-            return $this->client->get($url);
-        } catch (\Exception $e) {
-            if ($e->getCode() != 403) throw $e;
-        }
-
+        $url = 'api/v1/partners/'.$partner_id.'/categories';
+        return $this->client->get($url);
     }
+
     public function makeData()
     {
         $data = [];
@@ -49,12 +51,8 @@ class CategoryRepository extends BaseRepository
 
     public function store()
     {
-        try{
-            $data = $this->makeData();
-            return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data);
-        }catch(\Exception $e) {
-            if ($e->getCode() != 403) throw $e;
-        }
+        $data = $this->makeData();
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories', $data);
     }
 
 }

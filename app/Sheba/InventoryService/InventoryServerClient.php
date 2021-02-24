@@ -1,4 +1,4 @@
-<?php namespace App\Sheba\InventoryService\Repository;
+<?php namespace App\Sheba\InventoryService;
 
 
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
@@ -6,7 +6,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 
-class InventoryServiceClient
+class InventoryServerClient
 {
     protected $client;
     protected $baseUrl;
