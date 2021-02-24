@@ -1,5 +1,6 @@
-<?php namespace App\Sheba\InventoryService\Repository;
+<?php
 
+namespace App\Sheba\InventoryService\Repository;
 
 use App\Sheba\InventoryService\InventoryServerClient;
 
