@@ -1,7 +1,7 @@
 <?php namespace Sheba\Exceptions\Handlers;
 
 
-class ApiExceptionHandler extends Handler
+class HttpExceptionHandler extends Handler
 {
     use GenericHandler;
 

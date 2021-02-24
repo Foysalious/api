@@ -28,9 +28,6 @@ class CategoryController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
-            'name' => 'required|string',
-        ]);
         $partner_id = $request->partner->id;
         $modifier = $request->manager_resource->profile->name;
         $this->categoryRepository->setModifier($modifier)->setPartner($partner_id)->setCategoryName($request->name)->store();

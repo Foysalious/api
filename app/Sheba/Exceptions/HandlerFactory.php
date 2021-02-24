@@ -1,12 +1,12 @@
 <?php namespace Sheba\Exceptions;
 
-use App\Exceptions\ApiException;
+use App\Exceptions\HttpException;
 use App\Exceptions\DoNotReportException;
 use Exception as BaseException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\Exceptions\ExceptionForClient;
-use Sheba\Exceptions\Handlers\ApiExceptionHandler;
+use Sheba\Exceptions\Handlers\HttpExceptionHandler;
 use Sheba\Exceptions\Handlers\ApiValidationExceptionHandler;
 use Sheba\Exceptions\Handlers\ExceptionForClientHandler;
 use Sheba\Exceptions\Handlers\Handler;
@@ -53,7 +53,7 @@ class HandlerFactory
         if ($e instanceof MethodNotAllowedHttpException) return app(MethodNotAllowedHttpExceptionHandler::class);
         if ($e instanceof NotFoundHttpException) return app(NotFoundHttpExceptionHandler::class);
         if ($e instanceof RouteNotFoundException) return app(RouteNotFoundExceptionHandler::class);
-        if ($e instanceof ApiException) return app(ApiExceptionHandler::class);
+        if ($e instanceof HttpException) return app(HttpExceptionHandler::class);
         if ($e instanceof ExceptionForClient) return app(ExceptionForClientHandler::class);
         if ($e instanceof Throwable) return app(ThrowableHandler::class);
         return null;

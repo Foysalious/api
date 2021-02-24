@@ -1,10 +1,10 @@
 <?php namespace App\Sheba\InventoryService\Exceptions;
 
-use App\Exceptions\ApiException;
+use App\Exceptions\HttpException;
 use Throwable;
 
 
-class InventoryServiceServerError extends ApiException
+class InventoryServiceServerError extends HttpException
 {
     public function __construct($message = "", $code = 402, Throwable $previous = null)
     {
