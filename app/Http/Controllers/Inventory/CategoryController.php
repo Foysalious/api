@@ -16,8 +16,8 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
-        $partner_id = $request->user->id;
-        $products = $this->categoryRepository->getAllMasterCategories($partner_id);
+        $partner = $request->auth_user->getPartner();
+        $products = $this->categoryRepository->getAllMasterCategories($partner->id);
         return api_response($request, null, 200, $products);
     }
 
