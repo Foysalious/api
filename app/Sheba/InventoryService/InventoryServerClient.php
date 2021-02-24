@@ -1,5 +1,6 @@
-<?php namespace App\Sheba\InventoryService;
+<?php
 
+namespace App\Sheba\InventoryService;
 
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;

@@ -38,6 +38,9 @@ class Route
                     });
                 });
             });
+            $api->group(['prefix' => 'collections'], function($api){
+                $api->get('/', 'Inventory\CollectionController@index');
+            });
         });
     }
 }
