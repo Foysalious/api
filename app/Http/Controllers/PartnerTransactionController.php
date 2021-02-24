@@ -25,7 +25,7 @@ class PartnerTransactionController extends Controller
                 $transaction['valid_till'] = null;
                 return $transaction;
             });
-            $bonus_logs = $partner->bonusLogs()->where('valid_till', '<=', Carbon::now()->toDateTimeString())->with('spentOn')->get();
+            $bonus_logs = $partner->bonusLogs()->with('spentOn')->get();
             $bonuses = collect();
             foreach ($bonus_logs as $bonus_log) {
                 $bonuses->push($this->formatBonusTransaction($bonus_log));
