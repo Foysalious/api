@@ -6,9 +6,7 @@ class Route
     public function set($api)
     {
         $api->group(['prefix' => 'v4', 'namespace' => 'App\Http\Controllers'], function ($api) {
-            $api->group(['prefix' => 'POS/V1'], function ($api) {
-                $api->get('units', "Inventory\UnitController@index");
-            });
+
             $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['manager.auth']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
