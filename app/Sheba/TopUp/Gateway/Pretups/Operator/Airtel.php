@@ -1,6 +1,7 @@
 <?php namespace Sheba\TopUp\Gateway\Pretups\Operator;
 
 use Sheba\TopUp\Gateway\Gateway;
+use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Pretups\Pretups;
 
 class Airtel extends Pretups implements Gateway
@@ -21,5 +22,10 @@ class Airtel extends Pretups implements Gateway
     public function getShebaCommission()
     {
         return self::SHEBA_COMMISSION;
+    }
+
+    public function getName()
+    {
+        return Names::AIRTEL;
     }
 }

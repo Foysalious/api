@@ -8,7 +8,7 @@ trait Ssl
 {
     private $ssl;
 
-    public function __construct(SslClient $ssl)
+    public function __construct(SslVrClient $ssl)
     {
         $this->ssl = $ssl;
     }
@@ -25,7 +25,7 @@ trait Ssl
 
     public function getTopUpInitialStatus()
     {
-        return config('topup.status.pending')['sheba'];
+        return config('topup.status.pending.sheba');
     }
 
     /**
