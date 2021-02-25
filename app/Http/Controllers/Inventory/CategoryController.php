@@ -55,4 +55,12 @@ class CategoryController extends Controller
         return api_response($request, null, 200, $response);
     }
 
+    public function allCategory(Request $request)
+    {
+
+        $categories = $this->categoryService->getallcategory();
+        return api_response($request, null, 200, $categories);
+
+    }
+
 }

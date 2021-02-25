@@ -82,4 +82,10 @@ class CategoryService
         return $this->client->delete('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
     }
 
+    public function getallcategory()
+    {
+        $url = 'api/allCategory';
+        return $this->client->get($url);
+    }
+
 }
