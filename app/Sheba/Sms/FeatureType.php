@@ -21,4 +21,16 @@ class FeatureType
     const WEB_STORE                  = 'eCom';
     const REGISTRATION               = 'registration';
     const MARKET_PLACE_ORDER         = 'market_place_order';
+    const DUE_PAYMENT_REQUEST        = 'due_payment_request';
+    const PARTNER_RENEWAL            = 'partner_renewal';
+    const SEND_DUE_DEPOSIT_TO_CUSTOMER  = 'send_due_deposit_to_customer';
+    const AFFILIATE_BONUS            = 'affiliate_bonus';
+    const INSUFFICIENT_NOTIFICATION  = 'insufficient_notification';
+    const PARTNER_ORDER_REQUEST      = 'partner_order_request';
+    const TRIP_REQUEST_ACCEPT        = 'trip_request_accept';
+    const PARTNER_AFFILIATION        = 'partner_affiliation';
+    const TRANSPORT_TICKET_CONFIRM   = 'transport_ticket_confirm';
+    const PARTNER_REFERRAL           = 'partner_referral';
+    const PARTNER_SUBSCRIPTION       = 'partner_subscription';
+    const CHECKOUT                   = 'checkout';
 }
