@@ -54,7 +54,7 @@ class NeoBankingGeneralStatics
             'applicant_name_eng' => 'required|string',
             'father_name' => 'required|string',
             'mother_name' => 'required|string',
-            'spouse_name' => 'required|string',
+            'spouse_name' => 'string',
             'pres_address' => 'required|string',
             'id_front_name' => 'required|string',
             'id_back_name' => 'required|string',
