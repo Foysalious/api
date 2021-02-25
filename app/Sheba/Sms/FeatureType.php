@@ -18,5 +18,7 @@ class FeatureType
     const AFFILIATE_FAKE_REFERRAL    = 'affiliate_fake_referral';
     const BID                        = 'bid';
     const POS                        = 'pos';
-    const WEB_STORE                   = 'web_store';
+    const WEB_STORE                  = 'eCom';
+    const REGISTRATION               = 'registration';
+    const MARKET_PLACE_ORDER         = 'market_place_order';
 }

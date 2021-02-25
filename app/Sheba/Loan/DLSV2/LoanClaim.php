@@ -1,5 +1,4 @@
-<?php
-namespace App\Sheba\Loan\DLSV2;
+<?php namespace App\Sheba\Loan\DLSV2;
 
 
 use App\Models\PartnerBankLoan;

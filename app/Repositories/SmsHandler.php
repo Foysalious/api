@@ -14,9 +14,6 @@ class SmsHandler
     /** @var bool */
     private $isOff;
 
-    private $businessType;
-    private $featureType;
-
     /** @var Sms */
     public function __construct($event_name)
     {

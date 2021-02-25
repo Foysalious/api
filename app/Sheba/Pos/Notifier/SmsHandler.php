@@ -40,7 +40,9 @@ class SmsHandler {
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             try{
-                $sms->shoot();
+                $sms->setBusinessType(BusinessType::SMANAGER)
+                    ->setFeatureType(FeatureType::POS)
+                    ->shoot();
             }catch(\Throwable $e)
             {
             }

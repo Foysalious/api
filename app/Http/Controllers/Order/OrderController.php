@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -153,7 +155,10 @@ class OrderController extends Controller
             if (!(bool)config('sheba.send_order_create_sms')) return;
 
             if (!$order->jobs->first()->resource_id) {
-                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                (new SmsHandler('order-created-to-partner'))
+                    ->setBusinessType(BusinessType::MARKETPLACE)
+                    ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                    ->send($partner->getContactNumber(), [
                     'order_code' => $order->code(), 'partner_name' => $partner->name
                 ]);
             }
