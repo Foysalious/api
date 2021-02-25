@@ -92,6 +92,7 @@ class PaymentLinkController extends Controller
                 'purpose'   => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
@@ -162,6 +163,7 @@ class PaymentLinkController extends Controller
                 'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
@@ -215,6 +217,7 @@ class PaymentLinkController extends Controller
     public function getDefaultLink(Request $request)
     {
         try {
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
                 $default_payment_link = [
