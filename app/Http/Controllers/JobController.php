@@ -350,7 +350,7 @@ class JobController extends Controller
         $bill['material_price'] = (double)$job->materialPrice;
         $bill['total_service_price'] = (double)$job->servicePrice;
         $bill['discount'] = (double)$job->discountWithoutDeliveryDiscount;
-        $bill['payment methods'] = $methods_with_amounts;
+        $bill['payment-methods'] = $methods_with_amounts;
         $bill['services'] = $services;
         $bill['service_list'] = $service_list;
         $bill['category_name'] = $job->category->name;
