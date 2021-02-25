@@ -1,7 +1,7 @@
 <?php namespace App\Http\Controllers\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Sheba\InventoryService\Repository\UnitService;
+use App\Sheba\InventoryService\Services\UnitService;
 use Illuminate\Http\Request;
 
 
