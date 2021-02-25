@@ -421,7 +421,7 @@ class VoucherController extends Controller
 
         $voucher = $voucherRepository->create($voucher);
 
-        return api_response($request, null, 200);
+        return api_response($request, null, 200, ['code' => $voucher->code]);
     }
 
     private function generateRandomString($length = 10) {
