@@ -324,8 +324,17 @@ class JobController extends Controller
                 ));
             }
         }
+        $payment_method_names = [
+            "cbl" => "City Bank",
+            "Ssl" => "Other Debit/Credit",
+            "Wallet" => "Sheba Credit"
+        ];
         $partnerOrder = $job->partnerOrder;
         $methods_with_amounts = $partnerOrder->payments()->select('method','amount')->get()->toArray();
+
+        foreach ($methods_with_amounts as &$method) {
+            $method['name'] =$payment_method_names[$method['method']];
+        }
         $partnerOrder->calculate(true);
         $original_delivery_charge = $job->deliveryPrice;
         $delivery_discount = $job->deliveryDiscount;
