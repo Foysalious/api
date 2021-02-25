@@ -19,6 +19,12 @@ class ProductService
     protected $warrantyUnit;
     protected $vatPercentage;
     protected $unitId;
+    protected $images;
+    protected $wholesalePrice;
+    protected $cost;
+    protected $price;
+    protected $stock;
+    protected $channelId;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -138,6 +144,12 @@ class ProductService
             'warranty_unit' => $this->warrantyUnit ?: 'day',
             'vat_percentage' => $this->vatPercentage ?: 0,
             'unit_id' => $this->unitId,
+            'images' => $this->images,
+            'wholesale_price' => $this->wholesalePrice,
+            'cost' => $this->cost,
+            'price' => $this->price,
+            'stock' => $this->stock,
+            'channelId' => $this->channelId,
         ];
     }
 

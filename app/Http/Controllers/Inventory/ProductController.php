@@ -40,6 +40,12 @@ class ProductController extends Controller
             ->setWarrantyUnit($request->warranty_unit)
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
+            ->setImages($request->images)
+            ->setWholesalePrice($request->wholesale_price)
+            ->setCost($request->cost)
+            ->setPrice($request->price)
+            ->setStock($request->stock)
+            ->setChannelId($request->channel_id)
             ->store();
         return http_response($request, null, 200, $response);
     }
