@@ -295,7 +295,7 @@ return [
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
                 'input_type'    => 'email',
-                'mandatory'     => false
+                'mandatory'     => true
             ],
             [
                 'field_type'    => 'editText',
@@ -330,6 +330,7 @@ return [
                 'error_message' => 'ট্রেড লাইসেন্স মেয়াদ উত্তির্নের তারিখ পূরণ আবশ্যক',
                 'input_type'    => 'number',
                 'mandatory'     => true,
+                'future_date'   => true
             ],
             [
                 'field_type'    => 'date',
