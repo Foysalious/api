@@ -1252,13 +1252,10 @@ if (!function_exists('getResizedUrls')) {
      */
     function getResizedUrls($url, $height, $width)
     {
-        /** @var ImageResizer $resizer */
-        $resizer = app(ImageResizer::class);
-        $resizer
-            ->setImage(new S3Image($url))
-            ->pushSize(new ImageSize($height, $width))
-            ->buildUrls();
+        if (!$url) return [];
 
+        $resizer = getResizer($url, $height, $width);
+        $resizer->buildUrls();
         return [
             "webp" => $resizer->getWebpUrls(),
             "original" => $resizer->getOriginalExtUrls()
@@ -1275,6 +1272,21 @@ if (!function_exists('resizeAndSaveImage')) {
      */
     function resizeAndSaveImage($url, $height, $width, $image = null)
     {
+        $resizer = getResizer($url, $height, $width, $image);
+        $resizer->resizeAndSave();
+    }
+}
+
+if (!function_exists('getResizer')) {
+    /**
+     * @param $url
+     * @param $height
+     * @param $width
+     * @param null $image
+     * @return ImageResizer
+     */
+    function getResizer($url, $height, $width, $image = null)
+    {
         $s3_image = new S3Image($url);
         if ($image) $s3_image->setImage($image);
 
@@ -1282,8 +1294,9 @@ if (!function_exists('resizeAndSaveImage')) {
         $resizer = app(ImageResizer::class);
         $resizer
             ->setImage($s3_image)
-            ->pushSize(new ImageSize($height, $width))
-            ->resizeAndSave();
+            ->pushSize(new ImageSize($height, $width));
+
+        return $resizer;
     }
 }
 
