@@ -213,10 +213,14 @@ class TopUpController extends Controller
         $agent = $request->user;
         $this->setModifier($agent);
 
-        $verifyPin->setAgent($agent)
+        /**
+         * MANUALLY OFF FOR TESTING
+         *
+         * $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
             ->setRequest($request)
             ->verify();
+         */
 
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
