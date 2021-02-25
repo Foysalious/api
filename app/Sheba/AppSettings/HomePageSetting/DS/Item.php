@@ -2,10 +2,12 @@
 
 use Carbon\Carbon;
 use Sheba\AppSettings\HomePageSetting\Exceptions\UnsupportedTarget;
+use Sheba\AppSettings\HomePageSetting\Supported\Sections;
 use Sheba\AppSettings\HomePageSetting\Supported\Targets;
 
 class Item
 {
+    protected $sectionType;
     protected $targetType;
     protected $targetId;
     protected $name;
@@ -30,11 +32,17 @@ class Item
     protected $link;
     protected $children;
     protected $slug;
-    protected $start_date;
-    protected $end_date;
+    protected $startDate;
+    protected $endDate;
     protected $variables;
     protected $universalSlug;
     protected $categoryId;
+
+    public function setSectionType($section_type)
+    {
+        $this->sectionType = $section_type;
+        return $this;
+    }
 
     /**
      * @param mixed $variables
@@ -68,22 +76,22 @@ class Item
     }
 
     /**
-     * @param mixed $start_date
+     * @param mixed $startDate
      * @return Item
      */
-    public function setStartDate($start_date)
+    public function setStartDate($startDate)
     {
-        $this->start_date = $start_date;
+        $this->startDate = $startDate;
         return $this;
     }
 
     /**
-     * @param mixed $end_date
+     * @param mixed $endDate
      * @return Item
      */
-    public function setEndDate($end_date)
+    public function setEndDate($endDate)
     {
-        $this->end_date = $end_date;
+        $this->endDate = $endDate;
         return $this;
     }
 
@@ -302,38 +310,57 @@ class Item
     public function toArray()
     {
         return [
-            'target_type' => $this->targetType,
-            'target_id' => $this->targetId ? (int)$this->targetId : null,
-            'category_id' => $this->categoryId ? (int)$this->categoryId : null,
-            'name' => $this->name,
-            'icon' => $this->icon,
-            'icon_png' => $this->iconPng,
-            'icon_png_sizes' => getResizedUrls($this->iconPng, 52, 52),
-            'app_thumb' => $this->appThumb,
-            'app_thumb_sizes' => getResizedUrls($this->appThumb, 100, 100),
-            'thumb' => $this->thumb,
-            'thumb_sizes' => getResizedUrls($this->thumb, 180, 270),
-            'app_banner' => $this->appBanner,
-            'app_banner_sizes' => getResizedUrls($this->appBanner, 150, 365),
-            'banner' => $this->banner,
-            'video' => $this->video,
-            'is_parent' => $this->isParent,
-            'is_flash' => $this->isFlash,
-            'is_video' => $this->isVideo,
-            'height' => $this->height,
-            'valid_till' => $this->validTill ? $this->validTill->toDateTimeString() : null,
-            'voucher_code' => $this->voucherCode,
-            'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
-            'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
-            'ratio' => $this->ratio,
-            'package_name' => $this->packageName,
-            'link' => $this->link,
-            'children' => $this->children,
-            'slug' => $this->slug,
-            'universal_slug' => $this->universalSlug,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'variables' => $this->variables
+                'target_type' => $this->targetType,
+                'target_id' => $this->targetId ? (int)$this->targetId : null,
+                'category_id' => $this->categoryId ? (int)$this->categoryId : null,
+                'name' => $this->name,
+                'icon' => $this->icon,
+                'icon_png' => $this->iconPng,
+                'app_thumb' => $this->appThumb,
+                'thumb' => $this->thumb,
+                'app_banner' => $this->appBanner,
+                'banner' => $this->banner,
+                'video' => $this->video,
+                'is_parent' => $this->isParent,
+                'is_flash' => $this->isFlash,
+                'is_video' => $this->isVideo,
+                'height' => $this->height,
+                'valid_till' => $this->validTill ? $this->validTill->toDateTimeString() : null,
+                'voucher_code' => $this->voucherCode,
+                'updated_at' => $this->updatedAt ? $this->updatedAt->toDateTimeString() : null,
+                'updated_at_timestamp' => $this->updatedAt ? $this->updatedAt->timestamp : null,
+                'ratio' => $this->ratio,
+                'package_name' => $this->packageName,
+                'link' => $this->link,
+                'children' => $this->children,
+                'slug' => $this->slug,
+                'universal_slug' => $this->universalSlug,
+                'start_date' => $this->startDate,
+                'end_date' => $this->endDate,
+                'variables' => $this->variables
+            ] + $this->getResizedImages();
+    }
+
+    private function getResizedImages()
+    {
+        // Category images are considered as default. Reason: NFI.
+        $category_sizes = config('image_sizes.category');
+        $icon_png_size = $category_sizes['icon_png'];
+        $thumb_size = $category_sizes['thumb'];
+        $app_thumb_size = $category_sizes['app_thumb'];
+        $app_banner_size = $category_sizes['app_banner'];
+
+        if ($this->sectionType == Sections::SLIDER) {
+            $app_banner_size = config('image_sizes.slider.app_banner');
+        } else if ($this->sectionType == Sections::BANNER || $this->sectionType == Sections::BANNER_GROUP) {
+            $app_banner_size = config('image_sizes.offer.app_banner');
+        }
+
+        return [
+            'icon_png_sizes' => getResizedUrls($this->iconPng, $icon_png_size['height'], $icon_png_size['width']),
+            'app_thumb_sizes' => getResizedUrls($this->appThumb, $app_thumb_size['height'], $app_thumb_size['width']),
+            'thumb_sizes' => getResizedUrls($this->thumb, $thumb_size['height'], $thumb_size['width']),
+            'app_banner_sizes' => getResizedUrls($this->appBanner, $app_banner_size['height'], $app_banner_size['width']),
         ];
     }
 }
