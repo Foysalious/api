@@ -33,4 +33,5 @@ class FeatureType
     const PARTNER_REFERRAL           = 'partner_referral';
     const PARTNER_SUBSCRIPTION       = 'partner_subscription';
     const CHECKOUT                   = 'checkout';
+    const SMS_CAMPAIGN               = 'sms_campaign';
 }
