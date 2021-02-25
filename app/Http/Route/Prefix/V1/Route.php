@@ -329,6 +329,8 @@ class Route
                 });
             });
             $api->get('test/autosp', 'ShebaController@testAutoSpRun');
+
+            $api->post('register-mobile', 'ShebaController@registerCustomer');
         });
         return $api;
     }

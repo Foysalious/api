@@ -5,6 +5,8 @@ use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
 use App\Models\Customer;
 use App\Models\PartnerOrder;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
 use Sheba\AppVersion\AppVersionManager;
 use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Category\Category;
@@ -379,6 +381,12 @@ class ShebaController extends Controller
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+    }
+
+    public function registerCustomer(Request $request, CustomerRepository $cr)
+    {
+        $info = ['mobile' => $request->mobile];
+        $cr->registerMobile($info);
     }
 
     public function testAutoSpRun()
