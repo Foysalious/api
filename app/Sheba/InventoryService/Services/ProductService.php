@@ -121,6 +121,66 @@ class ProductService
         return $this;
     }
 
+    /**
+     * @param mixed $images
+     * @return ProductService
+     */
+    public function setImages($images)
+    {
+        $this->images = $images;
+        return $this;
+    }
+
+    /**
+     * @param mixed $wholesalePrice
+     * @return ProductService
+     */
+    public function setWholesalePrice($wholesalePrice)
+    {
+        $this->wholesalePrice = $wholesalePrice;
+        return $this;
+    }
+
+    /**
+     * @param mixed $cost
+     * @return ProductService
+     */
+    public function setCost($cost)
+    {
+        $this->cost = $cost;
+        return $this;
+    }
+
+    /**
+     * @param mixed $price
+     * @return ProductService
+     */
+    public function setPrice($price)
+    {
+        $this->price = $price;
+        return $this;
+    }
+
+    /**
+     * @param mixed $stock
+     * @return ProductService
+     */
+    public function setStock($stock)
+    {
+        $this->stock = $stock;
+        return $this;
+    }
+
+    /**
+     * @param mixed $channelId
+     * @return ProductService
+     */
+    public function setChannelId($channelId)
+    {
+        $this->channelId = $channelId;
+        return $this;
+    }
+
     public function getAllProducts($partner_id)
     {
         $url = 'api/v1/partners/' . $partner_id . '/products';
