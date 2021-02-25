@@ -388,6 +388,7 @@ class VoucherController extends Controller
         $this->validate($request, [
             'mobile' => 'required|mobile:bd',
             'amount' => 'required|numeric',
+            'cap' => 'numeric|required_with:is_percentage',
             'is_percentage' => 'required|numeric|in:0,1',
             'start_date' => 'required|date_format:Y-m-d',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
@@ -412,8 +413,10 @@ class VoucherController extends Controller
             'end_date' => Carbon::parse($request->end_date)->format('Y-m-d h:i:s'),
             'amount' => $request->amount,
             'is_amount_percentage' => $request->is_percentage,
+            'cap' => $request->cap,
             'rules' => json_encode($rules),
             'title' => $request->title ? $request->title : '',
+            'max_order' => 1
         ];
 
         $voucher = $voucherRepository->create($voucher);
@@ -422,7 +425,7 @@ class VoucherController extends Controller
     }
 
     private function generateRandomString($length = 10) {
-        $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $charactersLength = strlen($characters);
         $randomString = '';
         for ($i = 0; $i < $length; $i++) {
