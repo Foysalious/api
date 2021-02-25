@@ -10,11 +10,13 @@ use GuzzleHttp\Client;
 class UnitController extends Controller
 {
 
-    Private $unitRepository;
-    public function __construct(UnitService $unit_repo)
+    private $unitRepository;
+
+    public function __construct(UnitService $unitRepository)
     {
-        $this->unitRepository = $unit_repo;
+        $this->unitRepository = $unitRepository;
     }
+
     public function index(Request $request)
     {
 
@@ -22,7 +24,6 @@ class UnitController extends Controller
         return api_response($request, null, 200, $units);
 
     }
-
 }
 
 
