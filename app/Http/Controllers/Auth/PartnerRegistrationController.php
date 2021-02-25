@@ -238,11 +238,17 @@ class PartnerRegistrationController extends Controller
 
         $base_name = $name = preg_replace('/-$/', '', substr(strtolower(clean($name)), 0, 15));
         if ($name == "partner-no-name") $base_name = $name = uniqid("partner-no-name-");
-        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
-        if (in_array($name, array_merge($blacklist, $already_used))) {
-//            $name = $base_name . uniqid();
-            $name = $base_name . (count($already_used) + 1);
+        $already_used = Partner::select('sub_domain')->where('sub_domain', $name)->exists();
+
+        if (in_array($name, $blacklist) || $already_used) {
+            $name = $base_name . uniqid();
         }
+
+//        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
+//        if (in_array($name, array_merge($blacklist, $already_used))) {
+//           $name = $base_name . uniqid();
+//            $name = $base_name . (count($already_used) + 1);
+//        }
 
         return $name;
     }
