@@ -3,6 +3,8 @@
 use App\Models\PartnerReferral;
 use App\Models\Resource;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Sheba\FraudDetection\TransactionSources;
@@ -65,7 +67,10 @@ class Partner extends Referrer implements ReferrerInterface
      */
     private function sendSms($mobile){
         $partner = $this->referrer->getContactPerson() ;
-        (new SmsHandler('partner-referral-create'))->send($mobile, [
+        (new SmsHandler('partner-referral-create'))
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::PARTNER_REFERRAL)
+            ->send($mobile, [
             'partner' => $partner
         ]);
     }

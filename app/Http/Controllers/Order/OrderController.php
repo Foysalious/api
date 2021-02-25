@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
@@ -153,7 +155,10 @@ class OrderController extends Controller
             if (!(bool)config('sheba.send_order_create_sms')) return;
 
             if (!$order->jobs->first()->resource_id) {
-                (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                (new SmsHandler('order-created-to-partner'))
+                    ->setBusinessType(BusinessType::MARKETPLACE)
+                    ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                    ->send($partner->getContactNumber(), [
                     'order_code' => $order->code(), 'partner_name' => $partner->name
                 ]);
             }
@@ -164,7 +169,10 @@ class OrderController extends Controller
 
     private function sendSmsToCustomer($customer, $order) {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
-        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+        if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))
+            ->setBusinessType(BusinessType::MARKETPLACE)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+            ->send($customer->profile->mobile, [
             'order_code' => $order->code()
         ]);
     }
@@ -267,7 +275,10 @@ class OrderController extends Controller
             $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))
+                        ->setBusinessType(BusinessType::MARKETPLACE)
+                        ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                        ->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
@@ -295,7 +306,10 @@ class OrderController extends Controller
         $agent_mobile = $affiliate->profile->mobile;
         $job = $order->lastJob();
 
-        (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
+        (new SmsHandler('order-created-to-bondhu'))
+            ->setBusinessType(BusinessType::MARKETPLACE)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+            ->send($agent_mobile, [
             'service_name' => $job->category->name,
             'order_code' => $order->code(),
             'preferred_time' => $job->preferred_time,

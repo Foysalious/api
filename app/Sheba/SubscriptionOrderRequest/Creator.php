@@ -4,6 +4,8 @@ use App\Http\Requests\Request;
 use App\Models\Partner;
 use App\Models\SubscriptionOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequest;
 use Sheba\Dal\SubscriptionOrderRequest\SubscriptionOrderRequestRepositoryInterface;
 use Sheba\Partner\ImpressionManager;
@@ -96,7 +98,10 @@ class Creator
     private function sendOrderRequestSmsToPartner($partner)
     {
         /** @var Partner $partner */
-        (new SmsHandlerRepo('partner-order-request'))->send($partner->getContactNumber(), [
+        (new SmsHandlerRepo('partner-order-request'))
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::PARTNER_ORDER_REQUEST)
+            ->send($partner->getContactNumber(), [
             'partner_name' => $partner->name
         ]);
     }
