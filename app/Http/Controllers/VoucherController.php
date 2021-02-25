@@ -388,7 +388,7 @@ class VoucherController extends Controller
         $this->validate($request, [
             'mobile' => 'required|mobile:bd',
             'amount' => 'required|numeric',
-            'cap' => 'numeric|required_with:is_percentage',
+            'cap' => 'numeric|required_if:is_percentage,==,1',
             'is_percentage' => 'required|numeric|in:0,1',
             'start_date' => 'required|date_format:Y-m-d',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
