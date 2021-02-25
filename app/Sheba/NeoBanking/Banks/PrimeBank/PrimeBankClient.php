@@ -38,12 +38,13 @@ class PrimeBankClient extends ApiClient
 
     /**
      * @param $uri
+     * @param array $headers
      * @return mixed
      * @throws TPProxyServerError
      */
-    public function get($uri)
+    public function get($uri, $headers = [])
     {
-        return $this->call('get', $uri);
+        return $this->call('get', $uri, null, $headers);
     }
 
     /**
@@ -54,7 +55,7 @@ class PrimeBankClient extends ApiClient
      * @return mixed
      * @throws TPProxyServerError
      */
-    private function call($method, $uri, $data = null,$headers=[])
+    private function call($method, $uri, $data = null, $headers=[])
     {
         $options = $data ? $this->getOptions($data) : ['json'=>[]];
         /** @var SbsProxyClient $client */
@@ -63,7 +64,7 @@ class PrimeBankClient extends ApiClient
             return $client->callWithFile($this->makeUrl($uri), strtoupper($method), $options);
         }
         return $client->call((new TPRequest())->setMethod($method)->setInput($options['json'])->setUrl($this->makeUrl($uri))
-            ->setHeaders(array_merge(['Content-Type:application/json'],$headers)));
+            ->setHeaders(array_merge(['Content-Type:application/json'], $headers)));
     }
 
     private function makeUrl($uri)
