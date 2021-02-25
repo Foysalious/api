@@ -3,8 +3,10 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Transformers\CustomSerializer;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
+use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Exception;
+use League\Fractal\Resource\Item;
 use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
@@ -21,6 +24,7 @@ use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Usage\Usage;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Sheba\Pos\Order\PosOrder as PosOrderRepo;
 
 class PaymentLinkController extends Controller
 {
@@ -104,7 +108,8 @@ class PaymentLinkController extends Controller
 
             if($request->has('pos_order_id')){
                 $pos_order = PosOrder::find($request->pos_order_id);
-                $customer = PosCustomer::find($pos_order->customer_id);
+                 $this->deActivatePreviousLink($pos_order);
+                 $customer = PosCustomer::find($pos_order->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
 
@@ -129,6 +134,22 @@ class PaymentLinkController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    private function deActivatePreviousLink(PosOrder $order)
+    {
+        $payment_link_target = $order->getPaymentLinkTarget();
+        $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($payment_link_target);
+        $key = $payment_link_target->toString();
+        $links = null;
+        if(array_key_exists($key,$payment_link))
+            $links = $payment_link[$key];
+        if($links)
+        {
+            foreach ($links as $link) {
+                $this->creator->setStatus('deactivate')->setPaymentLinkId($link->getLinkID())->editStatus();
+            }
         }
     }
 

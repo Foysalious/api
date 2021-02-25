@@ -142,7 +142,8 @@ class Updater
                 'partner_id' => $this->data['partner']->id,
                 'customer_id' => $customer->id,
                 'note' => $this->data['note'],
-                'nick_name' => $this->data['name']
+                'nick_name' => $this->data['name'],
+                'is_supplier' => $this->data['is_supplier']
             ];
             $partner_pos_customer = $this->partnerPosCustomers->save($partner_pos_customer_data);
         }
@@ -153,8 +154,12 @@ class Updater
         if (isset($this->data['name']) && !empty($this->data['name'])) {
             $this->partnerPosCustomers->update($partner_pos_customer, ['nick_name' => $this->data['name']]);
         }
+        if (isset($this->data['is_supplier']) && !is_null($this->data['is_supplier'])) {
+            $this->partnerPosCustomers->update($partner_pos_customer, ['is_supplier' => (int)$this->data['is_supplier']]);
+        }
 
         $customer->name = $partner_pos_customer['nick_name'];
+        $customer->is_supplier = $partner_pos_customer['is_supplier'];
 
         return $customer;
     }
@@ -164,6 +169,7 @@ class Updater
         $this->data['mobile'] = formatMobileAux($this->data['mobile']);
         $this->data['email'] = (isset($this->data['email']) && !empty($this->data['email'])) ? $this->data['email'] : null;
         $this->data['note'] = isset($this->data['note']) ? $this->data['note'] : null;
+        $this->data['is_supplier'] = isset($this->data['is_supplier']) ? $this->data['is_supplier'] : 0;
     }
 
     /**
