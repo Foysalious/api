@@ -288,7 +288,6 @@ class ShebaController extends Controller
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
         $amount       = $request->amount;
-
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
@@ -299,7 +298,7 @@ class ShebaController extends Controller
 
         $emi_data = [
             "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get()
+            "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -313,7 +312,7 @@ class ShebaController extends Controller
             $icons_folder         = getEmiBankIconsFolder(true);
             $emi_data = [
                 "emi"   => $emi_calculator->getCharges($amount),
-                "banks" => Banks::get($icons_folder)
+                "banks" => (new Banks())->setAmount($amount)->get()
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
