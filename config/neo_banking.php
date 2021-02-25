@@ -289,7 +289,7 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'ই-মেইল আইডি',
+                'title'         => 'ই-মেইল আইডি *',
                 'name'          => 'email',
                 'id'            => 'email',
                 'hint'          => 'arafat@gmail.com',
