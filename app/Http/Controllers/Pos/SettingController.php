@@ -5,6 +5,8 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -77,6 +79,8 @@ class SettingController extends Controller
 
             $customer = PosCustomer::find($request->customer_id);
             (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::DUE_PAYMENT_REQUEST)
                 ->send($customer->profile->mobile, [
                     'partner_name' => $partner->name,
                     'due_amount' => $request->due_amount

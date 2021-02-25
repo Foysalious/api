@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers;
 
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Sms\Sms;
@@ -38,7 +40,10 @@ class SmsController extends Controller
         elseif ($request->action == self::FROM_MARKETPLACE)
             $sms_text = "Download Sheba MarketPlace App https://play.google.com/store/apps/details?id=xyz.sheba.customersapp&hl=en";
 
-        $this->sms->shoot($request->mobile, $sms_text);
+        $this->sms
+            ->setFeatureType(FeatureType::COMMON)
+            ->setBusinessType(BusinessType::COMMON)
+            ->shoot($request->mobile, $sms_text);
         return api_response($request, null, 200);
     }
 

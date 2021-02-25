@@ -1,6 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\PosCustomer;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -301,7 +303,11 @@ class Creator
     {
         /** @var Sms $sms */
         $sms = app(Sms::class);
-        $sms = $sms->setVendor('infobip')->to($sender_mobile)->msg($message);
+        $sms = $sms->setVendor('infobip')
+            ->to($sender_mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER);;
         try {
             $sms->shoot();
         } catch (\Throwable $e) {
