@@ -71,6 +71,7 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
+
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
@@ -88,7 +89,11 @@ class FeatureTestCase extends TestCase
             Partner::class
         ]);
 
+
         $this->profile = factory(Profile::class)->create();
+
+
+
         $this->createClientAccounts();
 
     }
