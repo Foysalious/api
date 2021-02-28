@@ -26,7 +26,7 @@ class FeatureType
     const SEND_DUE_DEPOSIT_TO_CUSTOMER  = 'send_due_deposit_to_customer';
     const AFFILIATE_BONUS            = 'affiliate_bonus';
     const INSUFFICIENT_NOTIFICATION  = 'insufficient_notification';
-    const PARTNER_ORDER_REQUEST      = 'partner_order_request';
+    const PARTNER_SUBSCRIPTION_ORDER_REQUEST      = 'partner_subscription_order';
     const TRIP_REQUEST_ACCEPT        = 'trip_request_accept';
     const PARTNER_AFFILIATION        = 'partner_affiliation';
     const TRANSPORT_TICKET_CONFIRM   = 'transport_ticket_confirm';
@@ -34,4 +34,6 @@ class FeatureType
     const PARTNER_SUBSCRIPTION       = 'partner_subscription';
     const CHECKOUT                   = 'checkout';
     const SMS_CAMPAIGN               = 'sms_campaign';
+    const INVITE_VENDORS             = 'invite_vendors';
+    const MARKETING                  = 'marketing';
 }

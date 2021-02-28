@@ -380,7 +380,7 @@ class ProfileRepository
         });
 
         (new SmsHandler('affiliate-register'))
-            ->setBusinessType(BusinessType::COMMON)
+            ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::AFFILIATE_BONUS)
             ->send($affiliate->profile->mobile, [
             'bonus_amount' => $affiliate_bonus_amount

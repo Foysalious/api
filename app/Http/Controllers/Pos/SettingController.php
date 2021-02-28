@@ -80,7 +80,7 @@ class SettingController extends Controller
             $customer = PosCustomer::find($request->customer_id);
             (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
                 ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::DUE_PAYMENT_REQUEST)
+                ->setFeatureType(FeatureType::POS)
                 ->send($customer->profile->mobile, [
                     'partner_name' => $partner->name,
                     'due_amount' => $request->due_amount

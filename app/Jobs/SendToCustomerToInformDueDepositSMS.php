@@ -40,7 +40,7 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
             if ($this->data['type'] == 'due') {
                 $sms = (new SmsHandler('inform-due'))->setVendor('infobip')
                     ->setBusinessType(BusinessType::SMANAGER)
-                    ->setFeatureType(FeatureType::SEND_DUE_DEPOSIT_TO_CUSTOMER)
+                    ->setFeatureType(FeatureType::DUE_TRACKER)
                     ->send($this->data['mobile'], [
                     'customer_name' => $this->data['customer_name'],
                     'partner_name' => $this->data['partner_name'],
@@ -51,7 +51,7 @@ class SendToCustomerToInformDueDepositSMS extends Job implements ShouldQueue
             } else {
                 $sms = (new SmsHandler('inform-deposit'))->setVendor('infobip')
                     ->setBusinessType(BusinessType::SMANAGER)
-                    ->setFeatureType(FeatureType::SEND_DUE_DEPOSIT_TO_CUSTOMER)
+                    ->setFeatureType(FeatureType::DUE_TRACKER)
                     ->send($this->data['mobile'], [
                     'customer_name' => $this->data['customer_name'],
                     'partner_name' => $this->data['partner_name'],

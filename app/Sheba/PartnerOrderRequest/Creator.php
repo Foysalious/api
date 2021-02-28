@@ -143,7 +143,7 @@ class Creator
             $partner = $this->partners->keyBy('id')->get($partner_id);
             (new SmsHandlerRepo('partner-order-request'))->setVendor('sslwireless')
                 ->setBusinessType(BusinessType::SMANAGER)
-                ->setFeatureType(FeatureType::PARTNER_ORDER_REQUEST)
+                ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION_ORDER_REQUEST)
                 ->send($partner->getContactNumber(), [
                 'partner_name' => $partner->name
             ]);
