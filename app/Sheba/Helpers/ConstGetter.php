@@ -10,6 +10,11 @@ trait ConstGetter
         return $class->getConstants();
     }
 
+    public static function getWithKeysFlipped()
+    {
+        return array_flip(static::getWithKeys());
+    }
+
     public static function get()
     {
         return array_values(static::getWithKeys());

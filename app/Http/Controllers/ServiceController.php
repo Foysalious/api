@@ -55,6 +55,11 @@ class ServiceController extends Controller
         try {
             list($offset, $limit) = calculatePagination($request);
             $services = Service::select('id', 'name', 'bn_name', 'unit', 'category_id', 'thumb', 'slug', 'min_quantity', 'banner', 'variable_type');
+
+            if($request->orderby_id && in_array($request->orderby_id, ['asc', 'desc'])){
+                $services = $services->orderBy('id', $request->orderby_id);
+            }
+
             $scope = ['start_price'];
             if ($request->has('is_business')) $services = $services->publishedForBusiness();
             if ($request->has('is_b2b')) $services->publishedForB2B();
