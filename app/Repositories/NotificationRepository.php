@@ -283,8 +283,8 @@ class NotificationRepository
         $this->sendSubscriptionNotification($title, $message, $partner);
         if ($withMessage) {
             (new SmsHandler('insufficient-balance-subscription'))
-                ->setBusinessType(BusinessType::COMMON)
-                ->setFeatureType(FeatureType::INSUFFICIENT_NOTIFICATION)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
                 ->send($partner->getContactNumber(), [
                 'package_type_bn' => $type,
                 'package_name'    => $package->show_name_bn,

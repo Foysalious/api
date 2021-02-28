@@ -74,7 +74,7 @@ class BusinessesController extends Controller
                 BusinessJoinRequest::create($data);
                 $invited_vendor++;
                 $this->sms
-                    ->setFeatureType(FeatureType::BUSINESS)
+                    ->setFeatureType(FeatureType::INVITE_VENDORS)
                     ->setBusinessType(BusinessType::B2B)
                     ->shoot(
                     $number,

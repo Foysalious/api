@@ -156,7 +156,7 @@ class OrderController extends Controller
 
             if (!$order->jobs->first()->resource_id) {
                 (new SmsHandler('order-created-to-partner'))
-                    ->setBusinessType(BusinessType::MARKETPLACE)
+                    ->setBusinessType(BusinessType::SMANAGER)
                     ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
                     ->send($partner->getContactNumber(), [
                     'order_code' => $order->code(), 'partner_name' => $partner->name
@@ -307,7 +307,7 @@ class OrderController extends Controller
         $job = $order->lastJob();
 
         (new SmsHandler('order-created-to-bondhu'))
-            ->setBusinessType(BusinessType::MARKETPLACE)
+            ->setBusinessType(BusinessType::BONDHU)
             ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($agent_mobile, [
             'service_name' => $job->category->name,

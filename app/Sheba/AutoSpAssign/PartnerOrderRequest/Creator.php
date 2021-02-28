@@ -100,7 +100,7 @@ class Creator
         $partner = $this->partners->keyBy('id')->get($partner_id);
         (new SmsHandlerRepo('partner-order-request'))
             ->setBusinessType(BusinessType::SMANAGER)
-            ->setFeatureType(FeatureType::PARTNER_ORDER_REQUEST)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->send($partner->getContactNumber(), [
             'partner_name' => $partner->name
         ]);

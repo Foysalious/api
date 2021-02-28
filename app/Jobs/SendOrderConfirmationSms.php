@@ -43,7 +43,7 @@ class SendOrderConfirmationSms extends Job implements ShouldQueue
         $message = "Thanks for placing order at Sheba.xyz. Order ID: " . $this->order->code() . ". Plz check email for details or log into www.sheba.xyz. Helpline: 16516";
 
         $this->sms
-            ->setFeatureType(FeatureType::SEND_ORDER_CONFIRMATION)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
             ->setBusinessType(BusinessType::MARKETPLACE)
             ->shoot($this->order->delivery_mobile, $message);
     }
