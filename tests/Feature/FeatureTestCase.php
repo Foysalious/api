@@ -1,8 +1,13 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Business;
+use App\Models\BusinessMember;
 use App\Models\Customer;
 use App\Models\Member;
+use App\Models\Partner;
+use App\Models\PartnerResource;
+use App\Models\PartnerSubscriptionPackage;
 use App\Models\Profile;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -28,6 +33,20 @@ class FeatureTestCase extends TestCase
     protected $resource;
     /** @var Member */
     protected $member;
+    /** @var Partner */
+    protected $partner;
+    /** @var PartnerResource */
+    protected $partner_resource;
+    // @var ParnerSubscriptionPackage
+    protected $partner_package;
+    /**
+     * @var $business
+     */
+    protected $business;
+    /**
+     * @var $business_member
+     */
+    private $business_member;
 
     public function setUp()
     {
@@ -53,11 +72,14 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        /*\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        $this->artisan('migrate');
-        $this->beforeApplicationDestroyed(function () {
-            \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });*/
+        /**
+         * NO NEED TO RUN
+         *
+         * \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         * $this->artisan('migrate');
+         * $this->beforeApplicationDestroyed(function () {
+         * \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+         * });*/
     }
 
     protected function logIn()
@@ -65,22 +87,25 @@ class FeatureTestCase extends TestCase
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
-
     }
 
     private function createAccounts()
     {
         $this->truncateTables([
-            Profile::class,
-            Affiliate::class,
-            Customer::class,
-            Member::class,
-            Resource::class
+            Profile::class, Affiliate::class, Customer::class, Member::class, Resource::class, Partner::class, Business::class, BusinessMember::class
         ]);
 
         $this->profile = factory(Profile::class)->create();
         $this->createClientAccounts();
+    }
 
+    protected function truncateTables(array $tables)
+    {
+        Schema::disableForeignKeyConstraints();
+        foreach ($tables as $table) {
+            $table::truncate();
+        }
+        Schema::enableForeignKeyConstraints();
     }
 
     private function createClientAccounts()
@@ -92,66 +117,39 @@ class FeatureTestCase extends TestCase
         $this->customer = factory(Customer::class)->create([
             'profile_id' => $this->profile->id
         ]);
-        /*$this->resource = factory(Resource::class)->create([
+        $this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
-        ]);*/
+        ]);
+        $this->partner_package = factory(PartnerSubscriptionPackage::class)->create();
+        $this->partner = factory(Partner::class)->create([
+            'package_id' => $this->partner_package->id
+        ]);
+        $this->partner_resource = factory(PartnerResource::class)->create([
+            'resource_id' => $this->resource->id, 'partner_id' => $this->partner->id
+        ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
         ]);
-
-
-    }
-
-    private function createAccountWithMobileNEmail($mobile,$email=null)
-    {
-        $this->profile = factory(Profile::class)->create([
-
-            'mobile' =>$mobile,
-            'email' =>$email,
-
+        $this->business = factory(Business::class)->create();
+        $this->business_member = factory(BusinessMember::class)->create([
+            'business_id' => $this->business->id, 'member_id' => $this->member->id
         ]);
-
-
-
-        $this->createClientAccounts();
     }
-
-
-    protected function logInWithMobileNEmail($mobile,$email=null)
-    {
-        $this->createAccountWithMobileNEmail($mobile,$email);
-        $this->token = $this->generateToken();
-        $this->createAuthTables();
-
-    }
-
 
     protected function generateToken()
     {
         return JWTAuth::fromUser($this->profile, [
-            'name' => $this->profile->name,
-            'image' => $this->profile->pro_pic,
-            'profile' => [
-                'id' => $this->profile->id,
-                'name' => $this->profile->name,
-                'email_verified' => $this->profile->email_verified
-            ],
-            'customer' =>[
+            'name' => $this->profile->name, 'image' => $this->profile->pro_pic, 'profile' => [
+                'id' => $this->profile->id, 'name' => $this->profile->name, 'email_verified' => $this->profile->email_verified
+            ], 'customer' => [
                 'id' => $this->customer->id
-            ],
-            'resource' => null,
-            'member' => [
+            ], 'resource' => null, 'member' => [
                 'id' => $this->member->id
-            ],
-            'business_member' => null,
-            'affiliate' => [
+            ], 'business_member' => [
+                'id' => $this->business_member->id, 'business_id' => $this->business->id, 'member_id' => $this->member->id, 'is_super' => 1
+            ], 'affiliate' => [
                 'id' => $this->affiliate->id
-            ],
-            'logistic_user' => null,
-            'bank_user' => null,
-            'strategic_partner_member' => null,
-            'avatar' => null,
-            "exp" => Carbon::now()->addDay()->timestamp
+            ], 'logistic_user' => null, 'bank_user' => null, 'strategic_partner_member' => null, 'avatar' => null, "exp" => Carbon::now()->addDay()->timestamp
         ]);
     }
 
@@ -161,9 +159,28 @@ class FeatureTestCase extends TestCase
             'profile_id' => $this->profile->id
         ]);
         factory(AuthorizationToken::class)->create([
-            'authorization_request_id' => $authorization_request->id,
-            'token' => $this->token
+            'authorization_request_id' => $authorization_request->id, 'token' => $this->token
         ]);
+    }
+
+    protected function logInWithMobileNEmail($mobile, $email = null)
+    {
+        $this->createAccountWithMobileNEmail($mobile, $email);
+        $this->token = $this->generateToken();
+        $this->createAuthTables();
+
+    }
+
+    private function createAccountWithMobileNEmail($mobile, $email = null)
+    {
+        $this->profile = factory(Profile::class)->create([
+
+            'mobile' => $mobile, 'email' => $email,
+
+        ]);
+
+
+        $this->createClientAccounts();
     }
 
     protected function truncateTable($table)
@@ -171,14 +188,5 @@ class FeatureTestCase extends TestCase
         $this->truncateTables([
             $table
         ]);
-    }
-
-    protected function truncateTables(array $tables)
-    {
-        Schema::disableForeignKeyConstraints();
-        foreach ($tables as $table) {
-            $table::truncate();
-        }
-        Schema::enableForeignKeyConstraints();
     }
 }
