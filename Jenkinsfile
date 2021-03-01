@@ -3,7 +3,7 @@ pipeline {
 
     stages {
         stage('LAST COMMIT DETAILS') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
@@ -14,7 +14,7 @@ pipeline {
             }
         }
         stage('RUN TEST RESULT') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
@@ -42,7 +42,7 @@ pipeline {
             }
         }
         stage('TEST RESULT TO DEPLOYMENT SERVER') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 sshagent(['development-server-ssh']) {
                     sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml /var/lib/jenkins/sheba/test-results/api"
@@ -51,7 +51,7 @@ pipeline {
             }
         }
         stage('SEND TEST RESULT TO TECH-ALERTS') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
