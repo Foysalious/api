@@ -181,14 +181,13 @@ class EmployeeController extends Controller
     {
         $business_member = $this->getBusinessMember($request);
         if (!$business_member) return api_response($request, null, 404);
-
         /** @var Business $business */
-        $business = Business::where('id', (int)$business_member['business_id'])->select('id', 'name', 'phone', 'email', 'type')->first();
-        $business_members = $business->getAccessibleBusinessMember()->get();
+        $business = $this->getBusiness($request);
+        $business_members = $this->accessibleBusinessMembers($business, $request);
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($business_members, new BusinessEmployeesTransformer());
+        $resource = new Item($business_members->get(), new BusinessEmployeesTransformer());
         $employees_with_dept_data = $manager->createData($resource)->toArray()['data'];
 
         return api_response($request, null, 200, [
@@ -325,9 +324,24 @@ class EmployeeController extends Controller
         return api_response($request, null, 200, $info);
     }
 
+    /**
+     * @param $auth_user
+     * @return null
+     */
     private function business($auth_user)
     {
         $business_id = $auth_user->getMemberAssociatedBusinessId();
         return $business_id ? Business::find($business_id) : null;
+    }
+
+    /**
+     * @param Business $business
+     * @param Request $request
+     * @return mixed
+     */
+    private function accessibleBusinessMembers(Business $business, Request $request)
+    {
+        if ($request->has('for') && $request->for == 'phone_book') return $business->getActiveBusinessMember();
+        return $business->getAccessibleBusinessMember();
     }
 }
