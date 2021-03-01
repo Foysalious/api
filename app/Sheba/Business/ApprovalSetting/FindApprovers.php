@@ -56,18 +56,14 @@ class FindApprovers
                 if ($approver['type'] == Types::LM) {
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
-                    if (!$line_manager) $this->setError(422, 'Manager not set yet!');
-                    $this->approvers[$approver['order']] = $line_manager->id;
+                    if ($line_manager) $this->approvers[$approver['order']] = $line_manager->id;
                 }
                 if ($approver['type'] == Types::HOD) {
-                    /** @var BusinessDepartment $department */
-                    $department = $business_member->department();
-                    if (!$department) $this->setError(422, 'Department not set yet!');
                     $this->getHeadOfDepartment($business_member);
-                    if ($this->headOfDepartment) $this->approvers[$approver->order] = $this->headOfDepartment->id;
+                    if ($this->headOfDepartment) $this->approvers[$approver['order']] = $this->headOfDepartment->id;
                 }
                 if ($approver['type'] == Types::EMPLOYEE) {
-                    $this->approvers[$approver['order']] = (int)$approver->type_id;
+                    $this->approvers[$approver['order']] = (int)$approver['type_id'];
                 }
             }
         } else {
@@ -76,13 +72,9 @@ class FindApprovers
                 if ($approver->type == Types::LM) {
                     /** @var BusinessMember $line_manager */
                     $line_manager = $business_member->manager()->first();
-                    #if (!$line_manager) $this->setError(422, 'Manager not set yet!');
                     if ($line_manager) $this->approvers[$approver->order] = $line_manager->id;
                 }
                 if ($approver->type == Types::HOD) {
-                    /** @var BusinessDepartment $department */
-                    $department = $business_member->department();
-                    #if (!$department) $this->setError(422, 'Department not set yet!');
                     $this->getHeadOfDepartment($business_member);
                     if ($this->headOfDepartment) $this->approvers[$approver->order] = $this->headOfDepartment->id;
                 }

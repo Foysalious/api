@@ -298,6 +298,7 @@ class Job extends BaseModel implements MorphCommentable
      */
     public function calculate($price_only = false)
     {
+        $is_old_order = $this->id < config('sheba.last_job_before_commission');
         /**
          * CALCULATING COMMISSION RATES
          */
@@ -329,8 +330,13 @@ class Job extends BaseModel implements MorphCommentable
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
         $this->serviceDiscounts = $this->getServiceDiscount();
-        $this->discountByPromo = $this->discount - $this->otherDiscounts;
-        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+
+//        CHANGED FOR MULTIPLE DISCOUNT PLACED ERROR
+//        $this->discountByPromo = $this->discount - $this->otherDiscounts;
+//        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+
+        $this->discountByPromo = $this->serviceDiscounts ? 0 : $this->discount - $this->otherDiscounts;
+        $this->totalDiscount = $this->discount = $this->serviceDiscounts ? $this->serviceDiscounts : $this_discount + $this->serviceDiscounts;
         $this->totalDiscountWithoutOtherDiscounts = $this->totalDiscount - $this->otherDiscounts;
         $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
@@ -354,9 +360,15 @@ class Job extends BaseModel implements MorphCommentable
         $this->materialPriceWithoutPartnerContribution = $this->getMaterialPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution);
         $this->deliveryPriceWithoutPartnerContribution = $this->getDeliveryPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution);
 
-        $this->serviceCost = formatTaka($this->servicePriceWithoutPartnerContribution * $this->serviceCostRate);
-        $this->materialCost = formatTaka($this->materialPriceWithoutPartnerContribution * $this->materialCostRate);
-        $this->deliveryCost = formatTaka($this->deliveryPriceWithoutPartnerContribution * $this->deliveryCostRate);
+        $this->serviceCost = $is_old_order
+            ? formatTaka($this->servicePrice * $this->serviceCostRate)
+            : formatTaka($this->servicePriceWithoutPartnerContribution * $this->serviceCostRate);
+        $this->materialCost = $is_old_order
+            ? formatTaka($this->materialPrice * $this->materialCostRate)
+            : formatTaka($this->materialPriceWithoutPartnerContribution * $this->materialCostRate);
+        $this->deliveryCost = $is_old_order
+            ? formatTaka($this->delivery_charge * $this->deliveryCostRate)
+            : formatTaka($this->deliveryPriceWithoutPartnerContribution * $this->deliveryCostRate);
         $this->logisticCostForPartner = formatTaka($this->logistic_charge * $this->logisticCostRateForPartner);
         $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->deliveryCost - $this->logisticCostForPartner);
         $this->commission = $this->totalPrice - $this->totalCostWithoutDiscount;
@@ -364,7 +376,9 @@ class Job extends BaseModel implements MorphCommentable
         /**
          * CALCULATING PROFIT
          */
-        $this->totalCost = $this->totalCostWithoutDiscount;
+        $this->totalCost = $is_old_order
+            ? $this->totalCostWithoutDiscount - $this->discountContributionPartner
+            : $this->totalCostWithoutDiscount;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = $this->totalPrice != 0 ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
