@@ -5,7 +5,6 @@ use App\Sheba\InventoryService\Services\UnitService;
 use Illuminate\Http\Request;
 
 
-use GuzzleHttp\Client;
 
 class UnitController extends Controller
 {

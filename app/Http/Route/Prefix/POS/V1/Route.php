@@ -7,6 +7,9 @@ class Route
     {
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
 
+            $api->get('/channels', "Inventory\ChannelController@index");
+
+
             $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['accessToken']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
