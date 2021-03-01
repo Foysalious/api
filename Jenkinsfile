@@ -22,7 +22,7 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh SingleTopUpTest',
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh testInvalidMobileNumberIsRejected',
                                 execTimeout: 120000,
                                 flatten: false,
                                 makeEmptyDirs: false,
@@ -68,7 +68,7 @@ pipeline {
                                 remoteDirectory: 'tech_alerts/public',
                                 remoteDirectorySDF: false,
                                 removePrefix: '',
-                                sourceFiles: 'api-test-result.xml'
+                                sourceFiles: '/var/lib/jenkins/sheba/test-results/api/api-test-result.xml'
                             )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
