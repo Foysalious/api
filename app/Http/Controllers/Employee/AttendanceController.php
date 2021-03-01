@@ -133,7 +133,6 @@ class AttendanceController extends Controller
             'is_geo_required' => $is_remote_enable ? 1 : 0
         ];
         if ($data['can_checkout']) $data['is_note_required'] = $checkout->isNoteRequired();
-        Log::info("Employee#$business_member->id, Response#" . json_encode($data));
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
