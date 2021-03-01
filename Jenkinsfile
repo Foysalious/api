@@ -65,7 +65,7 @@ pipeline {
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
                                 patternSeparator: '[, ]+',
-                                remoteDirectory: 'tech_alerts/public',
+                                remoteDirectory: '/var/www/tech_alerts/public',
                                 remoteDirectorySDF: false,
                                 removePrefix: '',
                                 sourceFiles: '/var/lib/jenkins/sheba/test-results/api/api-test-result.xml'
