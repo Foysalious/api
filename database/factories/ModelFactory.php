@@ -26,6 +26,7 @@ use Factory\PartnerOrderRequestFactory;
 use Factory\CustomerDeliveryAddressFactory;
 use Factory\ScheduleSlotsFactory;
 use Factory\JobServiceFactory;
+use Factory\CategoryPartnerFactory;
 
 $factory_classes = [
     CategoryFactory::class,
@@ -52,7 +53,8 @@ $factory_classes = [
     PartnerOrderRequestFactory::class,
     CustomerDeliveryAddressFactory::class,
     ScheduleSlotsFactory::class,
-    JobServiceFactory::class
+    JobServiceFactory::class,
+    CategoryPartnerFactory::class
 
 
 ];
