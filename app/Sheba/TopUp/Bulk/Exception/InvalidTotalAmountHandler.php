@@ -1,20 +1,21 @@
-<?php namespace Sheba\TopUp\Exception;
+<?php namespace Sheba\TopUp\Bulk\Exception;
 
 use Sheba\Exceptions\Handlers\GenericHandler;
 use Sheba\Exceptions\Handlers\Handler;
 
-class PinMismatchExceptionHandler extends Handler
+class InvalidTotalAmountHandler extends Handler
 {
     use GenericHandler;
 
     public function render()
     {
-        /** @var $exception PinMismatchException */
+        /** @var $exception InvalidTotalAmount */
         $exception = $this->exception;
         $response = [
             'code' => $this->getCode(),
             'message' => $this->getMessage(),
-            'login_wrong_pin_count' => $exception->getWrongPinCount()
+            'recharge_amount' => $exception->getTotalRechargeAmount(),
+            'total_balance' => $exception->getTotalBalance()
         ];
 
         return response()->json($response);
