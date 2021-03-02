@@ -3,7 +3,7 @@ pipeline {
 
     stages {
         stage('LAST COMMIT DETAILS') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
@@ -14,7 +14,7 @@ pipeline {
             }
         }
         stage('RUN TEST RESULT') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
@@ -22,8 +22,8 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh SingleTopUpTest',
-                                execTimeout: 120000,
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
+                                execTimeout: 360000,
                                 flatten: false,
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
@@ -42,16 +42,15 @@ pipeline {
             }
         }
         stage('TEST RESULT TO DEPLOYMENT SERVER') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 sshagent(['development-server-ssh']) {
-                    // sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml /var/lib/jenkins/sheba/test-results/api"
-                    sh "scp sheba@192.168.12.119:/var/www/api/results/phpunit/api-test-result.xml ."
+                    sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml ."
                 }
             }
         }
         stage('SEND TEST RESULT TO TECH-ALERTS') {
-            when { branch 'master-test' }
+            when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
@@ -65,10 +64,10 @@ pipeline {
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
                                 patternSeparator: '[, ]+',
-                                remoteDirectory: 'tech_alerts/public',
+                                remoteDirectory: '/tech_alerts/public',
                                 remoteDirectorySDF: false,
                                 removePrefix: '',
-                                sourceFiles: 'api-test-result.xml'
+                                sourceFiles: '**/api-test-result.xml'
                             )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,

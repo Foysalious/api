@@ -5,11 +5,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Member;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
+use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\BusinessMember;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepository;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
@@ -132,6 +134,21 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
+        return api_response($request, null, 200);
+    }
+
+    public function generateExcel(Request $request, PayRunBulkExcel $pay_run_bulk_excel)
+    {
+        /** @var Business $business */
+        $business = $request->business;
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $payroll_components = $business->payrollSetting->components->whereIn('type', array(Type::ADDITION, Type::DEDUCTION));
+        $business_members = $business->getAccessibleBusinessMember();
+
+        $pay_run_bulk_excel->setBusiness($business)->setBusinessMembers($business_members)->setPayrollComponent($payroll_components)->get();
         return api_response($request, null, 200);
     }
 }

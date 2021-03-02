@@ -1,11 +1,13 @@
-<?php namespace App\Sheba\InventoryService\Repository;
+<?php
+
+namespace App\Sheba\InventoryService;
 
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 
-class InventoryServiceClient
+class InventoryServerClient
 {
     protected $client;
     protected $baseUrl;
@@ -21,21 +23,24 @@ class InventoryServiceClient
         return $this->call('get', $uri);
     }
 
+
+    /**
+     * @param $method
+     * @param $uri
+     * @param null $data
+     * @return mixed
+     * @throws InventoryServiceServerError
+     */
     private function call($method, $uri, $data = null)
     {
         try {
-
-            $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-
-           /* if ($res['code'] != 200)
-                throw new InventoryServiceServerError($res['message']);*/
-            unset($res['code'], $res['message']);
-            return $res;
+            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
-            $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400)
-                throw new InventoryServiceServerError($res['message']);
-            throw new InventoryServiceServerError($e->getMessage());
+            $res = $e->getResponse();
+            $http_code = $res->getStatusCode();
+            $message = $res->getBody()->getContents();
+            if ($http_code > 399 && $http_code < 500) throw new InventoryServiceServerError($message, $http_code);
+            throw new InventoryServiceServerError($e->getMessage(),$http_code);
         }
     }
 
