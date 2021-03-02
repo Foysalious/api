@@ -20,7 +20,7 @@ class SettingsController extends Controller
                     ->with(['partner' => function ($q) {
                         $q->select('partners.id', 'partners.name');
                     }, 'jobs' => function ($q) {
-                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id')->with(['review' => function ($q) {
+                        $q->select('jobs.id', 'partner_order_id', 'resource_id', 'category_id', 'status')->with(['review' => function ($q) {
                             $q->select('reviews.id', 'reviews.job_id', 'rating');
                         }, 'category' => function ($q) {
                             $q->select('categories.id', 'categories.name');
@@ -35,7 +35,7 @@ class SettingsController extends Controller
             }]);
             $info = null;
             $partner_order = $customer->partnerOrders->first();
-            $job = $partner_order ? $partner_order->jobs->first() : null;
+            $job = $partner_order ? $partner_order->getActiveJob() : null;
 
             if (!$this->canTakeReview($job, $partner_order)) {
                 $job = null;
