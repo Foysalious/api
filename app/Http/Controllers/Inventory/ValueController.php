@@ -25,7 +25,7 @@ class ValueController extends Controller
         return http_response($request, null, 200, $value);
     }
 
-    public function update($partnerId, $valueId, Request $request)
+    public function update(Request $request, $valueId)
     {
         $partner = $request->auth_user->getPartner();
         $value = $this->valueService->setValueId($valueId)->setPartnerId($partner->id)->setName($request->name)->update();
