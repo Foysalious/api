@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
 use Sheba\ModificationFields;
+use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
+use App\Sheba\Pos\Category\Category;
 
 
 
