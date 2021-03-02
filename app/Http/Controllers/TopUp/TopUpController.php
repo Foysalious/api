@@ -296,16 +296,15 @@ class TopUpController extends Controller
      * @param $type
      * @return string
      */
-    public function getFullAgentType($type): string
+    private function getFullAgentType($type)
     {
-        $agent = '';
-
-        if ($type == 'customer') $agent = "App\\Models\\Customer";
-        elseif ($type == 'partner') $agent = "App\\Models\\Partner";
-        elseif ($type == 'business') $agent = "App\\Models\\Business";
-        elseif ($type == 'Company') $agent = "App\\Models\\Business";
-
-        return $agent;
+        switch ($type) {
+            case 'customer': return Customer::class;
+            case 'partner': return Partner::class;
+            case 'affiliate': return Affiliate::class;
+            case 'business': case 'Company': return Business::class;
+            default: return '';
+        }
     }
 
     /**

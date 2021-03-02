@@ -43,7 +43,6 @@ class TopUpExcelJob extends TopUpJob
         $this->setModifier($agent);
         parent::__construct($topup_order);
 
-        $this->file = $this->getFile($bulk);
         $this->row = $row;
         $this->totalRow = $total_row;
         $this->sms = new Sms();
@@ -70,6 +69,7 @@ class TopUpExcelJob extends TopUpJob
 
     private function getExcel(): LaravelExcelReader
     {
+        $this->file = $this->getFile($this->bulk);
         if (!$this->excel) $this->excel = Excel::selectSheets(TopUpExcel::SHEET)->load($this->file);
         return $this->excel;
     }
