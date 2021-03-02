@@ -9,9 +9,10 @@ class Route
 
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
+            $api->get('/units', "Inventory\UnitController@index");
 
 
-            $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['accessToken']], function ($api) {
+            $api->group(['prefix' => 'partners', 'middleware' => ['accessToken']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');
@@ -28,9 +29,9 @@ class Route
                     $api->post('/{category_id}', 'Inventory\CategoryController@update');
                     $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
                 });
-                $api->group(['prefix' => 'units'], function ($api) {
-                    $api->get('/', "Inventory\UnitController@index");
-                });
+//                $api->group(['prefix' => 'units'], function ($api) {
+//                    $api->get('/', "Inventory\UnitController@index");
+//                });
                 $api->group(['prefix' => 'options'], function ($api) {
                     $api->get('/', "Inventory\OptionController@index");
                     $api->post('/', "Inventory\OptionController@store");
