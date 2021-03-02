@@ -66,6 +66,11 @@ class PartnerNeoBankingInfo
         return $this->$code();
     }
 
+    public function getData()
+    {
+        return $this->data;
+    }
+
     public function postByCode($code, $data)
     {
         $data['updated_at']                         = Carbon::now()->format('Y-m-d H:s:i');
