@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -16,6 +17,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
+use Sheba\Location\Geo;
+use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
@@ -26,7 +29,7 @@ use Throwable;
 
 class AttendanceController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, BusinessBasicInformation;
 
     /**
      * @param Request $request
@@ -136,19 +139,59 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
-    private function getBusinessMember(Request $request)
+    public function attendanceInfo(Request $request)
     {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['id'])) return null;
-        return BusinessMember::find($business_member['id']);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMember($request);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        $is_remote_enable = $business->isRemoteAttendanceEnable();
+        $geo = $this->getGeo($request);
+        $address = $this->getAddress($geo);
+        $ip = $this->getIp();
+
+        $data = [
+            'is_in_wifi_area' => $this->isInWifiArea($business, $ip) ? 1 : 0,
+            'address' => $this->getAddress($geo),
+        ];
+        return api_response($request, null, 200, ['info' => $data]);
     }
 
-    public function getBusiness(Request $request)
+    private function getGeo(Request $request)
     {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['business_id'])) return null;
-        return Business::findOrFail($business_member['business_id']);
+        if (!$request->lat || !$request->lng) return null;
+        $geo = new Geo();
+        return $geo->setLat($request->lat)->setLng($request->lng);
+    }
+
+    public function getAddress(Geo $geo)
+    {
+        try {
+            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
+        } catch (\Throwable $exception) {
+            return "";
+        }
+    }
+
+    private function getIp()
+    {
+        $ip_methods = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
+        foreach ($ip_methods as $key) {
+            if (array_key_exists($key, $_SERVER) === true) {
+                foreach (explode(',', $_SERVER[$key]) as $ip) {
+                    $ip = trim($ip); //just to be safe
+                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+                        return $ip;
+                    }
+                }
+            }
+        }
+
+        return request()->ip();
+    }
+
+    private function isInWifiArea(Business $business, $ip)
+    {
+        return in_array($ip, $business->offices->pluck('ip')->toArray());
     }
 }
