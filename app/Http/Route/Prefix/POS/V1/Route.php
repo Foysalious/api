@@ -8,6 +8,7 @@ class Route
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
 
             $api->get('/channels', "Inventory\ChannelController@index");
+            $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
 
 
             $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['accessToken']], function ($api) {
@@ -22,7 +23,7 @@ class Route
                 });
                 $api->group(['prefix' => 'categories'], function ($api) {
                     $api->get('/', 'Inventory\CategoryController@index');
-                    $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
+
                     $api->post('/', 'Inventory\CategoryController@store');
                     $api->post('/{category_id}', 'Inventory\CategoryController@update');
                     $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
