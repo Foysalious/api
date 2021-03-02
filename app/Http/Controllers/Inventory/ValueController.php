@@ -18,10 +18,10 @@ class ValueController extends Controller
         $this->valueService = $valueService;
     }
 
-    public function store(Request $request, $partnerId, $optionId)
+    public function store(Request $request, $optionId)
     {
         $partner = $request->auth_user->getPartner();
-        $value = $this->valueService->setOptionId($optionId)->setPartnerId($partner->id)->setName($request->name)->store();
+        $value = $this->valueService->setOptionId($optionId)->setPartnerId($partner->id)->setValues($request->values)->store();
         return http_response($request, null, 200, $value);
     }
 
