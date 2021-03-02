@@ -73,7 +73,7 @@ class CategoryService
     public function update()
     {
         $data = $this->makeUpdateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
+        return $this->client->put('api/v1/partners/'.$this->partnerId.'/categories/'.$this->categoryId, $data);
     }
 
     public function delete()
