@@ -12,7 +12,7 @@ class Route
             $api->get('/units', "Inventory\UnitController@index");
 
 
-            $api->group(['prefix' => 'partners/{partner}', 'middleware' => ['accessToken']], function ($api) {
+            $api->group(['prefix' => 'partners', 'middleware' => ['accessToken']], function ($api) {
                 $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');
