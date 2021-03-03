@@ -55,6 +55,7 @@ class Creator
                 'payroll_setting_id' => $this->payrollSetting->id,
                 'name' => $component['key'],
                 'type' => $component['type'],
+                'is_default' => 1,
                 'setting' => json_encode(['percentage' => 0]),
             ];
         }
