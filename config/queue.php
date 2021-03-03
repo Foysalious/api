@@ -69,10 +69,10 @@ return [
                 'queue' => 'report',
                 'expire' => 60
             ],
-            'business' => [
+            'business_notification' => [
                 'driver' => 'redis',
                 'connection' => 'default',
-                'queue' => 'business',
+                'queue' => 'business_notification',
                 'expire' => 60
             ]
         ] + $top_up_queues,
