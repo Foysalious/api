@@ -10,8 +10,8 @@ class PayRunBulkExcel
     private $excelHandler;
     private $data;
     private $business;
-    private $businessMembers;
     private $payrollComponents;
+    private $payslip;
 
     public function __construct(ExcelHandler $excelHandler)
     {
@@ -25,9 +25,9 @@ class PayRunBulkExcel
         return $this;
     }
 
-    public function setBusinessMembers($business_members)
+    public function setPayslips($payslip)
     {
-        $this->businessMembers = $business_members;
+        $this->payslip = $payslip;
         return $this;
     }
 
@@ -60,14 +60,13 @@ class PayRunBulkExcel
 
     private function makeData()
     {
-        foreach ($this->businessMembers->get() as $business_member) {
-            $profile = $business_member->profile();
+        foreach ($this->payslip as $payslip) {
             $business_member_data = [
-                'id' => $business_member->id,
-                'employee_name' => $profile->name,
-                'employee_id' => $profile->employee_id,
-                'department' => $business_member->department() ? $business_member->department()->name : 'N/A',
-                'gross_salary' => $business_member->salary ? $business_member->salary['gross_salary'] : 0,
+                'id' => $payslip['business_member_id'],
+                'employee_name' => $payslip['employee_name'],
+                'employee_id' => $payslip['employee_id'],
+                'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                'gross_salary' => $payslip['gross_salary'],
             ] + $this->getComponents();
             array_push($this->data, $business_member_data);
         }
