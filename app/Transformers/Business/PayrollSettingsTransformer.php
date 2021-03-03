@@ -97,8 +97,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function getAdditionComponents($addition_components)
     {
         $data = [];
-        foreach ($addition_components as $addition)
-        {
+        foreach ($addition_components as $addition) {
             $data['addition'][$addition->name] = $addition->setting;
         }
         return $data;
@@ -107,8 +106,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function getDeductionComponents($deduction_components)
     {
         $data = [];
-        foreach ($deduction_components as $deduction)
-        {
+        foreach ($deduction_components as $deduction) {
             $data['deduction'][$deduction->name] = $deduction->setting;
         }
         return $data;

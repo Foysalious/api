@@ -145,7 +145,7 @@ class PayRunController extends Controller
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 401);
 
-        $payroll_components = $business->payrollSetting->components->whereIn('type', array(Type::ADDITION, Type::DEDUCTION));
+        $payroll_components = $business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION]);
         $business_members = $business->getAccessibleBusinessMember();
 
         $pay_run_bulk_excel->setBusiness($business)->setBusinessMembers($business_members)->setPayrollComponent($payroll_components)->get();
