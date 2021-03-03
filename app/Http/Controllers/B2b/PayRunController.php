@@ -48,9 +48,10 @@ class PayRunController extends Controller
      * @param Request $request
      * @param PayrunList $payrun_list
      * @param PaySlipExcel $pay_slip_excel
+     * @param PayRunBulkExcel $pay_run_bulk_excel
      * @return JsonResponse
      */
-    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel)
+    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel, PayRunBulkExcel $pay_run_bulk_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -69,6 +70,11 @@ class PayRunController extends Controller
         $count = count($payslip);
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
         if ($request->limit == 'all') $limit = $count;
+
+        if ($request->generate_sample) {
+            $payroll_components = $business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION]);
+            $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
+        }
         $payslip = collect($payslip)->splice($offset, $limit);
         return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
     }
@@ -134,21 +140,6 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
-        return api_response($request, null, 200);
-    }
-
-    public function generateExcel(Request $request, PayRunBulkExcel $pay_run_bulk_excel)
-    {
-        /** @var Business $business */
-        $business = $request->business;
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-
-        $payroll_components = $business->payrollSetting->components->whereIn('type', array(Type::ADDITION, Type::DEDUCTION));
-        $business_members = $business->getAccessibleBusinessMember();
-
-        $pay_run_bulk_excel->setBusiness($business)->setBusinessMembers($business_members)->setPayrollComponent($payroll_components)->get();
         return api_response($request, null, 200);
     }
 }

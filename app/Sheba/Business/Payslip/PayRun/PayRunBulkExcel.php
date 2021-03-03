@@ -10,8 +10,8 @@ class PayRunBulkExcel
     private $excelHandler;
     private $data;
     private $business;
-    private $businessMembers;
     private $payrollComponents;
+    private $payslip;
 
     public function __construct(ExcelHandler $excelHandler)
     {
@@ -25,9 +25,9 @@ class PayRunBulkExcel
         return $this;
     }
 
-    public function setBusinessMembers($business_members)
+    public function setPayslips($payslip)
     {
-        $this->businessMembers = $business_members;
+        $this->payslip = $payslip;
         return $this;
     }
 
@@ -60,40 +60,34 @@ class PayRunBulkExcel
 
     private function makeData()
     {
-        foreach ($this->businessMembers->get() as $business_member) {
-            $profile = $business_member->profile();
-            $data = [
-                'id' => $profile->member_id,
-                'employee_name' => $profile->name,
-                'employee_id' => $profile->employee_id,
-                'department' => $business_member->department() ? $business_member->department()->name : 'N/A',
-                'gross_salary' => $business_member->salary ? $business_member->salary['gross_salary'] : 0,
+        foreach ($this->payslip as $payslip) {
+            $business_member_data = [
+                'id' => $payslip['business_member_id'],
+                'employee_name' => $payslip['employee_name'],
+                'employee_id' => $payslip['employee_id'],
+                'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                'gross_salary' => $payslip['gross_salary'],
             ] + $this->getComponents();
-            array_push($this->data, $data);
+            array_push($this->data, $business_member_data);
         }
     }
 
     private function getHeaders()
     {
-
         $header = ['ID', 'Employee Name', 'Employee ID', 'Department', 'Gross Salary'];
-        foreach ($this->payrollComponents as $component)
-        {
+        foreach ($this->payrollComponents as $component) {
             $component_value = Components::getComponents($component->name);
             $header[] = $component_value['value'];
         }
-
         return $header;
     }
 
     private function getComponents()
     {
         $data = [];
-        foreach ($this->payrollComponents as $component)
-        {
+        foreach ($this->payrollComponents as $component) {
             $data[$component->name] = 0;
         }
         return $data;
     }
-
 }
