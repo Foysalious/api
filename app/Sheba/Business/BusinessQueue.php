@@ -11,7 +11,7 @@ abstract class BusinessQueue extends Job implements ShouldQueue
 
     public function __construct()
     {
-        $this->connection = 'business';
-        $this->queue = 'business';
+        $this->connection = 'business_notification';
+        $this->queue = 'business_notification';
     }
 }
