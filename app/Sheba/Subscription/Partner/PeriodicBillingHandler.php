@@ -160,10 +160,12 @@ class PeriodicBillingHandler
         $billing_type = $this->partner->billing_type;
         if (isset($subscriptionRules->subscription_fee))
             foreach ($subscriptionRules->subscription_fee as $fee)
-                if ($fee->title == $billing_type) $value = $fee->price;
-        if (!isset($value)) throw new InvalidPreviousSubscriptionRules();
-        $total = $this->totalDaysOfUsage() ? : 1;
-        return round(doubleval($value) / $total, 6);
+                if ($fee->title == $billing_type) {
+                    $value = $fee->price;
+                    $duration = $fee->duration;
+                }
+        if (!isset($value) || !isset($duration) || $duration == 0) throw new InvalidPreviousSubscriptionRules();
+        return round(doubleval($value) / $duration, 6);
     }
 
 
