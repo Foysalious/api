@@ -98,7 +98,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($addition_components as $addition) {
-            $data['addition'][$addition->name] = $addition->setting;
+            $data['addition'][$addition->name] = 0;
         }
         return $data;
     }
@@ -107,7 +107,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            $data['deduction'][$deduction->name] = $deduction->setting;
+            $data['deduction'][$deduction->name] = 0;
         }
         return $data;
     }
