@@ -95,7 +95,6 @@ class SettingsController extends Controller
             ];
             return api_response($request, $settings, 200, ['settings' => $settings]);
         } catch (\Throwable $e) {
-            dd($e->getMessage());
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
