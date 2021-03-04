@@ -44,7 +44,6 @@ class Creator
     private function addData($payroll_settings)
     {
         $add_addition_components = $this->payrollComponentRequester->getAddAdditionComponent();
-        dump('add_add', $add_addition_components);
         if ($add_addition_components)
             foreach ($add_addition_components as $component) {
                 $this->payrollComponentData[] = [
@@ -60,7 +59,6 @@ class Creator
     private function updateData($payroll_settings)
     {
         $update_addition_components = $this->payrollComponentRequester->getUpdateAdditionComponent();
-        dump('add_upd', $update_addition_components);
         if ($update_addition_components)
             foreach ($update_addition_components as $component) {
                 $data = [

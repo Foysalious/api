@@ -44,7 +44,6 @@ class Creator
     private function addData($payroll_settings)
     {
         $add_deduction_components = $this->payrollComponentRequester->getAddDeductionComponent();
-        dump('ded_add', $add_deduction_components);
         if ($add_deduction_components)
             foreach ($add_deduction_components as $component) {
                 $this->payrollComponentData[] = [
@@ -60,7 +59,6 @@ class Creator
     private function updateData($payroll_settings)
     {
         $update_deduction_components = $this->payrollComponentRequester->getUpdateDeductionComponent();
-        dump('ded_upd', $update_deduction_components);
         if ($update_deduction_components)
             foreach ($update_deduction_components as $component) {
                 $data = [
