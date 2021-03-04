@@ -109,7 +109,7 @@ class Partner extends Referrer implements ReferrerInterface
             throw new ReferenceNotFound();
         $ref_data              = $this->generateDetails($ref);
         $last_use              = $ref->refer->usage()->get()->last();
-        $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:s:i') : null;
+        $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:i:s') : null;
         $ref_data['stepwise_income'] = collect(config('partner.referral_steps'))
             ->map(function($item) {
                 return $item['amount'];
@@ -142,7 +142,7 @@ class Partner extends Referrer implements ReferrerInterface
         $reference['usage']          = $refer->usages;
         $reference['step']           = !empty($this->updatedRefer) ? $this->updatedRefer->refer_level : (int) $refer->refer_level;
         $reference['step_bn']        = $reference['milestone']['current_step'];
-        $reference['created_at']     = $refer->created_at->format('Y-m-d H:s:i');
+        $reference['created_at']     = $refer->created_at->format('Y-m-d H:i:s');
         $this->updatedRefer = null;
         return $reference;
     }

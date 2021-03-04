@@ -19,6 +19,7 @@ class AccountServer
      * @return string
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByAvatar($avatar, $type)
     {
@@ -32,6 +33,7 @@ class AccountServer
      * @return string
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByIdAndRememberToken($id, $remember_token, $type)
     {
@@ -44,6 +46,7 @@ class AccountServer
      * @return mixed
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function getRefreshToken($old_token)
     {
@@ -57,6 +60,7 @@ class AccountServer
      * @return string
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByMobileAndPassword($mobile, $password)
     {
@@ -69,6 +73,7 @@ class AccountServer
      * @return string
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByEmailAndPassword($email, $password)
     {
@@ -81,6 +86,7 @@ class AccountServer
      * @return string
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByEmailAndPasswordV2($email, $password)
     {
@@ -94,6 +100,7 @@ class AccountServer
      * @return mixed
      * @throws AccountServerNotWorking
      * @throws AccountServerAuthenticationError
+     * @throws WrongPinError
      */
     public function getTokenByIdentityAndPassword($identity, $password)
     {
@@ -111,6 +118,7 @@ class AccountServer
      * @return string
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function createAvatarAndGetTokenByMobileAndPassword($avatar_type, $mobile, $password)
     {
@@ -124,6 +132,7 @@ class AccountServer
      * @return string
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function createAvatarAndGetTokenByEmailAndPassword($avatar_type, $email, $password)
     {
@@ -137,6 +146,7 @@ class AccountServer
      * @return mixed
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function createAvatarAndGetTokenByIdentityAndPassword($avatar_type, $identity, $password)
     {
@@ -157,6 +167,7 @@ class AccountServer
      * @return string
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function createProfileAndAvatarAndGetTokenByEmailAndPassword($avatar_type, $name, $email, $password)
     {
@@ -171,6 +182,7 @@ class AccountServer
      * @return mixed
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function createProfileAndAvatarAndGetTokenByIdentityAndPassword($avatar_type, $name, $identity, $password)
     {
@@ -189,24 +201,38 @@ class AccountServer
      * @return array
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
+     * @throws WrongPinError
      */
     public function sendEmailVerificationLink($token)
     {
         return $this->client->get("api/v3/send-verification-link?token=$token");
     }
 
+    /**
+     * @param $token
+     * @param $reason
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
     public function logout($token, $reason)
     {
-        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/logout", [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $token,
-            ],
-            'form_params' => [
-                'reason' => $reason
-            ]
+        return $this->client->setToken($token)->post("/api/v1/logout", [
+            'reason' => $reason
         ]);
     }
 
+    /**
+     * @param $mobile
+     * @param $email
+     * @param $password
+     * @param $purpose
+     * @return array
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
     public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
         $data = [
@@ -215,20 +241,20 @@ class AccountServer
         ];
         if (!empty($email)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
-        return (new Client())->post(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password", [
-            'form_params' => $data
-        ]);
+
+        return $this->client->post("/api/v1/authenticate/password", $data);
     }
 
+    /**
+     * @param $token
+     * @param $purpose
+     * @return array|\Psr\Http\Message\ResponseInterface
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     */
     public function getAuthenticateRequests($token, $purpose)
     {
-        return (new Client())->get(rtrim(config('account.account_url'), '/') . "/api/v1/authenticate/password/requests", [
-            'headers' => [
-                'Authorization' => 'Bearer ' . $token,
-            ],
-            'query' => [
-                'purpose' => $purpose
-            ]
-        ]);
+        return $this->client->setToken($token)->get("/api/v1/authenticate/password/requests?purpose=$purpose");
     }
 }

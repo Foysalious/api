@@ -13,7 +13,9 @@ use League\Fractal\Resource\Item;
 use Sheba\Dal\POSOrder\OrderStatuses;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\Helpers\TimeFrame;
+use Sheba\PaymentLink\Target;
 use Sheba\Pos\Repositories\PosOrderRepository;
+use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 
 class PosOrderList
 {
@@ -27,9 +29,14 @@ class PosOrderList
     protected $q;
     protected $type;
 
+    /** @var PaymentLinkRepositoryInterface */
+    private $paymentLinkRepo;
+    protected $orderStatus;
+
     public function __construct()
     {
         $this->sales_channel = SalesChannels::POS;
+        $this->paymentLinkRepo = app(PaymentLinkRepositoryInterface::class);
     }
 
     /**
@@ -83,6 +90,16 @@ class PosOrderList
     }
 
     /**
+     * @param $orderStatus
+     * @return PosOrderList
+     */
+    public function setOrderStatus($orderStatus)
+    {
+        $this->orderStatus = $orderStatus;
+        return $this;
+    }
+
+    /**
      * @param $offset
      * @return PosOrderList
      */
@@ -106,6 +123,7 @@ class PosOrderList
     {
         /** @var PosOrder $orders */
         $orders = $this->getFilteredOrders();
+
         if ($this->sales_channel == SalesChannels::WEBSTORE) {
             $fractal = new Manager();
             $fractal->setSerializer(new CustomSerializer());
@@ -113,6 +131,8 @@ class PosOrderList
             return $fractal->createData($resource)->toArray()['data'];
         }
         $final_orders = collect();
+        $payment_link_targets = [];
+
         foreach ($orders as $index => $order) {
             $order->isRefundable();
             $order_data = $order->calculate();
@@ -120,8 +140,14 @@ class PosOrderList
             $manager->setSerializer(new CustomSerializer());
             $resource        = new Item($order_data, new PosOrderTransformer());
             $order_formatted = $manager->createData($resource)->toArray()['data'];
+            if (array_key_exists('payment_link_target', $order_formatted)) {
+                $payment_link_targets[] = $order_formatted['payment_link_target'];
+            }
             $final_orders->push($order_formatted);
         }
+
+        if (!empty($payment_link_targets)) $this->mapPaymentLinkData($final_orders, $payment_link_targets);
+
         if (!empty($this->status))
             $final_orders = $final_orders->where('status', $this->status)->slice($this->offset)->take($this->limit);
         $final_orders = $final_orders->groupBy('date')->toArray();
@@ -164,20 +190,27 @@ class PosOrderList
     {
         $orders_query = PosOrder::salesChannel($this->sales_channel)->with('items.service.discounts', 'customer.profile', 'payments', 'logs', 'partner')->byPartner($this->partner->id);
         if ($this->type) $orders_query = $this->filteredByType($orders_query, $this->type);
+        if ($this->orderStatus) $orders_query = $this->filteredByOrderStatus($orders_query, $this->orderStatus);
         if ($this->q) $orders_query = $this->filteredBySearchQuery($orders_query, $this->q);
         return empty($this->status) ? $orders_query->orderBy('created_at', 'desc')->skip($this->offset)->take($this->limit)->get() : $orders_query->orderBy('created_at', 'desc')->get();
     }
 
     private function filteredBySearchQuery($orders_query, $search_query)
     {
-        $orders_query = $orders_query->whereHas('customer.profile', function ($query) use ($search_query) {
-            $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
-            $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+        $partner_id = $this->partner->id;
+        $orders_query = $orders_query->where(function ($query) use($search_query, $partner_id){
+            $query->whereHas('customer.profile', function ($query) use ($search_query) {
+                $query->orWhere('profiles.name', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.email', 'LIKE', '%' . $search_query . '%');
+                $query->orWhere('profiles.mobile', 'LIKE', '%' . $search_query . '%');
+            })->orWhereHas('customer.partnerPosCustomer', function($query) use ($search_query, $partner_id) {
+                $query->where('partner_id', $partner_id);
+                $query->where('partner_pos_customers.nick_name', 'LIKE', '%' . $search_query . '%');
+            });
         });
         $orders_query = $orders_query->orWhere([
             [
-                'pos_orders.id',
+                'pos_orders.partner_wise_order_id',
                 'LIKE',
                 '%' . $search_query . '%'
             ],
@@ -198,6 +231,28 @@ class PosOrderList
         if ($type == 'new') $orders_query = $orders_query->where('status', OrderStatuses::PENDING);
         if ($type == 'running') $orders_query = $orders_query->whereIn('status', [OrderStatuses::PROCESSING, OrderStatuses::SHIPPED]);
         if ($type == 'completed') $orders_query = $orders_query->whereIn('status', [OrderStatuses::COMPLETED, OrderStatuses::CANCELLED, OrderStatuses::DECLINED]);
+        return $orders_query;
+    }
+
+    private function mapPaymentLinkData(&$final_orders, $payment_link_targets)
+    {
+        $payment_links = $this->paymentLinkRepo->getActivePaymentLinksByPosOrders($payment_link_targets);
+
+        $final_orders = $final_orders->map(function ($order) use ($payment_links) {
+            if (array_key_exists('payment_link_target', $order)) {
+                $key = $order['payment_link_target']->toString();
+                if (array_key_exists($key, $payment_links) && $payment_links[$key][0]) {
+                    (new PosOrderTransformer())->addPaymentLinkDataToOrder($order, $payment_links[$key][0]);
+                }
+                unset($order['payment_link_target']);
+            }
+            return $order;
+        });
+    }
+
+    private function filteredByOrderStatus($orders_query, $orderStatus)
+    {
+        $orders_query = $orders_query->where('status', $orderStatus);
         return $orders_query;
     }
 }

@@ -112,6 +112,9 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                 $authenticate_data = (new FacebookAccountKit())->authenticateKit($request->code);
             }
 
+            /**
+             Given mobile no and opt number( always 1st admin) not same
+             */
 //            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
 //                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
 //            }
@@ -142,6 +145,8 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             'created_by_type' => class_basename($request->manager_resource),
             'created_by'      => $request->manager_resource->id,
             'created_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+            'api_request_id' => $request->api_request ? $request->api_request->id : null,
+            'wallet_balance' => $partner->wallet
         ]));
 
         return api_response($request, $new_withdrawal, 200);

@@ -89,11 +89,15 @@ class Job extends BaseModel implements MorphCommentable
     public $profit;
     public $margin;
     public $deliveryDiscount = 0.00;
+    public $deliveryDiscountPartnerContribution;
     public $grossLogisticCharge;
     public $logisticDue;
     public $complexityIndex;
     public $isInWarranty;
     public $isCalculated;
+    public $servicePriceWithoutPartnerContribution;
+    public $materialPriceWithoutPartnerContribution;
+    public $deliveryPriceWithoutPartnerContribution;
     /** @var float|int */
     public $discountWithoutDeliveryDiscount;
     public $logisticDueWithoutDiscount;
@@ -294,47 +298,87 @@ class Job extends BaseModel implements MorphCommentable
      */
     public function calculate($price_only = false)
     {
+        $is_old_order = $this->id < config('sheba.last_job_before_commission');
+        /**
+         * CALCULATING COMMISSION RATES
+         */
         $this->serviceCostRate = 1 - ($this->commission_rate / 100);
         $this->materialCostRate = 1 - ($this->material_commission_rate / 100);
         $this->deliveryCostRate = 1 - ($this->delivery_commission_rate / 100);
         $this->logisticCostRateForPartner = $this->delivery_commission_rate / 100;
         $this->logisticSystemChargeRate = 0;
+
+        /**
+         * CALCULATING THE PRICES
+         */
         $this->servicePrice = formatTaka(($this->service_unit_price * $this->service_quantity) + $this->getServicePrice());
-        $this->serviceCost = formatTaka($this->servicePrice * $this->serviceCostRate);
         $this->materialPrice = formatTaka($this->calculateMaterialPrice());
-        $this->materialCost = formatTaka($this->materialPrice * $this->materialCostRate);
         $this->deliveryPrice = floatval($this->delivery_charge) ?: floatval($this->logistic_charge);
-        $this->deliveryCost = formatTaka($this->delivery_charge * $this->deliveryCostRate);
-        $this->logisticCostForPartner = formatTaka($this->logistic_charge * $this->logisticCostRateForPartner);
         $this->totalPriceWithoutVat = formatTaka($this->servicePrice + $this->materialPrice + $this->delivery_charge);
-        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->deliveryCost - $this->logisticCostForPartner);
         $this->logisticSystemCharge = $this->logistic_charge * $this->logisticSystemChargeRate;
         $this->logisticProfit = $this->logisticCostForPartner - $this->logisticSystemCharge;
         //$this->totalPrice = formatTaka($this->totalPriceWithoutVat + $this->vat); // later
         $this->totalPrice = $this->totalPriceWithoutVat;
-        $this->commission = $this->totalPrice - $this->totalCostWithoutDiscount;
         $this->totalPrice = formatTaka($this->totalPriceWithoutVat);
+
+        /**
+         * CALCULATING DISCOUNT
+         */
         $this->calculateOtherDiscounts();
         $this_discount = $this->isCalculated ? Job::find($this->id)->discount : $this->discount;
         $this->ownDiscount = $this_discount - $this->otherDiscounts;
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
         $this->serviceDiscounts = $this->getServiceDiscount();
-        $this->discountByPromo = $this->discount - $this->otherDiscounts;
-        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+
+//        CHANGED FOR MULTIPLE DISCOUNT PLACED ERROR
+//        $this->discountByPromo = $this->discount - $this->otherDiscounts;
+//        $this->totalDiscount = $this->discount = $this_discount + $this->serviceDiscounts;
+
+        $this->discountByPromo = $this->serviceDiscounts ? 0 : $this->discount - $this->otherDiscounts;
+        $this->totalDiscount = $this->discount = $this->serviceDiscounts ? $this->serviceDiscounts : $this_discount + $this->serviceDiscounts;
         $this->totalDiscountWithoutOtherDiscounts = $this->totalDiscount - $this->otherDiscounts;
         $this->originalDiscount = $this->isCapApplied() ? 0 : $this->original_discount_amount + $this->serviceDiscounts;
         $this->grossPrice = ($this->totalPrice > $this->discount) ? formatTaka($this->totalPrice - $this->discount) : 0;
         $this->service_unit_price = formatTaka($this->service_unit_price);
+
+        /**
+         * CALCULATING CONTRIBUTION
+         */
         $this->ownDiscountContributionSheba = formatTaka(($this->ownDiscount * $this->ownShebaContribution) / 100);
         $this->ownDiscountContributionPartner = formatTaka(($this->ownDiscount * $this->ownPartnerContribution) / 100);
         $this->serviceDiscountContributionSheba = $this->getServiceDiscountContributionSheba();
         $this->serviceDiscountContributionPartner = $this->getServiceDiscountContributionPartner();
-        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba +
-            $this->serviceDiscountContributionSheba + $this->otherDiscountContributionSheba);
-        $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner +
-            $this->serviceDiscountContributionPartner + $this->otherDiscountContributionPartner);
-        $this->totalCost = $this->totalCostWithoutDiscount - $this->discountContributionPartner;
+        $this->discountContributionSheba = formatTaka($this->ownDiscountContributionSheba + $this->serviceDiscountContributionSheba + $this->otherDiscountContributionSheba);
+        $this->discountContributionPartner = formatTaka($this->ownDiscountContributionPartner + $this->serviceDiscountContributionPartner + $this->otherDiscountContributionPartner);
+
+        /**
+         * CALCULATING THE PRICES WITHOUT PARTNER CONTRIBUTION
+         */
+        $partner_contribution_without_service_discount_contribution = $this->discountContributionPartner - $this->getServiceDiscountContributionPartner() - $this->deliveryDiscountPartnerContribution;
+        $this->servicePriceWithoutPartnerContribution = $this->getServicePriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution);
+        $this->materialPriceWithoutPartnerContribution = $this->getMaterialPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution);
+        $this->deliveryPriceWithoutPartnerContribution = $this->getDeliveryPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution);
+
+        $this->serviceCost = $is_old_order
+            ? formatTaka($this->servicePrice * $this->serviceCostRate)
+            : formatTaka($this->servicePriceWithoutPartnerContribution * $this->serviceCostRate);
+        $this->materialCost = $is_old_order
+            ? formatTaka($this->materialPrice * $this->materialCostRate)
+            : formatTaka($this->materialPriceWithoutPartnerContribution * $this->materialCostRate);
+        $this->deliveryCost = $is_old_order
+            ? formatTaka($this->delivery_charge * $this->deliveryCostRate)
+            : formatTaka($this->deliveryPriceWithoutPartnerContribution * $this->deliveryCostRate);
+        $this->logisticCostForPartner = formatTaka($this->logistic_charge * $this->logisticCostRateForPartner);
+        $this->totalCostWithoutDiscount = formatTaka($this->serviceCost + $this->materialCost + $this->deliveryCost - $this->logisticCostForPartner);
+        $this->commission = $this->totalPrice - $this->totalCostWithoutDiscount;
+
+        /**
+         * CALCULATING PROFIT
+         */
+        $this->totalCost = $is_old_order
+            ? $this->totalCostWithoutDiscount - $this->discountContributionPartner
+            : $this->totalCostWithoutDiscount;
         $this->grossCost = formatTaka($this->totalCost);
         $this->profit = formatTaka($this->grossPrice - $this->totalCost);
         $this->margin = $this->totalPrice != 0 ? (($this->grossPrice - $this->totalCost) * 100) / $this->totalPrice : 0;
@@ -1178,5 +1222,42 @@ class Job extends BaseModel implements MorphCommentable
     public function hasPendingCancelRequest()
     {
         return $this->cancelRequests()->where('status', CancelRequestStatuses::PENDING)->count() > 0;
+    }
+
+    /**
+     * @param $partner_contribution_without_service_discount_contribution
+     * @return float|int
+     */
+    private function getServicePriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution)
+    {
+        if (!(int)$this->totalPriceWithoutVat) return 0.00;
+
+        return $this->servicePrice
+            - (($this->servicePrice / $this->totalPriceWithoutVat) * $partner_contribution_without_service_discount_contribution)
+            - $this->getServiceDiscountContributionPartner();
+    }
+
+    /**
+     * @param $partner_contribution_without_service_discount_contribution
+     * @return float|int
+     */
+    private function getMaterialPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution)
+    {
+        if (!(int)$this->totalPriceWithoutVat) return 0.00;
+
+        return $this->materialPrice - (($this->materialPrice / $this->totalPriceWithoutVat) * $partner_contribution_without_service_discount_contribution);
+    }
+
+    /**
+     * @param $partner_contribution_without_service_discount_contribution
+     * @return float|int
+     */
+    private function getDeliveryPriceWithoutPartnerContribution($partner_contribution_without_service_discount_contribution)
+    {
+        if (!(int)$this->totalPriceWithoutVat) return 0.00;
+
+        return $this->delivery_charge
+            - (($this->delivery_charge / $this->totalPriceWithoutVat) * $partner_contribution_without_service_discount_contribution)
+            - $this->deliveryDiscountPartnerContribution;
     }
 }
