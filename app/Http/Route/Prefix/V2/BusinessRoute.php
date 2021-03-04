@@ -369,7 +369,7 @@ class BusinessRoute
                     $api->get('/settings', 'B2b\PayrollController@getPayrollSettings');
                     $api->post('/pay-schedule/{id}', 'B2b\PayrollController@updatePaySchedule');
                     $api->post('/salary-breakdown/{id}', 'B2b\PayrollController@updateSalaryBreakdown');
-                    $api->post('/component/{payroll_settings}/add', 'B2b\PayrollController@addComponent');
+                    $api->post('/component/{payroll_settings}', 'B2b\PayrollController@addComponent');
                 });
             });
         });
