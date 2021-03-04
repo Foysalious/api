@@ -9,7 +9,6 @@ use Sheba\Dal\Payslip\Payslip;
 class PayRunListTransformer extends TransformerAbstract
 {
     private $grossSalary;
-    private $netPayable;
 
     public function transform(Payslip $payslip)
     {
@@ -17,7 +16,6 @@ class PayRunListTransformer extends TransformerAbstract
         $business_member = $payslip->businessMember;
         $department = $business_member->department();
         return [
-            'total' => $this->getTotal($payslip),
             'id' =>  $payslip->id,
             'business_member_id' => $payslip->business_member_id,
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
@@ -25,7 +23,9 @@ class PayRunListTransformer extends TransformerAbstract
             'department' => $department ? $department->name : 'N/A',
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
             'gross_salary' => floatValFormat($this->grossSalary),
-            'net_payable' => $this->netPayable,
+            'addition' => $this->getTotal($payslip,'addition'),
+            'deduction' => $this->getTotal($payslip,'deduction'),
+            'net_payable' => $this->getTotal($payslip,'net_payable'),
         ];
     }
 
@@ -34,7 +34,7 @@ class PayRunListTransformer extends TransformerAbstract
         return $business_member->salary ? $business_member->salary->gross_salary : 0;
     }
 
-    private function getTotal($payslip)
+    private function getTotal($payslip, $type)
     {
         $salary_breakdown = json_decode($payslip->salary_breakdown, 1);
         $addition = 0;
@@ -52,14 +52,9 @@ class PayRunListTransformer extends TransformerAbstract
                 }
             }
         }
-        $this->netPayable = floatValFormat(($this->grossSalary + $addition) - $deduction);
-        $data = [
-            'gross_salary' => floatValFormat ($this->grossSalary),
-            'addition' => floatValFormat($addition),
-            'deduction' => floatValFormat($deduction),
-            'net_payable' => $this->netPayable
-        ];
-
-        return $data;
+        $net_payable = floatValFormat(($this->grossSalary + $addition) - $deduction);
+        if ($type == 'net_payable') return $net_payable;
+        if ($type == 'addition') return $addition;
+        if ($type == 'deduction') return $deduction;
     }
 }

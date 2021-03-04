@@ -123,7 +123,13 @@ class PayrunList
         $manager->setSerializer(new ArraySerializer());
         $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
-
+        $total_data ['total'] = [
+            'gross_salary' => $payslip_list->sum('gross_salary'),
+            'addition' => $payslip_list->sum('addition'),
+            'deduction' => $payslip_list->sum('deduction'),
+            'net_payable' => $payslip_list->sum('net_payable'),
+        ];
+        $payslip_list = $payslip_list->merge($total_data);
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         return $payslip_list;
