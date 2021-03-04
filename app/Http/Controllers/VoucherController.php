@@ -393,6 +393,9 @@ class VoucherController extends Controller
             'start_date' => 'required|date_format:Y-m-d',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'title' => 'string'
+        ], [
+            'required' => 'The :attribute field is required.',
+            'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
 
         $customer = Customer::whereHas('profile', function ($query) use ($request) {
