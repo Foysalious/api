@@ -98,7 +98,8 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($addition_components as $addition) {
-            $data['addition'][$addition->name] = $addition->setting;
+            if (!$addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => implode(" ", explode("_",$addition->name)), 'is_default' => 0];
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
         }
         return $data;
     }
@@ -107,7 +108,8 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            $data['deduction'][$deduction->name] = $deduction->setting;
+            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => implode(" ", explode("_",$deduction->name)), 'is_default' => 0];
+            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }
         return $data;
     }
