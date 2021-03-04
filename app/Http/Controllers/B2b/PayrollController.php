@@ -128,29 +128,8 @@ class PayrollController extends Controller
         if (!$payroll_setting) return api_response($request, null, 404);
 
         $payroll_component_requester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
-        $addition_creator->setPayrollComponentRequester($payroll_component_requester)->create();
-        $deduction_creator->setPayrollComponentRequester($payroll_component_requester)->create();
-        return api_response($request, null, 200);
-    }
-
-    public function updateComponent($business, $payroll_setting, Request $request, PayrollComponentRequester $payroll_component_requester, AdditionUpdater $addition_updater, DeductionsUpdater $deduction_updater)
-    {
-        $this->validate($request, [
-            'addition' => 'required',
-            'deduction' => 'required',
-        ]);
-        /** @var BusinessMember $business_member */
-        $business_member = $request->business_member;
-        if (!$business_member) return api_response($request, null, 401);
-
-        $this->setModifier($business_member->member);
-
-        $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
-        if (!$payroll_setting) return api_response($request, null, 404);
-
-        $payroll_component_requester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
-        $addition_updater->setPayrollComponentRequester($payroll_component_requester)->update();
-        $deduction_updater->setPayrollComponentRequester($payroll_component_requester)->update();
+        $addition_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
+        $deduction_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
         return api_response($request, null, 200);
     }
 }
