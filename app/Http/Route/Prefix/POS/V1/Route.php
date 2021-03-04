@@ -82,6 +82,6 @@ class Route
                         $api->get('/', 'Inventory\CollectionController@index');
                     });
                 });
-            }
+            });
         }
 
