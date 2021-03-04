@@ -385,6 +385,7 @@ class VoucherController extends Controller
 
     public function voucherAgainstMobile(Request $request, VoucherRepository $voucherRepository)
     {
+        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
         $this->validate($request, [
             'mobile' => 'required|mobile:bd',
             'amount' => 'required|numeric',
