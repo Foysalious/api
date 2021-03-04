@@ -110,4 +110,50 @@ class SubscriptionTest extends FeatureTestCase
 
 
     }
+
+    public function testSubscriptionRulesDynamic(){
+
+        $partner=Partner::first();
+        $partner_id=$partner->id;
+        $resource=Resource::first();
+        $resource_remembar_token=$resource->remember_token;
+        $subscriptionData=PartnerSubscriptionPackage::first();
+        dd($subscriptionData);
+
+        $respose=$this->get("v2/partners/".$partner_id."/subscriptions/all-packages?remember_token=".$resource_remembar_token,
+            [
+                "version-code" => "21121"
+            ]);
+        $data= $respose->decodeResponseJson();
+        $publication_status_monthly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [0] ['is_published'];
+        $publication_status_yearly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [1] ['is_published'];
+        $publication_status_two_yearly=$data ['data'] ['subscription_package'] [0] ['rules'] ['subscription_fee'] [2] ['is_published'];
+        //dd($data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['resource'] ['type'] ['add']);
+
+        $this->assertEquals(200,$data ["code"]);
+        $this->assertEquals(1,$data ['data'] ['subscription_package'] [0] ['id']);
+        $this->assertEquals("Basic",$data ['data'] ['subscription_package'] [0] ['name']);
+        $this->assertEquals(5,$data  ['data'] ['subscription_package'] [0] ['rules'] ['resource_cap'] ['value']);
+        $this->assertEquals(20,$data ['data'] ['subscription_package'] [0] ['rules'] ['commission'] ['value']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['loan']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['dashboard_analytics']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['print']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['download']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['alert']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['ledger']);
+        $this->assertEquals(false,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['product_publish']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['webstore_publish']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['resource'] ['type'] ['add']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['expense']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['extra_earning_global']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['customer_list']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['marketing_promo']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['digital_collection']);
+        $this->assertEquals(false,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['old_dashboard']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['notification']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['eshop']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['emi']);
+        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['due_tracker']);
+
+    }
 }
