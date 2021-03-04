@@ -2,6 +2,7 @@
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use League\Fractal\TransformerAbstract;
@@ -27,6 +28,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
             'id' => $payroll_setting->id,
             'business_id' => $payroll_setting->business_id,
             'salary_breakdown' => $this->grossSalaryBreakdown($payroll_setting),
+            'pay_components' => $this->payComponents($payroll_setting),
             'pay_schedule' => $this->paySchedule($payroll_setting),
             'payroll_setting_completion' => $this->payrollSettingCompletion(),
         ];
@@ -80,5 +82,35 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $total = $this->payrollComponentData['salary_breakdown_completion'] + $this->payScheduleData['pay_schedule_completion'];
         return round($total, 0);
+    }
+
+    private function payComponents($payroll_setting)
+    {
+        $addition_components = $payroll_setting->components->where('type',Type::ADDITION);
+        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION);
+        $addition = $this->getAdditionComponents($addition_components);
+        $deduction = $this->getDeductionComponents($deduction_components);
+
+        return array_merge($addition, $deduction);
+    }
+
+    private function getAdditionComponents($addition_components)
+    {
+        $data = [];
+        foreach ($addition_components as $addition) {
+            if (!$addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => implode(" ", explode("_",$addition->name)), 'is_default' => 0];
+            if ($addition->is_default) $data['addition'][] = ['id' => $addition->id, 'name' => Components::getComponents($addition->name)['value'], 'is_default' => 1];
+        }
+        return $data;
+    }
+
+    private function getDeductionComponents($deduction_components)
+    {
+        $data = [];
+        foreach ($deduction_components as $deduction) {
+            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => implode(" ", explode("_",$deduction->name)), 'is_default' => 0];
+            if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
+        }
+        return $data;
     }
 }

@@ -41,12 +41,50 @@ class Creator
 
     private function payrollComponentData()
     {
+        $this->getDefaultGrossComponents();
+        $this->getDefaultAdditionComponents();
+        $this->getDefaultDeductionComponents();
+
+        return $this->payrollComponentData;
+    }
+
+    private function getDefaultGrossComponents()
+    {
         foreach (Components::getDefaultComponents() as $key => $component) {
             $this->payrollComponentData[] = [
                 'payroll_setting_id' => $this->payrollSetting->id,
                 'name' => $component['key'],
                 'type' => $component['type'],
+                'is_default' => 1,
                 'setting' => json_encode(['percentage' => 0]),
+            ];
+        }
+        return $this->payrollComponentData;
+    }
+
+    private function getDefaultAdditionComponents()
+    {
+        foreach (Components::getDefaultAdditionComponents() as $key => $component) {
+            $this->payrollComponentData[] = [
+                'payroll_setting_id' => $this->payrollSetting->id,
+                'name' => $component['key'],
+                'type' => $component['type'],
+                'is_default' => 1,
+                'setting' => json_encode([]),
+            ];
+        }
+        return $this->payrollComponentData;
+    }
+
+    private function getDefaultDeductionComponents()
+    {
+        foreach (Components::getDefaultDeductionComponents() as $key => $component) {
+            $this->payrollComponentData[] = [
+                'payroll_setting_id' => $this->payrollSetting->id,
+                'name' => $component['key'],
+                'type' => $component['type'],
+                'is_default' => 1,
+                'setting' => json_encode([]),
             ];
         }
         return $this->payrollComponentData;

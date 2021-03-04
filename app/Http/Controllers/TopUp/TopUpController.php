@@ -218,6 +218,7 @@ class TopUpController extends Controller
          *
          * $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
+            ->setPurpose(Purpose::TOPUP)
             ->setRequest($request)
             ->verify();
          */

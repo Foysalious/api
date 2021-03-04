@@ -331,9 +331,9 @@ class JobController extends Controller
         ];
         $partnerOrder = $job->partnerOrder;
         $methods_with_amounts = $partnerOrder->payments()->select('method','amount')->get()->toArray();
-
         foreach ($methods_with_amounts as &$method) {
-            $method['name'] =$payment_method_names[$method['method']];
+            if(!array_key_exists($method['method'], $payment_method_names)) $method['name'] = $method['method'];
+            else $method['name'] = $payment_method_names[$method['method']];
         }
         $partnerOrder->calculate(true);
         $original_delivery_charge = $job->deliveryPrice;

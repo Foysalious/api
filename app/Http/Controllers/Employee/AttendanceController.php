@@ -2,6 +2,7 @@
 
 use App\Sheba\Business\BusinessBasicInformation;
 use Illuminate\Support\Facades\Log;
+use Sheba\Business\Attendance\AttendanceCommonInfo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -139,59 +140,17 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
-    public function attendanceInfo(Request $request)
+    public function attendanceInfo(Request $request, AttendanceCommonInfo $attendance_common_info)
     {
-        /** @var BusinessMember $business_member */
-        $business_member = $this->getBusinessMember($request);
         /** @var Business $business */
         $business = $this->getBusiness($request);
-        $is_remote_enable = $business->isRemoteAttendanceEnable();
-        $geo = $this->getGeo($request);
-        $address = $this->getAddress($geo);
-        $ip = $this->getIp();
-
+        $attendance_common_info->setLat($request->lat)->setLng($request->lng);
         $data = [
-            'is_in_wifi_area' => $this->isInWifiArea($business, $ip) ? 1 : 0,
-            'address' => $this->getAddress($geo),
+            'is_in_wifi_area' => $attendance_common_info->isInWifiArea($business) ? 1 : 0,
+            'address' => $attendance_common_info->getAddress()
         ];
+
         return api_response($request, null, 200, ['info' => $data]);
     }
 
-    private function getGeo(Request $request)
-    {
-        if (!$request->lat || !$request->lng) return null;
-        $geo = new Geo();
-        return $geo->setLat($request->lat)->setLng($request->lng);
-    }
-
-    public function getAddress(Geo $geo)
-    {
-        try {
-            return (new BarikoiClient)->getAddressFromGeo($geo)->getAddress();
-        } catch (\Throwable $exception) {
-            return "";
-        }
-    }
-
-    private function getIp()
-    {
-        $ip_methods = ['HTTP_CLIENT_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_FORWARDED', 'HTTP_X_CLUSTER_CLIENT_IP', 'HTTP_FORWARDED_FOR', 'HTTP_FORWARDED', 'REMOTE_ADDR'];
-        foreach ($ip_methods as $key) {
-            if (array_key_exists($key, $_SERVER) === true) {
-                foreach (explode(',', $_SERVER[$key]) as $ip) {
-                    $ip = trim($ip); //just to be safe
-                    if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
-                        return $ip;
-                    }
-                }
-            }
-        }
-
-        return request()->ip();
-    }
-
-    private function isInWifiArea(Business $business, $ip)
-    {
-        return in_array($ip, $business->offices->pluck('ip')->toArray());
-    }
 }
