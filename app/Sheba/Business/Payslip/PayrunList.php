@@ -32,6 +32,10 @@ class PayrunList
     private $sort;
     private $monthYear;
     private $departmentID;
+    /**
+     * @var \Illuminate\Support\Collection
+     */
+    private $payslip;
 
     /**
      * PayrunList constructor.
@@ -106,7 +110,8 @@ class PayrunList
     public function get()
     {
         $this->runPayslipQuery();
-        return $this->getData();
+        $this->payslip = $this->getData();
+        return $this->payslip;
     }
 
     private function runPayslipQuery()
@@ -123,16 +128,20 @@ class PayrunList
         $manager->setSerializer(new ArraySerializer());
         $payslip_list = new Collection($this->payslipList, new PayRunListTransformer());
         $payslip_list = collect($manager->createData($payslip_list)->toArray()['data']);
-        $total_data ['total'] = [
-            'gross_salary' => $payslip_list->sum('gross_salary'),
-            'addition' => $payslip_list->sum('addition'),
-            'deduction' => $payslip_list->sum('deduction'),
-            'net_payable' => $payslip_list->sum('net_payable'),
-        ];
-        $payslip_list = $payslip_list->merge($total_data);
+
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
         return $payslip_list;
+    }
+
+    public function getTotal()
+    {
+        return [
+            'gross_salary' => $this->payslip->sum('gross_salary'),
+            'addition' => $this->payslip->sum('addition'),
+            'deduction' => $this->payslip->sum('deduction'),
+            'net_payable' => $this->payslip->sum('net_payable'),
+        ];
     }
 
     /**
