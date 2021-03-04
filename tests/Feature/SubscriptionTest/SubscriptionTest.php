@@ -139,23 +139,23 @@ class SubscriptionTest extends FeatureTestCase
         $this->assertEquals($subscription_rules ['commission'] ['value'],$data ['data'] ['subscription_package'] [0] ['rules'] ['commission'] ['value']);
         $this->assertEquals($subscription_rules ['access_rules'] ['loan'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['loan']);
         $this->assertEquals($subscription_rules ['access_rules'] ['dashboard_analytics'] ,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['dashboard_analytics']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['print']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['download']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['alert']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['ledger']);
-        $this->assertEquals(false,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['product_publish']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['webstore_publish']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['resource'] ['type'] ['add']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['expense']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['extra_earning_global']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['customer_list']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['marketing_promo']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['digital_collection']);
-        $this->assertEquals(false,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['old_dashboard']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['notification']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['eshop']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['emi']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['due_tracker']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['invoice'] ['print'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['print']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['invoice'] ['download'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['download']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['due'] ['alert'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['alert']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['due'] ['ledger'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['ledger']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['ecom'] ['product_publish'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['product_publish']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['pos'] ['ecom'] ['webstore_publish'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['ecom'] ['webstore_publish']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['resource'] ['type'] ['add'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['resource'] ['type'] ['add']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['expense'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['expense']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['extra_earning_global'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['extra_earning_global']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['customer_list'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['customer_list']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['marketing_promo'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['marketing_promo']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['digital_collection'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['digital_collection']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['old_dashboard'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['old_dashboard']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['notification'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['notification']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['eshop'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['eshop']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['emi'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['emi']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['due_tracker'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['due_tracker']);
 
     }
 }
