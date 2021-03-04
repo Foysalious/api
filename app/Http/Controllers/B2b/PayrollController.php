@@ -149,8 +149,8 @@ class PayrollController extends Controller
         if (!$payroll_setting) return api_response($request, null, 404);
 
         $payroll_component_requester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
-        $addition_updater->setPayrollComponentRequester($payroll_component_requester)->create();
-        $deduction_updater->setPayrollComponentRequester($payroll_component_requester)->create();
+        $addition_updater->setPayrollComponentRequester($payroll_component_requester)->update();
+        $deduction_updater->setPayrollComponentRequester($payroll_component_requester)->update();
         return api_response($request, null, 200);
     }
 }
