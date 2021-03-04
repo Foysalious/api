@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components\Additions;
 
+use Illuminate\Support\Facades\DB;
 use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 
@@ -24,24 +25,53 @@ class Creator
         return $this;
     }
 
-    public function create()
+    public function createOrUpdate()
     {
-        $this->makeData();
-        $this->payrollComponentRepository->insert($this->payrollComponentData);
+        DB::transaction(function () {
+            $this->makeData();
+            if ($this->payrollComponentData)
+                $this->payrollComponentRepository->insert($this->payrollComponentData);
+        });
     }
 
     private function makeData()
     {
-        $addition_components = $this->payrollComponentRequester->getAddition();
         $payroll_settings = $this->payrollComponentRequester->getSetting();
-        foreach ($addition_components as $component) {
-            $this->payrollComponentData[] = [
-                'payroll_setting_id' => $payroll_settings->id,
-                'name' => $component,
-                'type' => 'addition',
-                'is_default' => 0,
-                'setting' => json_encode([]),
-            ];
-        }
+        $this->addData($payroll_settings);
+        $this->updateData($payroll_settings);
+    }
+
+    private function addData($payroll_settings)
+    {
+        $add_addition_components = $this->payrollComponentRequester->getAddAdditionComponent();
+        dump('add_add', $add_addition_components);
+        if ($add_addition_components)
+            foreach ($add_addition_components as $component) {
+                $this->payrollComponentData[] = [
+                    'payroll_setting_id' => $payroll_settings->id,
+                    'name' => $component['name'],
+                    'type' => 'addition',
+                    'is_default' => 0,
+                    'setting' => json_encode([]),
+                ];
+            }
+    }
+
+    private function updateData($payroll_settings)
+    {
+        $update_addition_components = $this->payrollComponentRequester->getUpdateAdditionComponent();
+        dump('add_upd', $update_addition_components);
+        if ($update_addition_components)
+            foreach ($update_addition_components as $component) {
+                $data = [
+                    'payroll_setting_id' => $payroll_settings->id,
+                    'name' => $component['name'],
+                    'type' => 'addition',
+                    'is_default' => 0,
+                    'setting' => json_encode([]),
+                ];
+                $existing_component = $this->payrollComponentRepository->find($component['id']);
+                $this->payrollComponentRepository->update($existing_component, $data);
+            }
     }
 }

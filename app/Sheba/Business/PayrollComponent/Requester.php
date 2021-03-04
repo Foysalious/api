@@ -6,6 +6,16 @@ class Requester
     private $setting;
     private $deduction;
     private $addition;
+    private $addAdditionComponent;
+    private $updateAdditionComponent;
+    /**
+     * @var mixed
+     */
+    private $updateDeductionComponent;
+    /**
+     * @var mixed
+     */
+    private $addDeductionComponent;
 
     public function setName($name)
     {
@@ -36,22 +46,36 @@ class Requester
     public function setAddition($addition)
     {
         $this->addition = json_decode($addition, 1);
+        $this->addAdditionComponent = $this->addition['add'];
+        $this->updateAdditionComponent = $this->addition['update'];
         return $this;
     }
 
-    public function getAddition()
+    public function getAddAdditionComponent()
     {
-        return $this->addition;
+        return $this->addAdditionComponent;
+    }
+
+    public function getUpdateAdditionComponent()
+    {
+        return $this->updateAdditionComponent;
     }
 
     public function setDeduction($deduction)
     {
         $this->deduction = json_decode($deduction,1);
+        $this->addDeductionComponent = $this->deduction['add'];
+        $this->updateDeductionComponent = $this->deduction['update'];
         return $this;
     }
 
-    public function getDeduction()
+    public function getAddDeductionComponent()
     {
-        return $this->deduction;
+        return $this->addDeductionComponent;
+    }
+
+    public function getUpdateDeductionComponent()
+    {
+        return $this->updateDeductionComponent;
     }
 }
