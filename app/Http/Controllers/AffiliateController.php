@@ -1247,6 +1247,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                         $q->with(['statusChangeLogs', 'resource.profile', 'jobServices', 'customerComplains', 'category', 'review' => function ($q) {
                             $q->select('id', 'rating', 'job_id');
                         }, 'usedMaterials']);
+                        $q->with('jobServices.service');
                     }]);
                 }]);
             }]);
@@ -1339,7 +1340,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
     private function getJobInformation(Job $job, PartnerOrder $partnerOrder)
     {
         $category = $job->category;
-        $service = $job->service;
+        $job_service = $job->jobServices[0];
+        $service = $job->jobServices[0]->service;
         $show_expert = $job->canCallExpert();
         $process_log = $job->statusChangeLogs->where('to_status', constants('JOB_STATUSES')['Process'])->first();
         return collect(array(
@@ -1351,6 +1353,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
             'service_id' => $service ? $service->id : null,
             'service_name' => $service ? $service->name : null,
             'service_thumb' => $service ? $service->thumb : null,
+            'service_unit' => $service ? $service->unit : null,
+            'job_quantity' => $job_service ? $job_service->quantity : null,
             'schedule_date' => $job->schedule_date ? $job->schedule_date : null,
             'served_date' => $job->delivered_date ? $job->delivered_date->format('Y-m-d H:i:s') : null,
             'process_date' => $process_log ? $process_log->created_at->format('Y-m-d H:i:s') : null,
