@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -43,10 +44,10 @@ class WebstoreSettingsController extends Controller
     public function update($partner, Request $request, WebstoreSettingsUpdateRequest $webstoreSettingsUpdateRequest)
     {
         $this->validate($request, [
-                'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
-                'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
+            'is_webstore_published' => 'sometimes|numeric|between:0,1', 'name' => 'sometimes|string',
+            'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric'
         ]);
-        $is_webstore_published = 0 ;
+        $is_webstore_published = 0;
         $partner_id = $request->partner->id;
         $this->setModifier($request->manager_resource);
         $webstoreSettingsUpdateRequest->setPartner($request->partner);
@@ -58,8 +59,9 @@ class WebstoreSettingsController extends Controller
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
         if ($request->has('sub_domain')) {
-            if ($this->subDomainAlreadyExist($request->sub_domain)) return api_response($request, null,400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
-            $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
+            $domain_name = strtolower($request->sub_domain);
+            if ($this->subDomainAlreadyExist($domain_name)) return api_response($request, null, 400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
+            $webstoreSettingsUpdateRequest->setSubDomain($domain_name);
         }
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
         if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
@@ -77,7 +79,7 @@ class WebstoreSettingsController extends Controller
                 ]));
             }
         }
-        return api_response($request, null,200, ['message' => 'Successful']);
+        return api_response($request, null, 200, ['message' => 'Successful']);
 
     }
 
@@ -99,7 +101,6 @@ class WebstoreSettingsController extends Controller
         return api_response($request, null, 200, ['data' => $list]);
     }
 
-
     /**
      * @param Request $request
      * @param $partner
@@ -108,12 +109,12 @@ class WebstoreSettingsController extends Controller
      */
     public function updateBanner(Request $request, $partner, WebstoreBannerSettings $webstoreBannerSettings)
     {
-            $partner_id = $request->partner->id;
-            $this->setModifier($request->manager_resource);
-            $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
-            if (!$banner_settings)
-                return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
-            $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
-            return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
+        $partner_id = $request->partner->id;
+        $this->setModifier($request->manager_resource);
+        $banner_settings = PartnerWebstoreBanner::where('partner_id', $partner_id)->first();
+        if (!$banner_settings)
+            return api_response($request, null, 400, ['message' => 'Banner Settings not found']);
+        $webstoreBannerSettings->setBannerSettings($banner_settings)->setData($request->all())->update();
+        return api_response($request, null, 200, ['message' => 'Banner Settings Updated Successfully']);
     }
 }

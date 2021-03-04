@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Exceptions\DoNotThrowException;
 use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
@@ -235,12 +237,10 @@ class AccountServer
      */
     public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
-        $data = [
-            'password' => $password,
-            'purpose' => $purpose
-        ];
-        if (!empty($email)) $data['email'] = $email;
+        $data = ['password' => $password, 'purpose' => $purpose];
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
+        if (!isset($data['mobile']) && !isset($data['email'])) throw new DoNotThrowException();
 
         return $this->client->post("/api/v1/authenticate/password", $data);
     }
@@ -256,5 +256,17 @@ class AccountServer
     public function getAuthenticateRequests($token, $purpose)
     {
         return $this->client->setToken($token)->get("/api/v1/authenticate/password/requests?purpose=$purpose");
+    }
+
+    /**
+     * @param $code
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getTokenByShebaAccountKit($code)
+    {
+        $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
+        return $data['token'];
     }
 }

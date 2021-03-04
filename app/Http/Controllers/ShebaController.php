@@ -3,7 +3,12 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\Customer;
+use App\Models\PartnerOrder;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
 use Sheba\AppVersion\AppVersionManager;
+use Sheba\AutoSpAssign\Job\InitiateAutoSpAssign;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -50,7 +55,7 @@ class ShebaController extends Controller
     {
         $this->serviceRepository     = $service_repo;
         $this->reviewRepository      = $review_repo;
-        $this->paymentLinkRepo = $paymentLinkRepository;
+        $this->paymentLinkRepo       = $paymentLinkRepository;
     }
 
     public function getInfo()
@@ -58,11 +63,9 @@ class ShebaController extends Controller
         $job_count      = Job::all()->count() + 16000;
         $service_count  = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
-        return response()->json([
-            'service'  => $service_count, 'job' => $job_count,
+        return response()->json(['service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-            'msg'      => 'successful', 'code' => 200
-        ]);
+            'msg' => 'successful', 'code' => 200]);
     }
 
     public function sendFaq(Request $request)
@@ -140,11 +143,9 @@ class ShebaController extends Controller
             $query->where('is_published', 1);
         })->where('portal_name', $portal_name)->where('screen', $screen)->first();
 
-        $slider = $sliderPortal->slider()->with([
-            'slides' => function ($q) use ($location) {
-                $q->where('location_id', $location)->orderBy('order');
-            }
-        ])->first();
+        $slider = $sliderPortal->slider()->with(['slides' => function ($q) use ($location) {
+            $q->where('location_id', $location)->orderBy('order');
+        }])->first();
 
         return $slider;
     }
@@ -289,7 +290,6 @@ class ShebaController extends Controller
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
         $amount       = $request->amount;
-
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
@@ -300,7 +300,7 @@ class ShebaController extends Controller
 
         $emi_data = [
             "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get()
+            "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -314,7 +314,7 @@ class ShebaController extends Controller
             $icons_folder         = getEmiBankIconsFolder(true);
             $emi_data = [
                 "emi"   => $emi_calculator->getCharges($amount),
-                "banks" => Banks::get($icons_folder)
+                "banks" => (new Banks())->setAmount($amount)->get()
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -349,7 +349,7 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -365,12 +365,12 @@ class ShebaController extends Controller
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag       = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
-            'type'     => $type->sluggable_type,
-            'id'       => $type->sluggable_id,
+            'type' => $type->sluggable_type,
+            'id' => $type->sluggable_id,
             'meta_tag' => $meta_tag && $meta_tag->meta_tag ? json_decode($meta_tag->meta_tag) : null,
-            'og_tag'   => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
+            'og_tag' => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
         ];
         return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
     }
@@ -381,5 +381,22 @@ class ShebaController extends Controller
         $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+    }
+
+    public function registerCustomer(Request $request, CustomerRepository $cr)
+    {
+        $info = ['mobile' => $request->mobile];
+        $cr->registerMobile($info);
+    }
+
+    public function testAutoSpRun()
+    {
+        $partner_order = PartnerOrder::find(186280);
+        $customer = Customer::find(189931);
+        $partnersFromList = [
+                                0 => 38571
+                            ];
+        dispatch(new InitiateAutoSpAssign($partner_order, $customer, $partnersFromList));
+        return 1;
     }
 }

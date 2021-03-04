@@ -7,6 +7,7 @@ use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
 use DB;
+use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
@@ -83,6 +84,7 @@ class TopUp
 
         $response = $this->response->getSuccess();
 
+        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->getMessage())));
         try {
             DB::transaction(function () use ($response, &$topup_order) {
                 $topup_order = $this->updateSuccessfulTopOrder($topup_order, $response);

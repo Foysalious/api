@@ -5,12 +5,14 @@ namespace Sheba\NeoBanking\Banks\PrimeBank;
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
 use Exception;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
+use Sheba\ModificationFields;
 use Sheba\NeoBanking\Exceptions\AccountCreateException;
 use Sheba\NeoBanking\Exceptions\InvalidPartnerInformationException;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
 
 class AccountCreate
 {
+    use ModificationFields;
     private $partner, $neoBankingData, $bank;
     private $data, $mobile, $response, $account_no;
 
@@ -77,14 +79,13 @@ class AccountCreate
     public function store()
     {
         if($this->response['code'] === 200){
-            PartnerNeoBankingAccount::create([
+            $this->setModifier($this->partner);
+            PartnerNeoBankingAccount::create($this->withBothModificationFields([
                 "partner_id" => $this->partner->id,
-                "account_no" => $this->response["data"]->info->account_no,
                 "bank_id"    => $this->bank->id
-            ]);
-            $this->account_no = $this->response["data"]->info->account_no;
+            ]));
             $data["title"]      = "New bank account created";
-            $data["message"]    = "অভিনন্দন! প্রাইম ব্যাংক এ আপনার নামে একটি ব্যাবসায়িক ব্যাংক অ্যাকাউন্ট খোলা হয়েছে। ব্যাংক অ্যাকাউন্ট নাম্বার $this->account_no";
+            $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
             $data["event_type"] = "NeoBanking";
             NeoBankingGeneralStatics::sendCreatePushNotification($this->partner, $data);
             notify()->partner($this->partner)->send([

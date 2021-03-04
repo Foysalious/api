@@ -1,5 +1,7 @@
 <?php namespace Sheba\SmsCampaign;
 
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use GuzzleHttp\Exception\GuzzleException;
 use Sheba\Sms\Sms;
 use Sheba\SmsCampaign\DTO\VendorSmsDTO;
@@ -8,10 +10,13 @@ class SmsHandler
 {
     /** @var Sms $sms */
     private $sms;
+    /** @var bool */
+    private $isOff;
 
     public function __construct(Sms $sms)
     {
         $this->sms = $sms->setVendor('infobip');
+        $this->isOff = !config('sms.is_on');
     }
 
     /**
@@ -21,7 +26,7 @@ class SmsHandler
      */
     public function sendBulkMessages($to, $message)
     {
-        $sms = $this->sms->to($to)->msg($message);
+        $sms = $this->sms->to($to)->msg($message)->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::SMS_CAMPAIGN);
         $sms->shoot();
         return $sms->getVendorResponse();
     }

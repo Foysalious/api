@@ -5,17 +5,15 @@ class LoanRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'loans'], function ($api) {
-            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
-            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
-            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
+        $api->group(['prefix' => 'loans', 'middleware' => 'shebaServer'], function ($api) {
+            $api->get('/{loan_id}/admin/generate-pdf', 'Loan\\LoanController@generateApplication');
         });
 
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
             $api->post('/password/reset', 'Auth\PasswordController@resetPasswordForBank');
         });
 
-        $api->group(['prefix' => 'loans', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+        $api->group(['prefix' => 'loans', 'middleware' => 'accessToken'], function ($api) {
             $api->post('/upload-retailer-list', 'Loan\\LoanController@uploadRetailerList');
             $api->get('/dashboard', 'Loan\\LoanController@getDashboardData');
             $api->post('/strategic-partner-dashboard', 'Loan\\LoanController@strategicPartnerDashboard');
@@ -43,6 +41,9 @@ class LoanRoute
             $api->get('loan-due-report', 'Loan\\LoanReportController@loanDueReport');
             $api->get('loan-status-report', 'Loan\\LoanReportController@loanStatusReport');
             $api->get('retailer-registration-report', 'Loan\\LoanReportController@retailerRegistrationReport');
+            $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
+            $api->get('/{loan_id}/download-documents', 'Loan\\LoanController@downloadDocuments');
+            $api->post('/{loan_id}/upload-documents', 'Loan\\LoanController@uploadDocuments');
 
         });
     }

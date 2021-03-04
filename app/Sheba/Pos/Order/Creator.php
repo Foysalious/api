@@ -226,6 +226,7 @@ class Creator
     /**
      * @param PosOrder $order
      * @throws InvalidDiscountType
+     * @throws \Exception
      */
     private function voucherCalculation(PosOrder $order)
     {

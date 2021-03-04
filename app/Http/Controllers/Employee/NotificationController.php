@@ -138,6 +138,8 @@ class NotificationController extends Controller
                 "title" => 'Attendance Alert',
                 "message" => "Have you reached office yet?  You are 5 minutes behind from being late! Hurry up!",
                 "event_type" => 'attendance',
+                "attendance_action_type" => 'checkin',
+                "time" => Carbon::now(),
                 "sound" => "notification_sound",
                 "channel_id" => $channel,
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
@@ -165,7 +167,6 @@ class NotificationController extends Controller
                 "click_action" => "FLUTTER_NOTIFICATION_CLICK"
             ], $topic, $channel, $sound);
         }
-
         if ($request->has('cancel_leave_id')) {
             $pushNotificationHandler->send([
                 "title" => "leave cancel",

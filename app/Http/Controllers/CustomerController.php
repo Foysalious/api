@@ -54,18 +54,17 @@ class CustomerController extends Controller
             return api_response($request, null, 500);
         }
     }
-
     public function update($customer, Request $request)
     {
         try {
             $this->validate($request, [
-                'field' => 'required|string|in:name,birthday,gender,address',
+                'field' => 'required|string|in:name,dob,gender,address',
                 'value' => 'required|string'
             ]);
             $customer = $request->customer;
             $field = $request->field;
             $profile = $customer->profile;
-            if ($field == 'birthday') {
+            if ($field == 'dob') {
                 $this->validate($request, [
                     'value' => 'required|date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
                 ]);
@@ -90,6 +89,45 @@ class CustomerController extends Controller
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
+        }
+    }
+
+    public function update_v3 ($customer, Request $request)
+    {
+        try {
+            $customer = $request->customer;
+            $profile = $customer->profile;
+            $this->validate($request, [
+                'name' => 'string',
+                'gender'=>'string|in:Male,Female,Other',
+                'address'=>'string',
+                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+                'email' => 'email|unique:profiles,email,' . $profile->id
+            ]);
+            $profile->name = ucwords($request->name);
+            $profile->gender = $request->gender;
+            $profile->address = $request->address;
+            $profile->dob = $request->dob;
+            $profile->email = $request->email;
+            $profile->update();
+            $this->checkIsCompleted($profile,$customer);
+            return api_response($request, 1, 200);
+        } catch (ValidationException $e) {
+            $message = getValidationErrorMessage($e->validator->errors()->all());
+            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function checkIsCompleted($profile,$customer)
+    {
+        if($profile->name && $profile->gender && $profile->dob)
+        {
+            DB::table('customers')
+                ->where('id', $customer->id)
+                ->update(array('is_completed' => 1));
         }
     }
 

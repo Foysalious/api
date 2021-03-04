@@ -36,6 +36,7 @@ class TopUpRequest
     private $lat;
     private $long;
 
+
     public function __construct(VendorFactory $vendor_factory, Contract $top_up_block_number_repository)
     {
         $this->vendorFactory = $vendor_factory;

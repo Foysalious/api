@@ -10,11 +10,11 @@ class Route
             (new PartnerRoute())->set($api);
             (new BusinessRoute())->set($api);
 
-            $api->group(['prefix' => 'bank-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+            $api->group(['prefix' => 'bank-user', 'middleware' => 'accessToken'], function ($api) {
                 $api->get('/information', 'BankUser\BankUserController@getBankUserInfo');
             });
 
-            $api->group(['prefix' => 'retailer-user', 'middleware' => 'jwtGlobalAuth'], function ($api) {
+            $api->group(['prefix' => 'retailer-user', 'middleware' => 'accessToken'], function ($api) {
                 $api->get('/information', 'StrategicPartner\StrategicPartnerController@getStrategicPartnerInfo');
             });
 
@@ -60,12 +60,11 @@ class Route
             });
             $api->get('training-videos', 'TrainingVideoController@index');
             $api->get('sitemap', 'SitemapController@index');
-            $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
+            $api->get('settings/car', 'HomePageSettingController@getCarV3');
+            $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
         });
-
-
     }
 }

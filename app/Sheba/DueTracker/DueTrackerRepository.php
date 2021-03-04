@@ -13,6 +13,8 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -276,11 +278,11 @@ class DueTrackerRepository extends BaseRepository
 
     public function removePosOrderPayment($pos_order_id, $amount){
         $payment = PosOrderPayment::where('pos_order_id', $pos_order_id)
-            ->where('amount', $amount)
-            ->where('transaction_type', 'Credit')
-            ->first();
-
+           ->where('amount', $amount)
+           ->where('transaction_type', 'Credit')
+           ->first();
         return $payment ? $payment->delete() : false;
+
     }
 
     private function createStoreData(Request $request)
@@ -448,28 +450,26 @@ class DueTrackerRepository extends BaseRepository
      */
     public function sendSMS(Request $request)
     {
+//        if(!config('sms.is_on')) return;
+
         $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
         if (empty($partner_pos_customer))
             throw new InvalidPartnerPosCustomer();
         /** @var PosCustomer $customer */
         $customer = $partner_pos_customer->customer;
-        $data     = [
-            'type'          => $request->type,
-            'partner_name'  => $request->partner->name,
-            'customer_name' => $customer->profile->name,
-            'mobile'        => $customer->profile->mobile,
-            'amount'        => $request->amount,
-        ];
-
+        $data = $this->setSmsData($request, $customer);
         if ($request->has('payment_link')) {
             $data['payment_link'] = $request->payment_link;
         }
+        /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
             throw new InsufficientBalance();
         }
+        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         $sms->shoot();
+
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }
@@ -531,6 +531,17 @@ class DueTrackerRepository extends BaseRepository
         ];
     }
 
+    private function setSmsData($request, $customer) {
+        return [
+            'type'          => $request->type,
+            'partner_name'  => $request->partner->name,
+            'customer_name' => $customer->profile->name,
+            'mobile'        => $customer->profile->mobile,
+            'amount'        => $request->amount,
+            'payment_link'  => $request->type == 'due' ? $request->payment_link : null
+        ];
+    }
+    
     /**
      * @param Request $request
      * @param PaymentLinkCreator $paymentLinkCreator

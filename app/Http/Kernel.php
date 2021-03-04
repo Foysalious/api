@@ -26,6 +26,7 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
+use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -39,6 +40,7 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 use Illuminate\Foundation\Http\Middleware\Authorize;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Fideloper\Proxy\TrustProxies;
 
 class Kernel extends HttpKernel
 {
@@ -52,7 +54,8 @@ class Kernel extends HttpKernel
     protected $middleware = [
         CheckForMaintenanceMode::class,
         CriticalAppVersionMiddleware::class,
-        XSS::class
+        XSS::class,
+        TrustProxies::class
     ];
 
     /**
@@ -68,10 +71,9 @@ class Kernel extends HttpKernel
             ShareErrorsFromSession::class,
             VerifyCsrfToken::class,
         ],
-
         'api' => [
             'throttle:60,1',
-        ],
+        ]
     ];
 
     /**
@@ -107,10 +109,11 @@ class Kernel extends HttpKernel
         'member.auth' => MemberAuthMiddleware::class,
         'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
-        'topUp.auth' => TopUpAuthMiddleware::class,//1
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
-        'apiRequestLog' => ApiRequestMiddleware::class
+        'apiRequestLog' => ApiRequestMiddleware::class,
+        'shebaServer' => ShebaNetworkMiddleware::class,
+        'topUp.auth' => TopUpAuthMiddleware::class
     ];
 }

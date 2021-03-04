@@ -122,7 +122,7 @@ class PartnerScheduleSlot
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')
+        $leaves = $this->partner->leaves()->select('id', 'artisan_id', 'start', 'end')
             ->where(function ($q) use ($start, $end) {
                 $q->where(function ($q) use ($start, $end) {
                     $q->whereBetween('start', [$start, $end]);
@@ -180,33 +180,30 @@ class PartnerScheduleSlot
     private function isBetweenAnyLeave(Carbon $time)
     {
         if (!$this->runningLeaves) return false;
-        else {
-            foreach ($this->runningLeaves as $runningLeave) {
-                $start = $runningLeave->start;
-                $end = $runningLeave->end;
-                if ($end) {
-                    if ($time->between($start, $end)) return true;
-                } else {
-                    if ($time->gte($start) && $end == null) return true;
-                }
-            }
-            return false;
+
+        foreach ($this->runningLeaves as $running_leave) {
+            $start = $running_leave->start;
+            $end = $running_leave->end;
+            if ($end && $time->between($start, $end)) return true;
+            if ($end == null && $time->gte($start)) return true;
         }
+
+        return false;
     }
 
     private function addAvailabilityByPreparationTime(Carbon $day)
     {
-        if ($this->preparationTime > 0) {
-            $date_string = $day->toDateString();
-            $this->shebaSlots->each(function ($slot) use ($date_string) {
-                if ($slot->is_available) {
-                    $start_time = Carbon::parse($date_string . ' ' . $slot->start);
-                    $end_time = Carbon::parse($date_string . ' ' . $slot->end);
-                    $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
-                    $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
-                }
-            });
-        }
+        if ($this->preparationTime <= 0) return;
+
+        $date_string = $day->toDateString();
+        $this->shebaSlots->each(function ($slot) use ($date_string) {
+            if ($slot->is_available) {
+                $start_time = Carbon::parse($date_string . ' ' . $slot->start);
+                $end_time = Carbon::parse($date_string . ' ' . $slot->end);
+                $preparation_time = Carbon::createFromTime(Carbon::now()->hour)->addMinute(61)->addMinute($this->preparationTime);
+                $slot['is_available'] = $preparation_time->lte($start_time) || $preparation_time->between($start_time, $end_time) ? 1 : 0;
+            }
+        });
     }
 
     private function addAvailabilityByResource(Carbon $day)

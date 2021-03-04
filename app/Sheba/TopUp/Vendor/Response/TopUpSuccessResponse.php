@@ -31,4 +31,16 @@ class TopUpSuccessResponse
     {
         return json_encode($this->transactionDetails);
     }
+
+    /**
+     * @return string|null
+     */
+    public function getMessage()
+    {
+        if (is_object($this->transactionDetails) && isset($this->transactionDetails->MESSAGE)) {
+            return $this->transactionDetails->MESSAGE;
+        } else {
+            return null;
+        }
+    }
 }

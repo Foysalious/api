@@ -353,6 +353,8 @@ class CustomerDeliveryAddressController extends Controller
         }
         $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
         $new_address = new CustomerDeliveryAddress();
+        dump($customer,$new_address,$request);
+        dd(11);
         return $this->_store($customer, $new_address, $request);
     }
 }

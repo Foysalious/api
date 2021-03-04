@@ -47,10 +47,10 @@ class Formatter
 
     private function getLeaveLogDetails()
     {
-        $logs = $this->leaveLogRepo->where('leave_id', $this->leave->id)->where('type', '=', 'leave_update')
+        $logs = $this->leaveLogRepo->where('leave_id', $this->leave->id)->where('type', '<>', 'leave_adjustment')
             ->select('log', 'created_at')->orderBy('id', 'DESC')->get()->map(function ($log) {
-                return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
-            })->toArray();
+            return ['log' => $log->log, 'created_at' => $log->created_at->format('h:i A - d M, Y')];
+        })->toArray();
 
         return $logs ? $logs : null;
     }

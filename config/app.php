@@ -171,6 +171,8 @@ return [
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
         AlgoliaSearch\Laravel\AlgoliaServiceProvider::class,
+        Fideloper\Proxy\TrustedProxyServiceProvider::class,
+        // L5Swagger\L5SwaggerServiceProvider::class,
 
         Sheba\Dal\Providers\RepositoriesServiceProvider::class,
         Sheba\Notification\NotificationServiceProvider::class,
@@ -178,7 +180,7 @@ return [
         Sheba\Pos\Repositories\PosRepositoryServiceProvider::class,
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
-        Sheba\Logistics\Listeners\EventsProvider::class
+        Sheba\Logistics\Listeners\EventsProvider::class,
     ],
 
     /*

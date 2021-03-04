@@ -56,8 +56,10 @@ return [
     'order' => [
         'request_accept_time_limit_in_seconds' => 90,
         'show_resource_list' => 0
+
     ],
     'lowest_version_for_emi_in_home_setting' => 3,
     'procurement_banner'=>env('DEFAULT_PROCUREMENT_BANNER','https://cdn-shebadev.s3.ap-south-1.amazonaws.com/b2b/image/notification/notification-banner.jpg'),
     'webstore_default_banner_id' => env('WEBSTORE_DEFAULT_BANNER_ID', 8)
 ];
+

@@ -9,12 +9,16 @@ class PaymentLinkClient
 {
     /** @var string */
     private $baseUrl;
-    /** @var Client */
+    private $partnerPaymentUrl;
+    /**
+     * @var Client
+     */
     private $client;
 
     public function __construct(Client $client)
     {
         $this->baseUrl = config('sheba.payment_link_url') . '/api/v1/payment-links';
+        $this->partnerPaymentUrl = config('sheba.payment_link_url') . '/api/v1/partner-payment-links';
         $this->client = $client;
     }
 
@@ -24,8 +28,33 @@ class PaymentLinkClient
             $user_type = $request->type;
             $user_id = $request->user->id;
             $search_value = $request->search;
+            $limit = $request->limit;
+            $offset = $request->offset;
+            $order = $request->order;
+            $linkType = $request->linkType;
 
-            $url = "$this->baseUrl?userType=$user_type&userId=$user_id&search=$search_value";
+            $url = "$this->baseUrl?userType=$user_type&userId=$user_id&search=$search_value&limit=$limit&offset=$offset&order=$order&linkType=$linkType";
+            $response = $this->client->get($url)->getBody()->getContents();
+            $response = json_decode($response, 1);
+            if ($response['code'] == 200)
+                return $response['links'];
+            return null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function partnerPaymentLinkList(Request $request)
+    {
+        try {
+            $user_type = $request->type;
+            $user_id = $request->user->id;
+            $search_value = $request->search;
+            $limit = $request->limit;
+            $offset = $request->offset;
+            $order = $request->order;
+            $linkType = $request->linkType;
+            $url = "$this->partnerPaymentUrl?userType=$user_type&userId=$user_id&search=$search_value&limit=$limit&offset=$offset&order=$order&linkType=$linkType";
             $response = $this->client->get($url)->getBody()->getContents();
             $response = json_decode($response, 1);
             if ($response['code'] == 200)

@@ -6,6 +6,8 @@ use App\Models\Transport\TransportTicketOrder;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
 use App\Sheba\Affiliate\PushNotification\PushNotification;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Database\QueryException;
@@ -85,7 +87,10 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                             'fare_amount' => $transport_ticket_order->amount
                         ];
 
-                        (new SmsHandler('transport_ticket_confirmed'))->send($transport_ticket_order->reserver_mobile, $sms_data);
+                        (new SmsHandler('transport_ticket_confirmed'))
+                            ->setBusinessType(BusinessType::BONDHU)
+                            ->setFeatureType(FeatureType::TRANSPORT_TICKET)
+                            ->send($transport_ticket_order->reserver_mobile, $sms_data);
                         dispatch(new SendEmailToNotifyVendorBalance('transport_ticket',$transport_ticket_order->vendor_id));
                     } catch (\Exception $e) {
                     }

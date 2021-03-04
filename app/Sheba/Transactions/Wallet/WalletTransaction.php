@@ -32,10 +32,11 @@ class WalletTransaction
     protected function debitWallet()
     {
         $this->model->reload();
-        /** @noinspection PhpUndefinedFieldInspection */
-        $this->model->wallet -= $this->amount;
-        $this->model->update();
-        return $this->model->wallet;
+        $model = (get_class($this->model));
+        $locked_model = ($model::whereId($this->model->id)->lockForUpdate()->first());
+        $locked_model->wallet -= $this->amount;
+        $locked_model->update();
+        return $locked_model->wallet;
     }
 
     /**
@@ -45,9 +46,10 @@ class WalletTransaction
     protected function creditWallet()
     {
         $this->model->reload();
-        /** @noinspection PhpUndefinedFieldInspection */
-        $this->model->wallet += $this->amount;
-        $this->model->update();
-        return $this->model->wallet;
+        $model = (get_class($this->model));
+        $locked_model = ($model::whereId($this->model->id)->lockForUpdate()->first());
+        $locked_model->wallet += $this->amount;
+        $locked_model->update();
+        return $locked_model->wallet;
     }
 }

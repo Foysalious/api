@@ -7,6 +7,8 @@ use App\Models\AffiliateTransaction;
 use App\Models\Affiliation;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\Request;
@@ -108,7 +110,10 @@ class AffiliationController extends Controller
             if ($affiliation_counter < 20) {
                 $affiliation = $this->affiliationDatabaseTransaction($affiliate, $request);
                 if (!$affiliation) return api_response($request, null, 500);
-                (new SmsHandler('affiliation-create-customer-notify'))->send($affiliation->customer_mobile, [
+                (new SmsHandler('affiliation-create-customer-notify'))
+                    ->setFeatureType(FeatureType::REGISTRATION)
+                    ->setBusinessType(BusinessType::BONDHU)
+                    ->send($affiliation->customer_mobile, [
                     'affiliate_name' => $affiliate->profile->name
                 ]);
                 (new NotificationRepository())->forAffiliation($affiliate, $affiliation);

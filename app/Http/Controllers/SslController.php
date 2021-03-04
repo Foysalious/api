@@ -1,6 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use App\Models\Payment;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Sheba\Payment\PaymentManager;
 use Sheba\TopUp\Gateway\Ssl;
@@ -23,14 +25,14 @@ class SslController extends Controller
             $payment = Payment::where('gateway_transaction_id', $request->tran_id)->first();
             if ($payment) {
                 $redirect_url = $payment->payable->success_url . '?invoice_id=' . $payment->transaction_id;
-                $method       = $payment->paymentDetails->last()->method;
+                $method = $payment->paymentDetails->last()->method;
                 if ($payment->isValid() && !$payment->isComplete()) {
                     $payment_manager->setMethodName($method)->setPayment($payment)->complete();
                 }
             } else {
-                throw new \Exception('Payment not found to validate.');
+                throw new Exception('Payment not found to validate.');
             }
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             logError($e);
         }
         return redirect($redirect_url);

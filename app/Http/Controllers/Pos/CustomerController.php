@@ -123,7 +123,7 @@ class CustomerController extends Controller
             /**
              * USAGE LOG
              */
-            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
+//            (new Usage())->setUser($request->partner)->setType(Usage::Partner()::CREATE_CUSTOMER)->create($request->manager_resource);
             return api_response($request, $customer, 200, ['customer' => $customer->details()]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -146,7 +146,7 @@ class CustomerController extends Controller
         try {
             $this->validate($request, ['mobile' => 'required|mobile:bd']);
             $this->setModifier($request->manager_resource);
-            $updater->setCustomer($customer)->setData($request->except([
+            $updater->setCustomer($customer)->setProfile($customer->profile)->setData($request->except([
                 'partner_id',
                 'remember_token',
                 'email'

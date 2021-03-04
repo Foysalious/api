@@ -3,9 +3,7 @@
 use App\Sheba\Algolia\Provider\EventsListenerProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
-
 use Sheba\Dal\Providers\CustomMigrationServiceProvider;
-use Sheba\Dev\DevelopmentEnvironmentChecker;
 use Sheba\Partner\HomePageSetting\Providers\ServiceProvider as PartnerHomeSettingServiceProvider;
 use Sheba\Partner\HomePageSettingV3\Providers\ServiceProvider as PartnerHomeSettingServiceProviderV3;
 use Sheba\PartnerOrder\ConcurrentUpdateRestriction\CURServiceProvider;
@@ -19,19 +17,6 @@ use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGetters
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     * @throws Exception
-     */
-    public function boot()
-    {
-        if (!in_array($this->app->environment(), ["production", "development"])) {
-            $this->app->make(DevelopmentEnvironmentChecker::class)->check();
-        }
-    }
-
     /**
      * Register any application services.
      *

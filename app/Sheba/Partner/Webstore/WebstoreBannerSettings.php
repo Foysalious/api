@@ -33,8 +33,6 @@ class WebstoreBannerSettings
         return PartnerWebstoreBanner::create($this->withCreateModificationField($this->data));
     }
 
-
-
     /**
      * @param PartnerWebstoreBanner $partner_banner_settings
      * @return $this
@@ -44,7 +42,6 @@ class WebstoreBannerSettings
         $this->partnerBannerSettings = $partner_banner_settings;
         return $this;
     }
-
 
     /**
      * @return mixed
@@ -58,7 +55,6 @@ class WebstoreBannerSettings
             ];
         });
     }
-
 
     /**
      * @return bool|int
@@ -81,4 +77,5 @@ class WebstoreBannerSettings
         if(isset($this->data['is_published']) && $this->data['is_published'] != $this->partnerBannerSettings->is_published)
             $this->updatedData['is_published'] = $this->data['is_published'];
     }
+
 }

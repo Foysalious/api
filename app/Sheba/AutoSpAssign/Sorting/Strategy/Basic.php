@@ -63,7 +63,7 @@ class Basic extends Strategy
     {
         $impression = new Impression();
         $impression_weighted_score = $impression->setMaxValue($this->maxImpression)->setMinValue($this->minImpression)
-            ->setPartner($partner)->getScore();
+            ->setPartner($partner)->setCategoryId($this->categoryId)->getScore();
         $impression_weight = $impression->getWeightInScaleOf1();
         return $quality_score * (1 - $impression_weight) + $impression_weighted_score;
     }

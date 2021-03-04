@@ -1,6 +1,7 @@
 <?php namespace Tests\Unit\Sheba\TopUp;
 
 use App\Models\TopUpOrder;
+use PHPUnit_Framework_MockObject_MockObject;
 use Sheba\TopUp\TopUp;
 use Sheba\TopUp\TopUpValidator;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
@@ -59,7 +60,7 @@ class TopUpTest extends UnitTestCase
     }
 
     /**
-     * @return \PHPUnit_Framework_MockObject_MockObject | TopUpValidator
+     * @return PHPUnit_Framework_MockObject_MockObject | TopUpValidator
      */
     private function getValidationWithError()
     {
