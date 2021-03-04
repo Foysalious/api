@@ -57,7 +57,7 @@ class ApprovalRequestController extends Controller
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
 
         foreach ($approval_requests as $approval_request) {
-           if ($approval_request->requestable) {
+           if (!$approval_request->requestable) continue;
                /** @var Leave $requestable */
                $requestable = $approval_request->requestable;
                /** @var Member $member */
@@ -71,7 +71,6 @@ class ApprovalRequestController extends Controller
                $approval_request = $manager->createData($resource)->toArray()['data'];
 
                array_push($approval_requests_list, $approval_request);
-           }
         }
 
         return api_response($request, $approval_requests_list, 200, [

@@ -109,6 +109,7 @@ class BusinessRoute
                     $api->post('/adjustment', 'B2b\LeaveAdjustmentController@leaveAdjustment');
                     $api->post('/bulk-adjustment', 'B2b\LeaveAdjustmentController@bulkLeaveAdjustment');
                     $api->get('/generate-adjustment-excel', 'B2b\LeaveAdjustmentController@generateAdjustmentExcel');
+                    $api->get('/reject-reasons', 'B2b\LeaveController@rejectReasons');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
