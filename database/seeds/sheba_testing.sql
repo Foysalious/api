@@ -12891,6 +12891,11 @@ CREATE TABLE `topup_gateways` (
 -- Records of topup_gateways
 -- ----------------------------
 BEGIN;
+INSERT INTO `topup_gateways` VALUES (1, 'ssl', 10, 10000, 1, 'IT - Shafiqul Islam', 1, 'IT - Shafiqul Islam', '2016-12-16 02:41:24', '2016-12-16 02:41:24');
+INSERT INTO `topup_gateways` VALUES (2, 'robi', 10, 10000, 1, 'IT - Shafiqul Islam', 1, 'IT - Shafiqul Islam', '2018-12-13 02:41:24', '2018-12-13 02:41:24');
+INSERT INTO `topup_gateways` VALUES (3, 'banglalink', 10, 10000, 1, 'IT - Shafiqul Islam', 1, 'IT - Shafiqul Islam', '2018-12-24 02:41:24', '2018-12-24 02:41:24');
+INSERT INTO `topup_gateways` VALUES (4, 'airtel', 10, 10000, 1, 'IT - Shafiqul Islam', 1, 'IT - Shafiqul Islam', '2018-12-24 02:41:24', '2018-12-24 02:41:24');
+INSERT INTO `topup_gateways` VALUES (5, 'paywell', 10, 10000, 1, 'IT - Shafiqul Islam', 1, 'IT - Shafiqul Islam', '2019-03-18 02:41:24', '2019-03-18 02:41:24');
 COMMIT;
 
 -- ----------------------------
