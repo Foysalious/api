@@ -118,7 +118,9 @@ class SubscriptionTest extends FeatureTestCase
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
         $subscriptionData=PartnerSubscriptionPackage::first();
-        dd($subscriptionData);
+        $subscription_rules=json_decode($subscriptionData->rules,1);
+
+        //dd($subscription_rules ['resource_cap'] ['value']);
 
         $respose=$this->get("v2/partners/".$partner_id."/subscriptions/all-packages?remember_token=".$resource_remembar_token,
             [
@@ -133,10 +135,10 @@ class SubscriptionTest extends FeatureTestCase
         $this->assertEquals(200,$data ["code"]);
         $this->assertEquals(1,$data ['data'] ['subscription_package'] [0] ['id']);
         $this->assertEquals("Basic",$data ['data'] ['subscription_package'] [0] ['name']);
-        $this->assertEquals(5,$data  ['data'] ['subscription_package'] [0] ['rules'] ['resource_cap'] ['value']);
-        $this->assertEquals(20,$data ['data'] ['subscription_package'] [0] ['rules'] ['commission'] ['value']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['loan']);
-        $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['dashboard_analytics']);
+        $this->assertEquals($subscription_rules ['resource_cap'] ['value'],$data  ['data'] ['subscription_package'] [0] ['rules'] ['resource_cap'] ['value']);
+        $this->assertEquals($subscription_rules ['commission'] ['value'],$data ['data'] ['subscription_package'] [0] ['rules'] ['commission'] ['value']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['loan'],$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['loan']);
+        $this->assertEquals($subscription_rules ['access_rules'] ['dashboard_analytics'] ,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['dashboard_analytics']);
         $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['print']);
         $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['invoice'] ['download']);
         $this->assertEquals(true,$data ['data'] ['subscription_package'] [0] ['rules'] ['access_rules'] ['pos'] ['due'] ['alert']);
