@@ -28,7 +28,7 @@ class ProductController extends Controller
      * @return JsonResponse
      * @throws Exception
      */
-    public function store(Request $request, $partnerId)
+    public function store(Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->productService
