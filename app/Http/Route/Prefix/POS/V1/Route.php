@@ -43,9 +43,14 @@ class Route
                         $api->put('/', "Inventory\ValueController@update");
                     });
                 });
-            });
-            $api->group(['prefix' => 'collections'], function($api){
-                $api->get('/', 'Inventory\CollectionController@index');
+
+                $api->group(['prefix' => 'collections'], function($api){
+                    $api->get('/', 'Inventory\CollectionController@index');
+                    $api->post('/', 'Inventory\CollectionController@store');
+                    $api->get('/{collection}', 'Inventory\CollectionController@show');
+                    $api->put('/{collection}', 'Inventory\CollectionController@update');
+                    $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+                });
             });
         });
     }
