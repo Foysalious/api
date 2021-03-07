@@ -57,7 +57,11 @@ class CollectionController extends Controller
 
     public function show(Request $request, $partner_id, $collection_id)
     {
-        $collection = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->getDetails();
+        try {
+            $collection = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->getDetails();
+        } catch(\Exception $exception) {
+            return api_response($request, 'No Data found!', 500, null);
+        }
         return http_response($request, null, 200, $collection);
     }
 
@@ -81,7 +85,12 @@ class CollectionController extends Controller
 
     public function destroy(Request $request, $partner_id, $collection_id)
     {
-        $response = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->delete();
+        try {
+            $response = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->delete();
+        } catch (\Exception $exception) {
+            return http_response($request, null, 500, null);
+        }
+
         return http_response($request, null, 200, $response);
     }
 }
