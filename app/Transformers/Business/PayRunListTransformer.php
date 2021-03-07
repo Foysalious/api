@@ -65,26 +65,36 @@ class PayRunListTransformer extends TransformerAbstract
     {
         $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['gross_salary_breakdown'];
 
-        $data  = [];
-        foreach ($salary_breakdown as $key => $payroll_component) {
+        $final_data  = [];
+        foreach ($salary_breakdown as $key => $component) {
             if ($key == 'gross_salary') continue;
-            $data[$key] = $payroll_component;
+            $name = Components::getComponents($key)['value'];
+            array_push($final_data, [
+                'key' => $key,
+                'name' => $name ? $name : ucwords(implode(" ", explode("_",$key))),
+                'value' => $component
+            ]);
         }
-        return $data;
+
+        return $final_data;
     }
 
     private function getComponentBreakdown($payslip, $type)
     {
         $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['payroll_component'];
-
-        $data  = [];
+        $final_data  = [];
         foreach ($salary_breakdown as $key => $payroll_component) {
             if ($key == $type) {
                 foreach ($payroll_component as $item => $component) {
-                    $data[$item] = $component;
+                    $name = Components::getComponents($item)['value'];
+                    array_push($final_data, [
+                        'key' => $item,
+                        'name' => $name ? $name : ucwords(implode(" ", explode("_",$item))),
+                        'value' => $component
+                    ]);
                 }
             }
         }
-        return $data;
+        return $final_data;
     }
 }
