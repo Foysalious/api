@@ -55,21 +55,21 @@ class CollectionController extends Controller
         return http_response($request, null, 201, $response);
     }
 
-    public function show(Request $request, $partner_id, $collection_id)
+    public function show(Request $request, $collection_id)
     {
         try {
-            $collection = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->getDetails();
+            $collection = $this->collectionService->setCollectionId($collection_id)->getDetails();
         } catch(\Exception $exception) {
-            return api_response($request, 'No Data found!', 500, null);
+            return http_response($request, 'No Data found!', 500, null);
         }
         return http_response($request, null, 200, $collection);
     }
 
 
-    public function update(Request $request, $partner_id, $collection_id)
+    public function update(Request $request, $collection_id)
     {
         $response = $this->collectionService
-            ->setPartnerId($partner_id)
+            ->setPartnerId($request->partner_id)
             ->setName($request->name)
             ->setDescription($request->description)
             ->setShardingId($request->sharding_id)
@@ -86,7 +86,7 @@ class CollectionController extends Controller
     public function destroy(Request $request, $partner_id, $collection_id)
     {
         try {
-            $response = $this->collectionService->setPartnerId($partner_id)->setCollectionId($collection_id)->delete();
+            $response = $this->collectionService->setCollectionId($collection_id)->delete();
         } catch (\Exception $exception) {
             return http_response($request, null, 500, null);
         }

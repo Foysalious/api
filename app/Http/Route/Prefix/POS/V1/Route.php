@@ -7,6 +7,14 @@ class Route
     {
         $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
 
+            $api->group(['prefix' => 'collections'], function ($api) {
+                $api->get('/', 'Inventory\CollectionController@index');
+                $api->post('/', 'Inventory\CollectionController@store');
+                $api->get('/{collection}', 'Inventory\CollectionController@show');
+                $api->put('/{collection}', 'Inventory\CollectionController@update');
+                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+            });
+
             $api->get('/channels', "Inventory\ChannelController@index");
             $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
@@ -53,14 +61,6 @@ class Route
                 $api->group(['prefix' => '{values}'], function ($api) {
                     $api->put('/', "Inventory\ValueController@update");
                 });
-            });
-
-            $api->group(['prefix' => 'collections'], function ($api) {
-                $api->get('/', 'Inventory\CollectionController@index');
-                $api->post('/', 'Inventory\CollectionController@store');
-                $api->get('/{collection}', 'Inventory\CollectionController@show');
-                $api->put('/{collection}', 'Inventory\CollectionController@update');
-                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
             });
 
         });
