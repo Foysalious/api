@@ -137,7 +137,7 @@ class CollectionService
 
     public function getDetails()
     {
-        return $this->client->get('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id);
+        return $this->client->get('api/v1/collection/' . $this->collection_id);
     }
 
     private function makeCreateData()
