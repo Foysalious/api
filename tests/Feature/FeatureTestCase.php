@@ -84,7 +84,6 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
-
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
@@ -93,12 +92,17 @@ class FeatureTestCase extends TestCase
     private function createAccounts()
     {
         $this->truncateTables([
-            Profile::class, Affiliate::class, Customer::class, Member::class, Resource::class, Partner::class, Business::class, BusinessMember::class
+            Profile::class,
+            Affiliate::class,
+            Customer::class,
+            Member::class,
+            Resource::class,
+            Partner::class,
+            Business::class,
+            BusinessMember::class
         ]);
 
-
         $this->profile = factory(Profile::class)->create();
-
 
 
         $this->createClientAccounts();
@@ -145,21 +149,28 @@ class FeatureTestCase extends TestCase
     {
         return JWTAuth::fromUser($this->profile, [
             'name' => $this->profile->name, 'image' => $this->profile->pro_pic, 'profile' => [
-                'id' => $this->profile->id, 'name' => $this->profile->name, 'email_verified' => $this->profile->email_verified
+                'id' => $this->profile->id,
+                'name' => $this->profile->name,
+                'email_verified' => $this->profile->email_verified
             ], 'customer' => [
                 'id' => $this->customer->id
-
-            ],
-            'resource' => [
-                'id'=>$this->resource->id
-            ],
-            'member' => [
+            ], 'resource' => [
+                'id' => $this->resource->id
+            ], 'member' => [
                 'id' => $this->member->id
             ], 'business_member' => [
-                'id' => $this->business_member->id, 'business_id' => $this->business->id, 'member_id' => $this->member->id, 'is_super' => 1
+                'id' => $this->business_member->id,
+                'business_id' => $this->business->id,
+                'member_id' => $this->member->id,
+                'is_super' => 1
             ], 'affiliate' => [
                 'id' => $this->affiliate->id
-            ], 'logistic_user' => null, 'bank_user' => null, 'strategic_partner_member' => null, 'avatar' => null, "exp" => Carbon::now()->addDay()->timestamp
+            ],
+            'logistic_user' => null,
+            'bank_user' => null,
+            'strategic_partner_member' => null,
+            'avatar' => null,
+            "exp" => Carbon::now()->addDay()->timestamp
         ]);
     }
 
@@ -178,18 +189,14 @@ class FeatureTestCase extends TestCase
         $this->createAccountWithMobileNEmail($mobile, $email);
         $this->token = $this->generateToken();
         $this->createAuthTables();
-
     }
 
     private function createAccountWithMobileNEmail($mobile, $email = null)
     {
         $this->profile = factory(Profile::class)->create([
-
             'mobile' => $mobile, 'email' => $email,
-
         ]);
-
-
+        
         $this->createClientAccounts();
     }
 
