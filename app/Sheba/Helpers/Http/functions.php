@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Requests\ApiRequest;
+use App\Models\HyperLocal;
+use App\Models\Location;
 use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -188,5 +190,23 @@ if (!function_exists('http_response')) {
         } else {
             return $internal_response;
         }
+    }
+}
+
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->has('location')) return Location::find($request->location);
+
+        if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
     }
 }

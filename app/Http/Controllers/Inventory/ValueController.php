@@ -31,4 +31,12 @@ class ValueController extends Controller
         $value = $this->valueService->setValueId($valueId)->setPartnerId($partner->id)->setName($request->name)->update();
         return http_response($request, null, 200, $value);
     }
+
+    public function destroy(Request $request, $valueId)
+    {
+        $value = $this->valueService
+            ->setValueId($valueId)
+            ->delete();
+        return http_response($request, null, 200, $value);
+    }
 }

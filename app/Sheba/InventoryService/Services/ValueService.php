@@ -112,5 +112,9 @@ class ValueService
         return $this->client->put('api/v1/partners/'.$this->partnerId.'/values/'.$this->valueId, $data);
     }
 
+    public function delete()
+    {
+        return $this->client->delete('api/v1/values/'.$this->valueId);
+    }
 
 }
