@@ -1,6 +1,7 @@
 <?php namespace App\Sheba\Business\Payslip\PayRun;
 
 use App\Models\Business;
+use PHPExcel_Cell;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Reports\ExcelHandler;
 use Excel;
@@ -12,6 +13,7 @@ class PayRunBulkExcel
     private $business;
     private $payrollComponents;
     private $payslip;
+    private $maxCell;
 
     public function __construct(ExcelHandler $excelHandler)
     {
@@ -42,12 +44,13 @@ class PayRunBulkExcel
         $header = $this->getHeaders();
         $this->makeData();
         $file_name = 'Pay_run_sample_excel';
-        Excel::create($file_name, function ($excel) use ($header){
-            $excel->sheet('data', function ($sheet) use ($header){
+        $max_bold_cell = 'A1:'.PHPExcel_Cell::stringFromColumnIndex($this->maxCell - 1).'1';
+        Excel::create($file_name, function ($excel) use ($header, $max_bold_cell){
+            $excel->sheet('data', function ($sheet) use ($header, $max_bold_cell){
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($header);
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:J1', function ($cells) {
+                $sheet->cell($max_bold_cell, function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -75,9 +78,13 @@ class PayRunBulkExcel
     private function getHeaders()
     {
         $header = ['ID', 'Employee Name', 'Employee ID', 'Department', 'Gross Salary'];
+        $this->maxCell = 5;
         foreach ($this->payrollComponents as $component) {
-            $component_value = Components::getComponents($component->name);
-            $header[] = $component_value['value'];
+            if ($component->is_default) $header_title = Components::getComponents($component->name)['value'];
+            $header_title = ucwords(implode(" ", explode("_",$component->name)));
+
+            $header[] = $header_title;
+            $this->maxCell++;
         }
         return $header;
     }
