@@ -4,6 +4,7 @@ use App\Models\BusinessMember;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\Payslip;
 
 class PayRunListTransformer extends TransformerAbstract
@@ -23,12 +24,13 @@ class PayRunListTransformer extends TransformerAbstract
             'department' => $department ? $department->name : 'N/A',
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
             'gross_salary' => floatValFormat($this->grossSalary),
-            'addition' => $this->getTotal($payslip,'addition'),
-            'deduction' => $this->getTotal($payslip,'deduction'),
+            'addition' => $this->getTotal($payslip,Type::ADDITION),
+            'deduction' => $this->getTotal($payslip,Type::DEDUCTION),
             'net_payable' => $this->getTotal($payslip,'net_payable'),
+            'components' => $this->getComponents($business_member),
             'gross_salary_breakdown' => $this->getGrossBreakdown($payslip),
-            'addition_breakdown' => $this->getComponentBreakdown($payslip,'addition'),
-            'deduction_breakdown' => $this->getComponentBreakdown($payslip,'deduction'),
+            'addition_breakdown' => $this->getComponentBreakdown($payslip,Type::ADDITION),
+            'deduction_breakdown' => $this->getComponentBreakdown($payslip,Type::DEDUCTION),
         ];
     }
 
@@ -43,13 +45,13 @@ class PayRunListTransformer extends TransformerAbstract
         $addition = 0;
         $deduction = 0;
         foreach ($salary_breakdown['payroll_component'] as $key => $payroll_component) {
-            if ($key == 'addition') {
+            if ($key == Type::ADDITION) {
                 foreach ($payroll_component as $component) {
                     $addition += $component;
                 }
             }
 
-            if ($key == 'deduction') {
+            if ($key == Type::DEDUCTION) {
                 foreach ($payroll_component as $component) {
                     $deduction += $component;
                 }
@@ -57,8 +59,8 @@ class PayRunListTransformer extends TransformerAbstract
         }
         $net_payable = floatValFormat(($this->grossSalary + $addition) - $deduction);
         if ($type == 'net_payable') return $net_payable;
-        if ($type == 'addition') return $addition;
-        if ($type == 'deduction') return $deduction;
+        if ($type == Type::ADDITION) return $addition;
+        if ($type == Type::DEDUCTION) return $deduction;
     }
 
     private function getGrossBreakdown($payslip)
@@ -94,6 +96,20 @@ class PayRunListTransformer extends TransformerAbstract
                     ]);
                 }
             }
+        }
+        return $final_data;
+    }
+
+    private function getComponents($business_member)
+    {
+        $payroll_components = $business_member->business->payrollSetting->components->whereIn('type',[Type::ADDITION, Type::DEDUCTION]);
+        $final_data = [];
+        foreach ($payroll_components as $key => $payroll_component) {
+            array_push($final_data, [
+                'key' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_",$payroll_component->name))),
+                'type' => $payroll_component->type
+            ]);
         }
         return $final_data;
     }
