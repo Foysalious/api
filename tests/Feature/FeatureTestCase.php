@@ -72,6 +72,7 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
+        dd(config('database'));
         /**
          * NO NEED TO RUN
          *
