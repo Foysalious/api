@@ -305,6 +305,39 @@ class ShebaController extends Controller
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
     }
+    public function getEmiInfo_v3(Request $request, Calculator $emi_calculator)
+    {
+        $amount       = $request->amount;
+        if (!$amount) {
+            return api_response($request, null, 400, ['message' => 'Amount missing']);
+        }
+
+        if ($amount < config('emi.minimum_emi_amount')) {
+            return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+        }
+
+        $emi_data = [
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get(),
+            "minimum_amount" => number_format(5000),
+            "static_info" =>[
+                "how_emi_works"=>[
+                    "As soon as you complete your purchase order on Pickaboo, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Pickaboo within 3 working days.",
+                    "Once Pickaboo receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ],
+                "terms_and_conditions"=>[
+                    "As soon as you complete your purchase order on Pickaboo, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Pickaboo within 3 working days.",
+                    "Once Pickaboo receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ]
+            ]
+        ];
+
+        return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+    }
 
     public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
     {
