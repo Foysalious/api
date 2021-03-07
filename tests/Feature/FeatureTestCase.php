@@ -84,6 +84,7 @@ class FeatureTestCase extends TestCase
 
     protected function logIn()
     {
+
         $this->createAccounts();
         $this->token = $this->generateToken();
         $this->createAuthTables();
@@ -95,7 +96,11 @@ class FeatureTestCase extends TestCase
             Profile::class, Affiliate::class, Customer::class, Member::class, Resource::class, Partner::class, Business::class, BusinessMember::class
         ]);
 
+
         $this->profile = factory(Profile::class)->create();
+
+
+
         $this->createClientAccounts();
     }
 
@@ -143,7 +148,12 @@ class FeatureTestCase extends TestCase
                 'id' => $this->profile->id, 'name' => $this->profile->name, 'email_verified' => $this->profile->email_verified
             ], 'customer' => [
                 'id' => $this->customer->id
-            ], 'resource' => null, 'member' => [
+
+            ],
+            'resource' => [
+                'id'=>$this->resource->id
+            ],
+            'member' => [
                 'id' => $this->member->id
             ], 'business_member' => [
                 'id' => $this->business_member->id, 'business_id' => $this->business->id, 'member_id' => $this->member->id, 'is_super' => 1
