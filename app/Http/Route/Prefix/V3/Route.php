@@ -64,6 +64,8 @@ class Route
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
+//            emi-info with static info
+            $api->get('emi-info', 'ShebaController@getEmiInfo_v3');
         });
 
 
