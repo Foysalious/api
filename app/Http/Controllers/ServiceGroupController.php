@@ -62,12 +62,14 @@ class ServiceGroupController extends Controller
                     $service_discount = $location_service->discounts()->running()->first();
                     removeRelationsFromModel($service);
                     $service['slug'] = $service->getSlug();
+                    $service['universal_slug'] = $service->getSlug();
                     $service['has_discount'] = $service_discount ? 1 : 0;
                     $service['discount_amount'] = $service_discount ? $service_discount['amount'] : 0;
                 }
                 else {
                     removeRelationsFromModel($service);
                     $service['slug'] = $service->getSlug();
+                    $service['universal_slug'] = $service->getSlug();
                 }
             });
             array_push($service_group_list, [
