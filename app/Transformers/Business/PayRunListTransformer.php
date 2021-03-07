@@ -27,7 +27,6 @@ class PayRunListTransformer extends TransformerAbstract
             'addition' => $this->getTotal($payslip,Type::ADDITION),
             'deduction' => $this->getTotal($payslip,Type::DEDUCTION),
             'net_payable' => $this->getTotal($payslip,'net_payable'),
-            'components' => $this->getComponents($business_member),
             'gross_salary_breakdown' => $this->getGrossBreakdown($payslip),
             'addition_breakdown' => $this->getComponentBreakdown($payslip,Type::ADDITION),
             'deduction_breakdown' => $this->getComponentBreakdown($payslip,Type::DEDUCTION),
@@ -96,20 +95,6 @@ class PayRunListTransformer extends TransformerAbstract
                     ]);
                 }
             }
-        }
-        return $final_data;
-    }
-
-    private function getComponents($business_member)
-    {
-        $payroll_components = $business_member->business->payrollSetting->components->whereIn('type',[Type::ADDITION, Type::DEDUCTION]);
-        $final_data = [];
-        foreach ($payroll_components as $key => $payroll_component) {
-            array_push($final_data, [
-                'key' => $payroll_component->name,
-                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_",$payroll_component->name))),
-                'type' => $payroll_component->type
-            ]);
         }
         return $final_data;
     }
