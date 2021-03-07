@@ -26,6 +26,9 @@ class PayRunListTransformer extends TransformerAbstract
             'addition' => $this->getTotal($payslip,'addition'),
             'deduction' => $this->getTotal($payslip,'deduction'),
             'net_payable' => $this->getTotal($payslip,'net_payable'),
+            'gross_salary_breakdown' => $this->getGrossBreakdown($payslip),
+            'addition_breakdown' => $this->getComponentBreakdown($payslip,'addition'),
+            'deduction_breakdown' => $this->getComponentBreakdown($payslip,'deduction'),
         ];
     }
 
@@ -56,5 +59,32 @@ class PayRunListTransformer extends TransformerAbstract
         if ($type == 'net_payable') return $net_payable;
         if ($type == 'addition') return $addition;
         if ($type == 'deduction') return $deduction;
+    }
+
+    private function getGrossBreakdown($payslip)
+    {
+        $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['gross_salary_breakdown'];
+
+        $data  = [];
+        foreach ($salary_breakdown as $key => $payroll_component) {
+            if ($key == 'gross_salary') continue;
+            $data[$key] = $payroll_component;
+        }
+        return $data;
+    }
+
+    private function getComponentBreakdown($payslip, $type)
+    {
+        $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['payroll_component'];
+
+        $data  = [];
+        foreach ($salary_breakdown as $key => $payroll_component) {
+            if ($key == $type) {
+                foreach ($payroll_component as $item => $component) {
+                    $data[$item] = $component;
+                }
+            }
+        }
+        return $data;
     }
 }
