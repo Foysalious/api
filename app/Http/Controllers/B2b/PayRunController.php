@@ -76,7 +76,7 @@ class PayRunController extends Controller
             $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
         }
         $payslip = collect($payslip)->splice($offset, $limit);
-        return api_response($request, null, 200, ['total_calculation'=> $payrun_list->getTotal(), 'payslip' => $payslip, 'total' => $count]);
+        return api_response($request, null, 200, ['total_calculation'=> $payrun_list->getTotal(), 'payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents(), 'total' => $count]);
     }
 
     /**
