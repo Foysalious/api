@@ -67,12 +67,21 @@ class NeoBankingGeneralStatics
 
     public static function types($type)
     {
-        $data = ['organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'], 'business_type_list' => ['list' => constants('PARTNER_BUSINESS_TYPE'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন']];
+        $data = ['organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'], 'business_type_list' => ['list' => self::partnerBusinessTypes(),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন']];
         try {
             return  $data[$type];
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    public static function partnerBusinessTypes()
+    {
+        $business_types = [];
+        collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+            array_push($business_types, $type['bn']);
+        });
+        return $business_types;
     }
 
     public static function sendCreatePushNotification($partner, $data)
