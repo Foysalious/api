@@ -25,7 +25,7 @@ class CollectionController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $collection = $this->collectionService->getAllCollection($partner->id);
+        $collection = $this->collectionService->getAllCollection();
         if(empty($collection))
             return api_response($request, "No data found!", 500, $collection);
         else

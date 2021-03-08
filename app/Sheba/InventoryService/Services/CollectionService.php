@@ -118,15 +118,15 @@ class CollectionService
         return $this;
     }
 
-    public function getAllCollection($partner_id)
+    public function getAllCollection()
     {
-        return $this->client->get('api/v1/partners/' . $partner_id . '/collection');
+        return $this->client->get('api/v1/collection');
     }
 
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data);
+        return $this->client->post('api/v1/collection', $data);
     }
 
     public function update()
