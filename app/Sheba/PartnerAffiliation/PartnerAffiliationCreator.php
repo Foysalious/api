@@ -3,6 +3,8 @@
 use App\Models\PartnerAffiliation;
 use App\Repositories\NotificationRepository;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
@@ -65,7 +67,10 @@ class PartnerAffiliationCreator
     private function sendSms()
     {
         $affiliate = $this->data['affiliate']->profile->name ?: $this->data['affiliate']->profile->name;
-        (new SmsHandler('partner-affiliation-create'))->send($this->data['resource_mobile'], [
+        (new SmsHandler('partner-affiliation-create'))
+            ->setBusinessType(BusinessType::SMANAGER)
+            ->setFeatureType(FeatureType::PARTNER_AFFILIATION)
+            ->send($this->data['resource_mobile'], [
             'affiliate' => $affiliate
         ]);
     }

@@ -6,6 +6,8 @@ use App\Models\BidItemField;
 use App\Models\Partner;
 use App\Sheba\Bitly\BitlyLinkShort;
 use App\Sheba\Repositories\Business\BidRepository;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Exception;
 use Illuminate\Database\QueryException;
 use Sheba\Business\BidStatusChangeLog\Creator;
@@ -230,7 +232,10 @@ class Updater
         $procurement_id = $this->bid->procurement->id;
         $bid_id = $this->bid->id;
         $url = config('sheba.business_url') . "/tender/$procurement_id/hire/$bid_id";
-        $this->sms->shoot($partner->getManagerMobile(), "$message. Now go to this link-" . $this->bitlyLink->shortUrl($url));
+        $this->sms
+            ->setFeatureType(FeatureType::BID)
+            ->setBusinessType(BusinessType::B2B)
+            ->shoot($partner->getManagerMobile(), "$message. Now go to this link-" . $this->bitlyLink->shortUrl($url));
     }
 
     public function updateStatus()

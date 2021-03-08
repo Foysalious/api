@@ -3,6 +3,8 @@
 use App\Models\Partner;
 use App\Models\PosOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Exception;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Transactions\Types;
@@ -38,7 +40,9 @@ class SmsHandler {
         if ((double)$partner->wallet > (double)$sms_cost) {
             /** @var WalletTransactionHandler $walletTransactionHandler */
             try{
-                $sms->shoot();
+                $sms->setBusinessType(BusinessType::SMANAGER)
+                    ->setFeatureType(FeatureType::POS)
+                    ->shoot();
             }catch(\Throwable $e)
             {
             }
@@ -55,7 +59,12 @@ class SmsHandler {
      */
     private function getSms($service_break_down) {
         if ($this->order->getDue() > 0) {
-            $sms = (new SmsHandlerRepo('pos-due-order-bills'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
+            $sms = (new SmsHandlerRepo('pos-due-order-bills'))
+                ->setVendor('infobip')
+                ->setMobile($this->order->customer->profile->mobile)
+                ->setFeatureType(FeatureType::POS)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setMessage([
                 'order_id'           => $this->order->partner_wise_order_id,
                 'service_break_down' => $service_break_down,
                 'total_amount'       => $this->order->getNetBill(),
@@ -63,7 +72,12 @@ class SmsHandler {
                 'partner_name'       => $this->order->partner->name
             ]);
         } else {
-            $sms = (new SmsHandlerRepo('pos-order-bills'))->setVendor('infobip')->setMobile($this->order->customer->profile->mobile)->setMessage([
+            $sms = (new SmsHandlerRepo('pos-order-bills'))
+                ->setVendor('infobip')
+                ->setMobile($this->order->customer->profile->mobile)
+                ->setFeatureType(FeatureType::POS)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setMessage([
                 'order_id'           => $this->order->partner_wise_order_id,
                 'service_break_down' => $service_break_down,
                 'total_amount'       => $this->order->getNetBill(),

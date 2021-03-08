@@ -108,7 +108,7 @@ class UpdaterV2
      */
     public function setDesignation($designation)
     {
-        $this->designation = strtolower($designation);
+        $this->designation = $designation;
         $this->businessRole = $this->getBusinessRole();
 
         return $this;
