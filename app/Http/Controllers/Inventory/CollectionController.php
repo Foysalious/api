@@ -87,7 +87,8 @@ class CollectionController extends Controller
     public function destroy(Request $request, $collection_id)
     {
         try {
-            $response = $this->collectionService->setCollectionId($collection_id)->delete();
+            $partner = $request->auth_user->getPartner();
+            $response = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->delete();
         } catch (\Exception $exception) {
             return http_response($request, null, 500, null);
         }
