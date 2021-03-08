@@ -31,7 +31,7 @@ class Ssl implements Gateway
         $ssl_response = new SslResponse();
         $ssl_response->setResponse($this->sslVrClient->call([
             "action" => SslVrClient::VR_PROXY_RECHARGE_ACTION,
-            'guid' => randomString(20, 1, 1),
+            'guid' => $topup_order->getGatewayRefId(),
             'payee_mobile' => $topup_order->payee_mobile,
             'operator_id' => $this->getOperatorId($topup_order->payee_mobile),
             'connection_type' => $topup_order->payee_mobile_type,
