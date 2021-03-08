@@ -77,5 +77,4 @@ class GrossSalaryBreakdownCalculate
         ];
         return $this->grossSalaryBreakdownWithTotalAmount;
     }
-
 }
