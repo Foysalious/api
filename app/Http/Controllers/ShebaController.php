@@ -308,7 +308,7 @@ class ShebaController extends Controller
     {
         $amount       = $request->amount;
         if (!$amount) {
-            $amount = number_format(5000);
+            $amount = 5000;
         }
 
         if ($amount < config('emi.minimum_emi_amount')) {
@@ -335,7 +335,7 @@ class ShebaController extends Controller
             ]
         ];
 
-        return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+        return api_response($request, null, 200, ['price' => number_format($amount), 'info' => $emi_data]);
     }
 
     public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
