@@ -1,5 +1,7 @@
 <?php namespace App\Transformers\Business;
 
+use App\Models\Member;
+use App\Models\Profile;
 use Illuminate\Support\Facades\DB;
 use League\Fractal\TransformerAbstract;
 use App\Models\Business;
@@ -9,6 +11,7 @@ use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
+use Sheba\Dal\Leave\Model as Leave;
 
 class LeaveApprovalRequestListTransformer extends TransformerAbstract
 {
@@ -22,9 +25,12 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
 
     public function transform($approval_request)
     {
+        /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         $business_member = $requestable->businessMember->load('member');
+        /** @var Member $member */
         $member = $business_member->member;
+        /** @var Profile $profile */
         $profile = $member->profile;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
         $approvers = $this->getApprover($requestable, $business_member);
