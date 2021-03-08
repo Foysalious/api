@@ -145,7 +145,7 @@ class AnnouncementController extends Controller
         if ($request->has('type')) $updater->setType($request->type);
         if ($request->has('short_description')) $updater->setShortDescription($request->short_description);
         if ($request->has('description')) $updater->setLongDescription($request->description);
-        if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date));
+        if ($request->has('end_date')) $updater->setEndDate(Carbon::parse($request->end_date . ' 23:59:59'));
 
         $updater->update();
 
