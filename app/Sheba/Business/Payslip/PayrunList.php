@@ -190,9 +190,8 @@ class PayrunList
         });
     }
 
-    public function getComponents()
+    public function getComponents($payroll_components)
     {
-        $payroll_components = $this->business->payrollSetting->components->whereIn('type',[Type::ADDITION, Type::DEDUCTION]);
         $final_data = [];
         foreach ($payroll_components as $key => $payroll_component) {
             array_push($final_data, [
