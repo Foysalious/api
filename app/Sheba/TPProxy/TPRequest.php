@@ -85,4 +85,14 @@ class TPRequest
         $this->headers = $headers;
         return $this;
     }
+
+    public function toArray()
+    {
+        return [
+            'url' => $this->getUrl(),
+            'headers' => $this->getHeaders(),
+            'input' => $this->getInput(),
+            'method' => $this->getMethod()
+        ];
+    }
 }
