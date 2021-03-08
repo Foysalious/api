@@ -53,12 +53,12 @@ class TopUpOrder extends BaseModel implements PayableType
                 'custom_like_query_tokenizer' => [
                     "type" => "ngram",
                     "min_gram" => 2,
-                    "max_gram" => 5,
+                    "max_gram" => 14,
                     "token_chars" => ["letter", "digit"]
                 ]
             ]
         ],
-        'max_ngram_diff' => 10
+        'max_ngram_diff' => 12
     ];
 
     protected $mappingProperties = [
