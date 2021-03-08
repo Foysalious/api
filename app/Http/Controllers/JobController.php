@@ -328,7 +328,7 @@ class JobController extends Controller
             "cbl" => "City Bank",
             "Ssl" => "Other Debit/Credit",
             "Wallet" => "Sheba Credit",
-            "Bonus" => "Wallet",
+            "Bonus" => "Sheba Credit",
             "Bondhu_balance" => "Bondhu Point"
         ];
         $partnerOrder = $job->partnerOrder;
