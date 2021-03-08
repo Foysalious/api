@@ -1,8 +1,4 @@
-<?php
-
-
-namespace Sheba\TopUp\Exception;
-
+<?php namespace Sheba\TopUp\Exception;
 
 use App\Exceptions\DoNotReportException;
 use Throwable;
@@ -13,5 +9,4 @@ class ResetRememberTokenException extends DoNotReportException
     {
         parent::__construct($message, $code, $previous);
     }
-
 }

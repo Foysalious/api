@@ -276,7 +276,7 @@ class PartnerSubscriptionBilling
      */
     private function sendSmsForSubscriptionUpgrade(PartnerSubscriptionPackage $old_package, PartnerSubscriptionPackage $new_package, $old_billing_type, $new_billing_type, $grade = PartnerSubscriptionChange::UPGRADE)
     {
-        if ((int)env('PARTNER_SUBSCRIPTION_SMS') == 1) {
+        if ((int)constants('PARTNER_SUBSCRIPTION_SMS') == 1) {
             $template = null;
             if ($grade == PartnerSubscriptionChange::UPGRADE) {
                 $template = 'upgrade-subscription';

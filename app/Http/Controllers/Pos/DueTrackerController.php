@@ -12,6 +12,7 @@ use Sheba\DueTracker\Exceptions\UnauthorizedRequestFromExpenseTrackerException;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 use Sheba\ExpenseTracker\Repository\EntryRepository;
 use Sheba\ModificationFields;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Reports\PdfHandler;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
@@ -21,8 +22,10 @@ class DueTrackerController extends Controller
 {
     use ModificationFields;
     private $entryRepo;
-    public function __construct(EntryRepository $entry_repo) {
+    private $paymentLinkCreator;
+    public function __construct(EntryRepository $entry_repo, PaymentLinkCreator $paymentLinkCreator) {
         $this->entryRepo=$entry_repo;
+        $this->paymentLinkCreator= $paymentLinkCreator;
     }
 
     /**
@@ -267,8 +270,11 @@ class DueTrackerController extends Controller
     {
         try {
             $request->merge(['customer_id' => $customer_id]);
-            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required', 'payment_link' => 'required_if:type,due']);
-            $dueTrackerRepository->sendSMS($request);
+            $this->validate($request, ['type' => 'required|in:due,deposit', 'amount' => 'required']);
+            if ($request->type == 'due') {
+                $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
+            }
+            if(config('sms.is_on')) $dueTrackerRepository->sendSMS($request);
             return api_response($request, true, 200);
 
         } catch (ValidationException $e) {
@@ -279,13 +285,12 @@ class DueTrackerController extends Controller
             return api_response($request, $message, 403, ['message' => $message]);
         } catch(InsufficientBalance $e) {
             $message = "Insufficient Balance";
-            return api_response($request, $message, 401, ['message' => $message]);
+            return api_response($request, $message, 402, ['message' => $message]);
         } catch (\Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
-
 
     /**
      * @param Request $request

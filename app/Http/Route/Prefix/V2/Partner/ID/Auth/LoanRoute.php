@@ -1,12 +1,9 @@
-<?php
-
-
-namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+<?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
 
 
 class LoanRoute
 {
-    function set($api)
+    public function set($api)
     {
         $api->group(['prefix' => 'loans'], function ($api) {
             $api->get('/{loan_id}/generate-pdf', 'Loan\\LoanController@generateApplication');
@@ -50,7 +47,7 @@ class LoanRoute
         });
     }
 
-    function indexed($api)
+    public function indexed($api)
     {
         $api->group(['prefix' => 'loans'], function ($api) {
             $api->group(['prefix' => 'v2', 'middleware' => 'loan.version'], function ($api) {
