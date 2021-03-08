@@ -5,14 +5,14 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
-use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use Carbon\Carbon;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
@@ -24,6 +24,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -47,6 +48,7 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Elasticsearch;
 
 class TopUpController extends Controller
 {
@@ -351,6 +353,7 @@ class TopUpController extends Controller
      * @param TopUpHistoryExcel $history_excel
      * @param TopUpDataFormat $topUp_data_format
      * @return JsonResponse
+     * @throws Exception
      */
     public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
     {
@@ -373,9 +376,8 @@ class TopUpController extends Controller
         if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
         if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
         if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
-        if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
-            $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-        });
+        if (isset($request->q) && $request->q !== "null" && !empty($request->q))
+            $topups = $this->searchPayeeMobile($user, $topups, $request, $offset, $limit);
 
         $total_topups = $topups->count();
         if ($is_excel_report) {
@@ -493,5 +495,54 @@ class TopUpController extends Controller
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    /**
+     * @param TopUpAgent $user
+     * @param $topups
+     * @param Request $request
+     * @param $offset
+     * @param $limit
+     * @return mixed
+     * @throws Exception
+     */
+    private function searchPayeeMobile(TopUpAgent $user, $topups, Request $request, $offset, $limit)
+    {
+        $search_query = preg_replace("/[^A-Za-z0-9]+/", "", $request->q);
+        try {
+            /** @var TopUpOrder $topup_orders */
+            $topup_order_model = app(TopUpOrder::class);
+            if ($this->isElasticSearchServerLiveWithTopupIndex($topup_order_model)) {
+                $query = [
+                    'bool' => [
+                        'must' => [
+                            ['term' => ['agent_type' => get_class($user)]],
+                            ['term' => ["agent_id" => $user->id]],
+                            ['term' => ["payee_mobile" => $search_query]]
+                        ]
+                    ]
+                ];
+                $topup_orders = TopUpOrder::searchByQuery($query, null, null, $limit, $offset, null);
+                return $topups->whereIn('id', $topup_orders->pluck('id')->toArray());
+            }
+        } catch (Missing404Exception $e) {
+            return $topups->where(function ($q) use ($request, $search_query) {
+                $q->where('payee_mobile', 'LIKE', '%' . $search_query . '%')->orWhere('payee_name', 'LIKE', '%' . $search_query . '%');
+            });
+        }
+
+        return $topups->where(function ($q) use ($request, $search_query) {
+            $q->where('payee_mobile', 'LIKE', '%' . $search_query . '%')->orWhere('payee_name', 'LIKE', '%' . $search_query . '%');
+        });
+    }
+
+    /**
+     * @param TopUpOrder $topup_order_model
+     * @return bool
+     * @throws Exception
+     */
+    private function isElasticSearchServerLiveWithTopupIndex(TopUpOrder $topup_order_model): bool
+    {
+        return Elasticsearch::ping() && Elasticsearch::indices()->stats(['index' => $topup_order_model->getIndexName()]);
     }
 }

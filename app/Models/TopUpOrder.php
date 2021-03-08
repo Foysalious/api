@@ -80,6 +80,7 @@ class TopUpOrder extends BaseModel implements PayableType
         'agent_id' => ['type' => 'integer'],
         'amount' => ['type' => 'double'],
         'payee_mobile' => ['type' => 'text', "analyzer" => "custom_like_query_analyzer", "search_analyzer" => "standard"],
+        'payee_name' => ['type' => 'text', "analyzer" => "custom_like_query_analyzer", "search_analyzer" => "standard"],
         'created_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"],
         'updated_at' => ['type' => 'date', "format" => "yyyy-MM-dd HH:mm:ss"]
     ];
