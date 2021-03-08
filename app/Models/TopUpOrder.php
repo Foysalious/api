@@ -186,4 +186,9 @@ class TopUpOrder extends BaseModel implements PayableType
     {
         return $this->gateway == Names::PAYWELL;
     }
+
+    public function getGatewayRefId()
+    {
+        return dechex($this->id);
+    }
 }
