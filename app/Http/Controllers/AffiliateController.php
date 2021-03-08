@@ -1441,6 +1441,8 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         } catch (Missing404Exception $e) {
             return $topups->where('payee_mobile', 'LIKE', '%' . $search_query . '%');
         }
+
+        return $topups->where('payee_mobile', 'LIKE', '%' . $search_query . '%');
     }
 
     /**

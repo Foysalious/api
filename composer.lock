@@ -3509,7 +3509,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_elasticsearch.git",
-                "reference": "f6185854c07708cdaf7124e5b5b3b102cb55a6ea"
+                "reference": "c98d11b7373af35347d6987d4a9d951af99d9b01"
             },
             "require": {
                 "elasticsearch/elasticsearch": "^v6.7.2",
@@ -3548,7 +3548,7 @@
                 "laravel",
                 "search"
             ],
-            "time": "2021-02-28T14:59:31+00:00"
+            "time": "2021-03-08T10:39:20+00:00"
         },
         {
             "name": "sheba/notification",
