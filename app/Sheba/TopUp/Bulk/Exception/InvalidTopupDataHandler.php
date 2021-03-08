@@ -1,20 +1,21 @@
-<?php namespace Sheba\TopUp\Exception;
+<?php namespace Sheba\TopUp\Bulk\Exception;
 
+use Illuminate\Http\JsonResponse;
 use Sheba\Exceptions\Handlers\GenericHandler;
 use Sheba\Exceptions\Handlers\Handler;
 
-class PinMismatchExceptionHandler extends Handler
+class InvalidTopupDataHandler extends Handler
 {
     use GenericHandler;
 
-    public function render()
+    public function render(): JsonResponse
     {
-        /** @var $exception PinMismatchException */
+        /** @var $exception InvalidTopupData */
         $exception = $this->exception;
         $response = [
             'code' => $this->getCode(),
             'message' => $this->getMessage(),
-            'login_wrong_pin_count' => $exception->getWrongPinCount()
+            'excel_errors' => $exception->getExcelErrors()
         ];
 
         return response()->json($response);
