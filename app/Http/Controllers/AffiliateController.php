@@ -13,7 +13,9 @@ use App\Models\ProfileBankInformation;
 use App\Models\ProfileMobileBankInformation;
 use App\Models\Resource;
 use App\Models\TopUpOrder;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
+use Illuminate\Foundation\Application;
 use Sheba\Dal\Service\Service;
 use App\Repositories\AffiliateRepository;
 use App\Repositories\FileRepository;
@@ -49,6 +51,7 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Throwable;
 use Validator;
 use Sheba\Dal\TopUpVendorOTF\Contract as TopUpVendorOTFRepo;
+use Elasticsearch;
 
 class AffiliateController extends Controller
 {
@@ -1420,18 +1423,33 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
      */
     private function searchPayeeMobile($affiliate, $topups, Request $request, $offset, $limit)
     {
-        $query = [
-            'bool' => [
-                'must' => [
-                    ['term' => ['agent_type' => get_class($affiliate)]],
-                    ['term' => ["agent_id" => $affiliate->id]],
-                    ['term' => ["payee_mobile" => $request->q]]
-                ]
-            ]
-        ];
-        $topup_orders = TopUpOrder::searchByQuery($query, null, null, $limit, $offset, null);
-        return $topups->whereIn('id', $topup_orders->pluck('id')->toArray());
+        $search_query = preg_replace("/[^0-9]+/", "", $request->q);
+        try {
+            /** @var TopUpOrder $topup_orders */
+            $topup_order_model = app(TopUpOrder::class);
+            if ($this->isElasticSearchServerLiveWithTopupIndex($topup_order_model)) {
+                $query = [
+                    'bool' => [
+                        'must' => [
+                            ['term' => ['agent_type' => get_class($affiliate)]], ['term' => ["agent_id" => $affiliate->id]], ['term' => ["payee_mobile" => $search_query]]
+                        ]
+                    ]
+                ];
+                $topup_orders = TopUpOrder::searchByQuery($query, null, null, $limit, $offset, null);
+                return $topups->whereIn('id', $topup_orders->pluck('id')->toArray());
+            }
+        } catch (Missing404Exception $e) {
+            return $topups->where('payee_mobile', 'LIKE', '%' . $search_query . '%');
+        }
+    }
 
-        // return $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
+    /**
+     * @param TopUpOrder $topup_order_model
+     * @return bool
+     * @throws Exception
+     */
+    private function isElasticSearchServerLiveWithTopupIndex(TopUpOrder $topup_order_model): bool
+    {
+        return Elasticsearch::ping() && Elasticsearch::indices()->stats(['index' => $topup_order_model->getIndexName()]);
     }
 }
