@@ -106,7 +106,7 @@ class FindApprovers
             $business_member_department = $business_member->department();
             /** @var BusinessDepartment $manager_department */
             $manager_department = $manager->department();
-            if ($business_member_department->id == $manager_department->id) {
+            if ($manager_department && ($business_member_department->id == $manager_department->id)) {
                 $this->headOfDepartment = $manager;
             }
             array_push($this->managers, $manager->id);
