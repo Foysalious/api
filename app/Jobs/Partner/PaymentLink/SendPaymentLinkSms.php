@@ -2,6 +2,8 @@
 
 use App\Jobs\Job;
 use App\Models\Payment;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
@@ -42,13 +44,19 @@ class SendPaymentLinkSms extends Job implements ShouldQueue
             $name = $this->payment->payable->getName();
             $payment_receiver = $this->paymentLink->getPaymentReceiver();
             $log = "$formatted_collected_amount TK has been collected from " . $name . " by link-" . $this->paymentLink->getLinkID() . ". Please see the sManager app for detail information.";
-            $this->sms->shoot($payment_receiver->getMobile(), $log);
+            $this->sms
+                ->setFeatureType(FeatureType::PAYMENT_LINK)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->shoot($payment_receiver->getMobile(), $log);
             $target = $this->paymentLink->getTarget();
             $variable = "paid $formatted_collected_amount TK";
             if ($target) $variable = "placed an order, ID : {$target->id}.Amount $formatted_collected_amount TK has been paid";
             $log = "You have successfully $variable To {$payment_receiver->name} through {$this->payment->paymentDetails->last()->readable_method}.";
             $log .= $money_receipt ? " Money receipt: $money_receipt" : '';
-            $this->sms->shoot($this->payment->payable->getMobile(), $log);
+            $this->sms
+                ->setFeatureType(FeatureType::PAYMENT_LINK)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->shoot($this->payment->payable->getMobile(), $log);
         }
     }
 }
