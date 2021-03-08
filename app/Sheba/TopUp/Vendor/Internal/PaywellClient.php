@@ -58,7 +58,7 @@ class PaywellClient
         $request_data = [
             "username" => $this->username,
             "password" => $this->password,
-            "ref_id" => $topup_order->id,
+            "ref_id" => $topup_order->getGatewayRefId(),
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
