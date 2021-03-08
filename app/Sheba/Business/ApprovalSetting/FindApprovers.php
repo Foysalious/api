@@ -3,6 +3,7 @@
 use App\Models\BusinessDepartment;
 use App\Models\BusinessMember;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\ApprovalSettingApprover\Types;
 use Sheba\Helpers\HasErrorCodeAndMessage;
 
@@ -125,8 +126,9 @@ class FindApprovers
             $business_member = BusinessMember::find($approver);
             $member = $business_member->member;
             $profile = $member->profile;
+
             array_push($default_approvers, [
-                'name' => $profile->name,
+                'name' => $profile->name ? $profile->name : 'n/s',
                 'status' => null
             ]);
         }
