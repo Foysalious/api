@@ -25,7 +25,7 @@ class CollectionController extends Controller
     public function index(Request $request)
     {
         $partner = $request->auth_user->getPartner();
-        $collection = $this->collectionService->getAllCollection();
+        $collection = $this->collectionService->setPartnerId($partner->id)->getAllCollection();
         if(empty($collection))
             return api_response($request, "No data found!", 500, $collection);
         else
@@ -57,8 +57,9 @@ class CollectionController extends Controller
 
     public function show(Request $request, $collection_id)
     {
+        $partner = $request->auth_user->getPartner();
         try {
-            $collection = $this->collectionService->setCollectionId($collection_id)->getDetails();
+            $collection = $this->collectionService->setPartnerId($partner->id)->setCollectionId($collection_id)->getDetails();
         } catch(\Exception $exception) {
             return http_response($request, 'No Data found!', 500, null);
         }
