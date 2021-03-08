@@ -54,7 +54,7 @@ class GatewayTimeoutHandler
         $n = self::TIMEOUT_THRESHOLD_COUNT - 1;
         $top_ups = $this->topUpOrderRepo->getPreviousNOrdersUsingGateway($n, $this->gateway->getName(), $this->topUpOrder);
 
-        if ($this->isAllNotTimedOut($top_ups)) return;
+        if ($top_ups->count() != $n || $this->isAllNotTimedOut($top_ups)) return;
 
         $this->vendorRepo->unpublishAllUsingGateway($this->gateway->getName());
         $this->notify();
