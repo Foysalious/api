@@ -310,15 +310,24 @@ class EmployeeController extends Controller
 
         $token = $this->accounts->getTokenByEmailAndPasswordV2($request->email, $request->password);
         $auth_user = AuthUser::createFromToken($token);
+        $business = $this->business($auth_user);
+
         $info = [
             'token' => $token,
             'user' => [
                 'name' => $auth_user->getName(),
                 'mobile' => $profile->mobile,
-                'image' => $profile->pro_pic
+                'image' => $profile->pro_pic,
+                'is_remote_attendance_enable' => $business->isRemoteAttendanceEnable()
             ]
         ];
 
         return api_response($request, null, 200, $info);
+    }
+
+    private function business($auth_user)
+    {
+        $business_id = $auth_user->getMemberAssociatedBusinessId();
+        return $business_id ? Business::find($business_id) : null;
     }
 }
