@@ -319,7 +319,7 @@ class ShebaController extends Controller
         $emi_data = [
             "emi"   => $emi_calculator->getCharges($amount),
             "banks" => (new Banks())->setAmount($amount)->get(),
-            "minimum_amount" => (double)5000,
+            "minimum_amount" => config('sheba.min_order_amount_for_emi'),
             "static_info" =>[
                 "how_emi_works"=>[
                     "As soon as you complete your purchase order on Pickaboo, you will see the full amount charged on your credit card.",
