@@ -308,7 +308,7 @@ class ShebaController extends Controller
     {
         $amount       = $request->amount;
         if (!$amount) {
-            return api_response($request, null, 400, ['message' => 'Amount missing']);
+            $amount = 5000;
         }
 
         if ($amount < config('emi.minimum_emi_amount')) {
