@@ -327,7 +327,9 @@ class JobController extends Controller
         $payment_method_names = [
             "cbl" => "City Bank",
             "Ssl" => "Other Debit/Credit",
-            "Wallet" => "Sheba Credit"
+            "Wallet" => "Sheba Credit",
+            "Bonus" => "Wallet",
+            "Bondhu_balance" => "Bondhu Point"
         ];
         $partnerOrder = $job->partnerOrder;
         $methods_with_amounts = $partnerOrder->payments()->select('method','amount')->get()->toArray();
