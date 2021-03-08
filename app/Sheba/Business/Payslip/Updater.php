@@ -1,6 +1,7 @@
 <?php namespace Sheba\Business\Payslip;
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
+use App\Sheba\Business\PayrollComponent\Components\PayrollComponent;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 
@@ -14,20 +15,26 @@ class Updater
     private $grossSalary;
     private $business;
     private $payslip;
+    private $payrollComponent;
+    private $addition;
+    private $deduction;
 
     /**
      * Updater constructor.
      * @param BusinessMemberRepositoryInterface $business_member_repository
      * @param PayslipRepository $payslip_repository
      * @param GrossSalaryBreakdownCalculate $gross_salary_breakdown_calculate
+     * @param PayrollComponent $payroll_component
      */
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 PayslipRepository $payslip_repository,
-                                GrossSalaryBreakdownCalculate $gross_salary_breakdown_calculate)
+                                GrossSalaryBreakdownCalculate $gross_salary_breakdown_calculate,
+                                PayrollComponent $payroll_component)
     {
         $this->grossSalaryBreakdownCalculate = $gross_salary_breakdown_calculate;
         $this->businessMemberRepository = $business_member_repository;
         $this->payslipRepository = $payslip_repository;
+        $this->payrollComponent = $payroll_component;
     }
 
     /**
@@ -40,6 +47,7 @@ class Updater
         $this->business = $this->businessMember->business;
         $payroll_setting = $this->business->payrollSetting;
         $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting);
+        $this->payrollComponent->setPayrollSetting($payroll_setting);
         return $this;
     }
 
@@ -64,6 +72,18 @@ class Updater
         return $this;
     }
 
+    public function setAddition($addition)
+    {
+        $this->addition = $addition;
+        return $this;
+    }
+
+    public function setDeduction($deduction)
+    {
+        $this->deduction = $deduction;
+        return $this;
+    }
+
     public function update()
     {
         $this->payslip = $this->payslipRepository->where('business_member_id', $this->businessMember->id)
@@ -78,8 +98,9 @@ class Updater
     private function formatPaySlipData()
     {
         $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($this->grossSalary);
+        $payroll_component_breakdown = $this->payrollComponent->setAddition($this->addition)->setDeduction($this->deduction)->getBreakdown();
         return [
-            'salary_breakdown' => json_encode($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted())
+            'salary_breakdown' => json_encode(array_merge($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted(), $payroll_component_breakdown))
         ];
     }
 }

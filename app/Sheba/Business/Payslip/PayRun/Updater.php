@@ -68,7 +68,7 @@ class Updater
         DB::transaction(function () {
             foreach ($this->payrunData as $data) {
                 $this->salaryRequester->setBusinessMember($data['id'])->setGrossSalary($data['amount'])->setManagerMember($this->managerMember)->createOrUpdate();
-                $this->payslipUpdater->setBusinessMember($data['id'])->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->update();
+                $this->payslipUpdater->setBusinessMember($data['id'])->setGrossSalary($data['amount'])->setScheduleDate($data['schedule_date'])->setAddition($data['addition'])->setDeduction($data['deduction'])->update();
             }
         });
         return true;
