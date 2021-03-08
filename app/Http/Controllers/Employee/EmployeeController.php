@@ -319,6 +319,7 @@ class EmployeeController extends Controller
                 'image' => $profile->pro_pic,
                 'business_id' => $business ? $business->id : null,
                 'business_name' => $business ? $business->name : null,
+                'is_remote_attendance_enable' => $business->isRemoteAttendanceEnable()
             ]
         ];
 
