@@ -109,7 +109,7 @@ class Client
         $input .= '<LOGINID></LOGINID>';
         $input .= '<PASSWORD></PASSWORD>';
         $input .= '<EXTCODE></EXTCODE>';
-        $input .= '<EXTREFNUM></EXTREFNUM>';
+        $input .= '<EXTREFNUM>' . $topup_order->getGatewayRefId() . '</EXTREFNUM>';
         $input .= "<MSISDN2>" . $topup_order->getOriginalMobile() . "</MSISDN2>";
         $input .= "<AMOUNT>" . ($topup_order->amount * $this->amountMultiplier) . "</AMOUNT>";
         $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
