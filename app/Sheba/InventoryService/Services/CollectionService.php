@@ -132,7 +132,7 @@ class CollectionService
     public function update()
     {
         $data = $this->makeCreateData();
-        return $this->client->put('api/v1/collection/' . $this->collection_id, $data);
+        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id, $data);
     }
 
     public function getDetails()
@@ -157,7 +157,7 @@ class CollectionService
 
     public function delete()
     {
-        return $this->client->delete('api/v1/collection/' . $this->collection_id);
+        return $this->client->delete('api/v1/partners/' . $this->partner_id .'/collection/' . $this->collection_id);
     }
 
 }
