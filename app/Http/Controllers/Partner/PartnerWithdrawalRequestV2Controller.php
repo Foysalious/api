@@ -50,25 +50,26 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                     'max' => $limitBank['max']
                 ]
             ];
+            $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
 
             if($request->partner->withdrawalRequests()->active()->count() > 0){
                 $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
-                if($withdrawable_amount > $limitBank['min'])
+                if($withdrawable_amount > $limitBank['min']) {
                     $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
-                else
+                }
+                else {
                     $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না।';
+                }
             }
             else
             {
-                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলনের জন্য আবেদন করতে পারবেন না।';
+                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             }
 
             if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
                 $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
                 $is_partner_blacklisted = true;
             }
-
-            $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
                 return api_response($request, $withdrawalRequests, 200,
                     ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message, 'is_black_listed' => $is_partner_blacklisted]);
         } catch (Throwable $e) {
