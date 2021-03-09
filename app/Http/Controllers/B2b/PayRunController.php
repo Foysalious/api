@@ -71,7 +71,9 @@ class PayRunController extends Controller
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
         if ($request->limit == 'all') $limit = $count;
 
-        $payroll_components = $business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->orderBy('name', 'ASC');
+        $addition_payroll_components = $business->payrollSetting->components->where('type', Type::ADDITION)->sortBy('name');
+        $deduction_payroll_components = $business->payrollSetting->components->where('type', Type::DEDUCTION)->sortBy('name');
+        $payroll_components = $addition_payroll_components->merge($deduction_payroll_components);
         if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
         
         $payslip = collect($payslip)->splice($offset, $limit);
