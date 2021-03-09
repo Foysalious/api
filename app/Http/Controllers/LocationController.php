@@ -201,7 +201,6 @@ class LocationController extends Controller
             $data = $manager->createData($resource)->toArray()['data'];
             return api_response($request, $request, 200, $data);
         } catch (Throwable $e) {
-            dd($e);
             app('sentry')->captureException($e);
             return api_response($request, $request, 500);
         }

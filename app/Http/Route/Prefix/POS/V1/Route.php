@@ -51,7 +51,13 @@ class Route
                 $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
             });
 
-            $api->group(['prefix' => 'products'], function ($api) {
+
+
+
+
+
+
+                $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');
                     $api->group(['prefix' => '{products}'], function ($api) {
