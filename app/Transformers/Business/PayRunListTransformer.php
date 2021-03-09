@@ -112,7 +112,8 @@ class PayRunListTransformer extends TransformerAbstract
                 }
             }
         }
-
+        $data = array_column($final_data, 'key');
+        array_multisort($data, SORT_ASC, $final_data);
         return $final_data;
     }
 
