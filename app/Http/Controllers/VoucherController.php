@@ -387,7 +387,7 @@ class VoucherController extends Controller
     {
         if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
         $this->validate($request, [
-            'mobile' => 'required|mobile:bd',
+            'mobile' => 'mobile:bd',
             'amount' => 'required|numeric',
             'cap' => 'numeric|required_if:is_percentage,==,1',
             'is_percentage' => 'required|numeric|in:0,1',

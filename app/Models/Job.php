@@ -41,7 +41,7 @@ class Job extends BaseModel implements MorphCommentable
 
     protected $guarded = ['id'];
     protected $materialPivotColumns = ['id', 'material_name', 'material_price', 'is_verified', 'verification_note', 'created_by', 'created_by_name', 'created_at', 'updated_by', 'updated_by_name', 'updated_at'];
-    protected $casts = ['sheba_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
+    protected $casts = ['sheba_contribution' => 'double', 'vendor_contribution' => 'double', 'partner_contribution' => 'double', 'commission_rate' => 'double'];
     protected $dates = ['delivered_date', 'estimated_delivery_date', 'estimated_visiting_date'];
 
     public $servicePrice;
@@ -69,6 +69,7 @@ class Job extends BaseModel implements MorphCommentable
     public $ownDiscount;
     public $ownShebaContribution;
     public $ownPartnerContribution;
+    public $ownVendorContribution;
     public $serviceDiscounts;
     public $originalDiscount;
     public $totalDiscount;
@@ -329,6 +330,7 @@ class Job extends BaseModel implements MorphCommentable
         $this->ownDiscount = $this_discount - $this->otherDiscounts;
         $this->ownShebaContribution = $this->sheba_contribution;
         $this->ownPartnerContribution = $this->partner_contribution;
+        $this->ownVendorContribution = $this->vendor_contribution;
         $this->serviceDiscounts = $this->getServiceDiscount();
 
 //        CHANGED FOR MULTIPLE DISCOUNT PLACED ERROR
