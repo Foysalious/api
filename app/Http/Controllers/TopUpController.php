@@ -105,11 +105,6 @@ class TopUpController extends Controller
         return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
     }
 
-    private function affiliateLogout(Affiliate $affiliate)
-    {
-        $affiliate->update($this->withUpdateModificationField(['remember_token' => str_random(255)]));
-    }
-
     /**
      * @param Request $request
      * @param VendorFactory $vendor
