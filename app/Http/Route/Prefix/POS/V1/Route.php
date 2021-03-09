@@ -9,16 +9,24 @@ class Route
 
 
             $api->get('/channels', "Inventory\ChannelController@index");
+            $api->get('/units', "Inventory\UnitController@index");
 
         });
 
+   $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
+      
+
+            $api->group(['prefix' => 'collections'], function ($api) {
+                $api->get('/', 'Inventory\CollectionController@index');
+                $api->post('/', 'Inventory\CollectionController@store');
+                $api->get('/{collection}', 'Inventory\CollectionController@show');
+                $api->put('/{collection}', 'Inventory\CollectionController@update');
+                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
+            });
 
 
-        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
 
-            $api->get('/units', "Inventory\UnitController@index");
-
-            $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
+            $api->get('/tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
                 $api->get('/', 'Inventory\ProductController@index');
                 $api->post('/', 'Inventory\ProductController@store');
@@ -30,7 +38,7 @@ class Route
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/', 'Inventory\CategoryController@index');
-
+                $api->get('/units', "Inventory\UnitController@index");
                 $api->delete('/value1/{valueId}', "Inventory\ValueController@destroy");
             });
 
@@ -50,14 +58,7 @@ class Route
                 $api->put('/{category_id}', 'Inventory\CategoryController@update');
                 $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
             });
-            $api->group(['prefix' => 'collections'], function ($api) {
-                $api->get('/', 'Inventory\CollectionController@index');
-                $api->post('/', 'Inventory\CollectionController@store');
-                $api->get('/{collection}', 'Inventory\CollectionController@show');
-                $api->put('/{collection}', 'Inventory\CollectionController@update');
-                $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
-            });
-            
+
             $api->group(['prefix' => 'options'], function ($api) {
                 $api->get('/', "Inventory\OptionController@index");
                 $api->post('/', "Inventory\OptionController@store");
