@@ -14,7 +14,7 @@ class Route
         });
 
    $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
-        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
+
 
             $api->group(['prefix' => 'collections'], function ($api) {
                 $api->get('/', 'Inventory\CollectionController@index');
