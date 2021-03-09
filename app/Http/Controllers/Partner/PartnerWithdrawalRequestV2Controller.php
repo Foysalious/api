@@ -58,12 +58,12 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                     $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
                 }
                 else {
-                    $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি <b>৳'. convertNumbersToBangla($security_money, true, 0). '।</b>';
+                    $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি <b>৳'. convertNumbersToBangla($security_money, true, 0). '</b> ।';
                 }
             }
             else
             {
-                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি <b> ৳'. convertNumbersToBangla($security_money, true, 0). '।</b>';
+                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি <b> ৳'. convertNumbersToBangla($security_money, true, 0). '</b>।';
             }
 
             if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
