@@ -538,6 +538,13 @@ class LeaveController extends Controller
     public function rejectReasons(Request $request, LeaveRejectReason $reject_reason)
     {
         $reject_reasons = $reject_reason::getReasons();
+        $reasons = [];
+        foreach ($reject_reasons as $key => $reject_reason) {
+            $reasons[] = [
+                'key' => $key,
+                'value' => $reject_reason
+            ];
+        }
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
     }
 }
