@@ -34,9 +34,6 @@ class PayrunList
     private $sort;
     private $monthYear;
     private $departmentID;
-    /**
-     * @var \Illuminate\Support\Collection
-     */
     private $payslip;
 
     /**
@@ -52,6 +49,10 @@ class PayrunList
         $this->salaryRepository = $salary_repository;
     }
 
+    /**
+     * @param Business $business
+     * @return $this
+     */
     public function setBusiness(Business $business)
     {
         $this->business = $business;
@@ -124,6 +125,9 @@ class PayrunList
         $this->payslipList = $payslips->get();
     }
 
+    /**
+     * @return \Illuminate\Support\Collection
+     */
     private function getData()
     {
         $manager = new Manager();
@@ -137,6 +141,9 @@ class PayrunList
         return $payslip_list;
     }
 
+    /**
+     * @return array
+     */
     public function getTotal()
     {
         return [
@@ -145,6 +152,23 @@ class PayrunList
             'deduction' => $this->payslip->sum('deduction'),
             'net_payable' => $this->payslip->sum('net_payable'),
         ];
+    }
+
+    /**
+     * @param $payroll_components
+     * @return array
+     */
+    public function getComponents($payroll_components)
+    {
+        $final_data = [];
+        foreach ($payroll_components as $payroll_component) {
+            array_push($final_data, [
+                'key' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_", $payroll_component->name))),
+                'type' => $payroll_component->type
+            ]);
+        }
+        return $final_data;
     }
 
     /**
@@ -188,18 +212,5 @@ class PayrunList
                 });
             });
         });
-    }
-
-    public function getComponents($payroll_components)
-    {
-        $final_data = [];
-        foreach ($payroll_components as $key => $payroll_component) {
-            array_push($final_data, [
-                'key' => $payroll_component->name,
-                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_",$payroll_component->name))),
-                'type' => $payroll_component->type
-            ]);
-        }
-        return $final_data;
     }
 }

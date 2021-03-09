@@ -1,13 +1,14 @@
 <?php namespace Sheba\Business\Payslip;
 
 use App\Sheba\Business\PayrollComponent\Components\GrossSalaryBreakdownCalculate;
-use App\Sheba\Business\PayrollComponent\Components\PayrollComponent;
+use App\Sheba\Business\PayrollComponent\Components\PayrollComponentCalculation;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 
 class Updater
 {
     private $grossSalaryBreakdownCalculate;
+    private $payrollComponentCalculation;
     private $businessMemberRepository;
     private $payslipRepository;
     private $businessMember;
@@ -15,7 +16,6 @@ class Updater
     private $grossSalary;
     private $business;
     private $payslip;
-    private $payrollComponent;
     private $addition;
     private $deduction;
 
@@ -24,17 +24,17 @@ class Updater
      * @param BusinessMemberRepositoryInterface $business_member_repository
      * @param PayslipRepository $payslip_repository
      * @param GrossSalaryBreakdownCalculate $gross_salary_breakdown_calculate
-     * @param PayrollComponent $payroll_component
+     * @param PayrollComponentCalculation $payroll_component_calculation
      */
     public function __construct(BusinessMemberRepositoryInterface $business_member_repository,
                                 PayslipRepository $payslip_repository,
                                 GrossSalaryBreakdownCalculate $gross_salary_breakdown_calculate,
-                                PayrollComponent $payroll_component)
+                                PayrollComponentCalculation $payroll_component_calculation)
     {
         $this->grossSalaryBreakdownCalculate = $gross_salary_breakdown_calculate;
         $this->businessMemberRepository = $business_member_repository;
         $this->payslipRepository = $payslip_repository;
-        $this->payrollComponent = $payroll_component;
+        $this->payrollComponentCalculation = $payroll_component_calculation;
     }
 
     /**
@@ -47,7 +47,7 @@ class Updater
         $this->business = $this->businessMember->business;
         $payroll_setting = $this->business->payrollSetting;
         $this->grossSalaryBreakdownCalculate->componentPercentageBreakdown($payroll_setting);
-        $this->payrollComponent->setPayrollSetting($payroll_setting);
+        $this->payrollComponentCalculation->setPayrollSetting($payroll_setting);
         return $this;
     }
 
@@ -98,9 +98,9 @@ class Updater
     private function formatPaySlipData()
     {
         $this->grossSalaryBreakdownCalculate->totalAmountPerComponent($this->grossSalary);
-        $payroll_component_breakdown = $this->payrollComponent->setAddition($this->addition)->setDeduction($this->deduction)->getBreakdown();
+        $payroll_component_calculation = $this->payrollComponentCalculation->setAddition($this->addition)->setDeduction($this->deduction)->getCalculationBreakdown();
         return [
-            'salary_breakdown' => json_encode(array_merge($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted(), $payroll_component_breakdown))
+            'salary_breakdown' => json_encode(array_merge($this->grossSalaryBreakdownCalculate->totalAmountPerComponentFormatted(), $payroll_component_calculation))
         ];
     }
 }

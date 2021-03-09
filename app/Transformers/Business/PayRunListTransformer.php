@@ -2,6 +2,7 @@
 
 use App\Models\BusinessMember;
 use Carbon\Carbon;
+use DateTimeZone;
 use League\Fractal\TransformerAbstract;
 use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
@@ -9,93 +10,124 @@ use Sheba\Dal\Payslip\Payslip;
 
 class PayRunListTransformer extends TransformerAbstract
 {
+    const NET_PAYABLE = 'net_payable';
+    const GROSS_SALARY = 'gross_salary';
     private $grossSalary;
 
+    /**
+     * @param Payslip $payslip
+     * @return array
+     */
     public function transform(Payslip $payslip)
     {
         $this->grossSalary = $this->getGrossSalary($payslip->businessMember);
         $business_member = $payslip->businessMember;
         $department = $business_member->department();
+        $salary_breakdown = $payslip->salaryBreakdown();
         return [
-            'id' =>  $payslip->id,
+            'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
             'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
             'employee_name' => $business_member->profile()->name,
             'department' => $department ? $department->name : 'N/A',
             'schedule_date' => Carbon::parse($payslip->schedule_date)->format('Y-m-d'),
             'gross_salary' => floatValFormat($this->grossSalary),
-            'addition' => $this->getTotal($payslip,Type::ADDITION),
-            'deduction' => $this->getTotal($payslip,Type::DEDUCTION),
-            'net_payable' => $this->getTotal($payslip,'net_payable'),
-            'gross_salary_breakdown' => $this->getGrossBreakdown($payslip),
-            'addition_breakdown' => $this->getComponentBreakdown($payslip,Type::ADDITION),
-            'deduction_breakdown' => $this->getComponentBreakdown($payslip,Type::DEDUCTION),
+            'addition' => $this->getTotal($salary_breakdown, Type::ADDITION),
+            'deduction' => $this->getTotal($salary_breakdown, Type::DEDUCTION),
+            'net_payable' => $this->getTotal($salary_breakdown, self::NET_PAYABLE),
+            'gross_salary_breakdown' => $this->getGrossBreakdown($salary_breakdown),
+            'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::ADDITION),
+            'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::DEDUCTION)
         ];
     }
 
+    /**
+     * @param BusinessMember $business_member
+     * @return bool|DateTimeZone|float|int|string
+     */
     private function getGrossSalary(BusinessMember $business_member)
     {
         return $business_member->salary ? $business_member->salary->gross_salary : 0;
     }
 
-    private function getTotal($payslip, $type)
+    /**
+     * @param $salary_breakdown
+     * @param $type
+     * @return float|int|mixed
+     */
+    private function getTotal($salary_breakdown, $type)
     {
-        $salary_breakdown = json_decode($payslip->salary_breakdown, 1);
         $addition = 0;
         $deduction = 0;
-        foreach ($salary_breakdown['payroll_component'] as $key => $payroll_component) {
-            if ($key == Type::ADDITION) {
-                foreach ($payroll_component as $component) {
-                    $addition += $component;
+        foreach ($salary_breakdown['payroll_component'] as $component_type => $component_breakdown) {
+            if ($component_type == Type::ADDITION) {
+                foreach ($component_breakdown as $component_value) {
+                    $addition += $component_value;
                 }
             }
 
-            if ($key == Type::DEDUCTION) {
-                foreach ($payroll_component as $component) {
-                    $deduction += $component;
+            if ($component_type == Type::DEDUCTION) {
+                foreach ($component_breakdown as $component_value) {
+                    $deduction += $component_value;
                 }
             }
         }
         $net_payable = floatValFormat(($this->grossSalary + $addition) - $deduction);
-        if ($type == 'net_payable') return $net_payable;
+
+        if ($type == self::NET_PAYABLE) return $net_payable;
         if ($type == Type::ADDITION) return $addition;
         if ($type == Type::DEDUCTION) return $deduction;
     }
 
-    private function getGrossBreakdown($payslip)
+    /**
+     * @param $salary_breakdown
+     * @return array
+     */
+    private function getGrossBreakdown($salary_breakdown)
     {
-        $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['gross_salary_breakdown'];
+        $gross_salary_breakdown = $salary_breakdown['gross_salary_breakdown'];
 
-        $final_data  = [];
-        foreach ($salary_breakdown as $key => $component) {
-            if ($key == 'gross_salary') continue;
-            $name = Components::getComponents($key)['value'];
-            array_push($final_data, [
-                'key' => $key,
-                'name' => $name ? $name : ucwords(implode(" ", explode("_",$key))),
-                'value' => $component
-            ]);
+        $final_data = [];
+        foreach ($gross_salary_breakdown as $component => $component_value) {
+            if ($component == self::GROSS_SALARY) continue;
+            $final_data[] = $this->componentBreakdown($component, $component_value);
         }
 
         return $final_data;
     }
 
-    private function getComponentBreakdown($payslip, $type)
+    /**
+     * @param $salary_breakdown
+     * @param $type
+     * @return array
+     */
+    private function getPayrollComponentBreakdown($salary_breakdown, $type)
     {
-        $salary_breakdown = json_decode($payslip->salary_breakdown, 1)['payroll_component'];
-        $final_data  = [];
-        foreach ($salary_breakdown as $key => $payroll_component) {
-            if ($key == $type) {
-                foreach ($payroll_component as $item => $component) {
-                    $name = Components::getComponents($item)['value'];
-                    array_push($final_data, [
-                        'key' => $item,
-                        'name' => $name ? $name : ucwords(implode(" ", explode("_",$item))),
-                        'value' => $component
-                    ]);
+        $components_salary_breakdown = $salary_breakdown['payroll_component'];
+        $final_data = [];
+        foreach ($components_salary_breakdown as $component_type => $component_breakdown) {
+            if ($component_type == $type) {
+                foreach ($component_breakdown as $component => $component_value) {
+                    $final_data[] = $this->componentBreakdown($component, $component_value);
                 }
             }
         }
+
         return $final_data;
+    }
+
+    /**
+     * @param $component
+     * @param $component_value
+     * @return array
+     */
+    private function componentBreakdown($component, $component_value)
+    {
+        $component_title = Components::getComponents($component)['value'];
+        return [
+            'key' => $component,
+            'name' => $component_title ? $component_title : ucwords(implode(" ", explode("_", $component))),
+            'value' => $component_value
+        ];
     }
 }

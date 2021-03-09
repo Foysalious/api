@@ -1,6 +1,6 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
-class PayrollComponent
+class PayrollComponentCalculation
 {
     private $payrollSetting;
     /**
@@ -30,7 +30,7 @@ class PayrollComponent
         return $this;
     }
 
-    public function getBreakdown()
+    public function getCalculationBreakdown()
     {
         $addition = $this->getAdditionComponent();
         $deduction = $this->getDeductionComponent();
@@ -38,19 +38,25 @@ class PayrollComponent
         return ['payroll_component' => array_merge($addition, $deduction)];
     }
 
+    /**
+     * @return array
+     */
     private function getAdditionComponent()
     {
-        foreach ($this->addition as $key => $value) {
-            $data['addition'][$key] = $value;
+        foreach ($this->addition as $component => $value) {
+            $data['addition'][$component] = $value;
         }
 
         return $data;
     }
 
+    /**
+     * @return array
+     */
     private function getDeductionComponent()
     {
-        foreach ($this->deduction as $key => $value) {
-            $data['deduction'][$key] = $value;
+        foreach ($this->deduction as $component => $value) {
+            $data['deduction'][$component] = $value;
         }
 
         return $data;
