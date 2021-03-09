@@ -33,16 +33,6 @@ abstract class Pretups
         return $pretups->recharge($topup_order);
     }
 
-    public function getInitialStatus()
-    {
-        return self::getInitialStatusStatically();
-    }
-
-    public static function getInitialStatusStatically()
-    {
-        return Statuses::SUCCESSFUL;
-    }
-
     abstract protected function getPin();
 
     abstract protected function getMid();
