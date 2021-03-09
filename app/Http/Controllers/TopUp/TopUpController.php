@@ -41,7 +41,7 @@ use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -454,9 +454,9 @@ class TopUpController extends Controller
         $vendor_factory = app(VendorFactory::class);
         $vendor = $vendor_factory->getById($request->vendor_id);
 
-        /** @var TopUp $topUp */
-        $topUp = app(TopUp::class);
-        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+        /** @var TopUpRechargeManager $topUp */
+        $topUp = app(TopUpRechargeManager::class);
+        $topUp->setAgent($agent)->setVendor($vendor)->setTopUpOrder($topup_order)->recharge();
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id
