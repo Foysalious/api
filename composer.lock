@@ -3361,7 +3361,7 @@
             "source": {
                 "type": "git",
                 "url": "https://mac_pasha@bitbucket.org/startern/sheba_sms.git",
-                "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
+                "reference": "bf52f38f3a2f78d5aa5a5bdfd102e6f6f0b0a96d"
             },
             "require": {
                 "ext-curl": "*"
@@ -3382,7 +3382,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2019-04-23T10:38:34+00:00"
+            "time": "2021-03-07T11:16:33+00:00"
         },
         {
             "name": "sheba/voucher",
