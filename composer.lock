@@ -3322,7 +3322,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "e1a7ee20cdc64cd5eec82562b7330d64e5b505a1"
+                "reference": "bf8231e0de4c6156354d9162443790cdc05c2d68"
             },
             "require": {
                 "php": ">=5.4"
@@ -3349,7 +3349,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-02-22T06:58:28+00:00"
+            "time": "2021-02-23T05:02:17+00:00"
         },
         {
             "name": "sheba/notification",
@@ -3418,7 +3418,7 @@
             "source": {
                 "type": "git",
                 "url": "https://bitbucket.org/startern/sheba_sms.git",
-                "reference": "78a5bcc7f9f19bbbae0422fc9bf9016715d8edd6"
+                "reference": "bf52f38f3a2f78d5aa5a5bdfd102e6f6f0b0a96d"
             },
             "require": {
                 "ext-curl": "*"
@@ -3439,7 +3439,7 @@
                 }
             ],
             "description": "Sms for Sheba",
-            "time": "2019-04-23T10:38:34+00:00"
+            "time": "2021-03-07T11:16:33+00:00"
         },
         {
             "name": "sheba/voucher",
@@ -5090,16 +5090,6 @@
                 "JWS",
                 "jwt"
             ],
-            "funding": [
-                {
-                    "url": "https://github.com/lcobucci",
-                    "type": "github"
-                },
-                {
-                    "url": "https://www.patreon.com/lcobucci",
-                    "type": "patreon"
-                }
-            ],
             "time": "2020-05-22T08:21:12+00:00"
         },
         {
@@ -5234,12 +5224,6 @@
                 "php",
                 "utf-8"
             ],
-            "funding": [
-                {
-                    "url": "https://www.paypal.me/mpdf",
-                    "type": "custom"
-                }
-            ],
             "time": "2020-07-15T09:48:00+00:00"
         },
         {
@@ -5287,12 +5271,6 @@
                 "duplicate",
                 "object",
                 "object graph"
-            ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/myclabs/deep-copy",
-                    "type": "tidelift"
-                }
             ],
             "time": "2020-06-29T13:22:24+00:00"
         },
@@ -6168,12 +6146,6 @@
                 "fpdi",
                 "pdf"
             ],
-            "funding": [
-                {
-                    "url": "https://tidelift.com/funding/github/packagist/setasign/fpdi",
-                    "type": "tidelift"
-                }
-            ],
             "time": "2020-04-28T12:40:35+00:00"
         },
         {
@@ -6375,6 +6347,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "1.1.0"
+    "platform-dev": []
 }
