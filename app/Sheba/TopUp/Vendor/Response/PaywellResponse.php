@@ -37,4 +37,9 @@ class PaywellResponse extends TopUpResponse
     {
         return ($this->response->status == 100) ? Statuses::PENDING : Statuses::SUCCESSFUL;
     }
+
+    public function isPending()
+    {
+        return $this->hasSuccess() && $this->response->status == 100;
+    }
 }

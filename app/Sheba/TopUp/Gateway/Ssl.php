@@ -82,19 +82,9 @@ class Ssl implements Gateway
         throw new \InvalidArgumentException('Invalid Mobile for ssl topup.');
     }
 
-    public function getInitialStatus()
-    {
-        return self::getInitialStatusStatically();
-    }
-
     public function getShebaCommission()
     {
         return self::SHEBA_COMMISSION;
-    }
-
-    public static function getInitialStatusStatically()
-    {
-        return Statuses::PENDING;
     }
 
     public function getName()
