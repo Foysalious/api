@@ -74,7 +74,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'id' => $requestable->id,
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id,
-                'department' => $business_member->role->businessDepartment->name,
+                'department' => $business_member->department()->name,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $this->profile->name,

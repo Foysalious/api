@@ -13,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
+use Sheba\Business\LeaveRejection\Creator as LeaveRejectionCreator;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
@@ -21,20 +22,24 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
+use Sheba\Dal\Leave\Status;
 
 class ApprovalRequestController extends Controller
 {
     use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
+    private $leaveRejectionCreator;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param LeaveRejectionCreator $leave_rejection_creator
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionCreator $leave_rejection_creator)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+        $this->leaveRejectionCreator = $leave_rejection_creator;
     }
 
     /**
@@ -65,21 +70,20 @@ class ApprovalRequestController extends Controller
         if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
 
         foreach ($approval_requests as $approval_request) {
-           if ($approval_request->requestable) {
-               /** @var Leave $requestable */
-               $requestable = $approval_request->requestable;
-               /** @var Member $member */
-               $member = $requestable->businessMember->member;
-               /** @var Profile $profile */
-               $profile = $member->profile;
+            if (!$approval_request->requestable) continue;
+            /** @var Leave $requestable */
+            $requestable = $approval_request->requestable;
+            /** @var Member $member */
+            $member = $requestable->businessMember->member;
+            /** @var Profile $profile */
+            $profile = $member->profile;
 
-               $manager = new Manager();
-               $manager->setSerializer(new CustomSerializer());
-               $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
-               $approval_request = $manager->createData($resource)->toArray()['data'];
+            $manager = new Manager();
+            $manager->setSerializer(new CustomSerializer());
+            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
+            $approval_request = $manager->createData($resource)->toArray()['data'];
 
-               array_push($approval_requests_list, $approval_request);
-           }
+            array_push($approval_requests_list, $approval_request);
         }
 
         return api_response($request, $approval_requests_list, 200, [
@@ -150,11 +154,13 @@ class ApprovalRequestController extends Controller
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'type' => 'required|string',
             'type_id' => 'required|string',
             'status' => 'required|string',
-        ]);
+        ];
+       # if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /**
          *  $type leave, support, expense
@@ -170,7 +176,9 @@ class ApprovalRequestController extends Controller
 
         /** @var ApprovalRequest $approval_request */
         $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
-        if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
+        #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
+
+        #$this->leaveRejectionCreator->setNote($request->note)->setReasons($request->reasons);
 
         $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
         $updater->setStatus($request->status)->change();
