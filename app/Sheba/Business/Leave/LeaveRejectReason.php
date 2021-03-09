@@ -31,4 +31,15 @@ class LeaveRejectReason
             'other' => 'Other',
         ];
     }
+
+    public static function getReasonsV2()
+    {
+        return [
+            'breach_of_leave_policy' => ['breach_of_leave_policy' => 'Breach of leave policy'],
+            'reasonable_notice_obligation' => ['reasonable_notice_obligation' => 'Reasonable notice obligation'],
+            'not_a_valid_leave_request' => ['not_a_valid_leave_request' => 'Not a valid leave request'],
+            'very_frequent_leave_requests' => ['very_frequent_leave_requests' => 'Very frequent leave requests'],
+            'other' => ['other' => 'Other'],
+        ];
+    }
 }
