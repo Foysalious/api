@@ -5,7 +5,6 @@ use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
 use DB;
-use Sheba\TopUp\Jobs\TopUpBalanceUpdateAndNotifyJob;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -82,6 +81,8 @@ class TopUpRechargeManager extends TopUpManager
             return;
         }
 
+        $this->statusChanger->attempted();
+
         $this->response = $this->vendor->recharge($this->topUpOrder);
 
         if ($this->response->hasError()) {
@@ -89,23 +90,7 @@ class TopUpRechargeManager extends TopUpManager
             return;
         }
 
-        $response = $this->response->getSuccess();
-
-        dispatch((new TopUpBalanceUpdateAndNotifyJob($topup_order, $response->getMessage())));
-        try {
-            DB::transaction(function () use ($response) {
-                $this->topUpOrder = $this->updateSuccessfulTopOrder($response);
-                $this->agent->getCommission()->setTopUpOrder($this->topUpOrder)->disburse();
-                $this->vendor->deductAmount($this->topUpOrder->amount);
-            });
-        } catch (Exception $e) {
-            $this->markOrderAsSystemError($e);
-        }
-
-        if ($this->topUpOrder->isAgentPartner()) {
-            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
-        }
-        $this->isSuccessful = true;
+        $this->handleSuccessfulTopUpByVendor();
     }
 
     /**
@@ -126,6 +111,27 @@ class TopUpRechargeManager extends TopUpManager
         if ($this->response->hasError()) return $this->response->getErrorResponse();
         if (!$this->isSuccessful) return new TopUpSystemErrorResponse();
         return new TopUpErrorResponse();
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function handleSuccessfulTopUpByVendor()
+    {
+        try {
+            DB::transaction(function () {
+                $this->topUpOrder = $this->updateSuccessfulTopOrder($this->response->getSuccess());
+                $this->agent->getCommission()->setTopUpOrder($this->topUpOrder)->disburse();
+                $this->vendor->deductAmount($this->topUpOrder->amount);
+            });
+        } catch (Exception $e) {
+            $this->markOrderAsSystemError($e);
+        }
+
+        if ($this->topUpOrder->isAgentPartner()) {
+            app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
+        }
+        $this->isSuccessful = true;
     }
 
     /**
