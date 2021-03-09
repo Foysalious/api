@@ -77,11 +77,11 @@ class DataMigration
 
     private function migrateInventoryData()
     {
-        $inventory_data = $this->generateInventoryMigrationData();
+        $inventory_data = $this->generateCategoryMigrationData();
         dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
     }
 
-    private function generateInventoryMigrationData()
+    private function generateCategoryMigrationData()
     {
         $partner_pos_categories = $this->partnerPosCategoryRepository
             ->getPartnerPosCategoriesForMigration($this->partner->id)->toArray();
