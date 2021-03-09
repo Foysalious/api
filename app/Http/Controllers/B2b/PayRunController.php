@@ -72,11 +72,11 @@ class PayRunController extends Controller
         if ($request->limit == 'all') $limit = $count;
 
         $payroll_components = $business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('type');
-        if ($request->generate_sample) {
-            $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
-        }
+        if ($request->generate_sample) $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
+        
         $payslip = collect($payslip)->splice($offset, $limit);
-        return api_response($request, null, 200, ['total_calculation'=> $payrun_list->getTotal(), 'payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count]);
+
+        return api_response($request, null, 200, ['payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count, 'total_calculation' => $payrun_list->getTotal()]);
     }
 
     /**
@@ -120,8 +120,8 @@ class PayRunController extends Controller
         $this->setModifier($manager_member);
 
         $verifyPin->setAgent($business)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->setPurpose(Purpose::PAYSLIP_DISBURSE)->verify();
-
         $this->payrunUpdater->setScheduleDate($request->schedule_date)->setBusiness($business)->disburse();
+
         return api_response($request, null, 200);
     }
 
@@ -135,11 +135,13 @@ class PayRunController extends Controller
         $business = $request->business;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
         /** @var Member $manager_member */
         $manager_member = $request->manager_member;
         $this->setModifier($manager_member);
 
         $this->payrunUpdater->setData($request->data)->setManagerMember($manager_member)->update();
+
         return api_response($request, null, 200);
     }
 }

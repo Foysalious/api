@@ -5,6 +5,7 @@ use App\Transformers\Business\PayReportListTransformer;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Payslip\Status;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -21,6 +22,7 @@ class PayReportList
     private $businessMemberIds;
     private $monthYear;
     private $departmentID;
+    private $payslip;
 
     /**
      * PayReportList constructor.
@@ -96,7 +98,8 @@ class PayReportList
     public function get()
     {
         $this->runPayslipQuery();
-        return $this->getData();
+        $this->payslip = $this->getData();
+        return $this->payslip;
     }
 
     public function getDisbursedMonth()
@@ -126,7 +129,21 @@ class PayReportList
 
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
+
         return $payslip_list;
+    }
+
+    /**
+     * @return array
+     */
+    public function getTotal()
+    {
+        return [
+            'gross_salary' => $this->payslip->sum('gross_salary'),
+            'addition' => $this->payslip->sum('addition'),
+            'deduction' => $this->payslip->sum('deduction'),
+            'net_payable' => $this->payslip->sum('net_payable'),
+        ];
     }
 
     /**

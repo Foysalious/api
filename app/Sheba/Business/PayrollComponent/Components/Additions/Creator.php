@@ -29,8 +29,7 @@ class Creator
     {
         DB::transaction(function () {
             $this->makeData();
-            if ($this->payrollComponentData)
-                $this->payrollComponentRepository->insert($this->payrollComponentData);
+            if ($this->payrollComponentData) $this->payrollComponentRepository->insert($this->payrollComponentData);
         });
     }
 

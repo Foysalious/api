@@ -33,8 +33,8 @@ class SslResponse extends TopUpResponse
         return $this->response->Message;
     }
 
-    public function resolveTopUpSuccessStatus()
+    public function isPending()
     {
-        return Ssl::getInitialStatusStatically();
+        return $this->hasSuccess();
     }
 }

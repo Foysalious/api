@@ -136,6 +136,11 @@ class TopUpOrder extends BaseModel implements PayableType
         return $this->status == Statuses::SUCCESSFUL;
     }
 
+    public function isPending()
+    {
+        return $this->status == Statuses::PENDING;
+    }
+
     public function isProcessed()
     {
         return $this->isFailed() || $this->isSuccess();
