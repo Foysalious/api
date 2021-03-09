@@ -20,6 +20,7 @@ class PartnerRoute
             $api->get('business-types', 'PartnerController@getBusinessTypes');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
+            $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);
             (new PosRoute())->set($api);
