@@ -1,14 +1,14 @@
 <?php namespace Sheba\TopUp\Vendor\Response\Ipn;
 
-abstract class SuccessResponse extends IpnResponse
+abstract class FailResponse extends IpnResponse
 {
     public function isFailed()
     {
-        return false;
+        return true;
     }
 
     protected function _handleTopUp()
     {
-        $this->topUp->success($this);
+        $this->topUp->fail($this);
     }
 }

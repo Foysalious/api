@@ -5,6 +5,10 @@ use Exception;
 use GuzzleHttp\Client as HttpClient;
 use InvalidArgumentException;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Paywell\PaywellSuccessResponse;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
@@ -145,5 +149,27 @@ class PaywellClient
         $response = $this->httpClient->call($this->tpRequest);
 
         return $response->enquiryData;
+    }
+
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws PaywellTopUpStillNotResolved
+     */
+    public function enquireIpnResponse(TopUpOrder $topup_order)
+    {
+        $response = $this->enquiry($topup_order->id);
+
+        /** @var IpnResponse $ipn_response */
+        $ipn_response = null;
+        if ($response->status_code == "200") {
+            $ipn_response = app(PaywellSuccessResponse::class);
+        } else if ($response->status_code != "100") {
+            $ipn_response = app(PaywellFailResponse::class);
+        } else {
+            throw new PaywellTopUpStillNotResolved($response);
+        }
+        $ipn_response->setResponse($response);
+        return $ipn_response;
     }
 }

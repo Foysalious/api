@@ -28,19 +28,9 @@ class Paywell implements Gateway
         return $this->paywell->recharge($topup_order);
     }
 
-    public function getInitialStatus()
-    {
-        return self::getInitialStatusStatically();
-    }
-
     public function getShebaCommission()
     {
         return self::SHEBA_COMMISSION;
-    }
-
-    public static function getInitialStatusStatically()
-    {
-        return Statuses::SUCCESSFUL;
     }
 
     public function getName()
