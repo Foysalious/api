@@ -3,6 +3,8 @@
 use App\Models\BusinessMember;
 use Carbon\Carbon;
 use League\Fractal\TransformerAbstract;
+use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\Payslip;
 use NumberFormatter;
 
@@ -21,13 +23,12 @@ class PayReportDetailsTransformer extends TransformerAbstract
 
     public function transform(Payslip $payslip)
     {
-        $addition = ['breakdown' => ['overtime' => 300], 'total' => 300];
-        $deduction = ['breakdown' => ['tax' => 300], 'total' => 300];
+        $payroll_components = $payslip->salaryBreakdown()['payroll_component'];
         return [
             'employee_info' => $this->employeeInfo(),
             'salary_info' => $this->salaryInfo($payslip),
-            'addition' => $addition,
-            'deduction' => $deduction
+            'addition' => $this->getPayrollComponentBreakdown($payroll_components, Type::ADDITION),
+            'deduction' => $this->getPayrollComponentBreakdown($payroll_components, Type::DEDUCTION)
         ];
     }
 
@@ -63,7 +64,6 @@ class PayReportDetailsTransformer extends TransformerAbstract
             'gross_salary' => $salary_break_down['gross_salary'],
             'net_payable' => $salary_break_down['gross_salary'],
             'net_payable_in_word' => $this->getAmountInWord($salary_break_down['gross_salary']),
-            //'net_payable_in_word' => 'One Thousand and Five Hundreds Taka Only',
         ];
     }
 
@@ -74,5 +74,26 @@ class PayReportDetailsTransformer extends TransformerAbstract
     private function getAmountInWord($amount)
     {
         return ucwords(str_replace('-', ' ', (new NumberFormatter("en", NumberFormatter::SPELLOUT))->format($amount)));
+    }
+
+    /**
+     * @param $payroll_components
+     * @param $type
+     * @return array
+     */
+    private function getPayrollComponentBreakdown($payroll_components, $type)
+    {
+        $total = 0;
+        $final_data = [];
+        foreach ($payroll_components as $component_type => $component_breakdown) {
+            if ($component_type == $type) {
+                foreach ($component_breakdown as $component => $component_value) {
+                    $total += $component_value;
+                    $final_data['breakdown'][ucwords(implode(" ", explode("_", $component)))] = $component_value;
+                }
+            }
+        }
+        $final_data['total'] = $total;
+        return $final_data;
     }
 }
