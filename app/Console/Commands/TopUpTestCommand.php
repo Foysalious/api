@@ -2,7 +2,7 @@
 
 use App\Models\TopUpOrder;
 use Illuminate\Console\Command;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\Vendor\VendorFactory;
 
 class TopUpTestCommand extends Command
@@ -16,10 +16,10 @@ class TopUpTestCommand extends Command
 
     /**
      * Execute the console command.
-     * @param TopUp $top_up
+     * @param TopUpRechargeManager $top_up
      * @param VendorFactory $vendor_factory
      */
-    public function handle(TopUp $top_up, VendorFactory $vendor_factory)
+    public function handle(TopUpRechargeManager $top_up, VendorFactory $vendor_factory)
     {
         try {
             $top_up_order = TopUpOrder::find(238911);
@@ -27,7 +27,8 @@ class TopUpTestCommand extends Command
 
             $top_up->setAgent($top_up_order->agent)
                 ->setVendor($vendor)
-                ->recharge($top_up_order);
+                ->setTopUpOrder($top_up_order)
+                ->recharge();
         } catch (\Exception $e) {
             dd(get_class($e), $e->getMessage(), simplifyExceptionTrace($e));
         }

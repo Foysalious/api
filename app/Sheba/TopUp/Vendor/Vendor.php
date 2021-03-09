@@ -65,11 +65,6 @@ abstract class Vendor
         }
     }
 
-    public function getTopUpInitialStatus()
-    {
-        return $this->topUpGateway->getInitialStatus();
-    }
-
     public function deductAmount($amount)
     {
         $this->model->amount -= $amount;

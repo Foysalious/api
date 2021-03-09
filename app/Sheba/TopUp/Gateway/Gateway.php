@@ -15,10 +15,6 @@ interface Gateway
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse;
 
-    public function getInitialStatus();
-
-    public static function getInitialStatusStatically();
-
     public function getShebaCommission();
 
     public function getName();
