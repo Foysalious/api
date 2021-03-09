@@ -86,8 +86,8 @@ class PayrollSettingsTransformer extends TransformerAbstract
 
     private function payComponents($payroll_setting)
     {
-        $addition_components = $payroll_setting->components->where('type',Type::ADDITION)->orderBy('name', 'ASC');
-        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION)->orderBy('name', 'ASC');
+        $addition_components = $payroll_setting->components->where('type',Type::ADDITION)->sortBy('name');
+        $deduction_components = $payroll_setting->components->where('type',Type::DEDUCTION)->sortBy('name');
         $addition = $this->getAdditionComponents($addition_components);
         $deduction = $this->getDeductionComponents($deduction_components);
 
