@@ -76,7 +76,7 @@ class PayRunController extends Controller
         
         $payslip = collect($payslip)->splice($offset, $limit);
 
-        return api_response($request, null, 200, ['total_calculation' => $payrun_list->getTotal(), 'payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count]);
+        return api_response($request, null, 200, ['payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count, 'total_calculation' => $payrun_list->getTotal()]);
     }
 
     /**
