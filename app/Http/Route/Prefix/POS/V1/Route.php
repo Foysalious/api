@@ -51,13 +51,7 @@ class Route
                 $api->delete('/{category_id}', 'Inventory\CategoryController@delete');
             });
 
-
-
-
-
-
-
-                $api->group(['prefix' => 'products'], function ($api) {
+            $api->group(['prefix' => 'products'], function ($api) {
                     $api->get('/', 'Inventory\ProductController@index');
                     $api->post('/', 'Inventory\ProductController@store');
                     $api->group(['prefix' => '{products}'], function ($api) {
@@ -77,12 +71,16 @@ class Route
                 $api->group(['prefix' => 'options'], function ($api) {
                     $api->get('/', "Inventory\OptionController@index");
                     $api->post('/', "Inventory\OptionController@store");
+                    $api->delete('/{optionId}', 'Inventory\OptionController@destroy');
                     $api->group(['prefix' => '{options}'], function ($api) {
                         $api->put('/', "Inventory\OptionController@update");
                         $api->post('values', "Inventory\ValueController@store");
                     });
                 });
                 $api->group(['prefix' => 'values'], function ($api) {
+
+                  $api->delete('/{valueId}', 'Inventory\ValueController@destroy');
+
                     $api->group(['prefix' => '{values}'], function ($api) {
                         $api->put('/', "Inventory\ValueController@update");
                     }); });
