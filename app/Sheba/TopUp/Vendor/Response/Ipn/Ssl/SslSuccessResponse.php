@@ -7,17 +7,6 @@ use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 
 class SslSuccessResponse extends SuccessResponse
 {
-
-    public function getSuccessfulTransactionDetails()
-    {
-        return $this->response;
-    }
-
-    public function setResponse($response)
-    {
-        $this->response = $response;
-    }
-
     public function getTopUpOrder(): TopUpOrder
     {
         $date = Carbon::now()->toDateString();

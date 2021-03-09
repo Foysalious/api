@@ -8,7 +8,7 @@ use Illuminate\Queue\Failed\FailedJobProviderInterface;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\Vendor\Vendor;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -18,7 +18,7 @@ class TopUpJob extends Job implements ShouldQueue
 {
     use InteractsWithQueue, SerializesModels;
 
-    /** @var TopUp */
+    /** @var TopUpRechargeManager */
     protected $topUp;
     /** @var VendorFactory */
     private $vendorFactory;
@@ -46,11 +46,11 @@ class TopUpJob extends Job implements ShouldQueue
      * Execute the job.
      *
      * @param VendorFactory $vendor_factory
-     * @param TopUp $top_up
+     * @param TopUpRechargeManager $top_up
      * @param FailedJobProviderInterface|null $logger
      * @return void
      */
-    public function handle(VendorFactory $vendor_factory, TopUp $top_up, FailedJobProviderInterface $logger = null)
+    public function handle(VendorFactory $vendor_factory, TopUpRechargeManager $top_up, FailedJobProviderInterface $logger = null)
     {
         if ($this->attempts() > 1) return;
 
@@ -95,9 +95,9 @@ class TopUpJob extends Job implements ShouldQueue
     private function _handle()
     {
         $this->vendor = $this->vendorFactory->getById($this->vendorId);
-        $this->topUp->setAgent($this->agent)->setVendor($this->vendor);
+        $this->topUp->setAgent($this->agent)->setVendor($this->vendor)->setTopUpOrder($this->topUpOrder);
 
-        $this->topUp->recharge($this->topUpOrder);
+        $this->topUp->recharge();
 
         event(new TopUpCompletedEvent([
             'id' => $this->topUpOrder->id,
