@@ -23,7 +23,7 @@ class CategoryController extends Controller
     {
         $partner = $request->auth_user->getPartner();
         $products = $this->categoryService->getAllMasterCategories($partner->id);
-        return api_response($request, null, 200, $products);
+        return http_response($request, null, 200, $products);
     }
 
     /**
@@ -36,7 +36,7 @@ class CategoryController extends Controller
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
         $response = $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryName($request->name)->store();
-        return api_response($request, null, 200, $response);
+        return http_response($request, null, 200, $response);
     }
 
     public function update(Request $request,$category_id)
@@ -44,7 +44,7 @@ class CategoryController extends Controller
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
         $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->update();
-        return api_response($request, null, 200, $response);
+        return http_response($request, null, 200, $response);
     }
 
     public function delete(Request $request,$category_id)
@@ -52,13 +52,13 @@ class CategoryController extends Controller
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
         $response =  $this->categoryService->setModifier($modifier)->setPartner($partner->id)->setCategoryId($category_id)->setCategoryName($request->name)->delete();
-        return api_response($request, null, 200, $response);
+        return http_response($request, null, 200, $response);
     }
 
     public function allCategory(Request $request)
     {
         $categories = $this->categoryService->getallcategory();
-        return api_response($request, null, 200, $categories);
+        return http_response($request, null, 200, $categories);
     }
 
 }
