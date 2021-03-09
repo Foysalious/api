@@ -5,9 +5,16 @@ class Route
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers'], function ($api) {
 
             $api->get('/channels', "Inventory\ChannelController@index");
+
+        });
+
+        $api->group(['prefix' => 'pos/v1', 'namespace' => 'App\Http\Controllers', 'middleware' => ['accessToken']], function ($api) {
+
+            $api->get('/units', "Inventory\UnitController@index");
+
             $api->get('/allCategory', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
                 $api->get('/', 'Inventory\ProductController@index');
@@ -20,7 +27,7 @@ class Route
             });
             $api->group(['prefix' => 'categories'], function ($api) {
                 $api->get('/', 'Inventory\CategoryController@index');
-                $api->get('/units', "Inventory\UnitController@index");
+
                 $api->delete('/value1/{valueId}', "Inventory\ValueController@destroy");
 
 
