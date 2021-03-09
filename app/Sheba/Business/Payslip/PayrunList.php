@@ -9,6 +9,8 @@ use Carbon\Carbon;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Serializer\ArraySerializer;
+use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Dal\Payslip\PayslipRepository;
 use Sheba\Dal\Salary\SalaryRepository;
@@ -32,6 +34,10 @@ class PayrunList
     private $sort;
     private $monthYear;
     private $departmentID;
+    /**
+     * @var \Illuminate\Support\Collection
+     */
+    private $payslip;
 
     /**
      * PayrunList constructor.
@@ -106,7 +112,8 @@ class PayrunList
     public function get()
     {
         $this->runPayslipQuery();
-        return $this->getData();
+        $this->payslip = $this->getData();
+        return $this->payslip;
     }
 
     private function runPayslipQuery()
@@ -126,7 +133,18 @@ class PayrunList
 
         if ($this->search) $payslip_list = collect($this->searchWithEmployeeName($payslip_list))->values();
         if ($this->sort && $this->sortColumn) $payslip_list = $this->sortByColumn($payslip_list, $this->sortColumn, $this->sort)->values();
+
         return $payslip_list;
+    }
+
+    public function getTotal()
+    {
+        return [
+            'gross_salary' => $this->payslip->sum('gross_salary'),
+            'addition' => $this->payslip->sum('addition'),
+            'deduction' => $this->payslip->sum('deduction'),
+            'net_payable' => $this->payslip->sum('net_payable'),
+        ];
     }
 
     /**
@@ -170,5 +188,18 @@ class PayrunList
                 });
             });
         });
+    }
+
+    public function getComponents($payroll_components)
+    {
+        $final_data = [];
+        foreach ($payroll_components as $key => $payroll_component) {
+            array_push($final_data, [
+                'key' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : ucwords(implode(" ", explode("_",$payroll_component->name))),
+                'type' => $payroll_component->type
+            ]);
+        }
+        return $final_data;
     }
 }

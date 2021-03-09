@@ -385,6 +385,7 @@ class VoucherController extends Controller
 
     public function voucherAgainstMobile(Request $request, VoucherRepository $voucherRepository)
     {
+        if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
         $this->validate($request, [
             'mobile' => 'required|mobile:bd',
             'amount' => 'required|numeric',
@@ -393,6 +394,9 @@ class VoucherController extends Controller
             'start_date' => 'required|date_format:Y-m-d',
             'end_date' => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'title' => 'string'
+        ], [
+            'required' => 'The :attribute field is required.',
+            'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
 
         $customer = Customer::whereHas('profile', function ($query) use ($request) {

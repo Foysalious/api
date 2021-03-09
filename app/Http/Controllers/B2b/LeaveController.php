@@ -66,6 +66,7 @@ class LeaveController extends Controller
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
         /** @var Business $business */

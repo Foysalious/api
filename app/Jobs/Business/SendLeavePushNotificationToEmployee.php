@@ -1,17 +1,12 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\BusinessMember;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\PushNotificationHandler;
 
-class SendLeavePushNotificationToEmployee extends Job implements ShouldQueue
+class SendLeavePushNotificationToEmployee extends BusinessQueue
 {
-    use InteractsWithQueue, SerializesModels;
-
     private $pushNotification;
     /** @var ApprovalRequest $approvalRequest */
     private $approvalRequest;
@@ -30,6 +25,7 @@ class SendLeavePushNotificationToEmployee extends Job implements ShouldQueue
         $this->businessMember   = $approval_request->approver;
         $this->leaveApplicant   = $leave_applicant;
         $this->pushNotification = new PushNotificationHandler();
+        parent::__construct();
     }
 
     public function handle()

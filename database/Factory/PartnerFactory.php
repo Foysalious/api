@@ -19,8 +19,8 @@ class PartnerFactory extends Factory
         return array_merge($this->commonSeeds, [
             'name'=> $this->faker->name,
             'package_id'=>2,
-            'mobile' => '+8801666777555',
-            'password' => bcrypt(89079),
+            'mobile' => '+8801678242967',
+            'password' => bcrypt(14725),
             'status' => 'Verified',
             'wallet' => 50000
         ]);// TODO: Implement getData() method.

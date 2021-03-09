@@ -33,10 +33,18 @@ class OptionController extends Controller
         return http_response($request, null, 200, $option);
     }
 
-    public function update($partnerId, $optionId, Request $request)
+    public function update($optionId, Request $request)
     {
         $partner = $request->auth_user->getPartner();
         $option = $this->optionService->setOptionId($optionId)->setPartnerId($partner->id)->setName($request->name)->update();
+        return http_response($request, null, 200, $option);
+    }
+
+    public function destroy(Request $request, $optionId)
+    {
+        $option = $this->optionService
+            ->setOptionId($optionId)
+            ->delete();
         return http_response($request, null, 200, $option);
     }
 }

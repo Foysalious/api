@@ -5,11 +5,13 @@ use App\Http\Controllers\Controller;
 use App\Models\Business;
 use App\Models\Member;
 use App\Sheba\Business\Payslip\Excel as PaySlipExcel;
+use App\Sheba\Business\Payslip\PayRun\PayRunBulkExcel;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Models\BusinessMember;
 use Sheba\Business\Payslip\PayRun\Updater as PayRunUpdater;
 use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\PayrollComponent\Type;
 use Sheba\Dal\Payslip\PayslipRepository;
 use App\Sheba\Business\Payslip\PayrunList;
 use App\Sheba\Business\Payslip\PendingMonths;
@@ -46,9 +48,10 @@ class PayRunController extends Controller
      * @param Request $request
      * @param PayrunList $payrun_list
      * @param PaySlipExcel $pay_slip_excel
+     * @param PayRunBulkExcel $pay_run_bulk_excel
      * @return JsonResponse
      */
-    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel)
+    public function index(Request $request, PayrunList $payrun_list, PaySlipExcel $pay_slip_excel, PayRunBulkExcel $pay_run_bulk_excel)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -67,8 +70,13 @@ class PayRunController extends Controller
         $count = count($payslip);
         if ($request->file == 'excel') return $pay_slip_excel->setPayslipData($payslip->toArray())->setPayslipName('Pay_run')->get();
         if ($request->limit == 'all') $limit = $count;
+
+        $payroll_components = $business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('type');
+        if ($request->generate_sample) {
+            $pay_run_bulk_excel->setBusiness($business)->setPayslips($payslip)->setPayrollComponent($payroll_components)->get();
+        }
         $payslip = collect($payslip)->splice($offset, $limit);
-        return api_response($request, null, 200, ['payslip' => $payslip, 'total' => $count]);
+        return api_response($request, null, 200, ['total_calculation'=> $payrun_list->getTotal(), 'payslip' => $payslip, 'payroll_components' => $payrun_list->getComponents($payroll_components), 'total' => $count]);
     }
 
     /**

@@ -22,8 +22,8 @@ pipeline {
                             transfers: [sshTransfer(
                                 cleanRemote: false,
                                 excludes: '',
-                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh SingleTopUpTest',
-                                execTimeout: 120000,
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
+                                execTimeout: 360000,
                                 flatten: false,
                                 makeEmptyDirs: false,
                                 noDefaultExcludes: false,
@@ -67,7 +67,7 @@ pipeline {
                                 remoteDirectory: '/tech_alerts/public',
                                 remoteDirectorySDF: false,
                                 removePrefix: '',
-                                sourceFiles: '**/*.xml'
+                                sourceFiles: '**/api-test-result.xml'
                             )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,

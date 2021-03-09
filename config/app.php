@@ -181,6 +181,7 @@ return [
         Sheba\Dal\Providers\DalEventsListenerProvider::class,
         Sheba\Report\Listeners\ReportUpdateProvider::class,
         Sheba\Logistics\Listeners\EventsProvider::class,
+        Sheba\Elasticsearch\ServiceProvider::class
     ],
 
     /*
@@ -235,5 +236,6 @@ return [
         'Image' => Intervention\Image\Facades\Image::class,
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
+        'Elasticsearch' => Sheba\Elasticsearch\Facade::class
     ]
 ];

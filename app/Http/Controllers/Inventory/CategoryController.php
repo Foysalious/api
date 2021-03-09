@@ -39,7 +39,7 @@ class CategoryController extends Controller
         return api_response($request, null, 200, $response);
     }
 
-    public function update(Request $request,$partner_id,$category_id)
+    public function update(Request $request,$category_id)
     {
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
@@ -47,7 +47,7 @@ class CategoryController extends Controller
         return api_response($request, null, 200, $response);
     }
 
-    public function delete(Request $request,$partner_id,$category_id)
+    public function delete(Request $request,$category_id)
     {
         $partner = $request->auth_user->getPartner();
         $modifier = $request->auth_user->getResource()->profile->name;
@@ -57,10 +57,8 @@ class CategoryController extends Controller
 
     public function allCategory(Request $request)
     {
-
         $categories = $this->categoryService->getallcategory();
         return api_response($request, null, 200, $categories);
-
     }
 
 }

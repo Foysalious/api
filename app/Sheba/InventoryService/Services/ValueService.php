@@ -5,12 +5,13 @@ use App\Sheba\InventoryService\InventoryServerClient;
 
 class ValueService
 {
-    public $partnerId;
-    public $modifier;
-    public $name;
-    public $client;
-    public $optionId;
-    public $valueId;
+    protected $partnerId;
+    protected $modifier;
+    protected $name;
+    protected $client;
+    protected $optionId;
+    protected $valueId;
+    protected $values;
 
     /**
      * ValueService constructor.
@@ -71,6 +72,16 @@ class ValueService
         return $this;
     }
 
+    /**
+     * @param $values
+     * @return ValueService
+     */
+    public function setValues($values)
+    {
+        $this->values = $values;
+        return $this;
+    }
+
     private function makeData()
     {
         $data = [];
@@ -80,9 +91,18 @@ class ValueService
         return $data;
     }
 
+    private function makeValuesData()
+    {
+        $data = [];
+        $data['values'] = $this->values;
+        $data['modifier']  = $this->modifier;
+        $data['partner_id'] = $this->partnerId;
+        return $data;
+    }
+
     public function store()
     {
-        $data = $this->makeData();
+        $data = $this->makeValuesData();
         return $this->client->post('api/v1/partners/'.$this->partnerId.'/options/'.$this->optionId.'/values', $data);
     }
 
@@ -92,5 +112,9 @@ class ValueService
         return $this->client->put('api/v1/partners/'.$this->partnerId.'/values/'.$this->valueId, $data);
     }
 
+    public function delete()
+    {
+        return $this->client->delete('api/v1/values/'.$this->valueId);
+    }
 
 }

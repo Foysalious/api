@@ -104,6 +104,16 @@ class PurchaseHandler
         $this->currentBillingType = $this->partner->billing_type;
     }
 
+
+    /**
+     * @throws HasAlreadyCollectedFeeException
+     */
+    public function checkIfAlreadyCollected()
+    {
+        if ($this->partner->alreadyCollectedSubscriptionFee())
+            throw new HasAlreadyCollectedFeeException();
+    }
+
     /**
      * @throws AlreadyRunningSubscriptionRequestException|HasAlreadyCollectedFeeException
      */
