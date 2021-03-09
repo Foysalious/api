@@ -3321,7 +3321,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "bf8231e0de4c6156354d9162443790cdc05c2d68"
             },
             "require": {
