@@ -1423,7 +1423,7 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
      */
     private function searchPayeeMobile($affiliate, $topups, Request $request, $offset, $limit)
     {
-        $search_query = preg_replace("/[^0-9]+/", "", $request->q);
+        $search_query = preg_replace("/[^A-Za-z0-9]+/", "", $request->q);
         try {
             /** @var TopUpOrder $topup_orders */
             $topup_order_model = app(TopUpOrder::class);
@@ -1431,8 +1431,15 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
                 $query = [
                     'bool' => [
                         'must' => [
-                            ['term' => ['agent_type' => get_class($affiliate)]], ['term' => ["agent_id" => $affiliate->id]], ['term' => ["payee_mobile" => $search_query]]
-                        ]
+                            ['term' => ['agent_type' => get_class($affiliate)]],
+                            ['term' => ["agent_id" => $affiliate->id]]
+                        ],
+                        'should' => [
+                            ['match' => ["payee_mobile" => $search_query]],
+                            ['match' => ["payee_name" => $search_query]]
+                        ],
+                        'minimum_should_match' => 1,
+                        'boost' => 1
                     ]
                 ];
                 $topup_orders = TopUpOrder::searchByQuery($query, null, null, $limit, $offset, null);

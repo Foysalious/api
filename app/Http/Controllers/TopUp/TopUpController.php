@@ -517,9 +517,14 @@ class TopUpController extends Controller
                     'bool' => [
                         'must' => [
                             ['term' => ['agent_type' => get_class($user)]],
-                            ['term' => ["agent_id" => $user->id]],
-                            ['term' => ["payee_mobile" => $search_query]]
-                        ]
+                            ['term' => ["agent_id" => $user->id]]
+                        ],
+                        'should' => [
+                            ['match' => ["payee_mobile" => $search_query]],
+                            ['match' => ["payee_name" => $search_query]]
+                        ],
+                        'minimum_should_match' => 1,
+                        'boost' => 1
                     ]
                 ];
                 $topup_orders = TopUpOrder::searchByQuery($query, null, null, $limit, $offset, null);
