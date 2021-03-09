@@ -90,7 +90,7 @@ class PayRunListTransformer extends TransformerAbstract
         $final_data = [];
         foreach ($gross_salary_breakdown as $component => $component_value) {
             if ($component == self::GROSS_SALARY) continue;
-            $final_data[] = $this->componentBreakdown($component, $component_value);
+            $final_data[] = $this->componentBreakdown($component, $component_value, Type::GROSS);
         }
 
         return $final_data;
@@ -108,7 +108,7 @@ class PayRunListTransformer extends TransformerAbstract
         foreach ($components_salary_breakdown as $component_type => $component_breakdown) {
             if ($component_type == $type) {
                 foreach ($component_breakdown as $component => $component_value) {
-                    $final_data[] = $this->componentBreakdown($component, $component_value);
+                    $final_data[] = $this->componentBreakdown($component, $component_value, $type);
                 }
             }
         }
@@ -121,13 +121,14 @@ class PayRunListTransformer extends TransformerAbstract
      * @param $component_value
      * @return array
      */
-    private function componentBreakdown($component, $component_value)
+    private function componentBreakdown($component, $component_value, $type)
     {
         $component_title = Components::getComponents($component)['value'];
         return [
             'key' => $component,
             'name' => $component_title ? $component_title : ucwords(implode(" ", explode("_", $component))),
-            'value' => $component_value
+            'value' => $component_value,
+            'type' => $type
         ];
     }
 }
