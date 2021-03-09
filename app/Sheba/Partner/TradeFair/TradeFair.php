@@ -91,7 +91,7 @@ class TradeFair
 
         $partners = Partner::has('tradeFair')->with('tradeFair')->where('is_webstore_published', 1)
             ->where('business_type', $converted_business_types[$business_type])
-            ->select('id','name','sub_domain','delivery_charge')->get();
+            ->select('id', 'name', 'sub_domain', 'delivery_charge')->get();
 
         $stores = [];
         $partners->each(function ($partner) use (&$stores) {
