@@ -21,8 +21,8 @@ class IndexRoute
             });
         });
 
-        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
-
+        $api->group(['prefix' => '{partner}', 'middleware' => ['accessToken']], function ($api) {
+            $api->post('migrate', 'Partner\DataMigrationController@migrate');
         });
     }
 }
