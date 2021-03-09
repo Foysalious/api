@@ -29,7 +29,7 @@ class Excel
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:E1', function ($cells) {
+                $sheet->cell('A1:G1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -48,6 +48,8 @@ class Excel
                 'employee_name'          => $payslip['employee_name'],
                 'department'          => $payslip['department'],
                 'gross_salary'          => $payslip['gross_salary'],
+                'addition'              => $payslip['addition'],
+                'deduction'              => $payslip['deduction'],
                 'net_payable'          => $payslip['net_payable'],
             ]);
         }
@@ -55,7 +57,7 @@ class Excel
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Gross Salary', 'Net Payable'];
+        return ['Employee ID', 'Employee Name', 'Department', 'Gross Salary', 'Addition', 'Deduction', 'Net Payable'];
     }
 
 }
