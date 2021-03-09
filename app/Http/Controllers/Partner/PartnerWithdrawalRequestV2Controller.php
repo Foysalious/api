@@ -127,6 +127,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
          */
         $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
         $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        $security_money = ($partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
         if ($request->payment_method == 'bkash' && ((double)$request->amount < $limitBkash['min'] || (double)$request->amount > $limitBkash['max'])) {
             return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bkash minimum limit ' . $limitBkash['min'] . ' TK and maximum ' . $limitBkash['max'] . ' TK']);
         } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
@@ -134,7 +135,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         }
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
-            $message = "পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।";
+            $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি <b> ৳'. convertNumbersToBangla($security_money, true, 0). '</b>।';
             return api_response($request, null, 403, ['message' => $message]);
         }
         $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
