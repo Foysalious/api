@@ -62,7 +62,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
                 $this->setModifier($customer = $payable->user);
-                $this->payment->transaction_details = null;
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
                 $this->clearTarget();
