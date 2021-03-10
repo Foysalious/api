@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
 use App\Models\Business;
 use App\Models\BusinessMember;
@@ -29,17 +30,18 @@ class ApprovalRequestController extends Controller
     use BusinessBasicInformation, ModificationFields;
 
     private $approvalRequestRepo;
-    private $leaveRejectionCreator;
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
-     * @param LeaveRejectionCreator $leave_rejection_creator
+     * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionCreator $leave_rejection_creator)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo,LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
-        $this->leaveRejectionCreator = $leave_rejection_creator;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
     }
 
     /**
@@ -151,7 +153,7 @@ class ApprovalRequestController extends Controller
             'type_id' => 'required|string',
             'status' => 'required|string',
         ];
-       # if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
+        if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
         $this->validate($request, $validation_data);
 
         /**
@@ -168,11 +170,12 @@ class ApprovalRequestController extends Controller
 
         /** @var ApprovalRequest $approval_request */
         $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
+
         #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
 
-        #$this->leaveRejectionCreator->setNote($request->note)->setReasons($request->reasons);
+        $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
 
-        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+        $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
         $updater->setStatus($request->status)->change();
 
         return api_response($request, null, 200);

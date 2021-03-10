@@ -10,6 +10,7 @@ use Exception;
 use Illuminate\Http\UploadedFile;
 use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\LeaveRejection\Creator as LeaveRejectionCreator;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
 use Sheba\Dal\Leave\LeaveStatusPresenter as LeaveStatusPresenter;
 use Sheba\Dal\Leave\Model as Leave;
@@ -49,7 +50,8 @@ class Updater
     private $approvalRequests;
     private $previousSubstituteName = 'n/s';
     private $leaveRejectionCreator;
-
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
     /**
      * Updater constructor.
      * @param LeaveRepository $leave_repository
@@ -160,6 +162,12 @@ class Updater
         return $this;
     }
 
+    public function setLeaveRejectionRequester(LeaveRejectionRequester $leave_rejection_requester)
+    {
+        $this->leaveRejectionRequester = $leave_rejection_requester;
+        return $this;
+    }
+
     /**
      * @param Leave $leave
      */
@@ -182,7 +190,7 @@ class Updater
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
-            #if ($this->status == Status::REJECTED) $this->leaveRejectionCreator->setLeave($this->leave)->create();
+            if ($this->status == Status::REJECTED) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
 
         });
 
