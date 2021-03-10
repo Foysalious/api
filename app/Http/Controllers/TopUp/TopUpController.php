@@ -388,7 +388,7 @@ class TopUpController extends Controller
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
         if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
-        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($request->user);
         if ($request->has('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
