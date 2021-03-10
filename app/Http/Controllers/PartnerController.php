@@ -1160,7 +1160,11 @@ class PartnerController extends Controller
             {
                 $converted_business_types[$business_type['bn']] = $business_type['en'];
             }
-            $business_type_with_count = Partner::where('is_webstore_published',1)->whereNotNull('business_type')->groupBy('business_type')->select('business_type', DB::raw('count(*) as total'))->get()->toArray();
+            $business_type_with_count = Partner::where(function($q){
+                $q->whereHas('tradeFair',function($q){
+                    $q->where('is_published',1);
+                });
+            })->where('is_webstore_published',1)->whereNotNull('business_type')->groupBy('business_type')->select('business_type', DB::raw('count(*) as total'))->get()->toArray();
             $business_types_with_count = collect($business_type_with_count)->map(function($type) use($converted_business_types){
                 return [
                     'business_type' => $converted_business_types[$type['business_type']],

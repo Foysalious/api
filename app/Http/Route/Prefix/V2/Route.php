@@ -196,7 +196,7 @@ class Route
             $api->post('due-tracker/create-pos-order-payment', 'Pos\DueTrackerController@createPosOrderPayment');
             $api->delete('due-tracker/remove-pos-order-payment/{pos_order_id}', 'Pos\DueTrackerController@removePosOrderPayment');
             $api->group(['prefix' => 'voucher', 'middleware' => ['vendor.auth']], function ($api) {
-                $api->post('/mobile', 'VoucherController@voucherAgainstMobile');
+                $api->post('/vendor', 'VoucherController@voucherAgainstVendor');
             });
         });
 

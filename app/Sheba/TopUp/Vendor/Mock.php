@@ -25,9 +25,4 @@ class Mock extends Vendor
             'MESSAGE' => "Mocking"
         ])));
     }
-
-    public function getTopUpInitialStatus()
-    {
-        return Statuses::SUCCESSFUL;
-    }
 }

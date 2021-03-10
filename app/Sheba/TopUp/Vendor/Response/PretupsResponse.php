@@ -37,4 +37,9 @@ class PretupsResponse extends TopUpResponse
     {
         return Pretups::getInitialStatusStatically();
     }
+
+    public function isPending()
+    {
+        return false;
+    }
 }

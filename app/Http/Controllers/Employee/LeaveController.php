@@ -20,6 +20,7 @@ use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use League\Fractal\Resource\Item;
 use Sheba\Business\Leave\Breakdown\LeaveBreakdown;
+use Sheba\Business\Leave\LeaveRejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\LeaveType\Contract as LeaveTypesRepoInterface;
@@ -261,6 +262,25 @@ class LeaveController extends Controller
 
         return api_response($request, null, 200, ['full_day_leaves' => $full_day_leaves, 'half_day_leaves' => $half_day_leaves]);
     }
+
+    /**
+     * @param Request $request
+     * @param LeaveRejectReason $reject_reason
+     * @return JsonResponse
+     */
+    public function rejectReasons(Request $request, LeaveRejectReason $reject_reason)
+    {
+        $reject_reasons = $reject_reason::getReasons();
+        $reasons = [];
+        foreach ($reject_reasons as $key => $reject_reason) {
+            $reasons[] = [
+                'key' => $key,
+                'value' => $reject_reason
+            ];
+        }
+        return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reasons]);
+    }
+
 
     /**
      * @param BusinessMember $business_member
