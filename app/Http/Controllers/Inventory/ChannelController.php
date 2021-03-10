@@ -21,7 +21,7 @@ class ChannelController extends Controller
     {
 
         $units = $this->channelService->getAll();
-        return api_response($request, null, 200, $units);
+        return http_response($request, null, 200, $units);
 
     }
 }
