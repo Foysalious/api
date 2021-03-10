@@ -383,7 +383,7 @@ class VoucherController extends Controller
         return $total_sale;
     }
 
-    public function voucherAgainstMobile(Request $request, VoucherRepository $voucherRepository)
+    public function voucherAgainstVendor(Request $request, VoucherRepository $voucherRepository)
     {
         if(!isset($request['start_date'])) return api_response($request, null, 403, ['message' => 'Start Date field is required']);
         $this->validate($request, [

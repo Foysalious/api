@@ -25,7 +25,9 @@ class PortWalletController extends Controller
         $payment = $this->getPaymentByRequest($request);
 
         if (!$payment) return api_response($request, null, 400, ['message' => "Invalid Payment"]);
-
+        if (!$payment->isValid()||$payment->isComplete()){
+            return api_response($request, null, 402,['message'=>"Invalid or completed payment"]);
+        }
         $this->complete($payment);
 
         if (!$payment) return api_response($request, null, 500, ['message' => "Something bad happened."]);
