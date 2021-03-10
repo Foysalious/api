@@ -735,8 +735,6 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
      */
     public function topUpHistory($affiliate, Request $request, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo, TopUpVendorOTFRepo $topup_vendor_otf): JsonResponse
     {
-        $topup_vendor_otf = app(TopUpVendorOTFRepo::class);
-
         $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'];
         $validator = Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -751,7 +749,11 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         if ($is_excel_report) { $offset = 0; $limit = 100000; }
 
         $request_builder->setOffset($offset)->setLimit($limit)->setAgent($affiliate);
-        if ($request->has('from') && $request->from !== "null") $request_builder->setFromDate($request->from)->setToDate($request->to);
+        if ($request->has('from') && $request->from !== "null") {
+            $from_date = Carbon::parse($request->from);
+            $to_date = Carbon::parse($request->to)->endOfDay();
+            $request_builder->setFromDate($from_date)->setToDate($to_date);
+        }
         if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
         if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
         if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);

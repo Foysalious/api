@@ -1,5 +1,6 @@
 <?php namespace Sheba\TopUp\History;
 
+use Carbon\Carbon;
 use phpseclib\System\SSH\Agent;
 use Sheba\TopUp\TopUpAgent;
 
@@ -15,6 +16,9 @@ class RequestBuilder
     private $agent;
     private $from;
     private $to;
+    private $connectionType;
+    private $isSingleTopup;
+    private $bulkId;
 
     /**
      * @return mixed
@@ -25,10 +29,10 @@ class RequestBuilder
     }
 
     /**
-     * @param $from
-     * @return RequestBuilder
+     * @param Carbon $from
+     * @return $this
      */
-    public function setFromDate($from)
+    public function setFromDate(Carbon $from)
     {
         $this->from = $from;
         return $this;
@@ -169,12 +173,58 @@ class RequestBuilder
     }
 
     /**
-     * @param mixed $to
-     * @return RequestBuilder
+     * @param Carbon $to
+     * @return $this
      */
-    public function setToDate($to)
+    public function setToDate(Carbon $to)
     {
         $this->to = $to;
         return $this;
+    }
+
+    /**
+     * @param $connection_type
+     * @return $this
+     */
+    public function setConnectionType($connection_type)
+    {
+        $this->connectionType = $connection_type;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getConnectionType()
+    {
+        return $this->connectionType;
+    }
+
+    public function setIsSingleTopup($is_single_topup)
+    {
+        $this->isSingleTopup = $is_single_topup;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getIsSingleTopup()
+    {
+        return $this->isSingleTopup;
+    }
+
+    public function setBulkRequestId($bulk_id)
+    {
+        $this->bulkId = $bulk_id;
+        return $this;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getBulkId()
+    {
+        return $this->bulkId;
     }
 }
