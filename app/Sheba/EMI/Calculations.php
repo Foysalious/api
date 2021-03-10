@@ -65,8 +65,8 @@ class Calculations
     public static function getMonthData($amount, $month, $format=true)
     {
         $data = self::getMonthInterest($month);
-
-        $bank_trx_fee = self::getBankTransactionFeeForManager($amount);
+        $rate = ($data['interest'] / 100);
+        $bank_trx_fee = self::getBankTransactionFeeForManager($amount + ceil(($amount * $rate)));
 
         return empty($data) ? [] : self::calculateMonthWiseCharge($amount, $data['month'], $data['interest'], $bank_trx_fee, $format);
     }

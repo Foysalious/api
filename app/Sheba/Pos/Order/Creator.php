@@ -1,6 +1,11 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Exceptions\DoNotReportException;
+use App\Exceptions\Pos\Customer\PartnerPosCustomerNotFoundException;
+use App\Exceptions\Pos\Customer\PosCustomerNotFoundException;
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Models\Partner;
+use App\Models\PartnerPosCustomer;
 use App\Models\PartnerPosService;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
@@ -116,6 +121,7 @@ class Creator
      * @return PosOrder
      * @throws InvalidDiscountType
      * @throws ExpenseTrackingServerError
+     * @throws DoNotReportException
      */
     public function create()
     {
@@ -133,7 +139,10 @@ class Creator
         foreach ($services as $service) {
             /** @var PartnerPosService $original_service */
             $original_service = isset($service['id']) && !empty($service['id']) ? $this->posServiceRepo->find($service['id']) : $this->posServiceRepo->defaultInstance($service);
-
+            if(!$original_service)
+                throw new DoNotReportException("Service not found with provided ID", 400);
+            if($original_service->is_published_for_shop && isset($service['quantity']) && !empty($service['quantity']) && $service['quantity'] > $original_service->stock)
+                throw new NotEnoughStockException("Not enough stock", 403);
             // $is_service_discount_applied = $original_service->discount();
             $service_wholesale_applicable = $original_service->wholesale_price ? true : false;
 
@@ -174,11 +183,18 @@ class Creator
 
     /**
      * @return mixed|null
+     * @throws PosCustomerNotFoundException
+     * @throws PartnerPosCustomerNotFoundException
      */
     private function resolveCustomerId()
     {
         if ($this->customer) return $this->customer->id;
-        else return (isset($this->data['customer_id']) && $this->data['customer_id']) ? $this->data['customer_id'] : null;
+        if (!isset($this->data['customer_id']) || !$this->data['customer_id']) return null;
+        $pos_customer = PosCustomer::find($this->data['customer_id']);
+        if (!$pos_customer) throw new PosCustomerNotFoundException("Customer #" . $this->data['customer_id'] . " Doesn't Exists.");
+        $partner_pos_customer = PartnerPosCustomer::where('partner_id', $this->partner->id)->where('customer_id', $this->data['customer_id'])->first();
+        if (!$partner_pos_customer) throw new PartnerPosCustomerNotFoundException("Customer #" . $this->data['customer_id'] . " Doesn't Belong To Partner #" . $this->partner->id);
+        return $this->data['customer_id'];
     }
 
 
@@ -245,7 +261,7 @@ class Creator
               ->setParty($profile)
               ->setAmount($amount)
               ->setAmountCleared($order->getPaid())
-              ->setHead(AutomaticIncomes::POS)
+              ->setHead($order->sales_channel == SalesChannels::POS ? AutomaticIncomes::POS : AutomaticIncomes::WEBSTORE_SALES )
               ->setSourceType(class_basename($order))
               ->setInterest($order->interest)
               ->setSourceId($order->id)

@@ -1,9 +1,9 @@
 <?php namespace Sheba\Payment\Adapters\Error;
 
 
-use App\Exceptions\ApiValidationException;
+use App\Exceptions\DoNotReportException;
 
-class PayableInitiateErrorException extends ApiValidationException
+class PayableInitiateErrorException extends DoNotReportException
 {
 
 }

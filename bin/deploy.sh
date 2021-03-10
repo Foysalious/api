@@ -15,6 +15,7 @@ pull_from_docker_registry() {
 
 # USE ON LOCAL
 run_on_local() {
+  . ./bin/parse_env.sh
   ./bin/dcup.sh local -d
 }
 
@@ -25,6 +26,7 @@ run_on_development() {
   reset_branch="$reset$1"
   eval "${reset_branch}"
 
+  . ./bin/parse_env.sh
   ./bin/dcup.sh dev -d
 
   ./bin/composer.sh install --no-interaction --ignore-platform-reqs

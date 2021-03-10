@@ -1,108 +1,80 @@
 pipeline {
     agent any
+
     stages {
-        stage('Make ENV File') {
+        stage('LAST COMMIT DETAILS') {
+            when { branch 'development' }
             steps {
-                withCredentials([
-                    string(credentialsId: 'VAULT_ROLE_ID', variable: 'VAULT_ROLE_ID'),
-                    string(credentialsId: 'VAULT_SECRET_ID', variable: 'VAULT_SECRET_ID')
-                ]) {
-                    sh './bin/make_env.sh'
-                    sh './bin/parse_env.sh'
+                script {
+                    LAST_COMMIT_USER_NAME = sh(script: 'git log -1 --pretty=%an', returnStdout: true).trim()
+                    LAST_COMMIT_USER_EMAIL = sh(script: 'git log -1 --pretty=%ae', returnStdout: true).trim()
+                    echo "last commit user:${LAST_COMMIT_USER_NAME}."
+                    echo "last commit user email:${LAST_COMMIT_USER_EMAIL}."
                 }
             }
         }
-        stage('Pull In Development') {
+        stage('RUN TEST RESULT') {
             when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
                         sshPublisherDesc(configName: 'development-server',
-                            transfers: [
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: '',
-                                    execTimeout: 120000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: 'api',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: '**/*.env'
-                                ),
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: 'cd /var/www/api && mv development.env .env && ./bin/deploy.sh development',
-                                    execTimeout: 120000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: '',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: ''
-                                )
-                            ],
+                            transfers: [sshTransfer(
+                                cleanRemote: false,
+                                excludes: '',
+                                execCommand: 'cd /var/www/api && ./bin/test_by_docker.sh',
+                                execTimeout: 360000,
+                                flatten: false,
+                                makeEmptyDirs: false,
+                                noDefaultExcludes: false,
+                                patternSeparator: '[, ]+',
+                                remoteDirectory: '',
+                                remoteDirectorySDF: false,
+                                removePrefix: '',
+                                sourceFiles: ''
+                            )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
-                            verbose: false
+                            verbose: true
                         )]
                     )
                 }
             }
         }
-        stage('Build For Production') {
-            when { branch 'master-docker' }
+        stage('TEST RESULT TO DEPLOYMENT SERVER') {
+            when { branch 'development' }
             steps {
-                 sh './bin/copy_needed_auth.sh'
-                 sh './bin/build.sh'
+                sshagent(['development-server-ssh']) {
+                    sh "scp sheba@103.197.207.30:/var/www/api/results/phpunit/api-test-result.xml ."
+                }
             }
         }
-        stage('Deploy To Production') {
-            when { branch 'master-docker' }
+        stage('SEND TEST RESULT TO TECH-ALERTS') {
+            when { branch 'development' }
             steps {
                 script {
                     sshPublisher(publishers: [
-                        sshPublisherDesc(configName: 'api-node-03',
-                            transfers: [
-                                sshTransfer(
-                                    cleanRemote: false,
-                                    excludes: '',
-                                    execCommand: 'cd /var/www/api && ./bin/deploy.sh master',
-                                    execTimeout: 120000,
-                                    flatten: false,
-                                    makeEmptyDirs: false,
-                                    noDefaultExcludes: false,
-                                    patternSeparator: '[, ]+',
-                                    remoteDirectory: '',
-                                    remoteDirectorySDF: false,
-                                    removePrefix: '',
-                                    sourceFiles: ''
-                                )
-                            ],
+                        sshPublisherDesc(configName: 'stage-server',
+                            transfers: [sshTransfer(
+                                cleanRemote: false,
+                                excludes: '',
+                                execCommand: '',
+                                execTimeout: 120000,
+                                flatten: false,
+                                makeEmptyDirs: false,
+                                noDefaultExcludes: false,
+                                patternSeparator: '[, ]+',
+                                remoteDirectory: '/tech_alerts/public',
+                                remoteDirectorySDF: false,
+                                removePrefix: '',
+                                sourceFiles: '**/api-test-result.xml'
+                            )],
                             usePromotionTimestamp: false,
                             useWorkspaceInPromotion: false,
-                            verbose: false
+                            verbose: true
                         )]
                     )
                 }
-            }
-        }
-        stage('Clean Up Build') {
-            when { branch 'master-docker' }
-            steps {
-                sh './bin/remove_build.sh'
-            }
-        }
-        stage('Delete Workspace Files') {
-            steps {
-                echo 'Deleting current workspace ...'
-                deleteDir() /* clean up our workspace */
             }
         }
     }

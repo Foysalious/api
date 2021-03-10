@@ -557,6 +557,7 @@ if (!function_exists('getTradeLicenceImagesFolder')) {
         return $url . 'images/profiles/trade_license_attachment_';
     }
 }
+
 if (!function_exists('getLoanFolder')) {
     function getLoanFolder($with_base_url = false)
     {
@@ -565,6 +566,17 @@ if (!function_exists('getLoanFolder')) {
             $url = env('S3_URL');
         }
         return $url . 'images/profiles/loan_documents/';
+    }
+}
+
+if (!function_exists('getNeoBankingFolder')) {
+    function getNeoBankingFolder($with_base_url = false)
+    {
+        $url = '';
+        if ($with_base_url) {
+            $url = env('S3_URL');
+        }
+        return $url . 'images/profiles/neo_banking_documents/';
     }
 }
 
@@ -578,6 +590,7 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         return $url . 'partner/trade_license/trade_';
     }
 }
+
 if (!function_exists('getLoanDocumentFolder')) {
     function getLoanDocumentsFolder($with_base_url = false)
     {
@@ -1123,12 +1136,26 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
     }
 
 }
+
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
+    /**
+     * @return string
+     */
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0): string
     {
         $url = '';
         if ($with_base_url)
             $url = env('S3_URL');
         return $url . "partner/$partner_id/proof-of-business";
+    }
+}
+
+if (!function_exists('getStorageExportFolder')) {
+    /**
+     * @return string
+     */
+    function getStorageExportFolder(): string
+    {
+        return storage_path('exports') . "/";
     }
 }

@@ -8,12 +8,12 @@ use App\Sheba\Business\BusinessBasicInformation;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Sheba\Business\Attendance\AttendanceList;
 use Sheba\Business\Attendance\Daily\DailyExcel;
 use Sheba\Business\Attendance\Monthly\Excel;
 use Sheba\Business\Attendance\Member\Excel as MemberMonthlyExcel;
 use Sheba\Business\Attendance\Setting\ActionType;
-use Sheba\Business\CoWorker\Statuses as CoWorkerStatuses;
 use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Attendance\Statuses;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
@@ -45,6 +45,10 @@ class AttendanceController extends Controller
     /** @var BusinessHolidayRepoInterface $holidayRepository */
     private $holidayRepository;
 
+    /**
+     * AttendanceController constructor.
+     * @param BusinessHolidayRepoInterface $business_holidays_repo
+     */
     public function __construct(BusinessHolidayRepoInterface $business_holidays_repo)
     {
         $this->holidayRepository = $business_holidays_repo;
@@ -96,40 +100,35 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['attendances' => $attendances, 'total' => $count]);
     }
 
+    /**
+     * @param $business
+     * @param Request $request
+     * @param AttendanceRepoInterface $attendance_repo
+     * @param TimeFrame $time_frame
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param Excel $monthly_excel
+     * @return JsonResponse|void
+     */
     public function getMonthlyStats($business, Request $request, AttendanceRepoInterface $attendance_repo,
                                     TimeFrame $time_frame, BusinessHolidayRepoInterface $business_holiday_repo,
                                     BusinessWeekendRepoInterface $business_weekend_repo, Excel $monthly_excel)
     {
         $this->validate($request, ['file' => 'string|in:excel']);
         list($offset, $limit) = calculatePagination($request);
+        /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        $members = $business->members()->select('members.id', 'profile_id')->with([
-            'profile' => function ($q) {
-                $q->select('profiles.id', 'name', 'mobile', 'email');
-            }, 'businessMember' => function ($q) {
-                $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id', 'employee_id')->with([
-                    'role' => function ($q) {
-                        $q->select('business_roles.id', 'business_department_id', 'name')->with([
-                            'businessDepartment' => function ($q) {
-                                $q->select('business_departments.id', 'business_id', 'name');
-                            }
-                        ]);
-                    }
-                ]);
-            }
-        ])->wherePivot('status', '<>', CoWorkerStatuses::INACTIVE);
+
+        $business_members = $business->getAccessibleBusinessMember();
 
         if ($request->has('department_id')) {
-            $members = $members->whereHas('businessMember', function ($q) use ($request) {
-                $q->whereHas('role', function ($q) use ($request) {
-                    $q->whereHas('businessDepartment', function ($q) use ($request) {
-                        $q->where('business_departments.id', $request->department_id);
-                    });
+            $business_members = $business_members->whereHas('role', function ($q) use ($request) {
+                $q->whereHas('businessDepartment', function ($q) use ($request) {
+                    $q->where('business_departments.id', $request->department_id);
                 });
             });
         }
 
-        $members = $members->get();
         $all_employee_attendance = [];
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->start_date;
@@ -141,11 +140,10 @@ class AttendanceController extends Controller
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
-        foreach ($members as $member) {
-            $member_name = $member->getIdentityAttribute();
+        foreach ($business_members->get() as $business_member) {
+            $member_name = $business_member->member->profile->name;
             /** @var BusinessMember $business_member */
-            $business_member = $member->businessMember;
-            $member_department = $business_member->department() ? $business_member->department() : null;
+            $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
             $department_name = $member_department ? $member_department->name : 'N/S';
             $department_id = $member_department ? $member_department->id : 'N/S';
 
@@ -158,7 +156,7 @@ class AttendanceController extends Controller
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id ? $business_member->employee_id : 'N/A',
                 'member' => [
-                    'id' => $member->id,
+                    'id' => $business_member->member->id,
                     'name' => $member_name,
                 ],
                 'department' => [
@@ -169,29 +167,20 @@ class AttendanceController extends Controller
             ]);
 
         }
-        $all_employee_attendance = collect($all_employee_attendance);
-        if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
 
-        if ($request->has('sort_on_absent')) {
-            $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
-        }
-        if ($request->has('sort_on_present')) {
-            $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
-        }
-        if ($request->has('sort_on_leave')) {
-            $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
-        }
+        $all_employee_attendance = collect($all_employee_attendance);
+
+        if ($request->has('search')) $all_employee_attendance = $this->searchWithEmployeeName($all_employee_attendance, $request);
+        if ($request->has('sort_on_absent')) $all_employee_attendance = $this->attendanceSortOnAbsent($all_employee_attendance, $request->sort_on_absent);
+        if ($request->has('sort_on_present')) $all_employee_attendance = $this->attendanceSortOnPresent($all_employee_attendance, $request->sort_on_present);
+        if ($request->has('sort_on_leave')) $all_employee_attendance = $this->attendanceSortOnLeave($all_employee_attendance, $request->sort_on_leave);
 
         $total_members = $all_employee_attendance->count();
         if ($request->has('limit')) $all_employee_attendance = $all_employee_attendance->splice($offset, $limit);
-        if ($request->file == 'excel') {
-            return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
-        }
+        if ($all_employee_attendance->isEmpty()) return api_response($request, null, 404);
+        if ($request->file == 'excel') return $monthly_excel->setMonthlyData($all_employee_attendance->toArray())->get();
 
-        return api_response($request, $all_employee_attendance, 200, [
-            'all_employee_attendance' => $all_employee_attendance,
-            'total_members' => $total_members,
-        ]);
+        return api_response($request, $all_employee_attendance, 200, ['all_employee_attendance' => $all_employee_attendance, 'total_members' => $total_members]);
     }
 
     /**
@@ -255,6 +244,19 @@ class AttendanceController extends Controller
         return (Carbon::now()->month == (int)$month && Carbon::now()->year == (int)$year);
     }
 
+    /**
+     * @param $business
+     * @param $member
+     * @param Request $request
+     * @param BusinessHolidayRepoInterface $business_holiday_repo
+     * @param BusinessWeekendRepoInterface $business_weekend_repo
+     * @param AttendanceRepoInterface $attendance_repo
+     * @param BusinessMemberRepositoryInterface $business_member_repository
+     * @param TimeFrame $time_frame
+     * @param AttendanceList $list
+     * @param MemberMonthlyExcel $member_monthly_excel
+     * @return JsonResponse|void
+     */
     public function showStat($business, $member, Request $request, BusinessHolidayRepoInterface $business_holiday_repo,
                              BusinessWeekendRepoInterface $business_weekend_repo, AttendanceRepoInterface $attendance_repo,
                              BusinessMemberRepositoryInterface $business_member_repository,

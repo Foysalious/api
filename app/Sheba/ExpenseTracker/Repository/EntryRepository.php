@@ -65,7 +65,7 @@ class EntryRepository extends BaseRepository
      */
     public function storeEntry($for, $data)
     {
-        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:s:i');
+        $data['created_at'] = Carbon::parse($data['created_at'])->format('Y-m-d H:i:s');
         $request_identification = $this->withBothModificationFields((new RequestIdentification())->get());
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/' . $for, $data);
@@ -106,7 +106,7 @@ class EntryRepository extends BaseRepository
      */
     public function setStartDate($start_date)
     {
-        $this->start_date = $start_date->format('Y-m-d H:s:i');
+        $this->start_date = $start_date->format('Y-m-d H:i:s');
         return $this;
     }
 
@@ -116,7 +116,7 @@ class EntryRepository extends BaseRepository
      */
     public function setEndDate($end_date)
     {
-        $this->end_date = $end_date->format('Y-m-d H:s:i');
+        $this->end_date = $end_date->format('Y-m-d H:i:s');
         return $this;
     }
 
@@ -234,7 +234,7 @@ class EntryRepository extends BaseRepository
      */
     public function payPayable($data, $updater_information, $payable_id)
     {
-        $data['created_at'] = Carbon::now()->format('Y-m-d H:s:i');
+        $data['created_at'] = Carbon::now()->format('Y-m-d H:i:s');
         $request_identification = (new RequestIdentification())->get() + $updater_information;
         $data['created_from'] = json_encode($request_identification);
         $result = $this->client->post('accounts/' . $this->accountId . '/payables/' . $payable_id . '/pay', $data);

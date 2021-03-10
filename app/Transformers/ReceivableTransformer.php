@@ -23,7 +23,7 @@ class ReceivableTransformer extends TransformerAbstract
                 ]
             ],
             "note" => $receivable['note'],
-            "created_at" => Carbon::parse($receivable['created_at'])->format('Y-m-d h:s:i A'),
+            "created_at" => Carbon::parse($receivable['created_at'])->format('Y-m-d h:i:s A'),
         ];
     }
 }

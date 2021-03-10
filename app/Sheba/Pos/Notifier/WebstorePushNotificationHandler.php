@@ -25,10 +25,11 @@ class WebstorePushNotificationHandler
         $net_bill = $this->order->getNetBill();
         $payment_status = $this->order->getPaid() ? 'প্রদত্ত' : 'বকেয়া';
         $order_id = $this->order->id;
-        $sales_channel = 'ওয়েবস্টোর';
+        $partner_wise_order_id = $this->order->partner_wise_order_id;
+        $sales_channel = 'অনলাইন স্টোর';
         $notification_data = [
-            "title" => 'New Webstore Order',
-            "message" => "অর্ডার # $order_id: নতুন অর্ডার দেওয়া হয়েছে। মোট টাকার পরিমাণ: $net_bill ($payment_status)\r\n চ্যানেল: $sales_channel",
+            "title" => 'New Online Store Order',
+            "message" => "অর্ডার # $partner_wise_order_id: নতুন অর্ডার দেওয়া হয়েছে। মোট টাকার পরিমাণ: $net_bill ($payment_status)\r\n চ্যানেল: $sales_channel",
             "sound" => "notification_sound",
             "event_type" => 'WebstoreOrder',
             "event_id" => $order_id
