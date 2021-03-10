@@ -5,6 +5,7 @@ use App\Models\Partner;
 use App\Sheba\InventoryService\InventoryServerClient;
 use Illuminate\Support\Collection;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategoryRepository;
+use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\Dal\PosCategory\PosCategoryRepository;
 use Sheba\Partner\DataMigration\Jobs\InventoryDataMigrationJob;
 
@@ -22,19 +23,24 @@ class DataMigration
     private $posCategories;
     /**  @var InventoryServerClient */
     private $client;
+    /** @var PartnerPosServiceRepository */
+    private $partnerPosServiceRepository;
 
     /**
      * DataMigration constructor.
      * @param PosCategoryRepository $posCategoryRepository
      * @param PartnerPosCategoryRepository $partnerPosCategoryRepository
      * @param InventoryServerClient $client
+     * @param PartnerPosServiceRepository $partnerPosServiceRepository
      */
     public function __construct(PosCategoryRepository $posCategoryRepository,
                                 PartnerPosCategoryRepository $partnerPosCategoryRepository,
-                                InventoryServerClient $client)
+                                InventoryServerClient $client,
+                                PartnerPosServiceRepository $partnerPosServiceRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
+        $this->partnerPosServiceRepository = $partnerPosServiceRepository;
         $this->client = $client;
         $this->categories = collect();
     }
@@ -77,7 +83,7 @@ class DataMigration
 
     private function migrateInventoryData()
     {
-        $inventory_data = $this->generateCategoryMigrationData();
+        $inventory_data = array_merge($this->generateCategoryMigrationData(), $this->generateProductMigrationData());
         dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
     }
 
@@ -94,6 +100,16 @@ class DataMigration
         $data = [];
         $data['partner_pos_categories'] = $partner_pos_categories;
         $data['pos_categories'] = $categories;
+        return $data;
+    }
+
+    private function generateProductMigrationData()
+    {
+        $partner_pos_services = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id);
+        $data = [];
+        $data['products'] = $partner_pos_services->select('id', 'partner_id', 'pos_category_id AS category_id',
+            'name', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
+            'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name', 'created_at', 'updated_at')->get()->toArray();
         return $data;
     }
 }
