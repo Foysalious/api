@@ -6,6 +6,7 @@ use Factory\JobFactory;
 use Factory\PartnerFactory;
 use Factory\PartnerOrderFactory;
 use Factory\PartnerResourceFactory;
+use Factory\ResourceScheduleFactory;
 use Factory\ServiceFactory;
 use Factory\LocationFactory;
 use Factory\ProfileFactory;
@@ -54,7 +55,8 @@ $factory_classes = [
     CustomerDeliveryAddressFactory::class,
     ScheduleSlotsFactory::class,
     JobServiceFactory::class,
-    CategoryPartnerFactory::class
+    CategoryPartnerFactory::class,
+    ResourceScheduleFactory::class
 
 
 ];
