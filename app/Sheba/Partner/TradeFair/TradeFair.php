@@ -89,7 +89,11 @@ class TradeFair
     {
         $converted_business_types = $this->convertPartnerBusinessType();
 
-        $partners = Partner::has('tradeFair')->with('tradeFair')->where('is_webstore_published', 1)
+        $partners = Partner::where(function($q){
+            $q->whereHas('tradeFair',function($tradeFair){
+                $tradeFair->where('is_published',1);
+            });
+        })->with('tradeFair')->where('is_webstore_published', 1)
             ->where('business_type', $converted_business_types[$business_type])
             ->select('id', 'name', 'sub_domain', 'delivery_charge')->get();
 
