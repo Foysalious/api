@@ -371,6 +371,7 @@ class LeaveController extends Controller
      */
     public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMemberById($business_member_id);
         /** @var Business $business */
