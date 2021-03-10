@@ -213,7 +213,7 @@ class PartnerRegistrationController extends Controller
             if (config('sms.is_on')) $this->sms
                 ->setFeatureType(FeatureType::REGISTRATION)
                 ->setBusinessType(BusinessType::SMANAGER)
-                ->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: http://bit.ly/sManagerGettingStarted");
+                ->shoot($resource->profile->mobile, "অভিনন্দন! sManager-এ আপনি সফল ভাবে রেজিস্ট্রেশন সম্পন্ন করেছেন। বিস্তারিত দেখুন: https://cutt.ly/Training_Video");
             if ($this->ref) $this->referrals::setReference($partner, $this->ref);
             $partner->refer_code = $partner->referCode();
             $partner->save();
