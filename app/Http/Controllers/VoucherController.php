@@ -399,6 +399,8 @@ class VoucherController extends Controller
             'end_date.after_or_equal' => 'The end date should be after start date'
         ]);
 
+        $vendor_contribution_in_percentage = 96;
+
         $customer = Customer::whereHas('profile', function ($query) use ($request) {
             return $query->where('mobile', '+88' . $request->mobile);
         })->first();
@@ -420,7 +422,9 @@ class VoucherController extends Controller
             'cap' => $request->cap,
             'rules' => json_encode($rules),
             'title' => $request->title ? $request->title : '',
-            'max_order' => 1
+            'max_order' => 1,
+            'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
+            'vendor_contribution' => $vendor_contribution_in_percentage,
         ];
 
         $voucher = $voucherRepository->create($voucher);
