@@ -465,6 +465,7 @@ class CoWorkerController extends Controller
      */
     public function show($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
+        if (!is_numeric($member_id)) return api_response($request, null, 400);
         $member = Member::findOrFail($member_id);
         if (!$member) return api_response($request, null, 404);
         $business = $request->business;
