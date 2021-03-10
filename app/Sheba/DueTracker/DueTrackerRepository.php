@@ -13,6 +13,8 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -25,6 +27,7 @@ use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
+use Sheba\PaymentLink\Creator as PaymentLinkCreator;
 use Sheba\RequestIdentification;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -460,16 +463,18 @@ class DueTrackerRepository extends BaseRepository
             'amount'        => $request->amount,
         ];
 
-        if ($request->type == 'due') {
+        if ($request->has('payment_link')) {
             $data['payment_link'] = $request->payment_link;
         }
-
+        /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
             throw new InsufficientBalance();
         }
+        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         $sms->shoot();
+
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }
@@ -531,4 +536,30 @@ class DueTrackerRepository extends BaseRepository
         ];
     }
 
+    /**
+     * @param Request $request
+     * @param PaymentLinkCreator $paymentLinkCreator
+     * @return mixed
+     * @throws \Exception
+     */
+    public function createPaymentLink(Request $request, $paymentLinkCreator ) {
+        $purpose = 'Due Collection';
+        $customer = PosCustomer::find($request->customer_id);
+        $payment_link_store = $paymentLinkCreator->setAmount($request->amount)
+            ->setReason($purpose)
+            ->setUserName($request->partner->name)
+            ->setUserId($request->partner->id)
+            ->setUserType('partner')
+            ->setTargetType('due_tracker')
+            ->setTargetId(1)
+            ->setPayerId($customer->id)
+            ->setPayerType('pos_customer')
+            ->save();
+
+        if ($payment_link_store) {
+            return $paymentLinkCreator->getPaymentLink();
+        }
+
+        throw new \Exception('payment link creation fail');
+    }
 }

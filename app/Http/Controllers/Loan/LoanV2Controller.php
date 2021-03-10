@@ -10,6 +10,8 @@ use App\Models\Profile;
 use App\Models\User;
 use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -324,17 +326,6 @@ class LoanV2Controller extends Controller
         }
     }
 
-    public function claimList(Request $request, $loan_id, Loan $loan)
-    {
-        try {
-
-
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
-    }
-
     public function getFinanceInformation($partner, Request $request)
     {
         try {
@@ -601,7 +592,11 @@ class LoanV2Controller extends Controller
             ]);
             $mobile  = $partner_bank_loan->partner->getContactNumber();
             $message = $request->message;
-            (new Sms())->msg($message)->to($mobile)->shoot();
+            (new Sms())->msg($message)
+                ->setFeatureType(FeatureType::LOAN)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->to($mobile)
+                ->shoot();
             return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());

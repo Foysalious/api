@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -77,6 +78,8 @@ class AttendanceController extends Controller
         $business_member = $this->getBusinessMember($request);
         $business = $this->getBusiness($request);
         if (!$business_member) return api_response($request, null, 404);
+
+        Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
