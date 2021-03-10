@@ -24,7 +24,7 @@ class Excel
                 $sheet->fromArray($this->data, null, 'A1', true, false);
                 $sheet->prependRow($this->getHeaders());
                 $sheet->freezeFirstRow();
-                $sheet->cell('A1:L1', function ($cells) {
+                $sheet->cell('A1:M1', function ($cells) {
                     $cells->setFontWeight('bold');
                 });
                 $sheet->getDefaultStyle()->getAlignment()->applyFromArray(
@@ -50,13 +50,14 @@ class Excel
                 'left_early'    => $employee['attendance']['left_early'],
                 'left_early_note' => $employee['attendance']['left_early_note'],
                 'on_leave'      => $employee['attendance']['on_leave'],
-                'absent'        => $employee['attendance']['absent']
+                'absent'        => $employee['attendance']['absent'],
+                'total_hours'   => $employee['attendance']['total_hours'],
             ]);
         }
     }
 
     private function getHeaders()
     {
-        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'left_early_note', 'On leave','Absent'];
+        return ['Employee ID', 'Employee Name', 'Department', 'Working Days', 'Present', 'On time', 'Late', 'Left Timely', 'Left early', 'left_early_note', 'On leave','Absent', 'Total Hours'];
     }
 }
