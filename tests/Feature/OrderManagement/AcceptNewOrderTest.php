@@ -8,13 +8,16 @@ use App\Models\PartnerResource;
 use App\Models\Profile;
 use App\Models\Resource;
 use App\Models\ResourceSchedule;
+use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
 use Factory\JobFactory;
 use Factory\ResourceScheduleFactory;
 use Illuminate\Support\Facades\DB;
 use phpDocumentor\Reflection\Types\Object_;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
+use Sheba\Dal\JobUpdateLog\JobUpdateLog;
 use Tests\Feature\FeatureTestCase;
+use Tests\Mocks\MockSuccessfulResourceJobRepository;
 
 class AcceptNewOrderTest extends FeatureTestCase
 {
@@ -33,7 +36,10 @@ class AcceptNewOrderTest extends FeatureTestCase
         DB::table('category_partner_resource')->truncate();
         $this->secondaryCategory->partnerResources()->attach($this->partner_resource);
         $this->secondaryCategory->resources()->attach($this->resource);
-
+        $this->truncateTables([
+            ResourceSchedule::class,
+            JobUpdateLog::class
+        ]);
 
     }
     /* test cases for accept order post api */
@@ -102,7 +108,9 @@ class AcceptNewOrderTest extends FeatureTestCase
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("Resource doesn't work for you", $data['message']);
     }
-    public function testAdminResourceTypeCannotAcceptOrder(){
+
+    public function testAdminResourceTypeCannotAcceptOrder()
+    {
         $handyman_resource_delete = PartnerResource::find(2);
         $handyman_resource_delete->delete();
         $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/accept',[
@@ -111,9 +119,39 @@ class AcceptNewOrderTest extends FeatureTestCase
         ]);
         //dd($response);
         $data = $response->decodeResponseJson();
+
         $this->assertEquals(403, $data['code']);
         $this->assertEquals("Resource doesn't work for you", $data['message']);
     }
 
+    public function testOrderAcceptedSuccessfully()
+    {
+        $this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/accept',[
+            'remember_token' => $this->resource->remember_token,
+            'resource_id' => $this->resource->id,
+        ]);
+        //dd($response);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(200, $data['code']);
+    }
 
+    public function testResourceIsAssignedOnAcceptedOrder()
+    {
+        $this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/accept',[
+            'remember_token' => $this->resource->remember_token,
+            'resource_id' => $this->resource->id,
+        ]);
+        //dd($response);
+        $data = $response->decodeResponseJson();
+        $job = \App\Models\Job::find($this->job->id);
+        $job_log = JobUpdateLog::where('job_id',$this->job->id)->first();
+        //dd($job_log);
+        $log = '{"msg":"Resource Change","old_resource_id":null,"new_resource_id":'.$this->resource->id.'}';
+        $this->assertEquals($this->resource->id,$job->resource_id);
+        $this->assertEquals($log,$job_log->log);
+
+
+    }
 }
