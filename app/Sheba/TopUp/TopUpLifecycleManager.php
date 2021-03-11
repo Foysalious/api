@@ -18,17 +18,11 @@ class TopUpLifecycleManager extends TopUpManager
     {
         if ($this->topUpOrder->isFailed()) return;
 
-        try {
-            DB::transaction(function () use ($fail_response) {
-                $this->statusChanger->failed(FailedReason::GATEWAY_ERROR, $fail_response->getTransactionDetailsString());
-                $this->refund();
-                $vendor = (new VendorFactory())->getById($this->topUpOrder->vendor_id);
-                $vendor->refill($this->topUpOrder->amount);
-            });
-        } catch (Exception $e) {
-            $this->markOrderAsSystemError($e);
-            throw $e;
-        }
+        $this->doTransaction(function () use ($fail_response) {
+            $this->statusChanger->failed(FailedReason::GATEWAY_ERROR, $fail_response->getTransactionDetailsString());
+            $this->refund();
+            $this->getVendor()->refill($this->topUpOrder->amount);
+        });
     }
 
     /**
@@ -39,13 +33,33 @@ class TopUpLifecycleManager extends TopUpManager
     {
         if ($this->topUpOrder->isSuccess()) return;
 
+        $this->doTransaction(function () use ($success_response) {
+            $this->statusChanger->successful(json_encode($success_response->getTransactionDetails()));
+        });
+    }
+
+    /**
+     * @param $action
+     * @throws Exception
+     */
+    private function doTransaction($action)
+    {
         try {
-            DB::transaction(function () use ($success_response) {
-                $this->statusChanger->successful(json_encode($success_response->getTransactionDetails()));
-            });
+            DB::transaction($action);
         } catch (Exception $e) {
             $this->markOrderAsSystemError($e);
             throw $e;
         }
+    }
+
+    /**
+     * @throws Exception
+     */
+    public function reload()
+    {
+        if ($this->topUpOrder->isFailed() || $this->topUpOrder->isSuccess()) return;
+        $vendor = $this->getVendor();
+        $response = $vendor->enquire($this->topUpOrder);
+        $response->handleTopUp();
     }
 }

@@ -2,7 +2,6 @@
 
 use App\Models\TopUpOrder;
 use Exception;
-use GuzzleHttp\Client as HttpClient;
 use InvalidArgumentException;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
@@ -17,8 +16,8 @@ use Sheba\TPProxy\TPRequest;
 
 class PaywellClient
 {
-    /** @var HttpClient */
-    private $httpClient;
+    /** @var TPProxyClient */
+    private $tpClient;
     private $username;
     private $password;
     private $authPassword;
@@ -37,7 +36,7 @@ class PaywellClient
      */
     public function __construct(TPProxyClient $client, TPRequest $request)
     {
-        $this->httpClient = $client;
+        $this->tpClient = $client;
         $this->tpRequest = $request;
 
         $this->username = config('topup.paywell.username');
@@ -83,7 +82,7 @@ class PaywellClient
             ->setInput($request_data);
 
         try {
-            $response = $this->httpClient->call($this->tpRequest);
+            $response = $this->tpClient->call($this->tpRequest);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
         }
@@ -105,7 +104,7 @@ class PaywellClient
         ];
 
         $this->tpRequest->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
-        $response = $this->httpClient->call($this->tpRequest);
+        $response = $this->tpClient->call($this->tpRequest);
 
         return $response->token->security_token;
     }
@@ -125,6 +124,12 @@ class PaywellClient
         throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
     }
 
+    /**
+     * @param $topup_order_id
+     * @return mixed
+     * @throws \Sheba\TPProxy\TPProxyServerError
+     * @throws Exception
+     */
     public function enquiry($topup_order_id)
     {
         $security_token = $this->getToken();
@@ -146,30 +151,8 @@ class PaywellClient
             ->setHeaders($headers)
             ->setInput($request_data);
 
-        $response = $this->httpClient->call($this->tpRequest);
+        $response = $this->tpClient->call($this->tpRequest);
 
         return $response->enquiryData;
-    }
-
-    /**
-     * @param TopUpOrder $topup_order
-     * @return IpnResponse
-     * @throws PaywellTopUpStillNotResolved
-     */
-    public function enquireIpnResponse(TopUpOrder $topup_order)
-    {
-        $response = $this->enquiry($topup_order->id);
-
-        /** @var IpnResponse $ipn_response */
-        $ipn_response = null;
-        if ($response->status_code == "200") {
-            $ipn_response = app(PaywellSuccessResponse::class);
-        } else if ($response->status_code != "100") {
-            $ipn_response = app(PaywellFailResponse::class);
-        } else {
-            throw new PaywellTopUpStillNotResolved($response);
-        }
-        $ipn_response->setResponse($response);
-        return $ipn_response;
     }
 }
