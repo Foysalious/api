@@ -20,9 +20,5 @@ class IndexRoute
                 });
             });
         });
-
-        $api->group(['prefix' => '{partner}', 'middleware' => ['accessToken']], function ($api) {
-            $api->post('migrate', 'Partner\DataMigrationController@migrate');
-        });
     }
 }

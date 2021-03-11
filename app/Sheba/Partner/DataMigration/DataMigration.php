@@ -1,6 +1,7 @@
 <?php namespace Sheba\Partner\DataMigration;
 
 
+use App\Exceptions\Pos\DataAlreadyMigratedException;
 use App\Models\Partner;
 use App\Sheba\InventoryService\InventoryServerClient;
 use Illuminate\Support\Collection;
@@ -84,8 +85,12 @@ class DataMigration
         return $this;
     }
 
+    /**
+     * @throws DataAlreadyMigratedException
+     */
     public function migrate()
     {
+        if ($this->partner->is_migration_completed) throw new DataAlreadyMigratedException();
         $this->migrateInventoryData();
     }
 
