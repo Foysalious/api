@@ -3,6 +3,7 @@
 use App\Models\TopUpOrder;
 use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 interface Gateway
@@ -18,4 +19,10 @@ interface Gateway
     public function getShebaCommission();
 
     public function getName();
+
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     */
+    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse;
 }
