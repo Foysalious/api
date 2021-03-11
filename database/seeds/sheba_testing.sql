@@ -1153,7 +1153,7 @@ COMMIT;
 DROP TABLE IF EXISTS `authorization_tokens`;
 CREATE TABLE `authorization_tokens` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `token` varchar(1000) COLLATE utf8_unicode_ci NOT NULL,
+  `token` varchar(3000) COLLATE utf8_unicode_ci NOT NULL,
   `authorization_request_id` int(10) unsigned NOT NULL,
   `valid_till` datetime NOT NULL,
   `refresh_valid_till` datetime NOT NULL,
@@ -6176,7 +6176,7 @@ INSERT INTO `locations` VALUES (49, 3, 'Brahmanbaria', '{\"lat\":\"23.9608181\",
 INSERT INTO `locations` VALUES (50, 3, 'Chittagong', '{\"lat\":\"22.356851\",\"lng\":\"91.78318190000005\",\"radius\":\"1\"}', 0, 1, 16, 'PM - Md. Masud Reza', 237, 'PM - Rakebul Hasan', '2018-10-25 17:47:05', '2018-11-04 11:42:08');
 INSERT INTO `locations` VALUES (51, 3, 'Bandarban', '{\"lat\":\"21.8311002\",\"lng\":\"92.36863210000001\",\"radius\":\"1\"}', 0, 1, 177, 'PM - Syed Mohammad Toaha', 177, 'PM - Syed Mohammad Toaha', '2018-10-25 17:47:52', '2018-10-25 17:47:52');
 INSERT INTO `locations` VALUES (52, 3, 'Chandpur', '{\"lat\":\"23.2320991\",\"lng\":\"90.66307499999994\",\"radius\":\"1\"}', 0, 1, 16, 'PM - Md. Masud Reza', 16, 'PM - Md. Masud Reza', '2018-10-25 17:47:54', '2018-10-25 17:47:54');
-INSERT INTO `locations` VALUES (53, 3, 'Cox\'s Bazar', '{\"lat\":\"21.4272283\",\"lng\":\"92.00580739999998\",\"radius\":\"1\"}', 0, 1, 177, 'PM - Syed Mohammad Toaha', 177, 'PM - Syed Mohammad Toaha', '2018-10-25 17:49:35', '2018-10-25 17:49:35');
+INSERT INTO `locations` VALUES (53, 3, 'Coxs Bazar', '{\"lat\":\"21.4272283\",\"lng\":\"92.00580739999998\",\"radius\":\"1\"}', 0, 1, 177, 'PM - Syed Mohammad Toaha', 177, 'PM - Syed Mohammad Toaha', '2018-10-25 17:49:35', '2018-10-25 17:49:35');
 INSERT INTO `locations` VALUES (54, 3, 'Comilla', '{\"lat\":23.42271,\"lng\":91.154865,\"radius\":\"1\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[91.14342,23.48711],[91.15148,23.48137],[91.1611,23.48554],[91.16745,23.48484],[91.17329,23.48587],[91.1896,23.47817],[91.20003,23.47149],[91.21596,23.46953],[91.24987,23.47033],[91.24748,23.45734],[91.25575,23.44466],[91.24566,23.42923],[91.23924,23.42041],[91.22098,23.416],[91.21742,23.40308],[91.14482,23.35624],[91.05398,23.37592],[91.06121,23.48259],[91.12197,23.48918],[91.14342,23.48711]]]},\"center\":{\"lat\":23.42271,\"lng\":91.154865}}', 1, 1, 16, 'PM - Md. Masud Reza', 17, 'IT - Firoze Ahmed', '2018-10-25 11:49:47', '2019-07-01 17:47:15');
 INSERT INTO `locations` VALUES (55, 3, 'Feni', '{\"lat\":\"23.0159132\",\"lng\":\"91.39758310000002\",\"radius\":\"1\"}', 0, 1, 177, 'PM - Syed Mohammad Toaha', 177, 'PM - Syed Mohammad Toaha', '2018-10-25 17:50:59', '2018-10-25 17:50:59');
 INSERT INTO `locations` VALUES (56, 3, 'Khagrachhari', '{\"lat\":\"23.1321751\",\"lng\":\"91.94902100000002\",\"radius\":\"1\"}', 0, 1, 16, 'PM - Md. Masud Reza', 16, 'PM - Md. Masud Reza', '2018-10-25 17:51:00', '2018-10-25 17:51:00');

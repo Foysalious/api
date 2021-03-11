@@ -133,6 +133,7 @@ class RegistrationTest extends FeatureTestCase
     //Test case: Post api without a mandatory payload and check response
     public function testRRegistrationPartnerwithWrongPayload()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",
@@ -151,6 +152,7 @@ class RegistrationTest extends FeatureTestCase
 
     public function testRRegistrationPartnerwithWrongPayloadinBussines_type()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",

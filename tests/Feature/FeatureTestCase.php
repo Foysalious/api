@@ -37,7 +37,7 @@ class FeatureTestCase extends TestCase
     protected $partner;
     /** @var PartnerResource */
     protected $partner_resource;
-//    @var ParnerSubscriptionPackage
+    /** @var PartnerSubscriptionPackage */
     protected $partner_package;
     /**
      * @var $business
@@ -72,11 +72,11 @@ class FeatureTestCase extends TestCase
      */
     public function runDatabaseMigrations()
     {
-        \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        $this->artisan('migrate');
-        $this->beforeApplicationDestroyed(function () {
+        //\Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
+        // $this->artisan('migrate');
+        /* $this->beforeApplicationDestroyed(function () {
             \Illuminate\Support\Facades\DB::unprepared(file_get_contents('database/seeds/sheba_testing.sql'));
-        });
+        });*/
     }
 
     protected function logIn()

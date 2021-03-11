@@ -333,7 +333,7 @@ class SingleTopUpTest extends FeatureTestCase
     public function testTopupInsufficientBalance () {
 
 
-        $walletBalanceUpdate = Affiliate::find(1);;
+        $walletBalanceUpdate = Affiliate::find(1);
         $walletBalanceUpdate->update(["wallet" => 100]);
 
        // dd($walletBalanceUpdate); //same as log
