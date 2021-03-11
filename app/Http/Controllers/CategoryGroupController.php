@@ -44,7 +44,7 @@ class CategoryGroupController extends Controller
                 $categories = $this->getCategoryByColumn('name', $request->name, $this->location);
                 return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
             }
-            $categoryGroups = CategoryGroup::$for()->select('id', 'name')
+            $categoryGroups = CategoryGroup::$for()->select('id', 'name','icon','icon_png')
                 ->whereHas('locations', function ($query) {
                     $query->select('locations.id')->where('locations.id', $this->location);
                 })
@@ -74,7 +74,6 @@ class CategoryGroupController extends Controller
                     })->values();
                 }
             }
-
             if (count($categoryGroups) > 0) {
                 $categoryGroups->map(function ($category_group) {
                     $category_group->icon_png = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/category_images/default_icons/default_v3.png";
