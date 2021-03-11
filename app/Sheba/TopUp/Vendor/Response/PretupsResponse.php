@@ -1,6 +1,9 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
 use Sheba\TopUp\Gateway\Pretups\Pretups;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Pretups\PretupsFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Pretups\PretupsSuccessResponse;
 
 class PretupsResponse extends TopUpResponse
 {
@@ -41,5 +44,13 @@ class PretupsResponse extends TopUpResponse
     public function isPending()
     {
         return false;
+    }
+
+    /**
+     * @return IpnResponse
+     */
+    public function makeIpnResponse()
+    {
+        return $this->hasSuccess() ? app(PretupsSuccessResponse::class) : app(PretupsFailResponse::class);
     }
 }

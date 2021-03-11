@@ -3,6 +3,7 @@
 
 use App\Models\TopUpOrder;
 use Exception;
+use Sheba\TopUp\Vendor\VendorFactory;
 
 abstract class TopUpManager
 {
@@ -37,5 +38,14 @@ abstract class TopUpManager
     protected function refund()
     {
         $this->topUpOrder->agent->getCommission()->setTopUpOrder($this->topUpOrder)->refund();
+    }
+
+    /**
+     * @return Vendor\Vendor
+     * @throws Exception
+     */
+    protected function getVendor()
+    {
+        return (new VendorFactory())->getById($this->topUpOrder->vendor_id);
     }
 }

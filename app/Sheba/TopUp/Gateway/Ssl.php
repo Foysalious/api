@@ -5,6 +5,7 @@ use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\SslVrClient;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -60,13 +61,23 @@ class Ssl implements Gateway
      * @return mixed
      * @throws Exception
      */
-    public function getRecharge($guid, $vr_guid)
+    public function getRecharge($guid, $vr_guid = null)
     {
         return $this->sslVrClient->call([
             'action' => SslVrClient::VR_PROXY_STATUS_ACTION,
             'guid' => $guid,
             'vr_guid' => $vr_guid
         ]);
+    }
+
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws Exception
+     */
+    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    {
+        return $this->getRecharge($topup_order->getGatewayRefId());
     }
 
     private function getOperatorId($mobile_number)
