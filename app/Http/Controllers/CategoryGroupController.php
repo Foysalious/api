@@ -42,7 +42,7 @@ class CategoryGroupController extends Controller
             $categories = $this->getCategoryByColumn('name', $request->name, $this->location);
             return $categories ? api_response($request, $categories, 200, ['category' => $categories]) : api_response($request, null, 404);
         }
-        $categoryGroups = CategoryGroup::$for()->select('id', 'name')
+        $categoryGroups = CategoryGroup::$for()->select('id', 'name','icon','icon_png')
             ->hasLocation($this->location)
             ->get();
         if ($request->has('with') && $request->with == 'categories') {
@@ -64,7 +64,6 @@ class CategoryGroupController extends Controller
 
         if (count($categoryGroups) > 0) {
             $categoryGroups->map(function ($category_group) {
-                $category_group->icon_png = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/category_images/default_icons/default_v3.png";
                 $category_group->icon_png_active = "https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/images/category_images/default_icons/active_v3.png";
             });
             return api_response($request, $categoryGroups, 200, ['categories' => $categoryGroups]);
