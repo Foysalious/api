@@ -9,6 +9,7 @@ use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Policy\PaymentInitiate;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Methods\PaymentMethod;
+use Throwable;
 
 class PaymentManager
 {
@@ -110,19 +111,25 @@ class PaymentManager
 
     /**
      * @return Payment
-     * @throws InvalidPaymentMethod|AlreadyCompletingPayment
+     * @throws InvalidPaymentMethod|AlreadyCompletingPayment|Throwable
      */
     public function complete()
     {
         $this->runningCompletionCheckAndSet();
-        $payment = $this->storeRequestPayload()->validate();
-        if ($payment->canComplete()) {
-            $completion_class = $this->payable->getCompletionClass();
-            $completion_class->setPayment($payment);
-            $payment = $completion_class->complete();
+        try {
+            $payment = $this->storeRequestPayload()->validate();
+            if ($payment->canComplete()) {
+                $completion_class = $this->payable->getCompletionClass();
+                $completion_class->setPayment($payment);
+                $payment = $completion_class->complete();
+            }
+            $this->unsetRunningCompletion();
+            return $payment;
+        } catch (Throwable $e) {
+            $this->unsetRunningCompletion();
+            throw  $e;
         }
-        $this->unsetRunningCompletion();
-        return $payment;
+
     }
 
     private function getKey()
