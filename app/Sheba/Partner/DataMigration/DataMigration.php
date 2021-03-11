@@ -8,6 +8,8 @@ use Sheba\Dal\PartnerPosCategory\PartnerPosCategoryRepository;
 use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\Dal\PosCategory\PosCategoryRepository;
 use Sheba\Partner\DataMigration\Jobs\InventoryDataMigrationJob;
+use Sheba\Pos\Repositories\PosServiceLogRepository;
+use DB;
 
 class DataMigration
 {
@@ -25,6 +27,9 @@ class DataMigration
     private $client;
     /** @var PartnerPosServiceRepository */
     private $partnerPosServiceRepository;
+    private $partnerPosServiceIds;
+    /** @var PosServiceLogRepository */
+    private $posServiceLogRepository;
 
     /**
      * DataMigration constructor.
@@ -32,15 +37,18 @@ class DataMigration
      * @param PartnerPosCategoryRepository $partnerPosCategoryRepository
      * @param InventoryServerClient $client
      * @param PartnerPosServiceRepository $partnerPosServiceRepository
+     * @param PosServiceLogRepository $posServiceLogRepository
      */
     public function __construct(PosCategoryRepository $posCategoryRepository,
                                 PartnerPosCategoryRepository $partnerPosCategoryRepository,
                                 InventoryServerClient $client,
-                                PartnerPosServiceRepository $partnerPosServiceRepository)
+                                PartnerPosServiceRepository $partnerPosServiceRepository,
+                                PosServiceLogRepository $posServiceLogRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
         $this->partnerPosServiceRepository = $partnerPosServiceRepository;
+        $this->posServiceLogRepository = $posServiceLogRepository;
         $this->client = $client;
         $this->categories = collect();
     }
@@ -85,13 +93,14 @@ class DataMigration
     {
         $inventory_data = array_merge($this->generatePartnerMigrationData(), $this->generateCategoryMigrationData());
         $inventory_data = array_merge($inventory_data, $this->generateProductMigrationData());
+        $inventory_data = array_merge($inventory_data, $this->generateProductUpdateLogsMigrationData());
         dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
     }
 
     private function generatePartnerMigrationData()
     {
         $data = [];
-        $data['partner'] = [
+        $data['partner_info'] = [
             'id' => $this->partner->id,
             'sub_domain' => $this->partner->sub_domain,
             'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0
@@ -118,10 +127,21 @@ class DataMigration
     private function generateProductMigrationData()
     {
         $partner_pos_services = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id);
+        $this->partnerPosServiceIds = $partner_pos_services;
         $data = [];
         $data['products'] = $partner_pos_services->select('id', 'partner_id', 'pos_category_id AS category_id',
             'name', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
             'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name', 'created_at', 'updated_at')->get()->toArray();
+        $this->partnerPosServiceIds = array_column($data['products'], 'id');
+        return $data;
+    }
+
+    private function generateProductUpdateLogsMigrationData()
+    {
+        $data = [];
+        $data['partner_pos_services_logs'] = DB::table('partner_pos_service_logs')->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value',
+                'created_by_name', 'created_at')->get();
         return $data;
     }
 }
