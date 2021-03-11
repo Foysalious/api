@@ -11,6 +11,7 @@ use Sheba\Partner\DataMigration\Jobs\InventoryDataMigrationJob;
 use Sheba\Pos\Repositories\PosServiceDiscountRepository;
 use Sheba\Pos\Repositories\PosServiceLogRepository;
 use DB;
+use Sheba\Repositories\PartnerRepository;
 
 class DataMigration
 {
@@ -33,6 +34,8 @@ class DataMigration
     private $posServiceLogRepository;
     /** @var PosServiceDiscountRepository */
     private $posServiceDiscountRepository;
+    /** @var PartnerRepository */
+    private $partnerRepository;
 
     /**
      * DataMigration constructor.
@@ -47,13 +50,16 @@ class DataMigration
                                 PartnerPosCategoryRepository $partnerPosCategoryRepository,
                                 InventoryServerClient $client,
                                 PartnerPosServiceRepository $partnerPosServiceRepository,
-                                PosServiceLogRepository $posServiceLogRepository, PosServiceDiscountRepository $posServiceDiscountRepository)
+                                PosServiceLogRepository $posServiceLogRepository,
+                                PosServiceDiscountRepository $posServiceDiscountRepository,
+                                PartnerRepository $partnerRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
         $this->partnerPosServiceRepository = $partnerPosServiceRepository;
         $this->posServiceLogRepository = $posServiceLogRepository;
         $this->posServiceDiscountRepository = $posServiceDiscountRepository;
+        $this->partnerRepository = $partnerRepository;
         $this->client = $client;
         $this->categories = collect();
     }
@@ -100,7 +106,7 @@ class DataMigration
         $inventory_data = array_merge($inventory_data, $this->generateProductMigrationData());
         $inventory_data = array_merge($inventory_data, $this->generateProductUpdateLogsMigrationData());
         $inventory_data = array_merge($inventory_data, $this->generateProductDiscountsMigrationData());
-        dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
+        dispatch(new InventoryDataMigrationJob($this->partner, $inventory_data));
     }
 
     private function generatePartnerMigrationData()
