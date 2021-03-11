@@ -2,6 +2,8 @@
 
 use App\Models\Payable;
 use App\Models\Payment;
+use Illuminate\Support\Facades\Redis;
+use Sheba\Payment\Exceptions\AlreadyCompletingPayment;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\Factory\PaymentStrategy;
 use Sheba\Payment\Policy\PaymentInitiate;
@@ -101,23 +103,48 @@ class PaymentManager
      */
     public function storeRequestPayload()
     {
-        $this->payment->request_payload  = json_encode(request()->all());
+        $this->payment->request_payload = json_encode(request()->all());
         $this->payment->save();
         return $this;
     }
 
     /**
      * @return Payment
-     * @throws InvalidPaymentMethod
+     * @throws InvalidPaymentMethod|AlreadyCompletingPayment
      */
     public function complete()
     {
+        $this->runningCompletionCheckAndSet();
         $payment = $this->storeRequestPayload()->validate();
         if ($payment->canComplete()) {
             $completion_class = $this->payable->getCompletionClass();
             $completion_class->setPayment($payment);
             $payment = $completion_class->complete();
         }
+        $this->unsetRunningCompletion();
         return $payment;
+    }
+
+    private function getKey()
+    {
+        return 'Payment::Completing::' . $this->payment->id;
+    }
+
+    /**
+     * @throws AlreadyCompletingPayment
+     */
+    private function runningCompletionCheckAndSet()
+    {
+        $key     = $this->getKey();
+        $already = Redis::get($key);
+        if ($already) {
+            throw new AlreadyCompletingPayment();
+        }
+        Redis::set($key, 1);
+    }
+
+    private function unsetRunningCompletion()
+    {
+        Redis::del($this->getKey());
     }
 }
