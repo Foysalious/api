@@ -83,8 +83,20 @@ class DataMigration
 
     private function migrateInventoryData()
     {
-        $inventory_data = array_merge($this->generateCategoryMigrationData(), $this->generateProductMigrationData());
+        $inventory_data = array_merge($this->generatePartnerMigrationData(), $this->generateCategoryMigrationData());
+        $inventory_data = array_merge($inventory_data, $this->generateProductMigrationData());
         dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
+    }
+
+    private function generatePartnerMigrationData()
+    {
+        $data = [];
+        $data['partner'] = [
+            'id' => $this->partner->id,
+            'sub_domain' => $this->partner->sub_domain,
+            'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0
+        ];
+        return $data;
     }
 
     private function generateCategoryMigrationData()
