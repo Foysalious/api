@@ -25,6 +25,8 @@ class ProductService
     protected $price;
     protected $stock;
     protected $channelId;
+    protected $discountAmount;
+    protected $discountEndDate;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -181,6 +183,18 @@ class ProductService
         return $this;
     }
 
+    public function setDisCountAmount($discountAmount)
+    {
+        $this->discountAmount  = $discountAmount;
+        return $this;
+    }
+
+    public function setDiscountEndDate($discount_end_date)
+    {
+        $this->discountEndDate = $discount_end_date;
+        return $this;
+    }
+
     public function getAllProducts($partner_id)
     {
         $url = 'api/v1/partners/' . $partner_id . '/products';
@@ -210,6 +224,8 @@ class ProductService
             'price' => $this->price,
             'stock' => $this->stock,
             'channelId' => $this->channelId,
+            'discount_amount' => $this->discountAmount,
+            'discount_end_date' => $this->discountEndDate,
         ];
     }
 

@@ -84,7 +84,7 @@ class CategoryService
 
     public function getallcategory()
     {
-        $url = 'api/allCategory';
+        $url = 'api/tree/'.$this->partnerId;
         return $this->client->get($url);
     }
 
