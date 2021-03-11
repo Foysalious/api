@@ -7,8 +7,11 @@ class ShebaRequestHeader
     const VERSION_CODE_KEY = "Version-Code";
     const PLATFORM_NAME_KEY = "Platform-Name";
 
+    /** @var string */
     private $portalName;
+    /** @var string */
     private $versionCode;
+    /** @var string */
     private $platformName;
 
     /**
@@ -20,7 +23,7 @@ class ShebaRequestHeader
     }
 
     /**
-     * @param mixed $portalName
+     * @param string $portalName
      * @return ShebaRequestHeader
      */
     public function setPortalName($portalName)
@@ -30,7 +33,7 @@ class ShebaRequestHeader
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getVersionCode()
     {
@@ -38,7 +41,7 @@ class ShebaRequestHeader
     }
 
     /**
-     * @param mixed $versionCode
+     * @param string $versionCode
      * @return ShebaRequestHeader
      */
     public function setVersionCode($versionCode)
@@ -48,7 +51,7 @@ class ShebaRequestHeader
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getPlatformName()
     {
@@ -56,7 +59,7 @@ class ShebaRequestHeader
     }
 
     /**
-     * @param mixed $platformName
+     * @param string $platformName
      * @return ShebaRequestHeader
      */
     public function setPlatformName($platformName)
