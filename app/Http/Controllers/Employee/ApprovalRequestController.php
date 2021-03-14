@@ -51,10 +51,14 @@ class ApprovalRequestController extends Controller
         $business_member = $this->getBusinessMember($request);
         $approval_requests_list = [];
 
+        list($offset, $limit) = calculatePagination($request);
+
         if ($request->has('type'))
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMemberFilterBy($business_member, $request->type);
         else
             $approval_requests = $approval_request_repo->getApprovalRequestByBusinessMember($business_member);
+
+        if ($request->has('limit')) $approval_requests = $approval_requests->splice($offset, $limit);
 
         foreach ($approval_requests as $approval_request) {
            if ($approval_request->requestable) {
