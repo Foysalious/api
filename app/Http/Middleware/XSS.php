@@ -33,11 +33,11 @@ class XSS
     public function handle($request, Closure $next)
     {
         if ($this->inExceptArray($request)) return $next($request);
-        if (!in_array(strtolower($request->method()), ['put', 'post'])) {
-            return $next($request);
-        }
+
+        if ($this->isMethodWhitelisted($request)) return $next($request);
 
         $input = $request->all();
+
         array_walk_recursive($input, function (&$input) {
             $input = htmlspecialchars($input, ENT_NOQUOTES | ENT_HTML5);
         });
@@ -66,5 +66,10 @@ class XSS
         }
 
         return false;
+    }
+
+    private function isMethodWhitelisted($request)
+    {
+        return !in_array(strtolower($request->method()), ['put', 'post', 'patch']);
     }
 }
