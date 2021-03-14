@@ -115,16 +115,6 @@ class PurchaseHandler
     }
 
     /**
-     * @throws HasAlreadyCollectedFeeException
-     */
-    public function checkIfAlreadyCollected()
-    {
-        if ($this->partner->alreadyCollectedSubscriptionFee())
-            throw new HasAlreadyCollectedFeeException();
-    }
-
-
-    /**
      * @throws AlreadyRunningSubscriptionRequestException|HasAlreadyCollectedFeeException
      */
     public function checkIfRunningAndAlreadyCollected()
