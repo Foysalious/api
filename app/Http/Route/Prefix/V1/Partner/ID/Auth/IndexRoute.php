@@ -20,9 +20,5 @@ class IndexRoute
                 });
             });
         });
-
-        $api->group(['prefix' => '{partner}', 'middleware' => ['manager.auth']], function ($api) {
-
-        });
     }
 }

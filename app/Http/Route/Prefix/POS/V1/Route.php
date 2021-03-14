@@ -72,7 +72,7 @@ class Route
                     $api->put('/', "Inventory\ValueController@update");
                 });
             });
-
+            $api->post('migrate', 'Partner\DataMigrationController@migrate');
         });
     }
 }
