@@ -14,6 +14,7 @@ class PaymentDetailTransformer extends TransformerAbstract
             'id' => $payment->id,
             'payment_code' => '#' . $payment->id,
             'amount' => $payment->payable->amount,
+            'description' => $payment->payable->description,
             'created_at' => Carbon::parse($payment->created_at)->format('Y-m-d h:i a'),
             'link' => $payment_link_payment_details['link'],
             'link_code' => '#' . $payment_link_payment_details['linkId'],

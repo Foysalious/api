@@ -90,7 +90,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     {
         return Payment::where('id', $payment)->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at')->with([
             'payable' => function ($query) {
-                $query->select('id', 'type', 'type_id', 'amount', 'user_type', 'user_id');
+                $query->select('id', 'type', 'type_id', 'amount', 'user_type', 'user_id', 'description');
             }
         ], 'paymentDetails')->first();
     }
