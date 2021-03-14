@@ -108,7 +108,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
     {
         $data = [];
         foreach ($deduction_components as $deduction) {
-            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => implode(" ", explode("_",$deduction->name)), 'is_default' => 0];
+            if (!$deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => ucwords(implode(" ", explode("_",$deduction->name))), 'is_default' => 0];
             if ($deduction->is_default) $data['deduction'][] = ['id' => $deduction->id, 'name' => Components::getComponents($deduction->name)['value'], 'is_default' => 1];
         }
         return $data;
