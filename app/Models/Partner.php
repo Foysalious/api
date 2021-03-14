@@ -660,11 +660,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function topUpTransaction(TopUpTransaction $transaction)
     {
-        /*
-         * WALLET TRANSACTION NEED TO REMOVE
-         * $this->debitWallet($transaction->getAmount());
-        $this->walletTransaction(['amount' => $transaction->getAmount(), 'type' => 'Debit', 'log' => $transaction->getLog()]);*/
-        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())->dispatch();
+        (new WalletTransactionHandler())->setModel($this)->setAmount($transaction->getAmount())
+            ->setSource(TransactionSources::TOP_UP)->setType(Types::debit())->setLog($transaction->getLog())
+            ->dispatch();
     }
 
     public function todayJobs($jobs = null)
@@ -691,9 +689,6 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function notCancelledJobs()
     {
-        /*return $this->jobs->reject(function ($job) {
-            return $job->cancelRequests()->count() > 0;
-        });*/
         return $this->jobs()->whereNotExists(function ($q) {
             $q->from('job_cancel_requests')->whereRaw('job_id = jobs.id');
         })->select('jobs.id', 'schedule_date', 'status')->get();
