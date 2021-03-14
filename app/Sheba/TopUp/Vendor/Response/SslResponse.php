@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\TopUp\Gateway\Ssl;
 
 class SslResponse extends TopUpResponse
 {

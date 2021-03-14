@@ -6,6 +6,8 @@ use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Internal\SslVrClient;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\SslResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -77,7 +79,15 @@ class Ssl implements Gateway
      */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
     {
-        return $this->getRecharge($topup_order->getGatewayRefId());
+        $response = $this->getRecharge($topup_order->getGatewayRefId());
+        /** @var IpnResponse $ipn_response */
+        $ipn_response = ($response && $response->recharge_status == 900) ?
+            app(SslSuccessResponse::class) :
+            app(SslFailResponse::class);
+
+        $ipn_response->setResponse($response);
+
+        return $ipn_response;
     }
 
     private function getOperatorId($mobile_number)
