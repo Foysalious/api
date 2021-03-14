@@ -51,6 +51,9 @@ class PretupsResponse extends TopUpResponse
      */
     public function makeIpnResponse()
     {
-        return $this->hasSuccess() ? app(PretupsSuccessResponse::class) : app(PretupsFailResponse::class);
+        /** @var IpnResponse $ipn_response */
+        $ipn_response = $this->hasSuccess() ? app(PretupsSuccessResponse::class) : app(PretupsFailResponse::class);
+        $ipn_response->setResponse($this->response);
+        return $ipn_response;
     }
 }

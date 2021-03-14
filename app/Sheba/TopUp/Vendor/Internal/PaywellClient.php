@@ -57,7 +57,6 @@ class PaywellClient
      */
     public function recharge(TopUpOrder $topup_order): TopUpResponse
     {
-        $security_token = $this->getToken();
         $request_data = [
             "username" => $this->username,
             "password" => $this->password,
@@ -68,17 +67,9 @@ class PaywellClient
             "operator" => $this->getOperatorId($topup_order->vendor_id)
         ];
 
-        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
-        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
-
-        $headers = [
-            "Authorization: Bearer " . $bearer_token,
-            "Content-Type:application/json"
-        ];
-
         $this->tpRequest->setUrl($this->singleTopupUrl)
             ->setMethod(TPRequest::METHOD_POST)
-            ->setHeaders($headers)
+            ->setHeaders($this->getHeaders($request_data))
             ->setInput($request_data);
 
         try {
@@ -125,34 +116,44 @@ class PaywellClient
     }
 
     /**
-     * @param $topup_order_id
+     * @param TopUpOrder $topup_order
      * @return mixed
      * @throws \Sheba\TPProxy\TPProxyServerError
      * @throws Exception
      */
-    public function enquiry($topup_order_id)
+    public function enquiry(TopUpOrder $topup_order)
     {
-        $security_token = $this->getToken();
         $request_data = [
             "username" => $this->username,
-            "trxId" => $topup_order_id
-        ];
-
-        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
-        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
-
-        $headers = [
-            "Authorization: Bearer " . $bearer_token,
-            "Content-Type:application/json"
+            "trxId" => $topup_order->getGatewayRefId()
         ];
 
         $this->tpRequest->setUrl($this->topupEnquiryUrl)
             ->setMethod(TPRequest::METHOD_POST)
-            ->setHeaders($headers)
+            ->setHeaders($this->getHeaders($request_data))
             ->setInput($request_data);
 
         $response = $this->tpClient->call($this->tpRequest);
 
+        if (!property_exists($response, "enquiryData")) return null;
+
         return $response->enquiryData;
+    }
+
+    /**
+     * @param $request_data
+     * @return string[]
+     * @throws Exception
+     */
+    private function getHeaders($request_data)
+    {
+        $security_token = $this->getToken();
+        $hashed_data = hash_hmac('sha256', json_encode($request_data), $this->encryptionKey);
+        $bearer_token = base64_encode($security_token . ":" . $this->apiKey . ":" . $hashed_data);
+
+        return [
+            "Authorization: Bearer " . $bearer_token,
+            "Content-Type:application/json"
+        ];
     }
 }

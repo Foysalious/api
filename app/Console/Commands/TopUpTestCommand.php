@@ -24,7 +24,7 @@ class TopUpTestCommand extends Command
     public function handle(TopUpRechargeManager $recharge, TopUpLifecycleManager $lifecycle, VendorFactory $vendor_factory)
     {
         try {
-            $top_up_order = TopUpOrder::find(6661607);
+            $top_up_order = TopUpOrder::find(6661608);
             /*$vendor = $vendor_factory->getById($top_up_order->vendor_id);
 
             $recharge->setAgent($top_up_order->agent)
@@ -34,7 +34,7 @@ class TopUpTestCommand extends Command
 
             $lifecycle->setTopUpOrder($top_up_order)->reload();
         } catch (\Exception $e) {
-            dd(get_class($e), $e->getMessage(), simplifyExceptionTrace($e));
+            dde($e);
         }
     }
 }
