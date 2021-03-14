@@ -130,11 +130,16 @@ class TopUpOrder extends BaseModel implements PayableType
         return json_decode($this->transaction_details);
     }
 
+    public function isGatewayRefUniform()
+    {
+        return $this->id > config('topup.non_uniform_gateway_ref_last_id');
+    }
+
     public function getGatewayRefId()
     {
-        if ($this->id >= config('topup.uniform_gateway_ref_first_id')) return dechex($this->id);
+        if ($this->isGatewayRefUniform()) return dechex($this->id);
 
-        if ($this->isViaPaywell()) return $this->id;
+        if ($this->isViaPaywell()) return 5659958;//$this->id;
 
         if ($this->isViaPretups()) return "";
 

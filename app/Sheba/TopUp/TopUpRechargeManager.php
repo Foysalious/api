@@ -63,10 +63,12 @@ class TopUpRechargeManager extends TopUpManager
     /**
      * @param TopUpOrder $order
      * @return $this
+     * @throws Exception
      */
     public function setTopUpOrder(TopUpOrder $order)
     {
         parent::setTopUpOrder($order);
+        $this->setAgent($order->agent)->setVendor($this->getVendor());
         $this->validator->setTopupOrder($this->topUpOrder);
         return $this;
     }

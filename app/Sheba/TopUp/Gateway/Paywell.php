@@ -50,11 +50,13 @@ class Paywell implements Gateway
      */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
     {
-        $response = $this->paywell->enquiry($topup_order->id);
+        $response = $this->paywell->enquiry($topup_order);
 
         /** @var IpnResponse $ipn_response */
         $ipn_response = null;
-        if ($response->status_code == "200") {
+        if (is_null($response)) {
+            $ipn_response = app(PaywellFailResponse::class);
+        } else if ($response->status_code == "200") {
             $ipn_response = app(PaywellSuccessResponse::class);
         } else if ($response->status_code != "100") {
             $ipn_response = app(PaywellFailResponse::class);
