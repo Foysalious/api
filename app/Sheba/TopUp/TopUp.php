@@ -206,9 +206,7 @@ class TopUp
     private function markOrderAsSystemError(TopUpOrder $top_up_order, Exception $e)
     {
         logErrorWithExtra($e, ['topup' => $top_up_order->getDirty()]);
-        $top_up_order->update([
-            'status' => Statuses::SYSTEM_ERROR
-        ]);
+        $top_up_order->update(['status' => Statuses::SYSTEM_ERROR]);
     }
 
     /**
