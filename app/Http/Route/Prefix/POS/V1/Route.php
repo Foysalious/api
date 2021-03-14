@@ -111,6 +111,7 @@ class Route
 
 
 
+            $api->post('migrate', 'Partner\DataMigrationController@migrate');
         });
     }
 }

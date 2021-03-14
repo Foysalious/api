@@ -146,7 +146,6 @@ class CollectionService
             'name' => $this->name,
             'description' => $this->description,
             'partner_id' => $this->partner_id,
-            'sharding_id' => $this->sharding_id,
             'thumb' => $this->thumb,
             'banner' => $this->banner,
             'app_thumb' => $this->app_thumb,

@@ -1,12 +1,18 @@
 <?php namespace Sheba\Partner\DataMigration;
 
 
+use App\Exceptions\Pos\DataAlreadyMigratedException;
 use App\Models\Partner;
 use App\Sheba\InventoryService\InventoryServerClient;
 use Illuminate\Support\Collection;
 use Sheba\Dal\PartnerPosCategory\PartnerPosCategoryRepository;
+use Sheba\Dal\PartnerPosService\PartnerPosServiceRepository;
 use Sheba\Dal\PosCategory\PosCategoryRepository;
 use Sheba\Partner\DataMigration\Jobs\InventoryDataMigrationJob;
+use Sheba\Pos\Repositories\PosServiceDiscountRepository;
+use Sheba\Pos\Repositories\PosServiceLogRepository;
+use DB;
+use Sheba\Repositories\PartnerRepository;
 
 class DataMigration
 {
@@ -22,19 +28,39 @@ class DataMigration
     private $posCategories;
     /**  @var InventoryServerClient */
     private $client;
+    /** @var PartnerPosServiceRepository */
+    private $partnerPosServiceRepository;
+    private $partnerPosServiceIds;
+    /** @var PosServiceLogRepository */
+    private $posServiceLogRepository;
+    /** @var PosServiceDiscountRepository */
+    private $posServiceDiscountRepository;
+    /** @var PartnerRepository */
+    private $partnerRepository;
 
     /**
      * DataMigration constructor.
      * @param PosCategoryRepository $posCategoryRepository
      * @param PartnerPosCategoryRepository $partnerPosCategoryRepository
      * @param InventoryServerClient $client
+     * @param PartnerPosServiceRepository $partnerPosServiceRepository
+     * @param PosServiceLogRepository $posServiceLogRepository
+     * @param PosServiceDiscountRepository $posServiceDiscountRepository
      */
     public function __construct(PosCategoryRepository $posCategoryRepository,
                                 PartnerPosCategoryRepository $partnerPosCategoryRepository,
-                                InventoryServerClient $client)
+                                InventoryServerClient $client,
+                                PartnerPosServiceRepository $partnerPosServiceRepository,
+                                PosServiceLogRepository $posServiceLogRepository,
+                                PosServiceDiscountRepository $posServiceDiscountRepository,
+                                PartnerRepository $partnerRepository)
     {
         $this->posCategoryRepository = $posCategoryRepository;
         $this->partnerPosCategoryRepository = $partnerPosCategoryRepository;
+        $this->partnerPosServiceRepository = $partnerPosServiceRepository;
+        $this->posServiceLogRepository = $posServiceLogRepository;
+        $this->posServiceDiscountRepository = $posServiceDiscountRepository;
+        $this->partnerRepository = $partnerRepository;
         $this->client = $client;
         $this->categories = collect();
     }
@@ -59,8 +85,12 @@ class DataMigration
         return $this;
     }
 
+    /**
+     * @throws DataAlreadyMigratedException
+     */
     public function migrate()
     {
+        if ($this->partner->is_migration_completed) throw new DataAlreadyMigratedException();
         $this->migrateInventoryData();
     }
 
@@ -77,8 +107,22 @@ class DataMigration
 
     private function migrateInventoryData()
     {
-        $inventory_data = $this->generateCategoryMigrationData();
-        dispatch(new InventoryDataMigrationJob($this->partner->id, $inventory_data));
+        $inventory_data = array_merge($this->generatePartnerMigrationData(), $this->generateCategoryMigrationData());
+        $inventory_data = array_merge($inventory_data, $this->generateProductMigrationData());
+        $inventory_data = array_merge($inventory_data, $this->generateProductUpdateLogsMigrationData());
+        $inventory_data = array_merge($inventory_data, $this->generateProductDiscountsMigrationData());
+        dispatch(new InventoryDataMigrationJob($this->partner, $inventory_data));
+    }
+
+    private function generatePartnerMigrationData()
+    {
+        $data = [];
+        $data['partner_info'] = [
+            'id' => $this->partner->id,
+            'sub_domain' => $this->partner->sub_domain,
+            'vat_percentage' => $this->partner->posSetting ? $this->partner->posSetting->vat_percentage : 0.0
+        ];
+        return $data;
     }
 
     private function generateCategoryMigrationData()
@@ -94,6 +138,37 @@ class DataMigration
         $data = [];
         $data['partner_pos_categories'] = $partner_pos_categories;
         $data['pos_categories'] = $categories;
+        return $data;
+    }
+
+    private function generateProductMigrationData()
+    {
+        $partner_pos_services = $this->partnerPosServiceRepository->where('partner_id', $this->partner->id);
+        $this->partnerPosServiceIds = $partner_pos_services;
+        $data = [];
+        $data['products'] = $partner_pos_services->select('id', 'partner_id', 'pos_category_id AS category_id',
+            'name', 'description', 'cost', 'price', 'unit', 'wholesale_price', 'stock', 'warranty', 'warranty_unit',
+            'vat_percentage', 'publication_status', 'is_published_for_shop', 'created_by_name', 'updated_by_name', 'created_at', 'updated_at')->get()->toArray();
+        $this->partnerPosServiceIds = array_column($data['products'], 'id');
+        return $data;
+    }
+
+    private function generateProductUpdateLogsMigrationData()
+    {
+        $data = [];
+        $data['partner_pos_services_logs'] = DB::table('partner_pos_service_logs')->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->select('partner_pos_service_id AS product_id', 'field_names', 'old_value', 'new_value',
+                'created_by_name', 'created_at')->get();
+        return $data;
+    }
+
+    private function generateProductDiscountsMigrationData()
+    {
+        $data = [];
+        $data['partner_pos_service_discounts'] = $this->posServiceDiscountRepository->whereIn('partner_pos_service_id', $this->partnerPosServiceIds)
+            ->select('partner_pos_service_id AS type_id', DB::raw("'product' AS type"), 'amount',
+                'is_amount_percentage', 'cap', 'start_date', 'end_date', 'created_by_name', 'updated_by_name',
+                'created_at', 'updated_at')->get()->toArray();
         return $data;
     }
 }
