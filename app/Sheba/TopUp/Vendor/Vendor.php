@@ -12,6 +12,7 @@ use Sheba\TopUp\Gateway\Names;
 use Sheba\TopUp\Gateway\Ssl;
 use Sheba\TopUp\GatewayTimeoutHandler;
 use Sheba\TopUp\Vendor\Response\GenericGatewayErrorResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpGatewayTimeoutResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
@@ -63,6 +64,17 @@ abstract class Vendor
         } catch (GatewayTimeout $e) {
             return $this->handleGatewayTimeout();
         }
+    }
+
+    /**
+     * @param TopUpOrder $topup_order
+     * @return IpnResponse
+     * @throws Exception
+     */
+    public function enquire(TopUpOrder $topup_order): IpnResponse
+    {
+        $this->resolveGateway($topup_order);
+        return $this->topUpGateway->enquireIpnResponse($topup_order);
     }
 
     public function deductAmount($amount)

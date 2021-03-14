@@ -17,6 +17,7 @@ use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
+use Sheba\TopUp\Gateway\Paywell;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
@@ -332,11 +333,11 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param PaywellClient $paywell_client
+     * @param Paywell $paywell
      * @return JsonResponse
-     * @throws Exception
+     * @throws \Sheba\TPProxy\TPProxyServerError | Exception
      */
-    public function paywellStatusUpdate(Request $request, PaywellClient $paywell_client)
+    public function paywellStatusUpdate(Request $request, Paywell $paywell)
     {
         /** @var TopUpOrder $topup_order */
         $topup_order = TopUpOrder::find($request->topup_order_id);
@@ -351,7 +352,7 @@ class TopUpController extends Controller
         }
 
         try {
-            $ipn_response = $paywell_client->enquireIpnResponse($topup_order);
+            $ipn_response = $paywell->enquireIpnResponse($topup_order);
             $ipn_response->handleTopUp();
             $actual_response = $ipn_response->getResponse();
         } catch (PaywellTopUpStillNotResolved $e) {

@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'uniform_gateway_ref_first_id' => env('UNIFORM_GATEWAY_REF_FIRST_ID'),
     'robi' => [
         'url' => env('ROBI_TOPUP_URL'),
         'login_id' => env('ROBI_TOPUP_LOGIN'),
