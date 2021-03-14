@@ -74,7 +74,7 @@ abstract class Vendor
     public function enquire(TopUpOrder $topup_order): IpnResponse
     {
         $this->resolveGateway($topup_order);
-        return $this->topUpGateway->enquireIpnResponse($topup_order);
+        return $this->topUpGateway->enquireIpnResponse($topup_order)->setTopUpOrder($topup_order);
     }
 
     public function deductAmount($amount)

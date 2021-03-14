@@ -5,6 +5,10 @@ class LoanRoute
 {
     public function set($api)
     {
+        $api->group(['prefix' => 'loans', 'middleware' => 'shebaServer'], function ($api) {
+            $api->get('/{loan_id}/admin/generate-pdf', 'Loan\\LoanController@generateApplication');
+        });
+
         $api->group(['prefix' => 'bank', 'middleware' => 'jwtGlobalAuth'], function ($api) {
             $api->post('/password/reset', 'Auth\PasswordController@resetPasswordForBank');
         });

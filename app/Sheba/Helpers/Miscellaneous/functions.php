@@ -260,6 +260,16 @@ if (!function_exists('simplifyExceptionTrace')) {
     }
 }
 
+if (!function_exists('dde')) {
+    /**
+     * @param \Exception $e
+     */
+    function dde(\Exception $e)
+    {
+        dd(get_class($e), $e->getMessage(), $e->getFile(), $e->getLine(), simplifyExceptionTrace($e));
+    }
+}
+
 if (!function_exists('array_push_on_array')) {
     /**
      * @param array $array
