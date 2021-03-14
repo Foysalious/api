@@ -9,10 +9,9 @@ class SslSuccessResponse extends SuccessResponse
 {
     public function getTopUpOrder(): TopUpOrder
     {
-        $date = Carbon::now()->toDateString();
-        return TopUpOrder::where('transaction_id', $this->response['guid'])
+        $guid = is_array($this->response) ? $this->response['guid'] : $this->response->guid;
+        return TopUpOrder::where('transaction_id', $guid)
             ->where('gateway', Gateway::SSL)
-            ->whereBetween('created_at', [$date . ' 00:00:00', $date . ' 23:59:59'])
             ->first();
     }
 }
