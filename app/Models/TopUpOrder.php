@@ -240,37 +240,4 @@ class TopUpOrder extends BaseModel implements PayableType
 
         return "";
     }
-
-    public function isViaSsl()
-    {
-        return $this->gateway == Names::SSL;
-    }
-
-    public function isViaPretups()
-    {
-        return in_array($this->gateway, [Names::ROBI, Names::AIRTEL, Names::BANGLALINK]);
-    }
-
-    public function getTransactionDetailsObject()
-    {
-        return json_decode($this->transaction_details);
-    }
-
-    public function isGatewayRefUniform()
-    {
-        return $this->id > config('topup.non_uniform_gateway_ref_last_id');
-    }
-
-    public function getGatewayRefId()
-    {
-        if ($this->isGatewayRefUniform()) return dechex($this->id);
-
-        if ($this->isViaPaywell()) return 5659958;//$this->id;
-
-        if ($this->isViaPretups()) return "";
-
-        if ($this->isViaSsl()) return $this->getTransactionDetailsObject()->guid;
-
-        return "";
-    }
 }
