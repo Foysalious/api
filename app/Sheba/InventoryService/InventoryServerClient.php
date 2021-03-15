@@ -58,6 +58,7 @@ class InventoryServerClient
         if ($data) {
             $options['form_params'] = $data;
             $options['json']        = $data;
+            $options['multipart'] = $data;
         }
         return $options;
     }
