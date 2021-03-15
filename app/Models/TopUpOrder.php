@@ -5,6 +5,7 @@ use Sheba\Dal\TopupOrder\Events\Created;
 use Sheba\Dal\TopupOrder\Events\Updated;
 use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\Dal\TopupOrder\Statuses;
+use Sheba\Dal\TopUpOrderStatusLog\TopUpOrderStatusLog;
 use Sheba\Elasticsearch\ElasticsearchTrait;
 use Sheba\Payment\PayableType;
 use Sheba\TopUp\Gateway\Names;
@@ -100,51 +101,9 @@ class TopUpOrder extends BaseModel implements PayableType
         return $this->belongsTo(TopUpVendor::class);
     }
 
-    public function isAgentPartner()
+    public function statusLogs()
     {
-        return $this->agent_type == Partner::class;
-    }
-
-    public function isAgentAffiliate()
-    {
-        return $this->agent_type == Affiliate::class;
-    }
-
-    public function getAgentNameAttribute()
-    {
-        if ($this->isAgentPartner()) return $this->agent->name;
-        elseif ($this->isAgentAffiliate()) return $this->agent->profile->name;
-    }
-
-    public function getAgentMobileAttribute()
-    {
-        if ($this->isAgentPartner()) return $this->agent->contact_no;
-        elseif ($this->isAgentAffiliate()) return $this->agent->profile->mobile;
-    }
-
-    public function isFailed()
-    {
-        return $this->status == Statuses::FAILED;
-    }
-
-    public function isFailedDueToGatewayTimeout()
-    {
-        return $this->isFailed() && $this->failed_reason == FailedReason::GATEWAY_TIMEOUT;
-    }
-
-    public function isSuccess()
-    {
-        return $this->status == Statuses::SUCCESSFUL;
-    }
-
-    public function isPending()
-    {
-        return $this->status == Statuses::PENDING;
-    }
-
-    public function isProcessed()
-    {
-        return $this->isFailed() || $this->isSuccess();
+        return $this->hasMany(TopUpOrderStatusLog::class, 'topup_order_id');
     }
 
     public function scopeProcessed($query)
@@ -177,6 +136,63 @@ class TopUpOrder extends BaseModel implements PayableType
         return $query->where('gateway', $gateway);
     }
 
+    public function getAgentNameAttribute()
+    {
+        if ($this->isAgentPartner()) return $this->agent->name;
+        elseif ($this->isAgentAffiliate()) return $this->agent->profile->name;
+    }
+
+    public function getAgentMobileAttribute()
+    {
+        if ($this->isAgentPartner()) return $this->agent->contact_no;
+        elseif ($this->isAgentAffiliate()) return $this->agent->profile->mobile;
+    }
+
+    public function isAgentPartner()
+    {
+        return $this->agent_type == Partner::class;
+    }
+
+    public function isAgentAffiliate()
+    {
+        return $this->agent_type == Affiliate::class;
+    }
+
+    public function isFailed()
+    {
+        return $this->status == Statuses::FAILED;
+    }
+
+    public function isFailedDueToGatewayTimeout()
+    {
+        return $this->isFailed() && $this->failed_reason == FailedReason::GATEWAY_TIMEOUT;
+    }
+
+    public function isSuccess()
+    {
+        return $this->status == Statuses::SUCCESSFUL;
+    }
+
+    public function isPending()
+    {
+        return $this->status == Statuses::PENDING;
+    }
+
+    public function isAttempted()
+    {
+        return $this->status == Statuses::ATTEMPTED;
+    }
+
+    public function isProcessed()
+    {
+        return $this->isFailed() || $this->isSuccess();
+    }
+
+    public function canRefresh()
+    {
+        return $this->isPending() || $this->isAttempted();
+    }
+
     public function getOriginalMobile()
     {
         return getOriginalMobileNumber($this->payee_mobile);
@@ -190,6 +206,39 @@ class TopUpOrder extends BaseModel implements PayableType
     public function isViaPaywell()
     {
         return $this->gateway == Names::PAYWELL;
+    }
+
+    public function isViaSsl()
+    {
+        return $this->gateway == Names::SSL;
+    }
+
+    public function isViaPretups()
+    {
+        return in_array($this->gateway, [Names::ROBI, Names::AIRTEL, Names::BANGLALINK]);
+    }
+
+    public function getTransactionDetailsObject()
+    {
+        return json_decode($this->transaction_details);
+    }
+
+    public function isGatewayRefUniform()
+    {
+        return $this->id > config('topup.non_uniform_gateway_ref_last_id');
+    }
+
+    public function getGatewayRefId()
+    {
+        if ($this->isGatewayRefUniform()) return dechex($this->id);
+
+        if ($this->isViaPaywell()) return $this->id;
+
+        if ($this->isViaPretups()) return "";
+
+        if ($this->isViaSsl()) return $this->getTransactionDetailsObject()->guid;
+
+        return "";
     }
 
     public function isViaSsl()

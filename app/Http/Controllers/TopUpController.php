@@ -22,6 +22,7 @@ use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
+use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
@@ -332,31 +333,20 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
-     * @param Paywell $paywell
+     * @param TopUpLifecycleManager $lifecycle
      * @return JsonResponse
      * @throws \Sheba\TPProxy\TPProxyServerError | Exception
      */
-    public function paywellStatusUpdate(Request $request, Paywell $paywell)
+    public function statusUpdate(Request $request, TopUpLifecycleManager $lifecycle)
     {
-        /** @var TopUpOrder $topup_order */
-        $topup_order = TopUpOrder::find($request->topup_order_id);
-
-        if (!$topup_order->isViaPaywell() || !$topup_order->isPending()) {
-            $data = [
-                'recipient_msisdn' => $topup_order->payee_mobile,
-                'status_name' => $topup_order->status,
-                'status_code' => '',
-            ];
-            return api_response($data, json_encode($data), 200);
-        }
+        $lifecycle->setTopUpOrder(TopUpOrder::find($request->topup_order_id));
 
         try {
-            $ipn_response = $paywell->enquireIpnResponse($topup_order);
-            $ipn_response->handleTopUp();
-            $actual_response = $ipn_response->getResponse();
+            $actual_response = $lifecycle->reload()->getResponse();
         } catch (PaywellTopUpStillNotResolved $e) {
             $actual_response = $e->getResponse();
         }
+
         return api_response($actual_response, json_encode($actual_response), 200);
     }
 }
