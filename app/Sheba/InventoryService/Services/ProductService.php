@@ -2,6 +2,8 @@
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 
 
 class ProductService
@@ -209,23 +211,27 @@ class ProductService
 
     private function makeCreateData()
     {
+        $request = request();
+        /** @var UploadedFile $file */
+        $file = $request->file('images');
         return [
-            'partner_id' => $this->partnerId,
-            'category_id' => $this->categoryId,
-            'name' => $this->name,
-            'description' => $this->description,
-            'warranty' => $this->warranty ?: 0,
-            'warranty_unit' => $this->warrantyUnit ?: 'day',
-            'vat_percentage' => $this->vatPercentage ?: 0,
-            'unit_id' => $this->unitId,
-            'images' => $this->images,
-            'wholesale_price' => $this->wholesalePrice,
-            'cost' => $this->cost,
-            'price' => $this->price,
-            'stock' => $this->stock,
-            'channelId' => $this->channelId,
-            'discount_amount' => $this->discountAmount,
-            'discount_end_date' => $this->discountEndDate,
+            'multipart' => [
+                ['name' => 'partner_id', 'contents' => $this->partnerId],
+                ['name' => 'category_id', 'contents' => $this->categoryId],
+                ['name' => 'name','contents' => $this->name],
+                ['name' => 'description','contents' => $this->description],
+                ['name' => 'warranty','contents' => $this->warranty ?: 0],
+                ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day'],
+                ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0],
+                ['name' => 'unit_id', 'contents' => $this->unitId],
+                ['name' => 'wholesale_price', 'contents' => $this->wholesalePrice],
+                ['name' => 'cost', 'contents' => $this->cost],
+                ['name' => 'price', 'contents' => $this->price],
+                ['name' => 'stock', 'contents' => $this->stock],
+                ['name' => 'discount_amount', 'contents' => $this->discountAmount],
+                ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
+                ['name' => 'images', 'contents' => File::get($file->getRealPath()), 'filename' => $file->getClientOriginalName()],
+            ]
         ];
     }
 
