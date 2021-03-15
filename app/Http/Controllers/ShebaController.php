@@ -326,15 +326,15 @@ class ShebaController extends Controller
             "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
             "static_info" =>[
                 "how_emi_works"=>[
-                    "As soon as you complete your purchase order on Pickaboo, you will see the full amount charged on your credit card.",
-                    "You must Sign and Complete the EMI form and submit it at Pickaboo within 3 working days.",
-                    "Once Pickaboo receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "As soon as you complete your purchase order on Sheba Service Platform, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform within 3 working days.",
+                    "Once Sheba Service Platform receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
                     "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
                 ],
                 "terms_and_conditions"=>[
-                    "As soon as you complete your purchase order on Pickaboo, you will see the full amount charged on your credit card.",
-                    "You must Sign and Complete the EMI form and submit it at Pickaboo within 3 working days.",
-                    "Once Pickaboo receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "As soon as you complete your purchase order on Sheba Service Platform, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform within 3 working days.",
+                    "Once Sheba Service Platform receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
                     "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
                 ]
             ]
