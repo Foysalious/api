@@ -17,7 +17,8 @@ class TradeFair
                                 FROM   partners  JOIN (
                                 SELECT  business_type, GROUP_CONCAT(id) grouped_partner
                                 FROM  partners
-                                where is_webstore_published = 1
+                                WHERE EXISTS(SELECT id FROM trade_fair WHERE partner_id=partners.id)
+                                and  is_webstore_published = 1
                                 GROUP BY business_type) group_max 
                                 ON partners.business_type = group_max.business_type
                                 AND FIND_IN_SET(id, grouped_partner) BETWEEN 1 AND 3
@@ -49,17 +50,17 @@ class TradeFair
     public function makeData($partners, $mapped_partner_business_type)
     {
         $converted_business_types = $this->convertPartnerBusinessType('bn');
-        $trade_fair_data = TradeFairModel::whereIn('partner_id', $partners)->with('partner','partner.webstoreBanner')->get()->map(function ($shop) use ($mapped_partner_business_type, $converted_business_types) {
+        $trade_fair_data = TradeFairModel::whereIn('partner_id', $partners)->with('partner', 'partner.webstoreBanner')->get()->map(function ($shop) use ($mapped_partner_business_type, $converted_business_types) {
             return [
                 'stall_id' => $shop->stall_id,
                 'partner_id' => $shop->partner_id,
                 'partner_name' => $shop->partner->name,
-                'sub_domain'  => $shop->partner->sub_domain,
+                'sub_domain' => $shop->partner->sub_domain,
                 'delivery_charge' => $shop->partner->delivery_charge,
-                'banner' =>  $shop->partner->webstoreBanner ? [
+                'banner' => $shop->partner->webstoreBanner ? [
                     'image_link' => $shop->partner->webstoreBanner->banner->image_link,
                     'small_image_link' => $shop->partner->webstoreBanner->banner->small_image_link,
-                    'title'  => $shop->partner->webstoreBanner->title,
+                    'title' => $shop->partner->webstoreBanner->title,
                     'description' => $shop->partner->webstoreBanner->description
                 ] : null,
                 'description' => $shop->description,
@@ -89,9 +90,9 @@ class TradeFair
     {
         $converted_business_types = $this->convertPartnerBusinessType();
 
-        $partners = Partner::where(function($q){
-            $q->whereHas('tradeFair',function($tradeFair){
-                $tradeFair->where('is_published',1);
+        $partners = Partner::where(function ($q) {
+            $q->whereHas('tradeFair', function ($tradeFair) {
+                $tradeFair->where('is_published', 1);
             });
         })->with('tradeFair')->where('is_webstore_published', 1)
             ->where('business_type', $converted_business_types[$business_type])
@@ -103,16 +104,16 @@ class TradeFair
                 'stall_id' => $partner->tradeFair->stall_id,
                 'partner_id' => $partner->id,
                 'partner_name' => $partner->name,
-                'sub_domain'  => $partner->sub_domain,
+                'sub_domain' => $partner->sub_domain,
                 'delivery_charge' => $partner->delivery_charge,
-                'banner' =>  $partner->webstoreBanner ? [
-                'image_link' => $partner->webstoreBanner->banner->image_link,
-                'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
-                'title'  => $partner->webstoreBanner->title,
-                'description' => $partner->webstoreBanner->description
-            ] : null,
+                'banner' => $partner->webstoreBanner ? [
+                    'image_link' => $partner->webstoreBanner->banner->image_link,
+                    'small_image_link' => $partner->webstoreBanner->banner->small_image_link,
+                    'title' => $partner->webstoreBanner->title,
+                    'description' => $partner->webstoreBanner->description
+                ] : null,
                 'description' => $partner->tradeFair->description,
-                'discount' =>  $partner->tradeFair->discount,
+                'discount' => $partner->tradeFair->discount,
                 'is_published' => $partner->tradeFair->is_published,
             ]);
         });
