@@ -28,6 +28,20 @@ abstract class TopUpManager
         $this->statusChanger->setOrder($this->topUpOrder);
         return $this;
     }
+    
+    /**
+     * @param $action
+     * @throws Exception
+     */
+    protected function doTransaction($action)
+    {
+        try {
+            DB::transaction($action);
+        } catch (Exception $e) {
+            $this->markOrderAsSystemError($e);
+            throw $e;
+        }
+    }
 
     protected function markOrderAsSystemError(Exception $e)
     {

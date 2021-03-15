@@ -41,11 +41,11 @@ class StatusChanger
     }
 
     /**
-     * @param $transaction_id
      * @param $transaction_details
+     * @param $transaction_id
      * @return TopUpOrder
      */
-    public function pending($transaction_id, $transaction_details)
+    public function pending($transaction_details, $transaction_id)
     {
         return $this->update(Statuses::PENDING, [
             "transaction_id" => $transaction_id,
@@ -54,8 +54,8 @@ class StatusChanger
     }
 
     /**
-     * @param $transaction_id
      * @param $transaction_details
+     * @param $transaction_id
      * @return TopUpOrder
      */
     public function successful($transaction_details, $transaction_id = null)
