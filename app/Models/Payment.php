@@ -88,7 +88,7 @@ class Payment extends Model
 
     public function isValid()
     {
-        return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED;
+        return $this->status != Statuses::VALIDATION_FAILED || $this->status != Statuses::INITIATION_FAILED || $this->status != Statuses::FAILED;
     }
 
     public function canComplete()
@@ -121,8 +121,8 @@ class Payment extends Model
         $detail      = $this->paymentDetails->first();
         $transaction = new ShebaTransaction();
         $transaction->setTransactionId($this->transaction_id)
-                    ->setGateway($detail ? $detail->method : null)
-                    ->setDetails(json_decode($this->transaction_details));
+            ->setGateway($detail ? $detail->method : null)
+            ->setDetails(json_decode($this->transaction_details));
 
         return $transaction;
     }
