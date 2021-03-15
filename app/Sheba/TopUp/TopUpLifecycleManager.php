@@ -41,20 +41,6 @@ class TopUpLifecycleManager extends TopUpManager
     }
 
     /**
-     * @param $action
-     * @throws Exception
-     */
-    private function doTransaction($action)
-    {
-        try {
-            DB::transaction($action);
-        } catch (Exception $e) {
-            $this->markOrderAsSystemError($e);
-            throw $e;
-        }
-    }
-
-    /**
      * @return IpnResponse | void
      * @throws Exception | PaywellTopUpStillNotResolved
      */
