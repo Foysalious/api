@@ -57,52 +57,51 @@ class InventoryServerClient
 
     private function getOptions($data = null)
     {
-        //dd($data['thumb']);
 //        $data['thumb'] = base64_encode(file_get_contents($data['thumb']));
-//        $options['headers'] = [
-//            'Content-Type' => 'application/json',
-//            'Accept'       => 'application/json'
-//        ];
-//        if ($data) {
-//            $options['form_params'] = $data;
-//            $options['json']        = $data;
-//        }
-//
-//        return $options;
-
-        $options['multipart'] = [
-            //'headers' => ['Content-Type' => 'application/json'],
-            [
-                'name' => 'name',
-                'contents' => $data['name']
-            ],
-            [
-                'name' => 'description',
-                'contents' => $data['description']
-            ],
-            [
-                'name' => 'is_published',
-                'contents' => $data['is_published']
-            ],
-            [
-                'name' => 'thumb',
-                'contents' => File::get($data['thumb']->getRealPath()), 'filename' => $data['thumb']->getClientOriginalName()
-            ],
-            [
-                'name' => 'banner',
-                'contents' => $data['banner']
-            ],
-            [
-                'name' => 'app_thumb',
-                'contents' => $data['app_thumb']
-            ],
-            [
-                'name' => 'app_banner',
-                'contents' => $data['app_banner']
-            ]
+        $options['headers'] = [
+            'Content-Type' => 'application/json',
+            'Accept'       => 'application/json'
         ];
+        if ($data) {
+            $options['form_params'] = $data;
+            $options['json']        = $data;
+        }
 
         return $options;
+
+//        $options['multipart'] = [
+//            //'headers' => ['Content-Type' => 'application/json'],
+//            [
+//                'name' => 'name',
+//                'contents' => $data['name']
+//            ],
+//            [
+//                'name' => 'description',
+//                'contents' => $data['description']
+//            ],
+//            [
+//                'name' => 'is_published',
+//                'contents' => $data['is_published']
+//            ],
+//            [
+//                'name' => 'thumb',
+//                'contents' => File::get($data['thumb']->getRealPath()), 'filename' => $data['thumb']->getClientOriginalName()
+//            ],
+//            [
+//                'name' => 'banner',
+//                'contents' => $data['banner']
+//            ],
+//            [
+//                'name' => 'app_thumb',
+//                'contents' => $data['app_thumb']
+//            ],
+//            [
+//                'name' => 'app_banner',
+//                'contents' => $data['app_banner']
+//            ]
+//        ];
+//
+//        return $options;
     }
 
     public function post($uri, $data)
