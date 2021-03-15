@@ -44,9 +44,9 @@ class Requester
     {
         $this->addition = json_decode($addition, 1);
         $this->addAdditionComponent = $this->addition['add'];
-        $this->hasError($this->addAdditionComponent);
+        if ($this->addAdditionComponent) $this->hasError($this->addAdditionComponent);
         $this->updateAdditionComponent = $this->addition['update'];
-        $this->hasError($this->updateAdditionComponent);
+        if ($this->updateAdditionComponent) $this->hasError($this->updateAdditionComponent);
         return $this;
     }
 
@@ -64,9 +64,9 @@ class Requester
     {
         $this->deduction = json_decode($deduction,1);
         $this->addDeductionComponent = $this->deduction['add'];
-        $this->hasError($this->addDeductionComponent);
+        if ($this->addDeductionComponent) $this->hasError($this->addDeductionComponent);
         $this->updateDeductionComponent = $this->deduction['update'];
-        $this->hasError($this->updateDeductionComponent);
+        if ($this->updateDeductionComponent) $this->hasError($this->updateDeductionComponent);
         return $this;
     }
 
