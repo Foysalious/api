@@ -5,7 +5,6 @@ namespace App\Sheba\InventoryService;
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Illuminate\Support\Facades\File;
 use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 
 class InventoryServerClient
@@ -34,14 +33,9 @@ class InventoryServerClient
      */
     private function call($method, $uri, $data = null)
     {
-        //dd($this->getOptions($data));
-        //dd($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-        //dd($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents());
         try {
-            //dd($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents());
             return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
-            //throw new \Exception($e->getMessage());
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
@@ -57,7 +51,6 @@ class InventoryServerClient
 
     private function getOptions($data = null)
     {
-//        $data['thumb'] = base64_encode(file_get_contents($data['thumb']));
         $options['headers'] = [
             'Content-Type' => 'application/json',
             'Accept'       => 'application/json'
@@ -66,42 +59,7 @@ class InventoryServerClient
             $options['form_params'] = $data;
             $options['json']        = $data;
         }
-
         return $options;
-
-//        $options['multipart'] = [
-//            //'headers' => ['Content-Type' => 'application/json'],
-//            [
-//                'name' => 'name',
-//                'contents' => $data['name']
-//            ],
-//            [
-//                'name' => 'description',
-//                'contents' => $data['description']
-//            ],
-//            [
-//                'name' => 'is_published',
-//                'contents' => $data['is_published']
-//            ],
-//            [
-//                'name' => 'thumb',
-//                'contents' => File::get($data['thumb']->getRealPath()), 'filename' => $data['thumb']->getClientOriginalName()
-//            ],
-//            [
-//                'name' => 'banner',
-//                'contents' => $data['banner']
-//            ],
-//            [
-//                'name' => 'app_thumb',
-//                'contents' => $data['app_thumb']
-//            ],
-//            [
-//                'name' => 'app_banner',
-//                'contents' => $data['app_banner']
-//            ]
-//        ];
-//
-//        return $options;
     }
 
     public function post($uri, $data)
@@ -113,7 +71,7 @@ class InventoryServerClient
      * @param $uri
      * @param $data
      * @return array|object|string|null
-     * @throws ExpenseTrackingServerError
+     * @throws InventoryServiceServerError
      */
     public function put($uri, $data)
     {
@@ -123,7 +81,7 @@ class InventoryServerClient
     /**
      * @param $uri
      * @return array|object|string|null
-     * @throws ExpenseTrackingServerError
+     * @throws InventoryServiceServerError
      */
     public function delete($uri)
     {
