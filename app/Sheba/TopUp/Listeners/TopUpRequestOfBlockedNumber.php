@@ -3,6 +3,7 @@
 use App\Models\Affiliate;
 use App\Models\CanTopUpUpdateLog;
 use App\Models\Partner;
+
 use App\Repositories\SmsHandler;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
@@ -11,15 +12,18 @@ use Sheba\Dal\TopUpTransactionBlockNotificationReceiver\TopUpTransactionBlockNot
 use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\Sms\Sms;
 use Sheba\TopUp\Events\TopUpRequestOfBlockedNumber as TopUpRequestOfBlockedNumberEvent;
-use Sheba\TopUp\TopUpRequest;
+
 
 class TopUpRequestOfBlockedNumber
 {
     private $sms;
 
+    private $topUpRequest;
+
     public function __construct(Sms $sms)
     {
         $this->sms = $sms;
+
     }
 
 
@@ -29,13 +33,13 @@ class TopUpRequestOfBlockedNumber
         $this->notifyConcerningPersons($event);
     }
 
-    private function blockUser(TopUpRequestOfBlockedNumberEvent $event)
+    private function blockUser(TopUpRequestOfBlockedNumberEvent $event )
     {
         if ($event->topupRequest->getAgent() instanceof Affiliate) $event->topupRequest->getAgent()->update(['verification_status' => 'rejected', 'reject_reason' => "Unusual / Suspicious account activity"]);
         elseif ($event->topupRequest->getAgent() instanceof Partner) {
 
-            $event->topupRequest->getAgent()->update(['can_topup' => 0] );
-//            $event->topupRequest->getAgent()->update(['can_topup' => 0] && ($partner = new Partner)->topupChangeLogs()->create(['from' => 1, 'to' => 0, 'partner_id' => $partner->id, 'created_by' => 'system', 'log' => 'Partner has been blacklisted due to top up request to this' . ($TopUpRequest =new TopUpRequest)->getMobile()]));
+           $event->topupRequest->getAgent()->update(['can_topup' => 0] );
+           $event->topupRequest->getAgent()->topupChangeLogs()->create(['from' => 1, 'to' => 0, 'partner_id' => $event->topupRequest->getAgent(),  'log' => 'Partner has been blacklisted due to top up request to this'. $event->topupRequest->getMobile()]);
         }
     }
 
