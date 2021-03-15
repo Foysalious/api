@@ -1,6 +1,7 @@
 <?php namespace App\Models;
 
 use AlgoliaSearch\Laravel\AlgoliaEloquentTrait;
+use App\Models\CanTopUpUpdateLog;
 use App\Models\Transport\TransportTicketOrder;
 use App\Sheba\Payment\Rechargable;
 use Carbon\Carbon;
@@ -152,6 +153,10 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
     public function basicInformations()
     {
         return $this->hasOne(PartnerBasicInformation::class);
+    }
+    public function topupChangeLogs()
+    {
+        return $this->hasMany(CanTopUpUpdateLog::class);
     }
 
     public function financeResources()
