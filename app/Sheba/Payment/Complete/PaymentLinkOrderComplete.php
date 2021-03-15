@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
@@ -77,7 +78,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->dispatchReward();
             $this->storeEntry();
         }catch (\Throwable $e){
-            dd($e);
             logError($e);
         }
         return $this->payment;
@@ -226,9 +226,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($payment_link->getAmount(), 2);
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        /** @var Payable $payable */
+        $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->name} by order link- {$payment_link->getLinkID()}",
+            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
             "event_type" => $event_type,
             "event_id"   => $this->target->id,
             "sound"      => "notification_sound",

@@ -6,6 +6,8 @@ use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Models\AffiliateTransaction;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Customer;
@@ -280,8 +282,8 @@ class ProfileRepository
     public function registerMobile($info)
     {
         $data = [
-            'mobile' => $info['mobile'],
-            'portal_name' => $info['portal_name'],
+            'mobile'          => $info['mobile'],
+            'portal_name'     => isset($info['portal_name']) ? $info['portal_name'] : $info['from'],
             'mobile_verified' => 1,
             "remember_token" => str_random(255)
         ];
@@ -377,7 +379,10 @@ class ProfileRepository
             ]);
         });
 
-        (new SmsHandler('affiliate-register'))->send($affiliate->profile->mobile, [
+        (new SmsHandler('affiliate-register'))
+            ->setBusinessType(BusinessType::BONDHU)
+            ->setFeatureType(FeatureType::AFFILIATE_BONUS)
+            ->send($affiliate->profile->mobile, [
             'bonus_amount' => $affiliate_bonus_amount
         ]);
     }

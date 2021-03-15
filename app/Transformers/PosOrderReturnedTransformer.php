@@ -19,6 +19,7 @@ class PosOrderReturnedTransformer extends TransformerAbstract
     public function transform(PosOrderLog $order_log)
     {
         $orders  = [];
+        /** @var \stdClass $details */
         $details = $order_log->details;
         foreach ($details->items->changes as $key => $item) {
             $service          = $this->itemRepo->getModel()->find($key);

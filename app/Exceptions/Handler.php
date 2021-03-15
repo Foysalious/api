@@ -7,6 +7,9 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Sheba\Exceptions\HandlerFactory;
+use Sheba\Payment\Exceptions\InitiateFailedException;
+use Sheba\Subscription\Partner\Access\Exceptions\AccessRestrictedExceptionForPackage;
+use Sheba\TopUp\Exception\PinMismatchException;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
@@ -21,8 +24,9 @@ class Handler extends ExceptionHandler
     protected $dontReport = [
         AuthorizationException::class,
         HttpException::class,
-        ValidationException::class,
-        DoNotReportException::class
+        InitiateFailedException::class,
+        AccessRestrictedExceptionForPackage::class,
+        PinMismatchException::class
     ];
 
     /**

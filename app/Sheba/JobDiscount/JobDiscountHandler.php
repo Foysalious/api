@@ -105,13 +105,12 @@ class JobDiscountHandler
 
     public function hasDiscount()
     {
-        return !is_null($this->discount);
+        return !is_null($this->discount) && (double) $this->discount !== 0;
     }
 
     public function create(Job $job)
     {
         $discount_data = $this->getData();
-        if (empty($discount_data)) return;
         $discount_data['job_id'] = $job->id;
         $this->jobDiscountRepo->create($discount_data);
     }

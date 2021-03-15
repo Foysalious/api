@@ -5,6 +5,7 @@ use App\Models\Department;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
+use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
@@ -438,6 +439,7 @@ class CoWorkerController extends Controller
         if ($request->has('employee_type')) $employees = $this->filterByEmployeeType($employees, $request)->values();
 
         $total_employees = count($employees);
+        $limit = $this->getLimit($request, $limit, $total_employees);
         $employees = collect($employees)->splice($offset, $limit);
 
         if (count($employees) > 0) return api_response($request, $employees, 200, [
@@ -446,6 +448,8 @@ class CoWorkerController extends Controller
         ]);
         return api_response($request, null, 404);
     }
+
+
 
     /**
      * @param $business
@@ -456,6 +460,7 @@ class CoWorkerController extends Controller
      */
     public function show($business, $member_id, Request $request, BusinessMemberRepositoryInterface $business_member_repo)
     {
+        if (!is_numeric($member_id)) return api_response($request, null, 400);
         $member = Member::findOrFail($member_id);
         if (!$member) return api_response($request, null, 404);
         $business = $request->business;
@@ -505,7 +510,6 @@ class CoWorkerController extends Controller
 
         $coWorker_requester = $this->coWorkerRequester->setStatus($request->status);
         $business_member = $this->coWorkerUpdater->setCoWorkerRequest($coWorker_requester)->setBusiness($business)->setMember($member_id)->statusUpdate();
-
         if ($business_member) return api_response($request, 1, 200);
         return api_response($request, null, 404);
     }
@@ -780,7 +784,8 @@ class CoWorkerController extends Controller
         });
     }
 
-    private function filterByEmployeeType($employees, Request $request) {
+    private function filterByEmployeeType($employees, Request $request)
+    {
         $is_super = $request->employee_type === 'super_admin' ? 1 : 0;
         return collect($employees)->filter(function ($employee) use ($is_super) {
             return $employee['is_super'] == $is_super;
@@ -830,5 +835,17 @@ class CoWorkerController extends Controller
             ]);
         }
         return $department_info;
+    }
+
+    /**
+     * @param Request $request
+     * @param $limit
+     * @param $total_employees
+     * @return mixed
+     */
+    private function getLimit(Request $request, $limit, $total_employees)
+    {
+        if ($request->has('limit') && $request->limit == 'all') return $total_employees;
+        return $limit;
     }
 }

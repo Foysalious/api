@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business;
 
+use App\Sheba\Sms\FeatureType;
 use Sheba\Sms\Sms;
 use App\Models\BusinessSmsTemplate;
 
@@ -32,7 +33,11 @@ class BusinessSmsHandler
         foreach ($variables as $variable => $value) {
             $message = str_replace("{{" . $variable . "}}", $value, $message);
         }
-        $sms = $this->sms->to($mobile)->msg($message);
+        $sms = $this->sms
+            ->setFeatureType(FeatureType::BUSINESS)
+            ->setBusinessType(FeatureType::BUSINESS)
+            ->to($mobile)
+            ->msg($message);
         $sms->shoot();
 
         return $sms;

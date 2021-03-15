@@ -17,4 +17,9 @@ class TopUpVendor extends Model
     {
         return $query->where('is_published', 1);
     }
+
+    public function scopeGateway($query, $gateway)
+    {
+        return $query->where('gateway', $gateway);
+    }
 }
