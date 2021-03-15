@@ -3,7 +3,9 @@
 
 use Exception;
 use Sheba\Dal\TopupOrder\FailedReason;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
 use DB;
@@ -53,13 +55,15 @@ class TopUpLifecycleManager extends TopUpManager
     }
 
     /**
-     * @throws Exception
+     * @return IpnResponse | void
+     * @throws Exception | PaywellTopUpStillNotResolved
      */
     public function reload()
     {
-        if ($this->topUpOrder->isFailed() || $this->topUpOrder->isSuccess()) return;
+        if (!$this->topUpOrder->canRefresh()) return;
         $vendor = $this->getVendor();
         $response = $vendor->enquire($this->topUpOrder);
         $response->handleTopUp();
+        return $response;
     }
 }

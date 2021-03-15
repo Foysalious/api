@@ -6,6 +6,7 @@ use App\Models\TopUpVendor;
 use Carbon\Carbon;
 use Exception;
 use Sheba\TopUp\Exception\GatewayTimeout;
+use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Gateway\Gateway;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Gateway\Names;
@@ -69,7 +70,7 @@ abstract class Vendor
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
-     * @throws Exception
+     * @throws Exception | PaywellTopUpStillNotResolved
      */
     public function enquire(TopUpOrder $topup_order): IpnResponse
     {
