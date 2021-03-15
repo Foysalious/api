@@ -213,9 +213,8 @@ class ProductService
     {
         $request = request();
         /** @var UploadedFile $file */
-        $file = $request->file('images');
+        $file = $request->file('images')[0];
         return [
-            'multipart' => [
                 ['name' => 'partner_id', 'contents' => $this->partnerId],
                 ['name' => 'category_id', 'contents' => $this->categoryId],
                 ['name' => 'name','contents' => $this->name],
@@ -230,8 +229,7 @@ class ProductService
                 ['name' => 'stock', 'contents' => $this->stock],
                 ['name' => 'discount_amount', 'contents' => $this->discountAmount],
                 ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
-                ['name' => 'images', 'contents' => File::get($file->getRealPath()), 'filename' => $file->getClientOriginalName()],
-            ]
+                ['name' => 'images[0]', 'contents' => File::get($file->getRealPath()), 'filename' => $file->getClientOriginalName()],
         ];
     }
 
@@ -254,25 +252,7 @@ class ProductService
         $request = request();
         /** @var UploadedFile $file */
         $file = $request->file('images');
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/products', [
-            'multipart' => [
-                ['name' => 'partner_id', 'contents' => $this->partnerId],
-                ['name' => 'category_id', 'contents' => $this->categoryId],
-                ['name' => 'name','contents' => $this->name],
-                ['name' => 'description','contents' => $this->description],
-                ['name' => 'warranty','contents' => $this->warranty ?: 0],
-                ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day'],
-                ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0],
-                ['name' => 'unit_id', 'contents' => $this->unitId],
-                ['name' => 'wholesale_price', 'contents' => $this->wholesalePrice],
-                ['name' => 'cost', 'contents' => $this->cost],
-                ['name' => 'price', 'contents' => $this->price],
-                ['name' => 'stock', 'contents' => $this->stock],
-                ['name' => 'discount_amount', 'contents' => $this->discountAmount],
-                ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
-                ['name' => 'images', 'contents' => File::get($file->getRealPath()), 'filename' => $file->getClientOriginalName()],
-            ]
-        ]);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/products', $data, true);
     }
 
     public function update()
