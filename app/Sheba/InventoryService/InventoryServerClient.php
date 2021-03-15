@@ -52,7 +52,7 @@ class InventoryServerClient
     private function getOptions($data = null)
     {
         $options['headers'] = [
-            'Content-Type' => 'application/json',
+//            'Content-Type' => 'application/json',
             'Accept'       => 'application/json'
         ];
         if ($data) {
