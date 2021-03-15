@@ -1,5 +1,7 @@
 <?php namespace Sheba\Business\PayrollComponent;
 
+use Sheba\Dal\PayrollComponent\Type;
+
 class Requester
 {
     private $name;
@@ -8,14 +10,9 @@ class Requester
     private $addition;
     private $addAdditionComponent;
     private $updateAdditionComponent;
-    /**
-     * @var mixed
-     */
     private $updateDeductionComponent;
-    /**
-     * @var mixed
-     */
     private $addDeductionComponent;
+    private $error =  false;
 
     public function setName($name)
     {
@@ -47,7 +44,9 @@ class Requester
     {
         $this->addition = json_decode($addition, 1);
         $this->addAdditionComponent = $this->addition['add'];
+        $this->hasError($this->addAdditionComponent);
         $this->updateAdditionComponent = $this->addition['update'];
+        $this->hasError($this->updateAdditionComponent);
         return $this;
     }
 
@@ -65,7 +64,9 @@ class Requester
     {
         $this->deduction = json_decode($deduction,1);
         $this->addDeductionComponent = $this->deduction['add'];
+        $this->hasError($this->addDeductionComponent);
         $this->updateDeductionComponent = $this->deduction['update'];
+        $this->hasError($this->updateDeductionComponent);
         return $this;
     }
 
@@ -77,5 +78,25 @@ class Requester
     public function getUpdateDeductionComponent()
     {
         return $this->updateDeductionComponent;
+    }
+
+    public function hasError($components)
+    {
+        $new_components = [];
+        foreach ($components as $components_type) {
+            foreach ($components_type as $components_value) {
+                array_push($new_components, $components_value);
+            }
+        }
+        $existing_components = $this->setting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->pluck('name')->toArray();
+
+        if (count(array_intersect($new_components, $existing_components)) > 0) $this->error = true;
+
+        return $this->error;
+    }
+
+    public function checkError()
+    {
+        return $this->error;
     }
 }

@@ -128,6 +128,8 @@ class PayrollController extends Controller
         if (!$payroll_setting) return api_response($request, null, 404);
 
         $payroll_component_requester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
+        if ($payroll_component_requester->checkError()) return api_response($request, null, 404, ['message' => 'Duplicate components found!']);
+
         $addition_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
         $deduction_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
 
