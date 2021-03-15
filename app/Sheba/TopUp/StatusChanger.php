@@ -93,14 +93,14 @@ class StatusChanger
      */
     private function update($status, $data = [])
     {
-        $updated_order = null;
-        DB::transaction(function () use ($data, $status, &$updated_order) {
+        DB::transaction(function () use ($data, $status) {
             $data["status"] = $status;
-            $updated_order = $this->orderRepo->update($this->order, $data);
+            $this->orderRepo->update($this->order, $data);
             $this->saveLog($status);
-            return $updated_order;
         });
-        return $updated_order;
+
+        $this->order->reload();
+        return $this->order;
     }
 
     private function saveLog($new_status)
