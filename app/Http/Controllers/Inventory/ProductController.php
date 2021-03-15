@@ -52,9 +52,10 @@ class ProductController extends Controller
         return http_response($request, null, 200, $response);
     }
 
-    public function show(Request $request, $partnerId, $productId)
+    public function show(Request $request, $productId)
     {
-        $product = $this->productService->setPartnerId($partnerId)->setProductId($productId)->getDetails();
+        $partner = $request->auth_user->getPartner();
+        $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->getDetails();
         return http_response($request, null, 200, $product);
     }
 
