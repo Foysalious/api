@@ -16,6 +16,8 @@ class StatusChanger
 
     /** @var TopUpOrder */
     private $order;
+    /** @var TopUpOrder */
+    private $oldOrder;
 
     public function __construct(TopUpOrderRepository $order_repo, TopUpOrderStatusLogRepository $status_repo)
     {
@@ -26,6 +28,7 @@ class StatusChanger
     public function setOrder(TopUpOrder $order)
     {
         $this->order = $order;
+        $this->oldOrder = clone $order;
         return $this;
     }
 
@@ -96,20 +99,19 @@ class StatusChanger
         DB::transaction(function () use ($data, $status) {
             $data["status"] = $status;
             $this->orderRepo->update($this->order, $data);
-            $this->saveLog($status);
+            $this->saveLog();
         });
 
-        $this->order->reload();
         return $this->order;
     }
 
-    private function saveLog($new_status)
+    private function saveLog()
     {
         $this->statusRepo->create([
             "topup_order_id" => $this->order->id,
-            "from" => $this->order->status,
-            "to" => $new_status,
-            "transaction_details" => $this->order->transaction_details
+            "from" => $this->oldOrder->status,
+            "to" => $this->order->status,
+            "transaction_details" => $this->oldOrder->transaction_details
         ]);
     }
 }
