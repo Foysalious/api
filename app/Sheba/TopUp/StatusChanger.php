@@ -102,6 +102,7 @@ class StatusChanger
             $this->saveLog();
         });
 
+        $this->oldOrder = clone $this->order;
         return $this->order;
     }
 
