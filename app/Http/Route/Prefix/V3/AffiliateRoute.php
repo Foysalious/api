@@ -20,9 +20,10 @@ class AffiliateRoute
                 $api->post('validate', 'BondhuBalanceController@validatePayment');
             });
 
-//            $api->group(['prefix' => 'bondhu-reward'], function ($api){
+            $api->group(['prefix' => 'bondhu-reward'], function ($api){
 //                $api->get('history', 'Affiliate\BondhuRewardController@rewardHistory' );
-//            });
+                $api->get('/', 'Affiliate\BondhuRewardController@rewardList');
+            });
         });
 
 
