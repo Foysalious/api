@@ -36,11 +36,6 @@ class PretupsResponse extends TopUpResponse
         return isset($this->response->MESSAGE) ? $this->response->MESSAGE : 'Vendor api call error.';
     }
 
-    public function resolveTopUpSuccessStatus()
-    {
-        return Pretups::getInitialStatusStatically();
-    }
-
     public function isPending()
     {
         return false;
