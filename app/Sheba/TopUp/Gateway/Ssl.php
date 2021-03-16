@@ -90,7 +90,7 @@ class Ssl implements Gateway
         return $ipn_response;
     }
 
-    public function getRefId(TopUpOrder $topup_order)
+    private function getRefId(TopUpOrder $topup_order)
     {
         return str_pad($topup_order->getGatewayRefId(), 20, '0', STR_PAD_LEFT);
     }
