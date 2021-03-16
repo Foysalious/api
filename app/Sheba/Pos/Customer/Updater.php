@@ -5,6 +5,8 @@ use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
 use App\Models\Profile;
 
+use Carbon\Carbon;
+use Firebase\JWT\JWT;
 use Illuminate\Http\UploadedFile;
 
 use Intervention\Image\Image;
@@ -61,6 +63,16 @@ class Updater
         return $this;
     }
 
+    /**
+     * @param PosCustomer $customer
+     * @return $this
+     */
+    public function setCustomer(PosCustomer $customer)
+    {
+        $this->posCustomer = $customer;
+        return $this;
+    }
+
     public function hasError()
     {
         if ($error = $this->alreadyExistError())
@@ -86,7 +98,7 @@ class Updater
         $this->saveImages();
         $this->format();
         $this->data['profile_id'] = $this->resolveProfileId();
-        return  $this->createOrUpdatePosCustomer();
+        return $this->createOrUpdatePosCustomer();
     }
 
     private function saveImages()
@@ -109,9 +121,9 @@ class Updater
     {
         $profile_data = [
 //            'name'      => $this->data['name'],
-            'mobile'    => $this->data['mobile'],
-            'email'     => $this->data['email'],
-            'address'   => $this->data['address']
+            'mobile' => $this->data['mobile'],
+            'email' => $this->data['email'],
+            'address' => $this->data['address']
         ];
         if (isset($this->data['profile_image'])) $profile_data += ['pro_pic' => $this->data['profile_image']];
         if (!$this->profile) {
@@ -119,6 +131,7 @@ class Updater
             $this->setProfile($profile);
         } else {
             unset($profile_data['email']);
+            $token = $this->getPartnerAuthorizationToken();
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;
@@ -181,13 +194,14 @@ class Updater
         return array_key_exists($filename, $this->data) && ($this->data[$filename] instanceof Image || ($this->data[$filename] instanceof UploadedFile && $this->data[$filename]->getPath() != ''));
     }
 
-    /**
-     * @param PosCustomer $customer
-     * @return $this
-     */
-    public function setCustomer(PosCustomer $customer)
+
+    private function getPartnerAuthorizationToken()
     {
-        $this->posCustomer = $customer;
-        return $this;
+        return JWT::encode([
+            'iss' => "smanager_authorization",
+            'sub' => $this->partner->id,
+            'iat' => Carbon::now()->timestamp,
+            'exp' => Carbon::now()->addMinutes(1)->timestamp
+        ], config('jwt.secret'));
     }
 }
