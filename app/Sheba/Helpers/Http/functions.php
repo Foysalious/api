@@ -171,6 +171,24 @@ if (!function_exists('isTimeoutException')) {
     }
 }
 
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->has('location')) return Location::find($request->location);
+
+        if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
+    }
+}
+
 if (!function_exists('http_response')) {
     /**
      * @param            $request
