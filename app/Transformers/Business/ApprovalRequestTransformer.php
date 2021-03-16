@@ -7,6 +7,7 @@ use App\Sheba\Business\BusinessBasicInformation;
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
+use Sheba\Business\Leave\LeaveRejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -143,7 +144,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $data = [];
         $final_data['note'] = $rejection->note;
         foreach ($reasons as $reason){
-            $data['reasons'][] = $reason->reason;
+            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
         }
         return array_merge($final_data, $data);
     }
