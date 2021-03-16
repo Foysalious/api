@@ -40,7 +40,7 @@ class ProductController extends Controller
             ->setWarrantyUnit($request->warranty_unit)
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
-            ->setImages($request->images)
+            ->setImages($request->file('images'))
             ->setWholesalePrice($request->wholesale_price)
             ->setCost($request->cost)
             ->setPrice($request->price)
