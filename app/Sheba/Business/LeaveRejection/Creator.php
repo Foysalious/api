@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\LeaveRejection;
 
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\LeaveRejectionReason\LeaveRejectionReasonRepository;
 use Sheba\Dal\LeaveRejection\LeaveRejectionRepository;
 use Sheba\Dal\LeaveRejection\LeaveRejection;
@@ -14,10 +15,10 @@ class Creator
     private $leaveRejectionReasonRepository;
     private $leaveRejectionRepository;
     private $leaveRejectionReasonData;
+    /** @var LeaveRejectionRequester $leaveRejectionRequester */
+    private $leaveRejectionRequester;
     private $leaveRejectionData;
-    private $reasons;
     private $leave;
-    private $note;
 
     public function __construct(LeaveRejectionRepository $leave_rejection_repository, LeaveRejectionReasonRepository $leave_rejection_reason_repository)
     {
@@ -25,16 +26,10 @@ class Creator
         $this->leaveRejectionReasonRepository = $leave_rejection_reason_repository;
     }
 
-    public function setReasons($reasons)
-    {
-        $this->reasons = $reasons;
-        if ($this->reasons) $this->reasons = json_decode($this->reasons, 1);
-        return $this;
-    }
 
-    public function setNote($note)
+    public function setLeaveRejectionRequester(LeaveRejectionRequester $leave_rejection_requester)
     {
-        $this->note = $note;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
         return $this;
     }
 
@@ -47,8 +42,9 @@ class Creator
     public function create()
     {
         $this->makeLeaveRejectionData();
+
         DB::transaction(function () {
-            $leave_rejection = $this->leaveRejectionRepository->create($this->withBothModificationFields($this->leaveRejectionData));
+            $leave_rejection = $this->leaveRejectionRepository->create($this->leaveRejectionData);
             $this->reasonCreate($leave_rejection);
         });
         return $this;
@@ -56,7 +52,7 @@ class Creator
 
     private function makeLeaveRejectionData()
     {
-        if ($this->note) $this->leaveRejectionData['note'] = $this->note;
+        if ($this->leaveRejectionRequester->getNote()) $this->leaveRejectionData['note'] = $this->leaveRejectionRequester->getNote();
         $this->leaveRejectionData['leave_id'] = $this->leave->id;
         return $this->leaveRejectionData;
     }
@@ -64,17 +60,18 @@ class Creator
     private function reasonCreate(LeaveRejection $leave_rejection)
     {
         $this->makeLeaveRejectionReasonData($leave_rejection);
-        $this->leaveRejectionReasonRepository->insert($this->withCreateModificationField($this->leaveRejectionReasonData));
+        $this->leaveRejectionReasonRepository->insert($this->leaveRejectionReasonData);
     }
 
     private function makeLeaveRejectionReasonData(LeaveRejection $leave_rejection)
     {
-        foreach ($this->reasons as $reason) {
-            $this->leaveRejectionReasonData[] = [
-                'leave_rejection_id' => $leave_rejection->id,
-                'reason' => $reason
-            ];
-        }
+        if (count($this->leaveRejectionRequester->getReasons()) > 0)
+            foreach ($this->leaveRejectionRequester->getReasons() as $reason) {
+                $this->leaveRejectionReasonData[] = [
+                    'leave_rejection_id' => $leave_rejection->id,
+                    'reason' => $reason
+                ];
+            }
         return $this->leaveRejectionReasonData;
     }
 }
