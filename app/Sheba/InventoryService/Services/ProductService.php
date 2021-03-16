@@ -2,6 +2,8 @@
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\File;
 
 
 class ProductService
@@ -209,49 +211,58 @@ class ProductService
 
     private function makeCreateData()
     {
-        return [
-            'partner_id' => $this->partnerId,
-            'category_id' => $this->categoryId,
-            'name' => $this->name,
-            'description' => $this->description,
-            'warranty' => $this->warranty ?: 0,
-            'warranty_unit' => $this->warrantyUnit ?: 'day',
-            'vat_percentage' => $this->vatPercentage ?: 0,
-            'unit_id' => $this->unitId,
-            'images' => $this->images,
-            'wholesale_price' => $this->wholesalePrice,
-            'cost' => $this->cost,
-            'price' => $this->price,
-            'stock' => $this->stock,
-            'channelId' => $this->channelId,
-            'discount_amount' => $this->discountAmount,
-            'discount_end_date' => $this->discountEndDate,
+        $data = [
+            ['name' => 'partner_id', 'contents' => $this->partnerId],
+            ['name' => 'category_id', 'contents' => $this->categoryId],
+            ['name' => 'name','contents' => $this->name],
+            ['name' => 'description','contents' => $this->description],
+            ['name' => 'warranty','contents' => $this->warranty ?: 0],
+            ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day'],
+            ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0],
+            ['name' => 'unit_id', 'contents' => $this->unitId],
+            ['name' => 'discount_amount', 'contents' => $this->discountAmount],
+            ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
         ];
+        if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
+        return $data;
     }
 
     private function makeUpdateData()
     {
         $data = [];
-        if (isset($this->categoryId)) $data['category_id'] = $this->categoryId;
-        if (isset($this->name)) $data['name'] = $this->name;
-        if (isset($this->description)) $data['description'] = $this->description;
-        if (isset($this->warranty)) $data['warranty'] = $this->warranty;
-        if (isset($this->warrantyUnit)) $data['warranty_unit'] = $this->warrantyUnit;
-        if (isset($this->vatPercentage)) $data['vat_percentage'] = $this->vatPercentage;
-        if (isset($this->unitId)) $data['unit_id'] = $this->unitId;
+        if (isset($this->categoryId)) array_push($data, ['name' => 'category_id', 'contents' => $this->categoryId]);
+        if (isset($this->name)) $data['name'] = array_push($data, ['name' => 'name','contents' => $this->name]);
+        if (isset($this->description)) $data['description'] = array_push($data, ['name' => 'description','contents' => $this->description]);
+        if (isset($this->warranty)) $data['warranty'] = array_push($data, ['name' => 'warranty','contents' => $this->warranty ?: 0]);
+        if (isset($this->warrantyUnit)) $data['warranty_unit'] = array_push($data, ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day']);
+        if (isset($this->vatPercentage)) $data['vat_percentage'] = array_push($data, ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0]);
+        if (isset($this->unitId)) $data['unit_id'] = array_push($data, ['name' => 'unit_id', 'contents' => $this->unitId]);
+        if (isset($this->discountAmount)) $data['discount_amount'] = array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
+        if (isset($this->discountEndDate)) $data['discount_end_date'] = array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
+        if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
+    }
+
+    private function makeImagesData()
+    {
+        $images = [];
+        foreach ($this->images as $key => $image)
+        {
+            array_push($images, ['name' => 'images['.$key.']', 'contents' => File::get($image->getRealPath()), 'filename' => $image->getClientOriginalName()]);
+        }
+        return $images;
     }
 
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/products', $data);
+        return $this->client->post('api/v1/partners/'.$this->partnerId.'/products', $data, true);
     }
 
     public function update()
     {
-        $data = $this->makeCreateData();
-        return $this->client->put('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId, $data);
+        $data = $this->makeUpdateData();
+        return $this->client->put('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId, $data, true);
     }
 
     public function delete()

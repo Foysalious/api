@@ -45,11 +45,10 @@ class CollectionController extends Controller
             ->setPartnerId($partner->id)
             ->setName($request->name)
             ->setDescription($request->description)
-            ->setShardingId($request->sharding_id)
-            ->setThumb($request->thumb)
-            ->setBanner($request->banner)
-            ->setAppThumb($request->app_thumb)
-            ->setAppBanner($request->app_banner)
+            ->setThumb($request->file('thumb'))
+            ->setBanner($request->file('banner'))
+            ->setAppThumb($request->file('app_thumb'))
+            ->setAppBanner($request->file('app_banner'))
             ->setIsPublished($request->is_published)
             ->store();
         return http_response($request, null, 201, $response);
@@ -74,7 +73,6 @@ class CollectionController extends Controller
             ->setPartnerId($partner->id)
             ->setName($request->name)
             ->setDescription($request->description)
-            ->setShardingId($request->sharding_id)
             ->setThumb($request->thumb)
             ->setBanner($request->banner)
             ->setAppThumb($request->app_thumb)

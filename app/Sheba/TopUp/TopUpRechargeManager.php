@@ -4,7 +4,6 @@ use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
-use DB;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -63,16 +62,18 @@ class TopUpRechargeManager extends TopUpManager
     /**
      * @param TopUpOrder $order
      * @return $this
+     * @throws Exception
      */
     public function setTopUpOrder(TopUpOrder $order)
     {
         parent::setTopUpOrder($order);
+        $this->setAgent($order->agent)->setVendor($this->getVendor());
         $this->validator->setTopupOrder($this->topUpOrder);
         return $this;
     }
 
     /**
-     * @throws Exception
+     * @throws \Throwable
      */
     public function recharge()
     {
@@ -114,19 +115,15 @@ class TopUpRechargeManager extends TopUpManager
     }
 
     /**
-     * @throws Exception
+     * @throws \Throwable
      */
     private function handleSuccessfulTopUpByVendor()
     {
-        try {
-            DB::transaction(function () {
-                $this->topUpOrder = $this->updateSuccessfulTopOrder($this->response->getSuccess());
-                $this->agent->getCommission()->setTopUpOrder($this->topUpOrder)->disburse();
-                $this->vendor->deductAmount($this->topUpOrder->amount);
-            });
-        } catch (Exception $e) {
-            $this->markOrderAsSystemError($e);
-        }
+        $this->doTransaction(function () {
+            $this->topUpOrder = $this->updateSuccessfulTopOrder($this->response->getSuccess());
+            $this->agent->getCommission()->setTopUpOrder($this->topUpOrder)->disburse();
+            $this->vendor->deductAmount($this->topUpOrder->amount);
+        });
 
         if ($this->topUpOrder->isAgentPartner()) {
             app()->make(ActionRewardDispatcher::class)->run('top_up', $this->agent, $this->topUpOrder);
@@ -144,8 +141,8 @@ class TopUpRechargeManager extends TopUpManager
         $details = $response->getTransactionDetailsAsString();
 
         $topup_order = $response->isPending() ?
-            $this->statusChanger->pending($id, $details) :
-            $this->statusChanger->successful($id, $details);
+            $this->statusChanger->pending($details, $id) :
+            $this->statusChanger->successful($details, $id);
 
         return $this->setAgentAndVendor($topup_order);
     }

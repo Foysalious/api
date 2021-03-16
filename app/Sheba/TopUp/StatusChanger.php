@@ -2,6 +2,7 @@
 
 
 use App\Models\TopUpOrder;
+use Illuminate\Support\Facades\DB;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\Dal\TopUpOrderStatusLog\TopUpOrderStatusLogRepository;
@@ -15,6 +16,8 @@ class StatusChanger
 
     /** @var TopUpOrder */
     private $order;
+    /** @var TopUpOrder */
+    private $oldOrder;
 
     public function __construct(TopUpOrderRepository $order_repo, TopUpOrderStatusLogRepository $status_repo)
     {
@@ -25,6 +28,7 @@ class StatusChanger
     public function setOrder(TopUpOrder $order)
     {
         $this->order = $order;
+        $this->oldOrder = clone $order;
         return $this;
     }
 
@@ -37,11 +41,11 @@ class StatusChanger
     }
 
     /**
-     * @param $transaction_id
      * @param $transaction_details
+     * @param $transaction_id
      * @return TopUpOrder
      */
-    public function pending($transaction_id, $transaction_details)
+    public function pending($transaction_details, $transaction_id)
     {
         return $this->update(Statuses::PENDING, [
             "transaction_id" => $transaction_id,
@@ -50,8 +54,8 @@ class StatusChanger
     }
 
     /**
-     * @param $transaction_id
      * @param $transaction_details
+     * @param $transaction_id
      * @return TopUpOrder
      */
     public function successful($transaction_details, $transaction_id = null)
@@ -92,19 +96,23 @@ class StatusChanger
      */
     private function update($status, $data = [])
     {
-        $data["status"] = $status;
-        $updated_order = $this->orderRepo->update($this->order, $data);
-        $this->saveLog($status);
-        return $updated_order;
+        DB::transaction(function () use ($data, $status) {
+            $data["status"] = $status;
+            $this->orderRepo->update($this->order, $data);
+            $this->saveLog();
+        });
+
+        $this->oldOrder = clone $this->order;
+        return $this->order;
     }
 
-    private function saveLog($new_status)
+    private function saveLog()
     {
         $this->statusRepo->create([
             "topup_order_id" => $this->order->id,
-            "from" => $this->order->status,
-            "to" => $new_status,
-            "transaction_details" => $this->order->transaction_details
+            "from" => $this->oldOrder->status,
+            "to" => $this->order->status,
+            "transaction_details" => $this->oldOrder->transaction_details
         ]);
     }
 }

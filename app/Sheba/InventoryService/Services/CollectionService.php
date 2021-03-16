@@ -5,6 +5,8 @@ namespace App\Sheba\InventoryService\Services;
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Input;
 
 class CollectionService
 {
@@ -126,13 +128,13 @@ class CollectionService
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data);
+        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data, true);
     }
 
     public function update()
     {
         $data = $this->makeCreateData();
-        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id, $data);
+        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id, $data, true);
     }
 
     public function getDetails()
@@ -143,15 +145,14 @@ class CollectionService
     private function makeCreateData()
     {
         return [
-            'name' => $this->name,
-            'description' => $this->description,
-            'partner_id' => $this->partner_id,
-            'sharding_id' => $this->sharding_id,
-            'thumb' => $this->thumb,
-            'banner' => $this->banner,
-            'app_thumb' => $this->app_thumb,
-            'app_banner' => $this->app_banner,
-            'is_published' => $this->is_published
+            ['name' => 'name', 'contents' => $this->name],
+            ['name' => 'description', 'contents' => $this->description],
+            ['name' => 'partner_id', 'contents' => $this->partner_id],
+            ['name' => 'is_published', 'contents' => $this->is_published],
+            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''],
+            ['name' => 'banner', 'contents' => $this->banner ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner ? $this->banner->getClientOriginalName() : ''],
+            ['name' => 'app_thumb', 'contents' => $this->app_thumb ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb ? $this->app_thumb->getClientOriginalName() : ''],
+            ['name' => 'app_banner', 'contents' => $this->app_banner ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner ? $this->app_banner->getClientOriginalName() : '']
         ];
     }
 

@@ -40,4 +40,9 @@ class MockResponse extends TopUpResponse
     {
         return Statuses::SUCCESSFUL;
     }
+
+    public function isPending()
+    {
+        return false;
+    }
 }

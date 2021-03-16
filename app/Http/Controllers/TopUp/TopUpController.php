@@ -446,12 +446,9 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if (!$topup_order) return api_response($request, null, 500);
 
-        $vendor_factory = app(VendorFactory::class);
-        $vendor = $vendor_factory->getById($request->vendor_id);
-
         /** @var TopUpRechargeManager $topUp */
         $topUp = app(TopUpRechargeManager::class);
-        $topUp->setAgent($agent)->setVendor($vendor)->setTopUpOrder($topup_order)->recharge();
+        $topUp->setTopUpOrder($topup_order)->recharge();
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id

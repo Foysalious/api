@@ -40,7 +40,7 @@ class ProductController extends Controller
             ->setWarrantyUnit($request->warranty_unit)
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
-            ->setImages($request->images)
+            ->setImages($request->file('images'))
             ->setWholesalePrice($request->wholesale_price)
             ->setCost($request->cost)
             ->setPrice($request->price)
@@ -52,9 +52,10 @@ class ProductController extends Controller
         return http_response($request, null, 200, $response);
     }
 
-    public function show(Request $request, $partnerId, $productId)
+    public function show(Request $request, $productId)
     {
-        $product = $this->productService->setPartnerId($partnerId)->setProductId($productId)->getDetails();
+        $partner = $request->auth_user->getPartner();
+        $product = $this->productService->setPartnerId($partner->id)->setProductId($productId)->getDetails();
         return http_response($request, null, 200, $product);
     }
 

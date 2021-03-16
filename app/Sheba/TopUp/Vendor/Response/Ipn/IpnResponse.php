@@ -11,6 +11,8 @@ abstract class IpnResponse
 
     /** @var array $response */
     protected $response;
+    /** @var TopUpOrder */
+    protected $topUpOrder;
 
     public function __construct(TopUpLifecycleManager $top_up)
     {
@@ -32,7 +34,19 @@ abstract class IpnResponse
         return $this->response;
     }
 
-    abstract public function getTopUpOrder(): TopUpOrder;
+    public function setTopUpOrder(TopUpOrder $order)
+    {
+        $this->topUpOrder = $order;
+        return $this;
+    }
+
+    public function getTopUpOrder(): TopUpOrder
+    {
+        if (is_null($this->topUpOrder)) $this->topUpOrder = $this->findTopUpOrder();
+        return $this->topUpOrder;
+    }
+
+    abstract protected function findTopUpOrder(): TopUpOrder;
 
     abstract public function isFailed();
 
@@ -45,7 +59,7 @@ abstract class IpnResponse
     }
 
     /**
-     * @throws \Exception
+     * @throws \Throwable
      * @return void
      */
     public function handleTopUp()
@@ -55,7 +69,7 @@ abstract class IpnResponse
     }
 
     /**
-     * @throws \Exception
+     * @throws \Throwable
      * @return void
      */
     abstract protected function _handleTopUp();
