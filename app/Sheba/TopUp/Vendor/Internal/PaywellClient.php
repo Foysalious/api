@@ -60,7 +60,7 @@ class PaywellClient
         $request_data = [
             "username" => $this->username,
             "password" => $this->password,
-            "ref_id" => $topup_order->getGatewayRefId(),
+            "ref_id" => $this->getRefId($topup_order),
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
             "con_type" => $topup_order->payee_mobile_type,
@@ -79,7 +79,7 @@ class PaywellClient
         }
 
         $topup_response = app(PaywellResponse::class);
-        $topup_response->setResponse($response->data);
+        $topup_response->setResponse(property_exists($response, "data") ? $response->data : $response);
         return $topup_response;
     }
 
@@ -125,7 +125,7 @@ class PaywellClient
     {
         $request_data = [
             "username" => $this->username,
-            "trxId" => $topup_order->getGatewayRefId()
+            "trxId" => $this->getRefId($topup_order)
         ];
 
         $this->tpRequest->setUrl($this->topupEnquiryUrl)
@@ -155,5 +155,10 @@ class PaywellClient
             "Authorization: Bearer " . $bearer_token,
             "Content-Type:application/json"
         ];
+    }
+
+    private function getRefId(TopUpOrder $topup_order)
+    {
+        return str_pad($topup_order->getGatewayRefId(), 15, '0', STR_PAD_LEFT);
     }
 }
