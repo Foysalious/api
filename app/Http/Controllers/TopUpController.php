@@ -339,10 +339,18 @@ class TopUpController extends Controller
      */
     public function statusUpdate(Request $request, TopUpLifecycleManager $lifecycle)
     {
-        $lifecycle->setTopUpOrder(TopUpOrder::find($request->topup_order_id));
+        /** @var TopUpOrder $top_up_order */
+        $top_up_order = TopUpOrder::find($request->topup_order_id);
+        if (!$top_up_order->canRefresh()) {
+            $message = "Top up is already " . $top_up_order->status;
+            return api_response($request, $message, 404, [
+                'code' => 400,
+                'message' => $message
+            ]);
+        }
 
         try {
-            $actual_response = $lifecycle->reload()->getResponse();
+            $actual_response = $lifecycle->setTopUpOrder($top_up_order)->reload()->getResponse();
         } catch (PaywellTopUpStillNotResolved $e) {
             $actual_response = $e->getResponse();
         }
