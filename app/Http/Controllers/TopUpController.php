@@ -192,7 +192,7 @@ class TopUpController extends Controller
     /**
      * @param IpnResponse $ipn_response
      * @param Request $request
-     * @throws Exception
+     * @throws \Throwable
      */
     private function sslHandle(IpnResponse $ipn_response, Request $request)
     {
@@ -335,7 +335,7 @@ class TopUpController extends Controller
      * @param Request $request
      * @param TopUpLifecycleManager $lifecycle
      * @return JsonResponse
-     * @throws \Sheba\TPProxy\TPProxyServerError | Exception
+     * @throws \Throwable
      */
     public function statusUpdate(Request $request, TopUpLifecycleManager $lifecycle)
     {

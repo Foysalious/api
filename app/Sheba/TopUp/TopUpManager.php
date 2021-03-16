@@ -3,7 +3,9 @@
 
 use App\Models\TopUpOrder;
 use Exception;
+use Illuminate\Support\Facades\DB;
 use Sheba\TopUp\Vendor\VendorFactory;
+use Throwable;
 
 abstract class TopUpManager
 {
@@ -28,22 +30,22 @@ abstract class TopUpManager
         $this->statusChanger->setOrder($this->topUpOrder);
         return $this;
     }
-    
+
     /**
      * @param $action
-     * @throws Exception
+     * @throws Throwable
      */
     protected function doTransaction($action)
     {
         try {
             DB::transaction($action);
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $this->markOrderAsSystemError($e);
             throw $e;
         }
     }
 
-    protected function markOrderAsSystemError(Exception $e)
+    protected function markOrderAsSystemError(Throwable $e)
     {
         logErrorWithExtra($e, ['topup' => $this->topUpOrder->getDirty()]);
         $this->statusChanger->systemError();
