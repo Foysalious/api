@@ -124,7 +124,7 @@ class PaymentLinkController extends Controller
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
                 return api_response($request, $payment_links, 200, ['payment_links' => $payment_links]);
             } else {
-                return api_response($request, 1, 404);
+                return api_response($request, [],200, ['payment_links'=>[]]);
             }
         } catch (\Throwable $e) {
             logError($e);
@@ -378,7 +378,7 @@ class PaymentLinkController extends Controller
             if ($data) {
                 return api_response($request, null, 200, ['data' => $data]);
             } else {
-                return api_response($request, null, 404);
+                return api_response($request, null, 200,['data'=>[]]);
             }
         } catch (\Throwable $e) {
             logError($e);
