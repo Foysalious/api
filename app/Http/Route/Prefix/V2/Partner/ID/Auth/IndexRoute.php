@@ -18,9 +18,11 @@ class IndexRoute
             $api->get('slider-details-and-account-types', 'PartnerController@getSliderDetailsAndAccountTypes');
             $api->get('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@index');
             $api->post('webstore-settings', 'Partner\Webstore\WebstoreSettingsController@update');
+            $api->post('toggle-webstore-sms-activation', 'PartnerController@toggleSmsActivation');
             $api->post('webstore/store-banner', 'Partner\Webstore\WebstoreSettingsController@storeBanner');
             $api->post('webstore/update-banner', 'Partner\Webstore\WebstoreSettingsController@updateBanner');
             $api->get('webstore/banner-list', 'Partner\Webstore\WebstoreSettingsController@bannerList');
+            $api->post('address', 'PartnerController@updateAddress');
             $api->group(['prefix' => 'e-shop'], function ($api) {
                 $api->group(['prefix' => 'order'], function ($api) {
                     $api->get('/', 'EShopOrderController@index');
@@ -148,7 +150,7 @@ class IndexRoute
             $api->post('add-categories', 'CategoryController@addCategories');
             $api->post('vat-registration-number', 'PartnerController@addVatRegistrationNumber');
             $api->group(['prefix'=>'top-up'],function($api){
-                $api->get('/history', 'TopUp\\TopUpController@topUpHistory');
+                $api->get('history', 'TopUp\TopUpController@topUpHistory');
             });
             $api->get('search', 'SearchController@search');
             $api->group(['prefix' => 'subscriptions'], function ($api) {

@@ -2,11 +2,21 @@
 
 class BangladeshiMobileValidator
 {
+    public static function isValid($number)
+    {
+        return self::validate($number);
+    }
+
+    public static function isInValid($number)
+    {
+        return !self::isValid($number);
+    }
+
     public static function validate($number)
     {
         if (!$number) return false;
 
-        return self::isBangladeshiNumberFormat(formatMobileAux($number));
+        return self::isBangladeshiNumberFormat(formatMobile($number));
     }
 
     private static function isBangladeshiNumberFormat($number)

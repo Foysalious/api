@@ -7,9 +7,7 @@ use Exception;
 
 class PaymentLinkClient
 {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $baseUrl;
     private $partnerPaymentUrl;
     /**
@@ -17,11 +15,11 @@ class PaymentLinkClient
      */
     private $client;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
         $this->baseUrl = config('sheba.payment_link_url') . '/api/v1/payment-links';
         $this->partnerPaymentUrl = config('sheba.payment_link_url') . '/api/v1/partner-payment-links';
-        $this->client = new Client();
+        $this->client = $client;
     }
 
     public function paymentLinkList(Request $request)
@@ -67,7 +65,6 @@ class PaymentLinkClient
         }
     }
 
-
     public function defaultPaymentLink(Request $request)
     {
         try {
@@ -84,7 +81,6 @@ class PaymentLinkClient
             return null;
         }
     }
-
 
     /**
      * @param $data
@@ -170,6 +166,75 @@ class PaymentLinkClient
         $response = $this->client->get($uri)->getBody()->getContents();
         return json_decode($response, true);
     }
+
+    /**
+     * @param $targets Target[]
+     * @return array
+     */
+    public function getPaymentLinksByTargets(array $targets)
+    {
+        if (empty($targets)) return [];
+
+        $targets = array_map(function (Target $target) {
+            return [
+                "targetType" => $target->getType(),
+                "targetId" => $target->getId(),
+            ];
+        }, $targets);
+
+        $uri = $this->baseUrl . '?targets=' . json_encode($targets);
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return array
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $targets = array_filter(array_map(function (Target $target) {
+            if ($target->getType() != TargetType::POS_ORDER) return null;
+            return $target->getId();
+        }, $targets));
+
+        if (empty($targets)) return [];
+
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets);
+
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
+    }
+
+    public function getActivePaymentLinksByPosOrders(array $targets)
+    {
+        $targets = array_filter(array_map(function (Target $target) {
+            if ($target->getType() != TargetType::POS_ORDER) return null;
+            return $target->getId();
+        }, $targets));
+
+        if (empty($targets)) return [];
+
+        $uri = $this->baseUrl . '?posOrders=' . implode(",", $targets) . '&isActive=' . 1;
+
+        $response = json_decode($this->client->get($uri)->getBody()->getContents(), true);
+
+        if ($response['code'] != 200) return [];
+
+        return $response['links'];
+    }
+
+    public function getActivePaymentLinkByPosOrder($target)
+    {
+       return $this->getActivePaymentLinksByPosOrders([$target]);
+    }
+
 
     /**
      * @param $identifier

@@ -32,7 +32,9 @@ class PartnerPosCustomer extends Model
             'email' => $profile->email,
             'address' => $profile->address,
             'image' => $profile->pro_pic,
-            'note' => $this->note
+            'note' => $this->note,
+            'is_supplier' => $this->is_supplier
+
         ];
     }
     public function scopeDueDateReminder($query,$partner_id,$customer_id){

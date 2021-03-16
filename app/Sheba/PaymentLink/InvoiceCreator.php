@@ -1,6 +1,7 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\Payment;
+use App\Models\PosOrder;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Reports\PdfHandler;
 
@@ -39,8 +40,8 @@ class InvoiceCreator
     {
         $pdf_handler = new PdfHandler();
         $user = $this->paymentLinkTransFormer->getPaymentReceiver();
-        $pos_order = $this->paymentLinkTransFormer->getTarget();
-        if ($pos_order) $pos_order = $pos_order->calculate();
+        $order = $this->paymentLinkTransFormer->getTarget();
+        $pos_order = $order instanceof PosOrder ? $order->calculate() : null;
         $info = [
             'payment_id' => $this->payment->id,
             'amount' => $this->payment->payable->amount,
@@ -65,7 +66,8 @@ class InvoiceCreator
                 'grand_total' => $pos_order->getTotalBill(),
                 'paid' => $pos_order->getPaid(), 'due' => $pos_order->getDue(),
                 'status' => $pos_order->getPaymentStatus(),
-                'vat' => $pos_order->getTotalVat()] : null
+                'vat' => $pos_order->getTotalVat(),
+                'delivery_charge' => $pos_order->delivery_charge] : null
         ];
 
         return $pdf_handler->setData($info)->setName($this->payment->transaction_id)->setViewFile('transaction_invoice')->save();

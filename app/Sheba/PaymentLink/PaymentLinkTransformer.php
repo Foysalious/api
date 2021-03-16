@@ -2,6 +2,7 @@
 
 use App\Models\Partner;
 use App\Models\PosCustomer;
+use Carbon\Carbon;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use stdClass;
@@ -39,6 +40,11 @@ class PaymentLinkTransformer
     public function getLink()
     {
         return $this->response->link;
+    }
+
+    public function getType()
+    {
+        return $this->response->type;
     }
 
     public function getLinkIdentifier()
@@ -98,6 +104,14 @@ class PaymentLinkTransformer
         $order = $this->getTarget();
         if ($order && $order instanceof ExternalPayment) return $this->getPaymentLinkPayer();
         return $order ? $order->customer->profile : $this->getPaymentLinkPayer();
+    }
+
+    /**
+     * @return Target
+     */
+    public function getUnresolvedTarget()
+    {
+        return new Target($this->response->targetType, $this->response->targetId);
     }
 
     /**
@@ -163,6 +177,11 @@ class PaymentLinkTransformer
         return $this->target->fail_url . '?transaction_id=' . $this->target->transaction_id;
     }
 
+    public function getCreatedAt()
+    {
+        return Carbon::createFromTimestampMs($this->response->createdAt);
+    }
+
     public function toArray()
     {
         $user       = $this->getPaymentReceiver();
@@ -180,6 +199,7 @@ class PaymentLinkTransformer
                     'id'    => $user->id,
                 ],
                 'payer'               => $payer ? [
+                    'id'     => $payer->id,
                     'name'   => $payer->name,
                     'mobile' => $payer->mobile
                 ] : null,
@@ -195,4 +215,48 @@ class PaymentLinkTransformer
             'mobile' => $user->getContactNumber()
         ];
     }
+
+    public function getPaymentLinkData()
+    {
+        $payer     = null;
+        $payerInfo = $this->getPayerInfo();
+
+        return array_merge([
+            'link_id'                 => $this->getLinkID(),
+            'reason'                  => $this->getReason(),
+            'type'                    => $this->getType(),
+            'status'                  => $this->response->isActive == 1 ? 'active' : 'inactive',
+            'amount'                  => $this->getAmount(),
+            'link'                    => $this->response->link,
+            'emi_month'               => $this->response->emiMonth,
+            'interest'                => $this->response->interest,
+            'bank_transaction_charge' => $this->response->bankTransactionCharge
+        ], $payerInfo);
+    }
+
+    private function getPayerInfo()
+    {
+        $payerInfo = [];
+        if ($this->response->payerId) {
+            try {
+                /** @var PosCustomer $payer */
+                $payer   = app('App\\Models\\' . pamelCase($this->response->payerType))::find($this->response->payerId);
+                $details = $payer ? $payer->details() : null;
+                if ($details) {
+                    $payerInfo = [
+                        'payer' => [
+                            'id'     => $details['id'],
+                            'name'   => $details['name'],
+                            'mobile' => $details['phone']
+                        ]
+                    ];
+                }
+            } catch (\Throwable $e) {
+                app('sentry')->captureException($e);
+            }
+        }
+        return $payerInfo;
+    }
+
+
 }

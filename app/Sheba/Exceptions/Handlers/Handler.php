@@ -38,10 +38,13 @@ abstract class Handler
         ];
 
         if ($this->wantsTrace()) {
+            if ($this->wantsToDie()) dd($this->exception);
+
             $response['exception'] = [
                 'message' => $this->exception->getMessage(),
                 'file' => $this->exception->getFile(),
                 'line' => $this->exception->getLine(),
+                'trace' => simplifyExceptionTrace($this->exception)
             ];
         }
         return response()->json($response);
@@ -65,5 +68,10 @@ abstract class Handler
     protected function wantsTrace()
     {
         return ($this->request->has('debug') && $this->request->debug) || config('app.env') != 'production';
+    }
+
+    protected function wantsToDie()
+    {
+        return $this->request->has('die') && $this->request->die;
     }
 }

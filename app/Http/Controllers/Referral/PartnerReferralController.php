@@ -18,6 +18,9 @@ class PartnerReferralController extends Controller
 
     public function index(Request $request, Referrals $referrals)
     {
+        ini_set('memory_limit', '4096M');
+        ini_set('max_execution_time', 420);
+
         try {
             $partner       = $request->partner;
             $reference     = $referrals::getReference($partner);

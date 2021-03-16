@@ -1,6 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\PosCustomer;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -64,7 +66,7 @@ class Creator
 
     public function setUserName($user_name)
     {
-        $this->userName = (empty($user_name)) ? "UnknownName" : $user_name;
+        $this->userName = (empty($user_name)) ? "Unknown Name" : $user_name;
         return $this;
     }
 
@@ -191,10 +193,8 @@ class Creator
             'interest'              => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge
         ];
-        if ($this->isDefault)
-            unset($this->data['reason']);
-        if (!$this->targetId)
-            unset($this->data['targetId'], $this->data['targetType']);
+        if ($this->isDefault) unset($this->data['reason']);
+        if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
     }
 
     public function getPaymentLinkData()
@@ -230,7 +230,11 @@ class Creator
 
             /** @var Sms $sms */
             $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
+            $sms = $sms->setVendor('infobip')
+                ->to($mobile)
+                ->msg($message)
+                ->setFeatureType(FeatureType::PAYMENT_LINK)
+                ->setBusinessType(BusinessType::SMANAGER);
             $sms->shoot();
         }
     }
@@ -296,5 +300,9 @@ class Creator
         $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
         $title = "লিঙ্ক তৈরি সফল হয়েছে";
         return ["message" => $message,"title" => $title];
+    }
+
+    public function getPaymentLink() {
+        return $this->paymentLinkCreated->link;
     }
 }

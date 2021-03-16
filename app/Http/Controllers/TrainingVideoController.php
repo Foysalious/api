@@ -1,14 +1,27 @@
 <?php namespace App\Http\Controllers;
+
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
+use Sheba\TrainingVideo\Response;
 
 class TrainingVideoController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param TrainingVideoRepository $video_repository
+     * @return JsonResponse
+     */
     public function index(Request $request, TrainingVideoRepository $video_repository)
     {
-        $data = ($request->has('key')) ? $video_repository->getByScreen($request->key) : $video_repository->getPublished();
-        $link = $this->formatResponse($data);
-        return api_response($request, $link,200,['data' => $link]);
+        try {
+            $data = ($request->has('key')) ? $video_repository->getByScreen($request->key) : $video_repository->getPublished();
+            $link = Response::get($data);
+            return api_response($request, $link, 200, ['data' => $link]);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 
     public function formatResponse($training_video_data)

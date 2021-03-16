@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Sheba\Payment\Exceptions\PayableNotFound;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
+use Sheba\PaymentLink\Target;
 use Sheba\PaymentLink\UrlTransformer;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use stdClass;
@@ -27,11 +28,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
      * PaymentLinkRepository constructor.
      * @param PaymentLinkTransformer $paymentLinkTransformer
      * @param UrlTransformer $urlTransformer
+     * @param PaymentLinkClient $client
      */
-    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer)
+    public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer, PaymentLinkClient $client)
     {
         parent::__construct();
-        $this->paymentLinkClient = new PaymentLinkClient();
+        $this->paymentLinkClient = $client;
         $this->paymentLinkTransformer = $paymentLinkTransformer;
         $this->urlTransformer = $urlTransformer;
         $this->paymentLinkTransactionDetailTransformer = new PaymentLinkTransactionDetailsTransformer();
@@ -192,4 +194,56 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         return null;
     }
 
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksGroupedByTargets(array $targets)
+    {
+        $links = $this->paymentLinkClient->getPaymentLinksByTargets($targets);
+
+        return $this->formatPaymentLinkTransformers($links);
+    }
+
+    private function formatPaymentLinkTransformers($links)
+    {
+        $result = [];
+        foreach ($links as $link) {
+            $link = (new PaymentLinkTransformer())->setResponse(json_decode(json_encode($link)));
+            array_push_on_array($result, $link->getUnresolvedTarget()->toString(), $link);
+        }
+        return $result;
+    }
+
+    /**
+     * @param $targets Target[]
+     * @return PaymentLinkTransformer[][]
+     */
+    public function getPaymentLinksByPosOrders(array $targets)
+    {
+        $links = $this->paymentLinkClient->getPaymentLinksByPosOrders($targets);
+        return $this->formatPaymentLinkTransformers($links);
+    }
+
+    public function getPaymentLinksByPosOrder($target)
+    {
+        return $this->getPaymentLinksByPosOrders([$target]);
+    }
+
+    public function getActivePaymentLinksByPosOrders(array $targets)
+    {
+        $links = $this->paymentLinkClient->getActivePaymentLinksByPosOrders($targets);
+        return $this->formatPaymentLinkTransformers($links);
+    }
+    public function getActivePaymentLinkByPosOrder($target)
+    {
+        $links = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
+        $payment_link =  $this->formatPaymentLinkTransformers($links);
+        $key = $target->toString();
+        if (array_key_exists($key, $payment_link)) {
+            return $payment_link[$key][0];
+        }
+        return false;
+    }
 }
