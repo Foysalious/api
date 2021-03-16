@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Bonus;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
@@ -25,7 +26,9 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
             Partner::class,
             Resource::class,
             PartnerResource::class,
-            Tag::class
+            Tag::class,
+            Bonus::class
+
         ]);
 
 
@@ -63,6 +66,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $partner_id=$partner->id;
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
+        $partner_transactions=
+       // dd($partner_transactions);
 
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
@@ -75,6 +80,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $data=$response->decodeResponseJson();
         dd($data);
+        $this->assertEquals(200,$data['code']);
+        $this->assertEquals(10500,$data['price']);
 
 
     }

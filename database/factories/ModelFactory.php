@@ -2,6 +2,7 @@
 
 use Factory\Factory;
 use Factory\CategoryFactory;
+use Factory\PartnerBonus;
 use Factory\PartnerSubscriptionPackageFactory;
 use Factory\JobFactory;
 use Factory\PartnerFactory;
@@ -60,7 +61,8 @@ $factory_classes = [
     JobServiceFactory::class,
     BusinessFactory::class,
     BusinessMemberFactory::class,
-    BusinessHolidayFactory::class
+    BusinessHolidayFactory::class,
+    PartnerBonus::class
 ];
 
 foreach ($factory_classes as $factory_class) {
