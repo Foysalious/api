@@ -1130,6 +1130,19 @@ class PartnerController extends Controller
     public function getQRCode(Request $request)
     {
         $partner = $request->partner;
+        if (!$partner->qr_code_image && !$partner->qr_code_account_type) {
+            $account_types     = [];
+            $all_account_types = config('partner.qr_code.account_types');
+            foreach ($all_account_types as $key => $type) {
+                array_push($account_types, $type);
+            }
+            $data = [
+                'description'   => config('partner.qr_code.description'),
+                'slider_image'  => config('partner.qr_code.slider_image'),
+                'account_types' => $account_types
+            ];
+            return api_response($request, null, 200, ['data' => $data]);
+        }
         $data    = [
             'account_type' => $partner->qr_code_account_type ? config('partner.qr_code.account_types')[$partner->qr_code_account_type] : null,
             'image'        => $partner->qr_code_image ?: null

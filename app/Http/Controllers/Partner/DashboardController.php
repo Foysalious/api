@@ -54,14 +54,11 @@ class DashboardController extends Controller
             $partner       = $request->partner;
             $slider_portal = SliderPortal::with('slider.slides')->where('portal_name', 'manager-app')->where('screen', 'home')->get();
             $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
-            $slide        = null;
             $all_slides   = $slides_query ? $slides_query->get() : null;
             $videos       = [];
             if ($all_slides && !$all_slides->isEmpty()) {
                 foreach ($all_slides as $key => $item) {
                     if ($item && json_decode($item->video_info)) {
-                        if ($key == 0)
-                            $slide = $item;
                         array_push($videos, json_decode($item->video_info));
                     }
                 }
@@ -161,21 +158,33 @@ class DashboardController extends Controller
                 'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
                 'leave_info'                   => (new LeaveStatus($partner))->getCurrentStatus(),
                 'sheba_order'                  => $partner->orders->isEmpty() ? 0 : 1,
-                'manager_dashboard_banner'     => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
-                'video'                        => $slide ? json_decode($slide->video_info) : null,
-                'has_pos_inventory'            => $partner->posServices->isEmpty() ? 0 : 1,
-                'has_kyc_profile_completed'    => $this->getSpLoanInformationCompletion($partner, $request),
-                'has_pos_due_order'            => 0,
-                'has_pos_paid_order'           => 0,
                 'home_videos'    => $videos ? $videos : null,
                 'feature_videos' => $details,
                 'has_qr_code'    => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0,
-                'has_webstore'   => $partner->has_webstore,
                 'is_webstore_published' => $partner->is_webstore_published
             ];
             if (request()->hasHeader('Portal-Name'))
                 $this->setDailyUsageRecord($partner, request()->header('Portal-Name'));
             return api_response($request, $dashboard, 200, ['data' => $dashboard]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getNewHomePage(Request $request) {
+        try {
+
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'name'                         => $partner->name,
+                'logo'                         => $partner->logo,
+                'status'                       => $partner->getStatusToCalculateAccess(),
+                'is_nid_verified'              =>(int)$request->manager_resource->profile->nid_verified ? true : false,
+                'is_webstore_published'        =>$partner->is_webstore_published
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -201,22 +210,6 @@ class DashboardController extends Controller
         if ($rate > 100)
             return 100;
         return $rate;
-    }
-
-    private function getSpLoanInformationCompletion($partner, $request)
-    {
-        try {
-            $sp_loan_information_completion = new SpLoanInformationCompletion();
-            $sp_information_completion      = $sp_loan_information_completion->getLoanInformationCompletion($partner, $request)->getData()->completion;
-            $personal                       = $sp_information_completion->personal->completion_percentage;
-            $business                       = $sp_information_completion->business->completion_percentage;
-            $finance                        = $sp_information_completion->finance->completion_percentage;
-            $nominee                        = $sp_information_completion->nominee->completion_percentage;
-            $documents                      = $sp_information_completion->documents->completion_percentage;
-            return ($personal == 100 && $business == 100 && $finance == 100 && $nominee == 100 && $documents == 100) ? 1 : 0;
-        } catch (Throwable $e) {
-            return 0;
-        }
     }
 
     /**
