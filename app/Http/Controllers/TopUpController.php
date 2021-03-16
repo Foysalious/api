@@ -329,7 +329,6 @@ class TopUpController extends Controller
         }
     }
 
-
     /**
      * @param Request $request
      * @param PaywellClient $paywell_client
