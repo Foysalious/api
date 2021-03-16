@@ -1,20 +1,18 @@
 <?php namespace Sheba\TopUp;
 
 
-use Exception;
 use Sheba\Dal\TopupOrder\FailedReason;
 use Sheba\TopUp\Exception\PaywellTopUpStillNotResolved;
 use Sheba\TopUp\Vendor\Response\Ipn\FailResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\SuccessResponse;
-use Sheba\TopUp\Vendor\VendorFactory;
 use DB;
 
 class TopUpLifecycleManager extends TopUpManager
 {
     /**
      * @param FailResponse $fail_response
-     * @throws Exception
+     * @throws \Throwable
      */
     public function fail(FailResponse $fail_response)
     {
@@ -29,7 +27,7 @@ class TopUpLifecycleManager extends TopUpManager
 
     /**
      * @param SuccessResponse $success_response
-     * @throws Exception
+     * @throws \Throwable
      */
     public function success(SuccessResponse $success_response)
     {
@@ -42,7 +40,7 @@ class TopUpLifecycleManager extends TopUpManager
 
     /**
      * @return IpnResponse | void
-     * @throws Exception | PaywellTopUpStillNotResolved
+     * @throws PaywellTopUpStillNotResolved | \Throwable
      */
     public function reload()
     {
