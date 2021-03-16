@@ -1,6 +1,5 @@
 <?php namespace Sheba\TopUp\Vendor\Response;
 
-use Sheba\Dal\TopupOrder\Statuses;
 
 class PaywellResponse extends TopUpResponse
 {
@@ -31,11 +30,6 @@ class PaywellResponse extends TopUpResponse
     public function getErrorMessage()
     {
         return $this->response->message;
-    }
-
-    public function resolveTopUpSuccessStatus()
-    {
-        return ($this->response->status == 100) ? Statuses::PENDING : Statuses::SUCCESSFUL;
     }
 
     public function isPending()
