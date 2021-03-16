@@ -67,13 +67,14 @@ class PaywellClient
             "operator" => $this->getOperatorId($topup_order->vendor_id)
         ];
 
-        $this->tpRequest->setUrl($this->singleTopupUrl)
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->singleTopupUrl)
             ->setMethod(TPRequest::METHOD_POST)
             ->setHeaders($this->getHeaders($request_data))
             ->setInput($request_data);
 
         try {
-            $response = $this->tpClient->call($this->tpRequest);
+            $response = $this->tpClient->call($tp_request);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
         }
@@ -94,8 +95,9 @@ class PaywellClient
             "Authorization: Basic " . $auth_code
         ];
 
-        $this->tpRequest->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
-        $response = $this->tpClient->call($this->tpRequest);
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->getTokenUrl)->setMethod(TPRequest::METHOD_POST)->setHeaders($headers);
+        $response = $this->tpClient->call($tp_request);
 
         return $response->token->security_token;
     }
@@ -128,12 +130,13 @@ class PaywellClient
             "trxId" => $this->getRefId($topup_order)
         ];
 
-        $this->tpRequest->setUrl($this->topupEnquiryUrl)
+        $tp_request = new TPRequest();
+        $tp_request->setUrl($this->topupEnquiryUrl)
             ->setMethod(TPRequest::METHOD_POST)
             ->setHeaders($this->getHeaders($request_data))
             ->setInput($request_data);
 
-        $response = $this->tpClient->call($this->tpRequest);
+        $response = $this->tpClient->call($tp_request);
 
         if (!property_exists($response, "enquiryData")) return null;
 
