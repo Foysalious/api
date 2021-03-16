@@ -95,9 +95,9 @@ class PaymentLinkController extends Controller
         try {
             $payment_links_list = $this->paymentLinkRepo->getPaymentLinkList($request);
             if ($payment_links_list) {
-                $payment_links_list = array_where($payment_links_list, function ($key, $link) {
-                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
-                });
+//                $payment_links_list = array_where($payment_links_list, function ($key, $link) {
+//                    return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
+//                });
 //                list($offset, $limit) = calculatePagination($request);
                 $links         = collect($payment_links_list);
                 $fractal       = new Manager();
