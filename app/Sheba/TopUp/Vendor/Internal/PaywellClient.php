@@ -138,9 +138,7 @@ class PaywellClient
 
         $response = $this->tpClient->call($tp_request);
 
-        if (!property_exists($response, "enquiryData")) return null;
-
-        return $response->enquiryData;
+        return property_exists($response, "enquiryData") ? $response->enquiryData : $response;
     }
 
     /**

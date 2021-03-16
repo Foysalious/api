@@ -54,9 +54,7 @@ class Paywell implements Gateway
 
         /** @var IpnResponse $ipn_response */
         $ipn_response = null;
-        if (is_null($response)) {
-            $ipn_response = app(PaywellFailResponse::class);
-        } else if ($response->status_code == "200") {
+        if ($response->status_code == "200") {
             $ipn_response = app(PaywellSuccessResponse::class);
         } else if ($response->status_code != "100") {
             $ipn_response = app(PaywellFailResponse::class);
