@@ -17,7 +17,7 @@ class TradeFair
                                 FROM   partners  JOIN (
                                 SELECT  business_type, GROUP_CONCAT(id) grouped_partner
                                 FROM  partners
-                                WHERE EXISTS(SELECT id FROM trade_fair WHERE partner_id=partners.id)
+                                WHERE EXISTS(SELECT id FROM trade_fair WHERE partner_id=partners.id AND is_published=1)
                                 and  is_webstore_published = 1
                                 GROUP BY business_type) group_max 
                                 ON partners.business_type = group_max.business_type
