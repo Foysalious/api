@@ -91,6 +91,11 @@ class LeaveController extends Controller
         if ($request->has('sort')) {
             $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
         }
+
+        if ($request->has('sort_by_period')) {
+            $leaves = $this->leaveOrderByPeriod($leaves, $request->sort_by_period)->values();
+        }
+
         if ($request->file == 'excel') {
             return $leave_request_report->setLeave($leaves)->get();
         }
@@ -414,6 +419,14 @@ class LeaveController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
             return strtoupper($leave['leave']['name']);
+        });
+    }
+
+    private function leaveOrderByPeriod($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['leave']['period']);
         });
     }
 
