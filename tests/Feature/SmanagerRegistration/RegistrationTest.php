@@ -144,7 +144,7 @@ class RegistrationTest extends FeatureTestCase
             'Authorization'=> "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(200,$data["code"]);
+        $this->assertEquals(403,$data["code"]);
         //$this->assertEquals(400,$data["message"]);
         //dd($data);
 
@@ -162,7 +162,7 @@ class RegistrationTest extends FeatureTestCase
             'Authorization'=> "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(200,$data["code"]);
+        $this->assertEquals(403,$data["code"]);
         $this->assertEquals("Successful",$data["message"]);
         //dd($data);
 
