@@ -14,7 +14,7 @@ class NeoBankingThirdPartyLogRepository
     /** @var Repository $repository */
     private $repository;
 
-    private $data, $dataType, $from;
+    private $request, $response, $from;
 
     public function __construct(Repository $repository)
     {
@@ -31,34 +31,31 @@ class NeoBankingThirdPartyLogRepository
         return $this;
     }
 
-    public function setDataType($dataType)
+    public function setRequest($request)
     {
-        if (!in_array($dataType,ThirdPartyLog::DATA_TYPE_LIST)) {
-           throw new Exception('Sorry! Invalid Data Type.');
-        }
-        $this->dataType = $dataType;
+        $this->request = $request;
         return $this;
     }
 
-    public function setData($data)
+    public function setResponse($response)
     {
-        $this->data = $data;
+        $this->response = $response;
         return $this;
     }
 
     public function store()
     {
         return $this->repository->create(
-            $this->withCreateModificationField(self::getData($this->data, $this->dataType, $this->from))
+            $this->withCreateModificationField($this->getData())
         );
     }
 
-    private static function getData($data, $dataType, $from)
+    private function getData()
     {
         return [
-            "data" => $data,
-            "data_type" => $dataType,
-            "from" => $from,
+            "request" => $this->request,
+            "response" => $this->response,
+            "from" => $this->from,
         ];
     }
 }
