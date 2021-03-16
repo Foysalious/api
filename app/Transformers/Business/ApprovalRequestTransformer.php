@@ -22,6 +22,9 @@ class ApprovalRequestTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
 
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
     /** @var Profile $profile */
     private $profile;
     /** @var Business $business */
@@ -82,19 +85,19 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'type' => $leave_type->title,
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-                'total_leave_Days' => $leave_type->total_days,
                 'is_half_day' => $requestable->is_half_day,
                 'half_day_configuration' => $requestable->is_half_day ? [
                     'half_day' => $requestable->half_day_configuration,
                     'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
                 ] : null,
                 'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
-
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note,
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'total_leave_days' => $leave_type->total_days,
+                'super_admin_reject_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN)
             ],
             'leave_log_details' => $this->getLeaveLog($requestable),
             'approvers' => $approvers,
@@ -120,7 +123,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             array_push($approvers, [
                 'name' => $profile->name,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => $this->getRejectReason($requestable)
+                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -136,11 +139,12 @@ class ApprovalRequestTransformer extends TransformerAbstract
         return $approvers;*/
     }
 
-    private function getRejectReason($requestable)
+    private function getRejectReason($requestable, $type)
     {
-        $rejection = $requestable->rejection;
+        $rejection = $requestable->rejection->where('is_rejected_by_super_admin',$type)->first();
         if (!$rejection) return null;
         $reasons = $rejection->reasons;
+        if ($type == self::SUPER_ADMIN) return $rejection->note;
         $data = [];
         $final_data['note'] = $rejection->note;
         foreach ($reasons as $reason){
