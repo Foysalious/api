@@ -141,7 +141,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
     private function getRejectReason($requestable, $type)
     {
-        $rejection = $requestable->rejection->where('is_rejected_by_super_admin',$type)->first();
+        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
         if (!$rejection) return null;
         $reasons = $rejection->reasons;
         if ($type == self::SUPER_ADMIN) return $rejection->note;
