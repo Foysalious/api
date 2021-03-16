@@ -148,7 +148,7 @@ class CollectionService
             ['name' => 'description', 'contents' => $this->description],
             ['name' => 'partner_id', 'contents' => $this->partner_id],
             ['name' => 'is_published', 'contents' => $this->is_published],
-            ['name' => 'thumb', 'contents' => File::get($this->thumb->getRealPath()) ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb->getClientOriginalName() ? $this->thumb->getClientOriginalName() : ''],
+            ['name' => 'thumb', 'contents' => empty(File::get($this->thumb->getRealPath())) ? null: File::get($this->thumb->getRealPath()), 'filename' => empty($this->thumb->getClientOriginalName()) ? '' : $this->thumb->getClientOriginalName()],
             ['name' => 'banner', 'contents' => File::get($this->banner->getRealPath()) ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner->getClientOriginalName() ? $this->banner->getClientOriginalName() : ''],
             ['name' => 'app_thumb', 'contents' => File::get($this->app_thumb->getRealPath()) ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb->getClientOriginalName() ? $this->app_thumb->getClientOriginalName() : ''],
             ['name' => 'app_banner', 'contents' => File::get($this->app_banner->getRealPath()) ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner->getClientOriginalName() ? $this->app_banner->getClientOriginalName() : '']
