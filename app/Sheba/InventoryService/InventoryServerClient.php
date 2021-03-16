@@ -5,7 +5,6 @@ namespace App\Sheba\InventoryService;
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
-use Sheba\ExpenseTracker\Exceptions\ExpenseTrackingServerError;
 
 class InventoryServerClient
 {
@@ -53,16 +52,14 @@ class InventoryServerClient
     private function getOptions($data = null, $multipart = false)
     {
         $options['headers'] = [
-//            'Content-Type' => 'application/json',
-            'Accept'       => 'application/json'
+            'Accept' => 'application/json'
         ];
-        if ($data) {
-            if ($multipart) {
-                $options['multipart'] = $data;
-            } else {
-                $options['form_params'] = $data;
-                $options['json']        = $data;
-            }
+        if (!$data) return $options;
+        if ($multipart) {
+            $options['multipart'] = $data;
+        } else {
+            $options['form_params'] = $data;
+            $options['json'] = $data;
         }
         return $options;
     }
