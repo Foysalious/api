@@ -48,6 +48,9 @@ use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 class LeaveController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
 
     private $approvalRequestRepo;
 
@@ -283,7 +286,8 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -546,5 +550,19 @@ class LeaveController extends Controller
             ];
         }
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
+    }
+
+    private function getRejectReason($requestable, $type)
+    {
+        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
+        if (!$rejection) return null;
+        $reasons = $rejection->reasons;
+        if ($type == self::SUPER_ADMIN) return $rejection->note;
+        $data = [];
+        $final_data['note'] = $rejection->note;
+        foreach ($reasons as $reason){
+            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
+        }
+        return array_merge($final_data, $data);
     }
 }
