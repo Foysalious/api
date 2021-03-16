@@ -5,6 +5,7 @@ namespace App\Sheba\InventoryService\Services;
 
 
 use App\Sheba\InventoryService\InventoryServerClient;
+use Illuminate\Support\Facades\File;
 
 class CollectionService
 {
@@ -126,7 +127,7 @@ class CollectionService
     public function store()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data);
+        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection', $data, true);
     }
 
     public function update()
@@ -143,14 +144,14 @@ class CollectionService
     private function makeCreateData()
     {
         return [
-            'name' => $this->name,
-            'description' => $this->description,
-            'partner_id' => $this->partner_id,
-            'thumb' => $this->thumb,
-            'banner' => $this->banner,
-            'app_thumb' => $this->app_thumb,
-            'app_banner' => $this->app_banner,
-            'is_published' => $this->is_published
+            ['name' => 'name', 'contents' => $this->name],
+            ['name' => 'description', 'contents' => $this->description],
+            ['name' => 'partner_id', 'contents' => $this->partner_id],
+            ['name' => 'is_published', 'contents' => $this->is_published],
+            ['name' => 'thumb', 'contents' => File::get($this->thumb->getRealPath()), 'filename' => $this->thumb->getClientOriginalName()],
+            ['name' => 'banner', 'contents' => File::get($this->banner->getRealPath()), 'filename' => $this->banner->getClientOriginalName()],
+            ['name' => 'app_thumb', 'contents' => File::get($this->app_thumb->getRealPath()), 'filename' => $this->app_thumb->getClientOriginalName()],
+            ['name' => 'app_banner', 'contents' => File::get($this->app_banner->getRealPath()), 'filename' => $this->app_banner->getClientOriginalName()]
         ];
     }
 
