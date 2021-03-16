@@ -34,7 +34,7 @@ class Ssl implements Gateway
         $ssl_response = new SslResponse();
         $ssl_response->setResponse($this->sslVrClient->call([
             "action" => SslVrClient::VR_PROXY_RECHARGE_ACTION,
-            'guid' => $topup_order->getGatewayRefId(),
+            'guid' => $this->getRefId($topup_order),
             'payee_mobile' => $topup_order->payee_mobile,
             'operator_id' => $this->getOperatorId($topup_order->payee_mobile),
             'connection_type' => $topup_order->payee_mobile_type,
@@ -79,7 +79,7 @@ class Ssl implements Gateway
      */
     public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
     {
-        $response = $this->getRecharge($topup_order->getGatewayRefId());
+        $response = $this->getRecharge($this->getRefId($topup_order));
         /** @var IpnResponse $ipn_response */
         $ipn_response = ($response && $response->recharge_status == 900) ?
             app(SslSuccessResponse::class) :
@@ -88,6 +88,11 @@ class Ssl implements Gateway
         $ipn_response->setResponse($response);
 
         return $ipn_response;
+    }
+
+    public function getRefId(TopUpOrder $topup_order)
+    {
+        return str_pad($topup_order->getGatewayRefId(), 20, '0', STR_PAD_LEFT);
     }
 
     private function getOperatorId($mobile_number)
