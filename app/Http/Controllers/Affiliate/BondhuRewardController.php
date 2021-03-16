@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Affiliate;
 
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
+use App\Models\Reward;
 use App\Models\RewardCampaign;
 use Carbon\Carbon;
 use Sheba\Dal\RewardAffiliates\Contract as RewardAffiliatesRepo;
@@ -26,6 +27,12 @@ class BondhuRewardController extends Controller
 
     }
 
+    /**
+     * @param $affiliate
+     * @param RewardDetails $rewardDetails
+     * @return mixed
+     * todo: progress of the reward
+     */
     public function rewardList($affiliate, RewardDetails $rewardDetails){
         $affiliateRewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)
             ->leftJoinReward()
@@ -38,7 +45,13 @@ class BondhuRewardController extends Controller
         return $affiliateRewards;
     }
 
-    public function rewardDetails($rewardId){
-
+    /**
+     * @param $affiliate
+     * @param $rewardId
+     * @return Reward|Reward[]|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|null
+     * todo: progress of the reward
+     */
+    public function rewardDetails($affiliate, $rewardId){
+        return Reward::with('detail')->find($rewardId);
     }
 }

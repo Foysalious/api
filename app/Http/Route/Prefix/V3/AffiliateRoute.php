@@ -23,6 +23,7 @@ class AffiliateRoute
             $api->group(['prefix' => 'bondhu-reward'], function ($api){
                 $api->get('/', 'Affiliate\BondhuRewardController@rewardList');
                 $api->get('history', 'Affiliate\BondhuRewardController@rewardHistory');
+                $api->get('{rewardId}', 'Affiliate\BondhuRewardController@rewardDetails');
             });
         });
 
