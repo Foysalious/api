@@ -4,7 +4,6 @@ use App\Models\TopUpOrder;
 use Exception;
 use App\Models\TopUpVendor;
 use Sheba\ModificationFields;
-use DB;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\Vendor\Response\TopUpErrorResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
@@ -74,7 +73,7 @@ class TopUpRechargeManager extends TopUpManager
     }
 
     /**
-     * @throws Exception
+     * @throws \Throwable
      */
     public function recharge()
     {
@@ -116,7 +115,7 @@ class TopUpRechargeManager extends TopUpManager
     }
 
     /**
-     * @throws Exception
+     * @throws \Throwable
      */
     private function handleSuccessfulTopUpByVendor()
     {

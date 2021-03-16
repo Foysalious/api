@@ -59,7 +59,7 @@ abstract class IpnResponse
     }
 
     /**
-     * @throws \Exception
+     * @throws \Throwable
      * @return void
      */
     public function handleTopUp()
@@ -69,7 +69,7 @@ abstract class IpnResponse
     }
 
     /**
-     * @throws \Exception
+     * @throws \Throwable
      * @return void
      */
     abstract protected function _handleTopUp();
