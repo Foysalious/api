@@ -353,12 +353,19 @@ class PartnerRegistrationController extends Controller
                 'has_webstore' => 'sometimes|numeric|between:0,1'
             ]);
             $profile = $request->profile;
-            if (!$profile->resource)
-                $resource = Resource::create([
-                    'profile_id' => $profile->id,
-                    'remember_token' => str_random(60),
-                    'status' => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
-                ]); else $resource = $profile->resource;
+            try {
+                if (!$resource = $profile->resource) {
+                    $resource = Resource::create(
+                        [
+                            'profile_id' => $profile->id,
+                            'remember_token' => str_random(60),
+                            'status' => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
+                        ]
+                    );
+                }
+            } catch (QueryException $e) {
+                $resource = $profile->resource;
+            }
             $this->setModifier($resource);
             $request['package_id'] = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
