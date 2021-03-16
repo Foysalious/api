@@ -149,10 +149,10 @@ class CollectionService
             ['name' => 'description', 'contents' => $this->description],
             ['name' => 'partner_id', 'contents' => $this->partner_id],
             ['name' => 'is_published', 'contents' => $this->is_published],
-            ['name' => 'thumb', 'contents' => empty(Input::get($this->thumb->getRealPath())) ? null: Input::get($this->thumb->getRealPath()), 'filename' => empty($this->thumb->getClientOriginalName()) ? '' : $this->thumb->getClientOriginalName()],
-            ['name' => 'banner', 'contents' => File::get($this->banner->getRealPath()) ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner->getClientOriginalName() ? $this->banner->getClientOriginalName() : ''],
-            ['name' => 'app_thumb', 'contents' => File::get($this->app_thumb->getRealPath()) ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb->getClientOriginalName() ? $this->app_thumb->getClientOriginalName() : ''],
-            ['name' => 'app_banner', 'contents' => File::get($this->app_banner->getRealPath()) ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner->getClientOriginalName() ? $this->app_banner->getClientOriginalName() : '']
+            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''],
+            ['name' => 'banner', 'contents' => $this->banner ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner ? $this->banner->getClientOriginalName() : ''],
+            ['name' => 'app_thumb', 'contents' => $this->app_thumb ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb ? $this->app_thumb->getClientOriginalName() : ''],
+            ['name' => 'app_banner', 'contents' => $this->app_banner ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner ? $this->app_banner->getClientOriginalName() : '']
         ];
     }
 
