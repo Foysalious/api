@@ -72,12 +72,13 @@ class InventoryServerClient
     /**
      * @param $uri
      * @param $data
+     * @param bool $multipart
      * @return array|object|string|null
      * @throws InventoryServiceServerError
      */
-    public function put($uri, $data)
+    public function put($uri, $data, $multipart = false)
     {
-        return $this->call('put', $uri, $data);
+        return $this->call('put', $uri, $data, $multipart);
     }
 
     /**
