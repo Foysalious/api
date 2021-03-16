@@ -121,8 +121,7 @@ class PaymentLinkController extends Controller
                 $payment_links_list = array_where($payment_links_list, function ($key, $link) {
                     return array_key_exists('targetType', $link) ? $link['targetType'] == null : $link;
                 });
-                list($offset, $limit) = calculatePagination($request);
-                $links         = collect($payment_links_list)->slice($offset)->take($limit);
+                $links         = collect($payment_links_list);
                 $fractal       = new Manager();
                 $resources     = new Collection($links, new PaymentLinkArrayTransform());
                 $payment_links = $fractal->createData($resources)->toArray()['data'];
@@ -230,9 +229,9 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount' => 'required|numeric',
+                'amount'      => 'required|numeric',
                 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
-                'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
+                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
             if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
@@ -248,7 +247,7 @@ class PaymentLinkController extends Controller
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
-                if (!$request->has('emi_month')) {
+                if(!$request->has('emi_month')) {
                     $this->creator->sentSms();
                 }
                 return api_response($request, $payment_link, 200, ['payment_link' => $payment_link]);
@@ -294,18 +293,19 @@ class PaymentLinkController extends Controller
             if ($default_payment_link) {
                 $default_payment_link = [
                     'link_id' => $default_payment_link[0]['linkId'],
-                    'link' => $default_payment_link[0]['link'],
-                    'amount' => $default_payment_link[0]['amount'],
+                    'link'    => $default_payment_link[0]['link'],
+                    'amount'  => $default_payment_link[0]['amount'],
                 ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             } else {
                 $request->merge(['isDefault' => 1]);
+                if (empty($request->user->name)) $request->user->name = "UnknownName";
                 $this->creator->setIsDefault($request->isDefault)->setAmount($request->amount)->setReason($request->purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
-                $store_default_link = $this->creator->save();
+                $store_default_link   = $this->creator->save();
                 $default_payment_link = [
                     'link_id' => $store_default_link->linkId,
-                    'link' => $store_default_link->link,
-                    'amount' => $store_default_link->amount,
+                    'link'    => $store_default_link->link,
+                    'amount'  => $store_default_link->amount,
                 ];
                 return api_response($request, $default_payment_link, 200, ['default_payment_link' => $default_payment_link]);
             }
@@ -320,31 +320,31 @@ class PaymentLinkController extends Controller
         try {
             $payment_link_details = $this->paymentLinkClient->paymentLinkDetails($link);
             if ($payment_link_details) {
-                $payables = $this->paymentLinkRepo->payables($payment_link_details);
+                $payables    = $this->paymentLinkRepo->payables($payment_link_details);
                 $all_payment = [];
                 foreach ($payables->get() as $payable) {
                     $payments = $payable->payments ? $payable->payments : null;
                     foreach ($payments as $payment) {
                         $payment = [
-                            'id' => $payment ? $payment->id : null,
-                            'code' => $payment ? '#' . $payment->id : null,
-                            'name' => $payment ? $payment->payable->getName() : null,
-                            'amount' => $payment ? $payable->amount : null,
+                            'id'         => $payment ? $payment->id : null,
+                            'code'       => $payment ? '#' . $payment->id : null,
+                            'name'       => $payment ? $payment->payable->getName() : null,
+                            'amount'     => $payment ? $payable->amount : null,
                             'created_at' => $payment ? Carbon::parse($payment->created_at)->format('Y-m-d h:i a') : null,
                         ];
                         array_push($all_payment, $payment);
                     }
                 }
                 $payment_link_payments = [
-                    'id' => $payment_link_details['linkId'],
-                    'code' => '#' . $payment_link_details['linkId'],
-                    'purpose' => $payment_link_details['reason'],
-                    'status' => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
-                    'payment_link' => $payment_link_details['link'],
-                    'amount' => $payment_link_details['amount'],
+                    'id'             => $payment_link_details['linkId'],
+                    'code'           => '#' . $payment_link_details['linkId'],
+                    'purpose'        => $payment_link_details['reason'],
+                    'status'         => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
+                    'payment_link'   => $payment_link_details['link'],
+                    'amount'         => $payment_link_details['amount'],
                     'total_payments' => $payables->count(),
-                    'created_at' => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
-                    'payments' => $all_payment
+                    'created_at'     => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
+                    'payments'       => $all_payment
                 ];
                 return api_response($request, $payment_link_payments, 200, ['payment_link_payments' => $payment_link_payments]);
             } else {
