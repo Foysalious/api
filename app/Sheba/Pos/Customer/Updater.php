@@ -132,6 +132,7 @@ class Updater
         } else {
             unset($profile_data['email']);
             $token = $this->getPartnerAuthorizationToken();
+            dd($token);
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;
@@ -201,7 +202,7 @@ class Updater
             'iss' => "smanager_authorization",
             'sub' => $this->partner->id,
             'iat' => Carbon::now()->timestamp,
-            'exp' => Carbon::now()->addMinutes(1)->timestamp
+            'exp' => Carbon::now()->addMinutes(100)->timestamp
         ], config('jwt.secret'));
     }
 }
