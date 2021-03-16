@@ -5,6 +5,7 @@ namespace App\Sheba\NeoBanking\Repositories;
 use App\Sheba\NeoBanking\Constants\ThirdPartyLog;
 use Sheba\Dal\NeoBankingThirdPartyLog\Contract as Repository;
 use Sheba\ModificationFields;
+use Exception;
 
 class NeoBankingThirdPartyLogRepository
 {
@@ -23,7 +24,7 @@ class NeoBankingThirdPartyLogRepository
     public function setFrom($from)
     {
         if (!in_array($from,ThirdPartyLog::THIRD_PARTY_FROM_LIST)) {
-            throw new \Exception('Sorry! Invalid Third Party Name.');
+            throw new Exception('Sorry! Invalid Third Party Name.');
         }
 
         $this->from = $from;
@@ -33,7 +34,7 @@ class NeoBankingThirdPartyLogRepository
     public function setDataType($dataType)
     {
         if (!in_array($dataType,ThirdPartyLog::DATA_TYPE_LIST)) {
-           throw new \Exception('Sorry! Invalid Data Type.');
+           throw new Exception('Sorry! Invalid Data Type.');
         }
         $this->dataType = $dataType;
         return $this;
