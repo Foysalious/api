@@ -62,7 +62,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'type' => $leave_type->title,
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-
+                'total_leave_Days' => $leave_type->total_days,
                 'is_half_day' => $requestable->is_half_day,
                 'half_day_configuration' => $requestable->is_half_day ? [
                     'half_day' => $requestable->half_day_configuration,
@@ -71,7 +71,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
 
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
                 'note' => $requestable->note
@@ -92,14 +92,14 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
         $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
         $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
-
         foreach ($requestable->requests as $approval_request) {
             $business_member = $approval_request->approver;
             $member = $business_member->member;
             $profile = $member->profile;
             array_push($approvers, [
                 'name' => $profile->name,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'reject_reason' => $this->getRejectReason($requestable)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -113,6 +113,19 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
         });
         return $approvers;*/
+    }
+
+    private function getRejectReason($requestable)
+    {
+        $rejection = $requestable->rejection;
+        if (!$rejection) return null;
+        $reasons = $rejection->reasons;
+        $data = [];
+        $final_data['note'] = $rejection->note;
+        foreach ($reasons as $reason){
+            $data['reasons'][] = $reason->reason;
+        }
+        return array_merge($final_data, $data);
     }
 
     /**
