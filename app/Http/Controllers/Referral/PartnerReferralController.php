@@ -161,7 +161,7 @@ class PartnerReferralController extends Controller
     public function getReferralSteps(Request $request)
     {
         try {
-            $stepDetails          = collect(config('partner.referral_steps'))
+            $stepDetails          = collect(config('partner.referral_steps'))->where('visible',true)
                 ->map(function ($item) {
                     return [
                         'ধাপ'          => $item['step'],
