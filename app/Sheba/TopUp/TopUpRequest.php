@@ -181,6 +181,12 @@ class TopUpRequest
             return 1;
         }
 
+        if ($this->isCanTopUpNo()) {
+            $this->errorMessage = "টপ-আপ সফল হয়নি, sManager কতৃক আপনার টপ-আপ সার্ভিস বন্ধ করা হয়েছে। বিস্তারিত জানতে কল করুন ১৬৫১৬ নাম্বারে।";
+            return 1;
+        }
+
+
         if ($this->agent instanceof Business && $this->isAmountBlocked()) {
             $this->errorMessage = "The recharge amount is blocked due to OTF activation issue.";
             return 1;
@@ -200,6 +206,12 @@ class TopUpRequest
         return 0;
     }
 
+
+    private function isCanTopUpNo()
+    {
+        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
+    }
+
     private function doesAgentNotHaveBalance()
     {
         return ($this->isFromRobiTopUpWallet == 1 && $this->agent->robi_topup_wallet < $this->amount) ||
@@ -208,9 +220,10 @@ class TopUpRequest
 
     private function isAgentNotVerified()
     {
-        return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified() || !$this->agent->canTopUp())) ||
+        return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
             ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
     }
+
 
     /**
      * @return bool
