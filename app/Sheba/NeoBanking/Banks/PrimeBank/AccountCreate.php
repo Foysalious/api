@@ -3,6 +3,8 @@
 namespace Sheba\NeoBanking\Banks\PrimeBank;
 
 use App\Sheba\NeoBanking\Banks\PrimeBank\PrimeBankClient;
+use App\Sheba\NeoBanking\Constants\ThirdPartyLog;
+use App\Sheba\NeoBanking\Repositories\NeoBankingThirdPartyLogRepository;
 use Exception;
 use Sheba\Dal\PartnerNeoBankingAccount\Model as PartnerNeoBankingAccount;
 use Sheba\ModificationFields;
@@ -67,7 +69,17 @@ class AccountCreate
      */
     public function create()
     {
+        /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
+        $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
         $this->response = (array)(new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
+
+        if (is_array($this->response) && array_key_exists('data', $this->response)) {
+            $thirdPartyLog->setRequest($this->data['application_data'])
+                            ->setResponse($this->response['data'])
+                            ->setFrom(ThirdPartyLog::PBL_ACCOUNT_CREATION)
+                            ->store();
+        }
+
         if ($this->response['code']!==200) throw new AccountCreateException($this->response['message']);
         return $this;
     }
