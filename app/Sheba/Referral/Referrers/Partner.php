@@ -173,7 +173,7 @@ class Partner extends Referrer implements ReferrerInterface
                 }
                 $earnings += $configuration['amount'];
             }
-            $key=count($config);
+            $key=count($config)-1;
             return [
                 'start'            =>  $config[$key]['duration'] ,
                 'end'              => 0,
