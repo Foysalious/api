@@ -41,7 +41,6 @@ class CollectionController extends Controller
 
     public function store(CollectionRequest $request)
     {
-        dd($request->all());
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
             ->setPartnerId($partner->id)
@@ -68,8 +67,9 @@ class CollectionController extends Controller
     }
 
 
-    public function update(Request $request, $collection_id)
+    public function update(CollectionRequest $request, $collection_id)
     {
+        dd($request->all());
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
             ->setPartnerId($partner->id)
