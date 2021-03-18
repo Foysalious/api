@@ -64,6 +64,7 @@ class EmployeeRoute
             });
             $api->group(['prefix' => 'approval-requests'], function ($api) {
                 $api->get('/', 'Employee\ApprovalRequestController@index');
+                $api->get('/leaves/{business_member}', 'Employee\ApprovalRequestController@leaveHistory');
                 $api->get('/{approval_request}', 'Employee\ApprovalRequestController@show');
                 $api->post('/status', 'Employee\ApprovalRequestController@updateStatus');
             });
