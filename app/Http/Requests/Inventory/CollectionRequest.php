@@ -25,7 +25,7 @@ class CollectionRequest extends Request
     {
         return [
             'name'              => 'required|string',
-            'description'       => 'nullable',
+            'description'       => '',
             'is_published'      => 'required',
             'thumb'             => 'mimes:jpg,bmp,png,jpeg',
             'banner'            => 'mimes:jpg,bmp,png,jpeg',
