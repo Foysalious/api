@@ -83,7 +83,7 @@ class AccountCreate
         $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
         $this->response = (array)(new PrimeBankClient())->setPartner($this->partner)->createAccount('api/v1/client/accounts/store-application', $this->data);
 
-        if (is_array($this->response) && array_key_exists('data', $this->response)) {
+        if (isset($this->response['data'])) {
             $thirdPartyLog->setRequest($this->data['application_data'])
                             ->setResponse($this->response['data'])
                             ->setFrom(ThirdPartyLog::PBL_ACCOUNT_CREATION)
