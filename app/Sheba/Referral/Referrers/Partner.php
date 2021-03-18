@@ -156,7 +156,9 @@ class Partner extends Referrer implements ReferrerInterface
     {
 
 
-        $config = $this->config;
+        $config = array_where($this->config,function($item){
+            return $item['visible']==true;
+        });
         if ($partner_referral->refer) {
             $usage    = (int)$partner_referral->usages;
             $earnings = 0;
