@@ -1,5 +1,7 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Transformers\Business\LeaveListTransformer;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use App\Models\Attachment;
 use App\Models\Business;
@@ -21,6 +23,7 @@ use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\ModificationFields;
 use Sheba\Dal\Leave\Status;
@@ -187,6 +190,20 @@ class ApprovalRequestController extends Controller
         $updater->setStatus($request->status)->change();
 
         return api_response($request, null, 200);
+    }
+
+    public function leaveHistory($business_member,Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $business_member = $this->getBusinessMemberById($business_member);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new Collection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+        return api_response($request, null, 200, ['leaves' => $leaves]);
     }
 }
 

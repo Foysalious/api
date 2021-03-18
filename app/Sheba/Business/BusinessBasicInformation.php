@@ -10,14 +10,10 @@ trait BusinessBasicInformation
 {
     public function getBusinessMember(Request $request)
     {
-        $business_member_id = $request->business_member;
-        if (!$request->has('business_member')) {
-            $auth_info = $request->auth_info;
-            $business_member = $auth_info['business_member'];
-            $business_member_id = $business_member['id'];
-            if (!isset($business_member['id'])) return null;
-        }
-        return BusinessMember::findOrFail($business_member_id);
+        $auth_info = $request->auth_info;
+        $business_member = $auth_info['business_member'];
+        if (!isset($business_member['id'])) return null;
+        return BusinessMember::findOrFail($business_member['id']);
     }
 
     public function getBusinessMemberById($business_member)
