@@ -67,7 +67,7 @@ class CollectionController extends Controller
     }
 
 
-    public function update(CollectionRequest $request, $collection_id)
+    public function update(Request $request, $collection_id)
     {
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
