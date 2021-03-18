@@ -45,6 +45,7 @@ class NeoBankingThirdPartyLogRepository
 
     public function store()
     {
+        dd($this->getData());
         return $this->repository->create(
             $this->withCreateModificationField($this->getData())
         );

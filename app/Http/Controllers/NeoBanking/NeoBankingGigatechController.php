@@ -5,6 +5,8 @@ namespace App\Http\Controllers\NeoBanking;
 
 
 use App\Http\Controllers\Controller;
+use App\Sheba\NeoBanking\Constants\ThirdPartyLog;
+use App\Sheba\NeoBanking\Repositories\NeoBankingThirdPartyLogRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
@@ -46,11 +48,18 @@ class NeoBankingGigatechController extends Controller
             }
             $data = (array)$response->data;
             if (isset($data['app_base_url'])) $data['app_base_url'] = 'https://gt-proxy.sheba.xyz';
+            /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
+            $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
+            $thirdPartyLog->setFrom(ThirdPartyLog::SBS)
+                ->setRequest($bank)
+                ->setResponse(json_encode(data))
+                ->store();
             return api_response($request, null, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -92,5 +101,9 @@ class NeoBankingGigatechController extends Controller
             logError($e);
             return api_response($request, null, 500);
         }
+    }
+
+    public function storeLivelinessLog(Request $request) {
+        dd($request->all());
     }
 }
