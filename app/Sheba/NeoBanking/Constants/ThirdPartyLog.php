@@ -14,5 +14,6 @@ final class ThirdPartyLog
     const PBL_RESPONSE = 'pbl_response';
     const PBL_ACCOUNT_CREATION = 'pbl_account_creation';
     const SBS = 'sbs';
+    const GIGA_TECH = "giga_tech";
 
 }

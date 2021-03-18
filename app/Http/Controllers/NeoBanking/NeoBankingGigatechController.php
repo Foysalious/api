@@ -27,6 +27,16 @@ class NeoBankingGigatechController extends Controller
             $data['id_front'] = $request->id_front;
             $data['id_back']  = $request->id_back;
             $info             = (array)(new NeoBanking())->setBank($bank)->getNidInfo($data);
+            dd($info["data"]);
+//            dd(json_encode($info));
+//            /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
+//            $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
+//            $thirdPartyLog->setFrom(ThirdPartyLog::GIGA_TECH)
+//                ->setRequest("ocr images")
+//                ->setResponse(json_encode($result))
+//                ->setPartnerId($request->partner->id)
+//                ->setOthers("phone model")
+//                ->store();
             return api_response($request, $info, 200, ['data' => $info["data"]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -48,18 +58,11 @@ class NeoBankingGigatechController extends Controller
             }
             $data = (array)$response->data;
             if (isset($data['app_base_url'])) $data['app_base_url'] = 'https://gt-proxy.sheba.xyz';
-            /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
-            $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
-            $thirdPartyLog->setFrom(ThirdPartyLog::SBS)
-                ->setRequest($bank)
-                ->setResponse(json_encode(data))
-                ->store();
             return api_response($request, null, 200, ['data' => $data]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
