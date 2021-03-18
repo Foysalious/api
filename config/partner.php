@@ -34,7 +34,7 @@ return [
         [
             'step'             => '৪র্থ ধাপ',
             'amount'           => 0,
-            'duration'         => 999999999999999999999999999,
+            'duration'         => 365000,
             'nid_verification' => true,
             'details'          => 'আপনার বন্ধুকে sManager অ্যাপের মাধ্যমে NID ভেরিফিকেশন করতে হবে।',
             'visible'          => true
