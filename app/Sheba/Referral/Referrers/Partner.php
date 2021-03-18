@@ -115,7 +115,7 @@ class Partner extends Referrer implements ReferrerInterface
         $ref_data              = $this->generateDetails($ref);
         $last_use              = $ref->refer->usage()->get()->last();
         $ref_data['last_used'] = !empty($last_use) ? $last_use->created_at->format('Y-m-d H:i:s') : null;
-        $ref_data['stepwise_income'] = collect(config('partner.referral_steps'))
+        $ref_data['stepwise_income'] = collect(config('partner.referral_steps'))->where('visible', true)
             ->map(function($item) {
                 return $item['amount'];
             });
@@ -161,30 +161,6 @@ class Partner extends Referrer implements ReferrerInterface
             $usage    = (int)$partner_referral->usages;
             $earnings = 0;
             foreach ($config as $key => $configuration) {
-                if ($configuration['nid_verification'])
-                {
-                   if($partner_referral->refer->isNIDVerified() && ($partner_referral->refer->refer_level != $key+1))
-                    {
-                        $partner_referral->refer->refer_level = $key+1;
-                        $partner_referral->refer->referrer_income = $earnings + $configuration['amount'];
-                        $partner_referral->refer->update();
-                        (new WalletTransactionHandler())->setModel($partner_referral->refer->referredBy)->setSource(TransactionSources::SHEBA_WALLET)->setType(Types::credit())->setAmount($configuration['amount'])->setLog($configuration['amount'] . " BDT has been credited for partner referral from usage of name: " . $partner_referral->refer->name . ', ID: ' . $partner_referral->refer->id)->store();
-
-                        $partnerModel = 'App\Models\Partner';
-                        $this->updatedRefer = $partnerModel::find($partner_referral->refer->id);
-
-                    }
-                    return [
-                        'start'            => 0,
-                        'end'              => 0,
-                        'nid_verification' => true,
-                        'future_earning'   => !$partner_referral->refer->isNIDVerified() ? $earnings + $configuration['amount'] : null,
-                        'current_step'     => $partner_referral->refer->isNIDVerified() ? $config[$key]['step'] : $config[$key-1]['step'],
-                        'future_step'      => !$partner_referral->refer->isNIDVerified()  ?   $config[$key]['step'] : (isset($config[$key+1]) ? $config[$key+1] : null )
-                    ];
-
-                }
-
                 if ($configuration['duration'] > $usage) {
                     return [
                         'start'            => (isset($config[$key - 1]) ? $config[$key - 1]['duration'] : 0),
@@ -201,73 +177,13 @@ class Partner extends Referrer implements ReferrerInterface
         return [
             'start'            => 0,
             'end'              => $config[0]['duration'],
-            'nid_verification' => false,
+            'nid_verification' => $config[0]['nid_verification'],
             'future_earning'   => $config[0]['amount'],
             'current_step'     => 'পেন্ডিং',
             'future_step'      => $config[0]['step']
         ];
     }
 
-  /*  private function getMilestoneForPartner($partner_referral)
-    {
-        $config = $this->config;
-        if ($partner_referral->refer) {
-            $usage    = (int)$partner_referral->usages;
-            $earnings = 0;
-            foreach ($config as $key => $configuration) {
-                if ($configuration['nid_verification'] && $partner_referral->refer->isNIDVerified()){
-                    $this->resolveLevelAndIncome($partner_referral,$key+1,$earnings + $configuration['amount']);
-                    return [
-                        'start'            => 0,
-                        'end'              => 0,
-                        'nid_verification' => true,
-                        'future_earning'   => null,
-                        'current_step'     => $config[$key]['step'],
-                        'future_step'      => isset($config[$key + 1]) ? $config[$key + 1]['step'] : null
-                    ];
-                }
-
-                if ($configuration['nid_verification'] && !$partner_referral->refer->isNIDVerified())
-                    return [
-                        'start'            => 0,
-                        'end'              => 0,
-                        'nid_verification' => true,
-                        'future_earning'   => $earnings + $configuration['amount'],
-                        'current_step'     => $config[$key-1]['step'],
-                        'future_step'      => isset($config[$key]) ? $config[$key]['step'] : null
-                    ];
-                if ($configuration['duration'] > $usage) {
-                    return [
-                        'start'            => (isset($config[$key - 1]) ? $config[$key - 1]['duration'] : 0),
-                        'end'              => $configuration['duration'],
-                        'nid_verification' => $configuration['nid_verification'],
-                        'future_earning'   => $earnings + $configuration['amount'],
-                        'current_step'     => (isset($config[$key - 1]) ? $config[$key - 1]['step'] : 'পেন্ডিং'),
-                        'future_step'      => $config[$key]['step']
-                    ];
-                }
-                $earnings += $configuration['amount'];
-            }
-        }
-        return [
-            'start'            => 0,
-            'end'              => $config[0]['duration'],
-            'nid_verification' => false,
-            'future_earning'   => $config[0]['amount'],
-            'current_step'     => 'পেন্ডিং',
-            'future_step'      => $config[0]['step']
-        ];
-    }
-
-    private function resolveLevelAndIncome($partner_referral,$level,$income)
-    {
-        if($partner_referral->refer->refer_level != $level  || ((double)$partner_referral->refer->referrer_income != (double)$income))
-        {
-            $partner_referral->refer->refer_level = $level;
-            $partner_referral->refer->referrer_income = $income;
-            $partner_referral->refer->update();
-        }
-    }*/
     function totalRefer()
     {
         $ref = $this->init()->selectRaw('count(*) as count')->first();
