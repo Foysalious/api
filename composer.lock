@@ -3894,7 +3894,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
+                "url": "https://bitbucket.org/startern/sheba_dal.git",
                 "reference": "c6237d399e5e47644d33135d9de3e5053697294c"
             },
             "require": {
@@ -3929,7 +3929,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://shafiq_startern@bitbucket.org/startern/sheba_elasticsearch.git",
+                "url": "https://bitbucket.org/startern/sheba_elasticsearch.git",
                 "reference": "7b89e06b9524a418efc527c07ed7954697dcf32b"
             },
             "require": {
