@@ -97,7 +97,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'note' => $requestable->note,
                 'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'total_leave_days' => $leave_type->total_days,
-                'super_admin_reject_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN)
+                'super_admin_action_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN)
             ],
             'leave_log_details' => $this->getLeaveLog($requestable),
             'approvers' => $approvers,

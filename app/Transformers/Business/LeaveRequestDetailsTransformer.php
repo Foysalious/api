@@ -72,7 +72,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
-            'super_admin_reject_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN),
+            'super_admin_action_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN),
             'leave' => [
                 'id' => $requestable->id,
                 'employee_id' => $requestable->businessMember->employee_id,

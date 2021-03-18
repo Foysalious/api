@@ -10,14 +10,16 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
+use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use League\Fractal\Resource\Collection as ResourceCollection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -29,6 +31,7 @@ use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresent
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -551,6 +554,31 @@ class LeaveController extends Controller
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
     }
 
+    /**
+     * @param $business_member_id
+     * @param Request $request
+     * @param LeaveRepository $leave_repo
+     * @return JsonResponse
+     */
+    public function leaveHistory($business_member_id, Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $business_member = $this->getBusinessMemberById($request->business_member_id);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new ResourceCollection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort')) {
+            $leaves = $this->leaveHistoryOrderBy($leaves, $request->sort)->values();
+        }
+
+        return api_response($request, null, 200, ['leaves' => $leaves]);
+    }
+
     private function getRejectReason($requestable, $type)
     {
         $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
@@ -563,5 +591,18 @@ class LeaveController extends Controller
             $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
         }
         return array_merge($final_data, $data);
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveHistoryOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['period']);
+        });
     }
 }
