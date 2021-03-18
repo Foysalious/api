@@ -5,6 +5,7 @@ use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
+use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
@@ -114,6 +115,8 @@ class Kernel extends HttpKernel
         'accessToken' => AccessTokenMiddleware::class,
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
-        'topUp.auth' => TopUpAuthMiddleware::class
+        'topUp.auth' => TopUpAuthMiddleware::class,
+        'terminate' => TerminatingMiddleware::class,
+
     ];
 }
