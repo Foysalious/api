@@ -78,8 +78,8 @@ class LeaveController extends Controller
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMember($request);
         $is_substitute_required = $this->isNeedSubstitute($business_member) ? 1 : 0;
-        if (!$leave || $leave->business_member_id != $business_member->id)
-            return api_response($request, null, 403);
+        /*if (!$leave || $leave->business_member_id != $business_member->id)
+            return api_response($request, null, 403);*/
 
         $leave = $leave->load(['leaveType' => function ($q) {
             return $q->withTrashed();
