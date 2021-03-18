@@ -173,6 +173,15 @@ class Partner extends Referrer implements ReferrerInterface
                 }
                 $earnings += $configuration['amount'];
             }
+            $key=count($config);
+            return [
+                'start'            =>  $config[$key]['duration'] ,
+                'end'              => 0,
+                'nid_verification' => $config[$key]['nid_verification'],
+                'future_earning'   => 0,
+                'current_step'     =>  $config[$key]['step'],
+                'future_step'      => $config[$key]['step']
+            ];
         }
         return [
             'start'            => 0,
