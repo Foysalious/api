@@ -13,7 +13,6 @@ use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -21,12 +20,10 @@ use League\Fractal\Resource\Collection as ResourceCollection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
-use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Business\Leave\LeaveRejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
@@ -555,7 +552,13 @@ class LeaveController extends Controller
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
     }
 
-    public function leaveHistory($business_member_id,Request $request, LeaveRepoInterface $leave_repo)
+    /**
+     * @param $business_member_id
+     * @param Request $request
+     * @param LeaveRepository $leave_repo
+     * @return JsonResponse
+     */
+    public function leaveHistory($business_member_id, Request $request, LeaveRepoInterface $leave_repo)
     {
         $business_member = $this->getBusinessMemberById($request->business_member_id);
         if (!$business_member) return api_response($request, null, 404);
@@ -566,6 +569,11 @@ class LeaveController extends Controller
         $fractal = new Manager();
         $resource = new ResourceCollection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort')) {
+            $leaves = $this->leaveHistoryOrderBy($leaves, $request->sort)->values();
+        }
+
         return api_response($request, null, 200, ['leaves' => $leaves]);
     }
 
@@ -581,5 +589,18 @@ class LeaveController extends Controller
             $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
         }
         return array_merge($final_data, $data);
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveHistoryOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['period']);
+        });
     }
 }
