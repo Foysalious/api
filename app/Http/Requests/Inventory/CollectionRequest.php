@@ -27,10 +27,10 @@ class CollectionRequest extends Request
             'name'              => 'required|string',
             'description'       => 'nullable',
             'is_published'      => 'required',
-            'thumb'             => 'nullable',
-            'banner'            => 'nullable|mimes:jpg,bmp,png,jpeg',
-            'app_thumb'         => 'nullable|mimes:jpg,bmp,png,jpeg',
-            'app_banner'        => 'nullable|mimes:jpg,bmp,png,jpeg'
+            'thumb'             => 'mimes:jpg,bmp,png,jpeg',
+            'banner'            => 'mimes:jpg,bmp,png,jpeg',
+            'app_thumb'         => 'mimes:jpg,bmp,png,jpeg',
+            'app_banner'        => 'mimes:jpg,bmp,png,jpeg'
         ];
     }
 }
