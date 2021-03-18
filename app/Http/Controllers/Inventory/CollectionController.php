@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Inventory;
 
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Inventory\CollectionRequest;
 use App\Sheba\InventoryService\Repository\CollectionRepository;
 use App\Sheba\InventoryService\Services\CollectionService;
 use Illuminate\Http\Request;
@@ -38,8 +39,9 @@ class CollectionController extends Controller
      * @throws Exception
      */
 
-    public function store(Request $request)
+    public function store(CollectionRequest $request)
     {
+        dd($request->all());
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
             ->setPartnerId($partner->id)
