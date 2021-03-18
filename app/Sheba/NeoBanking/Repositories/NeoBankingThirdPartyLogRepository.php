@@ -23,7 +23,7 @@ class NeoBankingThirdPartyLogRepository
 
     public function setFrom($from)
     {
-        if (!in_array($from,ThirdPartyLog::THIRD_PARTY_FROM_LIST)) {
+        if (!in_array($from,ThirdPartyLog::get())) {
             throw new Exception('Sorry! Invalid Third Party Name.');
         }
 
