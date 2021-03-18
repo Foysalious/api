@@ -21,7 +21,11 @@ class AffiliateRoute
             });
 
             $api->group(['prefix' => 'bondhu-reward'], function ($api){
-                $api->get('history', 'Affiliate\BondhuRewardController@rewardHistory' );
+                $api->get('/', 'Affiliate\BondhuRewardController@rewardList');
+                $api->get('history', 'Affiliate\BondhuRewardController@rewardHistory');
+                $api->get('achieved', 'Affiliate\BondhuRewardController@getUnseenAchievedRewards');
+                $api->get('{rewardId}', 'Affiliate\BondhuRewardController@rewardDetails');
+                $api->put('seen', 'Affiliate\BondhuRewardController@updateIsSeen');
             });
         });
 
