@@ -9,6 +9,7 @@ use App\Models\Affiliate;
 use App\Models\Reward;
 use App\Models\RewardCampaign;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Sheba\Dal\RewardAffiliates\Contract as RewardAffiliatesRepo;
 use Sheba\Reward\Event\Affiliate\RewardDetails;
 
@@ -20,10 +21,12 @@ class BondhuRewardController extends Controller
         $this->rewardAffiliateRepo = $rewardAffiliateRepo;
     }
 
-    public function rewardHistory($affiliate)
+    public function rewardHistory($affiliate, RewardDetails $rewardDetails)
     {
 //        $affiliate_model = Affiliate::where('id', $affiliate)->get();
-        $rewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)->get();
+//        $rewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)->get();
+        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<=');
+        $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
 
     }
 
@@ -34,13 +37,11 @@ class BondhuRewardController extends Controller
      * todo: progress of the reward
      */
     public function rewardList($affiliate, RewardDetails $rewardDetails){
-        $affiliateRewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)
-            ->leftJoinReward()
-            ->where('rewards.start_time', '<=', Carbon::now())
-            ->where('rewards.end_time', '>', Carbon::now())
-            ->get();
-
+        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '>', Carbon::now(), '<=');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
+
+//        $minStartTime = $affiliateRewards->min('start_time');
+//        $maxEndTime = $affiliateRewards->max('end_time');
 
         return $affiliateRewards;
     }
@@ -53,5 +54,20 @@ class BondhuRewardController extends Controller
      */
     public function rewardDetails($affiliate, $rewardId){
         return Reward::with('detail')->find($rewardId);
+    }
+
+    public function getUnseenAchievedRewards($affiliate, RewardDetails $rewardDetails){
+        $affiliateRewards = $this->rewardAffiliateRepo->getUnseenAchievedRewards($affiliate);
+        $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
+
+        return $affiliateRewards;
+    }
+
+    public function updateIsSeen($affiliate, Request $request){
+        if ($this->rewardAffiliateRepo->updateRewardSeen($request->affiliate_reward_id, true, $affiliate)){
+            return ['code' => 200, 'message' => 'Successful'];
+        }
+
+        return ['code' => 400, 'message' => 'Something went wrong'];
     }
 }
