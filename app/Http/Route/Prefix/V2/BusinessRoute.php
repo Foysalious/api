@@ -112,6 +112,7 @@ class BusinessRoute
                     $api->get('/reject-reasons', 'B2b\LeaveController@rejectReasons');
                     $api->group(['prefix' => 'approval-requests'], function ($api) {
                         $api->get('/lists', 'B2b\LeaveController@index');
+                        $api->get('/leave-history/{business_member_id}', 'B2b\LeaveController@leaveHistory');
                         $api->group(['prefix' => '{approval_request}'], function ($api) {
                             $api->get('/', 'B2b\LeaveController@show');
                         });
