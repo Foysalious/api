@@ -9,6 +9,7 @@ use App\Sheba\NeoBanking\Constants\ThirdPartyLog;
 use App\Sheba\NeoBanking\Repositories\NeoBankingThirdPartyLogRepository;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\NeoBankingThirdPartyLog\Model as neoBankingThirdPartyLog;
 use Sheba\NeoBanking\Exceptions\NeoBankingException;
 use Sheba\NeoBanking\NeoBanking;
 use Sheba\NeoBanking\Statics\NeoBankingGeneralStatics;
@@ -26,17 +27,10 @@ class NeoBankingGigatechController extends Controller
             $bank             = $request->bank_code;
             $data['id_front'] = $request->id_front;
             $data['id_back']  = $request->id_back;
-            $info             = (array)(new NeoBanking())->setBank($bank)->getNidInfo($data);
-            dd($info["data"]);
-//            dd(json_encode($info));
-//            /** @var NeoBankingThirdPartyLogRepository $thirdPartyLog */
-//            $thirdPartyLog = app(NeoBankingThirdPartyLogRepository::class);
-//            $thirdPartyLog->setFrom(ThirdPartyLog::GIGA_TECH)
-//                ->setRequest("ocr images")
-//                ->setResponse(json_encode($result))
-//                ->setPartnerId($request->partner->id)
-//                ->setOthers("phone model")
-//                ->store();
+            /** @var NeoBanking $neoBanking */
+            $neoBanking = app(NeoBanking::class);
+            $info             = (array)$neoBanking->setBank($bank)->getNidInfo($data);
+            $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,"ocr images", $info["data"]);
             return api_response($request, $info, 200, ['data' => $info["data"]]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -74,12 +68,20 @@ class NeoBankingGigatechController extends Controller
             $this->validate($request, ['mobile' => 'required|mobile:bd', 'bank_code' => 'required|string']);
             $bank           = $request->bank_code;
             $data['mobile'] = $request->mobile;
-            $result         = (array)(new NeoBanking())->setBank($bank)->getGigatechKycStatus($data);
+            /** @var NeoBanking $neoBanking */
+            $neoBanking = app(NeoBanking::class);
+            $result         = (array)$neoBanking->setBank($bank)->getGigatechKycStatus($data);
+
+            $thirdPartyLog = neoBankingThirdPartyLog::where([['partner_id',$request->partner->id],['from', 'giga_tech_status']])->orderBy('id', 'DESC')->first();
+            if($thirdPartyLog->response !== json_encode($result['data'])){
+                $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH_STATUS,$request->mobile, $result['data']);
+            }
             return api_response($request, $result, 200, ['data' => $result['data']]);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
+            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
@@ -93,7 +95,11 @@ class NeoBankingGigatechController extends Controller
             $partner          = $request->partner;
             $manager_resource = $request->manager_resource;
             $data             = NeoBankingGeneralStatics::kycData($request->all());
-            $result           = (array)(new NeoBanking())->setBank($bank)->setPartner($partner)->setResource($manager_resource)->setGigatechKycData($data)->storeGigatechKyc();
+            /** @var NeoBanking $neoBanking */
+            $neoBanking = app(NeoBanking::class);
+            $result           = (array)$neoBanking->setBank($bank)->setPartner($partner)->setResource($manager_resource)->setGigatechKycData($data)->storeGigatechKyc();
+            $log_data = array_except($data, ["applicant_photo","id_front","id_back"]);
+            $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,$log_data, $result['data']);
             return api_response($request, $result, 200, ['data' => $result['data']]);
         } catch (NeoBankingException $e) {
             return api_response($request, $e, $e->getCode(), ['message' => $e->getMessage()]);
@@ -107,6 +113,14 @@ class NeoBankingGigatechController extends Controller
     }
 
     public function storeLivelinessLog(Request $request) {
-        dd($request->all());
+        try {
+            /** @var NeoBanking $neoBanking */
+            $neoBanking = app(NeoBanking::class);
+            $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH,'liveliness', $request->response, $request->others);
+            return api_response($request, null, 200);
+        } catch (\Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
     }
 }
