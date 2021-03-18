@@ -14,7 +14,6 @@ class PartnerResourceFactory extends Factory
     protected function getData()
     {
         return array_merge($this->commonSeeds, [
-            'resource_type'=>'Admin',
             'is_verified'=> 1
         ]);
     }
