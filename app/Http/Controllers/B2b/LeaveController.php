@@ -15,8 +15,7 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
-use League\Fractal\Resource\Collection as ResourceCollection;
+use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
@@ -569,7 +568,7 @@ class LeaveController extends Controller
         if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
         $leaves = $leaves->get();
         $fractal = new Manager();
-        $resource = new ResourceCollection($leaves, new LeaveListTransformer());
+        $resource = new Collection($leaves, new LeaveListTransformer());
         $leaves = $fractal->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
