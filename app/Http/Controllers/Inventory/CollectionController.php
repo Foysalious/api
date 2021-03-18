@@ -52,6 +52,7 @@ class CollectionController extends Controller
             ->setAppBanner($request->file('app_banner'))
             ->setIsPublished($request->is_published)
             ->store();
+
         return http_response($request, null, 201, $response);
     }
 

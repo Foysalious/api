@@ -2,9 +2,10 @@
 
 namespace App\Http\Requests\Inventory;
 
+use App\Http\Requests\ApiRequest;
 use App\Http\Requests\Request;
 
-class CollectionRequest extends Request
+class CollectionRequest extends ApiRequest
 {
     /**
      * Determine if the user is authorized to make this request.
