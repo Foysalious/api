@@ -48,7 +48,8 @@ class PartnerTransactionController extends Controller
                 'transactions' => $final,
                 'balance' => round($request->partner->totalWalletAmount(), 2),
                 'credit' => round($request->partner->wallet, 2),
-                'bonus' => round($request->partner->bonusWallet(), 2)
+                'bonus' => round($request->partner->bonusWallet(), 2),
+                'is_credit_limit_exceed'    => $request->partner->isCreditLimitExceed()
             ]) : api_response($request, null, 404);
         } catch (\Throwable $e) {
             app('sentry')->captureException($e);
