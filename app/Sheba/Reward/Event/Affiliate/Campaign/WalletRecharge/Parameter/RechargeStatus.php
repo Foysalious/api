@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter;
+namespace Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter;
 
 
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +13,9 @@ class RechargeStatus extends CampaignEventParameter
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        if ($this->value != null) {
+            $query->where('payments.status', $this->value );
+        }
     }
 
     public function validate()

@@ -1,18 +1,22 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
+namespace Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
 
 
 use Illuminate\Database\Eloquent\Builder;
+use Sheba\Reward\Event\CampaignEventParameter;
 use Sheba\Reward\Exception\ParameterTypeMismatchException;
 
-class Operator extends \Sheba\Reward\Event\CampaignEventParameter
+class Operator extends CampaignEventParameter
 {
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+
+        if ($this->value != null) {
+            $query->whereIn('topup_orders.vendor_id', [1,2,3,4,5,6] );
+        }
     }
 
     public function validate()

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
+namespace Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
 
 
 use Illuminate\Database\Eloquent\Builder;
@@ -14,7 +14,7 @@ class Target extends CampaignEventParameter implements EventTarget
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        $query->having('total_amount', '>=', $this->value);
     }
 
     public function validate()

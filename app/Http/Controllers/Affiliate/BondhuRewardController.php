@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Reward;
 use App\Models\RewardCampaign;
+use App\Sheba\Affiliate\AffiliateRewardHelper;
 use Illuminate\Support\Facades\Artisan;
 use Sheba\Dal\RewardAffiliates\Contract as RewardAffiliatesRepo;
 use Sheba\Reward\CompletedCampaignHandler;
@@ -18,17 +19,23 @@ use Sheba\Reward\Event\Affiliate\RewardDetails;
 class BondhuRewardController extends Controller
 {
     private $rewardAffiliateRepo;
-    public function __construct(RewardAffiliatesRepo $rewardAffiliateRepo)
+    private $affiliateRewardHelper;
+
+    public function __construct(RewardAffiliatesRepo $rewardAffiliateRepo, AffiliateRewardHelper $affiliateRewardHelper )
     {
         $this->rewardAffiliateRepo = $rewardAffiliateRepo;
+        $this->affiliateRewardHelper = $affiliateRewardHelper;
     }
 
     public function rewardHistory($affiliate, RewardDetails $rewardDetails)
     {
 //        $affiliate_model = Affiliate::where('id', $affiliate)->get();
 //        $rewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)->get();
-        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<=');
+        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
+
+        $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
+        return $affiliateRewards;
 
     }
 

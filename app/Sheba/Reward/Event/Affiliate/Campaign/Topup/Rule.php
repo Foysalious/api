@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\Topup;
+namespace Sheba\Reward\Event\Affiliate\Campaign\Topup;
 
 
-use App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\Operator;
-use App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\Target;
-use App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\TopupStatus;
+use Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\Operator;
+use Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\Target;
+use Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter\TopupStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Sheba\Reward\Event\CampaignRule;
 use Sheba\Reward\Event\TargetProgress;
@@ -43,12 +43,30 @@ class Rule extends CampaignRule
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        $this->topupStatus->check($query);
+        $this->operator->check($query);
+    }
+
+    public function checkParticipation(Builder $query)
+    {
+        $this->topupStatus->check($query);
+        $this->operator->check($query);
+        $this->target->check($query);
     }
 
     public function getProgress(Builder $query): TargetProgress
     {
         // TODO: Implement getProgress() method.
+    }
+
+    public function isTargetAchieved($achieved_value)
+    {
+        return $achieved_value >= $this->target->value;
+    }
+
+    public function getAchievedValue($total_amount)
+    {
+        return $total_amount > $this->target->value ? $this->target->value : $total_amount ;
     }
 
 }

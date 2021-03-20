@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
+namespace Sheba\Reward\Event\Affiliate\Campaign\Topup\Parameter;
 
 
 use Illuminate\Database\Eloquent\Builder;
@@ -13,7 +13,9 @@ class TopupStatus extends CampaignEventParameter
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        if ($this->value != null) {
+            $query->where('topup_orders.status', $this->value );
+        }
     }
 
     public function validate()

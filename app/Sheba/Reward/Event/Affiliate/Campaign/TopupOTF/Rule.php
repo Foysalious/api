@@ -1,15 +1,15 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF;
+namespace Sheba\Reward\Event\Affiliate\Campaign\TopupOTF;
 
 
 
-use App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Operator;
-use App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Quantity;
-use App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\SimType;
-use App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Target;
-use App\Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\TopUpStatus;
+use Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Operator;
+use Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Quantity;
+use Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\SimType;
+use Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\Target;
+use Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Parameter\TopupStatus;
 use Illuminate\Database\Eloquent\Builder;
 use Sheba\Reward\Event\TargetProgress;
 use Sheba\Reward\Event\CampaignRule;
@@ -56,8 +56,23 @@ class Rule extends CampaignRule
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        $this->topupStatus->check($query);
+        $this->operator->check($query);
+        $this->simType->check($query);
+        $this->target->check($query);
+
     }
+
+    public function checkParticipation(Builder $query)
+    {
+        $this->quantity->check($query);
+        $this->topupStatus->check($query);
+        $this->operator->check($query);
+        $this->simType->check($query);
+        $this->target->check($query);
+    }
+
+
 
     /**
      * @inheritDoc
@@ -65,5 +80,15 @@ class Rule extends CampaignRule
     public function getProgress(Builder $query): TargetProgress
     {
         // TODO: Implement getProgress() method.
+    }
+
+    public function isTargetAchieved($achieved_value)
+    {
+        return $achieved_value >= $this->quantity->value;
+    }
+
+    public function getAchievedValue($quantity)
+    {
+        return $quantity > $this->quantity->value ? $this->quantity->value : $quantity ;
     }
 }

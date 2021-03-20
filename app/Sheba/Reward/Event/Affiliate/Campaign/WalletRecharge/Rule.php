@@ -1,12 +1,12 @@
 <?php
 
 
-namespace App\Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge;
+namespace Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge;
 
 
-use App\Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\Gateway;
-use App\Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\RechargeStatus;
-use App\Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\Target;
+use Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\Gateway;
+use Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\RechargeStatus;
+use Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Parameter\Target;
 use Illuminate\Database\Eloquent\Builder;
 use Sheba\Reward\Event\TargetProgress;
 use Sheba\Reward\Event\CampaignRule;
@@ -39,14 +39,33 @@ class Rule extends CampaignRule
 
     public function check(Builder $query)
     {
-        // TODO: Implement check() method.
+        $this->rechargeStatus->check($query);
+        $this->gateway->check($query);
+
     }
 
     /**
      * @inheritDoc
      */
+    public function checkParticipation(Builder $query)
+    {
+        $this->rechargeStatus->check($query);
+        $this->gateway->check($query);
+        $this->target->check($query);
+    }
+
     public function getProgress(Builder $query): TargetProgress
     {
         // TODO: Implement getProgress() method.
+    }
+
+    public function isTargetAchieved($achieved_value)
+    {
+        return $achieved_value >= $this->target->value;
+    }
+
+    public function getAchievedValue($total_amount)
+    {
+        return $total_amount > $this->target->value ? $this->target->value : $total_amount ;
     }
 }
