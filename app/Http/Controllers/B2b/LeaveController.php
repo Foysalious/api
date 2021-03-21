@@ -24,7 +24,7 @@ use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
-use Sheba\Business\Leave\LeaveRejectReason;
+use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
@@ -535,19 +535,13 @@ class LeaveController extends Controller
 
     /**
      * @param Request $request
-     * @param LeaveRejectReason $reject_reason
+     * @param RejectReason $reject_reason
      * @return JsonResponse
      */
-    public function rejectReasons(Request $request, LeaveRejectReason $reject_reason)
+    public function rejectReasons(Request $request, RejectReason $reject_reason)
     {
-        $reject_reasons = $reject_reason::getReasons();
-        $reasons = [];
-        foreach ($reject_reasons as $key => $reject_reason) {
-            $reasons[] = [
-                'key' => $key,
-                'value' => $reject_reason
-            ];
-        }
+        $reject_reasons = $reject_reason->reasons();
+
         return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
     }
 
