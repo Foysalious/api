@@ -34,8 +34,7 @@ class BondhuRewardController extends Controller
         $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
 
-        $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
-        return $affiliateRewards;
+        return $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
 
     }
 

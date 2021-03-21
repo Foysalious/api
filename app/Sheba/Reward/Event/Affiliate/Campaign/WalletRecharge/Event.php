@@ -22,7 +22,7 @@ class Event extends Campaign
         $timeFrame = $this->timeFrame;
         $from = $timeFrame->start->toDateString();
         $to = $timeFrame->end->addDay(1)->toDateString();
-
+        $rewards_for_affiliates = \DB::table('reward_affiliates')->select(['affiliate'])->where('reward', '=', $this->reward->id )->get();
         $this->query = Payable::select('user_id as affiliate_id', \DB::raw('sum(amount) as total_amount'))
             ->leftJoin('payments', function($join) {
                 $join->on('payables.id', '=', 'payments.payable_id');
@@ -31,6 +31,7 @@ class Event extends Campaign
             ->where('payments.created_at', '>=', $from)
             ->where('payments.created_at', '<', $to)
             ->where('payables.type', 'wallet_recharge')
+            ->whereIn('payables.user_id', array_column($rewards_for_affiliates, 'affiliate'))
             ->groupBy('payables.user_id')
         ;
 
@@ -60,9 +61,11 @@ class Event extends Campaign
         if ( $query_result->count() > 0 ) {
             $total_amount = $query_result[0]->total_amount;
             $achieved = $this->rule->getAchievedValue($total_amount);
-            $progress['achieved'] = $achieved;
+            $progress['achieved'] = (float) $achieved;
+            $progress['percentage'] = ($achieved * 100)/ $this->rule->target->value;
         } else {
             $progress['achieved'] = 0;
+            $progress['percentage'] = 0;
         }
         return $progress;
     }
