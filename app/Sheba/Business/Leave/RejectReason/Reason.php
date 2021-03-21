@@ -1,8 +1,8 @@
-<?php namespace Sheba\Business\Leave;
+<?php namespace Sheba\Business\Leave\RejectReason;
 
 use Sheba\Helpers\ConstGetter;
 
-class LeaveRejectReason
+class Reason
 {
     use ConstGetter;
 
