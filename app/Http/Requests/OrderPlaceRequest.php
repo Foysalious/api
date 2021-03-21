@@ -1,12 +1,16 @@
 <?php namespace App\Http\Requests;
 
 
+use App\Models\Customer;
 use Carbon\Carbon;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\UserAgentInformation;
 
 class OrderPlaceRequest extends ApiRequest
 {
+    /** @var Customer */
+    private $customerObject;
+
     /**
      * Determine if the user is authorized to make this request.
      *
@@ -68,6 +72,15 @@ class OrderPlaceRequest extends ApiRequest
         return $info;
     }
 
+    public function getCustomer()
+    {
+        if ($this->customerObject) return $this->customerObject;
+
+        $request = $this;
+        $this->customerObject = $request->customer instanceof Customer ? $request->customer : Customer::find($request->customer);
+        return $this->customerObject;
+    }
+
     /**
      * @return OrderPlace
      * @throws \App\Exceptions\RentACar\DestinationCitySameAsPickupException
@@ -82,7 +95,7 @@ class OrderPlaceRequest extends ApiRequest
         /** @var OrderPlace $order_place */
         $order_place = app(OrderPlace::class);
         $order_place
-            ->setCustomer($request->customer)
+            ->setCustomer($request->getCustomer())
             ->setDeliveryName($request->name)
             ->setDeliveryAddressId($request->address_id)
             ->setDeliveryAddress($request->address)

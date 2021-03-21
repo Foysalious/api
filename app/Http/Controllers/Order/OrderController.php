@@ -57,7 +57,7 @@ class OrderController extends Controller
         if (!$order) return api_response($request, null, 500);
 
         $order = Order::find($order->id);
-        $customer = $request->customer;
+        $customer = $request->getCustomer();
         if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
         $payment_method = $request->payment_method;
         /** @var Payment $payment */
@@ -74,7 +74,7 @@ class OrderController extends Controller
         return api_response($request, null, 200, (new OrderPlacedResponse($order, $payment))->toArray());
     }
 
-    private function setModifierFromRequest(Request $request)
+    private function setModifierFromRequest(OrderPlaceRequest $request)
     {
         $modifier = null;
         if ($request->has('created_by_type') && $request->created_by_type === Resource::class) {
@@ -82,7 +82,7 @@ class OrderController extends Controller
         } else if ($request->has('created_by')) {
             $modifier = User::find((int)$request->created_by);
         } else {
-            $modifier = $request->customer;
+            $modifier = $request->getCustomer();
         }
         $this->setModifier($modifier);
     }
