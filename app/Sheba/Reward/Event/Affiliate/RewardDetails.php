@@ -31,6 +31,17 @@ class RewardDetails
         return $affiliateRewards;
     }
 
+    public function mergeDetailsWithReward($affiliateReward){
+        if ($affiliateReward->detail_type == 'App\Models\RewardCampaign'){
+            $rewardDetails = RewardCampaign::where('id', $affiliateReward->detail_id)->first();
+        } else {
+            $rewardDetails = RewardAction::where('id', $affiliateReward->detail_id)->first();
+        }
+        $rewardDetails->events = json_decode($rewardDetails->events);
+        $affiliateReward['details'] = $rewardDetails;
+        return $affiliateReward;
+    }
+
     private function getCampaignDetails($rewards){
         $campaigns = $rewards->where('detail_type', 'App\Models\RewardCampaign')->pluck('detail_id');
         return RewardCampaign::whereIn('id', $campaigns)->get();
