@@ -13,6 +13,8 @@ use App\Models\Profile;
 use App\Repositories\FileRepository;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
 use App\Sheba\DueTracker\Exceptions\InsufficientBalance;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -464,12 +466,15 @@ class DueTrackerRepository extends BaseRepository
         if ($request->has('payment_link')) {
             $data['payment_link'] = $request->payment_link;
         }
+        /** @var SmsHandlerRepo $sms */
         list($sms, $log) = $this->getSms($data);
         $sms_cost = $sms->getCost();
         if ((double)$request->partner->wallet < (double)$sms_cost) {
             throw new InsufficientBalance();
         }
+        $sms->setBusinessType(BusinessType::SMANAGER)->setFeatureType(FeatureType::DUE_TRACKER);
         $sms->shoot();
+
         (new WalletTransactionHandler())->setModel($request->partner)->setAmount($sms_cost)->setType(Types::debit())->setLog($sms_cost . $log)->setTransactionDetails([])->setSource(TransactionSources::SMS)->store();
         return true;
     }

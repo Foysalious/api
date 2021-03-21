@@ -16,6 +16,9 @@ class NagadController extends Controller
             $data      = $request->all();
             $validator = new Validator($data);
             $payment   = $validator->getPayment();
+            if (!$payment->isValid()||$payment->isComplete()){
+                return api_response($request, null, 402,['message'=>"Invalid or completed payment"]);
+            }
             $method    = $payment->paymentDetails->last()->method;
             if ($method !== 'nagad') throw new \Exception('Invalid Method completion');
             /** @var Nagad $method */

@@ -359,7 +359,6 @@ class TopUpController extends Controller
         }
     }
 
-
     /**
      * @param Request $request
      * @param PaywellSuccessResponse $success_response

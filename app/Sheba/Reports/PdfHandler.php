@@ -44,6 +44,7 @@ class PdfHandler extends Handler
             $defaultFontConfig = (new FontVariables())->getDefaults();
             $fontData = $defaultFontConfig['fontdata'];
             $mPDF = new Mpdf([
+                'tempDir' => '/tmp',
                 'fontDir' => array_merge($fontDirs, [
                     storage_path('/fonts'),
                 ]), 'fontdata' => $fontData + [
@@ -76,6 +77,7 @@ class PdfHandler extends Handler
             $defaultFontConfig = (new FontVariables())->getDefaults();
             $fontData = $defaultFontConfig['fontdata'];
             $mPDF = new Mpdf([
+                'tempDir' => '/tmp',
                 'fontDir' => array_merge($fontDirs, [
                     storage_path('/fonts'),
                 ]), 'fontdata' => $fontData + [
