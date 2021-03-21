@@ -95,7 +95,7 @@ class LeaveController extends Controller
         $leaves = $manager->createData($resource)->toArray()['data'];
 
         if ($request->has('sort')) {
-            $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
+            $leaves = $this->leaveOrderByEmployee($leaves, $request->sort_by_employee)->values();
         }
 
         if ($request->has('sort_by_period')) {
@@ -421,7 +421,7 @@ class LeaveController extends Controller
      * @param string $sort
      * @return mixed
      */
-    private function leaveOrderBy($leaves, $sort = 'asc')
+    private function leaveOrderByEmployee($leaves, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
