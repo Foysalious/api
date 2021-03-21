@@ -145,11 +145,7 @@ class CustomerController extends Controller
     {
         $this->validate($request, ['mobile' => 'required|mobile:bd']);
         $this->setModifier($request->manager_resource);
-        $updater->setCustomer($customer)->setPartner($request->partner)->setData($request->except([
-            'partner_id',
-            'remember_token',
-            'email'
-        ]));
+        $updater->setCustomer($customer)->setPartner($request->partner)->setData($request->except(['partner_id', 'remember_token']));
         if ($error = $updater->hasError())
             return api_response($request, null, 400, ['message' => $error['msg']]);
         $customer = $updater->update();

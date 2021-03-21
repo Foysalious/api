@@ -261,14 +261,12 @@ class AccountServer
 
     public function updatePosCustomer($partner_id, $customer_id, $data, $token)
     {
-        $data = [
-            'password' => $password,
-            'purpose' => $purpose
-        ];
-        if (!empty($email)) $data['email'] = $email;
-        if (!empty($mobile)) $data['mobile'] = $mobile;
-
-        return $this->client->post("/api/v1/authenticate/password", $data);
+        return (new Client())->put(config('account.account_url') . "/api/v1/partners/$partner_id/pos-customers/$customer_id", [
+            'query' => $data,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]);
     }
 
 }

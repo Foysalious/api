@@ -14,6 +14,7 @@ use Intervention\Image\Image;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 
+use Sheba\OAuth2\AccountServer;
 use Sheba\Pos\Repositories\PartnerPosCustomerRepository;
 use Sheba\Pos\Repositories\PosCustomerRepository;
 
@@ -36,13 +37,16 @@ class Updater
     private $profile;
     /** @var Partner */
     private $partner;
+    /** @var AccountServer */
+    private $accountServer;
 
     public function __construct(ProfileRepository $profile_repo, PartnerPosCustomerRepository $customer_repo,
-                                PosCustomerRepository $pos_customer_repo)
+                                PosCustomerRepository $pos_customer_repo, AccountServer $account_server)
     {
         $this->profileRepo = $profile_repo;
         $this->partnerPosCustomers = $customer_repo;
         $this->posCustomers = $pos_customer_repo;
+        $this->accountServer = $account_server;
     }
 
     public function setData($data)
@@ -130,12 +134,20 @@ class Updater
             $profile = $this->profileRepo->store($profile_data);
             $this->setProfile($profile);
         } else {
-            unset($profile_data['email']);
-            $token = $this->getPartnerAuthorizationToken();
-            dd($token);
+            $this->updateCustomerAccount($profile_data['mobile'], $profile_data['email']);
+            unset($profile_data['email'], $profile_data['mobile']);
             $this->profileRepo->update($this->profile, $profile_data);
         }
         return $this->profile->id;
+    }
+
+    private function updateCustomerAccount($mobile, $email)
+    {
+        if (!$email && !$mobile) return;
+        $data = [];
+        if ($email) $data['email'] = $email;
+        if ($mobile) $data['mobile'] = $mobile;
+        $this->accountServer->updatePosCustomer($this->partner->id, $this->posCustomer->id, $data, $this->getPartnerAuthorizationToken());
     }
 
     private function createOrUpdatePosCustomer()
