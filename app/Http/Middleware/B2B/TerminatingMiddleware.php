@@ -8,11 +8,12 @@ use Illuminate\Support\Facades\Redis;
 
 class TerminatingMiddleware
 {
+
     /**
      * Handle an incoming request.
      *
-     * @param  Request  $request
-     * @param  Closure  $next
+     * @param Request $request
+     * @param Closure $next
      * @return mixed
      */
     public function handle($request, Closure $next)
@@ -23,13 +24,16 @@ class TerminatingMiddleware
     /**
      * Handle tasks after the response has been sent to the browser.
      *
-     * @param  Request  $request
-     * @param  Response  $response
+     * @param Request $request
+     * @param Response $response
      * @return void
      */
     public function terminate($request, $response)
     {
-        $key = 'BusinessRequestResponse::'.Carbon::now()->timestamp;
-        Redis::set($key, json_encode('Request_Uri:'. $request->getUri(), 'Request_All:'. json_encode($request->all()), '_Response:' .json_encode($response)));
+        $response_time = (microtime(true) - LARAVEL_START)*1000;
+        $key = 'BUSINESS_REQUEST_RESPONSE::' . Carbon::now()->timestamp;
+        Redis::set($key, json_encode([$request->url().' :: '.$response_time]));
+
+        return ($response);
     }
 }
