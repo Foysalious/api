@@ -231,7 +231,7 @@ class Partner extends Referrer implements ReferrerInterface
         if ($request->has('q') && !empty($request->q)) {
             $query = $request->q;
             return $this->formatRefers()->filter(function ($item) use ($query) {
-                return strpos( $item['name'],"$query")>=0 || strpos( $item['contact_number'],"$query")>=0;
+                return strpos( $item['name'],"$query")!==false || strpos( $item['contact_number'],"$query")!==false;
             })->values();
         }
         if ($request->has('limit') && !empty($request->limit)) {
