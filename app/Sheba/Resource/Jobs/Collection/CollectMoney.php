@@ -75,4 +75,9 @@ class CollectMoney
         return $collect_money_response;
     }
 
+    public function collectPaitial()
+    {
+        
+    }
+
 }
