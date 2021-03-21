@@ -399,7 +399,7 @@ class EventDataConverter
                             ],
                             'recharge_status' => [
                                 'type' => 'select',
-                                'possible_value' => ['successful' => 'Successful'],
+                                'possible_value' => ['completed' => 'Successful'],
                                 'is_multi_selectable' => 0,
                             ]
                         ]
