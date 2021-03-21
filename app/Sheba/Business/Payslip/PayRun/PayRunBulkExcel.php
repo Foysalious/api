@@ -63,12 +63,15 @@ class PayRunBulkExcel
 
     private function makeData()
     {
+        $x = 1;
         foreach ($this->payslip as $payslip) {
             $business_member_data = [
-                'id' => $payslip['business_member_id'],
+                'serial_no' => sprintf("%03d", $x++),
+                'business_member_id' => $payslip['business_member_id'],
                 'employee_name' => $payslip['employee_name'],
                 'employee_id' => $payslip['employee_id'],
                 'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                'schedule_date' => $payslip['schedule_date'],
                 'gross_salary' => $payslip['gross_salary'],
             ] + $this->getComponents();
             array_push($this->data, $business_member_data);
@@ -77,7 +80,7 @@ class PayRunBulkExcel
 
     private function getHeaders()
     {
-        $header = ['ID', 'Employee Name', 'Employee ID', 'Department', 'Gross Salary'];
+        $header = ['Serial', 'Business Member ID', 'Employee Name', 'Employee ID', 'Department', 'Schedule Date', 'Gross Salary'];
         $this->maxCell = 5;
         foreach ($this->payrollComponents as $component) {
             if ($component->is_default) $header_title = Components::getComponents($component->name)['value'];
