@@ -81,7 +81,7 @@ class PayRunBulkExcel
     private function getHeaders()
     {
         $header = ['Serial', 'Business Member ID', 'Employee Name', 'Employee ID', 'Department', 'Schedule Date', 'Gross Salary'];
-        $this->maxCell = 5;
+        $this->maxCell = 7;
         foreach ($this->payrollComponents as $component) {
             if ($component->is_default) $header_title = Components::getComponents($component->name)['value'];
             $header_title = ucwords(implode(" ", explode("_",$component->name)));
