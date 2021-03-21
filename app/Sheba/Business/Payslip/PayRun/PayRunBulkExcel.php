@@ -83,7 +83,7 @@ class PayRunBulkExcel
             if ($component->is_default) $header_title = Components::getComponents($component->name)['value'];
             $header_title = ucwords(implode(" ", explode("_",$component->name)));
 
-            $header[] = $header_title;
+            $header[] = $header_title.':'.$component->type;
             $this->maxCell++;
         }
         return $header;
