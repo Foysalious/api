@@ -174,7 +174,6 @@ class DashboardController extends Controller
 
     public function getNewHomePage(Request $request) {
         try {
-
             /** @var Partner $partner */
             $partner       = $request->partner;
             $data = [
@@ -186,7 +185,7 @@ class DashboardController extends Controller
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -375,6 +374,65 @@ class DashboardController extends Controller
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getBkashNo(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'bkash_no'                     => $partner->bkash_no,
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
+    public function getGeoInformation(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'geo_informations'  => json_decode($partner->geo_informations)
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getCurrentPackage(Request $request) {
+        try {
+            /** @var Partner $partner */
+            $partner       = $request->partner;
+            $data = [
+                'current_subscription_package' => [
+                    'id'            => $partner->subscription->id,
+                    'name'          => $partner->subscription->name,
+                    'name_bn'       => $partner->subscription->show_name_bn,
+                    'remaining_day' => $partner->last_billed_date ? $partner->periodicBillingHandler()->remainingDay() : 0,
+                    'billing_type'  => $partner->billing_type,
+                    'rules'         => $partner->subscription->getAccessRules(),
+                    'is_light'      => $partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+                ],
+                "status" => $partner->getStatusToCalculateAccess()
+            ];
+            return api_response($request, $data, 200, ['data' => $data]);
+        } catch (Throwable $e) {
+            logError($e);
             return api_response($request, null, 500);
         }
     }
