@@ -48,10 +48,8 @@ class BondhuRewardController extends Controller
         $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '>', Carbon::now(), '<=');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
         $affiliateRewards = $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
-//        $minStartTime = $affiliateRewards->min('start_time');
-//        $maxEndTime = $affiliateRewards->max('end_time');
 
-        return $affiliateRewards;
+        return ['code' => 200, 'data' => $affiliateRewards];
     }
 
     /**
@@ -68,14 +66,14 @@ class BondhuRewardController extends Controller
             ->get();
         $affiliateReward = $rewardDetails->mergeDetailsWithRewards($affiliateReward);
         $affiliateReward = $this->affiliateRewardHelper->checkRewardProgress($affiliateReward);
-        return $affiliateReward;
+        return ['code' => 200, 'data' => $affiliateReward[0]];
     }
 
     public function getUnseenAchievedRewards($affiliate, RewardDetails $rewardDetails){
         $affiliateRewards = $this->rewardAffiliateRepo->getUnseenAchievedRewards($affiliate);
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
 
-        return $affiliateRewards;
+        return ['code' => 200, 'data' => $affiliateRewards];
     }
 
     public function updateIsSeen($affiliate, Request $request){
