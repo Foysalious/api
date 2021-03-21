@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Bonus;
+use App\Models\BonusLog;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
@@ -27,7 +28,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
             Resource::class,
             PartnerResource::class,
             Tag::class,
-            Bonus::class
+            Bonus::class,
+            BonusLog::class
 
         ]);
 
@@ -64,10 +66,41 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
     public function testSubscriptionPurchase(){
         $partner=Partner::first();
         $partner_id=$partner->id;
+        $partner_wallet=$partner->wallet;
+        //dd($partner_wallet);
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
         $partner_transactions=
-       // dd($partner_transactions);
+        //dd($partner_transactions);
+
+
+        $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
+
+                "remember_token"=>$resource_remembar_token,
+                "package_id"=>2,
+                "billing_type"=>"monthly"
+            ]
+        );
+
+        $data=$response->decodeResponseJson();
+         dd($data);
+
+        $this->assertEquals(200,$data['code']);
+        $this->assertEquals(10500,$data['price']);
+        $this->assertEquals(39500,$data['remaining_balance']);
+
+
+
+    }
+
+    public function testSubscriptionPurchaseWithBonusWallet(){
+        $partner=Partner::first();
+        $partner_id=$partner->id;
+        $partner_wallet=$partner->wallet;
+        //dd($partner_wallet);
+        $resource=Resource::first();
+        $resource_remembar_token=$resource->remember_token;
+        // dd($partner_transactions);
 
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
@@ -80,8 +113,44 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $data=$response->decodeResponseJson();
         dd($data);
-        $this->assertEquals(200,$data['code']);
+        $partner_bonus_transaction=Bonus::first();
+        $partner_bonus_transaction_logs=BonusLog::first();
+        //dd($partner_bonus_transaction_logs);
+       /* $this->assertEquals(200,$data['code']);
         $this->assertEquals(10500,$data['price']);
+        $this->assertEquals(39500,$data['remaining_balance']);*/
+
+
+
+    }
+
+    public function testSubscriptionPurchaseWithPartialWallet(){
+        $partner=Partner::first();
+        $partner_id=$partner->id;
+        $partner_wallet=$partner->wallet;
+        //dd($partner_wallet);
+        $resource=Resource::first();
+        $resource_remembar_token=$resource->remember_token;
+        // dd($partner_transactions);
+
+
+        $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
+
+                "remember_token"=>$resource_remembar_token,
+                "package_id"=>2,
+                "billing_type"=>"monthly"
+            ]
+        );
+
+        $data=$response->decodeResponseJson();
+        dd($data);
+        $partner_bonus_transaction=Bonus::first();
+        $partner_bonus_transaction_logs=BonusLog::first();
+        //dd($partner_bonus_transaction_logs);
+        /* $this->assertEquals(200,$data['code']);
+         $this->assertEquals(10500,$data['price']);
+         $this->assertEquals(39500,$data['remaining_balance']);*/
+
 
 
     }
