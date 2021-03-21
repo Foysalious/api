@@ -24,6 +24,7 @@ class PayRunListTransformer extends TransformerAbstract
         $business_member = $payslip->businessMember;
         $department = $business_member->department();
         $salary_breakdown = $payslip->salaryBreakdown();
+        $payroll_components = $business_member->business->payrollSetting->components->whereIn('type', [Type::ADDITION, Type::DEDUCTION])->sortBy('name');
         return [
             'id' => $payslip->id,
             'business_member_id' => $payslip->business_member_id,
@@ -36,8 +37,8 @@ class PayRunListTransformer extends TransformerAbstract
             'deduction' => $this->getTotal($salary_breakdown, Type::DEDUCTION),
             'net_payable' => $this->getTotal($salary_breakdown, self::NET_PAYABLE),
             'gross_salary_breakdown' => $this->getGrossBreakdown($salary_breakdown),
-            'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::ADDITION),
-            'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown, Type::DEDUCTION)
+            'addition_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['addition'], $payroll_components, Type::ADDITION),
+            'deduction_breakdown' => $this->getPayrollComponentBreakdown($salary_breakdown['payroll_component']['deduction'], $payroll_components, Type::DEDUCTION)
         ];
     }
 
@@ -101,15 +102,13 @@ class PayRunListTransformer extends TransformerAbstract
      * @param $type
      * @return array
      */
-    private function getPayrollComponentBreakdown($salary_breakdown, $type)
+    private function getPayrollComponentBreakdown($salary_breakdown, $payroll_components, $type)
     {
-        $components_salary_breakdown = $salary_breakdown['payroll_component'];
         $final_data = [];
-        foreach ($components_salary_breakdown as $component_type => $component_breakdown) {
-            if ($component_type == $type) {
-                foreach ($component_breakdown as $component => $component_value) {
-                    $final_data[] = $this->componentBreakdown($component, $component_value, $type);
-                }
+        foreach ($payroll_components as  $component_breakdown) {
+            if ($component_breakdown->type == $type) {
+                if (array_key_exists($component_breakdown->name, $salary_breakdown))$final_data[] = $this->componentBreakdown($component_breakdown->name, $salary_breakdown[$component_breakdown->name], $type);
+                else $final_data[] = $this->componentBreakdown($component_breakdown->name, 0, $type);
             }
         }
         $data = array_column($final_data, 'key');
