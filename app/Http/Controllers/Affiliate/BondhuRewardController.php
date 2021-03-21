@@ -29,12 +29,10 @@ class BondhuRewardController extends Controller
 
     public function rewardHistory($affiliate, RewardDetails $rewardDetails)
     {
-//        $affiliate_model = Affiliate::where('id', $affiliate)->get();
-//        $rewards = $this->rewardAffiliateRepo->where('affiliate', $affiliate)->get();
-        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<');
+        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<=');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-
-        return $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
+        $history = $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
+        return $history;
 
     }
 

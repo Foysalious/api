@@ -34,6 +34,7 @@ class Event extends Campaign
             ->where('topup_orders.agent_type', 'App\\Models\\Affiliate')
             ->where('topup_orders.created_at', '>=', $from)
             ->where('topup_orders.created_at', '<', $to)
+            ->where('topup_orders.otf_id', '<>', null)
             ->whereIn('topup_orders.agent_id', array_column($rewards_for_affiliates, 'affiliate'))
             ->groupBy('topup_orders.agent_id')
         ;
@@ -52,8 +53,7 @@ class Event extends Campaign
     {
         $query_result = $this->getTotalTopupOTF( $rewardable );
         $progress = [
-            'target' => $this->rule->target->value,
-            'quantity' => $this->rule->quantity->value,
+            'target' => $this->rule->quantity->value,
         ];
         if ( $query_result->count() > 0 ) {
             $quantity = $query_result[0]->quantity;
