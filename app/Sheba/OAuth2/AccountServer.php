@@ -248,7 +248,7 @@ class AccountServer
     /**
      * @param $token
      * @param $purpose
-     * @return array|\Psr\Http\Message\ResponseInterface
+     * @return array|ResponseInterface
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
      * @throws WrongPinError
@@ -269,4 +269,15 @@ class AccountServer
         $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
         return $data['token'];
     }
+
+    public function updatePosCustomer($partner_id, $customer_id, $data, $token)
+    {
+        return (new Client())->put(config('account.account_url') . "/api/v1/partners/$partner_id/pos-customers/$customer_id", [
+            'query' => $data,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]);
+    }
+
 }
