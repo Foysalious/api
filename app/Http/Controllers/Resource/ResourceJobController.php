@@ -145,6 +145,11 @@ class ResourceJobController extends Controller
         return api_response($request, $response, $response->getCode(), ['message' => $response->getMessage()]);
     }
 
+    public function partialPay(Job $job, Request $request)
+    {
+        dd(123);
+    }
+
     public function extendTime(Job $job, Request $request, ExtendTime $extend_time)
     {
         $this->validate($request, ['time_in_minutes' => 'required|numeric']);
