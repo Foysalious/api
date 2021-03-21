@@ -7,10 +7,12 @@ use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
 use App\Models\Resource;
 use App\Models\Tag;
+use App\Repositories\NotificationRepository;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 use Sheba\Sms\SmsVendor;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockExpenseClient;
+use Tests\Mocks\MockNotificationRepository;
 use Tests\Mocks\MockSmsVendor;
 
 
@@ -33,7 +35,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         ]);
 
-
+        $this->logIn();
         //$this->freeSubscription = factory(PartnerSubscriptionPackage::class)->create();
         $this->basicSubscription = factory(PartnerSubscriptionPackage::class)->create([
             'name' => "Basic",
@@ -52,7 +54,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
             'rules' => '{"resource_cap":{"value":35,"is_published":1},"commission":{"value":25,"is_published":1},"fee":{"monthly":{"value":1575,"is_published":1},"yearly":{"value":10500,"is_published":1},"half_yearly":{"value":7665,"is_published":1}},"access_rules":{"loan":false,"dashboard_analytics":true,"pos":{"invoice":{"print":false,"download":true},"due":{"alert":true,"ledger":true},"inventory":{"warranty":{"add":true}},"report":true,"ecom":{"product_publish":false,"product_publish_limit":10,"webstore_publish":false}},"extra_earning":{"topup":true,"movie":true,"transport":true,"utility":true},"resource":{"type":{"add":true}},"expense":true,"extra_earning_global":true,"customer_list":true,"marketing_promo":true,"digital_collection":true,"old_dashboard":true,"notification":true,"eshop":true,"emi":true,"due_tracker":true},"tags":{"monthly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"yearly":{"bn":"\u09ea\u09eb% \u099b\u09be\u09dc","en":"45% discount","amount":"8,000"},"half_yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"\u09ae\u09be\u09b8\u09bf\u0995","price":1575,"duration":30,"is_published":1},{"title":"yearly","title_bn":"\u09ac\u09be\u09ce\u09b8\u09b0\u09bf\u0995","price":10500,"duration":365,"is_published":0},{"title":"half_yearly","title_bn":"\u0985\u09b0\u09cd\u09a7 \u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":7665,"duration":182,"is_published":0},{"title":"two_yearly","title_bn":"\u09a6\u09cd\u09ac\u09bf-\u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":10500,"duration":730,"is_published":0}]}',
             'new_rules' => '{"resource_cap":{"value":35,"is_published":1},"commission":{"value":25,"is_published":1},"fee":{"monthly":{"value":1575,"is_published":1},"yearly":{"value":10500,"is_published":1},"half_yearly":{"value":7665,"is_published":1}},"access_rules":{"loan":false,"dashboard_analytics":true,"pos":{"invoice":{"print":false,"download":true},"due":{"alert":true,"ledger":true},"inventory":{"warranty":{"add":true}},"report":true,"ecom":{"product_publish":false,"product_publish_limit":10,"webstore_publish":false}},"extra_earning":{"topup":true,"movie":true,"transport":true,"utility":true},"resource":{"type":{"add":true}},"expense":true,"extra_earning_global":true,"customer_list":true,"marketing_promo":true,"digital_collection":true,"old_dashboard":true,"notification":true,"eshop":true,"emi":true,"due_tracker":true},"tags":{"monthly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"yearly":{"bn":"\u09ea\u09eb% \u099b\u09be\u09dc","en":"45% discount","amount":"8,000"},"half_yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"\u09ae\u09be\u09b8\u09bf\u0995","price":1575,"duration":30,"is_published":1},{"title":"yearly","title_bn":"\u09ac\u09be\u09ce\u09b8\u09b0\u09bf\u0995","price":10500,"duration":365,"is_published":0},{"title":"half_yearly","title_bn":"\u0985\u09b0\u09cd\u09a7 \u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":7665,"duration":182,"is_published":0},{"title":"two_yearly","title_bn":"\u09a6\u09cd\u09ac\u09bf-\u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":10500,"duration":730,"is_published":0}]}',
         ]);
-        $this->logIn();
+
 
         Tag::create([
             'name' => "Subscription fee",
@@ -61,6 +63,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $this->app->singleton(SmsVendor::class, MockSmsVendor::class);
         $this->app->singleton(ExpenseTrackerClient::class, MockExpenseClient::class);
+        $this->app->singleton(NotificationRepository::class, MockNotificationRepository::class);
 
     }
     public function testSubscriptionPurchase(){
@@ -77,7 +80,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
                 "remember_token"=>$resource_remembar_token,
-                "package_id"=>2,
+                "package_id"=>3,
                 "billing_type"=>"monthly"
             ]
         );

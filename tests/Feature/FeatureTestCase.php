@@ -142,7 +142,7 @@ class FeatureTestCase extends TestCase
         $this->partner_bonus_wallet= factory(Bonus::class)->create([
             'user_type' => "App\\Models\\Partner",
             'user_id' => $this->partner->id,
-            'amount' => 50000
+            'amount' => 50
 
         ]);
         $this->member = factory(Member::class)->create([

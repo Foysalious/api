@@ -304,7 +304,7 @@ class PartnerSubscriptionController extends Controller
                     $hasCredit = $handler->hasCredit();
                     if (!$hasCredit) {
                         DB::rollback();
-//                        $handler->notifyForInsufficientBalance();
+                        $handler->notifyForInsufficientBalance();
                         return api_response($request, null, $inside ? 403 : 420, array_merge(['message' => 'আপনার একাউন্টে যথেষ্ট ব্যলেন্স নেই।।', 'required' => $handler->getRequiredBalance()], $handler->getBalance()));
                     }
                     $handler->purchase();
