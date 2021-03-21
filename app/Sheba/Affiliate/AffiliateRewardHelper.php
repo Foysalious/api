@@ -22,5 +22,6 @@ class AffiliateRewardHelper
             $temp['progress'] = $progress;
             $affiliate_progress [] = $temp;
         }
+        return $affiliate_progress;
     }
 }

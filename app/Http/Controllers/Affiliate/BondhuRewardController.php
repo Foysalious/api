@@ -48,7 +48,7 @@ class BondhuRewardController extends Controller
     public function rewardList($affiliate, RewardDetails $rewardDetails){
         $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '>', Carbon::now(), '<=');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-
+        $affiliateRewards = $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
 //        $minStartTime = $affiliateRewards->min('start_time');
 //        $maxEndTime = $affiliateRewards->max('end_time');
 
@@ -58,11 +58,18 @@ class BondhuRewardController extends Controller
     /**
      * @param $affiliate
      * @param $rewardId
+     * @param RewardDetails $rewardDetails
      * @return Reward|Reward[]|\Illuminate\Database\Eloquent\Builder|\Illuminate\Database\Eloquent\Builder[]|\Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|null
      * todo: progress of the reward
      */
-    public function rewardDetails($affiliate, $rewardId){
-        return Reward::with('detail')->find($rewardId);
+    public function rewardDetails($affiliate, $rewardId, RewardDetails $rewardDetails){
+        $affiliateReward = $this->rewardAffiliateRepo->where('reward', $rewardId)
+            ->where('affiliate', $affiliate)
+            ->leftJoinReward()
+            ->get();
+        $affiliateReward = $rewardDetails->mergeDetailsWithRewards($affiliateReward);
+        $affiliateReward = $this->affiliateRewardHelper->checkRewardProgress($affiliateReward);
+        return $affiliateReward;
     }
 
     public function getUnseenAchievedRewards($affiliate, RewardDetails $rewardDetails){
