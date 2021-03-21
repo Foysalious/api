@@ -45,11 +45,14 @@ class BondhuRewardController extends Controller
      * todo: progress of the reward
      */
     public function rewardList($affiliate, RewardDetails $rewardDetails){
-        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '>', Carbon::now(), '<=');
+        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, 'start_time', 'asc', Carbon::now(), '>')->get();
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-        $affiliateRewards = collect($this->affiliateRewardHelper->checkRewardProgress($affiliateRewards))->sortByDesc('progress.percentage');
-
-        return ['code' => 200, 'data' => $affiliateRewards];
+        $affiliateRewards = collect($this->affiliateRewardHelper->checkRewardProgress($affiliateRewards));
+        $rewards = array();
+        foreach ($affiliateRewards as $reward){
+            $rewards[] = $this->formatReward($reward);
+        }
+        return ['code' => 200, 'data' => $rewards];
     }
 
     /**
@@ -68,7 +71,7 @@ class BondhuRewardController extends Controller
         if ($affiliateReward){
             $affiliateReward = $rewardDetails->mergeDetailsWithReward($affiliateReward);
             $affiliateReward = $this->affiliateRewardHelper->checkRewardProgress([$affiliateReward]);
-            return ['code' => 200, 'data' => $affiliateReward[0]];
+            return ['code' => 200, 'data' => $this->formatReward($affiliateReward[0])];
         }
         return ['code' => 404, 'message' => 'Not found'];
     }
@@ -86,6 +89,13 @@ class BondhuRewardController extends Controller
         }
 
         return ['code' => 400, 'message' => 'Something went wrong'];
+    }
+
+    private function formatReward($reward){
+        $reward['reward_id'] = $reward['reward'];
+        $reward['event_type'] = array_keys((array)$reward['details']['events'])[0];
+        $reward['terms'] = json_decode($reward['terms']);
+        return collect($reward)->only('reward_id', 'name', 'amount', 'type', 'is_amount_percentage', 'short_description', 'long_description', 'terms', 'start_time', 'end_time', 'event_type', 'progress');
     }
 
 }
