@@ -72,7 +72,7 @@ class NeoBankingGigatechController extends Controller
             $neoBanking = app(NeoBanking::class);
             $result         = (array)$neoBanking->setBank($bank)->getGigatechKycStatus($data);
 
-            $thirdPartyLog = neoBankingThirdPartyLog::where([['partner_id',$request->partner->id],['from', 'giga_tech_status']])->orderBy('id', 'DESC')->first();
+            $thirdPartyLog = neoBankingThirdPartyLog::where([['partner_id',$request->partner->id],['from', ThirdPartyLog::GIGA_TECH_STATUS]])->orderBy('id', 'DESC')->first();
             if($thirdPartyLog->response !== json_encode($result['data'])){
                 $neoBanking->storeThirdPartyLogs($request, ThirdPartyLog::GIGA_TECH_STATUS,$request->mobile, $result['data']);
             }
@@ -81,7 +81,6 @@ class NeoBankingGigatechController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            dd($e);
             logError($e);
             return api_response($request, null, 500);
         }
