@@ -29,10 +29,12 @@ class Event extends Campaign
         $timeFrame = $this->timeFrame;
         $from = $timeFrame->start->toDateString();
         $to = $timeFrame->end->addDay(1)->toDateString();
+        $rewards_for_affiliates = \DB::table('reward_affiliates')->select(['affiliate'])->where('reward', '=', $this->reward->id )->get();
         $this->query = TopUpOrder::select('agent_id as affiliate_id', \DB::raw('count(id) as quantity'))
             ->where('topup_orders.agent_type', 'App\\Models\\Affiliate')
             ->where('topup_orders.created_at', '>=', $from)
             ->where('topup_orders.created_at', '<', $to)
+            ->whereIn('topup_orders.agent_id', array_column($rewards_for_affiliates, 'affiliate'))
             ->groupBy('topup_orders.agent_id')
         ;
 
@@ -56,9 +58,11 @@ class Event extends Campaign
         if ( $query_result->count() > 0 ) {
             $quantity = $query_result[0]->quantity;
             $achieved = $this->rule->getAchievedValue($quantity);
-            $progress['achieved'] = $achieved;
+            $progress['achieved'] = (int) $achieved;
+            $progress['percentage'] = ($achieved * 100)/ $this->rule->quantity->value;
         } else {
             $progress['achieved'] = 0;
+            $progress['percentage'] = 0;
         }
         return $progress;
     }

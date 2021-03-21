@@ -17,8 +17,7 @@ class AffiliateRewardHelper
             $reward_model = Reward::find($each_reward->reward);
             $event = $reward_model->setCampaignEvents()->campaignEvents;
             $progress = $event[0]->checkProgress(Affiliate::find($each_reward->affiliate));
-            $temp = [];
-            $temp['reward'] = $each_reward;
+            $temp = $each_reward->toArray();
             $temp['progress'] = $progress;
             $affiliate_progress [] = $temp;
         }

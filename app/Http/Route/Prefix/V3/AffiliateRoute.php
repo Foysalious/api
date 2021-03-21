@@ -24,7 +24,7 @@ class AffiliateRoute
                 $api->get('/', 'Affiliate\BondhuRewardController@rewardList');
                 $api->get('history', 'Affiliate\BondhuRewardController@rewardHistory');
                 $api->get('achieved', 'Affiliate\BondhuRewardController@getUnseenAchievedRewards');
-                $api->get('{rewardId}', 'Affiliate\BondhuRewardController@rewardDetails');
+                $api->get('{rewardId}', 'Affiliate\BondhuRewardController@rewardDetails')->where('rewardId', '[0-9]+');
                 $api->put('seen', 'Affiliate\BondhuRewardController@updateIsSeen');
             });
         });

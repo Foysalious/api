@@ -34,8 +34,7 @@ class BondhuRewardController extends Controller
         $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
 
-        $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
-        return $affiliateRewards;
+        return $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
 
     }
 
@@ -48,7 +47,7 @@ class BondhuRewardController extends Controller
     public function rewardList($affiliate, RewardDetails $rewardDetails){
         $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '>', Carbon::now(), '<=');
         $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-        $affiliateRewards = $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
+        $affiliateRewards = collect($this->affiliateRewardHelper->checkRewardProgress($affiliateRewards))->sortByDesc('progress.percentage');
 
         return ['code' => 200, 'data' => $affiliateRewards];
     }
@@ -64,10 +63,14 @@ class BondhuRewardController extends Controller
         $affiliateReward = $this->rewardAffiliateRepo->where('reward', $rewardId)
             ->where('affiliate', $affiliate)
             ->leftJoinReward()
-            ->get();
-        $affiliateReward = $rewardDetails->mergeDetailsWithRewards($affiliateReward);
-        $affiliateReward = $this->affiliateRewardHelper->checkRewardProgress($affiliateReward);
-        return ['code' => 200, 'data' => $affiliateReward[0]];
+            ->first();
+
+        if ($affiliateReward){
+            $affiliateReward = $rewardDetails->mergeDetailsWithReward($affiliateReward);
+            $affiliateReward = $this->affiliateRewardHelper->checkRewardProgress([$affiliateReward]);
+            return ['code' => 200, 'data' => $affiliateReward[0]];
+        }
+        return ['code' => 404, 'message' => 'Not found'];
     }
 
     public function getUnseenAchievedRewards($affiliate, RewardDetails $rewardDetails){
