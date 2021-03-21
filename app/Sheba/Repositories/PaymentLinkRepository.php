@@ -177,7 +177,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
             if ($filter) {
                 $transactionList = array_filter($transactionList, function ($item) use ($filter) {
-                    return strpos( (string)$item['link_id'],$filter)!==false || strpos( $item['customer_name'],$filter)!==false;
+                    return strpos( (string)$item['payment_id'],$filter)!==false || strpos( $item['customer_name'],$filter)!==false;
                 });
             }
 
