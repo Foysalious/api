@@ -1,10 +1,8 @@
 <?php namespace App\Http\Middleware\B2B;
 
-use Carbon\Carbon;
 use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Closure;
-use Illuminate\Support\Facades\Redis;
 
 class TerminatingMiddleware
 {
@@ -18,7 +16,14 @@ class TerminatingMiddleware
      */
     public function handle($request, Closure $next)
     {
-        return $next($request);
+        $response = $next($request);
+
+        // Add response time as an HTTP header. For better accuracy ensure this middleware
+        if (defined('LARAVEL_START') and $response instanceof Response) {
+            $response->headers->add(['X-RESPONSE-TIME' => microtime(true) - LARAVEL_START]);
+        }
+
+        return $response;
     }
 
     /**
@@ -30,10 +35,12 @@ class TerminatingMiddleware
      */
     public function terminate($request, $response)
     {
-        $response_time = (microtime(true) - LARAVEL_START)*1000;
-        $key = 'BUSINESS_REQUEST_RESPONSE::' . Carbon::now()->timestamp;
-        Redis::set($key, json_encode([$request->url().' :: '.$response_time]));
-
-        return ($response);
+        if (defined('LARAVEL_START') and $request instanceof Request) {
+            app('log')->debug('Response time', [
+                'method' => $request->getMethod(),
+                'uri' => $request->url(),
+                'seconds' => microtime(true) - LARAVEL_START,
+            ]);
+        }
     }
 }
