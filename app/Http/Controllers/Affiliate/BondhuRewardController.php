@@ -32,6 +32,7 @@ class BondhuRewardController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $affiliateRewardsHistory = $this->affiliateRewardHelper->getRewardHistory($affiliate, $offset, $limit);
         foreach ($affiliateRewardsHistory as $key=>$each){
+            $each['detail']['events'] = json_decode($each['detail']['events']);
             $each['details'] = $each['detail'];
             unset($each['detail']);
             $affiliateRewardsHistory[$key] = $this->formatReward($each);

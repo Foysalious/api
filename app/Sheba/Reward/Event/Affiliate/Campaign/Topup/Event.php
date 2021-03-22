@@ -52,16 +52,16 @@ class Event extends Campaign
     {
         $query_result = $this->getTotalTopupAmount( $rewardable );
         $progress = [
-            'target' => $this->rule->target->value,
+            'target' => (string) $this->rule->target->value
         ];
         if ( $query_result->count() > 0 ) {
             $total_amount = $query_result[0]->total_amount;
             $achieved = $this->rule->getAchievedValue($total_amount);
-            $progress['achieved'] = (float) $achieved;
-            $progress['percentage'] = ($achieved * 100)/ $this->rule->target->value;
+            $progress['achieved'] = (string) $achieved;
+            $progress['percentage'] = number_format((($achieved * 100)/ $this->rule->target->value), 2);
         } else {
-            $progress['achieved'] = 0;
-            $progress['percentage'] = 0;
+            $progress['achieved'] = (string) 0;
+            $progress['percentage'] = (string) 0;
         }
         return $progress;
 
