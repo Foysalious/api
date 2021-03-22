@@ -24,12 +24,14 @@ use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
+use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
@@ -159,10 +161,12 @@ class LeaveController extends Controller
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'type_id' => 'required|string',
             'status' => 'required|string',
-        ]);
+        ];
+        if ($request->status == LeaveStatus::REJECTED) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /** type_id approval_request id*/
         $type_ids = json_decode($request->type_id);
@@ -182,7 +186,8 @@ class LeaveController extends Controller
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
                 /** @var ApprovalRequest $approval_request */
                 if ($approval_request->approver_id != $business_member->id) return;
-                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+                $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
                 $updater->setStatus($request->status)->change();
             });
 
@@ -574,7 +579,7 @@ class LeaveController extends Controller
         $data = [];
         $final_data['note'] = $rejection->note;
         foreach ($reasons as $reason){
-            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
+            $data['reasons'][] = Reason::getComponents($reason->reason);
         }
         return array_merge($final_data, $data);
     }
