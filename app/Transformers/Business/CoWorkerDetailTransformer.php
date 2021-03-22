@@ -244,7 +244,7 @@ class CoWorkerDetailTransformer extends TransformerAbstract
     {
         $salary = $business_member->salary;
         if (!$salary) return [];
-        $salary_logs = $salary->logs;
+        $salary_logs = $salary->logs()->orderBy('created_at', 'DESC')->get();
         return (new SalaryLogFormatter())->setSalaryLogs($salary_logs)->format();
     }
 }
