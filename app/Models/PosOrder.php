@@ -141,8 +141,7 @@ class PosOrder extends Model
         });
     }
 
-    private function _setPaymentStatus()
-    {
+    private function _setPaymentStatus() {
         $this->paymentStatus = ($this->due) ? OrderPaymentStatuses::DUE : OrderPaymentStatuses::PAID;
         return $this;
     }

@@ -1,6 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\PosCustomer;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -29,7 +31,6 @@ class Creator
     private $bankTransactionCharge;
     /** @var BitlyLinkShort */
     private $bitlyLink;
-
 
     /**
      * Creator constructor.
@@ -64,7 +65,7 @@ class Creator
 
     public function setUserName($user_name)
     {
-        $this->userName = $user_name;
+        $this->userName = (empty($user_name)) ? "Unknown Name" : $user_name;
         return $this;
     }
 
@@ -214,6 +215,7 @@ class Creator
 
     public function sentSms()
     {
+        if(!config('sms.is_on')) return;
         if ($this->getPayerInfo()) {
             /** @var PaymentLinkClient $paymentLinkClient */
             $paymentLinkClient = app(PaymentLinkClient::class);
@@ -225,11 +227,7 @@ class Creator
             $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
             $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
             $mobile = $this->getPayerInfo()['payer']['mobile'];
-
-            /** @var Sms $sms */
-            $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
-            $sms->shoot();
+            $this->sendSms($mobile, $message);
         }
     }
 
@@ -272,7 +270,49 @@ class Creator
         return $this;
     }
 
+    public function getErrorMessage($status = false) {
+        if($status) {
+            $type = $status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+            $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক ' .$type. ' করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+            $title =  'লিংকটি ' .$type. ' করা সম্ভব হয়নি';
+            return ["message" => $message,"title" => $title];
+        }
+        $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        $title =  'লিঙ্ক তৈরি হয়নি';
+        return ["message" => $message,"title" => $title];
+    }
+
+    public function getSuccessMessage($status = false) {
+        if ($status) {
+            $message = $status === "active" ? 'অভিনন্দন! লিঙ্কটি আবার সক্রিয় হয়ে গিয়েছে। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।'
+                : "এই লিঙ্ক দিয়ে আপনি বর্তমানে কোন টাকা গ্রহণ করতে পারবেন না, তবে আপনি যেকোনো মুহূর্তে লিঙ্কটি আবার সক্রিয় করতে পারবেন।";
+            $title =  $status === "active" ? "লিঙ্কটি সক্রিয় হয়েছে" : "লিঙ্কটি নিষ্ক্রিয় হয়েছে";
+            return ["message" => $message,"title" => $title];
+        }
+        $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
+        $title = "লিঙ্ক তৈরি সফল হয়েছে";
+        return ["message" => $message,"title" => $title];
+    }
+
     public function getPaymentLink() {
         return $this->paymentLinkCreated->link;
+    }
+
+    private function sendSms($sender_mobile, $message)
+    {
+        /** @var Sms $sms */
+        $sms = app(Sms::class);
+        $sms = $sms->setVendor('infobip')
+            ->to($sender_mobile)
+            ->msg($message)
+            ->setFeatureType(FeatureType::PAYMENT_LINK)
+            ->setBusinessType(BusinessType::SMANAGER);;
+        try {
+            $sms->shoot();
+        } catch (\Throwable $e) {
+            logError($e);
+            return false;
+        }
+        return true;
     }
 }

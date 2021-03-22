@@ -39,6 +39,17 @@ class BdTickets extends ExternalApiClient
     }
 
     /**
+     * @param $port
+     * @return $this
+     */
+    public function setBookingPort($port)
+    {
+        $this->bookingPort = $port;
+        return $this;
+
+    }
+
+    /**
      * @param $uri
      * @return mixed|ResponseInterface
      * @throws GuzzleException

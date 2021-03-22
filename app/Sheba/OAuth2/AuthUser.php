@@ -1,7 +1,7 @@
 <?php namespace Sheba\OAuth2;
 
-
 use App\Models\Affiliate;
+use App\Models\BankUser;
 use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -27,7 +27,6 @@ class AuthUser
     private $user;
     /** @var Model|null */
     private $avatar;
-
 
     public function __construct($attributes = [])
     {
@@ -76,7 +75,7 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            if (request()->url() == config('sheba.api_url') . '/v2/top-up/get-topup-token') {
+            if (strpos(request()->url(), '/v2/top-up/get-topup-token') !== false) {
                 $jws = JWS::load($token);
                 $payload = $jws->getPayload();
             } else {
@@ -124,6 +123,17 @@ class AuthUser
     {
         if (!$this->isMember()) return null;
         return $this->attributes['business_member']['member_id'];
+    }
+
+    public function isCustomer()
+    {
+        return !is_null($this->attributes['customer']);
+    }
+
+    public function getCustomerId()
+    {
+        if (!$this->isCustomer()) return null;
+        return $this->attributes['customer']['id'];
     }
 
     public function getMemberAssociatedBusinessId()
@@ -251,8 +261,17 @@ class AuthUser
      */
     public function getPartner()
     {
-        if (!$this->profile || !$this->profile->resource) return null;
-        return $this->profile->resource->partners->first();
+        if (!isset($this->attributes['partner'])) return null;
+        return Partner::find($this->attributes['partner']['id']);
+    }
+
+    /**
+     * @return Partner|null
+     */
+    public function getBankUser()
+    {
+        if (!isset($this->attributes['bank_user'])) return null;
+        return BankUser::find($this->attributes['bank_user']['id']);
     }
 
     public function getAttributes()
@@ -265,11 +284,20 @@ class AuthUser
      */
     public function getBusiness()
     {
-        if (!$this->profile || !$this->profile->member) return null;
-        $member = $this->profile->member;
-        $business_member = $member ? $member->businessMember : null;
-        if (!$business_member) return null;
-        return $business_member->business;
+
+        if (!isset($this->attributes['business_member'])) return null;
+        $business = Business::find($this->attributes['business_member']['business_id']);
+        if ($business) $this->setBusiness($business);
+        return $business;
     }
 
+    /**
+     * @param Business $business
+     * @return AuthUser
+     */
+    public function setBusiness($business)
+    {
+        $this->business = $business;
+        return $this;
+    }
 }

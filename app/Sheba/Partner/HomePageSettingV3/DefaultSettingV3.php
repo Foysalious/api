@@ -33,7 +33,7 @@ class DefaultSettingV3
             "key" => "extra_income",
             "name_en" => "Extra Income",
             "name_bn" => "বাড়তি আয়",
-            "is_on_homepage" => 1
+            "is_on_homepage" => 0
         ];
 
         $loan = [
@@ -59,8 +59,8 @@ class DefaultSettingV3
 
         $customer_list = [
             "key" => "customer_list",
-            "name_en" => "Customer List",
-            "name_bn" => "গ্রাহক তালিকা",
+            "name_en" => "Contact List",
+            "name_bn" => "কন্টাক্ট লিস্ট",
             "is_on_homepage" => 0
         ];
 
@@ -112,6 +112,7 @@ class DefaultSettingV3
             "name_bn" => "কিস্তি",
             "is_on_homepage" => 0
         ];
+
         $digital_banking= [
             "key" => "digital_banking",
             "name_en" => "Digital Banking",
@@ -123,9 +124,10 @@ class DefaultSettingV3
             "key" => "topup",
             "name_en" => "Top Up",
             "name_bn" => "টপ-আপ",
-            "is_on_homepage" => 0
+            "is_on_homepage" => 1
         ];
-        return [$pos, $pos_due, $payment_link, $online_sheba, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi,$topup, $digital_banking];
+
+        return [$pos, $pos_due, $payment_link, $online_sheba, $topup, $extra_income, $loan, $earnings, $pos_history, $customer_list, $marketing, $report, $stock, $e_shop, $expense, $gift_shop, $emi, $digital_banking];
     }
     public static function getLastUpdatedAt()
     {

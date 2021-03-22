@@ -7,6 +7,7 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -58,9 +59,47 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
         ])->wherePivot('status', '<>', Statuses::INACTIVE);
     }
 
+    public function getActiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', Statuses::ACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
     public function getAccessibleBusinessMember()
     {
         return BusinessMember::where('business_id', $this->id)->where('status', '<>', Statuses::INACTIVE)->with([
+            'member' => function ($q) {
+                $q->select('members.id', 'profile_id')->with([
+                    'profile' => function ($q) {
+                        $q->select('profiles.id', 'name', 'mobile', 'email', 'pro_pic');
+                    }
+                ]);
+            }, 'role' => function ($q) {
+                $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                    'businessDepartment' => function ($q) {
+                        $q->select('business_departments.id', 'business_id', 'name');
+                    }
+                ]);
+            }
+        ]);
+    }
+
+    public function getAccessibleInactiveBusinessMember()
+    {
+        return BusinessMember::where('business_id', $this->id)->where('status', Statuses::INACTIVE)->with([
             'member' => function ($q) {
                 $q->select('members.id', 'profile_id')->with([
                     'profile' => function ($q) {
@@ -108,6 +147,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function officeHour()
     {
         return $this->hasOne(BusinessOfficeHour::class);
+    }
+
+    public function payrollSetting()
+    {
+        return $this->hasOne(PayrollSetting::class);
     }
 
     public function activePartners()

@@ -159,7 +159,7 @@ class DashboardController extends Controller
                     'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
                 ] : null,
                 'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
-                'leave_info'                   => (new LeaveStatus($partner))->getCurrentStatus(),
+                'leave_info'                   => (new LeaveStatus())->setArtisan($partner)->getCurrentStatus(),
                 'sheba_order'                  => $partner->orders->isEmpty() ? 0 : 1,
                 'manager_dashboard_banner'     => 'https://cdn-shebaxyz.s3.ap-south-1.amazonaws.com/partner_assets/dashboard/manager_dashboard.png',
                 'video'                        => $slide ? json_decode($slide->video_info) : null,

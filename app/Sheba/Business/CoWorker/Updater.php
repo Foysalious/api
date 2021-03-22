@@ -1,5 +1,6 @@
 <?php namespace Sheba\Business\CoWorker;
 
+use App\Helper\BangladeshiMobileValidator;
 use App\Models\Business;
 use Sheba\Business\BusinessMember\Requester as BusinessMemberRequester;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
@@ -364,6 +365,8 @@ class Updater
             $profile_data['dob'] = ($this->personalRequest->getDateOfBirth() == 'null') ? null : $this->personalRequest->getDateOfBirth();
 
             $this->profile = $this->profileRepository->update($this->profile, $profile_data);
+            $mobile = ($this->personalRequest->getPhone() == 'null') ? null : $this->personalRequest->getPhone();
+            $this->businessMemberRepository->update($this->businessMember, ['mobile' => $mobile]);
             DB::commit();
             return [$this->profile, $nid_image_front_name, $nid_image_front, $nid_image_back_name, $nid_image_back];
         } catch (Throwable $e) {
@@ -537,9 +540,9 @@ class Updater
     public function setMobile($mobile)
     {
         $this->mobile = $mobile;
-        $profile = $this->profileRepository->checkExistingMobile($mobile);
-        if (!$profile) return $this;
-        if ($profile->id != $this->member->profile->id)
+        $business_member = $this->checkExistingMobile($mobile);
+        if (!$business_member) return $this;
+        if ($business_member->id != $this->businessMember->id)
             $this->setError(400, 'This mobile number belongs to another member. Please contact with sheba');
 
         return $this;
@@ -579,5 +582,13 @@ class Updater
     {
         $this->business = $business;
         return $this;
+    }
+
+    public function checkExistingMobile($mobile)
+    {
+        $mobile = $mobile ? formatMobileAux($mobile) : null;
+        $mobile = BangladeshiMobileValidator::validate($mobile) ? $mobile : null;
+        if (!$mobile) return null;
+        return $this->businessMemberRepository->where('mobile', $mobile)->first();
     }
 }

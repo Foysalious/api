@@ -205,6 +205,7 @@ class Reschedule
         /** @var  Order $order */
         $order = $this->job->partnerOrder->order;
 
+        
         $this->job = $order->lastJob();
     }
 

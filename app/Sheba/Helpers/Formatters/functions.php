@@ -208,3 +208,11 @@ if (!function_exists('isEmailValid')) {
         return preg_match($regex, $email);
     }
 }
+
+if (!function_exists('isScriptedData')) {
+    function isScriptedData($data)
+    {
+        if (preg_match("/<|>/", $data,$matches)) return true;
+        return false;
+    }
+}

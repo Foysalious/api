@@ -187,9 +187,10 @@ class ComplainController extends Controller
                 'complain_preset' => 'required|numeric',
                 'complain' => 'sometimes|string',
             ]);
+            $last_job = $request->job->partnerOrder->order->lastJob();
             $this->setModifier($request->customer);
             $data = $this->processCommonData($request, 'Partner');
-            $data = array_merge($data, $this->processJobData($request, $request->job));
+            $data = array_merge($data, $this->processJobData($request, $last_job));
             $data = $this->withCreateModificationField($data);
 
             $complain = $this->complainRepo->create($data);

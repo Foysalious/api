@@ -1,6 +1,8 @@
 <?php namespace Sheba\OAuth2;
 
+use App\Exceptions\DoNotThrowException;
 use GuzzleHttp\Client;
+use Psr\Http\Message\ResponseInterface;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 
 class AccountServer
@@ -235,12 +237,10 @@ class AccountServer
      */
     public function passwordAuthenticate($mobile, $email, $password, $purpose)
     {
-        $data = [
-            'password' => $password,
-            'purpose' => $purpose
-        ];
-        if (!empty($email)) $data['email'] = $email;
+        $data = ['password' => $password, 'purpose' => $purpose];
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) $data['email'] = $email;
         if (!empty($mobile)) $data['mobile'] = $mobile;
+        if (!isset($data['mobile']) && !isset($data['email'])) throw new DoNotThrowException();
 
         return $this->client->post("/api/v1/authenticate/password", $data);
     }
@@ -248,7 +248,7 @@ class AccountServer
     /**
      * @param $token
      * @param $purpose
-     * @return array|\Psr\Http\Message\ResponseInterface
+     * @return array|ResponseInterface
      * @throws AccountServerAuthenticationError
      * @throws AccountServerNotWorking
      * @throws WrongPinError
@@ -257,4 +257,27 @@ class AccountServer
     {
         return $this->client->setToken($token)->get("/api/v1/authenticate/password/requests?purpose=$purpose");
     }
+
+    /**
+     * @param $code
+     * @return string
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     */
+    public function getTokenByShebaAccountKit($code)
+    {
+        $data = $this->client->post("api/v3/profile/authenticate/sheba-accountkit", ['code' => $code]);
+        return $data['token'];
+    }
+
+    public function updatePosCustomer($partner_id, $customer_id, $data, $token)
+    {
+        return (new Client())->put(config('account.account_url') . "/api/v1/partners/$partner_id/pos-customers/$customer_id", [
+            'query' => $data,
+            'headers' => [
+                'Authorization' => 'Bearer ' . $token
+            ]
+        ]);
+    }
+
 }

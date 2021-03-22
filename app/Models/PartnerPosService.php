@@ -17,7 +17,7 @@ class PartnerPosService extends BaseModel
     protected $casts = ['cost' => 'double', 'price' => 'double', 'stock' => 'double', 'vat_percentage' => 'double', 'show_image' => 'int'];
     protected $dates = ['deleted_at'];
 
-    public static $savedEventClass = PartnerPosServiceSaved::class;
+//    public static $savedEventClass = PartnerPosServiceSaved::class;
     public static $autoIndex = false;
 
     public $algoliaSettings = [
@@ -123,7 +123,7 @@ class PartnerPosService extends BaseModel
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;
-        return round((($discount->amount / $this->price) * 100), 1);
+        return round((($discount->amount/ $this->price) * 100),1);
     }
 
     public function runningDiscounts()

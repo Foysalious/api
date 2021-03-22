@@ -606,6 +606,7 @@ class OrderPlace
             $job_data['discount'] = $this->orderVoucherData->getDiscount();
             $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
             $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['vendor_contribution'] = $this->orderVoucherData->getVendorContribution();
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
             $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }

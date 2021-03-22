@@ -1,33 +1,42 @@
 <?php namespace App\Http\Controllers\TopUp;
 
+use App\Helper\BangladeshiMobileValidator;
+use App\Http\Controllers\AccountKit\AccountKitController;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
-use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use Carbon\Carbon;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
+use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
 use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
 use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
 use DB;
 use Excel;
@@ -36,7 +45,7 @@ use Sheba\Helpers\Formatters\BDMobileFormatter;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
-use Sheba\TopUp\TopUp;
+use Sheba\TopUp\TopUpRechargeManager;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -47,6 +56,7 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Elasticsearch;
 
 class TopUpController extends Controller
 {
@@ -90,10 +100,7 @@ class TopUpController extends Controller
     {
         $agent = $request->user;
         $validation_data = [
-            'mobile' => 'required|string|mobile:bd',
-            'connection_type' => 'required|in:prepaid,postpaid',
-            'vendor_id' => 'required|exists:topup_vendors,id',
-            'password' => 'required'
+            'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required'
         ];
 
         if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
@@ -108,8 +115,7 @@ class TopUpController extends Controller
 
         /** @var AuthUser $auth_user */
         $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        if ($user == 'business') $agent = $auth_user->getBusiness(); elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
         elseif ($user == 'partner') {
             $agent = $auth_user->getPartner();
             $token = $request->topup_token;
@@ -128,17 +134,10 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
-        $top_up_request->setAmount($request->amount)
-            ->setMobile($request->mobile)
-            ->setType($request->connection_type)
-            ->setAgent($agent)
-            ->setVendorId($request->vendor_id)
-            ->setLat($request->lat ? $request->lat : null)
-            ->setLong($request->long ? $request->long : null)
-            ->setUserAgent($userAgentInformation->getUserAgent());
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id)->setLat($request->lat ? $request->lat : null)->setLong($request->long ? $request->long : null)->setUserAgent($userAgentInformation->getUserAgent());
 
         if ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow)) {
             $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
@@ -219,10 +218,15 @@ class TopUpController extends Controller
         $agent = $request->user;
         $this->setModifier($agent);
 
-        $verifyPin->setAgent($agent)
+        /**
+         * MANUALLY OFF FOR TESTING
+         *
+         * $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
+            ->setPurpose(Purpose::TOPUP)
             ->setRequest($request)
             ->verify();
+         */
 
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
@@ -324,66 +328,82 @@ class TopUpController extends Controller
         $topup_bulk_request->save();
     }
 
-    public function activeBulkTopUps(Request $request)
+    /**
+     * @param Request $request
+     * @param $user
+     * @return JsonResponse
+     */
+    public function activeBulkTopUps(Request $request, $user)
     {
-        $agent = ($this->getFullAgentType($request->type))::find($request->user->id);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+        else return api_response($request, null, 400);
 
-        $topup_bulk_requests = TopUpBulkRequest::pending()->agent($agent)
-            ->withCount('orders', 'processedOrders')
-            ->having('orders_count', '>', 0)
-            ->orderBy('id', 'desc')->get()
-            ->map(function (TopUpBulkRequest $topup_bulk_request) {
-                return [
+        $final = [];
+        TopUpBulkRequest::where([
+            ['status', 'pending'],
+            ['agent_id', $agent->id],
+            ['agent_type', get_class($agent)]
+        ])->with('numbers')
+            ->where('status', 'pending')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->filter(function ($topup_bulk_request) {
+                return $topup_bulk_request->numbers->count() > 0;
+            })->map(function ($topup_bulk_request) use (&$final) {
+                array_push($final, [
                     'id' => $topup_bulk_request->id,
                     'agent_id' => $topup_bulk_request->agent_id,
-                    'agent_type' => strtolower(class_basename($topup_bulk_request->agent_type)),
+                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->orders_count,
-                    'total_processed' => $topup_bulk_request->processed_orders_count,
-                ];
-            })->toArray();
+                    'total_numbers' => $topup_bulk_request->numbers->count(),
+                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
+                        return in_array(strtolower($number->status), ['successful', 'failed']);
+                    })->count()
+                ]);
+            });
 
-        return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
+        return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
     }
 
     /**
      * @param Request $request
+     * @param $user
      * @param TopUpHistoryExcel $history_excel
      * @param TopUpDataFormat $topUp_data_format
+     * @param RequestBuilder $request_builder
+     * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
+    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
-
+        
         list($offset, $limit) = calculatePagination($request);
-        $user = $request->has('partner') ? $request->partner : $request->user;
 
-        $topups = $user->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
+        if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
-        if (isset($request->from) && $request->from !== "null") {
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($request->user);
+        if ($request->has('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
-            $topups = $topups->whereBetween('created_at', [$from_date, $to_date]);
+            $request_builder->setFromDate($from_date)->setToDate($to_date);
         }
-        if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-        if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-        if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
-        if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
-            $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-        });
+        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->has('connection_type') && $request->connection_type !== "null") $request_builder->setConnectionType($request->connection_type);
+        if ($request->has('topup_type') && $request->topup_type == "single") $request_builder->setIsSingleTopup(true);
+        if ($request->has('bulk_id') && $request->bulk_id !== "null" && $request->bulk_id) $request_builder->setBulkRequestId($request->bulk_id);
 
-        $total_topups = $topups->count();
-        if ($is_excel_report) {
-            $offset = 0;
-            $limit = 10000;
-        }
+        $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
+        $topups = $top_up_order_repo->getByFilter($request_builder);
 
-        $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
         list($topup_data, $topup_data_for_excel) = $topUp_data_format->topUpHistoryDataFormat($topups);
 
         if ($is_excel_report) {
@@ -426,12 +446,9 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if (!$topup_order) return api_response($request, null, 500);
 
-        $vendor_factory = app(VendorFactory::class);
-        $vendor = $vendor_factory->getById($request->vendor_id);
-
-        /** @var TopUp $topUp */
-        $topUp = app(TopUp::class);
-        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+        /** @var TopUpRechargeManager $topUp */
+        $topUp = app(TopUpRechargeManager::class);
+        $topUp->setTopUpOrder($topup_order)->recharge();
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id

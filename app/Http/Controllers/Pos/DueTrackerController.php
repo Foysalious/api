@@ -274,7 +274,7 @@ class DueTrackerController extends Controller
             if ($request->type == 'due') {
                 $request['payment_link'] = $dueTrackerRepository->createPaymentLink($request, $this->paymentLinkCreator);
             }
-            if(config('sms.is_on')) $dueTrackerRepository->sendSMS($request);
+            $dueTrackerRepository->sendSMS($request);
             return api_response($request, true, 200);
 
         } catch (ValidationException $e) {

@@ -54,7 +54,7 @@ class NeoBankingGeneralStatics
             'applicant_name_eng' => 'required|string',
             'father_name' => 'required|string',
             'mother_name' => 'required|string',
-            'spouse_name' => 'required|string',
+            'spouse_name' => 'string',
             'pres_address' => 'required|string',
             'id_front_name' => 'required|string',
             'id_back_name' => 'required|string',
@@ -67,12 +67,31 @@ class NeoBankingGeneralStatics
 
     public static function types($type)
     {
-        $data = ['organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'], 'business_type_list' => ['list' => constants('PARTNER_BUSINESS_TYPE'),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন']];
+        $data = ['organization_type_list' => ['list' => array_column(constants('PARTNER_OWNER_TYPES'), 'bn'), 'title' => 'প্রতিষ্ঠানের ধরণ সিলেক্ট করুন'], 'business_type_list' => ['list' => self::partnerBusinessTypes(),'title'=>'ব্যবসার ধরণ সিলেক্ট করুন']];
         try {
             return  $data[$type];
         } catch (\Throwable $e) {
             return [];
         }
+    }
+
+    public static function partnerBusinessTypes()
+    {
+        $business_types = [];
+        collect(constants('PARTNER_BUSINESS_TYPE'))->each(function ($type) use (&$business_types) {
+            array_push($business_types, $type['bn']);
+        });
+        return $business_types;
+    }
+
+    public static function accountNumberUpdateData($account_no)
+    {
+        $data = new \stdClass();
+        $data->title = "Account number has been generated";
+        $data->description = "Welcome to PBL. Your A/c no. $account_no has been generated. Upon Verification of docs and KYC, your A/c will be activated. You will be duly notified.";
+        $data->event_type = "NeoBanking";
+        $data->event_id = 1;
+        return $data;
     }
 
     public static function sendCreatePushNotification($partner, $data)
@@ -88,5 +107,25 @@ class NeoBankingGeneralStatics
         ];
 
         (new PushNotificationHandler())->send($notification_data, $topic, $channel, $sound);
+    }
+
+    public static function formatStatus($status) {
+        $data = [];
+        if($status->cpv === 'cpv_pending') {
+            $data['message'] = config('neo_banking.cpv_pending_message');
+            $data['type'] = config('neo_banking.message_type.cpv_pending');
+        } else if($status->cpv === 'cpv_unverified') {
+            $data['message'] = config('neo_banking.cpv_unverified_message');
+            $data['type'] = config('neo_banking.message_type.cpv_unverified');
+        } else if($status->cpv === 'cpv_verified') {
+            if($status->sign === 'signed') {
+                $data['message'] = config('neo_banking.signed_verified_message');
+                $data['type'] = config('neo_banking.message_type.cpv_verified');;
+            } else {
+                $data['message'] = config('neo_banking.unsigned_message');
+                $data['type'] = config('neo_banking.message_type.cpv_unsigned');
+            }
+        }
+        return $data;
     }
 }

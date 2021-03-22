@@ -7,6 +7,7 @@ use App\Models\Member;
 use App\Models\Profile;
 use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
+use Sheba\Business\Leave\LeaveRejectReason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -18,6 +19,9 @@ use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
 
 class LeaveRequestDetailsTransformer extends TransformerAbstract
 {
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
     private $business;
     /** @var Profile Profile */
     private $profile;
@@ -34,16 +38,14 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
      * @param Business $business
      * @param Profile $profile
      * @param BusinessRole $role
-     * @param LeaveLogRepo $leave_log_repo
-     * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      */
-    public function __construct(Business $business, Profile $profile, BusinessRole $role, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function __construct(Business $business, Profile $profile, BusinessRole $role)
     {
         $this->business = $business;
         $this->profile = $profile;
         $this->role = $role;
-        $this->leaveLogRepo = $leave_log_repo;
-        $this->leaveStatusChangeLogRepo = $leave_status_change_log_repo;
+        $this->leaveLogRepo = app(LeaveLogRepo::class);
+        $this->leaveStatusChangeLogRepo = app(LeaveStatusChangeLogRepo::class);
     }
 
     /**
@@ -70,21 +72,25 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
+            'super_admin_action_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN),
             'leave' => [
                 'id' => $requestable->id,
                 'employee_id' => $requestable->businessMember->employee_id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
+                'email' => $this->profile->email ?: null,
                 'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i A'),
                 'type' => [
                     'id' => $leave_type->id,
-                    'title' => $leave_type->title],
+                    'title' => $leave_type->title,
+                    'total_leave_days' => $leave_type->total_days,
+                    ],
                     'total_days' => (int)$requestable->total_days,
                     'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
                     'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                    'period' => $requestable->start_date->format('d/m/Y') . ' - ' . $requestable->end_date->format('d/m/Y'),
+                    'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                     'start_date' => $requestable->start_date->format('Y-m-d'),
                     'end_date' => $requestable->end_date->format('Y-m-d'),
                     'note' => $requestable->note,
@@ -116,6 +122,20 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
+    }
+
+    private function getRejectReason($requestable, $type)
+    {
+        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
+        if (!$rejection) return null;
+        $reasons = $rejection->reasons;
+        if ($type == self::SUPER_ADMIN) return $rejection->note;
+        $data = [];
+        $final_data['note'] = $rejection->note;
+        foreach ($reasons as $reason){
+            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
+        }
+        return array_merge($final_data, $data);
     }
 
     private function isLeaveCancelled($requestable)
@@ -154,6 +174,19 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         $cancel_log = $this->getLeaveCancelLogDetails($requestable) ? $this->getLeaveCancelLogDetails($requestable) : [];
         $update_log = $this->getLeaveLogDetails($requestable) ? $this->getLeaveLogDetails($requestable) : [];
 
-        return array_merge($cancel_log, $update_log);
+        $data = array_merge($cancel_log, $update_log);
+
+        usort($data, array($this,'sortByCreatedAt'));
+
+        return $data;
+    }
+
+    private function sortByCreatedAt($a, $b)
+    {
+        $a = $a['created_at'];
+        $b = $b['created_at'];
+
+        if ($a == $b) return 0;
+        return $a > $b ? -1 : 1;
     }
 }

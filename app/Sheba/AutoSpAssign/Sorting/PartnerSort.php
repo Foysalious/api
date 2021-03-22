@@ -8,6 +8,7 @@ class PartnerSort
 {
     /** @var Strategy */
     private $strategy;
+    private $categoryId;
 
     /**
      * @param Strategy $strategy
@@ -20,11 +21,21 @@ class PartnerSort
     }
 
     /**
+     * @param $category_id
+     * @return $this
+     */
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
+        return $this;
+    }
+
+    /**
      * @param EligiblePartner[] $partners
      * @return EligiblePartner[]
      */
     public function sort($partners)
     {
-        return $this->strategy->sort($partners);
+        return $this->strategy->setCategoryId($this->categoryId)->sort($partners);
     }
 }

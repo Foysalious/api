@@ -8,7 +8,7 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use Sheba\Dal\TopUpBlacklistNumber\TopUpBlacklistNumber;
 use Sheba\OAuth2\AccountServer;
-use Sheba\TopUp\Verification\VerifyPin;
+use Sheba\OAuth2\VerifyPin;
 use Tests\Feature\FeatureTestCase;
 use Sheba\Dal\TopUpOTFSettings\Model as TopUpOTFSettings;
 use Sheba\Dal\TopUpVendorOTF\Model as TopUpVendorOTF;

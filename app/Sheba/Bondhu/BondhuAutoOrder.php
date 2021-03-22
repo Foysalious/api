@@ -110,7 +110,8 @@ class BondhuAutoOrder
         $services = json_decode($this->request->services);
         if (isset($services[0]->id)){
             $getServiceInfo = Service::where('id', $services[0]->id)->first();
-            if($getServiceInfo->is_published_for_ddn == 1 && $services[0]->id !=676){
+            $cod_service_array = [676];
+            if($getServiceInfo->is_published_for_ddn == 1 && !in_array($services[0]->id, $cod_service_array)){
                 $order->setPayerId($this->affiliate->id);
                 $order->setPayerType('affiliate');
             }
