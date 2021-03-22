@@ -1,6 +1,7 @@
 <?php namespace Sheba\Reward;
 
 use App\Models\Reward;
+use App\Models\TopUpVendor;
 
 class EventDataConverter
 {
@@ -461,6 +462,13 @@ class EventDataConverter
     public function getEventsFor($target_type, $event_type)
     {
         return $this->event[$target_type][$event_type];
+    }
+
+    public function setOperators(){
+        $operators = TopUpVendor::select('id', 'name')->where('is_published', 1)->get();
+        foreach ($operators as $operator){
+            $this->operator[$operator->id] = $operator->name;
+        }
     }
 }
 

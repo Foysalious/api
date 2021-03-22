@@ -4,8 +4,10 @@
 namespace App\Sheba\Affiliate;
 
 
+use App\Http\Requests\Request;
 use App\Models\Affiliate;
 use App\Models\Reward;
+use Carbon\Carbon;
 use Sheba\Dal\AffiliateNotificationLogs\Contract as AffiliateNotificationLogsRepository;
 use Sheba\Dal\RewardAffiliates\Contract as RewardAffiliatesRepo;
 use Sheba\ModificationFields;
@@ -48,6 +50,23 @@ class AffiliateRewardHelper
     {
         $rewards =  $this->rewardAffiliatesRepo->where('affiliate', $affiliate )->where('is_achieved', 1 )->get();
         return $rewards->count() > 0 ?  array_column($rewards->toArray(), 'reward') : [];
+    }
+
+    public function getRewardHistory($affiliate, $offset, $limit )
+    {
+        $query = Reward::with('detail')
+            ->where('end_time', '<=', Carbon::now())
+            ->where('detail_type', 'App\Models\RewardCampaign')
+            ->leftJoin('reward_affiliates', function ($join){
+                $join->on('rewards.id', '=', 'reward_affiliates.reward' );
+            })
+            ->where('reward_affiliates.affiliate', '=', $affiliate)
+            ->orderBy('rewards.end_time', 'desc')
+            ->skip($offset)
+            ->limit($limit)
+            ->get();
+
+        return $this->checkRewardProgress($query);
     }
 
 }
