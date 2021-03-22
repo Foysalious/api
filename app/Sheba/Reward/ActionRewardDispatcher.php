@@ -34,7 +34,6 @@ class ActionRewardDispatcher
             ->where('rewards.end_time', '>=', Carbon::now())
             ->select('rewards.*')
             ->get();
-
         \Log::info(json_encode($published_rewards));
 
         foreach ($published_rewards as $reward) {

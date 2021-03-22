@@ -3,6 +3,7 @@
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\Customer;
 use Sheba\AppVersion\AppVersionManager;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
@@ -35,6 +36,7 @@ use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\RequestIdentification;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
@@ -385,13 +387,8 @@ class ShebaController extends Controller
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
     }
 
-    public function testProfileReward()
+    public function testProfileReward(Customer $customer)
     {
-        $client = new Client();
-//        $res = $client->request('GET',config('sheba.admin_url') . '/reward/create',[]);
-//        $response = json_decode($res->getBody());
-//        dd($response);
-
-
+        app()->make(ActionRewardDispatcher::class)->run('profile_complete',$customer);
     }
 }

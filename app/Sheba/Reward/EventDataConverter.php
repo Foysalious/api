@@ -263,6 +263,7 @@ class EventDataConverter
                         'name' => 'Completed Profile',
                         'event_class' => 'Sheba\Reward\Event\Customer\Action\ProfileComplete\Event',
                         'rule_class' => 'Sheba\Reward\Event\Customer\Action\ProfileComplete\Rule',
+                        'parameters' => []
                     ]
                 ],
                 'campaign' => []
