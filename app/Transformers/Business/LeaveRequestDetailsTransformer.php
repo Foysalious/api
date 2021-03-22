@@ -78,6 +78,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
                 'employee_id' => $requestable->businessMember->employee_id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
+                'email' => $this->profile->email ?: null,
                 'mobile' => $this->profile->mobile ?: null,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i A'),
