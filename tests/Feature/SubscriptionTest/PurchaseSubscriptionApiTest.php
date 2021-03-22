@@ -5,6 +5,7 @@ use App\Models\BonusLog;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PartnerTransaction;
 use App\Models\Resource;
 use App\Models\Tag;
 use App\Repositories\NotificationRepository;
@@ -31,7 +32,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
             PartnerResource::class,
             Tag::class,
             Bonus::class,
-            BonusLog::class
+            BonusLog::class,
+            PartnerTransaction::class
 
         ]);
 
@@ -67,15 +69,18 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
     }
     public function testSubscriptionPurchase(){
+
         $partner=Partner::first();
         $partner_id=$partner->id;
-        $partner_wallet=$partner->wallet;
-        //dd($partner_wallet);
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 100000]);
+        //dd($walletBalanceUpdate);
+
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
-        $partner_transactions=
-        //dd($partner_transactions);
 
+        $partner_wallet=$partner->wallet;
+        //dd($partner_wallet);
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
@@ -86,23 +91,30 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-         dd($data);
+        dd($data);
+        $partner_transactions=PartnerTransaction::first();
+        //$partner_subscription_purchase_price = $partner_transactions->
+        //dd($partner_transactions ['balance']);
 
         $this->assertEquals(200,$data['code']);
-        $this->assertEquals(10500,$data['price']);
-        $this->assertEquals(39500,$data['remaining_balance']);
+        $this->assertEquals($partner_transactions ['amount'],$data['price']);
+        $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
 
 
 
     }
 
     public function testSubscriptionPurchaseWithBonusWallet(){
+        $bonusWalletBalanceUpdate = Bonus::find(1);;
+        $bonusWalletBalanceUpdate->update(["amount" => 100]);
+       // dd($bonusWalletBalanceUpdate);
         $partner=Partner::first();
         $partner_id=$partner->id;
         $partner_wallet=$partner->wallet;
         //dd($partner_wallet);
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
+        $partner_transactions=PartnerTransaction::first();
         // dd($partner_transactions);
 
 
@@ -115,7 +127,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $partner_bonus_transaction=Bonus::first();
         $partner_bonus_transaction_logs=BonusLog::first();
         //dd($partner_bonus_transaction_logs);
@@ -134,6 +146,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         //dd($partner_wallet);
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
+        $partner_transactions=PartnerTransaction::first();
         // dd($partner_transactions);
 
 
@@ -146,7 +159,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $partner_bonus_transaction=Bonus::first();
         $partner_bonus_transaction_logs=BonusLog::first();
         //dd($partner_bonus_transaction_logs);
