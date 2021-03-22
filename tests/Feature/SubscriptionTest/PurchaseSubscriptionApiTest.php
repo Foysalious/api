@@ -79,7 +79,6 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-        dd($data);
         $this->assertEquals(200,$data['code']);
         $this->assertEquals(10500,$data['price']);
 

@@ -46,7 +46,7 @@ class FeatureTestCase extends TestCase
     /**
      * @var $business_member
      */
-    private $business_member;
+    protected $business_member;
 
     public function setUp()
     {
