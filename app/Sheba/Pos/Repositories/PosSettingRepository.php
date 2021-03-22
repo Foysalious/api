@@ -2,8 +2,8 @@
 
 use App\Http\Controllers\TrainingVideoController;
 use App\Models\PartnerPosSetting;
-use Sheba\Repositories\BaseRepository;
 use Sheba\Dal\TrainingVideo\Contract as TrainingVideoRepository;
+use Sheba\Repositories\BaseRepository;
 
 class PosSettingRepository extends BaseRepository
 {
@@ -28,7 +28,7 @@ class PosSettingRepository extends BaseRepository
         return PartnerPosSetting::create($this->withCreateModificationField($data));
     }
 
-    public function formatDisplayData($data)
+    private function formatDisplayData($data)
     {
         $data['printer_model'] = $data['printer_model'] ? : '';
         $data['printer_name'] = $data['printer_name'] ? : '';

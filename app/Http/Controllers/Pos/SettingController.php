@@ -30,20 +30,42 @@ class SettingController extends Controller
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
-            $settings = PartnerPosSetting::byPartner($partner->id)->first();
-            if (!$settings) $settings = $creator->createPartnerPosSettings($partner);
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
+            if (!$settings) {
+                $data = ['partner_id' => $partner->id];
+                $creator->setData($data)->create();
+                $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
+            }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             removeRelationsAndFields($settings);
-            $repository->getTrainingVideoData($settings);
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            return api_response($request, $settings,200, ['settings' => $settings]);
         } catch (Throwable $e) {
             logError($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function storePosSetting(Request $request, Creator $creator)
+    public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            if (!$settings) {
+                $data = ['partner_id' => $partner->id,];
+                $creator->setData($data)->create();
+                $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            }
+            removeRelationsAndFields($settings);
+            $repository->getTrainingVideoData($settings);
+            return api_response($request, $settings,200, ['data' => $settings]);
+        } catch (Throwable $e) {
+            app('sentry')->captureException($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function storePosSetting(Request $request, Creator $creator) {
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
