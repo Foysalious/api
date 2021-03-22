@@ -3,6 +3,8 @@
 use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Repositories\SmsHandler;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use GuzzleHttp\Exception\RequestException;
 use Sheba\Dal\TopUpTransactionBlockNotificationReceiver\TopUpTransactionBlockNotificationReceiver;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
@@ -36,7 +38,10 @@ class TopUpRequestOfBlockedNumber
         $receivers = TopUpTransactionBlockNotificationReceiver::with('user')->get();
         foreach ($receivers as $receiver) {
             try {
-                (new SmsHandler('affiliate-rejected-for-block-topup'))->send(BDMobileFormatter::format($receiver->user->mobile), [
+                (new SmsHandler('affiliate-rejected-for-block-topup'))
+                    ->setBusinessType(BusinessType::BONDHU)
+                    ->setFeatureType(FeatureType::TOP_UP)
+                    ->send(BDMobileFormatter::format($receiver->user->mobile), [
                     'blocked_number' => $event->topupRequest->getMobile(),
                     'amount' => $event->topupRequest->getAmount(),
                     'agent_id' => $event->topupRequest->getAgent()->id,

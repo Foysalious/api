@@ -15,10 +15,10 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -43,6 +43,7 @@ use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
 use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
+use App\Transformers\Business\LeaveApprovalRequestListTransformer;
 
 class LeaveController extends Controller
 {
@@ -71,6 +72,7 @@ class LeaveController extends Controller
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
         /** @var Business $business */
@@ -87,24 +89,11 @@ class LeaveController extends Controller
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
 
-        $leaves = [];
-        foreach ($leave_approval_requests as $approval_request) {
-            /** @var Leave $requestable */
-            $requestable = $approval_request->requestable;
-            /** @var BusinessMember $business_member */
-            $business_member = $requestable->businessMember;
-            /** @var Member $member */
-            $member = $business_member->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business));
+        $leaves = $manager->createData($resource)->toArray()['data'];
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
-            $approval_request = $manager->createData($resource)->toArray()['data'];
-
-            array_push($leaves, $approval_request);
-        }
         if ($request->has('sort')) {
             $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
         }
@@ -388,6 +377,7 @@ class LeaveController extends Controller
      */
     public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMemberById($business_member_id);
         /** @var Business $business */
@@ -440,7 +430,6 @@ class LeaveController extends Controller
         $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
         $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
         $canceled = $leaves->where('status', Status::CANCELED)->sortByDesc('created_at');
-
         return $pending->merge($accepted)->merge($rejected)->merge($canceled);
     }
 

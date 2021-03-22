@@ -5,17 +5,18 @@ use App\Models\Affiliate;
 use App\Models\Business;
 use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
-use App\Sheba\TopUp\TopUpExcelDataFormatError;
 use Carbon\Carbon;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
-use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
+use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
@@ -24,6 +25,8 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
@@ -47,6 +50,7 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Elasticsearch;
 
 class TopUpController extends Controller
 {
@@ -350,9 +354,11 @@ class TopUpController extends Controller
      * @param Request $request
      * @param TopUpHistoryExcel $history_excel
      * @param TopUpDataFormat $topUp_data_format
+     * @param RequestBuilder $request_builder
+     * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
+    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
@@ -360,30 +366,25 @@ class TopUpController extends Controller
         list($offset, $limit) = calculatePagination($request);
         $user = $request->has('partner') ? $request->partner : $request->user;
 
-        $topups = $user->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
+        if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
-        if (isset($request->from) && $request->from !== "null") {
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
+        if ($request->has('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
-            $topups = $topups->whereBetween('created_at', [$from_date, $to_date]);
+            $request_builder->setFromDate($from_date)->setToDate($to_date);
         }
-        if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-        if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-        if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
-        if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
-            $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-        });
+        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->has('connection_type') && $request->connection_type !== "null") $request_builder->setConnectionType($request->connection_type);
+        if ($request->has('topup_type') && $request->topup_type == "single") $request_builder->setIsSingleTopup(true);
+        if ($request->has('bulk_id') && $request->bulk_id !== "null" && $request->bulk_id) $request_builder->setBulkRequestId($request->bulk_id);
 
-        $total_topups = $topups->count();
-        if ($is_excel_report) {
-            $offset = 0;
-            $limit = 10000;
-        }
+        $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
+        $topups = $top_up_order_repo->getByFilter($request_builder);
 
-        $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
         list($topup_data, $topup_data_for_excel) = $topUp_data_format->topUpHistoryDataFormat($topups);
 
         if ($is_excel_report) {

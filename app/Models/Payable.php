@@ -163,13 +163,11 @@ class Payable extends Model
 
     public function getName()
     {
-        if ($this->user instanceof Customer) {
-            return $this->user->profile->name;
-        } elseif ($this->user instanceof Business) {
-            return $this->user->name;
-        } elseif ($this->user instanceof Partner) {
-            return $this->user->name;
-        }
+        if ($this->user instanceof Customer) return $this->user->profile->name;
+        if ($this->user instanceof Business) return $this->user->name;
+        if ($this->user instanceof Partner) return $this->user->name;
+        if ($this->user instanceof Affiliate) return $this->user->profile->name;
+        return '';
     }
 
 
