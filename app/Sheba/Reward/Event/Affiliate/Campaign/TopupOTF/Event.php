@@ -53,16 +53,16 @@ class Event extends Campaign
     {
         $query_result = $this->getTotalTopupOTF( $rewardable );
         $progress = [
-            'target' => $this->rule->quantity->value,
+            'target' => (string) $this->rule->quantity->value,
         ];
         if ( $query_result->count() > 0 ) {
             $quantity = $query_result[0]->quantity;
             $achieved = $this->rule->getAchievedValue($quantity);
-            $progress['achieved'] = (int) $achieved;
-            $progress['percentage'] = ($achieved * 100)/ $this->rule->quantity->value;
+            $progress['achieved'] = (string) $achieved;
+            $progress['percentage'] = number_format(($achieved * 100)/ $this->rule->quantity->value, 2 );
         } else {
-            $progress['achieved'] = 0;
-            $progress['percentage'] = 0;
+            $progress['achieved'] = (string) 0.00;
+            $progress['percentage'] = (string) 0.00;
         }
         return $progress;
     }
