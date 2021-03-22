@@ -24,7 +24,7 @@ class Route
                 $api->delete('/{collection}', 'Inventory\CollectionController@destroy');
             });
 
-
+            $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
 
             $api->get('/tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
