@@ -27,13 +27,21 @@ class BondhuRewardController extends Controller
         $this->affiliateRewardHelper = $affiliateRewardHelper;
     }
 
-    public function rewardHistory($affiliate, RewardDetails $rewardDetails)
+    public function rewardHistory($affiliate, Request $request)
     {
-        $affiliateRewards = $this->rewardAffiliateRepo->getRewardList($affiliate, Carbon::now(), '<=');
-        $affiliateRewards = $rewardDetails->mergeDetailsWithRewards($affiliateRewards);
-        $history = $this->affiliateRewardHelper->checkRewardProgress($affiliateRewards);
-        return $history;
+        list($offset, $limit) = calculatePagination($request);
+        $affiliateRewardsHistory = $this->affiliateRewardHelper->getRewardHistory($affiliate, $offset, $limit);
+        foreach ($affiliateRewardsHistory as $key=>$each){
+            $each['details'] = $each['detail'];
+            unset($each['detail']);
+            $affiliateRewardsHistory[$key] = $this->formatReward($each);
+        }
 
+        if (count($affiliateRewardsHistory) > 0) {
+            return api_response($request, $affiliateRewardsHistory, 200, ['history' => $affiliateRewardsHistory]);
+        } else {
+            return api_response($request, null, 404);
+        }
     }
 
     /**

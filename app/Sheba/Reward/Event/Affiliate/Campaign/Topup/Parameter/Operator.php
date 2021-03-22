@@ -15,7 +15,7 @@ class Operator extends CampaignEventParameter
     {
 
         if ($this->value != null) {
-            $query->whereIn('topup_orders.vendor_id', [1,2,3,4,5,6] );
+            $query->whereIn('topup_orders.vendor_id', $this->value );
         }
     }
 
