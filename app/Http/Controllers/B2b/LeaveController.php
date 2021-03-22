@@ -25,6 +25,7 @@ use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
 use Sheba\Business\Leave\RejectReason\RejectReason;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
@@ -53,14 +54,18 @@ class LeaveController extends Controller
 
 
     private $approvalRequestRepo;
+    /*** @var LeaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
     }
 
     /**
@@ -468,14 +473,15 @@ class LeaveController extends Controller
         $this->validate($request, [
             'leave_id' => 'required|string',
             'status' => 'required|string',
+            'note' => 'required|string'
         ]);
 
         $leave = $leave_repo->find($request->leave_id);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        $updater->setLeave($leave)->setStatus($request->status)->setBusinessMember($business_member)->updateStatus();
+        $this->leaveRejectionRequester->setNote($request->note);
+        $updater->setLeave($leave)->setStatus($request->status)->setLeaveRejectionRequester($this->leaveRejectionRequester)->setBusinessMember($business_member)->updateStatus();
 
         return api_response($request, null, 200);
     }
