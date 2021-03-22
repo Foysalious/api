@@ -64,7 +64,7 @@ class Route
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
-            $api->get('test-profile-reward', 'HomePageSettingController@getCarV3');
+            $api->get('test-profile-reward', 'ShebaController@testProfileReward');
 
         });
 

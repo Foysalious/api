@@ -34,9 +34,11 @@ use Sheba\NID\Validations\NidValidation;
 use Sheba\Payment\AvailableMethods;
 use Sheba\Payment\Presenter\PaymentMethodDetails;
 use Sheba\Repositories\PaymentLinkRepository;
+use Sheba\RequestIdentification;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Throwable;
 use Validator;
+use GuzzleHttp\Client;
 
 class ShebaController extends Controller
 {
@@ -385,6 +387,11 @@ class ShebaController extends Controller
 
     public function testProfileReward()
     {
+        $client = new Client();
+//        $res = $client->request('GET',config('sheba.admin_url') . '/reward/create',[]);
+//        $response = json_decode($res->getBody());
+//        dd($response);
+
 
     }
 }
