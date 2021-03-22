@@ -13,7 +13,6 @@ class Gateway extends CampaignEventParameter
 
     public function check(Builder $query)
     {
-        $this->value = ['SSL'];
         if ($this->value != null) {
             foreach ($this->value as $key=>$each ){
                 if($key == 0){
