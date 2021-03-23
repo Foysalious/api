@@ -453,7 +453,7 @@ class PartnerRepository
                 'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
             ] : null,
             'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
-            'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus(),
+            'leave_info'                   => (new LeaveStatus())->setArtisan($this->partner)->getCurrentStatus(),
             'sheba_order'                  => $this->partner->orders->isEmpty() ? 0 : 1,
             'home_videos'    => $videos ? $videos : null,
             'feature_videos' => $details,
