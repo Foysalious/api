@@ -93,25 +93,31 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $data=$response->decodeResponseJson();
         dd($data);
         $partner_transactions=PartnerTransaction::first();
+
         //$partner_subscription_purchase_price = $partner_transactions->
         //dd($partner_transactions ['balance']);
+        $partner=Partner::first();
+        $partner_package_id=$partner->package_id;
+        //dd($partner_package_id);
 
         $this->assertEquals(200,$data['code']);
         $this->assertEquals($partner_transactions ['amount'],$data['price']);
         $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
+        $this->assertEquals(3,$partner_package_id);
 
 
 
     }
 
     public function testSubscriptionPurchaseWithBonusWallet(){
+
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 0]);
         $bonusWalletBalanceUpdate = Bonus::find(1);;
-        $bonusWalletBalanceUpdate->update(["amount" => 100]);
+        $bonusWalletBalanceUpdate->update(["amount" => 100000]);
        // dd($bonusWalletBalanceUpdate);
         $partner=Partner::first();
         $partner_id=$partner->id;
-        $partner_wallet=$partner->wallet;
-        //dd($partner_wallet);
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
         $partner_transactions=PartnerTransaction::first();
@@ -121,19 +127,20 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
                 "remember_token"=>$resource_remembar_token,
-                "package_id"=>2,
+                "package_id"=>3,
                 "billing_type"=>"monthly"
             ]
         );
 
         $data=$response->decodeResponseJson();
-        //dd($data);
-        $partner_bonus_transaction=Bonus::first();
+        //dd($data ['price']);
+        $partner_bonus_transaction=Bonus::all();
+        //dd($partner_bonus_transaction [1] ['amount']);
         $partner_bonus_transaction_logs=BonusLog::first();
-        //dd($partner_bonus_transaction_logs);
-       /* $this->assertEquals(200,$data['code']);
-        $this->assertEquals(10500,$data['price']);
-        $this->assertEquals(39500,$data['remaining_balance']);*/
+        dd($partner_bonus_transaction_logs);
+        $this->assertEquals(200,$data['code']);
+        $this->assertEquals($partner_bonus_transaction [0] ['amount'],$data['price']);
+        $this->assertEquals($partner_bonus_transaction [1] ['amount'],$data['remaining_balance']);
 
 
 
