@@ -1,5 +1,8 @@
 <?php namespace App\Repositories;
 
+use App\Http\Controllers\PartnerOrderController;
+use Sheba\Analysis\Sales\PartnerSalesStatistics;
+use Sheba\CancelRequest\CancelRequestStatuses;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -13,12 +16,16 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection;
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
+use Sheba\Helpers\TimeFrame;
+use Sheba\Manager\JobList;
 use Sheba\ModificationFields;
+use Sheba\Partner\LeaveStatus;
 use Sheba\ResourceScheduler\ResourceHandler;
+use Sheba\Location\LocationSetter;
 
 class PartnerRepository
 {
-    use ModificationFields, CdnFileManager, FileManager;
+    use ModificationFields, CdnFileManager, FileManager, LocationSetter;
 
     private $partner;
     private $serviceRepo;
@@ -333,6 +340,142 @@ class PartnerRepository
             'has_pos_paid_order' => $has_pos_paid_order,*/
             'has_qr_code' => ($partner->qr_code_image && $partner->qr_code_account_type) ? 1 : 0
         ];
+    }
+    public function getNewDashboard($request, $performance, $partner_reward) {
+
+        $slider_portal = SliderPortal::with('slider.slides')->where('portal_name', 'manager-app')->where('screen', 'home')->get();
+        $slides_query = !$slider_portal->isEmpty() ? $slider_portal->last()->slider->slides()->where('location_id', $this->location)->orderBy('id', 'desc') : null;
+        $all_slides   = $slides_query ? $slides_query->get() : null;
+        $videos       = [];
+        if ($all_slides && !$all_slides->isEmpty()) {
+            foreach ($all_slides as $key => $item) {
+                if ($item && json_decode($item->video_info)) {
+                    array_push($videos, json_decode($item->video_info));
+                }
+            }
+        }
+        $details = $this->featureVideos();
+        $performance->setPartner($this->partner)->setTimeFrame((new TimeFrame())->forCurrentWeek())->calculate();
+        $performanceStats = $performance->getData();
+        $rating             = (new ReviewRepository)->getAvgRating($this->partner->reviews);
+        $rating             = (string)(is_null($rating) ? 0 : $rating);
+        $successful_jobs    = $this->partner->jobs()->whereDoesntHave('cancelRequest', function ($q) {
+            $q->where('status', CancelRequestStatuses::PENDING)->orWhere('status', CancelRequestStatuses::APPROVED);
+        })->select('jobs.id', 'schedule_date', 'status')->get();
+        $sales_stats        = (new PartnerSalesStatistics($this->partner))->calculate();
+        $upgradable_package = null;
+        $new_order          = $this->newOrdersCount($this->partner, $request);
+        return [
+            'name'                         => $this->partner->name,
+            'logo'                         => $this->partner->logo,
+            'geo_informations'             => json_decode($this->partner->geo_informations),
+            'current_subscription_package' => [
+                'id'            => $this->partner->subscription->id,
+                'name'          => $this->partner->subscription->name,
+                'name_bn'       => $this->partner->subscription->show_name_bn,
+                'remaining_day' => $this->partner->last_billed_date ? $this->partner->periodicBillingHandler()->remainingDay() : 0,
+                'billing_type'  => $this->partner->billing_type,
+                'rules'         => $this->partner->subscription->getAccessRules(),
+                'is_light'      => $this->partner->subscription->id == (int)config('sheba.partner_lite_packages_id')
+            ],
+            'badge'                        => $this->partner->resolveBadge(),
+            'rating'                       => $rating,
+            'status'                       => $this->partner->getStatusToCalculateAccess(),
+            'show_status'                  => constants('PARTNER_STATUSES_SHOW')[$this->partner['status']]['partner'],
+            'balance'                      => $this->partner->totalWalletAmount(),
+            'credit'                       => $this->partner->wallet,
+            'bonus'                        => round($this->partner->bonusWallet(), 2),
+            'is_credit_limit_exceed'       => $this->partner->isCreditLimitExceed(),
+            'is_on_leave'                  => $this->partner->runningLeave() ? 1 : 0,
+            'bonus_credit'                 => $this->partner->bonusWallet(),
+            'reward_point'                 => $this->partner->reward_point,
+            'bkash_no'                     => $this->partner->bkash_no,
+            'current_stats'                => [
+                'total_new_order'     => count($new_order) > 0 ? $new_order->total_new_orders : 0,
+                'total_order'         => $this->partner->orders()->count(),
+                'total_ongoing_order' => (new JobList($this->partner))->ongoing()->count(),
+                'today_order'         => $this->partner->todayJobs($successful_jobs)->count(),
+                'tomorrow_order'      => $this->partner->tomorrowJobs($successful_jobs)->count(),
+                'not_responded'       => $this->partner->notRespondedJobs($successful_jobs)->count(),
+                'schedule_due'        => $this->partner->scheduleDueJobs($successful_jobs)->count(),
+                'serve_due'           => $this->partner->serveDueJobs($successful_jobs)->count(),
+                'complain'            => $this->partner->complains()->notClosed()->count()
+            ],
+            'sales'                        => [
+                'today'                    => [
+                    'timeline' => date("jS F", strtotime(Carbon::today())),
+                    'amount'   => $sales_stats->today->orderTotalPrice + $sales_stats->today->posSale
+                ],
+                'week'                     => [
+                    'timeline' => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
+                    'amount'   => $sales_stats->week->orderTotalPrice + $sales_stats->week->posSale
+                ],
+                'month'                    => [
+                    'timeline' => date("jS F", strtotime(Carbon::today()->startOfMonth())) . "-" . date("jS F", strtotime(Carbon::today())),
+                    'amount'   => $sales_stats->month->orderTotalPrice + $sales_stats->month->posSale
+                ],
+                'total_due_for_pos_orders' => 0,
+            ],
+            'is_nid_verified'              => (int)$request->manager_resource->profile->nid_verified ? true : false,
+            'weekly_performance'           => [
+                'timeline'                   => date("jS F", strtotime(Carbon::today()->startOfWeek())) . "-" . date("jS F", strtotime(Carbon::today())),
+                'successfully_completed'     => [
+                    'count'       => $performanceStats['completed']['total'],
+                    'performance' => $this->formatRate($performanceStats['completed']['rate']),
+                    'is_improved' => $performanceStats['completed']['is_improved']
+                ],
+                'completed_without_complain' => [
+                    'count'       => $performanceStats['no_complain']['total'],
+                    'performance' => $this->formatRate($performanceStats['no_complain']['rate']),
+                    'is_improved' => $performanceStats['no_complain']['is_improved']
+                ],
+                'timely_accepted'            => [
+                    'count'       => $performanceStats['timely_accepted']['total'],
+                    'performance' => $this->formatRate($performanceStats['timely_accepted']['rate']),
+                    'is_improved' => $performanceStats['timely_accepted']['is_improved']
+                ],
+                'timely_started'             => [
+                    'count'       => $performanceStats['timely_processed']['total'],
+                    'performance' => $this->formatRate($performanceStats['timely_processed']['rate']),
+                    'is_improved' => $performanceStats['timely_processed']['is_improved']
+                ]
+            ],
+            'subscription_promotion'       => $upgradable_package ? [
+                'package'         => $upgradable_package->name,
+                'package_name_bn' => $upgradable_package->name_bn,
+                'package_badge'   => $upgradable_package->badge,
+                'package_usp_bn'  => json_decode($upgradable_package->usps, 1)['usp_bn']
+            ] : null,
+            'has_reward_campaign'          => count($partner_reward->upcoming()) > 0 ? 1 : 0,
+            'leave_info'                   => (new LeaveStatus($this->partner))->getCurrentStatus(),
+            'sheba_order'                  => $this->partner->orders->isEmpty() ? 0 : 1,
+            'home_videos'    => $videos ? $videos : null,
+            'feature_videos' => $details,
+            'has_qr_code'    => ($this->partner->qr_code_image && $this->partner->qr_code_account_type) ? 1 : 0,
+            'is_webstore_published' => $this->partner->is_webstore_published
+        ];
+
+    }
+
+    private function formatRate($rate)
+    {
+        if ($rate < 0)
+            return 0;
+        if ($rate > 100)
+            return 100;
+        return $rate;
+    }
+
+    private function newOrdersCount($partner, $request)
+    {
+        try {
+            $request->merge(['getCount' => 1]);
+            $partner_order = new PartnerOrderController();
+            $new_order     = $partner_order->newOrders($partner, $request)->getData();
+            return $new_order;
+        } catch (Throwable $e) {
+            return array();
+        }
     }
 
 
