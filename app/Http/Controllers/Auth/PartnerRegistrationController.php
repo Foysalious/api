@@ -411,9 +411,9 @@ class PartnerRegistrationController extends Controller
                  $this->profileRepository->registerAvatarByKit('affiliate', $profile);*/
             if ($resource->partnerResources->count() > 0)
                 return api_response($request, null, 403, ['message' => 'You already have a company!']);
-            $request['package_id'] = env('LITE_PACKAGE_ID');
+            $request['package_id']   = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
-            $data = $this->makePartnerCreateData($request);
+            $data                    = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
                 $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
@@ -423,7 +423,7 @@ class PartnerRegistrationController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context([
                 'request' => $request->all(),
                 'message' => $message
@@ -442,9 +442,9 @@ class PartnerRegistrationController extends Controller
         try {
             $this->validate($request, [
                 'company_name' => 'required|string',
-                'from' => 'string|in:' . implode(',', constants('FROM')),
-                'mobile' => 'required|mobile:bd',
-                'name' => 'required'
+                'from'         => 'string|in:' . implode(',', constants('FROM')),
+                'mobile'       => 'required|mobile:bd',
+                'name'         => 'required'
             ]);
 
             $mobile = formatMobile($request->mobile);
@@ -458,25 +458,25 @@ class PartnerRegistrationController extends Controller
                 if (!$resource)
                     $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             } else {
-                $profile = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
+                $profile  = $this->profileRepository->registerMobile(array_merge($request->all(), ['mobile' => $mobile]));
                 $resource = $this->profileRepository->registerAvatarByKit('resource', $profile);
             }
-            $request['package_id'] = env('LITE_PACKAGE_ID');
+            $request['package_id']   = env('LITE_PACKAGE_ID');
             $request['billing_type'] = 'monthly';
             $request['affiliate_id'] = (int)$affiliate;
             if (count($resource->partners) > 0) {
                 $partnerWithAffiliate = (($resource->partners[0]->affiliate_id === (int)$affiliate) && ($resource->partners[0]->status === 'Onboarded'));
                 if (!$partnerWithAffiliate || $this->liteFormCompleted($profile, $resource))
                     return api_response($request, null, 403, ['message' => 'This company already referred!']); else {
-                    $data = $this->makePartnerCreateData($request);
+                    $data                      = $this->makePartnerCreateData($request);
                     $data['moderation_status'] = 'pending';
-                    $partner = $resource->partners[0];
+                    $partner                   = $resource->partners[0];
                     $partner->update($data);
                     $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                     return api_response($request, null, 200, ['info' => $info]);
                 }
             }
-            $data = $this->makePartnerCreateData($request);
+            $data                      = $this->makePartnerCreateData($request);
             $data['moderation_status'] = 'pending';
             if ($partner = $this->createPartner($resource, $data)) {
                 (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
@@ -492,7 +492,7 @@ class PartnerRegistrationController extends Controller
             }
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry = app('sentry');
+            $sentry  = app('sentry');
             $sentry->user_context([
                 'request' => $request->all(),
                 'message' => $message
