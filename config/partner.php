@@ -20,7 +20,7 @@ return [
             'amount'           => 20,
             'duration'         => 12,
             'nid_verification' => true,
-            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যবহার করতে হবে।',
+            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ১২ দিন ব্যবহার করতে হবে এবং আপনার ব্যবসায়ী বন্ধুর sManager অ্যাকাউন্টটি অবশ্যই NID ভেরিফাইড হতে হবে।',
             'visible'          => true
         ],
         [
@@ -28,7 +28,7 @@ return [
             'amount'           => 30,
             'duration'         => 25,
             'nid_verification' => true,
-            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যবহার করতে হবে।',
+            'details'          => 'আপনার রেফার করা বন্ধুকে sManager অ্যাপ ২৫ দিন ব্যবহার করতে হবে এবং আপনার ব্যবসায়ী বন্ধুর sManager অ্যাকাউন্টটি অবশ্যই NID ভেরিফাইড হতে হবে।',
             'visible'          => true
         ],
         [
