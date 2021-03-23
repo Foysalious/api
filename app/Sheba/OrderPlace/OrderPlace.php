@@ -487,7 +487,7 @@ class OrderPlace
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
-            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
+//            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
