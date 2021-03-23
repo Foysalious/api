@@ -60,7 +60,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
-
+        $business_member = $requestable->businessMember;
         /** @var BusinessMember $substitute_business_member */
         $substitute_business_member = $requestable->substitute;
         /** @var Member $member */
@@ -78,7 +78,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::SUPER_ADMIN, null),
             'leave' => [
                 'id' => $requestable->id,
-                'employee_id' => $requestable->businessMember->employee_id,
+                'business_member_id' => $business_member->id,
+                'employee_id' => $business_member->employee_id,
                 'name' => $this->profile->name,
                 'pro_pic' => $this->profile->pro_pic,
                 'email' => $this->profile->email ?: null,
