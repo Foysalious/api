@@ -105,7 +105,8 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
     {
-        $agent = $request->user;
+        /** @var TopUpAgent $agent */
+        $agent = $this->getAgent($request, $user);
         $validation_data = [
             'mobile' => 'required|string|mobile:bd',
             'connection_type' => 'required|in:prepaid,postpaid',
@@ -123,12 +124,7 @@ class TopUpController extends Controller
 
         $this->validate($request, $validation_data);
 
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') {
-            $agent = $auth_user->getPartner();
+        if ($user == 'partner') {
             $token = $request->topup_token;
             if ($token) {
                 try {
@@ -138,13 +134,12 @@ class TopUpController extends Controller
                 } catch (Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
-
                 if ($credentials->sub != $agent->id) {
                     return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
                 }
             }
+        }
 
-        } else return api_response($request, null, 400);
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
