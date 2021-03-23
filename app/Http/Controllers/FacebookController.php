@@ -1,6 +1,4 @@
-<?php
-
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use App\Models\Profile;
 use App\Repositories\FacebookRepository;
@@ -10,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
+use Sheba\AppVersion\AppBuilder;
 use Sheba\Authentication\AuthUser;
 use Sheba\Portals\Portals;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
@@ -136,16 +135,12 @@ class FacebookController extends Controller
      */
     private function isUsingShebaAccountKit()
     {
-        $version = convertSemverToInt(\request()->header('Version-Code'));
-        $portal_name = \request()->header('portal-name');
-        $platform_name = \request()->header('Platform-Name');
+        $header = getShebaRequestHeader();
+        $app = AppBuilder::buildFromHeader($header);
 
-        return $portal_name == 'customer-portal' ||
-            ($version > 30211 && $portal_name == 'customer-app') ||
-            ($version > 12003 && $portal_name == 'bondhu-app') ||
-            ($version > 2145 && $portal_name == 'resource-app') ||
-            ($version > 126 && $portal_name == 'customer-app' && $platform_name == 'ios') ||
-            $portal_name == Portals::BUSINESS_WEB;
+        return $app ?
+            $app->isUsingShebaAccountKit() :
+            in_array($header->getPortalName(), [Portals::CUSTOMER_WEB, Portals::BUSINESS_WEB]);
     }
 
     private function getFacebookProfileInfo($token)

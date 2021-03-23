@@ -771,12 +771,6 @@ return [
     ],
     'REFERRAL_GIFT_AMOUNT' => env('REFERRAL_GIFT_AMOUNT'),
     'send_push_notifications' => env('SHEBA_SEND_PUSH_NOTIFICATIONS'),
-    'APPS' => [
-        "customer_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.customersapp",
-        "bondhu_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.bondhu",
-        "resource_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.resource",
-        "manager_app" => "https://play.google.com/store/apps/details?id=xyz.sheba.managerapp"
-    ],
     'MANAGER_TOPIC_NAME' => env('MANAGER_TOPIC_NAME'),
     'PARTNER_AFFILIATIONS_STATUSES' => [
         'pending' => 'Pending',
@@ -1370,4 +1364,5 @@ return [
         'অন্যান্য'
     ],
     "PARTNER_ORDER_TARGET_TYPE" => 'PARTNER_ORDER_DETAILS',
+    'PARTNER_SUBSCRIPTION_SMS' => env('PARTNER_SUBSCRIPTION_SMS')
 ];

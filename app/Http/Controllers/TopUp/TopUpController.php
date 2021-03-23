@@ -1,40 +1,43 @@
 <?php namespace App\Http\Controllers\TopUp;
 
-use App\Helper\BangladeshiMobileValidator;
 use App\Http\Controllers\Controller;
-use App\Jobs\Business\SendTopUpFailMail;
 use App\Models\Affiliate;
 use App\Models\Business;
+use App\Models\Customer;
 use App\Models\Partner;
+use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Sheba\TopUp\TopUpBulkRequest\Formatter as TopUpBulkRequestFormatter;
-use App\Sheba\TopUp\TopUpExcelDataFormatError;
-use App\Sheba\TopUp\Vendor\Vendors;
 use Carbon\Carbon;
+use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Sheba\Dal\AuthenticationRequest\Purpose;
+use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
 use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
+
+use Sheba\Dal\TopupOrder\TopUpOrderRepository;
+use Sheba\ModificationFields;
+use Sheba\TopUp\Bulk\RequestStatus;
+use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
+use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
+use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
+
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\History\RequestBuilder;
+use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
-use Sheba\TopUp\TopUpFailedReason;
 use Sheba\TopUp\TopUpHistoryExcel;
 use Sheba\TopUp\TopUpSpecialAmount;
-use Sheba\TopUp\Vendor\Vendor;
-use Sheba\TopUp\Verification\VerifyPin;
-use Sheba\TPProxy\TPProxyClient;
-use Sheba\TPProxy\TPProxyServerError;
-use Sheba\TPProxy\TPRequest;
+use Sheba\OAuth2\VerifyPin;
 use Sheba\UserAgentInformation;
-use Sheba\Wallet\WalletUpdateEvent;
 use DB;
 use Excel;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 use Sheba\Helpers\Formatters\BDMobileFormatter;
-use Sheba\Reports\ExcelHandler;
 use Sheba\TopUp\Creator;
 use Sheba\TopUp\Jobs\TopUpExcelJob;
 use Sheba\TopUp\Jobs\TopUpJob;
@@ -49,34 +52,33 @@ use Sheba\ShebaAccountKit\Requests\AccessTokenRequest;
 use Sheba\ShebaAccountKit\ShebaAccountKit;
 use Firebase\JWT\ExpiredException;
 use Firebase\JWT\JWT;
+use Elasticsearch;
 
 class TopUpController extends Controller
 {
+    use ModificationFields;
+
     public function getVendor(Request $request)
     {
-        try {
-            if ($request->type == 'customer') $agent = "App\\Models\\Customer"; elseif ($request->type == 'partner') $agent = "App\\Models\\Partner";
-            elseif ($request->type == 'business') $agent = "App\\Models\\Business";
-            else $agent = "App\\Models\\Affiliate";
-            $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
-            $error_message = "Currently, we’re supporting";
-            foreach ($vendors as $vendor) {
-                $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
-                $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
-                array_add($vendor, 'asset', $asset_name);
-                array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
-                array_add($vendor, 'is_prepaid_available', 1);
-                array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
-                if ($vendor->is_published) $error_message .= ',' . $vendor->name;
-            }
-            $regular_expression = [
-                'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)", 'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$", 'error_message' => $error_message . '.'
-            ];
-            return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $agent = $this->getFullAgentType($request->type);
+
+        $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
+        $error_message = "Currently, we’re supporting";
+        foreach ($vendors as $vendor) {
+            $vendor_commission = TopUpVendorCommission::where([['topup_vendor_id', $vendor->id], ['type', $agent]])->first();
+            $asset_name = strtolower(trim(preg_replace('/\s+/', '_', $vendor->name)));
+            array_add($vendor, 'asset', $asset_name);
+            array_add($vendor, 'agent_commission', $vendor_commission ? $vendor_commission->agent_commission : 0);
+            array_add($vendor, 'is_prepaid_available', 1);
+            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
+            if ($vendor->is_published) $error_message .= ',' . $vendor->name;
         }
+        $regular_expression = [
+            'typing' => "^(013|13|014|14|018|18|016|16|017|17|019|19|015|15)",
+            'from_contact' => "^(?:\+?88)?01[16|8]\d{8}$",
+            'error_message' => $error_message . '.'
+        ];
+        return api_response($request, $vendors, 200, ['vendors' => $vendors, 'regex' => $regular_expression]);
     }
 
     /**
@@ -99,9 +101,14 @@ class TopUpController extends Controller
             'vendor_id' => 'required|exists:topup_vendors,id',
             'password' => 'required'
         ];
-        $validation_data['amount'] = $this->isBusiness($agent) && $this->isPrepaid($request->connection_type) ?
-            'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit :
-            'required|min:10|max:1000|numeric';
+
+        if ($this->isBusiness($agent) && $this->isPrepaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10|max:' . $agent->topup_prepaid_max_limit;
+        } elseif ($this->isBusiness($agent) && $this->isPostpaid($request->connection_type)) {
+            $validation_data['amount'] = 'required|numeric|min:10';
+        } else {
+            $validation_data['amount'] = 'required|min:10|max:1000|numeric';
+        }
 
         $this->validate($request, $validation_data);
 
@@ -127,7 +134,7 @@ class TopUpController extends Controller
             }
 
         } else return api_response($request, null, 400);
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
         $top_up_request->setAmount($request->amount)
@@ -151,7 +158,7 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
 
         if ($topup_order) {
-            dispatch((new TopUpJob($agent, $request->vendor_id, $topup_order)));
+            dispatch((new TopUpJob($topup_order)));
 
             return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
         } else {
@@ -161,13 +168,17 @@ class TopUpController extends Controller
 
     public function isBusiness($agent)
     {
-        if ($agent instanceof Business) return true;
-        return false;
+        return $agent instanceof Business;
     }
 
     public function isPrepaid($connection_type)
     {
-        if ($connection_type == ConnectionType::PREPAID) return true;
+        return $connection_type == ConnectionType::PREPAID;
+    }
+
+    public function isPostpaid($connection_type)
+    {
+        if ($connection_type == ConnectionType::POSTPAID) return true;
         return false;
     }
 
@@ -202,91 +213,57 @@ class TopUpController extends Controller
      * @param VendorFactory $vendor
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
-     * @param TopUpExcelDataFormatError $top_up_excel_data_format_error
      * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
      * @throws Exception
      */
-    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request, Creator $creator, TopUpExcelDataFormatError $top_up_excel_data_format_error, TopUpSpecialAmount $special_amount)
+    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
+                              Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
-        $valid_extensions = ["xls", "xlsx", "xlm", "xla", "xlc", "xlt", "xlw"];
-        $extension = $request->file('file')->getClientOriginalExtension();
-
-        if (!in_array($extension, $valid_extensions))
-            return api_response($request, null, 400, ['message' => 'File type not support']);
 
         $agent = $request->user;
-        $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setRequest($request)->verify();
+        $this->setModifier($agent);
 
-        $sheet_names = Excel::load($request->file)->getSheetNames();
-        if (!in_array(TopUpExcel::SHEET, $sheet_names))
-            return api_response($request, null, 400, ['message' => 'The sheet name used in the excel file is incorrect. Please download the sample excel file for reference.']);
+        $verifyPin->setAgent($agent)
+            ->setProfile($request->access_token->authorizationRequest->profile)
+            ->setPurpose(Purpose::TOPUP)
+            ->setRequest($request)
+            ->verify();
 
-        $file = Excel::selectSheets(TopUpExcel::SHEET)->load($request->file)->save();
-        $file_path = $file->storagePath . DIRECTORY_SEPARATOR . $file->getFileName() . '.' . $file->ext;
-
-        $data = Excel::selectSheets(TopUpExcel::SHEET)->load($file_path)->get();
-        $data = $data->filter(function ($row) {
-            return ($row->mobile && $row->operator && $row->connection_type && $row->amount);
-        });
-
-        $total = $data->count();
-
-        $excel_error = null;
-        $halt_top_up = false;
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
-        $total_recharge_amount = 0;
+        $validator = (new ExtensionValidator())->setFile($request->file('file'));
+        $data_validator = (new DataFormatValidator())->setAgent($agent)->setBlockedAmountByOperator($blocked_amount_by_operator)->setRequest($request);
+        $validator->linkWith(new SheetNameValidator())->linkWith($data_validator);
+        $validator->check();
 
-        $data->each(function ($value, $key) use ($request, $agent, $file_path, $total, $excel_error, &$halt_top_up, $top_up_excel_data_format_error, $blocked_amount_by_operator, &$total_recharge_amount) {
-            $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-            $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-            $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-            $connection_type = TopUpExcel::TYPE_COLUMN_TITLE;
+        $bulk_request = $this->storeBulkRequest($agent, $data_validator->getBulkExcelCdnFilePath());
 
-            if (!$this->isMobileNumberValid($value->$mobile_field) && !$this->isAmountInteger($value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Mobile number Invalid, Amount Should be Integer';
-            } elseif (!$this->isMobileNumberValid($value->$mobile_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Mobile number Invalid';
-            } elseif (!$this->isAmountInteger($value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'Amount Should be Integer';
-            } elseif ($agent instanceof Business && $request->has('is_otf_allow') && !($request->is_otf_allow) && $this->isAmountBlocked($blocked_amount_by_operator, $value->$operator_field, $value->$amount_field)) {
-                $halt_top_up = true;
-                $excel_error = 'The recharge amount is blocked due to OTF activation issue';
-            } elseif ($agent instanceof Business && $this->isPrepaidAmountLimitExceed($agent, $value->$amount_field, $value->$connection_type)) {
-                $halt_top_up = true;
-                $excel_error = 'The amount exceeded your topUp prepaid limit';
-            } else {
-                $excel_error = null;
-            }
+        $data = $data_validator->getData();
+        $total = $data_validator->getTotal();
+        $file_path = $data_validator->getFilePath();
 
-            $total_recharge_amount += $value->$amount_field;
+        $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
+        $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
+        $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
+        $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
+        $name_field = TopUpExcel::NAME_COLUMN_TITLE;
 
-            $top_up_excel_data_format_error->setAgent($agent)->setFile($file_path)->setRow($key + 2)->updateExcel($excel_error);
-        });
-
-        if ($total_recharge_amount > $agent->wallet)
-            return api_response($request, null, 403, ['message' => 'You do not have sufficient balance to recharge.', 'recharge_amount' => $total_recharge_amount, 'total_balance' => floatval($agent->wallet)]);
-
-        if ($halt_top_up) {
-            $top_up_excel_data_format_errors = $top_up_excel_data_format_error->takeCompletedAction();
-            return api_response($request, null, 420, ['message' => 'Check The Excel Data Format Properly', 'excel_errors' => $top_up_excel_data_format_errors]);
-        }
-
-        $bulk_request = $this->storeBulkRequest($agent);
-        $data->each(function ($value, $key) use ($creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request) {
-            $operator_field = TopUpExcel::VENDOR_COLUMN_TITLE;
-            $type_field = TopUpExcel::TYPE_COLUMN_TITLE;
-            $mobile_field = TopUpExcel::MOBILE_COLUMN_TITLE;
-            $amount_field = TopUpExcel::AMOUNT_COLUMN_TITLE;
-            $name_field = TopUpExcel::NAME_COLUMN_TITLE;
+        $data->each(function ($value, $key) use (
+            $creator, $vendor, $agent, $file_path, $top_up_request, $total, $bulk_request,
+            $operator_field, $type_field, $mobile_field, $amount_field, $name_field
+        ) {
             if (!$value->$operator_field) return;
 
             $vendor_id = $vendor->getIdByName($value->$operator_field);
-            $request = $top_up_request->setType($value->$type_field)->setBulkId($bulk_request->id)->setMobile(BDMobileFormatter::format($value->$mobile_field))->setAmount($value->$amount_field)->setAgent($agent)->setVendorId($vendor_id)->setName($value->$name_field);
+            $request = $top_up_request->setType($value->$type_field)
+                ->setBulkId($bulk_request->id)
+                ->setMobile(BDMobileFormatter::format($value->$mobile_field))
+                ->setAmount($value->$amount_field)
+                ->setAgent($agent)
+                ->setVendorId($vendor_id)
+                ->setName($value->$name_field);
+
             $topup_order = $creator->setTopUpRequest($request)->create();
             if (!$topup_order) return;
 
@@ -298,93 +275,60 @@ class TopUpController extends Controller
                 return;
             }
 
-            dispatch(new TopUpExcelJob($agent, $vendor_id, $topup_order, $file_path, $key + 2, $total, $bulk_request));
+            dispatch(new TopUpExcelJob($agent, $topup_order, $key + 2, $total, $bulk_request));
         });
 
+        unlink($file_path);
         $response_msg = "Your top-up request has been received and will be transferred and notified shortly.";
 
         return api_response($request, null, 200, ['message' => $response_msg]);
     }
 
     /**
-     * @param $mobile
-     * @return bool
+     * @param $agent
+     * @param $bulk_excel_file_path
+     * @return TopUpBulkRequest
      */
-    private function isMobileNumberValid($mobile)
-    {
-        return BangladeshiMobileValidator::validate(BDMobileFormatter::format($mobile));
-    }
-
-    /**
-     * @param $amount
-     * @return bool
-     */
-    private function isAmountInteger($amount)
-    {
-        if (preg_match('/^\d+$/', $amount)) return true;
-        return false;
-    }
-
-    /**
-     * @param array $blocked_amount_by_operator
-     * @param $operator
-     * @param $amount
-     * @return bool
-     */
-    private function isAmountBlocked(array $blocked_amount_by_operator, $operator, $amount)
-    {
-        if ($operator == 'GP') return in_array($amount, $blocked_amount_by_operator[TopUpSpecialAmount::GP]);
-        if ($operator == 'BANGLALINK') return in_array($amount, $blocked_amount_by_operator[TopUpSpecialAmount::BANGLALINK]);
-        if ($operator == 'ROBI') return in_array($amount, $blocked_amount_by_operator[TopUpSpecialAmount::ROBI]);
-        if ($operator == 'AIRTEL') return in_array($amount, $blocked_amount_by_operator[TopUpSpecialAmount::AIRTEL]);
-        if ($operator == 'TELETALK') return in_array($amount, $blocked_amount_by_operator[TopUpSpecialAmount::TELETALK]);
-
-        return false;
-    }
-
-    /**
-     * @param Business $business
-     * @param $amount
-     * @param $connection_type
-     * @return bool
-     */
-    private function isPrepaidAmountLimitExceed(Business $business, $amount, $connection_type)
-    {
-        if ($connection_type == ConnectionType::PREPAID && ($amount > $business->topup_prepaid_max_limit)) return true;
-        return false;
-    }
-
-    public function storeBulkRequest($agent)
+    public function storeBulkRequest($agent, $bulk_excel_file_path): TopUpBulkRequest
     {
         $topup_bulk_request = new TopUpBulkRequest();
         $topup_bulk_request->agent_id = $agent->id;
         $topup_bulk_request->agent_type = $this->getFullAgentType($agent->type);
-        $topup_bulk_request->status = constants('TOPUP_BULK_REQUEST_STATUS')['pending'];
+        $topup_bulk_request->status = RequestStatus::PENDING;
+        $topup_bulk_request->file = $bulk_excel_file_path;
+        $this->withCreateModificationField($topup_bulk_request);
         $topup_bulk_request->save();
-
         return $topup_bulk_request;
     }
 
-    public function getFullAgentType($type)
+    /**
+     * @param $type
+     * @return string
+     */
+    private function getFullAgentType($type)
     {
-        $agent = '';
-
-        if ($type == 'customer') $agent = "App\\Models\\Customer"; elseif ($type == 'partner') $agent = "App\\Models\\Partner";
-        elseif ($type == 'business') $agent = "App\\Models\\Business";
-        elseif ($type == 'Company') $agent = "App\\Models\\Business";
-
-        return $agent;
+        switch ($type) {
+            case 'customer': return Customer::class;
+            case 'partner': return Partner::class;
+            case 'affiliate': return Affiliate::class;
+            case 'business': case 'Company': return Business::class;
+            default: return '';
+        }
     }
 
+    /**
+     * @param $request_id
+     * @param $mobile
+     * @param $vendor_id
+     */
     public function storeBulkRequestNumbers($request_id, $mobile, $vendor_id)
     {
         $topup_bulk_request = new TopUpBulkRequestNumber();
         $topup_bulk_request->topup_bulk_request_id = $request_id;
         $topup_bulk_request->mobile = $mobile;
         $topup_bulk_request->vendor_id = $vendor_id;
+        $this->withCreateModificationField($topup_bulk_request);
         $topup_bulk_request->save();
-
-        return $topup_bulk_request->id;
     }
 
     /**
@@ -394,43 +338,25 @@ class TopUpController extends Controller
      */
     public function activeBulkTopUps(Request $request, $user)
     {
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
-        else return api_response($request, null, 400);
+        /** @var AuthUser $agent */
+        $agent = $this->getAgent($request, $user);
 
-        $final = [];
-        TopUpBulkRequest::where([
-            ['status', 'pending'],
-            ['agent_id', $agent->id],
-            ['agent_type', get_class($agent)]
-        ])->with('numbers')
-            ->where('status', 'pending')
-            ->orderBy('id', 'desc')
-            ->get()
-            ->filter(function ($topup_bulk_request) {
-                return $topup_bulk_request->numbers->count() > 0;
-            })->map(function ($topup_bulk_request) use (&$final) {
-                array_push($final, [
+        $topup_bulk_requests = TopUpBulkRequest::pending()->agent($agent)
+            ->withCount('orders', 'processedOrders')
+            ->having('orders_count', '>', 0)
+            ->orderBy('id', 'desc')->get()
+            ->map(function (TopUpBulkRequest $topup_bulk_request) {
+                return [
                     'id' => $topup_bulk_request->id,
                     'agent_id' => $topup_bulk_request->agent_id,
-                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
+                    'agent_type' => strtolower(class_basename($topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->numbers->count(),
-                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
-                        return in_array(strtolower($number->status), ['successful', 'failed']);
-                    })->count()
-                ]);
-            });
+                    'total_numbers' => $topup_bulk_request->orders_count,
+                    'total_processed' => $topup_bulk_request->processed_orders_count,
+                ];
+            })->toArray();
 
-        return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
-    }
-
-    public function getBulkTopUpNumbers($bulk_id)
-    {
-        return TopUpBulkRequestNumber::where('topup_bulk_request_id', $bulk_id)->pluck('mobile')->toArray();
+        return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
     }
 
     /**
@@ -438,49 +364,52 @@ class TopUpController extends Controller
      * @param $user
      * @param TopUpHistoryExcel $history_excel
      * @param TopUpDataFormat $topUp_data_format
+     * @param RequestBuilder $request_builder
+     * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, $user, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format)
+    public function topUpHistory(Request $request, $user, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
 
         list($offset, $limit) = calculatePagination($request);
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
 
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
-        else return api_response($request, null, 400);
 
-        $topups = $agent->topups();
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
+        if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
-        if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from, $request->to]);
-        if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-        if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-        if (isset($request->connection_type) && $request->connection_type !== "null") $topups = $topups->where('payee_mobile_type', $request->connection_type);
-        if (isset($request->topup_type) && $request->topup_type == "single") $topups = $topups->where('bulk_request_id', '=', null);
-        if (isset($request->bulk_id) && $request->bulk_id !== "null" && $request->bulk_id) $topups = $topups->where('bulk_request_id', '=', $request->bulk_id);
-        if (isset($request->q) && $request->q !== "null" && !empty($request->q)) $topups = $topups->where(function ($qry) use ($request) {
-            $qry->where('payee_mobile', 'LIKE', '%' . $request->q . '%')->orWhere('payee_name', 'LIKE', '%' . $request->q . '%');
-        });
-
-        $total_topups = $topups->count();
-        if ($is_excel_report) {
-            $offset = 0;
-            $limit = 10000;
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
+        if ($request->has('from') && $request->from !== "null") {
+            $from_date = Carbon::parse($request->from);
+            $to_date = Carbon::parse($request->to)->endOfDay();
+            $request_builder->setFromDate($from_date)->setToDate($to_date);
         }
+        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->has('connection_type') && $request->connection_type !== "null") $request_builder->setConnectionType($request->connection_type);
+        if ($request->has('topup_type') && $request->topup_type == "single") $request_builder->setIsSingleTopup(true);
+        if ($request->has('bulk_id') && $request->bulk_id !== "null" && $request->bulk_id) $request_builder->setBulkRequestId($request->bulk_id);
 
-        $topups = $topups->with('vendor')->skip($offset * $limit)->take($limit)->orderBy('created_at', 'desc')->get();
+        $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
+        $topups = $top_up_order_repo->getByFilter($request_builder);
+
         list($topup_data, $topup_data_for_excel) = $topUp_data_format->topUpHistoryDataFormat($topups);
 
         if ($is_excel_report) {
             $history_excel->setAgent($user)->setData($topup_data_for_excel)->takeCompletedAction();
             return api_response($request, null, 200);
         }
-        return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
+
+        return response()->json([
+            'code' => 200,
+            'data' => $topup_data,
+            'total_topups' => $total_topups,
+            'offset' => $offset
+        ]);
     }
 
     /**
@@ -490,35 +419,36 @@ class TopUpController extends Controller
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @return JsonResponse
+     * @throws Exception
      */
     public function topUpTest(Request $request, TopUpRequest $top_up_request, Creator $creator)
     {
-        try {
-            $this->validate($request, [
-                'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'amount' => 'required|min:10|max:1000|numeric'
-            ]);
-            $agent = $request->user;
-            $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)->setAgent($agent)->setVendorId($request->vendor_id);
-            if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
-            $topup_order = $creator->setTopUpRequest($top_up_request)->create();
-            if ($topup_order) {
-                $vendor_factory = app(VendorFactory::class);
-                $vendor = $vendor_factory->getById($request->vendor_id);
-                /** @var TopUp $topUp */
-                $topUp = app(TopUp::class);
-                $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
-                return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $topup_order->id]);
-            } else {
-                return api_response($request, null, 500);
-            }
-        } catch (ValidationException $e) {
-            app('sentry')->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'mobile' => 'required|string|mobile:bd',
+            'connection_type' => 'required|in:prepaid,postpaid',
+            'vendor_id' => 'required|exists:topup_vendors,id',
+            'amount' => 'required|min:10|max:1000|numeric'
+        ]);
+        $agent = $request->user;
+        $top_up_request->setAmount($request->amount)->setMobile($request->mobile)->setType($request->connection_type)
+            ->setAgent($agent)->setVendorId($request->vendor_id);
+        if ($top_up_request->hasError()) return api_response($request, null, 403, [
+            'message' => $top_up_request->getErrorMessage()
+        ]);
+
+        $topup_order = $creator->setTopUpRequest($top_up_request)->create();
+        if (!$topup_order) return api_response($request, null, 500);
+
+        $vendor_factory = app(VendorFactory::class);
+        $vendor = $vendor_factory->getById($request->vendor_id);
+
+        /** @var TopUp $topUp */
+        $topUp = app(TopUp::class);
+        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
+        return api_response($request, null, 200, [
+            'message' => "Recharge Request Successful",
+            'id' => $topup_order->id
+        ]);
     }
 
     /**
@@ -546,23 +476,21 @@ class TopUpController extends Controller
         /** @var AuthUser $user */
         $user = $request->auth_user;
         $resourceNumber = $user->getPartner()->getContactNumber();
-        if ($otpNumber == $resourceNumber) {
-            $timeSinceMidnight = time() - strtotime("midnight");
-            $remainingTime = (24 * 3600) - $timeSinceMidnight;
+        if ($otpNumber != $resourceNumber) return api_response($request, null, 403, ['message' => 'Invalid Request']);
 
-            $payload = [
-                'iss' => "topup-jwt",
-                'sub' => $user->getPartner()->id,
-                'iat' => time(),
-                'exp' => time() + $remainingTime
-            ];
+        $timeSinceMidnight = time() - strtotime("midnight");
+        $remainingTime = (24 * 3600) - $timeSinceMidnight;
 
-            return api_response($request, null, 200, [
-                'topup_token' => JWT::encode($payload, config('jwt.secret'))
-            ]);
-        }
+        $payload = [
+            'iss' => "topup-jwt",
+            'sub' => $user->getPartner()->id,
+            'iat' => time(),
+            'exp' => time() + $remainingTime
+        ];
 
-        return api_response($request, null, 403, ['message' => 'Invalid Request']);
+        return api_response($request, null, 200, [
+            'topup_token' => JWT::encode($payload, config('jwt.secret'))
+        ]);
     }
 
     /**
@@ -578,5 +506,21 @@ class TopUpController extends Controller
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $user
+     * @return Affiliate|Business|Partner
+     */
+    private function getAgent(Request $request, $user)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+
+        return $agent;
     }
 }

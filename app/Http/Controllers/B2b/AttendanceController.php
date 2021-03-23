@@ -118,8 +118,8 @@ class AttendanceController extends Controller
         list($offset, $limit) = calculatePagination($request);
         /** @var Business $business */
         $business = Business::where('id', (int)$business)->select('id', 'name', 'phone', 'email', 'type')->first();
-        /** @var Collection $business_members */
-        $business_members = $business->getAccessibleBusinessMember()->get();
+
+        $business_members = $business->getAccessibleBusinessMember();
 
         if ($request->has('department_id')) {
             $business_members = $business_members->whereHas('role', function ($q) use ($request) {
@@ -128,6 +128,7 @@ class AttendanceController extends Controller
                 });
             });
         }
+
         $all_employee_attendance = [];
         if ($request->has('start_date') && $request->has('end_date')) {
             $start_date = $request->start_date;
@@ -139,7 +140,7 @@ class AttendanceController extends Controller
 
         $business_holiday = $business_holiday_repo->getAllByBusiness($business);
         $business_weekend = $business_weekend_repo->getAllByBusiness($business);
-        foreach ($business_members as $business_member) {
+        foreach ($business_members->get() as $business_member) {
             $member_name = $business_member->member->profile->name;
             /** @var BusinessMember $business_member */
             $member_department = $business_member->role ? $business_member->role->businessDepartment : null;
@@ -323,8 +324,8 @@ class AttendanceController extends Controller
         $half_day_leave_types = $business->leaveTypes()->isHalfDayEnable();
         $data = [
             'office_hour_type' => 'Fixed Time',
-            'start_time' => $office_time->start_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
-            'end_time' => $office_time->end_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
+            'start_time' => $office_time ? Carbon::parse($office_time->start_time)->format('h:i a') : '09:00 am',
+            'end_time' => $office_time ? Carbon::parse($office_time->end_time)->format('h:i a') : '05:00 pm',
             'weekends' => $weekend_days,
             'is_half_day_enable' => $business->is_half_day_enable,
             'half_day_leave_types_count' => $half_day_leave_types->count(),

@@ -23,6 +23,7 @@ class NeoBankingRoute
                     $api->post('/gigatech-kyc-submit', 'NeoBanking\\NeoBankingGigatechController@storeGigatechKyc');
                     $api->get('/select-types', 'NeoBanking\\NeoBankingController@selectTypes');
                     $api->post('/account-apply', 'NeoBanking\\NeoBankingController@accountApply');
+                    $api->post('/gigatech-liveliness-log', 'NeoBanking\\NeoBankingGigatechController@storeLivelinessLog');
                 });
             });
         });

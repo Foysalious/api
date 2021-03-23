@@ -18,5 +18,6 @@ return [
         'user' => env('INFOBIP_SMS_USER_NAME'),
         'password' => env('INFOBIP_SMS_PASSWORD')
     ],
-    'default-provider' => env('SMS_GATEWAY', 'sslwireless')
+    'default-provider' => env('SMS_GATEWAY', 'sslwireless'),
+    'is_on' => env('SMS_SEND_ON', true),
 ];

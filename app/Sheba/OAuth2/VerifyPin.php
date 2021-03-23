@@ -1,4 +1,4 @@
-<?php namespace Sheba\TopUp\Verification;
+<?php namespace Sheba\OAuth2;
 
 use App\Exceptions\DoNotReportException;
 use App\Models\Affiliate;
@@ -22,6 +22,7 @@ class VerifyPin
     private $managerResource;
     /** @var AccountServer */
     private $accountServer;
+    private $purpose;
 
     /**
      * VerifyPin constructor.
@@ -62,16 +63,50 @@ class VerifyPin
         return $this;
     }
 
+    /**
+     * @param $purpose
+     * @return VerifyPin
+     */
+    public function setPurpose($purpose)
+    {
+        $this->purpose = $purpose;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    private function logoutReason()
+    {
+        if ($this->purpose == Purpose::TOPUP) return BlacklistedReason::TOPUP_LOGOUT;
+        if ($this->purpose == Purpose::PAYSLIP_DISBURSE) return BlacklistedReason::PAYSLIP_LOGOUT;
+    }
+
+    /**
+     * @throws DoNotReportException
+     * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     public function verify()
     {
         $this->authenticateWithPassword();
     }
 
+    /**
+     * @throws \Exception
+     * @throws DoNotReportException
+     * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function authenticateWithPassword()
     {
         try {
-            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, Purpose::TOPUP);
-        } catch (ClientException $e) {
+            $this->accountServer->passwordAuthenticate($this->profile->mobile, $this->profile->email, $this->request->password, $this->purpose);
+        } catch (\Exception $e) {
             if ($e->getCode() != 403) throw $e;
             $this->getAuthenticateRequests();
         }
@@ -80,13 +115,15 @@ class VerifyPin
     /**
      * @throws DoNotReportException
      * @throws PinMismatchException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
      */
     private function getAuthenticateRequests()
     {
-        $result = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, Purpose::TOPUP);
-        $data = json_decode($result->getBody(), true);
+        $data = $this->accountServer->getAuthenticateRequests($this->request->access_token->token, $this->purpose);
         $continuous_wrong_pin_attempted = $this->getConsecutiveFailedCount($data['requests']);
-        
+
         if (count($data['requests']) < self::WRONG_PIN_COUNT_LIMIT)
             throw new PinMismatchException($continuous_wrong_pin_attempted, $message = "Pin Mismatch", $code = 403);
 
@@ -111,6 +148,12 @@ class VerifyPin
         return count($request_status);
     }
 
+    /**
+     * @throws DoNotReportException
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function sessionOut()
     {
         $this->logout();
@@ -118,9 +161,14 @@ class VerifyPin
         throw new DoNotReportException("You have been logged out", 401);
     }
 
+    /**
+     * @throws \Sheba\OAuth2\AccountServerAuthenticationError
+     * @throws \Sheba\OAuth2\AccountServerNotWorking
+     * @throws \Sheba\OAuth2\WrongPinError
+     */
     private function logout()
     {
-        $this->accountServer->logout($this->request->access_token->token, BlacklistedReason::TOPUP_LOGOUT);
+        $this->accountServer->logout($this->request->access_token->token, $this->logoutReason());
     }
 
     private function resetRememberToken()

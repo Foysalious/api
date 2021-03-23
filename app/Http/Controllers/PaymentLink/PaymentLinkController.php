@@ -3,8 +3,10 @@
 use App\Http\Controllers\Controller;
 use App\Models\PosCustomer;
 use App\Models\PosOrder;
+use App\Transformers\CustomSerializer;
 use App\Transformers\PaymentDetailTransformer;
 use App\Transformers\PaymentLinkArrayTransform;
+use App\Transformers\PosOrderTransformer;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -13,6 +15,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
 use Exception;
+use League\Fractal\Resource\Item;
 use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
@@ -21,6 +24,7 @@ use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Usage\Usage;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Sheba\Pos\Order\PosOrder as PosOrderRepo;
 
 class PaymentLinkController extends Controller
 {
@@ -88,6 +92,7 @@ class PaymentLinkController extends Controller
                 'purpose'   => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
                 'emi_month' => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
             if ($emi_month_invalidity !== false) return api_response($request, null, 400, ['message' => $emi_month_invalidity]);
             $this->creator
@@ -104,7 +109,8 @@ class PaymentLinkController extends Controller
 
             if($request->has('pos_order_id')){
                 $pos_order = PosOrder::find($request->pos_order_id);
-                $customer = PosCustomer::find($pos_order->customer_id);
+                 $this->deActivatePreviousLink($pos_order);
+                 $customer = PosCustomer::find($pos_order->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
             }
 
@@ -132,6 +138,22 @@ class PaymentLinkController extends Controller
         }
     }
 
+    private function deActivatePreviousLink(PosOrder $order)
+    {
+        $payment_link_target = $order->getPaymentLinkTarget();
+        $payment_link = app(PaymentLinkRepositoryInterface::class)->getPaymentLinksByPosOrder($payment_link_target);
+        $key = $payment_link_target->toString();
+        $links = null;
+        if(array_key_exists($key,$payment_link))
+            $links = $payment_link[$key];
+        if($links)
+        {
+            foreach ($links as $link) {
+                $this->creator->setStatus('deactivate')->setPaymentLinkId($link->getLinkID())->editStatus();
+            }
+        }
+    }
+
     public function createPaymentLinkForDueCollection(Request $request)
     {
         try {
@@ -141,6 +163,7 @@ class PaymentLinkController extends Controller
                 'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
             ]);
             $purpose = 'Due Collection';
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
             $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
@@ -194,6 +217,7 @@ class PaymentLinkController extends Controller
     public function getDefaultLink(Request $request)
     {
         try {
+            if(!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $default_payment_link = $this->paymentLinkClient->defaultPaymentLink($request);
             if ($default_payment_link) {
                 $default_payment_link = [
