@@ -5,9 +5,10 @@ use App\Models\BusinessMember;
 use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\AttachmentTransformer;
 use League\Fractal\TransformerAbstract;
-use Sheba\Business\Leave\LeaveRejectReason;
+use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -74,7 +75,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
-            'super_admin_action_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN),
+            'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::SUPER_ADMIN, null),
             'leave' => [
                 'id' => $requestable->id,
                 'employee_id' => $requestable->businessMember->employee_id,
@@ -124,20 +125,6 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
         return $collection->getData() ? $collection : $this->item(null, function () {
             return [];
         });
-    }
-
-    private function getRejectReason($requestable, $type)
-    {
-        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
-        if (!$rejection) return null;
-        $reasons = $rejection->reasons;
-        if ($type == self::SUPER_ADMIN) return $rejection->note;
-        $data = [];
-        $final_data['note'] = $rejection->note;
-        foreach ($reasons as $reason){
-            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
-        }
-        return array_merge($final_data, $data);
     }
 
     private function isLeaveCancelled($requestable)

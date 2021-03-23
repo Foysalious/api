@@ -4,10 +4,11 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
-use Sheba\Business\Leave\LeaveRejectReason;
+use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -31,6 +32,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
      * @var string
      */
     private $requestableType;
+    /*** @var ApprovalRequest */
+    private $approvalRequest;
 
     public function __construct(Profile $profile, Business $business)
     {
@@ -44,6 +47,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
      */
     public function transform(ApprovalRequest $approval_request)
     {
+        $this->approvalRequest = $approval_request;
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
@@ -78,7 +82,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'note' => $requestable->note,
                 'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'total_leave_days' => $leave_type->total_days,
-                'super_admin_action_reason' => $this->getRejectReason($requestable, self::SUPER_ADMIN)
+                'super_admin_action_reason' =>(new ApproverWithReason())->getRejectReason($this->approvalRequest, self::SUPER_ADMIN, null)
             ],
             'approvers' => $approvers
         ];
@@ -103,7 +107,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
             array_push($approvers, [
                 'name' => $profile->name,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -117,20 +121,6 @@ class ApprovalRequestTransformer extends TransformerAbstract
 
         });
         return $approvers;*/
-    }
-
-    private function getRejectReason($requestable, $type)
-    {
-        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
-        if (!$rejection) return null;
-        $reasons = $rejection->reasons;
-        if ($type == self::SUPER_ADMIN) return $rejection->note;
-        $data = [];
-        $final_data['note'] = $rejection->note;
-        foreach ($reasons as $reason){
-            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
-        }
-        return array_merge($final_data, $data);
     }
 
     /**

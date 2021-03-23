@@ -7,7 +7,7 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
@@ -58,6 +58,7 @@ class LeaveController extends Controller
     private $approvalRequestRepo;
     /*** @var LeaveRejectionRequester */
     private $leaveRejectionRequester;
+    private $approvalRequest;
 
     /**
      * ApprovalRequestController constructor.
@@ -127,7 +128,7 @@ class LeaveController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
-
+        $this->approvalRequest = $approval_request;
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
@@ -285,7 +286,7 @@ class LeaveController extends Controller
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -568,20 +569,6 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leaves' => $leaves]);
-    }
-
-    private function getRejectReason($requestable, $type)
-    {
-        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
-        if (!$rejection) return null;
-        $reasons = $rejection->reasons;
-        if ($type == self::SUPER_ADMIN) return $rejection->note;
-        $data = [];
-        $final_data['note'] = $rejection->note;
-        foreach ($reasons as $reason){
-            $data['reasons'][] = Reason::getComponents($reason->reason);
-        }
-        return array_merge($final_data, $data);
     }
 
     /**
