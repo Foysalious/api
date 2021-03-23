@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\TopUp;
 
+use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Business;
@@ -20,6 +21,10 @@ use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\WrongPinError;
+use Sheba\TopUp\Bulk\Exception\InvalidExtension;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
 use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
@@ -27,6 +32,7 @@ use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
@@ -58,9 +64,14 @@ class TopUpController extends Controller
 {
     use ModificationFields;
 
-    public function getVendor(Request $request)
+    /**
+     * @param Request $request
+     * @param $user
+     * @return JsonResponse
+     */
+    public function getVendor(Request $request, $user)
     {
-        $agent = $this->getFullAgentType($request->type);
+        $agent = $this->getFullAgentType($user);
 
         $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
         $error_message = "Currently, we’re supporting";
@@ -209,20 +220,27 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param $user
      * @param VerifyPin $verifyPin
      * @param VendorFactory $vendor
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
-     * @throws Exception
+     * @throws DoNotReportException
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     * @throws InvalidExtension
+     * @throws PinMismatchException
      */
-    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
+    public function bulkTopUp(Request $request, $user, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
                               Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
 
-        $agent = $request->user;
+        /** @var TopUpAgent $agent */
+        $agent = $this->getAgent($request, $user);
         $this->setModifier($agent);
 
         $verifyPin->setAgent($agent)
@@ -377,7 +395,6 @@ class TopUpController extends Controller
         /** @var AuthUser $user */
         $user = $this->getAgent($request, $user);
 
-
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
         if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
@@ -495,14 +512,14 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param $user
      * @param TopUpBulkRequestFormatter $topup_formatter
      * @return JsonResponse
      */
-    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
+    public function bulkList(Request $request, $user, TopUpBulkRequestFormatter $topup_formatter)
     {
-        $auth_user = $request->auth_user;
-        $agent = $auth_user->getBusiness();
-        $agent_type = $this->getFullAgentType($agent->type);
+        $agent = $this->getAgent($request, $user);
+        $agent_type = $this->getFullAgentType($user);
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
