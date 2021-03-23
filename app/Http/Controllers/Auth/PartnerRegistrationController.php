@@ -8,7 +8,6 @@ use App\Models\Partner;
 use App\Models\PartnerAffiliation;
 use App\Models\PartnerBasicInformation;
 use App\Models\PartnerReferral;
-use App\Models\PartnerSubscriptionPackage;
 use App\Models\PartnerWalletSetting;
 use App\Models\Profile;
 use App\Models\Resource;
@@ -31,7 +30,6 @@ use Sheba\Referral\Referrals;
 use Sheba\Repositories\Interfaces\Partner\PartnerRepositoryInterface;
 use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Sms\Sms;
-use Sheba\Subscription\Partner\BillingType;
 use Sheba\Subscription\Partner\PartnerSubscription;
 use Sheba\Voucher\Creator\Referral;
 use Throwable;
@@ -226,6 +224,7 @@ class PartnerRegistrationController extends Controller
      */
     private function guessSubDomain($name)
     {
+        $name      = strtolower($name);
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
 
         $is_unicode = (strlen($name) != strlen(utf8_decode($name)));
@@ -236,15 +235,8 @@ class PartnerRegistrationController extends Controller
         $already_used = Partner::select('sub_domain')->where('sub_domain', $name)->exists();
 
         if (in_array($name, $blacklist) || $already_used) {
-            $name = $base_name . uniqid();
+            $name = uniqid($base_name . '-');
         }
-
-//        $already_used = Partner::select('sub_domain')->where('sub_domain', 'like', $name . '%')->lists('sub_domain')->toArray();
-//        if (in_array($name, array_merge($blacklist, $already_used))) {
-//           $name = $base_name . uniqid();
-//            $name = $base_name . (count($already_used) + 1);
-//        }
-
         return $name;
     }
 
@@ -346,13 +338,23 @@ class PartnerRegistrationController extends Controller
                 'business_type' => 'string',
                 'has_webstore'  => 'sometimes|numeric|between:0,1'
             ]);
+            /** @var Profile $profile */
             $profile = $request->profile;
-            if (!$profile->resource)
-                $resource = Resource::create([
-                    'profile_id'     => $profile->id,
-                    'remember_token' => str_random(60),
-                    'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
-                ]); else $resource = $profile->resource;
+
+            try {
+                if (!$resource = $profile->resource) {
+                    $resource = Resource::create(
+                        [
+                            'profile_id'     => $profile->id,
+                            'remember_token' => str_random(60),
+                            'status'         => $profile->affiliate ? $profile->affiliate->verification_status : 'unverified',
+                        ]
+                    );
+                }
+            } catch (QueryException $e) {
+                $profile->load('resource');
+                $resource = $profile->resource;
+            }
             $this->setModifier($resource);
             $request['package_id']   = config('sheba.partner_lite_packages_id');
             $request['billing_type'] = 'monthly';
