@@ -64,4 +64,9 @@ class Paywell implements Gateway
         $ipn_response->setResponse($response);
         return $ipn_response;
     }
+
+    public function getName()
+    {
+        return Names::PAYWELL;
+    }
 }

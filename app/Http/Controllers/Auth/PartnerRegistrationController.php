@@ -124,7 +124,7 @@ class PartnerRegistrationController extends Controller
             $data = $this->makePartnerCreateData($request);
             if ($partner = $this->createPartner($resource, $data)) {
                 (new PartnerSubscription())->setRequestedPackage()->setPartner($partner)->createBasicSubscriptionRequest($resource)->updateSubscription();
-                $info               = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
+                $info = $this->profileRepository->getProfileInfo('resource', Profile::find($profile->id));
                 $business_join_reqs = BusinessJoinRequest::where('mobile', $mobile)->first();
                 if ($business_join_reqs) {
                     $partner->businesses()->sync(['business_id' => $business_join_reqs->business_id]);

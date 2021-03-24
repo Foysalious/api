@@ -34,6 +34,28 @@ class AuthUser
         $this->resolveAuthUser();
     }
 
+    public function resolveAuthUser()
+    {
+        $this->resolveProfile();
+        $this->resolveAvatar();
+    }
+
+    public function resolveProfile()
+    {
+        if (!isset($this->attributes['profile'])) return null;
+        $profile = Profile::find($this->attributes['profile']['id']);
+        if ($profile) $this->setProfile($profile);
+    }
+
+    public function resolveAvatar()
+    {
+        if (!$this->attributes['avatar']) return;
+
+        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
+        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
+        if ($avatar) $this->setAvatar($avatar);
+    }
+
     /**
      * @return AuthUser
      * @throws SomethingWrongWithToken
@@ -62,11 +84,6 @@ class AuthUser
         }
     }
 
-    public static function authenticate()
-    {
-        JWTAuth::getPayload(JWTAuth::getToken());
-    }
-
     /**
      * @param $token
      * @return AuthUser
@@ -87,6 +104,11 @@ class AuthUser
         }
     }
 
+    public static function authenticate()
+    {
+        JWTAuth::getPayload(JWTAuth::getToken());
+    }
+
     public function getName()
     {
         return $this->attributes['name'];
@@ -105,18 +127,6 @@ class AuthUser
     public function isLogisticUser()
     {
         return array_key_exists('logistic_user', $this->attributes);
-    }
-
-    public function isMember()
-    {
-        return !is_null($this->attributes['member']);
-    }
-
-    public function doesMemberHasBusiness()
-    {
-        if (!$this->isMember()) return false;
-
-        return !is_null($this->attributes['business_member']['business_id']);
     }
 
     public function getMemberId()
@@ -142,6 +152,13 @@ class AuthUser
         return $this->attributes['business_member']['business_id'];
     }
 
+    public function doesMemberHasBusiness()
+    {
+        if (!$this->isMember()) return false;
+
+        return !is_null($this->attributes['business_member']['business_id']);
+    }
+
     public function isMemberSuper()
     {
         if (!$this->doesMemberHasBusiness()) return null;
@@ -156,22 +173,6 @@ class AuthUser
     public function toJson()
     {
         return json_encode($this->attributes);
-    }
-
-    public function setProfile(Profile $profile)
-    {
-        $this->profile = $profile;
-        return $this;
-    }
-
-    /**
-     * @param Model $user
-     * @return $this
-     */
-    public function setAvatar(Model $user)
-    {
-        $this->avatar = $user;
-        return $this;
     }
 
     public function setUser(User $user)
@@ -200,28 +201,6 @@ class AuthUser
         return $this->profile ? $this->profile : $this->avatar;
     }
 
-    public function resolveAuthUser()
-    {
-        $this->resolveProfile();
-        $this->resolveAvatar();
-    }
-
-    public function resolveAvatar()
-    {
-        if (!$this->attributes['avatar']) return;
-
-        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
-        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
-        if ($avatar) $this->setAvatar($avatar);
-    }
-
-    public function resolveProfile()
-    {
-        if (!isset($this->attributes['profile'])) return null;
-        $profile = Profile::find($this->attributes['profile']['id']);
-        if ($profile) $this->setProfile($profile);
-    }
-
     /**
      * @return Profile|null
      */
@@ -230,12 +209,28 @@ class AuthUser
         return $this->profile;
     }
 
+    public function setProfile(Profile $profile)
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
     /**
      * @return Model|null
      */
     public function getAvatar()
     {
         return $this->avatar;
+    }
+
+    /**
+     * @param Model $user
+     * @return $this
+     */
+    public function setAvatar(Model $user)
+    {
+        $this->avatar = $user;
+        return $this;
     }
 
     /**
