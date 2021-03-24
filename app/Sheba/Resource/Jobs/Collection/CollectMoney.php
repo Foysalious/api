@@ -78,7 +78,7 @@ class CollectMoney
     public function collectPartial()
     {
         $client = new Client();
-        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->partnerOrder->id . '/collect-partial',
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/partner-order/' . $this->partnerOrder->id . '/partial-collect',
             [
                 'form_params' => [
                     'resource_id' => $this->resource->id,
