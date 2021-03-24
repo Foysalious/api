@@ -68,6 +68,7 @@ class Nagad extends PaymentMethod
             if ($resp->hasError()) {
                 throw new Exception($resp->toString());
             }
+            $resp->setRefId($initResponse->getPaymentReferenceId());
             $payment->redirect_url        = $resp->getCallbackUrl();
             $payment->transaction_details = $resp->toString();
             $payment->update();
