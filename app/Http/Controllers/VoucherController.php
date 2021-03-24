@@ -423,6 +423,7 @@ class VoucherController extends Controller
             'rules' => json_encode($rules),
             'title' => $request->title ? $request->title : '',
             'max_order' => 1,
+            'max_customer' => 1,
             'sheba_contribution' => 100 - $vendor_contribution_in_percentage,
             'vendor_contribution' => $vendor_contribution_in_percentage,
         ];
