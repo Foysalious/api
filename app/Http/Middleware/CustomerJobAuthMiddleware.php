@@ -48,10 +48,10 @@ class CustomerJobAuthMiddleware extends AccessTokenMiddleware
 
         $customer = Customer::find($this->authUser->getCustomerId());
         if (!$customer) throw new NotFoundException('User not found.', 404);
-        if ($customer->id != (int)$request->customer) throw new NotFoundException("You're not authorized to access this user.", 403);
+        if ($customer->id != (int)$request->customer->id) throw new NotFoundException("You're not authorized to access this user.", 403);
         $job = Job::with('partnerOrder.order')->find((int)$request->job);
         if (!$job) throw new NotFoundException("Order not found.", 404);
         if ($job->partnerOrder->order->customer_id != $customer->id) throw new NotFoundException("You're not authorized to access this order.", 403);
-        $request->merge(['customer' => $customer, 'job' => $job]);
+        $request->merge(['job' => $job]);
     }
 }
