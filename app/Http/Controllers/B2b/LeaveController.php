@@ -593,7 +593,7 @@ class LeaveController extends Controller
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
-            return strtoupper($leave['period']);
+            return strtoupper($leave['start_date']);
         });
     }
 }
