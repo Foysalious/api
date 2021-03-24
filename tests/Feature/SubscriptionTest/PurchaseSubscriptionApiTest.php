@@ -42,7 +42,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $this->basicSubscription = factory(PartnerSubscriptionPackage::class)->create([
             'name' => "Basic",
             'rules' => '{"resource_cap":{"value":5,"is_published":1},"commission":{"value":20,"is_published":1},"fee":{"monthly":{"value":95,"is_published":1},"yearly":{"value":310,"is_published":1},"half_yearly":{"value":410,"is_published":0}},"access_rules":{"loan":true,"dashboard_analytics":true,"pos":{"invoice":{"print":true,"download":true},"due":{"alert":true,"ledger":true},"inventory":{"warranty":{"add":true}},"report":false,"ecom":{"product_publish":false,"webstore_publish":true}},"extra_earning":{"topup":true,"movie":true,"transport":true,"utility":true},"resource":{"type":{"add":true}},"expense":true,"extra_earning_global":true,"customer_list":true,"marketing_promo":true,"digital_collection":true,"old_dashboard":false,"notification":true,"eshop":true,"emi":true,"due_tracker":true},"tags":{"monthly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"},"half_yearly":{"bn":"\u09eb\u09e6% \u099b\u09be\u09dc","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"\u09ae\u09be\u09b8\u09bf\u0995","price":95,"duration":30,"is_published":0},{"title":"yearly","title_bn":"\u09ac\u09be\u09ce\u09b8\u09b0\u09bf\u0995","price":310,"duration":365,"is_published":0},{"title":"two_yearly","title_bn":"\u09a6\u09cd\u09ac\u09bf-\u09ac\u09be\u09b0\u09cd\u09b7\u09bf\u0995","price":735,"duration":730,"is_published":1},{"title":"3_monthly","title_bn":"\u09e9 \u09ae\u09be\u09b8","price":285,"duration":90,"is_published":0},{"title":"6_monthly","title_bn":"\u09ec \u09ae\u09be\u09b8","price":570,"duration":180,"is_published":0},{"title":"9_monthly","title_bn":"\u09ef \u09ae\u09be\u09b8","price":855,"duration":270,"is_published":0},{"title":"11_month","title_bn":"egaro mash","price":880,"duration":330,"is_published":1},{"title":"13_month","title_bn":"month","price":900,"duration":800,"is_published":1}]}',
-            'new_rules' => '{"resource_cap":{"value":3,"is_published":1},"commission":{"value":0,"is_published":1},"fee":{"monthly":{"value":0,"is_published":1},"yearly":{"value":0,"is_published":1},"half_yearly":{"value":0,"is_published":1}},"access_rules":{"loan":true,"dashboard_analytics":true,"pos":{"invoice":{"print":false,"download":false},"due":{"alert":false,"ledger":false},"inventory":{"warranty":{"add":true}},"report":true,"ecom":{"product_publish":false,"webstore_publish":true}},"extra_earning":{"topup":false,"movie":false,"transport":false,"utility":false},"resource":{"type":{"add":false}},"expense":false,"extra_earning_global":false,"customer_list":false,"marketing_promo":false,"digital_collection":false,"old_dashboard":false,"notification":true,"eshop":false,"emi":false,"due_tracker":false},"tags":{"monthly":{"bn":"৫০% ছাড়","en":"50% discount","amount":"540"},"yearly":{"bn":"২৫% ছাড়","en":"25% discount","amount":"30,000"},"half_yearly":{"bn":"৫০% ছাড়","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"মাসিক","price":0,"duration":30,"is_published":0},{"title":"yearly","title_bn":"বাৎসরিক","price":0,"duration":365,"is_published":1},{"title":"half_yearly","title_bn":"অর্ধ বার্ষিক","price":0,"duration":182,"is_published":1}]}',
+            'new_rules' => '{"resource_cap":{"value":3,"is_published":1},"commission":{"value":0,"is_published":1},"fee":{"monthly":{"value":0,"is_published":1},"yearly":{"value":0,"is_published":1},"half_yearly":{"value":0,"is_published":1}},"access_rules":{"loan":true,"dashboard_analytics":true,"pos":{"invoice":{"print":false,"download":false},"due":{"alert":false,"ledger":false},"inventory":{"warranty":{"add":true}},"report":true,"ecom":{"product_publish":false,"webstore_publish":true}},"extra_earning":{"topup":false,"movie":false,"transport":false,"utility":false},"resource":{"type":{"add":false}},"expense":false,"extra_earning_global":false,"customer_list":false,"marketing_promo":false,"digital_collection":false,"old_dashboard":false,"notification":true,"eshop":false,"emi":false,"due_tracker":false},"tags":{"monthly":{"bn":"৫০% ছাড়","en":"50% discount","amount":"540"},"yearly":{"bn":"২৫% ছাড়","en":"25% discount","amount":"30,000"},"half_yearly":{"bn":"৫০% ছাড়","en":"50% discount","amount":"540"}},"subscription_fee":[{"title":"monthly","title_bn":"মাসিক","price":95,"duration":30,"is_published":1},{"title":"yearly","title_bn":"বাৎসরিক","price":0,"duration":365,"is_published":1},{"title":"half_yearly","title_bn":"অর্ধ বার্ষিক","price":0,"duration":182,"is_published":1}]}',
         ]);
 
         $this->AdvanceSubscription = factory(PartnerSubscriptionPackage::class)->create([
@@ -80,7 +80,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $resource_remembar_token=$resource->remember_token;
 
         $partner_wallet=$partner->wallet;
-        //dd($partner_wallet);
+
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
@@ -91,10 +91,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-        dd($data);
+        //dd($data);
         $partner_transactions=PartnerTransaction::first();
-
-        //$partner_subscription_purchase_price = $partner_transactions->
         //dd($partner_transactions ['balance']);
         $partner=Partner::first();
         $partner_package_id=$partner->package_id;
@@ -115,14 +113,11 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $walletBalanceUpdate->update(["wallet" => 0]);
         $bonusWalletBalanceUpdate = Bonus::find(1);;
         $bonusWalletBalanceUpdate->update(["amount" => 100000]);
-       // dd($bonusWalletBalanceUpdate);
         $partner=Partner::first();
         $partner_id=$partner->id;
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
         $partner_transactions=PartnerTransaction::first();
-        // dd($partner_transactions);
-
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
@@ -133,11 +128,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
-        //dd($data ['price']);
         $partner_bonus_transaction=Bonus::all();
-        //dd($partner_bonus_transaction [1] ['amount']);
         $partner_bonus_transaction_logs=BonusLog::first();
-        dd($partner_bonus_transaction_logs);
         $this->assertEquals(200,$data['code']);
         $this->assertEquals($partner_bonus_transaction [0] ['amount'],$data['price']);
         $this->assertEquals($partner_bonus_transaction [1] ['amount'],$data['remaining_balance']);
@@ -147,34 +139,103 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
     }
 
     public function testSubscriptionPurchaseWithPartialWallet(){
+
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 10000]);
+        $bonusWalletBalanceUpdate = Bonus::find(1);;
+        $bonusWalletBalanceUpdate->update(["amount" => 1000]);
         $partner=Partner::first();
         $partner_id=$partner->id;
-        $partner_wallet=$partner->wallet;
-        //dd($partner_wallet);
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
         $partner_transactions=PartnerTransaction::first();
-        // dd($partner_transactions);
-
 
         $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
                 "remember_token"=>$resource_remembar_token,
-                "package_id"=>2,
+                "package_id"=>3,
                 "billing_type"=>"monthly"
             ]
         );
 
         $data=$response->decodeResponseJson();
         //dd($data);
+        $partner_transactions=PartnerTransaction::first();
         $partner_bonus_transaction=Bonus::first();
         $partner_bonus_transaction_logs=BonusLog::first();
-        //dd($partner_bonus_transaction_logs);
-        /* $this->assertEquals(200,$data['code']);
-         $this->assertEquals(10500,$data['price']);
-         $this->assertEquals(39500,$data['remaining_balance']);*/
+        $subscription_purchase_price = $partner_bonus_transaction_logs['amount'] + $partner_transactions ['amount'];
+         $this->assertEquals(200,$data['code']);
+         $this->assertEquals($subscription_purchase_price,$data['price']);
+         $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
 
 
 
     }
+
+    public function testSubscriptionPurchaseWithInsuffiecientBalance(){
+
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 100]);
+        $bonusWalletBalanceUpdate = Bonus::find(1);;
+        $bonusWalletBalanceUpdate->update(["amount" => 10]);
+        $partner=Partner::first();
+        $partner_id=$partner->id;
+        $resource=Resource::first();
+        $resource_remembar_token=$resource->remember_token;
+
+        $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
+
+                "remember_token" => $resource_remembar_token,
+                "package_id" => 3,
+                "billing_type" => "monthly"
+            ]
+        );
+
+        $data=$response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(420,$data['code']);
+       /* $this->assertEquals($subscription_purchase_price,$data['price']);
+        $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);*/
+
+
+
+    }
+
+    public function testSubscriptionPurchaseExtendedDays()
+    {
+
+        $walletBalanceUpdate = Partner::find(1);;
+        $walletBalanceUpdate->update(["wallet" => 10000]);
+        $bonusWalletBalanceUpdate = Bonus::find(1);;
+        $bonusWalletBalanceUpdate->update(["amount" => 10000]);
+        $partner = Partner::first();
+        $partner_id = $partner->id;
+        $resource = Resource::first();
+        $resource_remembar_token = $resource->remember_token;
+
+        for ($i = 0; $i < 2; $i++) {
+
+        $response = $this->post("v2/partners/" . $partner_id . "/subscriptions/purchase", [
+
+                "remember_token" => $resource_remembar_token,
+                "package_id" => $i+2,
+                "billing_type" => "monthly"
+            ]
+        );
+    }
+        $data=$response->decodeResponseJson();
+        //dd($data ['extended_days']);
+        $partner_transactions=PartnerTransaction::first();
+        $partner_bonus_transaction=Bonus::all();
+        //$partner_bonus_transaction_logs=BonusLog::all();
+        $subscription_purchase_price = $partner_transactions ['amount'] + $partner_bonus_transaction [0] ['amount']+ $partner_bonus_transaction [1] ['amount'] ;
+        //dd($subscription_purchase_price);
+        //$partner_subscription_package_charges=
+        $this->assertEquals(200,$data['code']);
+        $this->assertEquals(1,$data ['extended_days']);
+        $this->assertEquals(10595,$subscription_purchase_price); /*** Total price for purchasing package**/
+        //$this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
+
+    }
+
 }
