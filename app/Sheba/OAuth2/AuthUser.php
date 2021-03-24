@@ -92,7 +92,7 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            if (strpos(request()->url(), '/v2/top-up/get-topup-token') !== false) {
+            if (request()->url() == config('sheba.api_url') . '/v2/top-up/get-topup-token') {
                 $jws = JWS::load($token);
                 $payload = $jws->getPayload();
             } else {
@@ -135,15 +135,9 @@ class AuthUser
         return $this->attributes['business_member']['member_id'];
     }
 
-    public function isCustomer()
+    public function isMember()
     {
-        return !is_null($this->attributes['customer']);
-    }
-
-    public function getCustomerId()
-    {
-        if (!$this->isCustomer()) return null;
-        return $this->attributes['customer']['id'];
+        return !is_null($this->attributes['member']);
     }
 
     public function getMemberAssociatedBusinessId()
@@ -279,20 +273,10 @@ class AuthUser
      */
     public function getBusiness()
     {
-
-        if (!isset($this->attributes['business_member'])) return null;
-        $business = Business::find($this->attributes['business_member']['business_id']);
-        if ($business) $this->setBusiness($business);
-        return $business;
-    }
-
-    /**
-     * @param Business $business
-     * @return AuthUser
-     */
-    public function setBusiness($business)
-    {
-        $this->business = $business;
-        return $this;
+        if (!$this->profile || !$this->profile->member) return null;
+        $member = $this->profile->member;
+        $business_member = $member ? $member->businessMember : null;
+        if (!$business_member) return null;
+        return $business_member->business;
     }
 }
