@@ -1,27 +1,27 @@
-<?php
-
-
-namespace Sheba\Reward\Event\Customer\Action\ProfileComplete;
+<?php namespace Sheba\Reward\Event\Customer\Action\ProfileComplete;
 
 
 use Sheba\Reward\Event\Action;
+use Sheba\Reward\Event\Rule as BaseRule;
+use Sheba\Reward\Exception\RulesTypeMismatchException;
 
 class Event extends Action
 {
-    private $rewardAmount;
-
-    public function setParams(array $params)
+    public function setRule(BaseRule $rule)
     {
-        parent::setParams($params);
-    }
+        if (!($rule instanceof Rule))
+            throw new RulesTypeMismatchException("ProfileComplete event must have a ProfileComplete rule");
 
-    public function isEligible()
-    {
-        // TODO: Implement isEligible() method.
+        return parent::setRule($rule);
     }
 
     public function getLogEvent()
     {
         // TODO: Implement getLogEvent() method.
+    }
+
+    public function isEligible()
+    {
+        return $this->rule->check($this->params);
     }
 }

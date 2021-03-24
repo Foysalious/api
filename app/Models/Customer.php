@@ -284,4 +284,10 @@ class Customer extends Authenticatable implements Rechargable, Rewardable, TopUp
     {
         return $this->profile->mobile;
     }
+
+    public function isCompleted()
+    {
+        $profile = $this->profile;
+        return $profile->name && $profile->gender && $profile->dob;
+    }
 }

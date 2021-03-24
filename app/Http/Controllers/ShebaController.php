@@ -386,9 +386,4 @@ class ShebaController extends Controller
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
     }
-
-    public function testProfileReward(Customer $customer)
-    {
-        app()->make(ActionRewardDispatcher::class)->run('profile_complete',$customer);
-    }
 }
