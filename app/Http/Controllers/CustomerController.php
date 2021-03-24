@@ -92,7 +92,7 @@ class CustomerController extends Controller
         }
     }
 
-    public function update_v3 ($customer, Request $request)
+    public function updateV3 ($customer, Request $request)
     {
         try {
             $customer = $request->customer;
