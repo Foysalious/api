@@ -15,7 +15,7 @@ class CustomerRoute
                 $api->post('promotions/add', 'PromotionV3Controller@add');
             });
             $api->group(['prefix' => 'edit'], function ($api) {
-                $api->put('/', 'CustomerController@update_v3');
+                $api->put('/', 'CustomerController@updateV3');
             });
             $api->group(['prefix' => 'addresses'], function ($api) {
                 $api->post('/', 'Customer\CustomerAddressController@store');

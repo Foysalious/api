@@ -266,6 +266,12 @@ class EventDataConverter
                                 'is_multi_selectable' => 1
                             ]
                         ]
+                    ],
+                    'profile_complete' => [
+                        'name' => 'Completed Profile',
+                        'event_class' => 'Sheba\Reward\Event\Customer\Action\ProfileComplete\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Customer\Action\ProfileComplete\Rule',
+                        'parameters' => []
                     ]
                 ],
                 'campaign' => []
