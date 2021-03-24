@@ -18,6 +18,7 @@ use Cache;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Redis;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
+use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Voucher\Creator\Referral;
 use Validator;
 use DB;
@@ -94,31 +95,29 @@ class CustomerController extends Controller
 
     public function updateV3 ($customer, Request $request)
     {
-        try {
-            $customer = $request->customer;
-            $profile = $customer->profile;
-            $this->validate($request, [
-                'name' => 'string',
-                'gender'=>'string|in:Male,Female,Other',
-                'address'=>'string',
-                'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-                'email' => 'email|unique:profiles,email,' . $profile->id
-            ]);
-            $profile->name = ucwords($request->name);
-            $profile->gender = $request->gender;
-            $profile->address = $request->address;
-            $profile->dob = $request->dob;
-            $profile->email = $request->email;
-            $profile->update();
-            $this->checkIsCompleted($profile,$customer);
-            return api_response($request, 1, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        /** @var Customer $customer */
+        $customer = $request->customer;
+        $profile = $customer->profile;
+        $this->validate($request, [
+            'name' => 'string',
+            'gender'=>'string|in:Male,Female,Other',
+            'address'=>'string',
+            'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
+            'email' => 'email|unique:profiles,email,' . $profile->id
+        ]);
+        if ($request->has('name')) $profile->name = ucwords($request->name);
+        if ($request->has('gender')) $profile->gender = $request->gender;
+        if ($request->has('address')) $profile->address = $request->address;
+        if ($request->has('dob')) $profile->dob = $request->dob;
+        if ($request->has('email')) $profile->email = $request->email;
+        $profile->update();
+        $customer->reload();
+        if ($customer->isCompleted() && !$customer->is_completed) {
+            app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
+            $customer->is_completed = 1;
+            $customer->update();
         }
+        return api_response($request, 1, 200);
     }
 
     public function checkIsCompleted($profile,$customer)
