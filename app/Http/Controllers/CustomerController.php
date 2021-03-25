@@ -78,13 +78,6 @@ class CustomerController extends Controller
             $profile->$field = trim($value);
         }
         $profile->update();
-        $customer->reload();
-        if ($customer->isCompleted() && !$customer->is_completed) {
-            app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
-            $customer->is_completed = 1;
-            $customer->update();
-        }
-
         return api_response($request, 1, 200);
     }
 
