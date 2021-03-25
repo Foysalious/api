@@ -53,7 +53,7 @@ class RechargeComplete extends PaymentComplete
         $payment_gateways = app(PaymentGatewayRepo::class);
         $payment_gateway = $payment_gateways->builder()
             ->where('service_type', $this->payment->created_by_type)
-            ->where('name', $this->payment->paymentDetails->last()->method)
+            ->where('method_name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
             ->get()
             ->first();
