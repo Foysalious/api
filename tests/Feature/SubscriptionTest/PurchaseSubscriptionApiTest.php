@@ -5,6 +5,7 @@ use App\Models\BonusLog;
 use App\Models\Partner;
 use App\Models\PartnerResource;
 use App\Models\PartnerSubscriptionPackage;
+use App\Models\PartnerSubscriptionPackageCharge;
 use App\Models\PartnerTransaction;
 use App\Models\Resource;
 use App\Models\Tag;
@@ -33,8 +34,8 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
             Tag::class,
             Bonus::class,
             BonusLog::class,
-            PartnerTransaction::class
-
+            PartnerTransaction::class,
+            PartnerSubscriptionPackageCharge::class
         ]);
 
         $this->logIn();
@@ -230,10 +231,13 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         //$partner_bonus_transaction_logs=BonusLog::all();
         $subscription_purchase_price = $partner_transactions ['amount'] + $partner_bonus_transaction [0] ['amount']+ $partner_bonus_transaction [1] ['amount'] ;
         //dd($subscription_purchase_price);
-        //$partner_subscription_package_charges=
+        $partner_subscription_package_charges=PartnerSubscriptionPackageCharge::all();
+        $partner_subscription_package_charges_DB =$partner_subscription_package_charges [1] ['cash_wallet_charge'] + $partner_subscription_package_charges [1] ['bonus_wallet_charge']+ $partner_subscription_package_charges [1] ['adjusted_amount_from_last_subscription'];
+        dd($partner_subscription_package_charges_DB);
+
         $this->assertEquals(200,$data['code']);
         $this->assertEquals(1,$data ['extended_days']);
-        $this->assertEquals(10595,$subscription_purchase_price); /*** Total price for purchasing package**/
+        $this->assertEquals($partner_subscription_package_charges_DB,$subscription_purchase_price); /*** Total price for purchasing package**/
         //$this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
 
     }
