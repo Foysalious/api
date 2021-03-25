@@ -29,6 +29,7 @@ class ProductService
     protected $channelId;
     protected $discountAmount;
     protected $discountEndDate;
+    protected $productDetails;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -197,6 +198,12 @@ class ProductService
         return $this;
     }
 
+    public function setProductDetails($product_details)
+    {
+        $this->productDetails = $product_details;
+        return $this;
+    }
+
     public function getAllProducts($partner_id)
     {
         $url = 'api/v1/partners/' . $partner_id . '/products';
@@ -222,6 +229,7 @@ class ProductService
             ['name' => 'unit_id', 'contents' => $this->unitId],
             ['name' => 'discount_amount', 'contents' => $this->discountAmount],
             ['name' => 'discount_end_date', 'contents' => $this->discountEndDate],
+            ['name' => 'product_details', 'contents' => $this->productDetails],
         ];
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;

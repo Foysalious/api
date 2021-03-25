@@ -48,6 +48,7 @@ class ProductController extends Controller
             ->setChannelId($request->channel_id)
             ->setDisCountAmount($request->discount_amount)
             ->setDiscountEndDate($request->discount_end_date)
+            ->setProductDetails($request->product_details)
             ->store();
         return http_response($request, null, 200, $response);
     }
