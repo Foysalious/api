@@ -84,6 +84,7 @@ class CustomerController extends Controller
             $customer->is_completed = 1;
             $customer->update();
         }
+
         return api_response($request, 1, 200);
     }
 
