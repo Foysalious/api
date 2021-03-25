@@ -26,7 +26,7 @@ class Route
 
             $api->get('warranty-units', 'Inventory\WarrantyUnitController@getWarrantyList');
 
-            $api->get('/tree', 'Inventory\CategoryController@allCategory');
+            $api->get('/category-tree', 'Inventory\CategoryController@allCategory');
             $api->group(['prefix' => 'products'], function ($api) {
                 $api->get('/', 'Inventory\ProductController@index');
                 $api->post('/', 'Inventory\ProductController@store');
