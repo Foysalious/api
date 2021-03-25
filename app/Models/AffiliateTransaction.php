@@ -96,4 +96,5 @@ class AffiliateTransaction extends Model
     {
         return $query->where('log', "Credit Purchase Gateway Charge");
     }
+
 }
