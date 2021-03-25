@@ -7,6 +7,7 @@ use Sheba\Business\CoWorker\Statuses;
 use Sheba\Dal\BaseModel;
 use Sheba\Dal\BusinessAttendanceTypes\AttendanceTypes;
 use Sheba\Dal\LeaveType\Model as LeaveTypeModel;
+use Sheba\Dal\PayrollSetting\PayrollSetting;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Helpers\TimeFrame;
 use Sheba\ModificationFields;
@@ -108,6 +109,11 @@ class Business extends BaseModel implements TopUpAgent, PayableUser, HasWalletTr
     public function officeHour()
     {
         return $this->hasOne(BusinessOfficeHour::class);
+    }
+
+    public function payrollSetting()
+    {
+        return $this->hasOne(PayrollSetting::class);
     }
 
     public function activePartners()
