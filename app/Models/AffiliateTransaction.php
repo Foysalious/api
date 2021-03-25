@@ -97,8 +97,4 @@ class AffiliateTransaction extends Model
         return $query->where('log', "Credit Purchase Gateway Charge");
     }
 
-    public function scopeRewardForCampaign($query)
-    {
-        return $query->where('log', 'LIKE', "% credited for % reward %");
-    }
 }
