@@ -91,4 +91,14 @@ class AffiliateTransaction extends Model
     {
         return $query->where('log', 'LIKE', "%Sheba facilitated amount%");
     }
+
+    public function scopeProductResell($query)
+    {
+        return $query->where('log', 'LIKE', "%Refund for Product Resell%");
+    }
+
+    public function scopeBusTicketCommission($query)
+    {
+        return $query->where('log', 'LIKE', '%bus ticket sales commission%');
+    }
 }
