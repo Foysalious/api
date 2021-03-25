@@ -915,7 +915,8 @@ class Loan
      */
     private function checkIsRobiRetailer()
     {
-        return $this->partner->retailers->where('strategic_partner_id', 2)->count() ? 1 : 0;
+        $retailers = $this->partner->retailers;
+        return  $retailers ? (($retailers->where('strategic_partner_id', 2)->count() ? 1 : 0)) : 0;
     }
 
     /**

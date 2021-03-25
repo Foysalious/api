@@ -10,27 +10,28 @@ use App\Sheba\Business\BusinessBasicInformation;
 use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
+use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
-use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
+use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
-use Sheba\Business\ApprovalRequest\Updater;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
-use Sheba\Business\CoWorker\Statuses;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
+use Sheba\Business\Leave\RejectReason\RejectReason;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -43,20 +44,28 @@ use Sheba\Business\Leave\SuperAdmin\LeaveEditType as EditType;
 use Sheba\Business\Leave\Adjustment\Approvers as AdjustmentApprovers;
 use Sheba\Business\Leave\Request\Excel as LeaveRequestExcel;
 use Sheba\Dal\LeaveStatusChangeLog\Contract as LeaveStatusChangeLogRepo;
+use App\Transformers\Business\LeaveApprovalRequestListTransformer;
 
 class LeaveController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
 
     private $approvalRequestRepo;
+    /*** @var LeaveRejectionRequester */
+    private $leaveRejectionRequester;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
     }
 
     /**
@@ -68,6 +77,7 @@ class LeaveController extends Controller
     {
         $this->validate($request, ['sort' => 'sometimes|required|string|in:asc,desc']);
 
+        /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
         if (!$business_member) return api_response($request, null, 420);
         /** @var Business $business */
@@ -84,27 +94,19 @@ class LeaveController extends Controller
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
 
-        $leaves = [];
-        foreach ($leave_approval_requests as $approval_request) {
-            /** @var Leave $requestable */
-            $requestable = $approval_request->requestable;
-            /** @var BusinessMember $business_member */
-            $business_member = $requestable->businessMember;
-            /** @var Member $member */
-            $member = $business_member->member;
-            /** @var Profile $profile */
-            $profile = $member->profile;
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business));
+        $leaves = $manager->createData($resource)->toArray()['data'];
 
-            $manager = new Manager();
-            $manager->setSerializer(new CustomSerializer());
-            $resource = new Item($approval_request, new ApprovalRequestTransformer($profile, $business));
-            $approval_request = $manager->createData($resource)->toArray()['data'];
-
-            array_push($leaves, $approval_request);
-        }
         if ($request->has('sort')) {
-            $leaves = $this->leaveOrderBy($leaves, $request->sort)->values();
+            $leaves = $this->leaveOrderByEmployee($leaves, $request->sort_by_employee)->values();
         }
+
+        if ($request->has('sort_by_period')) {
+            $leaves = $this->leaveOrderByPeriod($leaves, $request->sort_by_period)->values();
+        }
+
         if ($request->file == 'excel') {
             return $leave_request_report->setLeave($leaves)->get();
         }
@@ -123,7 +125,7 @@ class LeaveController extends Controller
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
+    public function show($business, $approval_request, Request $request)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -147,7 +149,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -282,7 +284,8 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -384,6 +387,7 @@ class LeaveController extends Controller
      */
     public function leaveBalanceDetails($business_id, $business_member_id, Request $request, TimeFrame $time_frame, LeaveLogRepo $leave_log_repo)
     {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
         /** @var BusinessMember $business_member */
         $business_member = $this->getBusinessMemberById($business_member_id);
         /** @var Business $business */
@@ -422,11 +426,19 @@ class LeaveController extends Controller
      * @param string $sort
      * @return mixed
      */
-    private function leaveOrderBy($leaves, $sort = 'asc')
+    private function leaveOrderByEmployee($leaves, $sort = 'asc')
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
             return strtoupper($leave['leave']['name']);
+        });
+    }
+
+    private function leaveOrderByPeriod($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['leave']['period']);
         });
     }
 
@@ -436,7 +448,6 @@ class LeaveController extends Controller
         $accepted = $leaves->where('status', Status::ACCEPTED)->sortByDesc('created_at');
         $rejected = $leaves->where('status', Status::REJECTED)->sortByDesc('created_at');
         $canceled = $leaves->where('status', Status::CANCELED)->sortByDesc('created_at');
-
         return $pending->merge($accepted)->merge($rejected)->merge($canceled);
     }
 
@@ -475,14 +486,15 @@ class LeaveController extends Controller
         $this->validate($request, [
             'leave_id' => 'required|string',
             'status' => 'required|string',
+            'note' => 'required|string'
         ]);
 
         $leave = $leave_repo->find($request->leave_id);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        $updater->setLeave($leave)->setStatus($request->status)->setBusinessMember($business_member)->updateStatus();
+        $this->leaveRejectionRequester->setNote($request->note);
+        $updater->setLeave($leave)->setStatus($request->status)->setLeaveRejectionRequester($this->leaveRejectionRequester)->setBusinessMember($business_member)->updateStatus();
 
         return api_response($request, null, 200);
     }
@@ -527,5 +539,69 @@ class LeaveController extends Controller
         return api_response($request, null, 200, [
             'approvers' => $approvers
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param RejectReason $reject_reason
+     * @return JsonResponse
+     */
+    public function rejectReasons(Request $request, RejectReason $reject_reason)
+    {
+        $reject_reasons = $reject_reason->reasons();
+
+        return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
+    }
+
+    /**
+     * @param $business_member_id
+     * @param Request $request
+     * @param LeaveRepository $leave_repo
+     * @return JsonResponse
+     */
+    public function leaveHistory($business_member_id, Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $business_member = $this->getBusinessMemberById($request->business_member_id);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new Collection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort')) {
+            $leaves = $this->leaveHistoryOrderBy($leaves, $request->sort)->values();
+        }
+
+        return api_response($request, null, 200, ['leaves' => $leaves]);
+    }
+
+    private function getRejectReason($requestable, $type)
+    {
+        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
+        if (!$rejection) return null;
+        $reasons = $rejection->reasons;
+        if ($type == self::SUPER_ADMIN) return $rejection->note;
+        $data = [];
+        $final_data['note'] = $rejection->note;
+        foreach ($reasons as $reason){
+            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
+        }
+        return array_merge($final_data, $data);
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveHistoryOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['period']);
+        });
     }
 }

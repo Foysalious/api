@@ -1,6 +1,7 @@
 <?php namespace Sheba\Payment\Complete;
 
 use App\Jobs\Partner\PaymentLink\SendPaymentLinkSms;
+use App\Models\Payable;
 use App\Models\Payment;
 use App\Models\PosOrder;
 use App\Models\Profile;
@@ -15,6 +16,7 @@ use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
+use Sheba\PaymentLink\PaymentLinkStatics;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
@@ -41,13 +43,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private $invoiceCreator;
     private $target;
     private $payment_receiver;
+    private $paymentLinkTax;
 
     public function __construct()
     {
         parent::__construct();
         $this->paymentLinkRepository = app(PaymentLinkRepositoryInterface::class);
         $this->invoiceCreator        = app(InvoiceCreator::class);
-        $this->paymentLinkCommission = 2;
+        $this->paymentLinkCommission = PaymentLinkStatics::get_payment_link_commission();
+        $this->paymentLinkTax        = PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function complete()
@@ -61,7 +65,6 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->paymentRepository->setPayment($this->payment);
                 $payable = $this->payment->payable;
                 $this->setModifier($customer = $payable->user);
-                $this->payment->transaction_details = null;
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
                 $this->clearTarget();
@@ -165,7 +168,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
         $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "(3TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
+        $minus_log                 = "($this->paymentLinkTax"."TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
         $walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
 
@@ -225,9 +228,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $sound            = config('sheba.push_notification_sound.manager');
         $formatted_amount = number_format($payment_link->getAmount(), 2);
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
+        /** @var Payable $payable */
+        $payable = Payable::find($this->payment->payable_id);
         (new PushNotificationHandler())->send([
             "title"      => 'Order Successful',
-            "message"    => "$formatted_amount Tk has been collected from {$payment_link->getPayer()->name} by order link- {$payment_link->getLinkID()}",
+            "message"    => "$formatted_amount Tk has been collected from {$payable->getName() } by order link- {$payment_link->getLinkID()}",
             "event_type" => $event_type,
             "event_id"   => $this->target->id,
             "sound"      => "notification_sound",

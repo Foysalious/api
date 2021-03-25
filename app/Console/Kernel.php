@@ -3,6 +3,7 @@
 use App\Console\Commands\ProductUpload;
 use App\Console\Commands\SetReleaseVersion;
 use App\Console\Commands\TopUpTestCommand;
+use App\Console\Commands\UploadSwaggerJson;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 use Sheba\Algolia\AlgoliaSync;
@@ -18,6 +19,7 @@ class Kernel extends ConsoleKernel
         ProductUpload::class,
         SetReleaseVersion::class,
         AlgoliaSync::class,
+        UploadSwaggerJson::class,
         TopUpTestCommand::class
     ];
 

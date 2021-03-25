@@ -142,6 +142,7 @@ class PartnerOrderRepository
                 "subscription_period" => Carbon::parse($subscription_order->billing_cycle_start)->format('M j') . ' - ' . Carbon::parse($subscription_order->billing_cycle_end)->format('M j'),
                 "preferred_time" => $schedules->first()->time,
                 'category_name' => $subscription_order->category->name,
+                'category_id' => $subscription_order->category->id,
                 'service_name' => [
                     'bn' => $subscription_order->category->bn_name,
                     'en' => $subscription_order->category->name
@@ -201,6 +202,7 @@ class PartnerOrderRepository
                     'total_price' => (double)$jobs[0]->partner_order->totalPrice,
                     'discount' => (double)$jobs[0]->partner_order->totalDiscount,
                     'category_name' => $jobs[0]->category ? $jobs[0]->category->name : null,
+                    'category_id' => $jobs[0]->category ? $jobs[0]->category->id : null,
                     'service_name' => [
                         'bn' => $jobs[0]->category ? $jobs[0]->category->bn_name : null,
                         'en' => $jobs[0]->category ? $jobs[0]->category->name : null,
@@ -397,11 +399,11 @@ class PartnerOrderRepository
         $partner_order['customer_mobile'] = $partner_order->order->isFromOfflineBondhu() ?
             $partner_order->order->affiliation->affiliate->profile->mobile :
             $partner_order->order->deliveryAddress->mobile;
-        $partner_order['resource_picture'] = $job->resource ? $job->resource->profile->pro_pic : null;
-        $partner_order['resource_mobile'] = $job->resource ? $job->resource->profile->mobile : null;
-        $partner_order['category_app_banner'] = $job->category ? $job->category->app_banner : null;
-        $partner_order['category_banner'] = $job->category ? $job->category->banner : null;
-        $partner_order['rating'] = $job->review ? (double)$job->review->rating : null;
+        $partner_order['resource_picture'] = $job && $job->resource ? $job->resource->profile->pro_pic : null;
+        $partner_order['resource_mobile'] = $job && $job->resource ? $job->resource->profile->mobile : null;
+        $partner_order['category_app_banner'] = $job && $job->category ? $job->category->app_banner : null;
+        $partner_order['category_banner'] = $job && $job->category ? $job->category->banner : null;
+        $partner_order['rating'] = $job && $job->review ? (double)$job->review->rating : null;
         $partner_order['address'] = $partner_order->order->deliveryAddress->address;
         $partner_order['location'] = $partner_order->order->location ? $partner_order->order->location->name : $partner_order->order->deliveryAddress->address;
         $partner_order['total_price'] = (double)$partner_order->totalPrice;
@@ -412,9 +414,9 @@ class PartnerOrderRepository
         $partner_order['finance_collection'] = (double)$partner_order->finance_collection;
         $partner_order['discount'] = (double)$partner_order->discount;
         $partner_order['total_jobs'] = count($partner_order->jobs);
-        $partner_order['order_status'] = $job->status;
-        $partner_order['isRentCar'] = $job->isRentCar();
-        $partner_order['is_on_premise'] = $job->site == 'partner' ? 1 : 0;
+        $partner_order['order_status'] = $job ? $job->status : null;
+        $partner_order['isRentCar'] = $job ? $job->isRentCar() : null;
+        $partner_order['is_on_premise'] = $job && $job->site == 'partner' ? 1 : 0;
         $partner_order['is_subscription_order'] = $partner_order->order->subscription_order_id ? 1 : 0;
 
         return $partner_order;

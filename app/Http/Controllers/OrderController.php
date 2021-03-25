@@ -17,6 +17,8 @@ use App\Sheba\Bondhu\BondhuAutoOrder;
 use App\Sheba\Checkout\Checkout;
 use App\Sheba\Checkout\OnlinePayment;
 use App\Sheba\Checkout\Validation;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\QueryException;
@@ -139,7 +141,8 @@ class OrderController extends Controller
                     $services = json_decode($request->services);
                     if (isset($services[0]->id)){
                         $getServiceInfo = Service::where('id', $services[0]->id)->first();
-                        if( $getServiceInfo->is_published_for_ddn == 1 &&  $services[0]->id != 676){
+                        $cod_service_array = [676];
+                        if( $getServiceInfo->is_published_for_ddn == 1 && !in_array($services[0]->id, $cod_service_array)){
                             $request->payment_method = 'bondhu_balance';
                         } else {
                             $request->payment_method = 'cod';
@@ -175,7 +178,6 @@ class OrderController extends Controller
             DB::rollback();
             logError($e);
             return api_response($request, null, 500);
-
         } catch (Throwable $e) {
             DB::rollback();
             logError($e);
@@ -202,7 +204,10 @@ class OrderController extends Controller
         $partner = $order->partnerOrders->first()->partner;
         $job = $order->lastJob();
 
-        (new SmsHandler('order-created-to-bondhu'))->send($agent_mobile, [
+        (new SmsHandler('order-created-to-bondhu'))
+            ->setBusinessType(BusinessType::BONDHU)
+            ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+            ->send($agent_mobile, [
             'service_name' => $job->category->name,
             'order_code' => $order->code(),
             'partner_name' => $partner->name,
@@ -220,13 +225,19 @@ class OrderController extends Controller
             $partner = $order->partnerOrders->first()->partner;
             if ((bool)config('sheba.send_order_create_sms')) {
                 if ($this->isSendingServedConfirmationSms($order)) {
-                    (new SmsHandler('order-created'))->send($customer->profile->mobile, [
+                    (new SmsHandler('order-created'))
+                        ->setBusinessType(BusinessType::MARKETPLACE)
+                        ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                        ->send($customer->profile->mobile, [
                         'order_code' => $order->code()
                     ]);
                 }
 
                 if (!$order->jobs->first()->resource_id) {
-                    (new SmsHandler('order-created-to-partner'))->send($partner->getContactNumber(), [
+                    (new SmsHandler('order-created-to-partner'))
+                        ->setBusinessType(BusinessType::SMANAGER)
+                        ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                        ->send($partner->getContactNumber(), [
                         'order_code' => $order->code(), 'partner_name' => $partner->name
                     ]);
                 }

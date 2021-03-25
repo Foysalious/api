@@ -1,6 +1,6 @@
 <?php namespace Sheba\TopUp;
 
-use App\Exceptions\DoNotReportException;
+use App\Exceptions\DoNotThrowException;
 use App\Models\Affiliate;
 use App\Models\Partner;
 use App\Models\TopUpOrder;
@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\ModificationFields;
+use Sheba\Reward\Rewardable;
 use Sheba\TopUp\Gateway\GatewayFactory;
 use Sheba\TopUp\Vendor\Vendor;
 

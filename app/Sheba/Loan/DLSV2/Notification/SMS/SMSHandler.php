@@ -18,6 +18,13 @@ class SMSHandler
     private $msgType;
     private $loanId;
     private $user;
+    private $sms;
+
+    public function __construct()
+    {
+        /** @var Sms sms */
+        $this->sms = app(Sms::class);
+    }
 
 
     /**
@@ -70,13 +77,24 @@ class SMSHandler
         return $this;
     }
 
+    public function setFeatureType($featureType)
+    {
+        $this->sms->setFeatureType($featureType);
+        return $this;
+    }
+
+    public function setBusinessType($businessType)
+    {
+        $this->sms->setBusinessType($businessType);
+        return $this;
+    }
     /**
      * @return IPDCSmsLogModel
      */
     public function shoot()
     {
-        $this->cost = (new Sms())->msg($this->message)->getCost();
-        (new Sms())->msg($this->message)->to($this->mobile)->shoot();
+        $this->cost = $this->sms->msg($this->message)->getCost();
+        $this->sms->msg($this->message)->to($this->mobile)->shoot();
         return $this->shootLog();
     }
 

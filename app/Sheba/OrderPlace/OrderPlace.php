@@ -487,7 +487,7 @@ class OrderPlace
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
-            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
+//            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }
@@ -606,6 +606,7 @@ class OrderPlace
             $job_data['discount'] = $this->orderVoucherData->getDiscount();
             $job_data['sheba_contribution'] = $this->orderVoucherData->getShebaContribution();
             $job_data['partner_contribution'] = $this->orderVoucherData->getPartnerContribution();
+            $job_data['vendor_contribution'] = $this->orderVoucherData->getVendorContribution();
             $job_data['discount_percentage'] = $this->orderVoucherData->getDiscountPercentage();
             $job_data['original_discount_amount'] = $this->orderVoucherData->getOriginalDiscountAmount();
         }

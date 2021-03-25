@@ -9,6 +9,7 @@ use Sheba\Dal\PartnerPosServiceImageGallery\Model as PartnerPosServiceImageGalle
 use Sheba\FileManagers\CdnFileManager;
 use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
+use Sheba\Pos\Repositories\Interfaces\PosServiceImageGalleyRepositoryInterface;
 use Sheba\Pos\Repositories\Interfaces\PosServiceRepositoryInterface;
 use Sheba\Pos\Repositories\PosServiceRepository;
 use Sheba\RequestIdentification;

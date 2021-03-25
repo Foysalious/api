@@ -24,7 +24,6 @@ class FacebookController extends Controller
     private $profileRepository;
     private $facebookRepository;
 
-
     public function __construct()
     {
         $this->fbKit = new FacebookAccountKit();

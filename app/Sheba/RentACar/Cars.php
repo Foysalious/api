@@ -57,6 +57,8 @@ class Cars
                 'discount' => $this->discount_calculation->getDiscount(),
                 'quantity' => $this->service->getQuantity(),
                 'is_surcharge_applied' => !!($surcharge) ? 1 : 0,
+                'is_vat_applicable' => $service_model->category->is_vat_applicable ? 1 : 0,
+                'vat_percentage' => $service_model->category->is_vat_applicable ? config('sheba.category_vat_in_percentage') : 0,
                 'surcharge_percentage' => $surcharge ? $surcharge->amount : null,
                 'surcharge_amount' => $surcharge_amount,
                 'unit_price' => $unit_price,

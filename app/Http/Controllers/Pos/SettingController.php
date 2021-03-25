@@ -5,10 +5,13 @@ use App\Models\Partner;
 use App\Models\PartnerPosSetting;
 use App\Models\PosCustomer;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
+use Sheba\Pos\Repositories\PosSettingRepository;
 use Sheba\Pos\Setting\Creator;
 use Throwable;
 
@@ -19,48 +22,68 @@ class SettingController extends Controller
     /**
      * @param Request $request
      * @param Creator $creator
+     * @param PosSettingRepository $repository
      * @return JsonResponse
      */
-    public function getSettings(Request $request, Creator $creator)
+    public function getSettings(Request $request, Creator $creator, PosSettingRepository $repository)
     {
         try {
             /** @var Partner $partner */
             $partner = $request->partner;
-            $settings = PartnerPosSetting::byPartner($partner->id)->first();
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             if (!$settings) {
-                $data = ['partner_id' => $partner->id,];
+                $data = ['partner_id' => $partner->id];
                 $creator->setData($data)->create();
-                $settings = PartnerPosSetting::byPartner($partner->id)->first();
+                $settings = PartnerPosSetting::byPartner($partner->id)->select('id', 'partner_id', 'vat_percentage', 'auto_printing', 'sms_invoice')->first();
             }
             $settings->vat_registration_number = $partner->basicInformations->vat_registration_number;
             removeRelationsAndFields($settings);
-            return api_response($request, $settings, 200, ['settings' => $settings]);
+            return api_response($request, $settings,200, ['settings' => $settings]);
+        } catch (Throwable $e) {
+            logError($e);
+            return api_response($request, null, 500);
+        }
+    }
+
+    public function getPrinterSettings(Request $request, Creator $creator, PosSettingRepository $repository)
+    {
+        try {
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            if (!$settings) {
+                $data = ['partner_id' => $partner->id,];
+                $creator->setData($data)->create();
+                $settings = PartnerPosSetting::byPartner($partner->id)->select('partner_id', 'printer_model', 'printer_name', 'auto_printing')->first();
+            }
+            removeRelationsAndFields($settings);
+            $repository->getTrainingVideoData($settings);
+            return api_response($request, $settings,200, ['data' => $settings]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
         }
     }
 
-    public function storePosSetting(Request $request) {
+    public function storePosSetting(Request $request, Creator $creator) {
         try {
-            $partnerPosSetting = PartnerPosSetting::where('partner_id', $request->partner->id)->first();
+            /** @var Partner $partner */
+            $partner = $request->partner;
+            $partnerPosSetting = PartnerPosSetting::where('partner_id', $partner->id)->first();
+            if (!$partnerPosSetting) $partnerPosSetting = $creator->createPartnerPosSettings($partner);
             $data = [];
             $this->setModifier($request->manager_resource);
-            if($request->has('vat_percentage')) {
-                $data["vat_percentage"] = $request->vat_percentage;
-            }
 
-            if($request->has('sms_invoice')) {
-                $data["sms_invoice"] = $request->sms_invoice;
-            }
+            if($request->has('vat_percentage')) $data["vat_percentage"] = $request->vat_percentage;
+            if($request->has('sms_invoice')) $data["sms_invoice"] = $request->sms_invoice;
+            if($request->has('auto_printing')) $data["auto_printing"] = $request->auto_printing;
+            if($request->has('printer_name')) $data["printer_name"] = $request->printer_name;
+            if($request->has('printer_model')) $data["printer_model"] = $request->printer_model;
 
-            if($request->has('auto_printing')) {
-                $data["auto_printing"] = $request->auto_printing;
-            }
             $partnerPosSetting->update($this->withUpdateModificationField($data));
             return api_response($request, null, 200);
         } catch (Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }
@@ -78,6 +101,8 @@ class SettingController extends Controller
 
             $customer = PosCustomer::find($request->customer_id);
             (new SmsHandlerRepo('due-payment-collect-request'))->setVendor('infobip')
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::POS)
                 ->send($customer->profile->mobile, [
                     'partner_name' => $partner->name,
                     'due_amount' => $request->due_amount

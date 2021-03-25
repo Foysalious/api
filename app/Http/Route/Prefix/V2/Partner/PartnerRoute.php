@@ -18,8 +18,11 @@ class PartnerRoute
             $api->get('rewards/faqs', 'Partner\PartnerRewardController@getFaqs');
             $api->get('resource-types', 'PartnerController@getResourceTypes');
             $api->get('business-types', 'PartnerController@getBusinessTypes');
+            $api->get('business-types-for-trade-fair', 'PartnerController@getBusinessTypesForTradeFair');
             $api->get('subscriptions', 'Partner\PartnerSubscriptionController@getAllPackages');
             $api->post('notification-store', "NeoBanking\\NeoBankingController@sendNotification");
+            $api->get('trade-fair/stores', 'Partner\Webstore\TradeFairController@getStores');
+            $api->get('trade-fair/stores-by-business-type', 'Partner\Webstore\TradeFairController@getStoresByBusinessType');
             $api->post('{partner}/account-number-store', "NeoBanking\\NeoBankingController@accountNumberStore");
             (new IDNonAuthRoute())->set($api);
             (new IDAuthRoute())->set($api);

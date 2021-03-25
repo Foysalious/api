@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
+use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Dal\PartnerWebstoreBanner\Model as PartnerWebstoreBanner;
@@ -99,7 +100,6 @@ class WebstoreSettingsController extends Controller
         $list = $webstoreBannerSettings->getBannerList();
         return api_response($request, null, 200, ['data' => $list]);
     }
-
 
     /**
      * @param Request $request

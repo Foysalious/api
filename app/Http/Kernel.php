@@ -5,6 +5,7 @@ use App\Http\Middleware\AffiliateAuthMiddleware;
 use App\Http\Middleware\ApiRequestMiddleware;
 use App\Http\Middleware\Authenticate;
 use App\Http\Middleware\B2B\OrderMiddleware;
+use App\Http\Middleware\B2B\TerminatingMiddleware;
 use App\Http\Middleware\BusinessManagerAuthMiddleware;
 use App\Http\Middleware\Cors2MiddleWare;
 use App\Http\Middleware\CriticalAppVersionMiddleware;
@@ -26,6 +27,7 @@ use App\Http\Middleware\PaymentLinkAuthMiddleware;
 use App\Http\Middleware\ProfileAuthMiddleware;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\ResourceJobAuthMiddleware;
+use App\Http\Middleware\Sheba\ShebaNetworkMiddleware;
 use App\Http\Middleware\ThrottleRequests;
 use App\Http\Middleware\TopUpAuthMiddleware;
 use App\Http\Middleware\VendorMiddleware;
@@ -108,10 +110,13 @@ class Kernel extends HttpKernel
         'member.auth' => MemberAuthMiddleware::class,
         'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
-        'topUp.auth' => TopUpAuthMiddleware::class,//1
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,
-        'apiRequestLog' => ApiRequestMiddleware::class
+        'apiRequestLog' => ApiRequestMiddleware::class,
+        'shebaServer' => ShebaNetworkMiddleware::class,
+        'topUp.auth' => TopUpAuthMiddleware::class,
+        'terminate' => TerminatingMiddleware::class,
+
     ];
 }

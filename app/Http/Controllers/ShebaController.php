@@ -1,9 +1,15 @@
 <?php namespace App\Http\Controllers;
 
+use App\Http\Controllers\Employee\AttendanceController;
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
+use App\Models\Customer;
+use App\Models\PartnerOrder;
+use App\Models\PotentialCustomer;
+use App\Repositories\CustomerRepository;
 use Sheba\AppVersion\AppVersionManager;
+use Sheba\Dal\Attendance\Contract as AttendanceRepoInterface;
 use Sheba\Dal\Category\Category;
 use App\Models\HyperLocal;
 use App\Models\Job;
@@ -48,28 +54,28 @@ class ShebaController extends Controller
 
     public function __construct(ServiceRepository $service_repo, ReviewRepository $review_repo, PaymentLinkRepository $paymentLinkRepository)
     {
-        $this->serviceRepository     = $service_repo;
-        $this->reviewRepository      = $review_repo;
+        $this->serviceRepository = $service_repo;
+        $this->reviewRepository = $review_repo;
         $this->paymentLinkRepo = $paymentLinkRepository;
     }
 
     public function getInfo()
     {
-        $job_count      = Job::all()->count() + 16000;
-        $service_count  = Service::where('publication_status', 1)->get()->count();
+        $job_count = Job::all()->count() + 16000;
+        $service_count = Service::where('publication_status', 1)->get()->count();
         $resource_count = Resource::where('is_verified', 1)->get()->count();
         return response()->json([
-            'service'  => $service_count, 'job' => $job_count,
+            'service' => $service_count, 'job' => $job_count,
             'resource' => $resource_count,
-            'msg'      => 'successful', 'code' => 200
+            'msg' => 'successful', 'code' => 200
         ]);
     }
 
     public function sendFaq(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name'    => 'required|string',
-            'email'   => 'required|email',
+            'name' => 'required|string',
+            'email' => 'required|email',
             'subject' => 'required|string',
             'message' => 'required|string'
         ]);
@@ -84,7 +90,7 @@ class ShebaController extends Controller
     {
         if ($request->has('is_business') && (int)$request->is_business) {
             $portal_name = 'manager-app';
-            $screen      = 'eshop';
+            $screen = 'eshop';
 
             if (!$request->has('location')) $location = 4;
             else $location = $request->location;
@@ -94,7 +100,7 @@ class ShebaController extends Controller
 
             if (!$request->has('location')) $location = 4;
             else $location = $request->location;
-        }else {
+        } else {
             if ($request->has('location')) {
                 $location = $request->location;
             } else {
@@ -105,7 +111,7 @@ class ShebaController extends Controller
             }
 
             $portal_name = $request->portal;
-            $screen      = $request->screen;
+            $screen = $request->screen;
         }
 
         $slider = $this->getSliderWithSlides($location, $portal_name, $screen);
@@ -126,7 +132,7 @@ class ShebaController extends Controller
          * $images = $images->show();
          * }
          * return count($images) > 0 ? api_response($request, $images, 200, ['images' => $images]) : api_response($request, null, 404);*/
-}
+    }
 
     /**
      * @param $location
@@ -140,11 +146,9 @@ class ShebaController extends Controller
             $query->where('is_published', 1);
         })->where('portal_name', $portal_name)->where('screen', $screen)->first();
 
-        $slider = $sliderPortal->slider()->with([
-            'slides' => function ($q) use ($location) {
-                $q->where('location_id', $location)->orderBy('order');
-            }
-        ])->first();
+        $slider = $sliderPortal->slider()->with(['slides' => function ($q) use ($location) {
+            $q->where('location_id', $location)->orderBy('order');
+        }])->first();
 
         return $slider;
     }
@@ -177,7 +181,7 @@ class ShebaController extends Controller
 
     public function sendCarRentalInfo(Request $request)
     {
-        $ids        = array_map('intval', explode(',', env('RENT_CAR_IDS')));
+        $ids = array_map('intval', explode(',', env('RENT_CAR_IDS')));
         $categories = Category::whereIn('id', $ids)->select('id', 'name', 'parent_id')->get();
         return api_response($request, $categories, 200, ['info' => $categories]);
     }
@@ -187,13 +191,13 @@ class ShebaController extends Controller
         $butcher_service = Service::find((int)env('BUTCHER_SERVICE_ID'));
         if (!$butcher_service) return api_response($request, null, 404);
         $butcher_info = [
-            'id'           => $butcher_service->id,
-            'category_id'  => $butcher_service->category_id,
-            'name'         => $butcher_service->name,
-            'unit'         => $butcher_service->unit,
+            'id' => $butcher_service->id,
+            'category_id' => $butcher_service->category_id,
+            'name' => $butcher_service->name,
+            'unit' => $butcher_service->unit,
             'min_quantity' => (double)$butcher_service->min_quantity,
-            'price_info'   => json_decode($butcher_service->variables),
-            'date'         => "2018-08-21"
+            'price_info' => json_decode($butcher_service->variables),
+            'date' => "2018-08-21"
         ];
         return api_response($request, $butcher_info, 200, ['info' => $butcher_info]);
     }
@@ -211,11 +215,11 @@ class ShebaController extends Controller
                 $message = 'Payment Failed.';
             }
             $fail_url = null;
-            if($external_payment){
+            if ($external_payment) {
                 $fail_url = $external_payment->fail_url;
             }
             return api_response($request, null, 404,
-                ['message' => $message,'external_payment_redirection_url'=>$fail_url]);
+                ['message' => $message, 'external_payment_redirection_url' => $fail_url]);
         }
 
         /** @var Payable $payable */
@@ -227,7 +231,7 @@ class ShebaController extends Controller
             'created_at' => $payment->created_at->format('jS M, Y, h:i A'),
             'invoice_link' => $payment->invoice_link,
             'transaction_id' => $transaction_id,
-            'external_payment_redirection_url'=>$external_payment ? $external_payment->success_url : null
+            'external_payment_redirection_url' => $external_payment ? $external_payment->success_url : null
         ];
 
         if ($payable->isPaymentLink()) $this->mergePaymentLinkInfo($info, $payable);
@@ -288,7 +292,7 @@ class ShebaController extends Controller
 
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
-        $amount       = $request->amount;
+        $amount = $request->amount;
 
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
@@ -299,22 +303,55 @@ class ShebaController extends Controller
         }
 
         $emi_data = [
-            "emi"   => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get()
+            "emi" => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+    }
+    public function getEmiInfo_v3(Request $request, Calculator $emi_calculator)
+    {
+        $amount       = $request->amount;
+        if (!$amount) {
+            $amount = 5000;
+        }
+
+        if ($amount < config('emi.minimum_emi_amount')) {
+            return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+        }
+
+        $emi_data = [
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get(),
+            "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
+            "static_info" =>[
+                "how_emi_works"=>[
+                    "As soon as you complete your purchase order on Sheba Service Platform, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform within 3 working days.",
+                    "Once Sheba Service Platform receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ],
+                "terms_and_conditions"=>[
+                    "As soon as you complete your purchase order on Sheba Service Platform, you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform within 3 working days.",
+                    "Once Sheba Service Platform receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ]
+            ]
+        ];
+
+        return api_response($request, null, 200, ['price' => number_format($amount), 'info' => $emi_data]);
     }
 
     public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
     {
         try {
             $this->validate($request, ['amount' => 'required|numeric|min:' . config('emi.manager.minimum_emi_amount')]);
-            $amount               = $request->amount;
-            $icons_folder         = getEmiBankIconsFolder(true);
+            $amount = $request->amount;
+            $icons_folder = getEmiBankIconsFolder(true);
             $emi_data = [
-                "emi"   => $emi_calculator->getCharges($amount),
-                "banks" => Banks::get($icons_folder)
+                "emi" => $emi_calculator->getCharges($amount),
+                "banks" => (new Banks())->setAmount($amount)->get()
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
@@ -349,7 +386,7 @@ class ShebaController extends Controller
             return api_response($request, null, 400, ['message' => isset($check['message']) ? $check['message'] : 'NID is not verified']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
-            $sentry  = app('sentry');
+            $sentry = app('sentry');
             $sentry->user_context(['request' => $request->all(), 'message' => $message]);
             $sentry->captureException($e);
             return api_response($request, $message, 400, ['message' => $message]);
@@ -365,12 +402,12 @@ class ShebaController extends Controller
         if (!$type) return api_response($request, null, 404);
         if ($type->sluggable_type == 'service') $model = 'service';
         else $model = 'category';
-        $meta_tag       = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
+        $meta_tag = $meta_tag_repository->builder()->select('meta_tag', 'og_tag')->where('taggable_type', 'like', '%' . $model)->where('taggable_id', $type->sluggable_id)->first();
         $sluggable_type = [
-            'type'     => $type->sluggable_type,
-            'id'       => $type->sluggable_id,
+            'type' => $type->sluggable_type,
+            'id' => $type->sluggable_id,
             'meta_tag' => $meta_tag && $meta_tag->meta_tag ? json_decode($meta_tag->meta_tag) : null,
-            'og_tag'   => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
+            'og_tag' => $meta_tag && $meta_tag->og_tag ? json_decode($meta_tag->og_tag) : null,
         ];
         return api_response($request, true, 200, ['sluggable_type' => $sluggable_type]);
     }
@@ -378,8 +415,19 @@ class ShebaController extends Controller
     public function redirectUrl(Request $request)
     {
         $this->validate($request, ['url' => 'required']);
-        $new_url = RedirectUrl::where('old_url', '=' , $request->url)->first();
+        $new_url = RedirectUrl::where('old_url', '=', $request->url)->first();
         if (!$new_url) return api_response($request, true, 404, ['message' => 'Not Found']);
         return api_response($request, true, 200, ['new_url' => $new_url->new_url]);
+    }
+
+    public function getHourLogs(Request $request, AttendanceRepoInterface $attendance_repo)
+    {
+        $this->validate($request, ['start_date' => 'required|date_format:Y-m-d', 'end_date' => 'required|date_format:Y-m-d']);
+        $ids = json_decode($request->id);
+        $attendances = $attendance_repo->builder()
+            ->whereIn('business_member_id', $ids)->where([['date', ">=", $request->start_date], ['date', '<=', $request->end_date]])
+            ->select('id', 'business_member_id', 'date', 'checkin_time', 'checkout_time', 'staying_time_in_minutes')
+            ->get();
+        return api_response($request, null, 200, ['data' => $attendances->groupBy('business_member_id')]);
     }
 }

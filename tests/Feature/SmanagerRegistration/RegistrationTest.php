@@ -61,7 +61,7 @@ class RegistrationTest extends FeatureTestCase
         $partner_registration=Partner::all();
         $today = Carbon::today();
         $next_billing_date = $today->copy()->addDays(30);
-       // dd($partner_registration);
+        // dd($partner_registration);
         $this-> assertEquals(1,$partner_registration->id);
         $this-> assertEquals("ZUBAYER TEST",$partner_registration->name);
         $this-> assertEquals("zubayer-test",$partner_registration->sub_domain);
@@ -134,6 +134,7 @@ class RegistrationTest extends FeatureTestCase
     //Test case: Post api without a mandatory payload and check response
     public function testRRegistrationPartnerwithWrongPayload()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",
@@ -152,6 +153,7 @@ class RegistrationTest extends FeatureTestCase
 
     public function testRRegistrationPartnerwithWrongPayloadinBussines_type()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",

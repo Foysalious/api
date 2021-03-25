@@ -3,6 +3,7 @@
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
 use App\Models\HyperLocal;
+use App\Models\Location;
 use Sheba\CustomerDeliveryAddress\CustomerDeliveryAddressManager;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Partner;
@@ -111,8 +112,10 @@ class CustomerDeliveryAddressController extends Controller
             'service' => 'sometimes|string',
             'category' => 'sometimes|string',
         ]);
+        $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+        if (!is_null($hyperLocation)) $location = $hyperLocation->location->id;
         $customer = $request->customer;
-        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->get();
+        $customer_delivery_addresses = $customer_delivery_address_repo->getAddressesForOrderPlacement($customer->id)->where('location_id',$location)->get();
         $customer_order_addresses = $customer->orders()->selectRaw('delivery_address,count(*) as c')->groupBy('delivery_address')->orderBy('c', 'desc')->get();
         $target = new Coords((double)$request->lat, (double)$request->lng);
         $customer_delivery_addresses = $customer_delivery_addresses->reject(function ($address) {
@@ -353,8 +356,6 @@ class CustomerDeliveryAddressController extends Controller
         }
         $request->merge(["location_id" => $hyper_local ? $hyper_local->location_id : null]);
         $new_address = new CustomerDeliveryAddress();
-        dump($customer,$new_address,$request);
-        dd(11);
         return $this->_store($customer, $new_address, $request);
     }
 }

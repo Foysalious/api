@@ -48,16 +48,11 @@ class CustomerController extends Controller
                     }]);
                 }]);
             }])->whereHas('category', function ($q) use ($location) {
-                $q->published()->select('id', 'publication_status')->whereHas('locations', function ($q) use ($location) {
-                    $q->where('locations.id', $location);
-                });
+                $q->published()->hasLocation($location)->select('id', 'publication_status');
             })->whereHas('job', function ($q) use ($location) {
                 $q->whereHas('jobServices', function ($q) use ($location) {
                     $q->whereHas('service', function ($q) use ($location) {
-                        $q->published()->select('id', 'publication_status')
-                            ->whereHas('locations', function ($q) use ($location) {
-                                $q->where('locations.id', $location);
-                            });
+                        $q->published()->select('id', 'publication_status')->hasLocation($location);
                     });
                 });
             })->where('created_at', '>=', Carbon::now()->subMonths(6)->toDateTimeString())->orderBy('id', 'desc');
@@ -68,6 +63,7 @@ class CustomerController extends Controller
         $reviews = $reviews->get();
 
         if (count($reviews) == 0) return api_response($request, null, 404);
+
         $final = collect();
         foreach ($reviews->groupBy('category_id') as $key => $reviews) {
             foreach ($reviews as $review) {
@@ -129,14 +125,17 @@ class CustomerController extends Controller
                 if (empty($all_services)) continue;
                 $data['category']['is_inspection_service'] = $all_services[0]->is_inspection_service;
                 $data['category']['services'] = $all_services;
+                $data['category']['vat_percentage'] = config('sheba.category_vat_in_percentage');
                 $data['category']['max_order_amount'] = $data['category']['max_order_amount'] ? (double) $data['category']['max_order_amount'] : null;
+                $data['category']['app_thumb_sizes'] = getResizedUrls($data['category']['app_thumb'], 100, 100);
                 $data['rating'] = $review->rating;
                 $data['partner'] = $review->job->partnerOrder->partner;
                 $final->push(collect($data));
             }
         }
         if (count($final) > 0) return api_response($request, $final, 200, ['data' => $final]);
-        else return api_response($request, null, 404);
+
+        return api_response($request, null, 404);
     }
 
     private function canThisServiceAvailableForOrderAgain($final, Job $job)
@@ -170,5 +169,13 @@ class CustomerController extends Controller
         }
         return 0;
 
+    }
+    public function getProfileCompletion($customer, Request $request)
+    {
+        $customer = $request->customer;
+        $data = [];
+        $data['is_completed'] = $customer->is_completed;
+        if ($data['is_completed'] == 0) $data['not_complete_profile'] = "https://techcommunity.microsoft.com/t5/image/serverpage/image-id/9646i0C7B8315EF139689?v=1.0";
+        return api_response($request, $data, 200, ['data' => $data]);
     }
 }

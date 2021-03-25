@@ -2,6 +2,7 @@
 
 use Sheba\AutoSpAssign\EligiblePartner;
 use Sheba\AutoSpAssign\Sorting\Parameter\AvgRating;
+use Sheba\AutoSpAssign\Sorting\Parameter\Commission;
 use Sheba\AutoSpAssign\Sorting\Parameter\ComplainPercentage;
 use Sheba\AutoSpAssign\Sorting\Parameter\InTimeAcceptance;
 use Sheba\AutoSpAssign\Sorting\Parameter\MaxRevenue;
@@ -16,6 +17,17 @@ abstract class Strategy
     protected $minRevenue;
     protected $minRating;
     protected $maxRating;
+    protected $categoryId;
+
+    /**
+     * @param $category_id
+     * @return Strategy
+     */
+    public function setCategoryId($category_id)
+    {
+        $this->categoryId = $category_id;
+        return $this;
+    }
 
     public function setMaxRevenue($maxRevenue)
     {
@@ -57,7 +69,8 @@ abstract class Strategy
             new InTimeAcceptance(),
             new OnTimeArrival(),
             new PackageScore(),
-            new ResourceAppUsage()
+            new ResourceAppUsage(),
+            new Commission()
         ];
     }
 
@@ -98,8 +111,8 @@ abstract class Strategy
         $score = 0;
         $param = new MaxRevenue();
         $rating_param = new AvgRating();
-        $score += $param->setMaxValue($this->maxRevenue)->setMinValue($this->minRevenue)->setPartner($partner)->getScore();
-        $score += $rating_param->setMaxValue($this->maxRating)->setMinValue($this->minRating)->setPartner($partner)->getScore();
+        $score += $param->setMaxValue($this->maxRevenue)->setMinValue($this->minRevenue)->setPartner($partner)->setCategoryId($this->categoryId)->getScore();
+        $score += $rating_param->setMaxValue($this->maxRating)->setMinValue($this->minRating)->setPartner($partner)->setCategoryId($this->categoryId)->getScore();
         return $score;
     }
 
@@ -107,7 +120,7 @@ abstract class Strategy
     {
         $score = 0;
         foreach ($this->getNormalizedParameters() as $param) {
-            $score += $param->setPartner($partner)->getScore();
+            $score += $param->setPartner($partner)->setCategoryId($this->categoryId)->getScore();
         }
         return $score;
     }

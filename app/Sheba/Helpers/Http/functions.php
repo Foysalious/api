@@ -1,9 +1,12 @@
 <?php
 
 use App\Http\Requests\ApiRequest;
+use App\Models\HyperLocal;
+use App\Models\Location;
 use GuzzleHttp\Exception\ConnectException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Sheba\Helpers\Http\ShebaHttpResponse;
 use Sheba\Helpers\Http\ShebaRequestHeader;
 use Sheba\Helpers\Http\ShebaResponse;
 use Sheba\Portals\Portals;
@@ -165,5 +168,63 @@ if (!function_exists('isTimeoutException')) {
     function isTimeoutException(ConnectException $exception)
     {
         return starts_with($exception->getMessage(), "cURL error 28: ");
+    }
+}
+
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->has('location')) return Location::find($request->location);
+
+        if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
+    }
+}
+
+if (!function_exists('http_response')) {
+    /**
+     * @param            $request
+     * @param            $internal_response
+     * @param            $response_code
+     * @param array|null $external_response
+     * @return JsonResponse
+     */
+    function http_response($request, $internal_response, $response_code, array $external_response = null)
+    {
+        $public_response = (new ShebaHttpResponse())->$response_code;
+        if ($external_response != null) {
+            $public_response = array_merge($public_response, $external_response);
+        }
+        if (class_basename($request) == 'Request' || $request instanceof ApiRequest) {
+            return response()->json($public_response, $response_code);
+        } else {
+            return $internal_response;
+        }
+    }
+}
+
+if (!function_exists('getLocationFromRequest')) {
+    /**
+     * @param $request
+     * @return Location|null
+     */
+    function getLocationFromRequest($request)
+    {
+        if ($request->has('location')) return Location::find($request->location);
+
+        if ($request->has('lat')) {
+            $hyperLocation = HyperLocal::insidePolygon((double)$request->lat, (double)$request->lng)->with('location')->first();
+            if (!is_null($hyperLocation)) return $hyperLocation->location;
+        }
+
+        return null;
     }
 }

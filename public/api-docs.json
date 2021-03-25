@@ -1,0 +1,42 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "Swagger Integration with PHP Laravel",
+        "description": "Integrate Swagger in Laravel application",
+        "termsOfService": "",
+        "contact": {
+            "email": "sachit.wadhawan@quovantis.com"
+        },
+        "version": "1.0.0"
+    },
+    "host": "api.sheba.test",
+    "basePath": "/",
+    "schemes": [
+        "http"
+    ],
+    "paths": {
+        "/v2/partners/{partner}": {
+            "get": {
+                "description": "Return a Component name and description",
+                "parameters": [
+                    {
+                        "name": "partner",
+                        "in": "path",
+                        "description": "partner_id",
+                        "required": true,
+                        "type": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "500": {
+                        "description": "Internel Server Error"
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {}
+}
