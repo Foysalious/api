@@ -119,8 +119,8 @@ class AffiliateTransactionRepository
         if($count = $refunds->count()) $category_wise_transaction[] = $this->makeData($refunds->sum('amount'), $count, "Refunds", "রিফান্ড", "refunds");
         if($count = $sheba_facilitated->count()) $category_wise_transaction[] = $this->makeData($sheba_facilitated->sum('amount'), $count, "Facilitated Amount", "ফ্যাসিলিটি অ্যামাউন্ট", "facilitated_amount");
         if($count = $service_purchase->count()) $category_wise_transaction[] = $this->makeData($service_purchase->sum('amount'), $count, "Service Purchase", "সার্ভিস ক্রয়", "service_purchase",'-');
-        if($count = $product_resell->count()) $category_wise_transaction[] = $this->makeData($product_resell->sum('amount'), $count, "Product Resell", "সার্ভিস ক্রয়", "product_resell",'+');
-        if($count = $bus_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($bus_ticket_commission->sum('amount'), $count, "Bus Ticket Commission", "বাস টিকিট কমিশন", "bus_ticket_commission",'+');
+        if($count = $product_resell->count()) $category_wise_transaction[] = $this->makeData($product_resell->sum('amount'), $count, "Product Resell", "পণ্য পুনরায় বিক্রয়", "product_resell");
+        if($count = $bus_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($bus_ticket_commission->sum('amount'), $count, "Bus Ticket Commission", "বাস টিকিট কমিশন", "bus_ticket_commission");
 
         return $category_wise_transaction;
     }

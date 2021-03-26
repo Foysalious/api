@@ -84,7 +84,8 @@ class AffiliateTransaction extends Model
 
     public function scopeManualDisbursement($query)
     {
-        return $query->where('log', 'LIKE', "%received from manual disbursement%");
+        return $query->where('log', 'LIKE', "%received from manual disbursement%")
+                     ->orWhere('log', 'LIKE', "%received as TopUp Commission%");
     }
 
     public function scopeShebaFacilitated($query)
