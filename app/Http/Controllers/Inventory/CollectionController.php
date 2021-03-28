@@ -80,7 +80,7 @@ class CollectionController extends Controller
             ->setIsPublished($request->is_published)
             ->setCollectionId($collection_id)
             ->update();
-        return http_response($request, null, 201, $response);
+        return http_response($request, null, 200, $response);
     }
 
     public function destroy(Request $request, $collection_id)
