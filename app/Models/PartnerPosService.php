@@ -118,6 +118,8 @@ class PartnerPosService extends BaseModel
 
     public function getDiscountPercentage()
     {
+        if($this->price == 0)
+            return 0;
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
             return $discount->amount;
@@ -158,5 +160,10 @@ class PartnerPosService extends BaseModel
             'is_published_for_shop' => (int)$this->is_published_for_shop,
             'app_thumb' => $this->app_thumb,
         ];
+    }
+
+    public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
+    {
+        return $query->where('partner_id', $partner_id)->where('publication_status',1)->where('is_published_for_shop',1);
     }
 }

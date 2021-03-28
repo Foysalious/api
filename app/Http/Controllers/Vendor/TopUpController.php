@@ -41,7 +41,7 @@ class TopUpController extends Controller
             if ($top_up_request->hasError()) return api_response($request, null, 403, ['message' => $top_up_request->getErrorMessage()]);
             $top_up_order = $creator->setTopUpRequest($top_up_request)->create();
             if ($top_up_order) {
-                dispatch((new TopUpJob($agent, $request->operator_id, $top_up_order)));
+                dispatch((new TopUpJob($top_up_order)));
                 return api_response($request, null, 200, ['message' => "Recharge Request Successful", 'id' => $top_up_order->id]);
             } else {
                 return api_response($request, null, 500);
