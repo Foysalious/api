@@ -164,7 +164,7 @@ class ApprovalRequestController extends Controller
             'type_id' => 'required|string',
             'status' => 'required|string',
         ];
-        if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
+        #if ($request->status == Status::REJECTED) $validation_data['reasons'] = 'required|string';
         $this->validate($request, $validation_data);
 
         /**
