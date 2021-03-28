@@ -134,7 +134,7 @@ class CollectionService
     public function update()
     {
         $data = $this->makeCreateData();
-        return $this->client->post('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id . '?_method=PUT', $data, true);
+        return $this->client->put('api/v1/partners/' . $this->partner_id . '/collection/' . $this->collection_id, $data, true);
     }
 
     public function getDetails()

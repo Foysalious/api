@@ -55,7 +55,6 @@ class RechargeComplete extends PaymentComplete
             ->where('service_type', $this->payment->created_by_type)
             ->where('method_name', $this->payment->paymentDetails->last()->method)
             ->where('status', 'Published')
-            ->get()
             ->first();
 
         if($payment_gateway){
