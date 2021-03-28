@@ -1,6 +1,7 @@
 <?php namespace Tests\Feature;
 
 use App\Models\Affiliate;
+use App\Models\Bonus;
 use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Customer;
@@ -37,6 +38,8 @@ class FeatureTestCase extends TestCase
     protected $partner;
     /** @var PartnerResource */
     protected $partner_resource;
+    /** @var PartnerBonus */
+    protected $PartnerBonus;
 //    @var ParnerSubscriptionPackage
     protected $partner_package;
     /**
@@ -128,6 +131,7 @@ class FeatureTestCase extends TestCase
         ]);
         $this->resource = factory(Resource::class)->create([
             'profile_id' => $this->profile->id
+            //'resource_type' => 'Admin'
         ]);
         $this->partner_package = factory(PartnerSubscriptionPackage::class)->create();
         $this->partner = factory(Partner::class)->create([
@@ -137,7 +141,8 @@ class FeatureTestCase extends TestCase
         ]);
         $this->partner_resource = factory(PartnerResource::class)->create([
             'resource_id' => $this->resource->id,
-            'partner_id' => $this->partner->id
+            'partner_id' => $this->partner->id,
+            'resource_type' => "Admin"
         ]);
         $this->member = factory(Member::class)->create([
             'profile_id' => $this->profile->id
@@ -146,6 +151,10 @@ class FeatureTestCase extends TestCase
         $this->business_member = factory(BusinessMember::class)->create([
             'business_id' => $this->business->id,
             'member_id' => $this->member->id
+        ]);
+        $PartnerBonus =  factory(Bonus::class)->create([
+            'user_type' => "App\\Models\\Partner",
+            'user_id' => $this->partner->id
         ]);
     }
 

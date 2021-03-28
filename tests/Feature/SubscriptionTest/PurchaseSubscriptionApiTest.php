@@ -79,6 +79,7 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $resource=Resource::first();
         $resource_remembar_token=$resource->remember_token;
+        //dd($resource_remembar_token);
 
         $partner_wallet=$partner->wallet;
 
@@ -101,7 +102,6 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $this->assertEquals(200,$data['code']);
         $this->assertEquals($partner_transactions ['amount'],$data['price']);
-        $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
         $this->assertEquals(3,$partner_package_id);
 
 
@@ -112,8 +112,9 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         $walletBalanceUpdate = Partner::find(1);;
         $walletBalanceUpdate->update(["wallet" => 0]);
-        $bonusWalletBalanceUpdate = Bonus::find(1);;
+        $bonusWalletBalanceUpdate = Bonus::find(1);
         $bonusWalletBalanceUpdate->update(["amount" => 100000]);
+        //dd($bonusWalletBalanceUpdate);
         $partner=Partner::first();
         $partner_id=$partner->id;
         $resource=Resource::first();
@@ -129,17 +130,17 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         );
 
         $data=$response->decodeResponseJson();
+        //dd($data);
         $partner_bonus_transaction=Bonus::all();
         $partner_bonus_transaction_logs=BonusLog::first();
         $this->assertEquals(200,$data['code']);
         $this->assertEquals($partner_bonus_transaction [0] ['amount'],$data['price']);
-        $this->assertEquals($partner_bonus_transaction [1] ['amount'],$data['remaining_balance']);
 
 
 
     }
 
-    public function testSubscriptionPurchaseWithPartialWallet(){
+   public function testSubscriptionPurchaseWithPartialWallet(){
 
         $walletBalanceUpdate = Partner::find(1);;
         $walletBalanceUpdate->update(["wallet" => 10000]);
@@ -167,42 +168,78 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
         $subscription_purchase_price = $partner_bonus_transaction_logs['amount'] + $partner_transactions ['amount'];
          $this->assertEquals(200,$data['code']);
          $this->assertEquals($subscription_purchase_price,$data['price']);
-         $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
 
 
 
     }
 
-    public function testSubscriptionPurchaseWithInsuffiecientBalance(){
+       public function testSubscriptionPurchaseWithInsuffiecientBalance(){
 
-        $walletBalanceUpdate = Partner::find(1);;
-        $walletBalanceUpdate->update(["wallet" => 100]);
-        $bonusWalletBalanceUpdate = Bonus::find(1);;
-        $bonusWalletBalanceUpdate->update(["amount" => 10]);
-        $partner=Partner::first();
-        $partner_id=$partner->id;
-        $resource=Resource::first();
-        $resource_remembar_token=$resource->remember_token;
+           $walletBalanceUpdate = Partner::find(1);;
+           $walletBalanceUpdate->update(["wallet" => 100]);
+           $bonusWalletBalanceUpdate = Bonus::find(1);;
+           $bonusWalletBalanceUpdate->update(["amount" => 10]);
+           $partner=Partner::first();
+           $partner_id=$partner->id;
+           $resource=Resource::first();
+           $resource_remembar_token=$resource->remember_token;
 
-        $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
+           $response = $this->post( "v2/partners/".$partner_id."/subscriptions/purchase",[
 
-                "remember_token" => $resource_remembar_token,
-                "package_id" => 3,
-                "billing_type" => "monthly"
-            ]
-        );
+                   "remember_token" => $resource_remembar_token,
+                   "package_id" => 3,
+                   "billing_type" => "monthly"
+               ]
+           );
 
-        $data=$response->decodeResponseJson();
-        //dd($data);
-        $this->assertEquals(420,$data['code']);
-       /* $this->assertEquals($subscription_purchase_price,$data['price']);
-        $this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);*/
+           $data=$response->decodeResponseJson();
+           //dd($data);
+           $this->assertEquals(420,$data['code']);
 
 
 
-    }
 
-    public function testSubscriptionPurchaseExtendedDays()
+       }
+
+       public function testSubscriptionPurchaseExtendedDays()
+       {
+
+           $walletBalanceUpdate = Partner::find(1);;
+           $walletBalanceUpdate->update(["wallet" => 10000]);
+           $bonusWalletBalanceUpdate = Bonus::find(1);;
+           $bonusWalletBalanceUpdate->update(["amount" => 10000]);
+           $partner = Partner::first();
+           $partner_id = $partner->id;
+           $resource = Resource::first();
+           $resource_remembar_token = $resource->remember_token;
+
+           for ($i = 0; $i < 2; $i++) {
+
+           $response = $this->post("v2/partners/" . $partner_id . "/subscriptions/purchase", [
+
+                   "remember_token" => $resource_remembar_token,
+                   "package_id" => $i+2,
+                   "billing_type" => "monthly"
+               ]
+           );
+       }
+           $data=$response->decodeResponseJson();
+           //dd($data );
+           $partner_transactions=PartnerTransaction::first();
+           $partner_bonus_transaction=Bonus::all();
+           $partner_bonus_transaction_logs=BonusLog::all();
+           $subscription_purchase_price = $partner_transactions ['amount'] + $partner_bonus_transaction [0] ['amount']+ $partner_bonus_transaction [1] ['amount'] ;
+           //dd($subscription_purchase_price);
+           $partner_subscription_package_charges=PartnerSubscriptionPackageCharge::all();
+           $partner_subscription_package_charges_DB =$partner_subscription_package_charges [1] ['cash_wallet_charge'] + $partner_subscription_package_charges [1] ['bonus_wallet_charge']+ $partner_subscription_package_charges [1] ['adjusted_amount_from_last_subscription'];
+          // dd($partner_subscription_package_charges_DB);
+
+           $this->assertEquals(200,$data['code']);
+           $this->assertEquals(1,$data ['extended_days']);
+           $this->assertEquals($partner_subscription_package_charges_DB,$subscription_purchase_price);
+
+       }
+    public function testSubscriptionPurchaseSamePackageExtends()
     {
 
         $walletBalanceUpdate = Partner::find(1);;
@@ -216,30 +253,32 @@ class PurchaseSubscriptionApiTest extends FeatureTestCase{
 
         for ($i = 0; $i < 2; $i++) {
 
-        $response = $this->post("v2/partners/" . $partner_id . "/subscriptions/purchase", [
+            $response = $this->post("v2/partners/" . $partner_id . "/subscriptions/purchase", [
 
-                "remember_token" => $resource_remembar_token,
-                "package_id" => $i+2,
-                "billing_type" => "monthly"
-            ]
-        );
-    }
+                    "remember_token" => $resource_remembar_token,
+                    "package_id" => 2,
+                    "billing_type" => "monthly"
+                ]
+            );
+        }
         $data=$response->decodeResponseJson();
-        //dd($data ['extended_days']);
+        //dd($data );
         $partner_transactions=PartnerTransaction::first();
         $partner_bonus_transaction=Bonus::all();
-        //$partner_bonus_transaction_logs=BonusLog::all();
+        $partner_bonus_transaction_logs=BonusLog::all();
         $subscription_purchase_price = $partner_transactions ['amount'] + $partner_bonus_transaction [0] ['amount']+ $partner_bonus_transaction [1] ['amount'] ;
         //dd($subscription_purchase_price);
         $partner_subscription_package_charges=PartnerSubscriptionPackageCharge::all();
         $partner_subscription_package_charges_DB =$partner_subscription_package_charges [1] ['cash_wallet_charge'] + $partner_subscription_package_charges [1] ['bonus_wallet_charge']+ $partner_subscription_package_charges [1] ['adjusted_amount_from_last_subscription'];
-        dd($partner_subscription_package_charges_DB);
+        // dd($partner_subscription_package_charges_DB);
 
         $this->assertEquals(200,$data['code']);
-        $this->assertEquals(1,$data ['extended_days']);
-        $this->assertEquals($partner_subscription_package_charges_DB,$subscription_purchase_price); /*** Total price for purchasing package**/
-        //$this->assertEquals($partner_transactions ['balance'],$data['remaining_balance']);
+        $this->assertEquals(30,$data ['extended_days']);
+        $this->assertEquals($partner_subscription_package_charges_DB,$subscription_purchase_price);
 
     }
+
+
+
 
 }
