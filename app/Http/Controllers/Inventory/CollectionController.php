@@ -82,6 +82,7 @@ class CollectionController extends Controller
             ->setIsPublished($request->is_published)
             ->setCollectionId($collection_id)
             ->update();
+
         return http_response($request, null, 200, $response);
     }
 
