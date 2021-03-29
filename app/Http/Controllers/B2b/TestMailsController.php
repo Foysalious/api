@@ -23,6 +23,10 @@ class TestMailsController extends Controller
             Mail::send('emails.email_verification_V3', ['code' => 1111], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject);
             });
+        }elseif ($request->has('invitation') && $request->invitation == 1) {
+            Mail::send('emails.co-worker-invitation-v3', ['password' => 1111], function ($m) use ($email, $subject) {
+                $m->to($email)->subject($subject);
+            });
         } else {
             Mail::send([], [], function ($m) use ($email, $subject) {
                 $m->to($email)->subject($subject)->setBody('Hi, welcome to Sheba Platform Limited.');
