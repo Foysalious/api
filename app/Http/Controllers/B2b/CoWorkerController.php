@@ -17,13 +17,14 @@ use Sheba\Business\CoWorker\Requests\FinancialRequest;
 use Sheba\Business\CoWorker\Requests\OfficialRequest;
 use Sheba\Business\CoWorker\Requests\PersonalRequest;
 use Sheba\Business\CoWorker\Requests\BasicRequest;
+use App\Sheba\Business\Salary\Requester as CoWorkerSalaryRequester;
+use Sheba\Dal\Salary\SalaryRepository;
 use League\Fractal\Serializer\ArraySerializer;
 use Sheba\Reports\ExcelHandler;
 use Sheba\Reports\Exceptions\NotAssociativeArray;
 use Sheba\Repositories\Interfaces\BusinessMemberRepositoryInterface;
 use Sheba\Repositories\ProfileRepository;
 use League\Fractal\Resource\Collection;
-use App\Jobs\SendBusinessRequestEmail;
 use Sheba\FileManagers\CdnFileManager;
 use App\Transformers\CustomSerializer;
 use Sheba\Business\CoWorker\Statuses;
@@ -66,6 +67,10 @@ class CoWorkerController extends Controller
     private $coWorkerUpdater;
     /** @var CoWorkerRequester $coWorkerRequester */
     private $coWorkerRequester;
+    /** @var CoWorkerSalaryRequester */
+    private $coWorkerSalaryRequester;
+    /** @var SalaryRepository */
+    private $salaryRepositry;
 
     /**
      * CoWorkerController constructor.
@@ -79,12 +84,14 @@ class CoWorkerController extends Controller
      * @param CoWorkerCreator $co_worker_creator
      * @param CoWorkerUpdater $co_worker_updater
      * @param CoWorkerRequester $coWorker_requester
+     * @param CoWorkerSalaryRequester $co_worker_salary_requester
+     * @param SalaryRepository $salary_repositry
      */
     public function __construct(FileRepository $file_repository, ProfileRepository $profile_repository, BasicRequest $basic_request,
                                 EmergencyRequest $emergency_request, FinancialRequest $financial_request,
                                 OfficialRequest $official_request, PersonalRequest $personal_request,
                                 CoWorkerCreator $co_worker_creator, CoWorkerUpdater $co_worker_updater,
-                                CoWorkerRequester $coWorker_requester)
+                                CoWorkerRequester $coWorker_requester, CoWorkerSalaryRequester $co_worker_salary_requester, SalaryRepository $salary_repositry)
     {
         $this->fileRepository = $file_repository;
         $this->profileRepository = $profile_repository;
@@ -96,6 +103,8 @@ class CoWorkerController extends Controller
         $this->coWorkerCreator = $co_worker_creator;
         $this->coWorkerUpdater = $co_worker_updater;
         $this->coWorkerRequester = $coWorker_requester;
+        $this->coWorkerSalaryRequester = $co_worker_salary_requester;
+        $this->salaryRepositry = $salary_repositry;
     }
 
     /**
@@ -337,6 +346,24 @@ class CoWorkerController extends Controller
      * @param Request $request
      * @return JsonResponse
      */
+    public function salaryInfoEdit($business, $member_id, Request $request)
+    {
+        $manager_member = $request->manager_member;
+        $this->setModifier($manager_member);
+        $business = $request->business;
+        $this->coWorkerSalaryRequester->setMember($member_id)
+            ->setGrossSalary($request->gross_salary)
+            ->setManagerMember($manager_member)
+            ->createOrUpdate();
+        return api_response($request, null, 200);
+    }
+
+    /**
+     * @param $business
+     * @param $member_id
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function emergencyInfoEdit($business, $member_id, Request $request)
     {
         $validation_data = [
@@ -488,7 +515,7 @@ class CoWorkerController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $member = new Item($member, new CoWorkerDetailTransformer($is_inactive_filter_applied));
+        $member = new Item($member, new CoWorkerDetailTransformer($business, $is_inactive_filter_applied));
         $employee = $manager->createData($member)->toArray()['data'];
 
         if (count($employee) > 0) return api_response($request, $employee, 200, ['employee' => $employee]);

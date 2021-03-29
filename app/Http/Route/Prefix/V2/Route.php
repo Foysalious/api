@@ -136,7 +136,11 @@ class Route
                     $api->get('', 'OfferGroupController@show');
                 });
             });
-            (new BusinessRoute())->set($api);
+
+            $api->group(['middleware' => 'terminate'], function ($api) {
+                (new BusinessRoute())->set($api);
+            });
+
             $api->group(['prefix' => 'services'], function ($api) {
                 $api->get('', 'ServiceController@index');
             });
