@@ -18,6 +18,7 @@ use Sheba\Transport\Bus\Order\Status;
 use Sheba\Transport\Bus\Order\TransportTicketRequest;
 use Sheba\Transport\Bus\Order\Updater;
 use Sheba\Transport\Bus\Repositories\TransportTicketOrdersRepository;
+use Sheba\Transport\Bus\Response\BdTicketsResponse;
 use Sheba\Transport\Bus\Vendor\BdTickets\BdTickets;
 use Sheba\Transport\Bus\Vendor\VendorFactory;
 use Throwable;
@@ -54,8 +55,9 @@ class TransportTicketPurchaseComplete extends PaymentComplete
                 $seat_count = count($transaction_details->trips[0]->coachSeatList);
 
                 $vendor = app(VendorFactory::class);
-                $vendor = $vendor->getById($transport_ticket_order->vendor_id);
                 /** @var BdTickets $vendor */
+                $vendor = $vendor->getById($transport_ticket_order->vendor_id);
+                /** @var BdTicketsResponse $ticket_confirm_response */
                 $ticket_confirm_response = $vendor->confirmTicket($transaction_details->id);
 
                 Redis::set('transport_ticket_' . $transaction_details->id, json_encode($ticket_confirm_response->getResponse()));
