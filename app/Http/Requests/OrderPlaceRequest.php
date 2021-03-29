@@ -34,7 +34,6 @@ class OrderPlaceRequest extends ApiRequest
             'name' => 'required|string',
             'services' => 'required|string',
             'sales_channel' => 'required|string',
-            'remember_token' => 'required|string',
             'mobile' => 'required|string|mobile:bd',
             'email' => 'sometimes|email',
             'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
