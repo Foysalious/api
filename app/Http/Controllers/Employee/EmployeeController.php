@@ -158,6 +158,7 @@ class EmployeeController extends Controller
                 'can_checkout' => $attendance && $attendance->canTakeThisAction(Actions::CHECKOUT) ? 1 : 0,
                 'is_note_required' => 0
             ],
+            'is_remote_enable' => $business->isRemoteAttendanceEnable(),
             'is_approval_request_required' => $approval_requests->count() > 0 ? 1 : 0,
             'approval_requests' => ['pending_request' => $pending_approval_requests->count()],
             'is_profile_complete' => $profile_completion_score ? 1 : 0,
@@ -319,6 +320,7 @@ class EmployeeController extends Controller
                 'image' => $profile->pro_pic,
                 'business_id' => $business ? $business->id : null,
                 'business_name' => $business ? $business->name : null,
+                'is_remote_attendance_enable' => $business->isRemoteAttendanceEnable()
             ]
         ];
 
