@@ -38,6 +38,9 @@ RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd in
 RUN pecl install mongodb-1.4.4 \
     && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongo.ini
 
+# Install php-ext-apfd
+RUN pecl install apfd && docker-php-ext-enable apfd
+
 # Install sentry
 RUN curl -sL https://sentry.io/get-cli/ | bash
 
