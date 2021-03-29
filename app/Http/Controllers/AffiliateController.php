@@ -34,6 +34,7 @@ use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
 use Sheba\Bondhu\Statuses;
+use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\FraudDetection\TransactionSources;
 use Sheba\Logs\Customer\JobLogs;
 use Sheba\ModificationFields;
@@ -41,6 +42,7 @@ use Sheba\Reports\ExcelHandler;
 use Sheba\Repositories\Interfaces\ProfileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileMobileBankingRepositoryInterface;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
+use Sheba\TopUp\History\RequestBuilder;
 use Sheba\Transactions\InvalidTransaction;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
@@ -723,84 +725,69 @@ GROUP BY affiliate_transactions.affiliate_id', [$affiliate->id, $agent_id]));
         return response()->json(['code' => 200, 'data' => $earning]);
     }
 
-    public function topUpHistory($affiliate, Request $request)
+    /**
+     * @param $affiliate
+     * @param Request $request
+     * @param RequestBuilder $request_builder
+     * @param TopUpOrderRepository $top_up_order_repo
+     * @param TopUpVendorOTFRepo $topup_vendor_otf
+     * @return JsonResponse
+     */
+    public function topUpHistory($affiliate, Request $request, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo, TopUpVendorOTFRepo $topup_vendor_otf): JsonResponse
     {
-        $topupvendorotf = app(TopUpVendorOTFRepo::class);
-
-        try {
-            $rules = [
-                'from' => 'date_format:Y-m-d',
-                'to' => 'date_format:Y-m-d|required_with:from'
-            ];
-
-            $validator = Validator::make($request->all(), $rules);
-            if ($validator->fails()) {
-                $error = $validator->errors()->all()[0];
-                return api_response($request, $error, 400, ['msg' => $error]);
-            }
-
-            list($offset, $limit) = calculatePagination($request);
-            $topups = Affiliate::find($affiliate)->topups();
-
-            $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel') ? true : false;
-
-            if (isset($request->from) && $request->from !== "null") $topups = $topups->whereBetween('created_at', [$request->from . " 00:00:00", $request->to . " 23:59:59"]);
-            if (isset($request->vendor_id) && $request->vendor_id !== "null") $topups = $topups->where('vendor_id', $request->vendor_id);
-            if (isset($request->status) && $request->status !== "null") $topups = $topups->where('status', $request->status);
-            if (isset($request->q) && $request->q !== "null") $topups = $topups->where('payee_mobile', 'LIKE', '%' . $request->q . '%');
-            if (isset($request->from_robi_topup_wallet) && $request->from_robi_topup_wallet == 1)
-                $topups = $topups->where('is_robi_topup_wallet', 1);
-            else
-                $topups = $topups->where('is_robi_topup_wallet', 0);
-
-            $total_topups = $topups->count();
-            if ($is_excel_report) {
-                $offset = 0;
-                $limit = 100000;
-            }
-            $topups = $topups->with('vendor')->skip($offset)->take($limit)->orderBy('created_at', 'desc')->get();
-
-            $topup_data = [];
-
-
-            foreach ($topups as $topup) {
-
-                if($topup->otf_id > 0){
-                    $topupotf = $topupvendorotf->builder()->where('id', $topup->otf_id)->first();
-                    $otf_name_en = isset($topupotf->name_en) ? $topupotf->name_en : "";
-                    $otf_name_bn = isset($topupotf->name_bn) ? $topupotf->name_bn : "";
-                }else{
-                    $otf_name_en = '';
-                    $otf_name_bn = '';
-                }
-
-                $topup = [
-                    'payee_mobile' => $topup->payee_mobile,
-                    'payee_name' => $topup->payee_name ? $topup->payee_name : 'N/A',
-                    'amount' => $topup->amount,
-                    'operator' => $topup->vendor->name,
-                    'status' => $topup->status,
-                    'otf_name_en' => $otf_name_en,
-                    'otf_name_bn' => $otf_name_bn,
-                    'created_at' => $topup->created_at->format('jS M, Y h:i A'),
-                    'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
-                ];
-                array_push($topup_data, $topup);
-            }
-
-            if ($is_excel_report) {
-                $excel = app(ExcelHandler::class);
-                $excel->setName('Topup History');
-                $excel->setViewFile('topup_history');
-                $excel->pushData('topup_data', $topup_data);
-                $excel->download();
-            }
-
-            return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $rules = ['from' => 'date_format:Y-m-d', 'to' => 'date_format:Y-m-d|required_with:from'];
+        $validator = Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            $error = $validator->errors()->all()[0];
+            return api_response($request, $error, 400, ['msg' => $error]);
         }
+
+        list($offset, $limit) = calculatePagination($request);
+        $affiliate = Affiliate::find($affiliate);
+
+        $is_excel_report = $request->has('content_type') && $request->content_type == 'excel';
+        if ($is_excel_report) { $offset = 0; $limit = 100000; }
+
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($affiliate);
+        if ($request->has('from') && $request->from !== "null") {
+            $from_date = Carbon::parse($request->from);
+            $to_date = Carbon::parse($request->to)->endOfDay();
+            $request_builder->setFromDate($from_date)->setToDate($to_date);
+        }
+        if ($request->has('vendor_id') && $request->vendor_id !== "null") $request_builder->setVendorId($request->vendor_id);
+        if ($request->has('status') && $request->status !== "null") $request_builder->setStatus($request->status);
+        if ($request->has('q') && $request->q !== "null") $request_builder->setSearchQuery($request->q);
+        if ($request->has('from_robi_topup_wallet') && $request->from_robi_topup_wallet == 1) $request_builder->setIsRobiTopupWallet($request->from_robi_topup_wallet);
+
+        $total_topups = $top_up_order_repo->getTotalCountByFilter($request_builder);
+        $topups = $top_up_order_repo->getByFilter($request_builder);
+
+        $topup_otfs = $topup_vendor_otf->builder()->get()->pluckMultiple(['name_en', 'name_bn'], 'id')->toArray();
+        $topup_data = [];
+        foreach ($topups as $topup) {
+            $topup = [
+                'payee_mobile' => $topup->payee_mobile,
+                'payee_name' => $topup->payee_name ?: 'N/A',
+                'amount' => $topup->amount,
+                'operator' => $topup->vendor->name,
+                'status' => $topup->status,
+                'otf_name_en' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_en'] : "",
+                'otf_name_bn' => isset($topup_otfs[$topup->otf_id]) ? $topup_otfs[$topup->otf_id]['name_bn'] : "",
+                'created_at' => $topup->created_at->format('jS M, Y h:i A'),
+                'created_at_raw' => $topup->created_at->format('Y-m-d h:i:s')
+            ];
+            array_push($topup_data, $topup);
+        }
+
+        if ($is_excel_report) {
+            $excel = app(ExcelHandler::class);
+            $excel->setName('Topup History');
+            $excel->setViewFile('topup_history');
+            $excel->pushData('topup_data', $topup_data);
+            $excel->download();
+        }
+
+        return response()->json(['code' => 200, 'data' => $topup_data, 'total_topups' => $total_topups, 'offset' => $offset]);
     }
 
     public function getCustomerInfo(Request $request)

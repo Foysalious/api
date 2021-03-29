@@ -50,27 +50,28 @@ class PartnerWithdrawalRequestV2Controller extends Controller
                     'max' => $limitBank['max']
                 ]
             ];
+            $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
 
             if($request->partner->withdrawalRequests()->active()->count() > 0){
                 $active_request_amount =  $request->partner->withdrawalRequests()->active()->sum('amount') ;
-                if($withdrawable_amount > $limitBank['min'])
+                if($withdrawable_amount > $limitBank['min']) {
                     $error_message = 'আপনার '. convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। আপনি '.  convertNumbersToBangla($withdrawable_amount,true, 0). ' টাকা উত্তোলন করার জন্য আবেদন করতে পারবেন।';
-                else
-                    $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না।';
+                }
+                else {
+                    $error_message = 'আপনার '.convertNumbersToBangla($active_request_amount,true, 0) . ' টাকার উত্তোলনের আবেদন প্রক্রিয়াধীন রয়েছে। পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি পুনরায় উত্তোলন করার জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
+                }
             }
             else
             {
-                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলনের জন্য আবেদন করতে পারবেন না।';
+                $error_message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না। আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             }
 
             if($request->partner->status === PartnerStatuses::BLACKLISTED || $request->partner->status === PartnerStatuses::PAUSED) {
                 $error_message = 'ব্ল্যাক লিস্ট হওয়ার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে পারবেন না।';
                 $is_partner_blacklisted = true;
             }
-
-            $security_money = ($request->partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
-                return api_response($request, $withdrawalRequests, 200,
-                    ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message, 'is_black_listed' => $is_partner_blacklisted]);
+            return api_response($request, $withdrawalRequests, 200,
+                                ['withdrawalRequests' => $withdrawalRequests, 'wallet' => $request->partner->wallet, 'withdrawable_amount' => $withdrawable_amount,  'bank_info' => $bank_information , 'withdraw_limit' => $withdraw_limit,'security_money' => $security_money, 'status_message' => $error_message, 'is_black_listed' => $is_partner_blacklisted]);
         } catch (Throwable $e) {
             app('sentry')->captureException($e);
             return api_response($request, null, 500);
@@ -113,7 +114,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
             }
 
             /**
-             Given mobile no and opt number( always 1st admin) not same
+            Given mobile no and opt number( always 1st admin) not same
              */
 //            if (trim_phone_number($request->bkash_number) != trim_phone_number($authenticate_data['mobile'])) {
 //                return api_response($request, null, 400, ['message' => 'Your provided bkash number and verification number did not match,please verify using your bkash number']);
@@ -126,6 +127,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
          */
         $limitBkash = constants('WITHDRAW_LIMIT')['bkash'];
         $limitBank  = constants('WITHDRAW_LIMIT')['bank'];
+        $security_money = ($partner->walletSetting->security_money ? floatval($request->partner->walletSetting->security_money) : 0);
         if ($request->payment_method == 'bkash' && ((double)$request->amount < $limitBkash['min'] || (double)$request->amount > $limitBkash['max'])) {
             return api_response($request, null, 400, ['message' => 'Payment Limit mismatch for bkash minimum limit ' . $limitBkash['min'] . ' TK and maximum ' . $limitBkash['max'] . ' TK']);
         } else if ($request->payment_method == 'bank' && ((double)$request->amount < $limitBank['min'] || (double)$request->amount > $limitBank['max'])) {
@@ -133,7 +135,7 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         }
         $valid_maximum_requested_amount = (double)$partner->wallet - (double)$partner->walletSetting->security_money- (double)$partner->withdrawalRequests()->active()->sum('amount');
         if (((double)$request->amount > $valid_maximum_requested_amount)) {
-            $message = "পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।";
+            $message = 'পর্যাপ্ত ব্যালান্স না থাকার কারণে আপনি টাকা উত্তোলন এর জন্য আবেদন করতে  পারবেন না।আপনার সিকিউরিটি মানি ৳'. convertNumbersToBangla($security_money, true, 0). '।';
             return api_response($request, null, 403, ['message' => $message]);
         }
         $new_withdrawal = WithdrawalRequest::create(array_merge((new UserRequestInformation($request))->getInformationArray(), [
@@ -159,10 +161,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
         if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
             $withdrawal_update = $partnerWithdrawalRequest->update([
-                'status'          => $request->status,
-                'updated_by'      => $request->manager_resource->id,
-                'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-            ]);
+                                                                       'status'          => $request->status,
+                                                                       'updated_by'      => $request->manager_resource->id,
+                                                                       'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+                                                                   ]);
             return api_response($request, $withdrawal_update, 200);
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
@@ -176,10 +178,10 @@ class PartnerWithdrawalRequestV2Controller extends Controller
         $partnerWithdrawalRequest = WithdrawalRequest::find($withdrawals);
         if (($partner->id == $partnerWithdrawalRequest->requester->id) && ($partnerWithdrawalRequest->requester_type=='partner') && ($partnerWithdrawalRequest->status == 'pending')) {
             $withdrawal_update = $partnerWithdrawalRequest->update([
-                'status'          => 'cancelled',
-                'updated_by'      => $request->manager_resource->id,
-                'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
-            ]);
+                                                                       'status'          => 'cancelled',
+                                                                       'updated_by'      => $request->manager_resource->id,
+                                                                       'updated_by_name' => 'Resource - ' . $request->manager_resource->profile->name,
+                                                                   ]);
             return api_response($request, $withdrawal_update, 200);
         } else {
             return api_response($request, '', 403, ['result' => 'You can not update this withdraw request']);
