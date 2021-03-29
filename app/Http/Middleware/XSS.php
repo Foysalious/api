@@ -22,7 +22,10 @@ class XSS
         'v2/partners/*/webstore-settings',
         'v2/partners/*/pos/products/orders',
         'v2/businesses/*/departments',
-        'v2/businesses/*/departments/*'
+        'v2/businesses/*/departments/*',
+        'service',
+        'service/*',
+        'category/*'
     ];
 
     /**
