@@ -174,7 +174,7 @@ class PurchaseHandler
 
     public function notifyForInsufficientBalance()
     {
-        (new NotificationRepository())->sendInsufficientNotification($this->partner, $this->newPackage, $this->newBillingType, $this->grade);
+        app(NotificationRepository::class)->sendInsufficientNotification($this->partner, $this->newPackage, $this->newBillingType, $this->grade);
     }
 
     /**

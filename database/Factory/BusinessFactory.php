@@ -18,6 +18,6 @@ class BusinessFactory extends Factory
             'sub_domain'=>'my-company',
             'type'=>'Company',
             'is_verified'=> 1
-        ]);// TODO: Implement getData() method.
+        ]);
     }
 }
