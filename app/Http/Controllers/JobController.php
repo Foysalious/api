@@ -429,7 +429,7 @@ class JobController extends Controller
                 $collect->put('timestamp', $log->created_at->timestamp);
                 $collect->put('type', $key);
                 $collect->put('color_code', '#02adfc');
-                $all_logs->push($collect);
+                if(substr_count($log->log, 'Commission Rate') === 0) $all_logs->push($collect);
             }
         }
     }
@@ -570,37 +570,27 @@ class JobController extends Controller
 
     public function cancel($customer, $job, Request $request)
     {
-        try {
-            $this->validate($request, [
-                'remember_token' => 'required',
-                'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
-                'cancel_reason_details' => 'sometimes|string'
-            ]);
+        $this->validate($request, [
+            'cancel_reason' => 'required|exists:job_cancel_reasons,key,is_published_for_customer,1',
+            'cancel_reason_details' => 'sometimes|string'
+        ]);
 
-            $client = new Client();
-            $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
-                [
-                    'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
-                        'customer_id' => $customer,
-                        'remember_token' => $request->remember_token,
-                        'status' => constants('JOB_STATUSES')['Cancelled'],
-                        'cancel_reason' => $request->cancel_reason,
-                        'cancel_reason_details' => $request->cancel_reason_details,
-                        'created_by_type' => get_class($request->customer)
-                    ])
-                ]);
-            if ($response = json_decode($res->getBody())) {
-                return api_response($request, $response, $response->code);
-            }
-            return api_response($request, null, 500);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (RequestException $e) {
-            logError($e);
-            return api_response($request, null, 500);
-        }
+        $customer = $request->customer;
+        $client = new Client();
+        $res = $client->request('POST', config('sheba.admin_url') . '/api/job/' . $job . '/change-status',
+            [
+                'form_params' => array_merge((new UserRequestInformation($request))->getInformationArray(), [
+                    'customer_id' => $customer->id,
+                    'remember_token' => $customer->remember_token,
+                    'status' => constants('JOB_STATUSES')['Cancelled'],
+                    'cancel_reason' => $request->cancel_reason,
+                    'cancel_reason_details' => $request->cancel_reason_details,
+                    'created_by_type' => get_class($customer)
+                ])
+            ]);
+        if ($response = json_decode($res->getBody())) return api_response($request, $response, $response->code);
+
+        return api_response($request, null, 500);
     }
 
     public function saveFavorites($customer, $job, Request $request)

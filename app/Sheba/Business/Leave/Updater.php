@@ -190,7 +190,7 @@ class Updater
             $this->leaveStatusLogCreator->setLeave($this->leave)->setPreviousStatus($previous_status)->setStatus($this->status)
                 ->setBusinessMember($this->businessMember)
                 ->create();
-            if ($this->status == Status::REJECTED) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
+            #if ($this->status == Status::REJECTED) $this->leaveRejectionCreator->setLeaveRejectionRequester($this->leaveRejectionRequester)->setLeave($this->leave)->create();
 
         });
 

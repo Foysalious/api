@@ -97,6 +97,7 @@ class Updater
                 $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
             }
         }
+
         if (isset($this->data['deleted_image'])) {
             $this->data['deleted_image_link'] = PartnerPosServiceImageGallery::whereIn('id',$this->data['deleted_image'])->pluck('image_link')->toArray();
             $this->deleteFromCDN($this->data['deleted_image_link']);

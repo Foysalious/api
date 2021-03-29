@@ -48,6 +48,7 @@ class ProductController extends Controller
             ->setChannelId($request->channel_id)
             ->setDisCountAmount($request->discount_amount)
             ->setDiscountEndDate($request->discount_end_date)
+            ->setProductDetails($request->product_details)
             ->store();
         return http_response($request, null, 200, $response);
     }
@@ -59,10 +60,11 @@ class ProductController extends Controller
         return http_response($request, null, 200, $product);
     }
 
-    public function update(Request $request, $partnerId, $productId)
+    public function update(Request $request, $productId)
     {
+        $partner = $request->auth_user->getPartner();
         $product = $this->productService
-            ->setPartnerId($partnerId)
+            ->setPartnerId($partner->id)
             ->setProductId($productId)
             ->setCategoryId($request->category_id)
             ->setName($request->name)
@@ -71,6 +73,7 @@ class ProductController extends Controller
             ->setWarrantyUnit($request->warranty_unit)
             ->setVatPercentage($request->vat_percentage)
             ->setUnitId($request->unit_id)
+            ->setProductDetails($request->product_details)
             ->update();
         return http_response($request, null, 200, $product);
     }

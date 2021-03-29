@@ -229,7 +229,7 @@ class PartnerRegistrationController extends Controller
      */
     private function guessSubDomain($name)
     {
-        $name      = strtolower($name);
+        $name = strtolower($name);
         $blacklist = ["google", "facebook", "microsoft", "sheba", "sheba.xyz"];
 
         $is_unicode = (strlen($name) != strlen(utf8_decode($name)));

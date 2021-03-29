@@ -1,7 +1,5 @@
 <?php
 
-use Sheba\Logistics\Listeners\EventsProvider;
-
 return [
 
     /*

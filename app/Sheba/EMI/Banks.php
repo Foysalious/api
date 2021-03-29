@@ -1,6 +1,7 @@
 <?php namespace Sheba\EMI;
-use phpDocumentor\Reflection\Types\This;
-use Sheba\EMI\Calculator;
+
+use Illuminate\Support\Collection;
+
 class Banks
 {
     private $calculator;
@@ -14,7 +15,7 @@ class Banks
     public function get($icons_folder = null)
     {
         $icons_folder = $icons_folder ?: getEmiBankIconsFolder(true);
-        $banks = [
+        $banks = collect([
             [
                 "name"     => "Midland Bank Ltd",
                 "logo"     => $icons_folder . "midland_bank.png",
@@ -271,27 +272,34 @@ class Banks
                     12 => 8.5
                 ]
             ],
-        ];
+        ]);
 
         $banks = $this->formatEmi($banks);
 
-        return $banks;
+        return $banks->values();
     }
 
-    public function setAmount($amount) {
+    public function setAmount($amount)
+    {
         $this->amount = $amount;
         return $this;
     }
 
-    public function formatEmi($banks)
+    public function formatEmi(Collection $banks)
     {
-        return array_map(function ($bank) {
-            $emis = [];
+        return $banks->map(function ($bank) {
+            $emis = collect();
             foreach ($bank['emi'] as $key => $value) {
-                array_push($emis, $this->calculator->calculateMonthWiseCharge($this->amount, $key, $value));
+                $emis->push($this->calculator->calculateMonthWiseCharge($this->amount, $key, $value));
             }
+            $emis = $emis->sortBy('interest_value');
             $bank['emi'] = $emis;
+            $bank['lowest_emi'] = $emis[0]['interest_value'];
             return $bank;
-        }, $banks);
+        })->sortBy('lowest_emi')->map(function ($bank) {
+            unset($bank['lowest_emi']);
+            $bank['emi'] = $bank['emi']->forgetEach('interest_value')->values();
+            return $bank;
+        });
     }
 }

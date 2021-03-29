@@ -7,7 +7,7 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
@@ -24,12 +24,14 @@ use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
+use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Business\Leave\RejectReason\RejectReason;
 use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
 use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
@@ -56,6 +58,7 @@ class LeaveController extends Controller
     private $approvalRequestRepo;
     /*** @var LeaveRejectionRequester */
     private $leaveRejectionRequester;
+    private $approvalRequest;
 
     /**
      * ApprovalRequestController constructor.
@@ -130,7 +133,7 @@ class LeaveController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
-
+        $this->approvalRequest = $approval_request;
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
@@ -164,10 +167,12 @@ class LeaveController extends Controller
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'type_id' => 'required|string',
             'status' => 'required|string',
-        ]);
+        ];
+        if ($request->status == LeaveStatus::REJECTED) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /** type_id approval_request id*/
         $type_ids = json_decode($request->type_id);
@@ -187,7 +192,8 @@ class LeaveController extends Controller
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
                 /** @var ApprovalRequest $approval_request */
                 if ($approval_request->approver_id != $business_member->id) return;
-                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+                $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
                 $updater->setStatus($request->status)->change();
             });
 
@@ -285,7 +291,7 @@ class LeaveController extends Controller
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => $this->getRejectReason($requestable, self::APPROVER)
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -578,20 +584,6 @@ class LeaveController extends Controller
         return api_response($request, null, 200, ['leaves' => $leaves]);
     }
 
-    private function getRejectReason($requestable, $type)
-    {
-        $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
-        if (!$rejection) return null;
-        $reasons = $rejection->reasons;
-        if ($type == self::SUPER_ADMIN) return $rejection->note;
-        $data = [];
-        $final_data['note'] = $rejection->note;
-        foreach ($reasons as $reason){
-            $data['reasons'][] = LeaveRejectReason::getComponents($reason->reason);
-        }
-        return array_merge($final_data, $data);
-    }
-
     /**
      * @param $leaves
      * @param string $sort
@@ -601,7 +593,7 @@ class LeaveController extends Controller
     {
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
-            return strtoupper($leave['period']);
+            return strtoupper($leave['start_date']);
         });
     }
 }

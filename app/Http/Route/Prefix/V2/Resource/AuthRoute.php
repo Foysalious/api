@@ -41,6 +41,7 @@ class AuthRoute
                     $api->get('services', 'Resource\ResourceJobController@getServices');
                     $api->get('updated-bill', 'Resource\ResourceJobController@getUpdatedBill');
                     $api->post('services', 'Resource\ResourceJobController@updateService');
+                    $api->post('partial-pay', 'Resource\ResourceJobController@partialPay');
                 });
             });
             $api->group(['prefix' => 'transactions'], function ($api) {

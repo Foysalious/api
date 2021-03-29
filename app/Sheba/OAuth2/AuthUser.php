@@ -34,6 +34,28 @@ class AuthUser
         $this->resolveAuthUser();
     }
 
+    public function resolveAuthUser()
+    {
+        $this->resolveProfile();
+        $this->resolveAvatar();
+    }
+
+    public function resolveProfile()
+    {
+        if (!isset($this->attributes['profile'])) return null;
+        $profile = Profile::find($this->attributes['profile']['id']);
+        if ($profile) $this->setProfile($profile);
+    }
+
+    public function resolveAvatar()
+    {
+        if (!$this->attributes['avatar']) return;
+
+        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
+        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
+        if ($avatar) $this->setAvatar($avatar);
+    }
+
     /**
      * @return AuthUser
      * @throws SomethingWrongWithToken
@@ -62,11 +84,6 @@ class AuthUser
         }
     }
 
-    public static function authenticate()
-    {
-        JWTAuth::getPayload(JWTAuth::getToken());
-    }
-
     /**
      * @param $token
      * @return AuthUser
@@ -75,7 +92,7 @@ class AuthUser
     public static function createFromToken($token)
     {
         try {
-            if (strpos(request()->url(), '/v2/top-up/get-topup-token') !== false) {
+            if (request()->url() == config('sheba.api_url') . '/v2/top-up/get-topup-token') {
                 $jws = JWS::load($token);
                 $payload = $jws->getPayload();
             } else {
@@ -85,6 +102,11 @@ class AuthUser
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
         }
+    }
+
+    public static function authenticate()
+    {
+        JWTAuth::getPayload(JWTAuth::getToken());
     }
 
     public function getName()
@@ -107,9 +129,21 @@ class AuthUser
         return array_key_exists('logistic_user', $this->attributes);
     }
 
+    public function getMemberId()
+    {
+        if (!$this->isMember()) return null;
+        return $this->attributes['business_member']['member_id'];
+    }
+
     public function isMember()
     {
         return !is_null($this->attributes['member']);
+    }
+
+    public function getMemberAssociatedBusinessId()
+    {
+        if (!$this->doesMemberHasBusiness()) return null;
+        return $this->attributes['business_member']['business_id'];
     }
 
     public function doesMemberHasBusiness()
@@ -117,29 +151,6 @@ class AuthUser
         if (!$this->isMember()) return false;
 
         return !is_null($this->attributes['business_member']['business_id']);
-    }
-
-    public function getMemberId()
-    {
-        if (!$this->isMember()) return null;
-        return $this->attributes['business_member']['member_id'];
-    }
-
-    public function isCustomer()
-    {
-        return !is_null($this->attributes['customer']);
-    }
-
-    public function getCustomerId()
-    {
-        if (!$this->isCustomer()) return null;
-        return $this->attributes['customer']['id'];
-    }
-
-    public function getMemberAssociatedBusinessId()
-    {
-        if (!$this->doesMemberHasBusiness()) return null;
-        return $this->attributes['business_member']['business_id'];
     }
 
     public function isMemberSuper()
@@ -156,22 +167,6 @@ class AuthUser
     public function toJson()
     {
         return json_encode($this->attributes);
-    }
-
-    public function setProfile(Profile $profile)
-    {
-        $this->profile = $profile;
-        return $this;
-    }
-
-    /**
-     * @param Model $user
-     * @return $this
-     */
-    public function setAvatar(Model $user)
-    {
-        $this->avatar = $user;
-        return $this;
     }
 
     public function setUser(User $user)
@@ -200,28 +195,6 @@ class AuthUser
         return $this->profile ? $this->profile : $this->avatar;
     }
 
-    public function resolveAuthUser()
-    {
-        $this->resolveProfile();
-        $this->resolveAvatar();
-    }
-
-    public function resolveAvatar()
-    {
-        if (!$this->attributes['avatar']) return;
-
-        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
-        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
-        if ($avatar) $this->setAvatar($avatar);
-    }
-
-    public function resolveProfile()
-    {
-        if (!isset($this->attributes['profile'])) return null;
-        $profile = Profile::find($this->attributes['profile']['id']);
-        if ($profile) $this->setProfile($profile);
-    }
-
     /**
      * @return Profile|null
      */
@@ -230,12 +203,28 @@ class AuthUser
         return $this->profile;
     }
 
+    public function setProfile(Profile $profile)
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
     /**
      * @return Model|null
      */
     public function getAvatar()
     {
         return $this->avatar;
+    }
+
+    /**
+     * @param Model $user
+     * @return $this
+     */
+    public function setAvatar(Model $user)
+    {
+        $this->avatar = $user;
+        return $this;
     }
 
     /**
@@ -284,20 +273,21 @@ class AuthUser
      */
     public function getBusiness()
     {
-
-        if (!isset($this->attributes['business_member'])) return null;
-        $business = Business::find($this->attributes['business_member']['business_id']);
-        if ($business) $this->setBusiness($business);
-        return $business;
+        if (!$this->profile || !$this->profile->member) return null;
+        $member = $this->profile->member;
+        $business_member = $member ? $member->businessMember : null;
+        if (!$business_member) return null;
+        return $business_member->business;
     }
 
-    /**
-     * @param Business $business
-     * @return AuthUser
-     */
-    public function setBusiness($business)
+    public function getCustomerId()
     {
-        $this->business = $business;
-        return $this;
+        if (!$this->isCustomer()) return null;
+        return $this->attributes['customer']['id'];
+    }
+
+    public function isCustomer()
+    {
+        return !is_null($this->attributes['customer']);
     }
 }

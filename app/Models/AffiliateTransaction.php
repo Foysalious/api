@@ -84,7 +84,8 @@ class AffiliateTransaction extends Model
 
     public function scopeManualDisbursement($query)
     {
-        return $query->where('log', 'LIKE', "%received from manual disbursement%");
+        return $query->where('log', 'LIKE', "%received from manual disbursement%")
+                     ->orWhere('log', 'LIKE', "%received as TopUp Commission%");
     }
 
     public function scopeShebaFacilitated($query)
@@ -95,5 +96,15 @@ class AffiliateTransaction extends Model
     public function scopePointPurchaseCommission($query)
     {
         return $query->where('log', "Credit Purchase Gateway Charge");
+    }
+
+    public function scopeProductResell($query)
+    {
+        return $query->where('log', 'LIKE', "%Refund for Product Resell%");
+    }
+
+    public function scopeBusTicketCommission($query)
+    {
+        return $query->where('log', 'LIKE', '%bus ticket sales commission%');
     }
 }

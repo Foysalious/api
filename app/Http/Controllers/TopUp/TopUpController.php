@@ -1,7 +1,6 @@
 <?php namespace App\Http\Controllers\TopUp;
 
-use App\Helper\BangladeshiMobileValidator;
-use App\Http\Controllers\AccountKit\AccountKitController;
+use App\Exceptions\DoNotReportException;
 use App\Http\Controllers\Controller;
 use App\Models\Affiliate;
 use App\Models\Business;
@@ -23,14 +22,18 @@ use Sheba\Dal\TopUpBulkRequestNumber\TopUpBulkRequestNumber;
 
 use Sheba\Dal\TopupOrder\TopUpOrderRepository;
 use Sheba\ModificationFields;
+use Sheba\OAuth2\AccountServerAuthenticationError;
+use Sheba\OAuth2\AccountServerNotWorking;
+use Sheba\OAuth2\WrongPinError;
+use Sheba\TopUp\Bulk\Exception\InvalidExtension;
 use Sheba\TopUp\Bulk\RequestStatus;
 use Sheba\TopUp\Bulk\Validator\DataFormatValidator;
 use Sheba\TopUp\Bulk\Validator\ExtensionValidator;
 use Sheba\TopUp\Bulk\Validator\SheetNameValidator;
 
-use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\TopUp\ConnectionType;
 use Sheba\OAuth2\AuthUser;
+use Sheba\TopUp\Exception\PinMismatchException;
 use Sheba\TopUp\History\RequestBuilder;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpDataFormat;
@@ -62,9 +65,14 @@ class TopUpController extends Controller
 {
     use ModificationFields;
 
-    public function getVendor(Request $request)
+    /**
+     * @param Request $request
+     * @param $user
+     * @return JsonResponse
+     */
+    public function getVendor(Request $request, $user)
     {
-        $agent = $this->getFullAgentType($request->type);
+        $agent = $this->getFullAgentType($user);
 
         $vendors = TopUpVendor::select('id', 'name', 'is_published')->published()->get();
         $error_message = "Currently, we’re supporting";
@@ -98,7 +106,8 @@ class TopUpController extends Controller
      */
     public function topUp(Request $request, $user, TopUpRequest $top_up_request, Creator $creator, TopUpSpecialAmount $special_amount, UserAgentInformation $userAgentInformation, VerifyPin $verifyPin)
     {
-        $agent = $request->user;
+        /** @var TopUpAgent $agent */
+        $agent = $this->getAgent($request, $user);
         $validation_data = [
             'mobile' => 'required|string|mobile:bd', 'connection_type' => 'required|in:prepaid,postpaid', 'vendor_id' => 'required|exists:topup_vendors,id', 'password' => 'required'
         ];
@@ -113,11 +122,7 @@ class TopUpController extends Controller
 
         $this->validate($request, $validation_data);
 
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness(); elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') {
-            $agent = $auth_user->getPartner();
+        if ($user == 'partner') {
             $token = $request->topup_token;
             if ($token) {
                 try {
@@ -127,13 +132,12 @@ class TopUpController extends Controller
                 } catch (Exception $e) {
                     return api_response($request, null, 409, ['message' => 'Invalid topup token']);
                 }
-
                 if ($credentials->sub != $agent->id) {
                     return api_response($request, null, 404, ['message' => 'Not a valid partner request']);
                 }
             }
+        }
 
-        } else return api_response($request, null, 400);
         $verifyPin->setAgent($agent)->setProfile($request->access_token->authorizationRequest->profile)->setPurpose(Purpose::TOPUP)->setRequest($request)->verify();
 
         $userAgentInformation->setRequest($request);
@@ -202,31 +206,34 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param $user
      * @param VerifyPin $verifyPin
      * @param VendorFactory $vendor
      * @param TopUpRequest $top_up_request
      * @param Creator $creator
      * @param TopUpSpecialAmount $special_amount
      * @return JsonResponse
-     * @throws Exception
+     * @throws DoNotReportException
+     * @throws AccountServerAuthenticationError
+     * @throws AccountServerNotWorking
+     * @throws WrongPinError
+     * @throws InvalidExtension
+     * @throws PinMismatchException
      */
-    public function bulkTopUp(Request $request, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
+    public function bulkTopUp(Request $request, $user, VerifyPin $verifyPin, VendorFactory $vendor, TopUpRequest $top_up_request,
                               Creator $creator, TopUpSpecialAmount $special_amount): JsonResponse
     {
         $this->validate($request, ['file' => 'required|file', 'password' => 'required']);
 
-        $agent = $request->user;
+        /** @var TopUpAgent $agent */
+        $agent = $this->getAgent($request, $user);
         $this->setModifier($agent);
 
-        /**
-         * MANUALLY OFF FOR TESTING
-         *
-         * $verifyPin->setAgent($agent)
+        $verifyPin->setAgent($agent)
             ->setProfile($request->access_token->authorizationRequest->profile)
             ->setPurpose(Purpose::TOPUP)
             ->setRequest($request)
             ->verify();
-         */
 
         $blocked_amount_by_operator = $this->getBlockedAmountForTopup($special_amount);
         $validator = (new ExtensionValidator())->setFile($request->file('file'));
@@ -335,38 +342,25 @@ class TopUpController extends Controller
      */
     public function activeBulkTopUps(Request $request, $user)
     {
-        /** @var AuthUser $auth_user */
-        $auth_user = $request->auth_user;
-        if ($user == 'business') $agent = $auth_user->getBusiness();
-        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
-        elseif ($user == 'partner') $agent = $auth_user->getPartner();
-        else return api_response($request, null, 400);
+        /** @var AuthUser $agent */
+        $agent = $this->getAgent($request, $user);
 
-        $final = [];
-        TopUpBulkRequest::where([
-            ['status', 'pending'],
-            ['agent_id', $agent->id],
-            ['agent_type', get_class($agent)]
-        ])->with('numbers')
-            ->where('status', 'pending')
-            ->orderBy('id', 'desc')
-            ->get()
-            ->filter(function ($topup_bulk_request) {
-                return $topup_bulk_request->numbers->count() > 0;
-            })->map(function ($topup_bulk_request) use (&$final) {
-                array_push($final, [
+        $topup_bulk_requests = TopUpBulkRequest::pending()->agent($agent)
+            ->withCount('orders', 'processedOrders')
+            ->having('orders_count', '>', 0)
+            ->orderBy('id', 'desc')->get()
+            ->map(function (TopUpBulkRequest $topup_bulk_request) {
+                return [
                     'id' => $topup_bulk_request->id,
                     'agent_id' => $topup_bulk_request->agent_id,
-                    'agent_type' => strtolower(str_replace('App\Models\\', '', $topup_bulk_request->agent_type)),
+                    'agent_type' => strtolower(class_basename($topup_bulk_request->agent_type)),
                     'status' => $topup_bulk_request->status,
-                    'total_numbers' => $topup_bulk_request->numbers->count(),
-                    'total_processed' => $topup_bulk_request->numbers->filter(function ($number) {
-                        return in_array(strtolower($number->status), ['successful', 'failed']);
-                    })->count()
-                ]);
-            });
+                    'total_numbers' => $topup_bulk_request->orders_count,
+                    'total_processed' => $topup_bulk_request->processed_orders_count,
+                ];
+            })->toArray();
 
-        return response()->json(['code' => 200, 'active_bulk_topups' => $final]);
+        return response()->json(['code' => 200, 'active_bulk_topups' => $topup_bulk_requests]);
     }
 
     /**
@@ -378,17 +372,19 @@ class TopUpController extends Controller
      * @param TopUpOrderRepository $top_up_order_repo
      * @return JsonResponse
      */
-    public function topUpHistory(Request $request, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo)
+    public function topUpHistory(Request $request, $user, TopUpHistoryExcel $history_excel, TopUpDataFormat $topUp_data_format, RequestBuilder $request_builder, TopUpOrderRepository $top_up_order_repo)
     {
         ini_set('memory_limit', '6096M');
         ini_set('max_execution_time', 480);
         
         list($offset, $limit) = calculatePagination($request);
+        /** @var AuthUser $user */
+        $user = $this->getAgent($request, $user);
 
         $is_excel_report = ($request->has('content_type') && $request->content_type == 'excel');
         if ($is_excel_report) {$offset = 0; $limit = 10000;}
 
-        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($request->user);
+        $request_builder->setOffset($offset)->setLimit($limit)->setAgent($user);
         if ($request->has('from') && $request->from !== "null") {
             $from_date = Carbon::parse($request->from);
             $to_date = Carbon::parse($request->to)->endOfDay();
@@ -446,9 +442,12 @@ class TopUpController extends Controller
         $topup_order = $creator->setTopUpRequest($top_up_request)->create();
         if (!$topup_order) return api_response($request, null, 500);
 
-        /** @var TopUpRechargeManager $topUp */
-        $topUp = app(TopUpRechargeManager::class);
-        $topUp->setTopUpOrder($topup_order)->recharge();
+        $vendor_factory = app(VendorFactory::class);
+        $vendor = $vendor_factory->getById($request->vendor_id);
+
+        /** @var TopUp $topUp */
+        $topUp = app(TopUp::class);
+        $topUp->setAgent($agent)->setVendor($vendor)->recharge($topup_order);
         return api_response($request, null, 200, [
             'message' => "Recharge Request Successful",
             'id' => $topup_order->id
@@ -499,16 +498,32 @@ class TopUpController extends Controller
 
     /**
      * @param Request $request
+     * @param $user
      * @param TopUpBulkRequestFormatter $topup_formatter
      * @return JsonResponse
      */
-    public function bulkList(Request $request, TopUpBulkRequestFormatter $topup_formatter)
+    public function bulkList(Request $request, $user, TopUpBulkRequestFormatter $topup_formatter)
     {
-        $auth_user = $request->auth_user;
-        $agent = $auth_user->getBusiness();
-        $agent_type = $this->getFullAgentType($agent->type);
+        $agent = $this->getAgent($request, $user);
+        $agent_type = $this->getFullAgentType($user);
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    /**
+     * @param Request $request
+     * @param $user
+     * @return Affiliate|Business|Partner
+     */
+    private function getAgent(Request $request, $user)
+    {
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        if ($user == 'business') $agent = $auth_user->getBusiness();
+        elseif ($user == 'affiliate') $agent = $auth_user->getAffiliate();
+        elseif ($user == 'partner') $agent = $auth_user->getPartner();
+
+        return $agent;
     }
 }

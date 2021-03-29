@@ -35,7 +35,6 @@ class ActionRewardDispatcher
             ->select('rewards.*')
             ->get();
 
-        \Log::info('action reward dispatcher ---->'.json_encode($published_rewards));
 
         foreach ($published_rewards as $reward) {
             /** @var Reward $reward */

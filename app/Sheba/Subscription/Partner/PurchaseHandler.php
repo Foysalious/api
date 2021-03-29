@@ -114,6 +114,7 @@ class PurchaseHandler
             throw new HasAlreadyCollectedFeeException();
     }
 
+
     /**
      * @throws AlreadyRunningSubscriptionRequestException|HasAlreadyCollectedFeeException
      */

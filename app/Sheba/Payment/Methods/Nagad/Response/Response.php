@@ -52,6 +52,12 @@ abstract class Response
         return json_encode($this->data);
     }
 
+    public function setRefId($id)
+    {
+        $this->data['paymentRefId'] = $id;
+        return $this;
+    }
+
     public function toDecodedString()
     {
         return json_encode($this->output);
