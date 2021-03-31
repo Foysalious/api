@@ -336,7 +336,7 @@ class PaymentLinkController extends Controller
                     'status'         => $payment_link_details['isActive'] == 1 ? 'active' : 'inactive',
                     'payment_link'   => $payment_link_details['link'],
                     'amount'         => $payment_link_details['amount'],
-                    'total_payments' => $payables->count(),
+                    'total_payments' => $payments->count(),
                     'created_at'     => date('Y-m-d h:i a', $payment_link_details['createdAt'] / 1000),
                     'payments'       => $all_payment
                 ];
