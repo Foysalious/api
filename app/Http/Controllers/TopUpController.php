@@ -56,7 +56,7 @@ class TopUpController extends Controller
             array_add($vendor, 'asset', $asset_name);
             array_add($vendor, 'agent_commission', $vendor_commission->agent_commission);
             array_add($vendor, 'is_prepaid_available', 1);
-            array_add($vendor, 'is_postpaid_available', ($vendor->id != 6) ? 1 : 0);
+            array_add($vendor, 'is_postpaid_available', ( ! in_array($vendor->id, [6,7]) ) ? 1 : 0);
             if ($vendor->is_published) $error_message .= ',' . $vendor->name;
         }
         $regular_expression = array(
