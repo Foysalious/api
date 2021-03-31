@@ -7,7 +7,6 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
@@ -78,11 +77,12 @@ class LeaveController extends Controller
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business));
@@ -513,5 +513,14 @@ class LeaveController extends Controller
         return api_response($request, null, 200, [
             'approvers' => $approvers
         ]);
+    }
+
+    private function filterByPeriod($leave_approval_requests, Request $request) {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            $requestable = $approval_request->requestable;
+            $start_date = $requestable ? $requestable->start_date : null;
+            $end_date = $requestable ? $requestable->end_date : null;
+            return $start_date >= $request->period_start.' 00:00:00' && $end_date <= $request->period_end.' 23:59:59';
+        });
     }
 }
