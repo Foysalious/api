@@ -86,7 +86,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     public function payables($payment_link_details)
     {
 
-        return Payment::leftJoin('payments', 'payments.payable_id','=','payables.id')->where([
+        return Payment::leftJoin('payables', 'payments.payable_id','=','payables.id')->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
         ])->select('payments.id', 'type', 'type_id', 'amount','payments.created_at')
             ->where('status',Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
