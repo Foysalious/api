@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Payment\Exceptions\PayableNotFound;
+use Sheba\Payment\Statuses;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\PaymentLink\Target;
@@ -84,15 +85,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function payables($payment_link_details)
     {
-        return Payable::whereHas('payments', function ($query) {
-            $query->where('status', 'completed');
-        })->where([
+
+        return Payment::leftJoin('payments', 'payments.payable_id','=','payables.id')->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
-        ])->with([
-            'payments' => function ($q) {
-                $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-            }
-        ])->select('id', 'type', 'type_id', 'amount')->orderBy('created_at', 'desc');
+        ])->select('payments.id', 'type', 'type_id', 'amount','payments.created_at')
+            ->where('status',Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
     }
 
     public function payment($payment)
