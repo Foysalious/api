@@ -155,6 +155,7 @@ class ResourceJobRepository
                         'partner_id' => $request->partner->id
                     ])
                 ]);
+            dd($res->getBody());
             return json_decode($res->getBody());
         } catch (RequestException $e) {
             app('sentry')->captureException($e);

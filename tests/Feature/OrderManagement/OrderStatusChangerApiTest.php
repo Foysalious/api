@@ -13,11 +13,14 @@ use App\Models\ResourceSchedule;
 use App\Repositories\ResourceJobRepository;
 use Carbon\Carbon;
 use Factory\JobFactory;
+use Factory\PartnerOrderRequestFactory;
 use Factory\ResourceScheduleFactory;
+use Factory\SubscriptionOrderRequest;
 use Illuminate\Support\Facades\DB;
 use phpDocumentor\Reflection\Types\Object_;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use Sheba\Dal\JobUpdateLog\JobUpdateLog;
+use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
 use Tests\Feature\FeatureTestCase;
 use Tests\Mocks\MockSuccessfulResourceJobRepository;
 
@@ -36,6 +39,7 @@ class AcceptNewOrderTest extends FeatureTestCase
         ]);
         DB::table('category_resource')->truncate();
         DB::table('category_partner_resource')->truncate();
+        DB::table('partner_order_requests')->truncate();
         $this->secondaryCategory->partnerResources()->attach($this->partner_resource);
         $this->secondaryCategory->resources()->attach($this->resource);
         $this->truncateTables([
@@ -288,7 +292,7 @@ class AcceptNewOrderTest extends FeatureTestCase
         $this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
         $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/accept',[
             'remember_token' => $this->resource->remember_token,
-            'resource_id' => $this->resource->id,
+            'resource_id' => $this->resource->id
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(403, $data['code']);
@@ -305,10 +309,94 @@ class AcceptNewOrderTest extends FeatureTestCase
         $this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
         $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/accept',[
             'remember_token' => $this->resource->remember_token,
-            'resource_id' => $this->resource->id,
+            'resource_id' => $this->resource->id
         ]);
         $data = $response->decodeResponseJson();
         $this->assertEquals(200, $data['code']);
         $this->assertEquals("Successful", $data['message']);
     }
+
+    /* partner_order -> id update to null
+    create partner_order_request with partner_id & partner_order_id
+    request status update to missed
+    hit api to sync partner_order_request can be accepted */
+    public function testMissedPartnerOrderRequestCannotBeAccepted()
+    {
+        //$this->partner_order->update(['partner_id'=> null]);
+        $partner_order_request = factory(PartnerOrderRequest::class)->create([
+            'partner_id'=>$this->partner->id,
+            'partner_order_id'=>$this->partner_order->id
+        ]);
+        $partner_order_request -> update(['status'=>'missed']);
+        //dd($this->resource);
+        //$this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/order-requests/'.$partner_order_request->id.'/accept',[
+            'remember_token' => $this->resource->remember_token
+        ]);
+        $data = $response->decodeResponseJson();
+        //dd($data);
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("missed is not acceptable.", $data['message']);
+    }
+
+    /*public function testSubscriptionPartnerOrderRequestCanBeAccepted()
+    {
+        $subscription_order_request = factory(SubscriptionOrderRequest::class)->create([
+            'id' => $this->subscription_order_request->id,
+            'partner_id'=>$this->partner->id,
+            'status'=>'missed'
+        ]);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/order-requests/'.$partner_order_request->id.'/accept',[
+            'remember_token' => $this->resource->remember_token
+        ]);
+        $data = $response->decodeResponseJson();
+    }*/
+
+    public function testAcceptedPartnerOrderRequestCannotBeAccepted()
+    {
+        //$this->partner_order->update(['partner_id'=> null]);
+        $partner_order_request = factory(PartnerOrderRequest::class)->create([
+            'partner_id'=>$this->partner->id,
+            'partner_order_id'=>$this->partner_order->id
+        ]);
+        $partner_order_request -> update(['status'=>'Accepted']);
+        //dd($this->resource);
+        //$this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/order-requests/'.$partner_order_request->id.'/accept',[
+            'remember_token' => $this->resource->remember_token
+        ]);
+        $data = $response->decodeResponseJson();
+        dd($data);
+        $this->assertEquals(403, $data['code']);
+    }
+
+    public function testAssignedOrderCannotBeChangedByUnassignedPartner()
+    {
+        $partner_order_request = factory(PartnerOrderRequest::class)->create([
+            'partner_id'=>$this->partner->id,
+            'partner_order_id'=>$this->partner_order->id
+        ]);
+        $partner_one = factory(Partner::class)->create([
+            'id'=>2
+        ]);
+        $response=$this->post('v1/partners/'.$partner_one->id.'/order-requests/'.$partner_order_request->id.'/accept',[
+            'remember_token' => $this->resource->remember_token
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(403, $data['code']);
+        $this->assertEquals("Forbidden. You're not a manager of this partner.", $data['message']);
+    }
+
+    public function testDeclinedOrderStatus()
+    {
+        // hit job api with reject action :  https://api.dev-sheba.xyz/v1/partners/37732/jobs/202549/reject
+        $this->app->singleton(ResourceJobRepository::class, MockSuccessfulResourceJobRepository::class);
+        $response=$this->post('v1/partners/'.$this->partner->id.'/jobs/'.$this->job->id.'/reject',[
+            'remember_token' => $this->resource->remember_token,
+        ]);
+        $data = $response->decodeResponseJson();
+        $this->assertEquals(200, $data['code']);
+        $this->assertEquals('Successful', $data['message']);
+    }
+
 }
