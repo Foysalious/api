@@ -69,7 +69,8 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
             'created_at' => $approval_request->created_at->format('M d, Y'),
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
-            'show_approve_reject_buttons' => $approval_request->approver_id == $requestable->business_member_id ? $this->isLeaveApprovedOrRejected($requestable) : 0,
+            'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
+            'show_normal_approver_approve_reject_buttons' => $approval_request->approver_id == $requestable->business_member_id ? 1 : 0,
             'leave' => [
                 'id' => $requestable->id,
                 'employee_id' => $requestable->businessMember->employee_id,
