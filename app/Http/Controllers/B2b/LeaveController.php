@@ -7,8 +7,8 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\ApprovalRequestTransformer;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
+use App\Transformers\Business\LeaveBalanceRemainingTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
@@ -389,6 +389,23 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
+    }
+
+    public function leaveBalanceRemaining($business_id, $business_member_id, Request $request)
+    {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMemberById($business_member_id);
+        /** @var Business $business */
+        $business = $business_member->business;
+        $leave_types = $business->leaveTypes()->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member, new LeaveBalanceRemainingTransformer($leave_types));
+        $leave_balance = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['leave_balance_remaining' => $leave_balance]);
     }
 
     /**
