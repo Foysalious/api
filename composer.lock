@@ -1696,7 +1696,7 @@
             "time": "2017-03-12T09:23:10+00:00"
         },
         {
-            "name": "jeremeamia/SuperClosure",
+            "name": "jeremeamia/superclosure",
             "version": "2.3.0",
             "source": {
                 "type": "git",
@@ -3474,7 +3474,7 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "b2002f254681ed0191db1bc21754a850ca88dc6d"
+                "reference": "f735e337d9b812f5abdc859a56f715d62521e7f2"
             },
             "require": {
                 "php": ">=5.4"
@@ -3501,7 +3501,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-03-25T08:10:24+00:00"
+            "time": "2021-04-01T07:25:38+00:00"
         },
         {
             "name": "sheba/elasticsearch",

@@ -119,8 +119,7 @@ class LeaveController extends Controller
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        if ($business_member->id != $approval_request->approver_id)
+        if (!$business_member->isSuperAdmin() && $business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
         $leave_requester_business_member = $requestable->businessMember;
