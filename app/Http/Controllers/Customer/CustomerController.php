@@ -176,7 +176,7 @@ class CustomerController extends Controller
         $customer = $request->customer;
         $data = [];
         $data['is_completed'] = $customer->is_completed;
-        if ($data['is_completed'] == 0) $data['not_complete_profile'] = "https://techcommunity.microsoft.com/t5/image/serverpage/image-id/9646i0C7B8315EF139689?v=1.0";
+        if ($data['is_completed'] == 0) $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
         return api_response($request, $data, 200, ['data' => $data]);
 
     }
