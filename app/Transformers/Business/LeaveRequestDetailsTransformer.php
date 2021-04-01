@@ -74,6 +74,7 @@ class LeaveRequestDetailsTransformer extends TransformerAbstract
             'super_admin_section_show' => $this->isLeaveCancelled($requestable),
             'show_approve_reject_buttons' => $this->isLeaveApprovedOrRejected($requestable),
             'super_admin_action_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::SUPER_ADMIN, null),
+            'show_approve_reject_buttons' => $approval_request->approver_id == $requestable->business_member_id ? $this->isLeaveApprovedOrRejected($requestable) : 0,
             'leave' => [
                 'id' => $requestable->id,
                 'business_member_id' => $business_member->id,

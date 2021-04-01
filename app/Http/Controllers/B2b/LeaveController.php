@@ -9,6 +9,7 @@ use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
+use App\Transformers\Business\LeaveBalanceRemainingTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
@@ -139,8 +140,7 @@ class LeaveController extends Controller
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        if ($business_member->id != $approval_request->approver_id)
+        if (!$business_member->isSuperAdmin() && $business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
         $leave_requester_business_member = $requestable->businessMember;
@@ -413,6 +413,23 @@ class LeaveController extends Controller
         }
 
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
+    }
+
+    public function leaveBalanceRemaining($business_id, $business_member_id, Request $request)
+    {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMemberById($business_member_id);
+        /** @var Business $business */
+        $business = $business_member->business;
+        $leave_types = $business->leaveTypes()->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member, new LeaveBalanceRemainingTransformer($leave_types));
+        $leave_balance = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['leave_balance_remaining' => $leave_balance]);
     }
 
     /**
