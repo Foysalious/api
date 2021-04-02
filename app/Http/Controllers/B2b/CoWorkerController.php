@@ -556,9 +556,13 @@ class CoWorkerController extends Controller
         ]);
         $business = $request->business;
         $manager_member = $request->manager_member;
+        $logged_in_member_id = $request->business_member->member_id;
         $this->setModifier($manager_member);
+        $member_ids = json_decode($request->employee_ids);
 
-        foreach (json_decode($request->employee_ids) as $member_id) {
+        if (in_array($logged_in_member_id, $member_ids)) return api_response($request, null, 404, ['message' => 'One of the Ids contains superadmin ID, which cannot be deactivated, Please check again.']);
+
+        foreach ($member_ids as $member_id) {
             $business_member = BusinessMember::where([
                 ['member_id', $member_id], ['business_id', $business->id]
             ])->first();
