@@ -1,11 +1,9 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Models\Business;
-use App\Models\Department;
 use Exception;
 use Illuminate\Http\UploadedFile;
 use Intervention\Image\Image;
-use Sheba\Business\BusinessMember\Events\BusinessMemberUpdated;
 use Sheba\Business\CoWorker\Designations;
 use Sheba\Business\CoWorker\Requests\Requester as CoWorkerRequester;
 use App\Transformers\Business\CoWorkerDetailTransformer;
@@ -531,7 +529,11 @@ class CoWorkerController extends Controller
     public function statusUpdate($business, $member_id, Request $request)
     {
         $this->validate($request, ['status' => 'required|string|in:' . implode(',', Statuses::get())]);
+        $logged_in_member_id = $request->business_member->member_id;
+        if ($logged_in_member_id == $member_id) return api_response($request, null, 404, ['message' => 'Sorry, You cannot deactivated yourself as Superadmin.']);
+
         $manager_member = $request->manager_member;
+
         $business = $request->business;
         $this->setModifier($manager_member);
 
