@@ -86,7 +86,7 @@ class AccountCreate
         if (isset($this->response['data'])) {
             $thirdPartyLog->setRequest($this->data['application_data'])
                             ->setPartnerId($this->partner->id)
-                            ->setResponse($this->response['data'])
+                            ->setResponse(json_encode($this->response['data']))
                             ->setFrom(ThirdPartyLog::PBL_ACCOUNT_CREATION)
                             ->store();
         }
