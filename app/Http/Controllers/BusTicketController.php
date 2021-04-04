@@ -6,6 +6,7 @@ use App\Models\Payment;
 use App\Models\Transport\TransportTicketOrder;
 use App\Transformers\BusRouteTransformer;
 use App\Transformers\CustomSerializer;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -497,7 +498,12 @@ class BusTicketController extends Controller
                         ->setSource(TransactionSources::SHEBA_WALLET)
                         ->store();
 
-                    return api_response($request, null, 200, ['message' => 'Ticket cancelled successfully.', 'code' => 200]);
+                    return api_response(
+                        $request,
+                        null,
+                        200,
+                        ['message' => 'Ticket cancelled successfully. User was refunded '. $refundAmount .'tk', 'code' => 200]
+                    );
                 }
             }
 
