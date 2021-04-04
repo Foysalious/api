@@ -1,5 +1,6 @@
 <?php namespace App\Http\Controllers\Pos;
 
+use App\Exceptions\Pos\Order\OrderNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Models\Partner;
 use App\Models\PosCustomer;
@@ -275,10 +276,12 @@ class OrderController extends Controller
         ]);
     }
 
+
     /**
      * @param Request $request
      * @param Updater $updater
      * @return JsonResponse
+     * @throws OrderNotFoundException
      */
     public function update(Request $request, Updater $updater)
     {
@@ -286,6 +289,9 @@ class OrderController extends Controller
             /** @var PosOrder $order */
             $new           = 1;
             $order         = PosOrder::with('items')->find($request->order);
+            if(!$order)
+                throw new OrderNotFoundException('Order Not Found', 400);
+
             $is_returned   = ($this->isReturned($order, $request, $new));
             $refund_nature = $is_returned ? Natures::RETURNED : Natures::EXCHANGED;
             $return_nature = $is_returned ? $this->getReturnType($request, $order) : null;
