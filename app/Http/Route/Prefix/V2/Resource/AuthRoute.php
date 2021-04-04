@@ -62,6 +62,11 @@ class AuthRoute
             $api->get('wallet', 'Resource\ResourceWalletController@getWallet');
             $api->post('withdrawals', 'Resource\ResourceWithdrawalRequestController@store');
             $api->post('orders', 'Resource\ResourceOrderController@placeOrder');
+            $api->group(['prefix' => 'info-call'], function ($api) {
+                $api->get('/', 'Resource\InfoCallController@index');
+                $api->post('/', 'Resource\InfoCallController@store');
+                $api->get('{id}', 'Resource\InfoCallController@show');
+            });
         });
     }
 }
