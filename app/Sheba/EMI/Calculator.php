@@ -19,10 +19,11 @@ class Calculator
     public function calculateMonthWiseCharge($amount, $month, $interest, $format = true)
     {
         $rate                 = ($interest / 100);
+        $interest_two_decimal = number_format((float)$interest, 2, '.', '');
         $bank_trx_fee = $this->getBankTransactionFee($amount + ceil(($amount * $rate)));
         return $format ? [
             "number_of_months"     => $month,
-            "interest"             => "$interest%",
+            "interest"             => "$interest_two_decimal%",
             "interest_value"       => $interest,
             "total_interest"       => number_format(ceil(($amount * $rate))),
             "bank_transaction_fee" => number_format($bank_trx_fee),
