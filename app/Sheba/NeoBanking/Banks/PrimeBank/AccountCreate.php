@@ -68,7 +68,8 @@ class AccountCreate
             "user_id"          => $this->partner->id,
             "name"             => $application['personal']['applicant_name'] ? : null,
             "mobile"           => $this->mobile,
-            "company_name"     => $this->partner->name
+            "company_name"     => $this->partner->name,
+            "full_data"        => json_encode($application)
         ];
         return $this;
     }
