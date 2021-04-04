@@ -30,7 +30,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
             'salary_breakdown' => $this->grossSalaryBreakdown($payroll_setting),
             'pay_components' => $this->payComponents($payroll_setting),
             'pay_schedule' => $this->paySchedule($payroll_setting),
-            'payroll_setting_completion' => $this->payrollSettingCompletion(),
+            //'payroll_setting_completion' => $this->payrollSettingCompletion(),
         ];
     }
 
@@ -41,15 +41,20 @@ class PayrollSettingsTransformer extends TransformerAbstract
     private function grossSalaryBreakdown($payroll_setting)
     {
         $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
-        $count = 0;
-        if (($payroll_percentage_breakdown->basicSalary > 0) || ($payroll_percentage_breakdown->houseRent > 0) || ($payroll_percentage_breakdown->medicalAllowance > 0) || ($payroll_percentage_breakdown->conveyance > 0)) $count++;
-        $salary_breakdown_completion = round((($count / 1) * 50), 0);
+        $payroll_percentage_breakdown_total = (new GrossSalaryBreakdownCalculate())->totalPercentage($payroll_setting);
 
-        $this->payrollComponentData[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
+        //$count = 0;
+        /*if (($payroll_percentage_breakdown->basicSalary > 0) || ($payroll_percentage_breakdown->houseRent > 0) || ($payroll_percentage_breakdown->medicalAllowance > 0) || ($payroll_percentage_breakdown->conveyance > 0)) $count++;*/
+        //$salary_breakdown_completion = round((($count / 1) * 50), 0);
+
+        /*$this->payrollComponentData[Components::BASIC_SALARY] = $payroll_percentage_breakdown->basicSalary;
         $this->payrollComponentData[Components::HOUSE_RENT] = $payroll_percentage_breakdown->houseRent;
         $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
-        $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
-        $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
+        $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;*/
+        $this->payrollComponentData['salary_breakdown'] = $payroll_percentage_breakdown;
+        //$this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
+        $this->payrollComponentData['salary_total_percentage'] = $payroll_percentage_breakdown_total;
+
         return $this->payrollComponentData;
     }
 
