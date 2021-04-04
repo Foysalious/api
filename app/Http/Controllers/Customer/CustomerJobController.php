@@ -41,6 +41,7 @@ class CustomerJobController extends Controller
                 try {
                     DB::transaction(function () use ($order, $voucher, $job) {
                         $order->update($this->withUpdateModificationField(['voucher_id' => $voucher->id]));
+                        if($voucher->max_order === 1 && $voucher->max_customer === 1) $voucher->update(['is_active' => 0]);
                         $voucherDiscount = new VoucherDiscount();
                         $total_price = (double)$job->partnerOrder->calculate(true)->totalPrice;
                         $amount = $voucherDiscount->setVoucher($voucher)->calculate($total_price);
