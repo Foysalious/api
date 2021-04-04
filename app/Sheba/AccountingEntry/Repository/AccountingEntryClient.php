@@ -10,9 +10,9 @@ class AccountingEntryClient
     protected $baseUrl;
     protected $apiKey;
 
-    public function __construct()
+    public function __construct(Client $client)
     {
-        $this->client = (new Client());
+        $this->client = $client;
         $this->baseUrl = rtrim(config('accounting_entry.api_url'), '/');
         $this->apiKey = config('accounting_entry.api_key');
     }
@@ -68,11 +68,14 @@ class AccountingEntryClient
         return $this->baseUrl . "/" . $uri;
     }
 
+    /**
+     * @param null $data
+     * @return array
+     */
     public function getOptions($data = null)
     {
         $options['headers'] = ['Content-Type' => 'application/json', 'x-api-key' => $this->apiKey, 'Accept' => 'application/json'];
         if ($data) {
-            $options['form_params'] = $data;
             $options['json'] = $data;
         }
         return $options;

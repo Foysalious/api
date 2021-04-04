@@ -290,6 +290,7 @@ class IndexRoute
             (new BidRoute())->set($api);
             (new DueTrackerRoute())->set($api);
             (new ReferralRoute())->individuals($api);
+            (new Accounting())->set($api);
         });
     }
 }
