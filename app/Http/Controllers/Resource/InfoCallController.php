@@ -34,6 +34,7 @@ class InfoCallController extends Controller
             'priority' => 'High',
             'flag' => 'Red',
             'info_category' => 'not_available',
+            'status' => 'Open',
             'customer_mobile' => $request->mobile,
             'location_id' => $request->location_id,
             'service_id' => $request->service_id,
