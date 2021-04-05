@@ -1,17 +1,23 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
-use Sheba\Dal\PayrollComponent\Components;
+use Sheba\Business\PayrollComponent\Components\MedicalAllowance;
+use Sheba\Business\PayrollComponent\Components\BasicSalary;
+use Sheba\Business\PayrollComponent\Components\Conveyance;
+use Sheba\Business\PayrollComponent\Components\HouseRent;
 use Sheba\Dal\PayrollComponent\PayrollComponent;
+use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\Type;
 
 class GrossSalaryBreakdownCalculate
 {
-    private $componentPercentage = [];
+    private $componentPercentage;
     private $totalAmountPerComponent;
     private $grossSalaryBreakdownWithTotalAmount;
 
     public function __construct()
     {
+        $this->componentPercentage = new GrossSalaryComponent();
+        $this->totalAmountPerComponent = new GrossSalaryComponent();
         $this->grossSalaryBreakdownWithTotalAmount = [];
     }
 
@@ -24,28 +30,20 @@ class GrossSalaryBreakdownCalculate
         /** @var PayrollComponent $payroll_components */
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
         foreach ($payroll_components as $payroll_component) {
-             array_push($this->componentPercentage, [
-                 'id' => $payroll_component->id,
-                'key' => $payroll_component->name,
-                'title' => Components::getComponents($payroll_component->name)['value'],
-                'is_default' => $payroll_component->is_default,
-                'value' =>(new GrossComponents($payroll_component))->getPercentage(),
-                'is_enable' => 1,
-                'is_taxable' => 0,
-            ]);
+            if ($payroll_component->name == Components::BASIC_SALARY) {
+                $this->componentPercentage->basicSalary = (new BasicSalary($payroll_component))->getPercentage();
+            }
+            if ($payroll_component->name == Components::HOUSE_RENT) {
+                $this->componentPercentage->houseRent = (new HouseRent($payroll_component))->getPercentage();
+            }
+            if ($payroll_component->name == Components::MEDICAL_ALLOWANCE) {
+                $this->componentPercentage->medicalAllowance = (new MedicalAllowance($payroll_component))->getPercentage();
+            }
+            if ($payroll_component->name == Components::CONVEYANCE) {
+                $this->componentPercentage->conveyance = (new Conveyance($payroll_component))->getPercentage();
+            }
         }
         return $this->componentPercentage;
-    }
-
-    public function totalPercentage($payroll_setting)
-    {
-        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
-        $total = 0;
-        foreach ($payroll_components as $payroll_component) {
-            $total += (new GrossComponents($payroll_component))->getPercentage();
-        }
-
-        return $total;
     }
 
 
