@@ -64,7 +64,7 @@ class CustomerOrderController extends Controller
                 $all_orders = $customer->orders;
                 if($status) {
                     $all_orders = $all_orders->filter(function ($order, $key) use ($status) {
-                        return $order->lastPartnerOrder()->getActiveJob()->status === $status;
+                        return $order->lastPartnerOrder() ? $order->lastPartnerOrder()->lastJob()->status === $status : false;
                     });
                 }
                 $all_jobs = $this->getInformation($all_orders);
