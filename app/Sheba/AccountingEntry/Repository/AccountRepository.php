@@ -12,8 +12,8 @@ class AccountRepository extends AccountingEntryClient
         "source_type" => "transfer",
         "debit_account_key" => $data->from_account_key,
         "credit_account_key" => $data->to_account_key,
-        "entry_at" => $data->date
-    ];
+        "entry_at" => $data->date,
+        "details" => $data->note];
         $url = "api/journals/partner/".$data->partner->id;
         try {
             return $this->post($url, $entry_data);
