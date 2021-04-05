@@ -2,6 +2,7 @@
 
 use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\Leave\Model as Leave;
+use Sheba\Dal\Leave\Status;
 
 class ApproverWithReason
 {
@@ -15,7 +16,7 @@ class ApproverWithReason
         $rejection = $requestable->rejection()->where('is_rejected_by_super_admin',$type)->first();
         if (!$rejection) return null;
         if ($type == self::SUPER_ADMIN) return $rejection->note;
-        if ($type == self::APPROVER && $approval_request->approver_id != $approver_id) return null;
+        if ($type == self::APPROVER && $approval_request->approver_id != $approver_id || $approval_request->status != Status::REJECTED) return null;
         $reasons = $rejection->reasons;
         $data = [];
         $final_data['note'] = $rejection->note;
