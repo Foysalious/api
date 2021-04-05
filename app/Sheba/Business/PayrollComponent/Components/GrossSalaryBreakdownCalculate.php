@@ -12,7 +12,6 @@ class GrossSalaryBreakdownCalculate
 
     public function __construct()
     {
-        $this->totalAmountPerComponent = new GrossSalaryComponent();
         $this->grossSalaryBreakdownWithTotalAmount = [];
     }
 
