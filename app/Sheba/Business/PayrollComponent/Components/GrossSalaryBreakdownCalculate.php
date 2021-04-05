@@ -1,5 +1,6 @@
 <?php namespace App\Sheba\Business\PayrollComponent\Components;
 
+use Sheba\Dal\PayrollComponent\Components;
 use Sheba\Dal\PayrollComponent\PayrollComponent;
 use Sheba\Dal\PayrollComponent\Type;
 
@@ -11,7 +12,6 @@ class GrossSalaryBreakdownCalculate
 
     public function __construct()
     {
-        //$this->componentPercentage = new GrossSalaryComponent();
         $this->totalAmountPerComponent = new GrossSalaryComponent();
         $this->grossSalaryBreakdownWithTotalAmount = [];
     }
@@ -26,31 +26,15 @@ class GrossSalaryBreakdownCalculate
         $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
         foreach ($payroll_components as $payroll_component) {
              array_push($this->componentPercentage, [
-                'name' => $payroll_component->name,
+                 'id' => $payroll_component->id,
+                'key' => $payroll_component->name,
+                'title' => Components::getComponents($payroll_component->name)['value'],
                 'is_default' => $payroll_component->is_default,
                 'value' =>(new GrossComponents($payroll_component))->getPercentage(),
                 'is_enable' => 1,
                 'is_taxable' => 0,
             ]);
-
-
-            /*if ($payroll_component->name == Components::BASIC_SALARY) {
-                $this->componentPercentage->basicSalary = (new BasicSalary($payroll_component))->getPercentage();
-            }
-            else if ($payroll_component->name == Components::HOUSE_RENT) {
-                $this->componentPercentage->houseRent = (new HouseRent($payroll_component))->getPercentage();
-            }
-            else if ($payroll_component->name == Components::MEDICAL_ALLOWANCE) {
-                $this->componentPercentage->medicalAllowance = (new MedicalAllowance($payroll_component))->getPercentage();
-            }
-            else if ($payroll_component->name == Components::CONVEYANCE) {
-                $this->componentPercentage->conveyance = (new Conveyance($payroll_component))->getPercentage();
-            }
-            else {
-                $this->componentPercentage->others =
-            }*/
         }
-        //dd($this->componentPercentage);
         return $this->componentPercentage;
     }
 
