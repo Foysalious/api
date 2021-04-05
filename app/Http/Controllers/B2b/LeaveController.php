@@ -292,7 +292,7 @@ class LeaveController extends Controller
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
