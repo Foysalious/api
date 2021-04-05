@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
 use App\Models\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
+use Sheba\Dal\Service\Service;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AuthUser;
 
@@ -49,12 +50,19 @@ class InfoCallController extends Controller
     public function show($id)
     {
         $info_call = InfoCall::findOrFail($id);
+        if ($info_call->status == 'Rejected') $status = 'বাতিল হয়েছে';
+        elseif ($info_call->status == 'Converted') $status = 'গ্রহণ হয়েছে';
+        else $status = 'অপেক্ষমান';
         $info_call_details = [
             'id' => $id,
-            'status' => $info_call->status,
-            'service_name'=> $info_call->service_name,
+            'status' => $status,
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
+        if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
+        else {
+            $service_name = Service::select('name')->where('id',$info_call->service_id)->get();
+            $info_call_details['service_name'] =$service_name[0]['name'];
+        }
         return ['code' => 200, 'info_call_details' => $info_call_details];
     }
 }
