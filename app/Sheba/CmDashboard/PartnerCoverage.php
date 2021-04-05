@@ -53,7 +53,8 @@ class PartnerCoverage
                 ->where('category_partner.category_id', $this->category)
                 ->where('partners.status', 'Verified')
                 ->where('category_partner.is_verified', 1)
-                ->pluck('partner_id');
+                ->pluck('partner_id')
+                ->all();
         }
 
         if($this->service) {
@@ -68,7 +69,7 @@ class PartnerCoverage
                 $service_query = $service_query->whereIn('partner_service.partner_id', $this->partners);
             }
 
-            $this->partners = $service_query->pluck('partner_id');
+            $this->partners = $service_query->pluck('partner_id')->all();
 
             if(count($this->serviceCombination) && count($this->partners)) {
                 foreach ($service_query->pluck('options', 'partner_id') as $partner_id => $partner_options) {
@@ -101,7 +102,7 @@ class PartnerCoverage
             $locations = $locations->whereIn('partner_id', $this->partners);
         }
 
-        foreach ($locations->pluck('count', 'location_id') as $location_id => $partner_count) {
+        foreach ($locations->pluck('count', 'location_id')->all() as $location_id => $partner_count) {
             $this->locations[$location_id]['partner_count'] = $partner_count;
         }
 

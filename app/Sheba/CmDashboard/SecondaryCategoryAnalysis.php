@@ -1,5 +1,6 @@
 <?php namespace Sheba\CmDashboard;
 
+use Illuminate\Support\Collection;
 use Sheba\Dal\Category\Category;
 use App\Models\Location;
 use App\Models\Partner;
@@ -78,7 +79,7 @@ class SecondaryCategoryAnalysis
     private function getPartners()
     {
         $this->partners = DB::table('category_partner')->select('partner_id')
-            ->where('category_id', $this->categoryId)->pluck('partner_id');
+            ->where('category_id', $this->categoryId)->pluck('partner_id')->all();
     }
 
     private function calculateJobStatuses()
@@ -92,7 +93,6 @@ class SecondaryCategoryAnalysis
         $data = DB::table('location_partner')->select(DB::raw('location_id, COUNT(partner_id) as partner_count'))
             ->whereIn('partner_id', $this->partners)->groupBy('location_id')->get();
 
-        $data = collect($data);
         $this->partnerLocationsCount['min'] = $data->min('partner_count') ?: 0;
         $this->partnerLocationsCount['max'] = $data->max('partner_count') ?: 0;
         $this->partnerLocationsCount['avg'] = $data->avg('partner_count') ?: 0;
@@ -100,7 +100,7 @@ class SecondaryCategoryAnalysis
         $this->maxPartnerLocations = $this->getPartnerLocationsOnCount($data, 'max');
     }
 
-    private function getPartnerLocationsOnCount($data, $count_type)
+    private function getPartnerLocationsOnCount(Collection $data, $count_type)
     {
         return $data->where('partner_count', $this->partnerLocationsCount[$count_type])
             ->pluck('location_id')->map(function ($location_id) {
@@ -110,10 +110,8 @@ class SecondaryCategoryAnalysis
 
     private function calculateCommissions()
     {
-        $data = DB::table('category_partner')->select(DB::raw('commission, COUNT(partner_id) as partner_count'))
-            ->where('category_id', $this->categoryId)->groupBy('commission')->get();
-
-        $this->commissionsCount = collect($data)->pluck('partner_count', 'commission');
+        $this->commissionsCount = DB::table('category_partner')->select(DB::raw('commission, COUNT(partner_id) as partner_count'))
+            ->where('category_id', $this->categoryId)->groupBy('commission')->get()->pluck('partner_count', 'commission');
     }
 
     private function calculateSpChanges()
@@ -133,7 +131,7 @@ class SecondaryCategoryAnalysis
         $this->avgSpChanges = $total_partner ? ($total_changes / $total_partner) : 0;
     }
 
-    private function getChangedPartnerOnCount($data, $count)
+    private function getChangedPartnerOnCount(Collection $data, $count)
     {
         return $data->where('count', $count)
             ->pluck('old_partner_id')->map(function ($location_id) {
@@ -149,7 +147,7 @@ class SecondaryCategoryAnalysis
             })->groupBy('cancel_reason');
         if($this->timeFrame) $data = $data->whereBetween('created_at', $this->timeFrame->getArray());
 
-        $this->cancelReasons = collect($data->get())->pluck('count', 'cancel_reason');
+        $this->cancelReasons = $data->get()->pluck('count', 'cancel_reason');
     }
 
     private function formatData()

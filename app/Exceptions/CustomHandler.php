@@ -3,6 +3,7 @@
 use Dingo\Api\Http\Request;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Validation\ValidationException;
 use Sheba\Exceptions\HandlerFactory;
@@ -53,5 +54,17 @@ class CustomHandler extends DingoHandler
         if ($this->parentHandler->shouldReport($e)) $handler ? $handler->report() : logError($e);
 
         return $handler ? $handler->render() : parent::render($request, $e);
+    }
+
+    /**
+     * Convert an authentication exception into an unauthenticated response.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param AuthenticationException $exception
+     * @return \Illuminate\Http\Response|Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return response()->json(['error' => 'Unauthenticated.'], 401);
     }
 }

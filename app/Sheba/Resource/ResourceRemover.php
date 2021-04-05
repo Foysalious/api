@@ -36,7 +36,7 @@ class ResourceRemover
             'worked_as' => json_encode($this->resource->typeIn($this->partner)),
             'categories' => $this->getPartnerResourceCategories($partner_resources)->pluck('category_id')->toJson(),
             'jobs_served' => $this->getServedJobCount(),
-            'avg_rating' => $this->getAvgRating() ?: $this->getAvgRating(),
+            'avg_rating' => $this->getAvgRating(),
             'got_complain' => $this->getComplainsCount(),
         ];
         ResourceEmployment::create($this->withBothModificationFields($data));
@@ -55,7 +55,7 @@ class ResourceRemover
 
     private function getPartnerResourceCategories($partner_resources)
     {
-        return collect(DB::table('category_partner_resource')->where('partner_resource_id', $partner_resources->pluck('id')->toArray())->get());
+        return DB::table('category_partner_resource')->where('partner_resource_id', $partner_resources->pluck('id')->toArray())->get();
     }
 
     private function getServedJobCount()

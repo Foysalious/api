@@ -35,13 +35,13 @@ return [
                 'driver' => 'database',
                 'table' => 'jobs',
                 'queue' => 'default',
-                'expire' => 60
+                'retry_after' => 60
             ],
             'beanstalkd' => [
                 'driver' => 'beanstalkd',
                 'host' => 'localhost',
                 'queue' => 'default',
-                'ttr' => 60
+                'retry_after' => 60
             ],
             'sqs' => [
                 'driver' => 'sqs',
@@ -55,25 +55,25 @@ return [
                 'driver' => 'redis',
                 'connection' => 'default',
                 'queue' => 'api_queue',
-                'expire' => 60
+                'retry_after' => 60
             ],
             'sms_campaign' => [
                 'driver' => 'redis',
                 'connection' => 'default',
                 'queue' => 'sms_campaign',
-                'expire' => 60
+                'retry_after' => 60
             ],
             'report' => [
                 'driver' => 'redis',
                 'connection' => 'default',
                 'queue' => 'report',
-                'expire' => 60
+                'retry_after' => 60
             ],
             'business_notification' => [
                 'driver' => 'redis',
                 'connection' => 'default',
                 'queue' => 'business_notification',
-                'expire' => 60
+                'retry_after' => 60
             ]
         ] + $top_up_queues,
 

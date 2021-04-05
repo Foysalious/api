@@ -166,12 +166,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
 
     public function getLocationsList()
     {
-        return $this->locations->lists('id')->toArray();
+        return $this->locations->pluck('id')->toArray();
     }
 
     public function getLocationsNames()
     {
-        return $this->locations->lists('name')->toArray();
+        return $this->locations->pluck('name')->toArray();
     }
 
     public function reviews()
@@ -475,9 +475,12 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             $partner_resource_ids[$resource->pivot->id] = $resource;
         });
         $result = [];
-        collect(DB::table('category_partner_resource')->select('partner_resource_id')->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)->get())->pluck('partner_resource_id')->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
-            $result[] = $partner_resource_ids[$partner_resource_id];
-        });
+        DB::table('category_partner_resource')->select('partner_resource_id')
+            ->whereIn('partner_resource_id', array_keys($partner_resource_ids))->where('category_id', $category)
+            ->get()->pluck('partner_resource_id')
+            ->each(function ($partner_resource_id) use ($partner_resource_ids, &$result) {
+                $result[] = $partner_resource_ids[$partner_resource_id];
+            });
         return collect($result);
     }
 

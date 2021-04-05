@@ -2,6 +2,7 @@
 
 use App\Sheba\Release\Release;
 use Exception;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -59,5 +60,17 @@ class Handler extends ExceptionHandler
         if ($this->shouldReport($e)) $handler ? $handler->report() : logError($e);
 
         return $handler ? $handler->render() : parent::render($request, $e);
+    }
+
+    /**
+     * Convert an authentication exception into an unauthenticated response.
+     *
+     * @param Request $request
+     * @param AuthenticationException $exception
+     * @return \Illuminate\Http\Response|Response
+     */
+    protected function unauthenticated($request, AuthenticationException $exception)
+    {
+        return response()->json(['error' => 'Unauthenticated.'], 401);
     }
 }

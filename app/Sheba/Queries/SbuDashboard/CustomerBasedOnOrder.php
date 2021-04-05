@@ -5,30 +5,31 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerBasedOnOrder
 {
-    private $table;
+    private $today;
+    private $hasOrderQuery;
 
     public function __construct()
     {
-        $this->table = DB::table('customers');
         $this->today = Carbon::today()->toDateString();
+        $this->hasOrderQuery = function ($query) {
+            $query->from('orders as o')->whereRaw('orders.customer_id=o.customer_id')
+                ->where('o.created_at', '<', $this->today)->limit(1);
+        };
     }
 
     public function newUser()
     {
-        $date = $this->today;
-        $data = DB::table('orders')->where('created_at', '>=', $date)->whereNotExists(function ($query) use ($date) {
-            $query->from('orders as o')->whereRaw('orders.customer_id=o.customer_id')->where('o.created_at', '<', $date)->limit(1);
-        })->selectRaw('count(distinct(orders.customer_id)) as total')->get();
-        return $data;
+        return $this->getBaseQuery()->whereNotExists($this->hasOrderQuery)->get()->all();
     }
 
     public function returningUser()
     {
-        $date = $this->today;
-        $data = DB::table('orders')->where('created_at', '>=', $date)->whereExists(function ($query) use ($date) {
-            $query->from('orders as o')->whereRaw('orders.customer_id=o.customer_id')->where('o.created_at', '<', $date)->limit(1);
-        })->selectRaw('count(distinct(orders.customer_id)) as total')->get();
+        return $this->getBaseQuery()->whereExists($this->hasOrderQuery)->get()->all();
+    }
 
-        return $data;
+    private function getBaseQuery()
+    {
+        return DB::table('orders')->where('created_at', '>=', $this->today)
+            ->selectRaw('count(distinct(orders.customer_id)) as total');
     }
 }

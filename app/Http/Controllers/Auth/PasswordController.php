@@ -10,7 +10,6 @@ use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Redis;
-use Illuminate\Validation\ValidationException;
 use Mail;
 use Sheba\Dal\Profile\Events\ProfilePasswordUpdated;
 use Sheba\Sms\Sms;
@@ -88,76 +87,38 @@ class PasswordController extends Controller
 
     public function validatePasswordResetCode(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'code' => 'required',
-                'from' => 'required|string|in:' . implode(',', constants('FROM'))
-            ]);
-            $code = Redis::get('password_reset_code_' . (int)$request->code);
-            return $code != null ? api_response($request, 1, 200) : api_response($request, 0, 404);
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, [
+            'code' => 'required',
+            'from' => 'required|string|in:' . implode(',', constants('FROM'))
+        ]);
+        $code = Redis::get('password_reset_code_' . (int)$request->code);
+        return $code != null ? api_response($request, 1, 200) : api_response($request, 0, 404);
     }
 
     public function reset(Request $request)
     {
-        try {
-            $this->validate($request, [
-                'password' => 'required|min:5|max:20',
-                'from' => 'required|string|in:' . implode(',', constants('FROM')),
-                'code' => 'required'
-            ]);
-            /*if (!preg_match('/^(?=.*[A-Za-z\d])[A-Za-z\d!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)) {
-                return api_response($request, 0, 403, ['message' => "Password must contain one letter or one number"]);
-            }
-            if (!preg_match('/^(?=.*[!@#$%^&*(),.?":{}|<>])[!@#$%^&*(),.?":{}|<>]{5,20}$/', $request->password)){
-                return api_response($request, 0, 403, ['message' => "Punctuations that you have used are not supported"]);
-            }*/
+        $this->validate($request, [
+            'password' => 'required|min:5|max:20',
+            'from' => 'required|string|in:' . implode(',', constants('FROM')),
+            'code' => 'required'
+        ]);
 
-            $key = Redis::get('password_reset_code_' . (int)$request->code);
-            if ($key != null) {
-                $data = json_decode($key);
-                $profile = Profile::find((int)$data->profile_id);
-                $profile->password = bcrypt($request->password);
-                $profile->update();
-                event(new ProfilePasswordUpdated($profile));
-                Redis::del('password_reset_code_' . (int)$request->code);
-                return api_response($request, $profile, 200);
-            } else {
-                return api_response($request, 0, 403);
-            }
-        } catch (ValidationException $e) {
-            $sentry = app('sentry');
-            $sentry->user_context(['request' => $request->all()]);
-            $sentry->captureException($e);
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $key = Redis::get('password_reset_code_' . (int)$request->code);
+        if ($key == null) return api_response($request, 0, 403);
+
+        $data = json_decode($key);
+        $profile = Profile::find((int)$data->profile_id);
+        $profile->password = bcrypt($request->password);
+        $profile->update();
+        event(new ProfilePasswordUpdated($profile));
+        Redis::del('password_reset_code_' . (int)$request->code);
+        return api_response($request, $profile, 200);
     }
 
     public function resetPasswordForBank(Request $request)
     {
-        try {
-            $this->validate($request, ['new_password' => 'required|min:4']);
-            $request->user->profile->update(['password' => bcrypt($request->new_password)]);
-            return api_response($request, true, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $this->validate($request, ['new_password' => 'required|min:4']);
+        $request->user->profile->update(['password' => bcrypt($request->new_password)]);
+        return api_response($request, true, 200);
     }
 }

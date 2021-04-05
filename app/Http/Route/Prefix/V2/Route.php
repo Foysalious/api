@@ -39,9 +39,7 @@ class Route
             $api->get('validate-transaction-id', 'PartnerTransactionController@validateTransactionId');
             $api->post('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
             $api->get('transactions/{transactionID}', 'ShebaController@checkTransactionStatus');
-            //$api->post('password/email', 'Auth\PasswordController@sendResetPasswordEmail');
             $api->post('password/validate', 'Auth\PasswordController@validatePasswordResetCode');
-            //$api->post('password/reset', 'Auth\PasswordController@reset');
             $api->post('events', 'EventController@store');
             $api->get('top-up/fail/ssl', 'TopUpController@sslFail');
             $api->get('top-up/success/ssl', 'TopUpController@sslSuccess');

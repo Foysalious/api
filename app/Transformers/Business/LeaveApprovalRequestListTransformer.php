@@ -72,7 +72,6 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
     private function getApprover($requestable, $requestable_business_member)
     {
         $approvers = [];
-        $all_approvers = [];
         $this->requestableType = ApprovalRequestType::getByModel($requestable);
         $approval_setting = (new FindApprovalSettings())->getApprovalSetting($requestable_business_member, $this->requestableType);
         $find_approvers = (new FindApprovers())->calculateApprovers($approval_setting, $requestable_business_member);
@@ -81,9 +80,6 @@ class LeaveApprovalRequestListTransformer extends TransformerAbstract
         $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
 
         foreach ($requestable->requests as $approval_request) {
-            /*$business_member = $approval_request->approver;
-            $member = $business_member->member;
-            $profile = $member->profile;*/
             $profile = DB::table('approval_requests')
                 ->join('business_member', 'business_member.id', '=', 'approval_requests.approver_id')
                 ->join('members', 'members.id', '=', 'business_member.member_id')

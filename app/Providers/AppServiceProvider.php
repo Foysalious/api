@@ -1,7 +1,7 @@
 <?php namespace App\Providers;
 
 use App\Http\Middleware\B2B\TerminatingMiddleware;
-use App\Sheba\Algolia\Provider\EventsListenerProvider;
+use Sheba\Algolia\Provider\EventsListenerProvider as AlgoliaProvider;
 use Exception;
 use Illuminate\Support\ServiceProvider;
 
@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->register(PartnerHomeSettingServiceProviderV3::class);
         $this->app->register(HighlyDemandsCategoriesServiceProvider::class);
         $this->app->register(CURServiceProvider::class);
-        $this->app->register(EventsListenerProvider::class);
+        $this->app->register(AlgoliaProvider::class);
         $this->app->singleton(TerminatingMiddleware::class);
     }
 }

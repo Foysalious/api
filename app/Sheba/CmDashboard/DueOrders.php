@@ -25,7 +25,7 @@ class DueOrders
      */
     public function get($from, $to)
     {
-        $orders = $this->makeQuery()->whereBetween('partner_orders.closed_at', [$from . ' 00:00:00', $to . ' 23:59:59'])->get();
+        $orders = $this->makeQuery()->whereBetween('partner_orders.closed_at', [$from . ' 00:00:00', $to . ' 23:59:59'])->get()->all();
         $orders_id  = array_unique(array_pluck($orders, 'id'));
         $orders     = Order::findMany($orders_id);
 

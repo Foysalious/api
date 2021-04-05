@@ -30,50 +30,45 @@ class PartnerSummary
 
     public function verifiedToday()
     {
-        $date = $this->today;
-        $data = $this->logTable
+        return $this->logTable
             ->selectRaw('count(distinct(partner_id)) as total')
             ->where('to', '=', constants('PARTNER_STATUSES')['Verified'])
-            ->whereNotExists(function ($query) use ($date) {
+            ->whereNotExists(function ($query) {
                 $query->from('partner_status_change_logs as p')
                     ->where('p.to', '=', constants('PARTNER_STATUSES')['Verified'])
                     ->whereRaw('p.partner_id=partner_status_change_logs.partner_id')
-                    ->where('p.created_at', '<', $date);
+                    ->where('p.created_at', '<', $this->today);
             })
             ->where('created_at', '>=', $this->today)
-            ->get();
-        return $data;
+            ->get()->all();
     }
 
     public function onBoardToday()
     {
-        $data = $this->table
+        return $this->table
             ->where('status', '=', constants('PARTNER_STATUSES')['Onboarded'])
             ->where('created_at', '>=', $this->today)
             ->selectRaw('count(*) as total')
-            ->get();
-        return $data;
+            ->get()->all();
     }
 
     public function active()
     {
-        $data = $this->orderTable
+        return $this->orderTable
             ->leftJoin('partner_orders', 'partner_orders.order_id', '=', 'orders.id')
             ->where('orders.created_at', '>=', $this->today)
             ->selectRaw('count(distinct(partner_orders.partner_id)) as total')
-            ->get();
-        return $data;
+            ->get()->all();
     }
 
     public function totalWalletRecharge()
     {
-        $data = $this->partnerTransactionTable
+       return $this->partnerTransactionTable
             ->where('log', 'like', '%paid to SHEBA%')
             ->where('type', '=', 'Credit')
             ->where('transaction_details', 'LIKE', '%bkash%')
             ->where('created_at', '>=', $this->today)
             ->selectRaw('sum(amount) as total')
-            ->get();
-        return $data;
+            ->get()->all();
     }
 }
