@@ -66,14 +66,14 @@ class PayRunBulkExcel
         $x = 1;
         foreach ($this->payslip as $payslip) {
             $business_member_data = [
-                'serial_no' => sprintf("%03d", $x++),
-                'business_member_id' => $payslip['business_member_id'],
-                'employee_name' => $payslip['employee_name'],
-                'employee_id' => $payslip['employee_id'],
-                'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
-                'schedule_date' => $payslip['schedule_date'],
-                'gross_salary' => $payslip['gross_salary'],
-            ] + $this->getComponents($payslip);
+                    'serial_no' => sprintf("%03d", $x++),
+                    'business_member_id' => $payslip['business_member_id'],
+                    'employee_name' => $payslip['employee_name'],
+                    'employee_id' => $payslip['employee_id'],
+                    'department' => $payslip['department'] ? $payslip['department'] : 'N/A',
+                    'schedule_date' => $payslip['schedule_date'],
+                    'gross_salary' => $payslip['gross_salary'],
+                ] + $this->getComponents($payslip);
             array_push($this->data, $business_member_data);
         }
     }
