@@ -500,10 +500,9 @@ class LeaveController extends Controller
         $leave = $leave_repo->find($request->leave_id);
 
         $edit_values = json_decode($request->data);
-
         foreach ($edit_values as $value) {
             if ($value->type === EditType::LEAVE_TYPE) {
-                $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
+                $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveType();
             }
             if ($value->type === EditType::LEAVE_DATE) {
                 $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
