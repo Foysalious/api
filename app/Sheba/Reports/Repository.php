@@ -21,7 +21,7 @@ abstract class Repository
     {
         $query = $this->query->build();
         $data = collect();
-        $query->chunk($this->chunkSize, function($chunk) use(&$data) {
+        $query->orderBy('id')->chunk($this->chunkSize, function($chunk) use(&$data) {
             $data = $data->merge($chunk);
         });
         return $data;

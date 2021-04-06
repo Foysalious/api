@@ -18,7 +18,6 @@ use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use JWTAuth;
 use JWTFactory;
-use Session;
 use Sheba\OAuth2\AccountServer;
 use Sheba\Repositories\Interfaces\MemberRepositoryInterface;
 use Throwable;

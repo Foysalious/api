@@ -160,7 +160,12 @@ class PartnerList
                 $query->where('partner_service.is_monthly_subscription_enable', 1);
             }
         })->whereDoesntHave('leaves', function ($q) {
-            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+            $q->where('end', null)
+                ->orWhere(function($q) {
+                    $q
+                        ->where('start', '<=', Carbon::now())
+                        ->where('end', '>=', Carbon::now()->addDays(7));
+                });
         })->with(['handymanResources' => function ($q) {
             $q->selectRaw('count(distinct resources.id) as total_experts, partner_id')
                 ->join('category_partner_resource', 'category_partner_resource.partner_resource_id', '=', 'partner_resource.id')

@@ -87,7 +87,10 @@ class PartnerListBuilder implements Builder
     public function checkLeave()
     {
         $this->partnerQuery = $this->partnerQuery->whereDoesntHave('leaves', function ($q) {
-            $q->where('end', null)->orWhere([['start', '<=', Carbon::now()], ['end', '>=', Carbon::now()->addDays(7)]]);
+            $q->where('end', null)->orWhere(function($q) {
+                $q->where('start', '<=', Carbon::now())
+                    ->where('end', '>=', Carbon::now()->addDays(7));
+            });
         });
     }
 

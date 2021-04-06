@@ -1,28 +1,20 @@
 <?php namespace App\Http\Controllers\B2b;
 
 use App\Jobs\Business\SendMailVerificationCodeEmail;
-use App\Models\Business;
 use App\Models\BusinessMember;
-use App\Models\Member;
-use App\Models\Profile;
-use App\Repositories\ProfileRepository;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\ValidationException;
 use Sheba\Business\CoWorker\Statuses;
 use Sheba\OAuth2\AccountServer;
 use Sheba\OAuth2\AccountServerAuthenticationError;
 use Sheba\OAuth2\AccountServerNotWorking;
 use Sheba\OAuth2\AuthUser;
 use Sheba\OAuth2\SomethingWrongWithToken;
-use Sheba\Repositories\Business\MemberRepository;
 use Sheba\Repositories\Interfaces\ProfileRepositoryInterface;
-use Tymon\JWTAuth\Exceptions\JWTException;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use JWTFactory;
 use Validator;
 use JWTAuth;
-use Session;
 use Hash;
 
 class LoginController extends Controller
