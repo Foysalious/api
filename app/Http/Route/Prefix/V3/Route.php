@@ -69,7 +69,5 @@ class Route
             });
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
         });
-
-
     }
 }

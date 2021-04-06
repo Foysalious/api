@@ -2,7 +2,9 @@
 
 use App\Exceptions\HyperLocationNotFoundException;
 use App\Http\Controllers\Controller;
+use App\Http\Presenters\OrderPlacedResponse;
 use App\Http\Requests\OrderCreateFromBondhuRequest;
+use App\Http\Requests\OrderPlaceRequest;
 use App\Jobs\AddCustomerGender;
 use App\Models\Affiliate;
 use App\Models\Customer;
@@ -16,7 +18,6 @@ use App\Repositories\SmsHandler;
 use App\Sheba\Bondhu\BondhuAutoOrderV3;
 use App\Sheba\Sms\BusinessType;
 use App\Sheba\Sms\FeatureType;
-use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Http\JsonResponse;
@@ -24,13 +25,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\ModificationFields;
-use Sheba\OrderPlace\Exceptions\LocationIdNullException;
 use Sheba\OrderPlace\OrderPlace;
 use Sheba\Payment\Adapters\Payable\OrderAdapter;
 use Sheba\Payment\Exceptions\InitiateFailedException;
 use Sheba\Payment\Exceptions\InvalidPaymentMethod;
 use Sheba\Payment\PaymentManager;
-use Sheba\UserAgentInformation;
 use Throwable;
 
 class OrderController extends Controller
@@ -38,136 +37,88 @@ class OrderController extends Controller
     use DispatchesJobs;
     use ModificationFields;
 
-    public function store(Request $request, OrderPlace $order_place, OrderAdapter $order_adapter, UserAgentInformation $userAgentInformation)
+    /**
+     * @param OrderPlaceRequest $request
+     * @param OrderAdapter $order_adapter
+     * @return JsonResponse
+     * @throws InitiateFailedException
+     * @throws InvalidPaymentMethod
+     * @throws ValidationException
+     * @throws \App\Exceptions\RentACar\DestinationCitySameAsPickupException
+     * @throws \App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException
+     * @throws \App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException
+     * @throws \Sheba\ServiceRequest\Exception\ServiceIsUnpublishedException
+     * @throws \Exception
+     */
+    public function store(OrderPlaceRequest $request, OrderAdapter $order_adapter)
     {
+        $this->setModifierFromRequest($request);
+        $order = $request->buildOrderPlace()->create();
+        if (!$order) return api_response($request, null, 500);
+
+        $order = Order::find($order->id);
+        $customer = $request->getCustomer();
+        if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
+        $payment_method = $request->payment_method;
+        /** @var Payment $payment */
+        $payment = $this->getPayment($payment_method, $order, $order_adapter);
+        if ($payment) $payment = $payment->getFormattedPayment();
+
         try {
-            $request->merge(['mobile' => formatMobile($request->mobile)]);
-            $this->validate($request, [
-                'name' => 'required|string',
-                'services' => 'required|string',
-                'sales_channel' => 'required|string',
-                'remember_token' => 'required|string',
-                'mobile' => 'required|string|mobile:bd',
-                'email' => 'sometimes|email',
-                'date' => 'required|date_format:Y-m-d|after:' . Carbon::yesterday()->format('Y-m-d'),
-                'time' => 'required|string',
-                'payment_method' => 'required|string|in:cod,online,wallet,bkash,cbl,partner_wallet,bondhu_balance',
-                'address' => 'required_without:address_id',
-                'address_id' => 'required_without:address|numeric',
-                'partner' => 'sometimes|required',
-                'partner_id' => 'sometimes|required|numeric',
-                'affiliate_id' => 'sometimes|required|numeric',
-                'info_call_id' => 'sometimes|required|numeric',
-                'affiliation_id' => 'sometimes|required|numeric',
-                'vendor_id' => 'sometimes|required|numeric',
-                'crm_id' => 'sometimes|required|numeric',
-                'business_id' => 'sometimes|required|numeric',
-                'voucher' => 'sometimes|required|numeric',
-                'emi_month' => 'numeric',
-                'created_by' => 'numeric',
-                'created_by_name' => 'string',
-            ], ['mobile' => 'Invalid mobile number!']);
-            $this->setModifierFromRequest($request);
-            $userAgentInformation->setRequest($request);
-            $order = $order_place
-                ->setCustomer($request->customer)
-                ->setDeliveryName($request->name)
-                ->setDeliveryAddressId($request->address_id)
-                ->setDeliveryAddress($request->address)
-                ->setPaymentMethod($request->payment_method)
-                ->setDeliveryMobile($request->mobile)
-                ->setSalesChannel($request->sales_channel)
-                ->setPartnerId($request->partner_id)
-                ->setSelectedPartnerId($request->partner)
-                ->setAdditionalInformation($request->additional_information)
-                ->setAffiliationId($request->affiliation_id)
-                ->setInfoCallId($request->info_call_id)
-                ->setBusinessId($request->business_id)
-                ->setCrmId($request->crm_id)
-                ->setVoucherId($request->voucher)
-                ->setServices($request->services)
-                ->setScheduleDate($request->date)
-                ->setScheduleTime($request->time)
-                ->setVendorId($request->vendor_id)
-                ->setUserAgentInformation($userAgentInformation)
-                ->create();
-            if (!$order) return api_response($request, null, 500);
-            $order = Order::find($order->id);
-            $customer = $request->customer;
-            if (!empty($customer->profile->name) && empty($customer->profile->gender)) dispatch(new AddCustomerGender($customer->profile));
-            $payment_method = $request->payment_method;
-            /** @var Payment $payment */
-            $payment = $this->getPayment($payment_method, $order, $order_adapter);
-            if ($payment) $payment = $payment->getFormattedPayment();
-            $job = $order->jobs->first();
-            $partner_order = $job->partnerOrder;
-            $order_with_response_data = [
-                'job_id' => $job->id,
-                'order_code' => $order->code(),
-                'payment' => $payment,
-                'order' => [
-                    'id' => $order->id,
-                    'code' => $order->code(),
-                    'job' => ['id' => $job->id]
-                ]
-            ];
-            if ($partner_order->partner_id) {
-                $order_with_response_data['provider_mobile'] = $partner_order->partner->getContactNumber();
-                $this->sendNotifications($customer, $order);
-            }
-
+            $this->sendNotifications($customer, $order);
             $this->sendSmsToCustomer($customer, $order);
-
-            return api_response($request, null, 200, $order_with_response_data);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            logError($e, $request, $message);
-            return api_response($request, $message, 400, ['message' => $message]);
+        } catch (\Exception $e) {
+            logError($e);
         }
+
+        return api_response($request, null, 200, (new OrderPlacedResponse($order, $payment))->toArray());
     }
 
-    private function setModifierFromRequest(Request $request)
+    private function setModifierFromRequest(OrderPlaceRequest $request)
     {
-        if ($request->has('created_by_type')) {
-            if ($request->created_by_type === Resource::class) {
-                $this->setModifier(Resource::find((int)$request->created_by));
-                return;
-            };
+        $modifier = null;
+        if ($request->has('created_by_type') && $request->created_by_type === Resource::class) {
+            $modifier = Resource::find((int)$request->created_by);
+        } else if ($request->has('created_by')) {
+            $modifier = User::find((int)$request->created_by);
+        } else {
+            $modifier = $request->getCustomer();
         }
-
-
-
-        if ($request->has('created_by')) $this->setModifier(User::find((int)$request->created_by));
-        else $this->setModifier($request->customer);
+        $this->setModifier($modifier);
     }
 
     /**
      * @TODO FIx notification sending
      * @param $customer
      * @param $order
+     * @throws \Exception
      */
     private function sendNotifications($customer, $order)
     {
-        try {
-            /** @var Partner $partner */
-            $partner = $order->partnerOrders->first()->partner;
-            (new NotificationRepository())->send($order);
-            if (!(bool)config('sheba.send_order_create_sms')) return;
+        if (!$order->partnerOrders->first()->partner_id) return;
 
-            if (!$order->jobs->first()->resource_id) {
-                (new SmsHandler('order-created-to-partner'))
-                    ->setBusinessType(BusinessType::SMANAGER)
-                    ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
-                    ->send($partner->getContactNumber(), [
-                    'order_code' => $order->code(), 'partner_name' => $partner->name
-                ]);
-            }
-        } catch (Throwable $e) {
-            logError($e);
+        /** @var Partner $partner */
+        $partner = $order->partnerOrders->first()->partner;
+        (new NotificationRepository())->send($order);
+        if (!(bool)config('sheba.send_order_create_sms')) return;
+
+        if (!$order->jobs->first()->resource_id) {
+            (new SmsHandler('order-created-to-partner'))
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::MARKET_PLACE_ORDER)
+                ->send($partner->getContactNumber(), [
+                'order_code' => $order->code(), 'partner_name' => $partner->name
+            ]);
         }
     }
 
-    private function sendSmsToCustomer($customer, $order) {
+    /**
+     * @param $customer
+     * @param $order
+     * @throws \Exception
+     */
+    private function sendSmsToCustomer($customer, $order)
+    {
         $customer = ($customer instanceof Customer) ? $customer : Customer::find($customer);
         if ($this->isSendingServedConfirmationSms($order)) (new SmsHandler('order-created'))
             ->setBusinessType(BusinessType::MARKETPLACE)
