@@ -32,6 +32,7 @@ class LeaveBalanceRemainingTransformer extends TransformerAbstract
             $used_leave_days = $this->businessMember->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($leave_type->id);
             $leave_type_total_days = $this->businessMember->getTotalLeaveDaysByLeaveTypes($leave_type->id);
             array_push($data, [
+                'id' => $leave_type->id,
                 'title' => $leave_type->title,
                 'allowed_leaves' => (int)$leave_type_total_days,
                 'used_leaves' => $used_leave_days,
