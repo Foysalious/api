@@ -3565,7 +3565,7 @@
             "version": "dev-master",
             "source": {
                 "type": "git",
-                "url": "https://mac_pasha@bitbucket.org/startern/sheba_elasticsearch.git",
+                "url": "https://bitbucket.org/startern/sheba_elasticsearch.git",
                 "reference": "fd7d025e5b9428a78a44b85fa70d2e0d703a7993"
             },
             "require": {
