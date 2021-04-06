@@ -110,7 +110,6 @@ class Kernel extends HttpKernel
         'member.auth' => MemberAuthMiddleware::class,
         'jwtAuth' => JWTAuthentication::class,//10
         'jwtGlobalAuth' => JWTAuthMiddleware::class,//6
-        'topUp.auth' => TopUpAuthMiddleware::class,//1
         'resource.jwt.auth' => ResourceAuthMiddleware::class,//1
         'paymentLink.auth' => PaymentLinkAuthMiddleware::class,//1
         'accessToken' => AccessTokenMiddleware::class,

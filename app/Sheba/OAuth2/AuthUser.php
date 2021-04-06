@@ -1,6 +1,7 @@
 <?php namespace Sheba\OAuth2;
 
 use App\Models\Affiliate;
+use App\Models\BankUser;
 use App\Models\Business;
 use App\Models\Partner;
 use App\Models\Profile;
@@ -33,6 +34,28 @@ class AuthUser
         $this->resolveAuthUser();
     }
 
+    public function resolveAuthUser()
+    {
+        $this->resolveProfile();
+        $this->resolveAvatar();
+    }
+
+    public function resolveProfile()
+    {
+        if (!isset($this->attributes['profile'])) return null;
+        $profile = Profile::find($this->attributes['profile']['id']);
+        if ($profile) $this->setProfile($profile);
+    }
+
+    public function resolveAvatar()
+    {
+        if (!$this->attributes['avatar']) return;
+
+        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
+        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
+        if ($avatar) $this->setAvatar($avatar);
+    }
+
     /**
      * @return AuthUser
      * @throws SomethingWrongWithToken
@@ -61,11 +84,6 @@ class AuthUser
         }
     }
 
-    public static function authenticate()
-    {
-        JWTAuth::getPayload(JWTAuth::getToken());
-    }
-
     /**
      * @param $token
      * @return AuthUser
@@ -84,6 +102,11 @@ class AuthUser
         } catch (JWTException $e) {
             throw new SomethingWrongWithToken($e->getMessage(), $e->getStatusCode());
         }
+    }
+
+    public static function authenticate()
+    {
+        JWTAuth::getPayload(JWTAuth::getToken());
     }
 
     public function getName()
@@ -106,9 +129,21 @@ class AuthUser
         return array_key_exists('logistic_user', $this->attributes);
     }
 
+    public function getMemberId()
+    {
+        if (!$this->isMember()) return null;
+        return $this->attributes['business_member']['member_id'];
+    }
+
     public function isMember()
     {
         return !is_null($this->attributes['member']);
+    }
+
+    public function getMemberAssociatedBusinessId()
+    {
+        if (!$this->doesMemberHasBusiness()) return null;
+        return $this->attributes['business_member']['business_id'];
     }
 
     public function doesMemberHasBusiness()
@@ -157,22 +192,6 @@ class AuthUser
         return json_encode($this->attributes);
     }
 
-    public function setProfile(Profile $profile)
-    {
-        $this->profile = $profile;
-        return $this;
-    }
-
-    /**
-     * @param Model $user
-     * @return $this
-     */
-    public function setAvatar(Model $user)
-    {
-        $this->avatar = $user;
-        return $this;
-    }
-
     public function setUser(User $user)
     {
         $this->user = $user;
@@ -199,28 +218,6 @@ class AuthUser
         return $this->profile ? $this->profile : $this->avatar;
     }
 
-    public function resolveAuthUser()
-    {
-        $this->resolveProfile();
-        $this->resolveAvatar();
-    }
-
-    public function resolveAvatar()
-    {
-        if (!$this->attributes['avatar']) return;
-
-        $avatar = Avatars::getModelName($this->attributes['avatar']['type']);
-        $avatar = $avatar::find($this->attributes['avatar']['type_id']);
-        if ($avatar) $this->setAvatar($avatar);
-    }
-
-    public function resolveProfile()
-    {
-        if (!isset($this->attributes['profile'])) return null;
-        $profile = Profile::find($this->attributes['profile']['id']);
-        if ($profile) $this->setProfile($profile);
-    }
-
     /**
      * @return Profile|null
      */
@@ -229,12 +226,28 @@ class AuthUser
         return $this->profile;
     }
 
+    public function setProfile(Profile $profile)
+    {
+        $this->profile = $profile;
+        return $this;
+    }
+
     /**
      * @return Model|null
      */
     public function getAvatar()
     {
         return $this->avatar;
+    }
+
+    /**
+     * @param Model $user
+     * @return $this
+     */
+    public function setAvatar(Model $user)
+    {
+        $this->avatar = $user;
+        return $this;
     }
 
     /**
@@ -260,8 +273,17 @@ class AuthUser
      */
     public function getPartner()
     {
-        if (!$this->profile || !$this->profile->resource) return null;
-        return $this->profile->resource->partners->first();
+        if (!isset($this->attributes['partner'])) return null;
+        return Partner::find($this->attributes['partner']['id']);
+    }
+
+    /**
+     * @return Partner|null
+     */
+    public function getBankUser()
+    {
+        if (!isset($this->attributes['bank_user'])) return null;
+        return BankUser::find($this->attributes['bank_user']['id']);
     }
 
     public function getAttributes()
