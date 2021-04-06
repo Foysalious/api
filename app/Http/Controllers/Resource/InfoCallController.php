@@ -3,8 +3,10 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
+use Sheba\Dal\InfoCall\Statuses;
+use Sheba\Dal\InfoCallStatusLogs\InfoCallStatusLogRepository;
 use Sheba\Dal\Service\Service;
 use Sheba\ModificationFields;
 use Sheba\OAuth2\AuthUser;
@@ -16,9 +18,13 @@ class InfoCallController extends Controller
     /** @var InfoCallRepository  */
     private $infoCallRepository;
 
-    public function __construct(InfoCallRepository $repo)
+    /** @var InfoCallStatusLogRepository */
+    private $infoCallStatusLogRepository;
+
+    public function __construct(InfoCallRepository $repo, InfoCallStatusLogRepository $status_repo)
     {
         $this->infoCallRepository = $repo;
+        $this->infoCallStatusLogRepository = $status_repo;
     }
 
     public function index()
@@ -50,17 +56,18 @@ class InfoCallController extends Controller
     public function show($id)
     {
         $info_call = InfoCall::findOrFail($id);
-        if ($info_call->status == 'Rejected') $status = 'বাতিল হয়েছে';
-        elseif ($info_call->status == 'Converted') $status = 'গ্রহণ হয়েছে';
-        else $status = 'অপেক্ষমান';
+        $log = $this->infoCallStatusLogRepository->getLastRejectLogOfInfoCall($info_call);
+        if ($log) $service_comment = $log->rejectReason->name;
         $info_call_details = [
             'id' => $id,
-            'status' => $status,
+            'status' => $info_call->status,
+            'bn_status'=> Statuses::getBanglaStatus($info_call->status),
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
+        if ($info_call->status == Statuses::REJECTED && $log) $info_call_details['service_comment'] = $service_comment;
         if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         else {
-            $service_name = Service::select('name')->where('id',$info_call->service_id)->get();
+            $service_name = Service::select('name')->where('id', $info_call->service_id)->get();
             $info_call_details['service_name'] =$service_name[0]['name'];
         }
         return ['code' => 200, 'info_call_details' => $info_call_details];

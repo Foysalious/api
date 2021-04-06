@@ -6,7 +6,7 @@ use Illuminate\Validation\ValidationException;
 use mysql_xdevapi\Exception;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 
 class InfoCallController extends Controller
 {
