@@ -91,4 +91,10 @@ class AffiliateTransaction extends Model
     {
         return $query->where('log', 'LIKE', "%Sheba facilitated amount%");
     }
+
+    public function scopePointPurchaseCommission($query)
+    {
+        return $query->where('log', "Credit Purchase Gateway Charge");
+    }
+
 }

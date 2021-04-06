@@ -127,8 +127,8 @@ if (!function_exists('findStartEndDateOfAMonth')) {
         if (empty($month)) $month = Carbon::now()->month;
         if (empty($year)) $year = Carbon::now()->year;
         $days_in_month = cal_days_in_month(CAL_GREGORIAN, $month, $year);
-        $start_time    = Carbon::now()->year($year)->month($month)->day(1)->hour(0)->minute(0)->second(0);
-        $end_time      = Carbon::now()->year($year)->month($month)->day($days_in_month)->hour(23)->minute(59)->second(59);
+        $start_time    = Carbon::create($year, $month, 1, 0, 0, 0);
+        $end_time      = Carbon::create($year, $month, $days_in_month, 23, 59, 59);
         return [
             'start_time'    => $start_time,
             'end_time'      => $end_time,

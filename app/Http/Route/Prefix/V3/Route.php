@@ -67,6 +67,7 @@ class Route
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
+            $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
         });
 
 
