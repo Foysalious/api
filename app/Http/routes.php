@@ -3,6 +3,7 @@
 Route::get('/', function () {
     return ['code' => 200, 'message' => "Success. This project will hold the api's"];
 });
+Route::get('/check_encryption', 'TopUp\\TopUpController@checkEncryption');
 $api = app('Dingo\Api\Routing\Router');
 
 /*

@@ -13,6 +13,8 @@ use Carbon\Carbon;
 use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Http\JsonResponse;
+use Jose\Factory\JWEFactory;
+use Jose\Factory\JWKFactory;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
@@ -497,5 +499,42 @@ class TopUpController extends Controller
         $bulk_topup_data = $topup_formatter->setAgent($agent)->setAgentType($agent_type)->format();
 
         return api_response($request, null, 200, ['code' => 200, 'data' => $bulk_topup_data]);
+    }
+
+    public function checkEncryption(Request $request){
+        $encryption_key = "Ld83ShdoDVVmdXFCrRB8N8c6tkLKttmtxM_9MmZpfos";
+
+        $key_id = "5bd485f0-09a1-11e9-aea3-1f560374ecce";
+
+        $data = [
+            "srcuid" => "sohoj_test_user",
+            "srcpwd"=> "sohoj_test_password",
+            "msisdn"=> "01811759175",
+            "amount"=> "15",
+            "operator" => "Robi",
+            "type" => "PREPAID"
+        ];
+
+        $header = [
+            "zip" => "DEF",
+            "enc" => "A128CBC-HS256",
+            "alg" => "dir",
+            "kid" => "5bd485f0-09a1-11e9-aea3-1f560374ecce"
+
+        ];
+
+
+        $key = JWKFactory::createFromValues([
+            'kty' => 'oct',
+            'kid' => '5bd485f0-09a1-11e9-aea3-1f560374ecce',
+            'use' => 'enc',
+            'alg' => 'A128CBC-HS256',
+            'k' => $encryption_key
+        ]);
+
+        $encrypt = JWEFactory::createJWEToCompactJSON(
+            $data, $key, $header
+        );
+        return api_response($request, null, 200, ['code' => 200, 'payload' => $encrypt]);
     }
 }
