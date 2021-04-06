@@ -21,19 +21,6 @@ use Sheba\AppSettings\HomePageSetting\Getters\Provider as HomePageSettingGetters
 class AppServiceProvider extends ServiceProvider
 {
     /**
-     * Bootstrap any application services.
-     *
-     * @return void
-     * @throws Exception
-     */
-    public function boot()
-    {
-        if (!in_array($this->app->environment(), ["production", "development"])) {
-            $this->app->make(DevelopmentEnvironmentChecker::class)->check();
-        }
-    }
-
-    /**
      * Register any application services.
      *
      * @return void
