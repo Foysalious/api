@@ -112,6 +112,10 @@ class CustomerController extends Controller
             $customer->is_completed = 1;
             $customer->update();
         }
+        elseif ($customer->isCompleted() && !$customer->is_completed) {
+            $customer->is_completed = 1;
+            $customer->update();
+        }
         return api_response($request, 1, 200);
     }
 
