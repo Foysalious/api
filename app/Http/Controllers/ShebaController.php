@@ -1,6 +1,5 @@
 <?php namespace App\Http\Controllers;
 
-use App\Http\Controllers\Employee\AttendanceController;
 use App\Http\Presenters\PresentableDTOPresenter;
 use App\Http\Requests\AppVersionRequest;
 use App\Jobs\SendFaqEmail;
@@ -290,8 +289,7 @@ class ShebaController extends Controller
 
     public function getEmiInfo(Request $request, Calculator $emi_calculator)
     {
-        $amount = $request->amount;
-
+        $amount       = $request->amount;
         if (!$amount) {
             return api_response($request, null, 400, ['message' => 'Amount missing']);
         }
@@ -301,11 +299,43 @@ class ShebaController extends Controller
         }
 
         $emi_data = [
-            "emi" => $emi_calculator->getCharges($amount),
-            "banks" => Banks::get()
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get()
         ];
 
         return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);
+    }
+    public function getEmiInfo_v3(Request $request, Calculator $emi_calculator)
+    {
+        $amount       = $request->amount;
+        if (!$amount) {
+            $amount = 5000;
+        }
+
+        if ($amount < config('emi.minimum_emi_amount')) {
+            return api_response($request, null, 400, ['message' => 'Amount is less than minimum emi amount']);
+        }
+        $emi_data = [
+            "emi"   => $emi_calculator->getCharges($amount),
+            "banks" => (new Banks())->setAmount($amount)->get(),
+            "minimum_amount" => number_format(config('sheba.min_order_amount_for_emi')),
+            "static_info" =>[
+                "how_emi_works"=>[
+                    "As soon as you complete your purchase order on Sheba Service Platform , you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform  within 3 working days.",
+                    "Once Sheba Service Platform  receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ],
+                "terms_and_conditions"=>[
+                    "As soon as you complete your purchase order on Sheba Service Platform , you will see the full amount charged on your credit card.",
+                    "You must Sign and Complete the EMI form and submit it at Sheba Service Platform  within 3 working days.",
+                    "Once Sheba Service Platform  receives this signed document from the customer, then it shall be submitted to the concerned bank to commence the EMI process.",
+                    "The EMI processing will be handled by the bank itself *. After 5-7 working days, your bank will convert this into EMI."
+                ]
+            ]
+        ];
+
+        return api_response($request, null, 200, ['price' => number_format($amount), 'info' => $emi_data]);
     }
 
     public function emiInfoForManager(Request $request, CalculatorForManager $emi_calculator)
@@ -315,8 +345,8 @@ class ShebaController extends Controller
             $amount = $request->amount;
             $icons_folder = getEmiBankIconsFolder(true);
             $emi_data = [
-                "emi" => $emi_calculator->getCharges($amount),
-                "banks" => Banks::get($icons_folder)
+                "emi"   => $emi_calculator->getCharges($amount),
+                "banks" => (new Banks())->setAmount($amount)->get()
             ];
 
             return api_response($request, null, 200, ['price' => $amount, 'info' => $emi_data]);

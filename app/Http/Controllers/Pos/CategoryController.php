@@ -5,10 +5,7 @@ use App\Models\Partner;
 use App\Models\PosCategory;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Sheba\Dal\PartnerPosCategory\PartnerPosCategory;
-use App\Sheba\Pos\Category\Category;
-use Illuminate\Validation\ValidationException;
-use Sheba\ModificationFields;
+
 
 
 class CategoryController extends Controller

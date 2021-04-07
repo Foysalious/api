@@ -171,4 +171,13 @@ class CustomerController extends Controller
         return 0;
 
     }
+    public function getProfileCompletion($customer, Request $request)
+    {
+        $customer = $request->customer;
+        $data = [];
+        $data['is_completed'] = $customer->is_completed;
+        if ($data['is_completed'] == 0) $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+        return api_response($request, $data, 200, ['data' => $data]);
+
+    }
 }
