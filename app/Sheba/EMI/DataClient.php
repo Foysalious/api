@@ -3,7 +3,6 @@
 
 use App\Models\Partner;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ServerException;
 use Sheba\ExpenseTracker\Repository\ExpenseTrackerClient;
 
 class DataClient {
