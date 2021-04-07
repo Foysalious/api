@@ -271,7 +271,7 @@ class ProductService
     public function update()
     {
         $data = $this->makeUpdateData();
-        return $this->client->post('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId.'?_method=PUT', $data, true);
+        return $this->client->put('api/v1/partners/'.$this->partnerId.'/products/'.$this->productId, $data, true);
     }
 
     public function delete()

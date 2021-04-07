@@ -16,10 +16,10 @@ use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -130,7 +130,7 @@ class LeaveController extends Controller
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -153,7 +153,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $business_member, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);

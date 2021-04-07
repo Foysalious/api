@@ -97,7 +97,8 @@ class CustomerController extends Controller
             'gender'=>'string|in:Male,Female,Other',
             'address'=>'string',
             'dob' => 'date|date_format:Y-m-d|before:' . Carbon::today()->format('Y-m-d'),
-            'email' => 'email|unique:profiles,email,' . $profile->id
+            'email' => 'email|unique:profiles,email,' . $profile->id,
+            'is_old_user' => 'required'
         ]);
         if ($request->has('name')) $profile->name = ucwords($request->name);
         if ($request->has('gender')) $profile->gender = $request->gender;
@@ -106,8 +107,12 @@ class CustomerController extends Controller
         if ($request->has('email')) $profile->email = $request->email;
         $profile->update();
         $customer->reload();
-        if ($customer->isCompleted() && !$customer->is_completed) {
+        if ($request->is_old_user == "1" && $customer->isCompleted() && !$customer->is_completed) {
             app()->make(ActionRewardDispatcher::class)->run('profile_complete', $customer);
+            $customer->is_completed = 1;
+            $customer->update();
+        }
+        elseif ($customer->isCompleted() && !$customer->is_completed) {
             $customer->is_completed = 1;
             $customer->update();
         }

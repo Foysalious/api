@@ -53,16 +53,11 @@ class WebstoreSettingsController extends Controller
         $webstoreSettingsUpdateRequest->setPartner($request->partner);
         if ($request->has('is_webstore_published')) {
             if ($request->is_webstore_published) AccessManager::checkAccess(AccessManager::Rules()->POS->ECOM->WEBSTORE_PUBLISH, $request->partner->subscription->getAccessRules());
-
             $webstoreSettingsUpdateRequest->setIsWebstorePublished($request->is_webstore_published);
             $is_webstore_published = 1;
         }
         if ($request->has('name')) $webstoreSettingsUpdateRequest->setName($request->name);
-        if ($request->has('sub_domain')) {
-            $domain_name = strtolower($request->sub_domain);
-            if ($this->subDomainAlreadyExist($domain_name)) return api_response($request, null, 400, ['message' => 'এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!']);
-            $webstoreSettingsUpdateRequest->setSubDomain($domain_name);
-        }
+        if ($request->has('sub_domain')) $webstoreSettingsUpdateRequest->setSubDomain($request->sub_domain);
         if ($request->has('delivery_charge')) $webstoreSettingsUpdateRequest->setDeliveryCharge($request->delivery_charge);
         if ($request->has('has_webstore')) $webstoreSettingsUpdateRequest->setHasWebstore($request->has_webstore);
         $webstoreSettingsUpdateRequest->update();
@@ -83,11 +78,6 @@ class WebstoreSettingsController extends Controller
 
     }
 
-    private function subDomainAlreadyExist($sub_domain)
-    {
-        if (Partner::where('sub_domain', $sub_domain)->exists()) return true;
-        return false;
-    }
 
     /**
      * @param Request $request

@@ -63,13 +63,15 @@ class Route
             });
             $api->get('training-videos', 'TrainingVideoController@index');
             $api->get('sitemap', 'SitemapController@index');
+            $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->group(['prefix' => 'subscriptions'], function ($api) {
                 $api->get('/{id}', 'SubscriptionController@details');
             });
-            $api->get('settings/car', 'HomePageSettingController@getCarV3');
             $api->get('payment-gateways/{service_type}', 'PaymentGatewayController@getPaymentGateways');
 //            emi-info with static info
             $api->get('emi-info', 'ShebaController@getEmiInfo_v3');
         });
+
+
     }
 }

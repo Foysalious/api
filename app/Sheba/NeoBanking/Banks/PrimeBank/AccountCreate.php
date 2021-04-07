@@ -108,43 +108,18 @@ class AccountCreate
                 "partner_id" => $this->partner->id,
                 "bank_id"    => $this->bank->id
             ]));
-            $this->notificationSend();
+            $data["title"]      = "New bank account created";
+            $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
+            $data["event_type"] = "NeoBanking";
+            NeoBankingGeneralStatics::sendCreatePushNotification($this->partner, $data);
+            notify()->partner($this->partner)->send([
+                "title"       => $data["title"],
+                "description" => $data["message"],
+                "type"        => "Info",
+                "event_type"  => "NeoBanking"
+            ]);
         }
         return $this->response;
-    }
-
-    /**
-     * @param $account_no
-     * @return int
-     * @throws Exception
-     */
-    public function storeAccountWithNumber($account_no)
-    {
-        $this->setModifier($this->partner);
-        PartnerNeoBankingAccount::create($this->withBothModificationFields([
-            "partner_id" => $this->partner->id,
-            "bank_id"    => $this->bank->id,
-            "account_no" => $account_no
-        ]));
-        $this->notificationSend();
-        return 1;
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function notificationSend()
-    {
-        $data["title"]      = "New bank account created";
-        $data["message"]    = "Prime Bank account open request received and will be notified shortly.";
-        $data["event_type"] = "NeoBanking";
-        NeoBankingGeneralStatics::sendCreatePushNotification($this->partner, $data);
-        notify()->partner($this->partner)->send([
-            "title"       => $data["title"],
-            "description" => $data["message"],
-            "type"        => "Info",
-            "event_type"  => "NeoBanking"
-        ]);
     }
 
     /**
