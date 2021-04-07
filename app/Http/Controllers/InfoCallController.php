@@ -6,7 +6,7 @@ use Illuminate\Validation\ValidationException;
 use mysql_xdevapi\Exception;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 
 class InfoCallController extends Controller
 {
@@ -54,7 +54,7 @@ class InfoCallController extends Controller
         $this->setModifier($request->customer);
         $this->validate($request, [
             'service_name' => 'required|string',
-            'estimated_budget' => 'required|numeric',
+            'estimated_budget' => 'numeric',
             'location_id' => 'numeric',
         ]);
         $customer = $request->customer;
