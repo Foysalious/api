@@ -54,7 +54,7 @@ class InfoCallController extends Controller
         $this->setModifier($request->customer);
         $this->validate($request, [
             'service_name' => 'required|string',
-            'estimated_budget' => 'required|numeric',
+            'estimated_budget' => 'numeric',
             'location_id' => 'numeric',
         ]);
         $customer = $request->customer;
