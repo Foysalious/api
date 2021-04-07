@@ -7,9 +7,10 @@ use App\Models\BusinessRole;
 use App\Models\Member;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
-use App\Transformers\Business\ApprovalRequestTransformer;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
+use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
@@ -23,11 +24,16 @@ use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
 use Sheba\Business\Leave\Balance\Excel as BalanceExcel;
+use Sheba\Business\Leave\RejectReason\Reason;
+use Sheba\Business\Leave\RejectReason\RejectReason;
+use Sheba\Business\LeaveRejection\Requester as LeaveRejectionRequester;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\ApprovalRequestPresenter as ApprovalRequestPresenter;
 use Sheba\Dal\ApprovalRequest\Contract as ApprovalRequestRepositoryInterface;
 use Sheba\Dal\ApprovalRequest\Status;
+use Sheba\Dal\Leave\Status as LeaveStatus;
 use Sheba\Dal\ApprovalRequest\Type as ApprovalRequestType;
+use Sheba\Dal\Leave\Contract as LeaveRepoInterface;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\Leave\Model as Leave;
@@ -45,16 +51,24 @@ use App\Transformers\Business\LeaveApprovalRequestListTransformer;
 class LeaveController extends Controller
 {
     use ModificationFields, BusinessBasicInformation;
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
 
     private $approvalRequestRepo;
+    /*** @var LeaveRejectionRequester */
+    private $leaveRejectionRequester;
+    private $approvalRequest;
 
     /**
      * ApprovalRequestController constructor.
      * @param ApprovalRequestRepositoryInterface $approval_request_repo
+     * @param LeaveRejectionRequester $leave_rejection_requester
      */
-    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo)
+    public function __construct(ApprovalRequestRepositoryInterface $approval_request_repo, LeaveRejectionRequester $leave_rejection_requester)
     {
         $this->approvalRequestRepo = $approval_request_repo;
+        $this->leaveRejectionRequester = $leave_rejection_requester;
     }
 
     /**
@@ -114,7 +128,7 @@ class LeaveController extends Controller
         /** @var Business $business */
         $business = $request->business;
         $approval_request = $this->approvalRequestRepo->find($approval_request);
-
+        $this->approvalRequest = $approval_request;
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
@@ -148,10 +162,12 @@ class LeaveController extends Controller
      */
     public function updateStatus(Request $request, UpdaterV2 $updater)
     {
-        $this->validate($request, [
+        $validation_data = [
             'type_id' => 'required|string',
             'status' => 'required|string',
-        ]);
+        ];
+        if ($request->status == LeaveStatus::REJECTED) $validation_data['reasons'] = 'required|string';
+        $this->validate($request, $validation_data);
 
         /** type_id approval_request id*/
         $type_ids = json_decode($request->type_id);
@@ -171,7 +187,8 @@ class LeaveController extends Controller
             ->each(function ($approval_request) use ($business_member, $updater, $request) {
                 /** @var ApprovalRequest $approval_request */
                 if ($approval_request->approver_id != $business_member->id) return;
-                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request);
+                $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
+                $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
                 $updater->setStatus($request->status)->change();
             });
 
@@ -268,7 +285,8 @@ class LeaveController extends Controller
                 'department' => $role ? $role->businessDepartment->name : null,
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -461,14 +479,15 @@ class LeaveController extends Controller
         $this->validate($request, [
             'leave_id' => 'required|string',
             'status' => 'required|string',
+            'note' => 'required|string'
         ]);
 
         $leave = $leave_repo->find($request->leave_id);
 
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        $updater->setLeave($leave)->setStatus($request->status)->setBusinessMember($business_member)->updateStatus();
+        $this->leaveRejectionRequester->setNote($request->note);
+        $updater->setLeave($leave)->setStatus($request->status)->setLeaveRejectionRequester($this->leaveRejectionRequester)->setBusinessMember($business_member)->updateStatus();
 
         return api_response($request, null, 200);
     }
@@ -513,5 +532,55 @@ class LeaveController extends Controller
         return api_response($request, null, 200, [
             'approvers' => $approvers
         ]);
+    }
+
+    /**
+     * @param Request $request
+     * @param RejectReason $reject_reason
+     * @return JsonResponse
+     */
+    public function rejectReasons(Request $request, RejectReason $reject_reason)
+    {
+        $reject_reasons = $reject_reason->reasons();
+
+        return api_response($request, $reject_reasons, 200, ['reject_reasons' => $reject_reasons]);
+    }
+
+    /**
+     * @param $business_member_id
+     * @param Request $request
+     * @param LeaveRepository $leave_repo
+     * @return JsonResponse
+     */
+    public function leaveHistory($business_member_id, Request $request, LeaveRepoInterface $leave_repo)
+    {
+        $business_member = $this->getBusinessMemberById($request->business_member_id);
+        if (!$business_member) return api_response($request, null, 404);
+
+        $leaves = $leave_repo->getLeavesByBusinessMember($business_member)->orderBy('id', 'desc');
+        if ($request->has('type')) $leaves = $leaves->where('leave_type_id', $request->type);
+        $leaves = $leaves->get();
+        $fractal = new Manager();
+        $resource = new Collection($leaves, new LeaveListTransformer());
+        $leaves = $fractal->createData($resource)->toArray()['data'];
+
+        if ($request->has('sort')) {
+            $leaves = $this->leaveHistoryOrderBy($leaves, $request->sort)->values();
+        }
+
+        return api_response($request, null, 200, ['leaves' => $leaves]);
+    }
+
+    /**
+     * @param $leaves
+     * @param string $sort
+     * @return mixed
+     */
+    private function leaveHistoryOrderBy($leaves, $sort = 'asc')
+    {
+        $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
+        return collect($leaves)->$sort_by(function ($leave, $key) {
+            return strtoupper($leave['start_date']);
+        });
     }
 }

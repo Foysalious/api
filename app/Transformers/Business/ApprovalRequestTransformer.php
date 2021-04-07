@@ -4,9 +4,11 @@ use App\Models\Business;
 use App\Models\BusinessMember;
 use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
+use App\Sheba\Business\Leave\ApproverWithReason;
 use League\Fractal\TransformerAbstract;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
 use Sheba\Business\ApprovalSetting\FindApprovers;
+use Sheba\Business\Leave\RejectReason\Reason;
 use Sheba\Dal\ApprovalFlow\Type;
 use Sheba\Dal\ApprovalRequest\Model as ApprovalRequest;
 use Sheba\Dal\ApprovalRequest\Status;
@@ -19,6 +21,9 @@ class ApprovalRequestTransformer extends TransformerAbstract
 {
     use BusinessBasicInformation;
 
+    const SUPER_ADMIN = 1;
+    const APPROVER = 0;
+
     /** @var Profile $profile */
     private $profile;
     /** @var Business $business */
@@ -27,6 +32,8 @@ class ApprovalRequestTransformer extends TransformerAbstract
      * @var string
      */
     private $requestableType;
+    /*** @var ApprovalRequest */
+    private $approvalRequest;
 
     public function __construct(Profile $profile, Business $business)
     {
@@ -40,6 +47,7 @@ class ApprovalRequestTransformer extends TransformerAbstract
      */
     public function transform(ApprovalRequest $approval_request)
     {
+        $this->approvalRequest = $approval_request;
         /** @var Leave $requestable */
         $requestable = $approval_request->requestable;
         $leave_type = $requestable->leaveType()->withTrashed()->first();
@@ -55,26 +63,26 @@ class ApprovalRequestTransformer extends TransformerAbstract
                 'id' => $requestable->id,
                 'business_member_id' => $business_member->id,
                 'employee_id' => $business_member->employee_id,
-                'department' => $business_member->role->businessDepartment->name,
+                'department' => $business_member->department()->name,
                 'title' => $requestable->title,
                 'requested_on' => $requestable->created_at->format('M d') . ' at ' . $requestable->created_at->format('h:i a'),
                 'name' => $this->profile->name,
                 'type' => $leave_type->title,
                 'total_days' => $requestable->total_days,
                 'left' => $requestable->left_days < 0 ? abs($requestable->left_days) : $requestable->left_days,
-
                 'is_half_day' => $requestable->is_half_day,
                 'half_day_configuration' => $requestable->is_half_day ? [
                     'half_day' => $requestable->half_day_configuration,
                     'half_day_time' => $this->business->halfDayStartEnd($requestable->half_day_configuration),
                 ] : null,
                 'time' => $requestable->is_half_day ? $this->business->halfDayStartEndTime($requestable->half_day_configuration) : $this->business->fullDayStartEndTime(),
-
                 'is_leave_days_exceeded' => $requestable->isLeaveDaysExceeded(),
-                'period' => $requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
                 'leave_date' => ($requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y')) ? $requestable->start_date->format('M d, Y') : $requestable->start_date->format('M d, Y') . ' - ' . $requestable->end_date->format('M d, Y'),
                 'status' => LeaveStatusPresenter::statuses()[$requestable->status],
-                'note' => $requestable->note
+                'note' => $requestable->note,
+                'period' => $requestable->start_date->format('M d, Y') == $requestable->end_date->format('M d, Y') ? $requestable->start_date->format('M d') :$requestable->start_date->format('M d') . ' - ' . $requestable->end_date->format('M d'),
+                'total_leave_days' => $leave_type->total_days,
+                'super_admin_action_reason' =>(new ApproverWithReason())->getRejectReason($this->approvalRequest, self::SUPER_ADMIN, null)
             ],
             'approvers' => $approvers
         ];
@@ -92,14 +100,14 @@ class ApprovalRequestTransformer extends TransformerAbstract
         $requestable_approval_request_ids = $requestable->requests()->pluck('approver_id', 'id')->toArray();
         $remainingApprovers = array_diff($find_approvers, $requestable_approval_request_ids);
         $default_approvers = (new FindApprovers())->getApproversInfo($remainingApprovers);
-
         foreach ($requestable->requests as $approval_request) {
             $business_member = $approval_request->approver;
             $member = $business_member->member;
             $profile = $member->profile;
             array_push($approvers, [
                 'name' => $profile->name,
-                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status]
+                'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);

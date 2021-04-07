@@ -17,6 +17,8 @@ class LeaveListTransformer extends TransformerAbstract
             'end_date' => $leave['end_date'],
             'status' => LeaveStatusPresenter::statuses()[$leave['status']],
             'created_at' => $leave['created_at'],
+            'period' => $leave['start_date']->format('M d, Y') == $leave['end_date']->format('M d, Y') ? $leave['start_date']->format('M d') : $leave['start_date']->format('M d') .' - '. $leave['end_date']->format('M d'),
+            'total_days' => $leave['total_days'],
         ];
     }
 }
