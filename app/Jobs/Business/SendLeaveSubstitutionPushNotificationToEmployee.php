@@ -1,18 +1,13 @@
 <?php namespace App\Jobs\Business;
 
-use App\Jobs\Job;
 use App\Models\BusinessMember;
 use App\Models\Member;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
+use App\Sheba\Business\BusinessQueue;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\PushNotificationHandler;
 
-class SendLeaveSubstitutionPushNotificationToEmployee extends Job implements ShouldQueue
+class SendLeaveSubstitutionPushNotificationToEmployee extends BusinessQueue
 {
-    use InteractsWithQueue, SerializesModels;
-
     private $pushNotification;
     /** @var Leave $leave */
     private $leave;
@@ -25,6 +20,7 @@ class SendLeaveSubstitutionPushNotificationToEmployee extends Job implements Sho
     {
         $this->leave = $leave;
         $this->pushNotification = new PushNotificationHandler();
+        parent::__construct();
     }
 
     public function handle()
@@ -40,7 +36,7 @@ class SendLeaveSubstitutionPushNotificationToEmployee extends Job implements Sho
 
             $topic = config('sheba.push_notification_topic_name.employee') . (int)$substitute_business_member->member->id;
             $channel = config('sheba.push_notification_channel_name.employee');
-            $sound  = config('sheba.push_notification_sound.employee');
+            $sound = config('sheba.push_notification_sound.employee');
             $start_date = $this->leave->start_date->format('d/m/Y');
             $end_date = $this->leave->end_date->format('d/m/Y');
             $notification_data = [
