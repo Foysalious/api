@@ -153,12 +153,6 @@ class AuthUser
         return !is_null($this->attributes['business_member']['business_id']);
     }
 
-    public function getMemberId()
-    {
-        if (!$this->isMember()) return null;
-        return $this->attributes['business_member']['member_id'];
-    }
-
     public function isCustomer()
     {
         return !is_null($this->attributes['customer']);
@@ -168,12 +162,6 @@ class AuthUser
     {
         if (!$this->isCustomer()) return null;
         return $this->attributes['customer']['id'];
-    }
-
-    public function getMemberAssociatedBusinessId()
-    {
-        if (!$this->doesMemberHasBusiness()) return null;
-        return $this->attributes['business_member']['business_id'];
     }
 
     public function isMemberSuper()
