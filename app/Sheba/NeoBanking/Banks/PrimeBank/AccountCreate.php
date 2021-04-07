@@ -68,7 +68,8 @@ class AccountCreate
             "user_id"          => $this->partner->id,
             "name"             => $application['personal']['applicant_name'] ? : null,
             "mobile"           => $this->mobile,
-            "company_name"     => $this->partner->name
+            "company_name"     => $this->partner->name,
+            "full_data"        => json_encode($application)
         ];
         return $this;
     }
@@ -86,7 +87,7 @@ class AccountCreate
         if (isset($this->response['data'])) {
             $thirdPartyLog->setRequest($this->data['application_data'])
                             ->setPartnerId($this->partner->id)
-                            ->setResponse($this->response['data'])
+                            ->setResponse(json_encode($this->response['data']))
                             ->setFrom(ThirdPartyLog::PBL_ACCOUNT_CREATION)
                             ->store();
         }
