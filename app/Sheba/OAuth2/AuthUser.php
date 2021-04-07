@@ -290,15 +290,4 @@ class AuthUser
         if (!$business_member) return null;
         return $business_member->business;
     }
-
-    public function getCustomerId()
-    {
-        if (!$this->isCustomer()) return null;
-        return $this->attributes['customer']['id'];
-    }
-
-    public function isCustomer()
-    {
-        return !is_null($this->attributes['customer']);
-    }
 }
