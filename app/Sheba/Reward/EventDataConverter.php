@@ -1,11 +1,19 @@
 <?php namespace Sheba\Reward;
 
 use App\Models\Reward;
+use App\Models\TopUpVendor;
 
 class EventDataConverter
 {
     private $event;
-
+    private $operator = [
+        'all' => 'All',
+        'robi' => 'Robi',
+        'airtel' => 'Airtel',
+        'gp' => 'GP',
+        'banglalink' => 'Banglalink',
+        'teletalk' => 'Teletalk'
+    ];
     public function __construct()
     {
         $this->event = collect([
@@ -325,6 +333,85 @@ class EventDataConverter
                             ]
                         ]
                     ]
+            ],
+            'affiliate' =>[
+                'campaign' => [
+                    'topup' => [
+                        'name' => 'TopUp',
+                        'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\Topup\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                            'topup_status' => [
+                                'type' => 'select',
+                                'possible_value' => ['Successful' => 'Successful'],
+                                'is_multi_selectable' => 0
+                            ],
+                            'operator' => [
+                                'type' => 'select',
+                                'possible_value' => $this->operator,
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
+                    ],
+
+                    'topup_otf' => [
+                        'name' => 'TopUp-OTF',
+                        'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\TopupOTF\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                            'quantity' => [
+                                'type' => 'number',
+                                'min' => 0,
+                                'warning' => 'Quantity is recommended to be a higher number. User gets reward very easily if quantity is low',
+                            ],
+                            'topup_status' => [
+                                'type' => 'select',
+                                'possible_value' => ['Successful' => 'Successful'],
+                                'is_multi_selectable' => 0
+                            ],
+                            'operator' => [
+                                'type' => 'select',
+                                'possible_value' => $this->operator,
+                                'is_multi_selectable' => 1
+                            ],
+                            'sim_type' => [
+                                'type' => 'select',
+                                'possible_value' => ['prepaid' => 'Prepaid', 'postpaid' => 'Postpaid'],
+                                'is_multi_selectable' => 1
+                            ]
+                        ]
+                    ],
+
+                    'wallet_recharge' => [
+                        'name' => 'Point Recharge',
+                        'event_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Affiliate\Campaign\WalletRecharge\Rule',
+                        'parameters' => [
+                            'target' => [
+                                'type' => 'number',
+                                'min' => 0
+                            ],
+                            'gateway' => [
+                                'type' => 'select',
+                                'possible_value' => ['bkash' => 'bKash', 'nagad' => 'Nagad'],
+                                'is_multi_selectable' => 1
+                            ],
+                            'recharge_status' => [
+                                'type' => 'select',
+                                'possible_value' => ['completed' => 'Successful'],
+                                'is_multi_selectable' => 0,
+                            ]
+                        ]
+                    ],
+                ],
             ]
         ]);
     }
@@ -381,6 +468,13 @@ class EventDataConverter
     public function getEventsFor($target_type, $event_type)
     {
         return $this->event[$target_type][$event_type];
+    }
+
+    public function setOperators(){
+        $operators = TopUpVendor::select('id', 'name')->where('is_published', 1)->get();
+        foreach ($operators as $operator){
+            $this->operator[$operator->id] = $operator->name;
+        }
     }
 }
 
