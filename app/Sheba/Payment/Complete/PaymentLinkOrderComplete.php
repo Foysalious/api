@@ -9,25 +9,22 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
-use Sheba\ExpenseTracker\AutomaticExpense;
 use Sheba\ExpenseTracker\AutomaticIncomes;
 use Sheba\ExpenseTracker\Repository\AutomaticEntryRepository;
-use Sheba\FraudDetection\TransactionSources;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\InvoiceCreator;
 use Sheba\PaymentLink\PaymentLinkStatics;
+use Sheba\PaymentLink\PaymentLinkTransaction;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\Pos\Payment\Creator as PaymentCreator;
 use Sheba\PushNotificationHandler;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
 use Sheba\Reward\ActionRewardDispatcher;
-use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
-use Sheba\Transactions\Wallet\WalletTransactionHandler;
 use Sheba\Usage\Usage;
-use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 
 class PaymentLinkOrderComplete extends PaymentComplete
 {
@@ -44,6 +41,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private $target;
     private $payment_receiver;
     private $paymentLinkTax;
+    /**
+     * @var int
+     */
+    private $entryAmount;
 
     public function __construct()
     {
@@ -79,7 +80,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $this->notify();
             $this->dispatchReward();
             $this->storeEntry();
-        }catch (\Throwable $e){
+        } catch (\Throwable $e) {
             logError($e);
         }
         return $this->payment;
@@ -91,7 +92,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
         $entry_repo = app(AutomaticEntryRepository::class)->setPartner($this->payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)
-                                                          ->setEmiMonth($payable->emi_month)->setAmountCleared($payable->amount);
+                                                          ->setEmiMonth($payable->emi_month)->setAmountCleared($this->entryAmount);
         $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
         if ($this->target) {
             $entry_repo->setCreatedAt($this->target->created_at);
@@ -106,8 +107,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $entry_repo->setParty($payer);
         }
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
-            ->setPaymentId($this->payment->id)
-            ->setIsPaymentLink(1)->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+                   ->setPaymentId($this->payment->id)
+                   ->setIsPaymentLink(1)->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
@@ -115,7 +116,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
             $entry_repo->store();
         }
     }
-    private function getSourceType(){
+
+    private function getSourceType()
+    {
         if ($this->target instanceof PosOrder) return 'PosOrder';
         if ($this->target instanceof ExternalPayment) return 'ExternalPayment';
         return null;
@@ -154,24 +157,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function processTransactions(HasWalletTransaction $payment_receiver)
     {
-        $walletTransactionHandler  = (new WalletTransactionHandler())->setModel($payment_receiver);
-        $recharge_wallet_amount    = $this->payment->payable->amount;
-        $formatted_recharge_amount = number_format($recharge_wallet_amount, 2);
-        $recharge_log              = "$formatted_recharge_amount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
-        $recharge_transaction      = $walletTransactionHandler->setType(Types::credit())->setAmount($recharge_wallet_amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
-        $interest                  = (double)$this->paymentLink->getInterest();
-        if ($interest > 0) {
-            $formatted_interest = number_format($interest, 2);
-            $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$recharge_transaction->id}, and Transc amount $formatted_recharge_amount";
-            $walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-        }
-
-        $minus_wallet_amount       = $this->getPaymentLinkFee($recharge_wallet_amount);
-        $formatted_minus_amount    = number_format($minus_wallet_amount, 2);
-        $minus_log                 = "($this->paymentLinkTax"."TK + $this->paymentLinkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$recharge_transaction->id}, and Transc amount: $formatted_recharge_amount";
-        $walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($minus_wallet_amount)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
-        /*$payment_receiver->minusWallet($minus_wallet_amount, ['log' => $minus_log]);*/
-
+        $transaction       = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
+        $this->entryAmount = $this->paymentLink->getPaidBy() == PaymentLinkStatics::paidByTypes()[0] ? $transaction->getAmount() - $transaction->getFee() - $this->paymentLink->getPartnerProfit() : $transaction->getAmount();
     }
 
     private function getPaymentLinkFee($amount)
