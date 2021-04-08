@@ -38,6 +38,9 @@ class InfoCallController extends Controller
         $auth_user = $request->auth_user;
         $resource = $auth_user->getResource();
         $this->setModifier($resource);
+        $service = Service::select('name')->where('id', $request->service_id)->get();
+        if ($request->has('service_id')) $service_name = $service[0]['name'];
+        else $service_name = $request->service_name;
         $data = [
             'priority' => 'High',
             'flag' => 'Red',
@@ -46,7 +49,7 @@ class InfoCallController extends Controller
             'customer_mobile' => $request->mobile,
             'location_id' => $request->location_id,
             'service_id' => $request->service_id,
-            'service_name' => $request->service_name,
+            'service_name' => $service_name,
             'created_by_type'=> get_class($resource)
         ];
         $info_call = $this->infoCallRepository->create($data);
