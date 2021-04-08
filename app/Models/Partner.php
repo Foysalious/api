@@ -1038,4 +1038,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
         return $this->hasOne(PartnerWebstoreBanner::class);
     }
 
+    public function isMigrationCompleted()
+    {
+        return $this->is_migration_completed == 1;
+    }
+
 }
