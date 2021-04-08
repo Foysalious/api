@@ -10,10 +10,15 @@ class DataMigration
     private $partner;
     /** @var InventoryDataMigration */
     private $inventoryDataMigration;
+    /**
+     * @var PosOrderDataMigration
+     */
+    private $posOrderDataMigration;
 
-    public function __construct(InventoryDataMigration $inventoryDataMigration)
+    public function __construct(InventoryDataMigration $inventoryDataMigration, PosOrderDataMigration $posOrderDataMigration)
     {
         $this->inventoryDataMigration = $inventoryDataMigration;
+        $this->posOrderDataMigration = $posOrderDataMigration;
     }
 
     /**
@@ -33,6 +38,8 @@ class DataMigration
     {
         if ($this->partner->isMigrationCompleted()) throw new DataAlreadyMigratedException();
         $this->inventoryDataMigration->setPartner($this->partner)->migrate();
+        $this->posOrderDataMigration->setPartner($this->partner)->migrate();
+
         dispatch(new PartnerMigrationCompleteJob($this->partner));
 
     }
