@@ -4,6 +4,8 @@ use App\Http\Controllers\Controller;
 use App\Models\HyperLocal;
 use App\Models\Job;
 use App\Models\Location;
+use App\Models\Reward;
+use App\Models\RewardAction;
 use Sheba\Dal\LocationService\LocationService;
 use App\Models\Review;
 use Sheba\Dal\Service\Service;
@@ -173,10 +175,19 @@ class CustomerController extends Controller
     }
     public function getProfileCompletion($customer, Request $request)
     {
+        $reward_action = RewardAction::where('event_name', 'profile_complete')->latest('id')->first();
+        $reward = Reward::where('detail_id', $reward_action->id)
+            ->select('rewards.*')
+            ->get();
+        $decision = (($reward[0]->start_time <= Carbon::now()) && ($reward[0]->end_time >= Carbon::now()));
         $customer = $request->customer;
         $data = [];
         $data['is_completed'] = $customer->is_completed;
-        if ($data['is_completed'] == 0) $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+        if ($data['is_completed'] == 1) $data['reward_active'] = 0;
+        if ($decision && $data['is_completed'] == 0){
+            $data['reward_active'] = 1;
+            $data['not_complete_profile'] = "https://cdn-marketplacedev.s3.ap-south-1.amazonaws.com/sheba_xyz/images/png/sheba-credit-banner.png";
+        }
         return api_response($request, $data, 200, ['data' => $data]);
 
     }
