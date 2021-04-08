@@ -4,6 +4,8 @@
 namespace Sheba\TopUp\Vendor\Response;
 
 
+use Sheba\TopUp\Gateway\BdRecharge;
+
 class BdRechargeResponse extends TopUpResponse
 {
 
@@ -12,7 +14,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function hasSuccess(): bool
     {
-        return $this->response['status'] == 200;
+        return $this->response && $this->response->status == 200;
     }
 
     /**
@@ -20,7 +22,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        return $this->response['data']['tid'];
+        return $this->response->data->tid;
     }
 
     /**
@@ -28,7 +30,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorCode()
     {
-        return $this->response['status'];
+        return $this->response->status;
     }
 
     /**
@@ -36,7 +38,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        return $this->response['data']['message'];
+        return $this->response->data->message;
     }
 
     /**
@@ -44,6 +46,6 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function resolveTopUpSuccessStatus()
     {
-        // TODO: Implement resolveTopUpSuccessStatus() method.
+        return BdRecharge::getInitialStatusStatically();
     }
 }

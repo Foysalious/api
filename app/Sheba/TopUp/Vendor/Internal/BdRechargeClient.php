@@ -66,7 +66,7 @@ class BdRechargeClient
             "amount" => (int) $topup_order->amount,
             "type" => strtoupper($topup_order->payee_mobile_type),
             "operator" => $this->getOperatorId($topup_order->vendor_id),
-            "customer_tid" => $topup_order->id,
+            "customer_tid" => "$topup_order->id",
         ];
 
         $request_data = [

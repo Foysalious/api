@@ -29,7 +29,7 @@ class BdRecharge implements Gateway
     {
         $response = new BdRechargeResponse();
         $response->setResponse($this->client->recharge($topup_order));
-        dd($response);
+        return $response;
     }
 
     public function getInitialStatus()
