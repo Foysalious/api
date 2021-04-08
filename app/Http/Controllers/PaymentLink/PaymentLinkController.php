@@ -146,11 +146,11 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount'           => 'required',
-                'purpose'          => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
-                'emi_month'        => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
-                'interest_paid_by' => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
-                'transaction_charge'=>'sometimes|numeric|min:'.PaymentLinkStatics::get_payment_link_commission()
+                'amount'             => 'required',
+                'purpose'            => 'required', 'customer_id' => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             $emi_month_invalidity = Creator::validateEmiMonth($request->all());
@@ -165,7 +165,7 @@ class PaymentLinkController extends Controller
                 ->setTargetId($request->pos_order_id)
                 ->setTargetType('pos_order')
                 ->setEmiMonth((int)$request->emi_month)
-                ->setPaidBy($request->interest_paid_by?:PaymentLinkStatics::paidByTypes()[($request->has("emi_month")?1:0)])
+                ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
                 ->setTransactionFeePercentage($request->transaction_charge)
                 ->calculate();
 
@@ -219,21 +219,26 @@ class PaymentLinkController extends Controller
     {
         try {
             $this->validate($request, [
-                'amount'      => 'required|numeric',
-                'customer_id' => 'sometimes|integer|exists:pos_customers,id',
-                'emi_month'   => 'sometimes|integer|in:' . implode(',', config('emi.valid_months'))
+                'amount'             => 'required|numeric',
+                'customer_id'        => 'sometimes|integer|exists:pos_customers,id',
+                'emi_month'          => 'sometimes|integer|in:' . implode(',', config('emi.valid_months')),
+                'interest_paid_by'   => 'sometimes|in:' . implode(',', PaymentLinkStatics::paidByTypes()),
+                'transaction_charge' => 'sometimes|numeric|min:' . PaymentLinkStatics::get_payment_link_commission()
             ]);
             $purpose = 'Due Collection';
             if (!$request->user) return api_response($request, null, 404, ['message' => 'User not found']);
             if ($request->has('customer_id')) $customer = PosCustomer::find($request->customer_id);
 
-            $this->creator->setAmount($request->amount)->setReason($purpose)->setUserName($request->user->name)->setUserId($request->user->id)->setUserType($request->type);
+            $this->creator->setAmount($request->amount)
+                          ->setReason($purpose)
+                          ->setUserName($request->user->name)
+                          ->setUserId($request->user->id)
+                          ->setUserType($request->type)
+                          ->setEmiMonth($request->emi_month)
+                          ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
+                          ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
-            if ($request->emi_month) {
-                $data = Calculations::getMonthData($request->amount, (int)$request->emi_month, false);
-                $this->creator->setAmount($data['total_amount'])->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setEmiMonth((int)$request->emi_month);
-            }
-            $this->creator->setTargetType('due_tracker')->setTargetId(1);
+            $this->creator->setTargetType('due_tracker')->setTargetId(1)->calculate();
             $payment_link_store = $this->creator->save();
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
