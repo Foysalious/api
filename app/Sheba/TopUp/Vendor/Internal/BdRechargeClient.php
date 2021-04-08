@@ -66,7 +66,7 @@ class BdRechargeClient
             "amount" => (int) $topup_order->amount,
             "type" => strtoupper($topup_order->payee_mobile_type),
             "operator" => $this->getOperatorId($topup_order->vendor_id),
-            "customer_tid" => $topup_order->id,
+            "customer_tid" => "$topup_order->id",
         ];
 
         $request_data = [
@@ -86,8 +86,6 @@ class BdRechargeClient
             $response = $this->httpClient->call($this->tpRequest);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
-        }catch ( TPProxyServerError $e) {
-            dd($e);
         }
         return $response;
     }
@@ -97,7 +95,7 @@ class BdRechargeClient
         $unencrypted_data = [
             "srcuid" => $this->username,
             "srcpwd" => $this->password,
-            "tid" => $topup_order_id
+            "tid" => "$topup_order_id"
         ];
 
         $request_data = [
