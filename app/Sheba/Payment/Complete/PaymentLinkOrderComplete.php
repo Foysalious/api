@@ -44,7 +44,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /**
      * @var int
      */
-    private $entryAmount;
+    private $entryAmount=0;
 
     public function __construct()
     {
@@ -91,7 +91,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($this->payment_receiver)->setAmount($payable->amount)->setHead(AutomaticIncomes::PAYMENT_LINK)
+        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($this->payment_receiver)->setAmount($this->entryAmount)->setHead(AutomaticIncomes::PAYMENT_LINK)
                                                           ->setEmiMonth($payable->emi_month)->setAmountCleared($this->entryAmount);
         $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
         if ($this->target) {
