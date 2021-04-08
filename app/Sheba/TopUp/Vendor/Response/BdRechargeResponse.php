@@ -12,7 +12,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function hasSuccess(): bool
     {
-        // TODO: Implement hasSuccess() method.
+        return $this->response['status'] == 200;
     }
 
     /**
@@ -20,7 +20,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getTransactionId()
     {
-        // TODO: Implement getTransactionId() method.
+        return $this->response['data']['tid'];
     }
 
     /**
@@ -28,7 +28,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorCode()
     {
-        // TODO: Implement getErrorCode() method.
+        return $this->response['status'];
     }
 
     /**
@@ -36,7 +36,7 @@ class BdRechargeResponse extends TopUpResponse
      */
     public function getErrorMessage()
     {
-        // TODO: Implement getErrorMessage() method.
+        return $this->response['data']['message'];
     }
 
     /**
