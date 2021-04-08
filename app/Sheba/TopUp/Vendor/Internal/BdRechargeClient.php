@@ -1,7 +1,7 @@
 <?php
 
 
-namespace App\Sheba\TopUp\Vendor;
+namespace App\Sheba\TopUp\Vendor\Internal;
 
 
 use App\Models\TopUpOrder;
@@ -12,6 +12,7 @@ use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\PaywellResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 use Sheba\TPProxy\TPProxyClient;
+use Sheba\TPProxy\TPProxyServerError;
 use Sheba\TPProxy\TPProxyServerTimeout;
 use Sheba\TPProxy\TPRequest;
 use InvalidArgumentException;
@@ -63,8 +64,9 @@ class BdRechargeClient
             "srcpwd" => $this->password,
             "msisdn" => $topup_order->payee_mobile,
             "amount" => (int) $topup_order->amount,
-            "type" => $topup_order->payee_mobile_type,
-            "operator" => $this->getOperatorId($topup_order->vendor_id)
+            "type" => strtoupper($topup_order->payee_mobile_type),
+            "operator" => $this->getOperatorId($topup_order->vendor_id),
+            "customer_tid" => $topup_order->id,
         ];
 
         $request_data = [
@@ -84,11 +86,10 @@ class BdRechargeClient
             $response = $this->httpClient->call($this->tpRequest);
         } catch (TPProxyServerTimeout $e) {
             throw new GatewayTimeout($e->getMessage());
+        }catch ( TPProxyServerError $e) {
+            dd($e);
         }
         return $response;
-        $topup_response = app(PaywellResponse::class);
-        $topup_response->setResponse($response->data);
-        return $topup_response;
     }
 
     public function enquiry($topup_order_id)
