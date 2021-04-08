@@ -53,7 +53,6 @@ class TopUpJob extends Job implements ShouldQueue
     public function handle(VendorFactory $vendor_factory, TopUp $top_up, FailedJobProviderInterface $logger = null)
     {
         if ($this->attempts() > 1) return;
-
         $this->vendorFactory = $vendor_factory;
         $this->topUp = $top_up;
         $this->failedJobLogger = $logger;

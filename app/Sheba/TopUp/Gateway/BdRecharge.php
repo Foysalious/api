@@ -5,7 +5,7 @@ namespace Sheba\TopUp\Gateway;
 
 
 use App\Models\TopUpOrder;
-use App\Sheba\TopUp\Vendor\BdRechargeClient;
+use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
 use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
