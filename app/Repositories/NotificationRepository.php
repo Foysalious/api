@@ -11,7 +11,10 @@ use App\Models\PartnerOrder;
 use App\Sheba\Affiliate\PushNotification\MovieTicketPurchaseFailed;
 use App\Sheba\Affiliate\PushNotification\TopUpFailed;
 use App\Sheba\Affiliate\PushNotification\TransportTicketPurchaseFailed;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Sheba\Subscription\Partner\PartnerSubscriptionChange;
+use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\PartnerOrderRequest\Events\OrderRequestEvent;
 use Sheba\PushNotificationHandler;
 use Sheba\Subscription\Partner\BillingType;
@@ -27,6 +30,10 @@ class NotificationRepository
         $this->order = $order;
         $this->send();
     }*/
+    /**
+     * @param $order
+     * @throws InvalidOptionsException
+     */
     public function send($order)
     {
         $this->order = $order;
@@ -50,6 +57,10 @@ class NotificationRepository
             $this->sendNotificationToPartner($this->order->partner_orders);
     }
 
+    /**
+     * @param $partner_orders
+     * @throws InvalidOptionsException
+     */
     private function sendNotificationToPartner($partner_orders)
     {
         foreach ($partner_orders as $partner_order) {
@@ -74,7 +85,7 @@ class NotificationRepository
                 "sound"      => "notification_sound",
                 "channel_id" => $channel
             ];
-            (new PushNotificationHandler())->send($payload, $topic, $channel, $sound);
+            (new PushNotificationHandler())->setPriority(true)->send($payload, $topic, $channel, $sound);
 
             event(new OrderRequestEvent(['user_type' => 'partner', 'user_id' => $partner->id, 'payload' => $payload]));
         }
@@ -280,7 +291,10 @@ class NotificationRepository
         $message   = "এসম্যানেজার এর $type $package->show_name_bn প্যকেজ এ সাবস্ক্রিপশন $gradeType  জন্য আপনার ওয়ালেট এ  পর্যাপ্ত  ব্যলেন্স নেই আনুগ্রহ করে ওয়ালেট রিচার্জ করুন এবং সাবস্ক্রিপশন সক্রিয় করুন।";
         $this->sendSubscriptionNotification($title, $message, $partner);
         if ($withMessage) {
-            (new SmsHandler('insufficient-balance-subscription'))->send($partner->getContactNumber(), [
+            (new SmsHandler('insufficient-balance-subscription'))
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION)
+                ->send($partner->getContactNumber(), [
                 'package_type_bn' => $type,
                 'package_name'    => $package->show_name_bn,
                 'grade_text'      => $gradeType

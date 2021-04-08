@@ -9,6 +9,8 @@ use App\Exceptions\RentACar\InsideCityPickUpAddressNotFoundException;
 use App\Exceptions\RentACar\OutsideCityPickUpAddressNotFoundException;
 use App\Models\Affiliation;
 use App\Models\CarRentalJobDetail;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\Customer;
@@ -381,6 +383,7 @@ class OrderPlace
                 $job = $this->createJob($partner_order);
                 $this->createCarRentalDetail($job);
                 $job->jobServices()->saveMany($job_services);
+                Log::info('Creating Job Service JOB#'.$job.'.[ServiceDiscount: '.var_export($this->discountCalculation->getDiscountId(), true).']');
                 $this->updateVoucherInPromoList($order);
                 if (!$order->location_id) throw new LocationIdNullException("Order #" . $order->id . " has no location id");
                 $partner_order = $partner_order->fresh();
@@ -470,7 +473,6 @@ class OrderPlace
             $unit_price = $upsell_unit_price ? $upsell_unit_price : $this->priceCalculation->getUnitPrice();
             $total_original_price = $this->priceCalculation->getTotalOriginalPrice();
             $this->discountCalculation->setService($service)->setLocationService($location_service)->setOriginalPrice($total_original_price)->setQuantity($selected_service->getQuantity())->calculate();
-
             $service_data = [
                 'service_id' => $service->id,
                 'quantity' => $selected_service->getQuantity(),
@@ -485,6 +487,7 @@ class OrderPlace
                 'variable_type' => $service->variable_type,
                 'surcharge_percentage' => $this->priceCalculation->getSurcharge() ? $this->priceCalculation->getSurcharge()->amount : 0
             ];
+//            Log::info('Creating Job Service JOB# '.'.[Data: '.var_export($service_data, true).']');
             list($service_data['option'], $service_data['variables']) = $service->getVariableAndOption($selected_service->getOption());
             $job_services->push(new JobService($service_data));
         }

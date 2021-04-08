@@ -3,6 +3,8 @@
 use App\Http\Controllers\Controller;
 use App\Models\Bid;
 use App\Models\Business;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\Dal\Category\Category;
 use App\Models\Partner;
 use App\Models\Procurement;
@@ -990,7 +992,9 @@ class ProcurementController extends Controller
     private function shootSmsForInvitation(Business $business, Procurement $procurement, BitlyLinkShort $bitly_link, Sms $sms, Partner $partner)
     {
         $url = config('sheba.business_url') . "/tender/list/$procurement->id";
-        $sms->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
+        $sms->setFeatureType(FeatureType::PROCUREMENT)
+            ->setBusinessType(BusinessType::B2B)
+            ->shoot($partner->getManagerMobile(), "You have been invited to serve $business->name. Now go to this link-" . $bitly_link->shortUrl($url));
     }
 
     /**

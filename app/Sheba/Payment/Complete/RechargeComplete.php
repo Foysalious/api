@@ -8,6 +8,7 @@ use Sheba\Reward\ActionRewardDispatcher;
 use Sheba\Transactions\Types;
 use Sheba\Transactions\Wallet\HasWalletTransaction;
 use Sheba\Transactions\Wallet\WalletTransactionHandler;
+use Sheba\Dal\PaymentGateway\Contract as PaymentGatewayRepo;
 
 class RechargeComplete extends PaymentComplete
 {
@@ -23,6 +24,7 @@ class RechargeComplete extends PaymentComplete
                 if ($payable_user instanceof Partner) {
                     app(ActionRewardDispatcher::class)->run('partner_wallet_recharge', $payable_user, $payable_user, $payable);
                 }
+                $this->storeCommissionTransaction();
             });
         } catch (QueryException $e) {
             $this->failPayment();
@@ -41,5 +43,28 @@ class RechargeComplete extends PaymentComplete
     protected function saveInvoice()
     {
         // TODO: Implement saveInvoice() method.
+    }
+
+    private function storeCommissionTransaction()
+    {
+        /** @var HasWalletTransaction $user */
+        $user = $this->payment->payable->user;
+
+        $payment_gateways = app(PaymentGatewayRepo::class);
+        $payment_gateway = $payment_gateways->builder()
+            ->where('service_type', $this->payment->created_by_type)
+            ->where('method_name', $this->payment->paymentDetails->last()->method)
+            ->where('status', 'Published')
+            ->first();
+
+        if($payment_gateway && $payment_gateway->cash_in_charge > 0){
+            (new WalletTransactionHandler())->setModel($user)
+                ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
+                ->setType(Types::debit())
+                ->setLog('Credit Purchase Gateway Charge')
+                ->setTransactionDetails($this->payment->getShebaTransaction()->toArray())
+                ->setSource($this->payment->paymentDetails->last()->method)
+                ->store();
+        }
     }
 }

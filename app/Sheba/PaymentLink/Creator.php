@@ -1,6 +1,8 @@
 <?php namespace Sheba\PaymentLink;
 
 use App\Models\PosCustomer;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Sheba\EMI\Calculations;
 use Sheba\Repositories\Interfaces\PaymentLinkRepositoryInterface;
 use Sheba\Repositories\PaymentLinkRepository;
@@ -64,7 +66,7 @@ class Creator
 
     public function setUserName($user_name)
     {
-        $this->userName = $user_name;
+        $this->userName = (empty($user_name)) ? "Unknown Name" : $user_name;
         return $this;
     }
 
@@ -191,10 +193,8 @@ class Creator
             'interest'              => $this->interest,
             'bankTransactionCharge' => $this->bankTransactionCharge
         ];
-        if ($this->isDefault)
-            unset($this->data['reason']);
-        if (!$this->targetId)
-            unset($this->data['targetId'], $this->data['targetType']);
+        if ($this->isDefault) unset($this->data['reason']);
+        if (!$this->targetId) unset($this->data['targetId'], $this->data['targetType']);
     }
 
     public function getPaymentLinkData()
@@ -230,7 +230,11 @@ class Creator
 
             /** @var Sms $sms */
             $sms = app(Sms::class);
-            $sms = $sms->setVendor('infobip')->to($mobile)->msg($message);
+            $sms = $sms->setVendor('infobip')
+                ->to($mobile)
+                ->msg($message)
+                ->setFeatureType(FeatureType::PAYMENT_LINK)
+                ->setBusinessType(BusinessType::SMANAGER);
             $sms->shoot();
         }
     }
@@ -272,5 +276,33 @@ class Creator
             $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($data['total_amount']);
         }
         return $this;
+    }
+
+    public function getErrorMessage($status = false) {
+        if($status) {
+            $type = $status === "active" ? "সক্রিয়" : "নিষ্ক্রিয়";
+            $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক ' .$type. ' করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+            $title =  'লিংকটি ' .$type. ' করা সম্ভব হয়নি';
+            return ["message" => $message,"title" => $title];
+        }
+        $message = 'দুঃখিত! কিছু একটা সমস্যা হয়েছে, লিঙ্ক তৈরি করা সম্ভব হয়নি। অনুগ্রহ করে আবার চেষ্টা করুন।';
+        $title =  'লিঙ্ক তৈরি হয়নি';
+        return ["message" => $message,"title" => $title];
+    }
+
+    public function getSuccessMessage($status = false) {
+        if ($status) {
+            $message = $status === "active" ? 'অভিনন্দন! লিঙ্কটি আবার সক্রিয় হয়ে গিয়েছে। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।'
+                : "এই লিঙ্ক দিয়ে আপনি বর্তমানে কোন টাকা গ্রহণ করতে পারবেন না, তবে আপনি যেকোনো মুহূর্তে লিঙ্কটি আবার সক্রিয় করতে পারবেন।";
+            $title =  $status === "active" ? "লিঙ্কটি সক্রিয় হয়েছে" : "লিঙ্কটি নিষ্ক্রিয় হয়েছে";
+            return ["message" => $message,"title" => $title];
+        }
+        $message = "অভিনন্দন! আপনি সফলভাবে একটি কাস্টম লিঙ্ক তৈরি করেছেন। লিঙ্কটি শেয়ার করার মাধ্যমে টাকা গ্রহণ করুন।";
+        $title = "লিঙ্ক তৈরি সফল হয়েছে";
+        return ["message" => $message,"title" => $title];
+    }
+
+    public function getPaymentLink() {
+        return $this->paymentLinkCreated->link;
     }
 }

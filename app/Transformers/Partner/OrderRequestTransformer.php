@@ -51,6 +51,7 @@ class OrderRequestTransformer extends TransformerAbstract
             'destination_address_geo' => $job->carRentalJobDetail ? json_decode($job->carRentalJobDetail->destination_address_geo) : null,
             'total_price' => (double)$request->partnerOrder->calculate()->totalPrice,
             'status' => $request->status,
+            'category_id' => $job->category ? $job->category->id : null,
             'number_of_order' => 1,
             'is_order_request' => true,
             'is_subscription_order' => false,

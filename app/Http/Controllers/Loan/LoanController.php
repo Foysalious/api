@@ -11,6 +11,8 @@ use App\Repositories\CommentRepository;
 use App\Repositories\FileRepository;
 use App\Sheba\Loan\DLSV2\LoanAccount;
 use App\Sheba\Loan\Exceptions\LoanNotFoundException;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -535,7 +537,11 @@ class LoanController extends Controller
             ]);
             $mobile  = $partner_bank_loan->partner->getContactNumber();
             $message = $request->message;
-            (new Sms())->msg($message)->to($mobile)->shoot();
+            (new Sms())->msg($message)
+                ->setFeatureType(FeatureType::LOAN)
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->to($mobile)
+                ->shoot();
             return api_response($request, null, 200, ['message' => 'SMS has been sent successfully']);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -673,10 +679,17 @@ class LoanController extends Controller
                 $loan_application_name = 'proposal_letter_' . $loan_id;
                 return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_proposal_letter')->download();
             }
-
             if ($data["loan_type"] === LoanTypes::MICRO) {
                 $loan_application_name = 'dana_classic_' . $loan_id;
-                return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->download(true);
+                if( $request->has("from_admin")) {
+                    $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->save(true);
+                    return api_response($request, null, 200, ['data' => $pdf]);
+                }
+                $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('dana_classic_application_form')->download(true);
+            }
+            if( $request->has("from_admin")) {
+                $pdf = $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->save();
+                return api_response($request, null, 200, ['data' => $pdf]);
             }
             return $pdf_handler->setData($data)->setName($loan_application_name)->setViewFile('partner_loan_application_form')->download();
         } catch (ValidationException $e) {

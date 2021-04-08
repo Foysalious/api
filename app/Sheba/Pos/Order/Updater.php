@@ -1,5 +1,6 @@
 <?php namespace Sheba\Pos\Order;
 
+use App\Exceptions\Pos\Order\NotEnoughStockException;
 use App\Models\PosOrder;
 use App\Models\PosOrderItem;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -65,7 +66,7 @@ class Updater
         if (isset($this->data['services'])) {
             $services = json_decode($this->data['services'], true);
             foreach ($services as $service) {
-                $item                     = $this->new ? $this->itemRepo->findFromOrder($this->order, $service['id']) : $this->itemRepo->findByService($this->order, $service['id']);
+                $item = $this->new ? $this->itemRepo->findFromOrder($this->order, $service['id']) : $this->itemRepo->findByService($this->order, $service['id']);
                 $service_data['quantity'] = $service['quantity'];
                 if ($item->discount && $item->quantity) {
                     $service_discount_data['amount'] = ($item->discount->amount / $item->quantity) * $service['quantity'];
@@ -97,6 +98,8 @@ class Updater
             return;
         $is_stock_maintainable = $this->stockManager->setPosService($partner_pos_service)->isStockMaintainable();
         if ($is_stock_maintainable) {
+            if ($item->service->is_published_for_shop  && $service_quantity > $item->service->stock)
+                throw new NotEnoughStockException("Not enough stock", 403);
             $changed_quantity = abs($service_quantity - $item->quantity);
             if ($item->quantity > $service_quantity)
                 $this->stockManager->increase($changed_quantity); elseif ($item->quantity < $service_quantity)

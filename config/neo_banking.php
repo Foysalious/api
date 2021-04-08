@@ -145,6 +145,36 @@ return [
                 'error_message' => 'জন্ম তারিখ পূরণ আবশ্যক',
             ],
             [
+                'field_type' => 'header',
+                'title'      => 'লিঙ্গ',
+                'mandatory'  => false
+            ],
+            [
+                'field_type' => 'radioGroup',
+                'title'      => '',
+                'name'       => 'gender',
+                'id'         => 'gender',
+                'mandatory'  => false,
+                'views'      => [
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'male',
+                        'id'         => 'male',
+                        'title'      => 'পুরুষ',
+                        'mandatory'  => false,
+                        'value'      => 1
+                    ],
+                    [
+                        'field_type' => 'radioButton',
+                        'name'       => 'female',
+                        'id'         => 'female',
+                        'title'      => 'নারী',
+                        'mandatory'  => false,
+                        'value'      => 0
+                    ]
+                ]
+            ],
+            [
                 'field_type'    => 'editText',
                 'title'         => 'বাবার নাম  *',
                 'name'          => 'father_name',
@@ -259,13 +289,13 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => 'ই-মেইল আইডি',
+                'title'         => 'ই-মেইল আইডি *',
                 'name'          => 'email',
                 'id'            => 'email',
                 'hint'          => 'arafat@gmail.com',
                 'error_message' => 'ই-মেইল আইডি পূরণ আবশ্যক',
                 'input_type'    => 'email',
-                'mandatory'     => false
+                'mandatory'     => true
             ],
             [
                 'field_type'    => 'editText',
@@ -293,11 +323,30 @@ return [
             ],
             [
                 'field_type'    => 'date',
+                'title'         => 'ট্রেড লাইসেন্স মেয়াদ উত্তির্নের তারিখ *',
+                'name'          => 'trade_license_expire_date',
+                'id'            => 'trade_license_expire_date',
+                'hint'          => 'উদাহরণ: 01/01/2000',
+                'error_message' => 'ট্রেড লাইসেন্স মেয়াদ উত্তির্নের তারিখ পূরণ আবশ্যক',
+                'input_type'    => 'number',
+                'mandatory'     => true,
+                'future_date'   => true
+            ],
+            [
+                'field_type'    => 'date',
                 'title'         => 'নিবন্ধনের তারিখ *',
                 'name'          => 'trade_licence_date',
                 'id'            => 'trade_licence_date',
                 'hint'          => 'উদাহরণ: 01/01/2000',
                 'error_message' => 'নিবন্ধনের তারিখ  পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => "ট্রেড লাইসেন্স প্রদান কারি কর্তৃপক্ষ *",
+                'name'          => 'issue_authority',
+                'id'            => 'issue_authority',
+                'hint'          => '',
+                'error_message' => 'ট্রেড লাইসেন্স প্রদান কারি কর্তৃপক্ষ পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -411,6 +460,26 @@ return [
                 'mandatory'     => false,
                 'input_type'    => 'number'
             ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'সম্ভব্য মাসিক জমার পরিমান *',
+                'name'          => 'monthly_earning',
+                'id'            => 'monthly_earning',
+                'hint'          => 'উদাহরণ: 10000',
+                'error_message' => 'সম্ভব্য মাসিক জমার পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
+                'input_type'    => 'number'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'সম্ভব্য মাসিক উত্তলনের পরিমান *',
+                'name'          => 'expected_monthly_withdrew',
+                'id'            => 'expected_monthly_withdrew',
+                'hint'          => 'উদাহরণ: 10000',
+                'error_message' => 'সম্ভব্য মাসিক উত্তলনের পরিমান পূরণ আবশ্যক',
+                'mandatory'     => true,
+                'input_type'    => 'number'
+            ]
         ],
         'nominee'     => [
             [
@@ -441,6 +510,22 @@ return [
                 'id'            => 'nominee_relation',
                 'hint'          => 'এখানে লিখুন',
                 'error_message' => 'আবেদনকারীর সাথে সম্পর্ক পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'নমিনীর পিতার নাম *',
+                'name'          => 'nominee_father_name',
+                'id'            => 'nominee_father_name',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'নমিনীর পিতার নাম পূরণ আবশ্যক'
+            ],
+            [
+                'field_type'    => 'editText',
+                'title'         => 'নমিনীর মায়ের নাম *',
+                'name'          => 'nominee_mother_name',
+                'id'            => 'nominee_mother_name',
+                'hint'          => 'এখানে লিখুন',
+                'error_message' => 'নমিনীর মায়ের নাম পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -936,6 +1021,7 @@ return [
             "internet_banking_no"  => "0"
         ]
     ],
+    'cpv_pending_account_null_message'   => 'আপনার ব্যঙ্ক একাউন্ট ওপেনিং আবেদন প্রক্রিয়াধিন রয়েছে। আগামী ৪৮ ঘন্টার মধ্যে একাউন্ট ওপেনিং সম্মপন্ন হবে, অনুগ্রহ করে অপক্ষা করুন অথবা বিস্তারিত জানতে কল করুন ১৬৫১৬',
     'cpv_pending_message'                => 'এই মুহূর্তে আপনার অ্যাকাউন্টে শুধু মাত্র টাকা জমা দেয়া যাবে। সম্পূর্ণরূপে অ্যাকাউন্ট সচল করতে আপনার নির্ধারিত শাখায় গিয়ে স্বাক্ষর করুন এবং আপনার ঠিকানা ভেরিফিকেশন এর জন্য অপেক্ষা করুন। ',
     'cpv_unverified_message'             => 'আপনার প্রদত্ত ঠিকানা ভেরিফিকেশন করা সম্ভব হয়নি। পূর্ণাঙ্গ ব্যাংক অ্যাকাউন্ট সচল করতে ১৬৫১৬ এ কল করে সঠিন তথ্য দিয়ে পুনরায় ঠিকানা ভেরিফিকেশন এর জন্য অনুরোধ করুন।',
     'signed_verified_message'            => 'আভিনন্দন! প্রাইম ব্যঙ্ক এ সফল ভাবে আপনার অ্যাকাউন্ট খোলা হয়েছে। এখন থেকে আপনি সকল ধরনের লেনদেন করতে পারবেন।',
@@ -945,5 +1031,7 @@ return [
         'cpv_unverified'   => 'Error',
         'cpv_verified'     => 'Success',
         'unsigned_message' => 'Info'
-    ]
+    ],
+
+    "PBL_account_create_key" => "6b9580a51b1a26026b50ceeb84dkc93ofcic6f7idcvl3jl6j"
 ];

@@ -11,6 +11,8 @@ class SmsHandler
     private $template;
     /** @var Sms  */
     private $sms;
+    /** @var bool */
+    private $isOff;
 
     /** @var Sms */
     public function __construct($event_name)
@@ -19,6 +21,7 @@ class SmsHandler
         $sms_templates  = app(SmsTemplateRepo::class);
         $this->template = $sms_templates->findByEventName($event_name);
         $this->sms      = app(Sms::class);
+        $this->isOff = !config('sms.is_on');
     }
 
     public function setVendor($vendor)
@@ -35,6 +38,7 @@ class SmsHandler
      */
     public function send($mobile, $variables)
     {
+        if ($this->isOff) return;
         if (!$this->template->is_on) return $this->sms;
 
         $this->checkVariables($variables);
@@ -79,6 +83,7 @@ class SmsHandler
 
     public function shoot()
     {
+        if ($this->isOff) return;
         $this->sms->shoot();
         return $this->sms;
     }
@@ -88,5 +93,31 @@ class SmsHandler
         if ($this->template->doesVariablesMatch($variables)) return;
 
         throw new Exception("Variable doesn't match");
+    }
+
+    public function getMsg() {
+        return $this->sms->getMsg();
+    }
+
+
+    /**
+     * @param $businessType
+     * @return $this
+     */
+    public function setBusinessType($businessType)
+    {
+        $this->sms->setBusinessType($businessType);
+        return $this;
+    }
+
+
+    /**
+     * @param $featureType
+     * @return $this
+     */
+    public function setFeatureType($featureType)
+    {
+        $this->sms->setFeatureType($featureType);
+        return $this;
     }
 }

@@ -15,6 +15,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
+        ini_set('memory_limit', '2048M');
         try {
             $partner = $request->partner;
             $total_items = 0.00;
@@ -96,6 +97,12 @@ class CategoryController extends Controller
                     $service->pos_category_id = $category_id;
                     $service->unit = $service->unit ? constants('POS_SERVICE_UNITS')[$service->unit] : null;
                     $service->warranty_unit = $service->warranty_unit ? config('pos.warranty_unit')[$service->warranty_unit] : null;
+                    $service->image_gallery = $service->imageGallery ? $service->imageGallery->map(function($image){
+                        return [
+                            'id' =>   $image->id,
+                            'image_link' => $image->image_link
+                        ];
+                    }) : [];
                     $total_items++;
                     if ($service->cost) $items_with_buying_price++;
                     $total_buying_price += $service->cost * $service->stock;
