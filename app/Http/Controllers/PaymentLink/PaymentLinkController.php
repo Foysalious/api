@@ -185,7 +185,7 @@ class PaymentLinkController extends Controller
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
                 if (!$request->has('emi_month')) {
-                    $this->creator->sentSms();
+                    $this->creator->sendSMS();
                 }
                 return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
@@ -234,7 +234,7 @@ class PaymentLinkController extends Controller
                           ->setUserName($request->user->name)
                           ->setUserId($request->user->id)
                           ->setUserType($request->type)
-                          ->setEmiMonth($request->emi_month)
+                          ->setEmiMonth($request->emi_month?:0)
                           ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
                           ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
@@ -253,7 +253,7 @@ class PaymentLinkController extends Controller
             $message = getValidationErrorMessage($e->validator->errors()->all());
             return api_response($request, $message, 400, ['message' => $message]);
         } catch (\Throwable $e) {
-            app('sentry')->captureException($e);
+            logError($e);
             return api_response($request, null, 500);
         }
     }

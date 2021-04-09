@@ -83,7 +83,7 @@ class Creator
 
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = round($amount, 2);
         return $this;
     }
 
@@ -157,7 +157,7 @@ class Creator
      */
     public function setInterest($interest)
     {
-        $this->interest = $interest;
+        $this->interest = round($interest,2);
         return $this;
     }
 
@@ -167,7 +167,7 @@ class Creator
      */
     public function setBankTransactionCharge($bankTransactionCharge)
     {
-        $this->bankTransactionCharge = $bankTransactionCharge;
+        $this->bankTransactionCharge = round($bankTransactionCharge,2);
         return $this;
     }
 
@@ -255,7 +255,7 @@ class Creator
 
     public function sentSms()
     {
-        if ($this->getPayerInfo()) {
+        if ($this->getPayerInfo() && config('sms.is_on')) {
             /** @var PaymentLinkClient $paymentLinkClient */
             $paymentLinkClient = app(PaymentLinkClient::class);
             $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
