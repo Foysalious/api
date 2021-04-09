@@ -82,7 +82,7 @@ class Creator
 
     public function setAmount($amount)
     {
-        $this->amount = $amount;
+        $this->amount = round($amount, 2);
         return $this;
     }
 
@@ -156,7 +156,7 @@ class Creator
      */
     public function setInterest($interest)
     {
-        $this->interest = $interest;
+        $this->interest = round($interest,2);
         return $this;
     }
 
@@ -166,7 +166,7 @@ class Creator
      */
     public function setBankTransactionCharge($bankTransactionCharge)
     {
-        $this->bankTransactionCharge = $bankTransactionCharge;
+        $this->bankTransactionCharge = round($bankTransactionCharge,2);
         return $this;
     }
 
@@ -254,8 +254,7 @@ class Creator
 
     public function sentSms()
     {
-        if(!config('sms.is_on')) return;
-        if ($this->getPayerInfo()) {
+        if ($this->getPayerInfo() && config('sms.is_on')) {
             /** @var PaymentLinkClient $paymentLinkClient */
             $paymentLinkClient = app(PaymentLinkClient::class);
             $paymentLink       = $paymentLinkClient->createShortUrl($this->paymentLinkCreated->link);
@@ -264,9 +263,17 @@ class Creator
                 $link = $paymentLink->url->shortUrl;
             }
             $extra_message = $this->targetType == 'pos_order' ? 'করুন। ' : 'করে বাকি পরিশোধ করুন। ';
-            $message = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
-            $mobile = $this->getPayerInfo()['payer']['mobile'];
-            $this->sendSms($mobile, $message);
+            $message       = 'প্রিয় গ্রাহক, দয়া করে পেমেন্ট লিংকের মাধ্যমে ' . $this->userName . ' কে ' . $this->amount . ' টাকা পে ' . $extra_message . $link . ' Powered by sManager.';
+            $mobile        = $this->getPayerInfo()['payer']['mobile'];
+
+            /** @var Sms $sms */
+            $sms = app(Sms::class);
+            $sms = $sms->setVendor('infobip')
+                       ->to($mobile)
+                       ->msg($message)
+                       ->setFeatureType(FeatureType::PAYMENT_LINK)
+                       ->setBusinessType(BusinessType::SMANAGER);
+            $sms->shoot();
         }
     }
 
