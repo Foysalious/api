@@ -578,6 +578,7 @@ if (!function_exists('getTradeLicenceImagesFolder')) {
         return $url . 'images/profiles/trade_license_attachment_';
     }
 }
+
 if (!function_exists('getLoanFolder')) {
     /**
      * @param false $with_base_url
@@ -618,6 +619,7 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         return $url . 'partner/trade_license/trade_';
     }
 }
+
 if (!function_exists('getLoanDocumentFolder')) {
 
     /**
@@ -1194,14 +1196,14 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
     }
 
 }
-if (!function_exists('getPartnerProofOfBusinessFolder')) {
 
+if (!function_exists('getPartnerProofOfBusinessFolder')) {
     /**
      * @param false $with_base_url
      * @param int $partner_id
      * @return string
      */
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0): string
     {
         $url = '';
         if ($with_base_url)
@@ -1495,5 +1497,15 @@ if (!function_exists('getNameWithExtension')) {
     {
         $info = pathinfo($path);
         return $info['basename'];
+    }
+}
+
+if (!function_exists('getStorageExportFolder')) {
+    /**
+     * @return string
+     */
+    function getStorageExportFolder(): string
+    {
+        return storage_path('exports') . "/";
     }
 }
