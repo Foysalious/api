@@ -342,11 +342,11 @@ return [
             ],
             [
                 'field_type'    => 'editText',
-                'title'         => "ট্রেড লাইেন্স প্রদান কারি কর্তৃপক্ষ *",
+                'title'         => "ট্রেড লাইসেন্স প্রদান কারি কর্তৃপক্ষ *",
                 'name'          => 'issue_authority',
                 'id'            => 'issue_authority',
                 'hint'          => '',
-                'error_message' => 'ট্রেড লাইেন্স প্রদান কারি কর্তৃপক্ষ পূরণ আবশ্যক'
+                'error_message' => 'ট্রেড লাইসেন্স প্রদান কারি কর্তৃপক্ষ পূরণ আবশ্যক'
             ],
             [
                 'field_type'    => 'editText',
@@ -1031,5 +1031,7 @@ return [
         'cpv_unverified'   => 'Error',
         'cpv_verified'     => 'Success',
         'unsigned_message' => 'Info'
-    ]
+    ],
+
+    "PBL_account_create_key" => "6b9580a51b1a26026b50ceeb84dkc93ofcic6f7idcvl3jl6j"
 ];

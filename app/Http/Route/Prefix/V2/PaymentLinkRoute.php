@@ -7,12 +7,16 @@ class PaymentLinkRoute
                      'middleware' => ['paymentLink.auth']
         ], function ($api) {
             $api->get('/', 'PaymentLink\PaymentLinkController@index');
+            $api->get('/partner-payment-links', 'PaymentLink\PaymentLinkController@partnerPaymentLinks');
             $api->post('/', 'PaymentLink\PaymentLinkController@store');
             $api->post('/due-collection', 'PaymentLink\PaymentLinkController@createPaymentLinkForDueCollection');
             $api->post('/{link}', 'PaymentLink\PaymentLinkController@statusChange');
             $api->get('/default', 'PaymentLink\PaymentLinkController@getDefaultLink');
+            $api->get('/dashboard', 'PaymentLink\PaymentLinkController@getDashboard');
+            $api->get('/custom-link-data', 'PaymentLink\PaymentLinkController@customLinkCreateData');
             $api->get('/{link}/payments', 'PaymentLink\PaymentLinkController@getPaymentLinkPayments');
             $api->get('/{link}/payments/{payment}', 'PaymentLink\PaymentLinkController@paymentLinkPaymentDetails');
+            $api->get('/transactions', 'PaymentLink\PaymentLinkController@transactionList');
         });
         $api->group(['prefix' => 'payment-links'], function ($api) {
             $api->get('/{link}', 'PaymentLink\PaymentLinkController@show');

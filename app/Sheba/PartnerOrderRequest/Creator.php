@@ -4,6 +4,8 @@ use App\Models\Job;
 use App\Models\Partner;
 use App\Models\PartnerOrder;
 use App\Repositories\SmsHandler as SmsHandlerRepo;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use App\Transformers\CustomSerializer;
 use App\Transformers\Partner\OrderRequestTransformer;
 use Illuminate\Support\Collection;
@@ -139,7 +141,10 @@ class Creator
         try {
             /** @var Partner $partner */
             $partner = $this->partners->keyBy('id')->get($partner_id);
-            (new SmsHandlerRepo('partner-order-request'))->setVendor('sslwireless')->send($partner->getContactNumber(), [
+            (new SmsHandlerRepo('partner-order-request'))->setVendor('sslwireless')
+                ->setBusinessType(BusinessType::SMANAGER)
+                ->setFeatureType(FeatureType::PARTNER_SUBSCRIPTION_ORDER_REQUEST)
+                ->send($partner->getContactNumber(), [
                 'partner_name' => $partner->name
             ]);
         } catch (Throwable $e) {
