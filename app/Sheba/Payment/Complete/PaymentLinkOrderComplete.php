@@ -44,7 +44,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /**
      * @var int
      */
-    private $entryAmount=0;
+    private $entryAmount = 0;
 
     public function __construct()
     {
@@ -159,7 +159,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function processTransactions(HasWalletTransaction $payment_receiver)
     {
         $transaction       = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
-        $this->entryAmount = $this->paymentLink->getPaidBy() == PaymentLinkStatics::paidByTypes()[0] ? $transaction->getAmount() - $transaction->getFee() - $this->paymentLink->getPartnerProfit() : $transaction->getAmount();
+        $this->entryAmount = $this->paymentLink->getPaidBy() == PaymentLinkStatics::paidByTypes()[0] ? $transaction->getAmount() : $transaction->getAmount() - $transaction->getFee() - $this->paymentLink->getPartnerProfit();
     }
 
     private function getPaymentLinkFee($amount)
