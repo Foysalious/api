@@ -145,7 +145,7 @@ class ServiceGroupController extends Controller
         foreach ($service_group->services as $service) {
             $service = $this->formatService($service);
             if ($location) {
-                $location_service = LocationService::where('location_id', $location)->where('service_id', $service->id)->first();
+                $location_service = LocationService::where('location_id', $location)->where('service_id', $service['id'])->first();
                 $service_discount = $location_service->discounts()->running()->first();
                 $service['has_discount'] = $service_discount ? 1 : 0;
             }
