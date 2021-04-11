@@ -1,4 +1,7 @@
-<?php namespace App\Http\Controllers\Accounting;
+<?php
+
+
+namespace App\Http\Controllers\Accounting;
 
 
 use App\Http\Controllers\Controller;
@@ -6,7 +9,7 @@ use App\Sheba\AccountingEntry\Repository\AccountRepository;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
-class AccountingController extends Controller
+class ExpenseController extends Controller
 {
     use ModificationFields;
 
@@ -17,18 +20,17 @@ class AccountingController extends Controller
         $this->accountingRepo = $accountingRepo;
     }
 
-    /**
-     * @param Request $request
-     * @return \Illuminate\Http\JsonResponse
-     */
-    public function storeAccountsTransfer(Request $request){
+    public function storeExpenseEntry(Request $request) {
         $this->validate($request, [
             'amount' => 'required|numeric',
             'from_account_key' => 'required',
             'to_account_key' => 'required',
-            'date' => 'required|date_format:Y-m-d'
+            'date' => 'required|date_format:Y-m-d',
+            'amount_cleared' => 'sometimes|required|numeric',
+            'customer_id' => 'required_with:amount_cleared'
         ]);
-        $response = $this->accountingRepo->accountTransfer($request);
+        $response = $this->accountingRepo->storeExpenseEntry($request);
         return api_response($request, $response, 200);
     }
+
 }

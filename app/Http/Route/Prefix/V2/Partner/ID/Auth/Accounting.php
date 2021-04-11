@@ -7,6 +7,7 @@ class Accounting
     {
         $api->group(['prefix' => 'accounting'], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
+            $api->post('/expense', 'Accounting\\ExpenseController@storeExpenseEntry');
         });
     }
 }
