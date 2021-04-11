@@ -157,7 +157,7 @@ class Creator
      */
     public function setInterest($interest)
     {
-        $this->interest = round($interest,2);
+        $this->interest = round($interest, 2);
         return $this;
     }
 
@@ -167,7 +167,7 @@ class Creator
      */
     public function setBankTransactionCharge($bankTransactionCharge)
     {
-        $this->bankTransactionCharge = round($bankTransactionCharge,2);
+        $this->bankTransactionCharge = round($bankTransactionCharge, 2);
         return $this;
     }
 
@@ -348,7 +348,7 @@ class Creator
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
                 $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + PaymentLinkStatics::get_payment_link_tax())->setAmount($data['total_amount'])->setPartnerProfit($data['partner_profit']);
             } else {
-                $this->setAmount($this->amount + round($amount * $this->transactionFeePercentage / 100, 2) + PaymentLinkStatics::get_payment_link_tax())->setPartnerProfit($this->amount - (round($amount * PaymentLinkStatics::get_payment_link_commission() / 100) + PaymentLinkStatics::get_payment_link_tax()));
+                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + PaymentLinkStatics::get_payment_link_tax())->setPartnerProfit($this->amount - ($amount + round($amount * PaymentLinkStatics::get_payment_link_commission() / 100, 2) + PaymentLinkStatics::get_payment_link_tax()));
             }
 
         } else {
