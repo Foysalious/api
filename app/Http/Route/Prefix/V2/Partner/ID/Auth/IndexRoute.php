@@ -119,6 +119,7 @@ class IndexRoute
                 $api->resources(['customers' => 'Pos\CustomerController']);
                 $api->group(['prefix' => 'settings'], function ($api) {
                     $api->get('/', 'Pos\SettingController@getSettings');
+                    $api->get('/printer', 'Pos\SettingController@getPrinterSettings');
                     $api->post('/', 'Pos\SettingController@storePosSetting');
                 });
                 $api->post('due-payment-request-sms', 'Pos\SettingController@duePaymentRequestSms');
