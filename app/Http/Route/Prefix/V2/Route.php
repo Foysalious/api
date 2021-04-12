@@ -154,7 +154,7 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-            $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
+            $api->group(['prefix' => 'top-up', 'middleware' => ['accessToken']], function ($api) {
                 $api->post('get-topup-token', 'TopUp\TopUpController@generateJwt');
                 $api->get('special-amount-data', 'TopUp\TopUpController@specialAmount');
                 $api->post('{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");
