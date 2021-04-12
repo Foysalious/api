@@ -3,6 +3,7 @@
 use App\Models\Attachment;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Sheba\Attachments\FilesAttachment;
 use Sheba\Dal\Expense\Expense;
@@ -176,4 +177,31 @@ class ExpenseRepo
             return false;
         }
     }
+
+    public function getExpenseByMember($members_ids)
+    {
+        return Expense::whereIn('member_id', $members_ids)->with([
+                'member' => function ($query) {
+                    $query->select('members.id', 'members.profile_id')->with([
+                        'profile' => function ($query) {
+                            $query->select('profiles.id', 'profiles.name', 'profiles.email', 'profiles.mobile');
+                        },
+                        'businessMember' => function ($q) {
+                            $q->select('business_member.id', 'business_id', 'member_id', 'type', 'business_role_id')->with([
+                                'role' => function ($q) {
+                                    $q->select('business_roles.id', 'business_department_id', 'name')->with([
+                                        'businessDepartment' => function ($q) {
+                                            $q->select('business_departments.id', 'business_id', 'name');
+                                        }
+                                    ]);
+                                }
+                            ]);
+                        }
+                    ]);
+                }
+            ])->select('id', 'member_id', 'amount', 'created_at', DB::raw('YEAR(created_at) year, MONTH(created_at) month'), DB::raw('SUM(amount) amount'))
+            ->groupby('year', 'month', 'member_id')
+            ->orderBy('created_at', 'desc');
+    }
+
 }

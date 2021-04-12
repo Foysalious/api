@@ -1,5 +1,8 @@
 <?php namespace App\Http\Controllers\Employee;
 
+use App\Sheba\Business\BusinessBasicInformation;
+use Illuminate\Support\Facades\Log;
+use Sheba\Business\Attendance\AttendanceCommonInfo;
 use Sheba\Dal\BusinessWeekend\Contract as BusinessWeekendRepoInterface;
 use Sheba\Dal\BusinessHoliday\Contract as BusinessHolidayRepoInterface;
 use Sheba\Business\AttendanceActionLog\ActionChecker\ActionProcessor;
@@ -15,6 +18,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use League\Fractal\Resource\Item;
 use App\Models\BusinessMember;
+use Sheba\Location\Geo;
+use Sheba\Map\Client\BarikoiClient;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
 use Sheba\Helpers\TimeFrame;
@@ -25,7 +30,7 @@ use Throwable;
 
 class AttendanceController extends Controller
 {
-    use ModificationFields;
+    use ModificationFields, BusinessBasicInformation;
 
     /**
      * @param Request $request
@@ -77,6 +82,8 @@ class AttendanceController extends Controller
         $business_member = $this->getBusinessMember($request);
         $business = $this->getBusiness($request);
         if (!$business_member) return api_response($request, null, 404);
+
+        Log::info("Attendance for Employee#$business_member->id, Request#" . json_encode($request->except(['profile', 'auth_info', 'auth_user', 'access_token'])));
 
         $checkout = $action_processor->setActionName(Actions::CHECKOUT)->getAction();
         if ($request->action == Actions::CHECKOUT && $checkout->isNoteRequired()) {
@@ -133,19 +140,17 @@ class AttendanceController extends Controller
         return api_response($request, null, 200, ['attendance' => $data]);
     }
 
-    private function getBusinessMember(Request $request)
+    public function attendanceInfo(Request $request, AttendanceCommonInfo $attendance_common_info)
     {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['id'])) return null;
-        return BusinessMember::find($business_member['id']);
+        /** @var Business $business */
+        $business = $this->getBusiness($request);
+        $attendance_common_info->setLat($request->lat)->setLng($request->lng);
+        $data = [
+            'is_in_wifi_area' => $attendance_common_info->isInWifiArea($business) ? 1 : 0,
+            'address' => $attendance_common_info->getAddress()
+        ];
+
+        return api_response($request, null, 200, ['info' => $data]);
     }
 
-    public function getBusiness(Request $request)
-    {
-        $auth_info = $request->auth_info;
-        $business_member = $auth_info['business_member'];
-        if (!isset($business_member['business_id'])) return null;
-        return Business::findOrFail($business_member['business_id']);
-    }
 }

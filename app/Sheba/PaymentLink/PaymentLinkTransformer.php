@@ -208,6 +208,14 @@ class PaymentLinkTransformer
 
     }
 
+    public function partialInfo() {
+        $user       = $this->getPaymentReceiver();
+        return [
+            'name'   => $user->name,
+            'mobile' => $user->getContactNumber()
+        ];
+    }
+
     public function getPaymentLinkData()
     {
         $payer     = null;

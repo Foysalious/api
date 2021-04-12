@@ -6,6 +6,8 @@ use App\Models\Member;
 use App\Models\Promotion;
 use App\Models\Voucher;
 use App\Models\AffiliateTransaction;
+use App\Sheba\Sms\BusinessType;
+use App\Sheba\Sms\FeatureType;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Customer;
@@ -358,7 +360,10 @@ class ProfileRepository
             ]);
         });
 
-        (new SmsHandler('affiliate-register'))->send($affiliate->profile->mobile, [
+        (new SmsHandler('affiliate-register'))
+            ->setBusinessType(BusinessType::BONDHU)
+            ->setFeatureType(FeatureType::AFFILIATE_BONUS)
+            ->send($affiliate->profile->mobile, [
             'bonus_amount' => $affiliate_bonus_amount
         ]);
     }
