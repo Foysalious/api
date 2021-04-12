@@ -79,7 +79,9 @@ class AffiliateTransaction extends Model
     public function scopeRefunds($query)
     {
         return $query->where('log', 'LIKE', '%is refunded%')
-            ->orWhere('log', 'LIKE', '%manually refunded in your account%');
+            ->orWhere('log', 'LIKE', '%manually refunded in your account%')
+            ->orWhere('log', 'LIKE', "%received as refund%")
+            ->orWhere('log', 'LIKE', "%Refund for Product Resell%");
     }
 
     public function scopeManualDisbursement($query)
@@ -96,11 +98,6 @@ class AffiliateTransaction extends Model
     public function scopePointPurchaseCommission($query)
     {
         return $query->where('log', "Credit Purchase Gateway Charge");
-    }
-
-    public function scopeProductResell($query)
-    {
-        return $query->where('log', 'LIKE', "%Refund for Product Resell%");
     }
 
     public function scopeBusTicketCommission($query)

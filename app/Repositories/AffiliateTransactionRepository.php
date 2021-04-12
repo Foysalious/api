@@ -107,7 +107,6 @@ class AffiliateTransactionRepository
         $sheba_facilitated         = $this->affiliate->transactions()->credit()->shebaFacilitated()->between($this->start_date, $this->end_date);
         $service_purchase          = $this->affiliate->transactions()->debit()->servicePurchase()->between($this->start_date, $this->end_date);
         $point_purchase_charge    = $this->affiliate->transactions()->debit()->pointPurchaseCommission()->between($this->start_date, $this->end_date);
-        $product_resell            = $this->affiliate->transactions()->credit()->productResell()->between($this->start_date, $this->end_date);
         $bus_ticket_commission     = $this->affiliate->transactions()->credit()->busTicketCommission()->between($this->start_date, $this->end_date);
 
         if($count = $balance_recharge->count()) $category_wise_transaction[] = $this->makeData($balance_recharge->sum('amount'), $count, "Balance Recharge", "ব্যালেন্স রিচার্জ", "balance_recharge");
@@ -121,7 +120,6 @@ class AffiliateTransactionRepository
         if($count = $sheba_facilitated->count()) $category_wise_transaction[] = $this->makeData($sheba_facilitated->sum('amount'), $count, "Facilitated Amount", "ফ্যাসিলিটি অ্যামাউন্ট", "facilitated_amount");
         if($count = $service_purchase->count()) $category_wise_transaction[] = $this->makeData($service_purchase->sum('amount'), $count, "Service Purchase", "সার্ভিস ক্রয়", "service_purchase",'-');
         if($count = $point_purchase_charge->count()) $category_wise_transaction[] = $this->makeData($point_purchase_charge->sum('amount'), $count, "Point Purchase Commission", "পয়েন্ট ক্রয় কমিশন", "point_purchase_commission",'-');
-        if($count = $product_resell->count()) $category_wise_transaction[] = $this->makeData($product_resell->sum('amount'), $count, "Product Resell", "পণ্য পুনরায় বিক্রয়", "product_resell");
         if($count = $bus_ticket_commission->count()) $category_wise_transaction[] = $this->makeData($bus_ticket_commission->sum('amount'), $count, "Bus Ticket Commission", "বাস টিকিট কমিশন", "bus_ticket_commission");
 
         return $category_wise_transaction;
