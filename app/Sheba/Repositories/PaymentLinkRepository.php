@@ -7,6 +7,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Sheba\Payment\Exceptions\PayableNotFound;
+use Sheba\Payment\Statuses;
 use Sheba\PaymentLink\PaymentLinkClient;
 use Sheba\PaymentLink\PaymentLinkTransformer;
 use Sheba\PaymentLink\Target;
@@ -33,9 +34,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
     public function __construct(PaymentLinkTransformer $paymentLinkTransformer, UrlTransformer $urlTransformer, PaymentLinkClient $client)
     {
         parent::__construct();
-        $this->paymentLinkClient = $client;
-        $this->paymentLinkTransformer = $paymentLinkTransformer;
-        $this->urlTransformer = $urlTransformer;
+        $this->paymentLinkClient                       = $client;
+        $this->paymentLinkTransformer                  = $paymentLinkTransformer;
+        $this->urlTransformer                          = $urlTransformer;
         $this->paymentLinkTransactionDetailTransformer = new PaymentLinkTransactionDetailsTransformer();
 
     }
@@ -84,15 +85,11 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function payables($payment_link_details)
     {
-        return Payable::whereHas('payments', function ($query) {
-            $query->where('status', 'completed');
-        })->where([
+
+        return Payment::leftJoin('payables', 'payments.payable_id', '=', 'payables.id')->where([
             ['type', 'payment_link'], ['type_id', $payment_link_details['linkId']],
-        ])->with([
-            'payments' => function ($q) {
-                $q->select('id', 'payable_id', 'status', 'created_by_type', 'created_by', 'created_by_name', 'created_at');
-            }
-        ])->select('id', 'type', 'type_id', 'amount')->orderBy('created_at', 'desc');
+        ])->select('payments.id', 'type', 'type_id', 'amount', 'payments.created_at', 'payable_id')
+            ->where('status', Statuses::COMPLETED)->orderBy('payments.created_at', 'desc');
     }
 
     public function payment($payment)
@@ -143,12 +140,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
     public function getPaymentList(Request $request)
     {
-        $filter = $search_value = $request->transaction_search;
+        $filter             = $search_value = $request->transaction_search;
         $payment_links_list = $this->getPartnerPaymentLinkList($request);
         if (is_array($payment_links_list) && count($payment_links_list) > 0) {
             $transactionList = [];
-            $linkIds = array_column($payment_links_list, 'linkId');
-            $links = [];
+            $linkIds         = array_column($payment_links_list, 'linkId');
+            $links           = [];
             array_walk($payment_links_list, function ($val, $key) use (&$links) {
                 $links[$val['linkId']] = $val;
             });
@@ -169,7 +166,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
             $transactions = $transactionQuery->get();
 
             foreach ($transactions as $transaction) {
-                $payment = $this->payment($transaction->payment_id);
+                $payment              = $this->payment($transaction->payment_id);
                 $transactionFormatted = $this->paymentLinkTransactionDetailTransformer->transform($payment, $links[$transaction->type_id]);
                 array_push($transactionList, $transactionFormatted);
             }
@@ -177,7 +174,7 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
 
             if ($filter) {
                 $transactionList = array_filter($transactionList, function ($item) use ($filter) {
-                    return strpos( (string)$item['payment_id'],$filter)!==false || strpos( $item['customer_name'],$filter)!==false;
+                    return strpos((string)$item['payment_id'], $filter) !== false || strpos($item['customer_name'], $filter) !== false;
                 });
             }
 
@@ -185,9 +182,9 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
                 return $b['payment_id'] - $a['payment_id'];
             });
 
-            $limit = $request->transaction_limit;
+            $limit  = $request->transaction_limit;
             $offset = $request->transaction_offset;
-            $links = collect($transactionList)->slice($offset)->take($limit);
+            $links  = collect($transactionList)->slice($offset)->take($limit);
             return array_values($links->toArray());
 
         }
@@ -236,11 +233,12 @@ class PaymentLinkRepository extends BaseRepository implements PaymentLinkReposit
         $links = $this->paymentLinkClient->getActivePaymentLinksByPosOrders($targets);
         return $this->formatPaymentLinkTransformers($links);
     }
+
     public function getActivePaymentLinkByPosOrder($target)
     {
-        $links = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
-        $payment_link =  $this->formatPaymentLinkTransformers($links);
-        $key = $target->toString();
+        $links        = $this->paymentLinkClient->getActivePaymentLinkByPosOrder($target);
+        $payment_link = $this->formatPaymentLinkTransformers($links);
+        $key          = $target->toString();
         if (array_key_exists($key, $payment_link)) {
             return $payment_link[$key][0];
         }
