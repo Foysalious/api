@@ -158,6 +158,11 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private function processTransactions(HasWalletTransaction $payment_receiver)
     {
         $transaction       = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
+        $this->entryAmount = $this->setEntryAmount($transaction);
+    }
+
+    private function setEntryAmount(PaymentLinkTransaction $transaction)
+    {
         $this->entryAmount = $this->paymentLink->getPaidBy() == PaymentLinkStatics::paidByTypes()[0] ? $transaction->getAmount() : $transaction->getAmount() - $transaction->getFee() - $this->paymentLink->getPartnerProfit();
     }
 
