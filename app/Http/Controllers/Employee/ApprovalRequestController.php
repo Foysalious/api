@@ -185,7 +185,6 @@ class ApprovalRequestController extends Controller
         #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
 
         $this->leaveRejectionRequester->setNote($request->note)->setReasons($request->reasons);
-
         $updater->setBusinessMember($business_member)->setApprovalRequest($approval_request)->setLeaveRejectionRequester($this->leaveRejectionRequester);
         $updater->setStatus($request->status)->change();
 
