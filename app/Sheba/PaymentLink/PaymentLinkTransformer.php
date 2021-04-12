@@ -75,7 +75,7 @@ class PaymentLinkTransformer
     public function isEmi()
     {
         $month = $this->getEmiMonth();
-        return !is_null($month) || $month > 0;
+        return !is_null($month) && $month > 0;
     }
 
     public function getInterest()

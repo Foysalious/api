@@ -41,10 +41,8 @@ class PaymentLinkOrderComplete extends PaymentComplete
     private $target;
     private $payment_receiver;
     private $paymentLinkTax;
-    /**
-     * @var int
-     */
-    private $entryAmount = 0;
+    /** @var PaymentLinkTransaction $transaction */
+    private $transaction;
 
     public function __construct()
     {
@@ -78,9 +76,9 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
         try {
             $this->payment = $this->saveInvoice();
-            $this->notify();
-            $this->dispatchReward();
             $this->storeEntry();
+            $this->dispatchReward();
+            $this->notify();
         } catch (\Throwable $e) {
             logError($e);
         }
@@ -92,9 +90,14 @@ class PaymentLinkOrderComplete extends PaymentComplete
 
         $payable = $this->payment->payable;
         /** @var AutomaticEntryRepository $entry_repo */
-        $entry_repo = app(AutomaticEntryRepository::class)->setPartner($this->payment_receiver)->setAmount($this->entryAmount)->setHead(AutomaticIncomes::PAYMENT_LINK)
-                                                          ->setEmiMonth($payable->emi_month)->setAmountCleared($this->entryAmount);
-        $entry_repo->setInterest($this->paymentLink->getInterest())->setBankTransactionCharge($this->paymentLink->getBankTransactionCharge());
+        $entry_repo = app(AutomaticEntryRepository::class)
+            ->setPartner($this->payment_receiver)
+            ->setAmount($this->transaction->getEntryAmount())
+            ->setHead(AutomaticIncomes::PAYMENT_LINK)
+            ->setEmiMonth($this->transaction->getEmiMonth())
+            ->setAmountCleared($this->transaction->getEntryAmount())
+            ->setInterest($this->transaction->getInterest())
+            ->setBankTransactionCharge($this->transaction->getFee());
         if ($this->target) {
             $entry_repo->setCreatedAt($this->target->created_at);
             $entry_repo->setSourceType($this->getSourceType());
@@ -102,14 +105,15 @@ class PaymentLinkOrderComplete extends PaymentComplete
         }
         $payer = $this->paymentLink->getPayer();
         if (empty($payer)) {
-            $payer = $this->payment->payable->getUserProfile();
+            $payer = $payable->getUserProfile();
         }
         if ($payer instanceof Profile) {
             $entry_repo->setParty($payer);
         }
         $entry_repo->setPaymentMethod($this->payment->paymentDetails->last()->readable_method)
                    ->setPaymentId($this->payment->id)
-                   ->setIsPaymentLink(1)->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
+                   ->setIsPaymentLink(1)
+                   ->setIsDueTrackerPaymentLink($this->paymentLink->isDueTrackerPaymentLink());
         if ($this->target instanceof PosOrder) {
             $entry_repo->setIsWebstoreOrder($this->target->sales_channel == SalesChannels::WEBSTORE ? 1 : 0);
             $entry_repo->updateFromSrc();
@@ -158,19 +162,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
      */
     private function processTransactions(HasWalletTransaction $payment_receiver)
     {
-        $transaction       = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
-        $this->entryAmount = $this->setEntryAmount($transaction);
+        $this->transaction = (new PaymentLinkTransaction($this->payment, $this->paymentLink))->setReceiver($payment_receiver)->create();
+
     }
 
-    private function setEntryAmount(PaymentLinkTransaction $transaction)
-    {
-        $this->entryAmount = $this->paymentLink->getPaidBy() == PaymentLinkStatics::paidByTypes()[0] ? $transaction->getAmount() : $transaction->getAmount() - $transaction->getFee() - $this->paymentLink->getPartnerProfit();
-    }
-
-    private function getPaymentLinkFee($amount)
-    {
-        return ($this->paymentLink->getEmiMonth() > 0 ? $this->paymentLink->getBankTransactionCharge() ?: 0 : round(($amount * $this->paymentLinkCommission) / 100, 2)) + 3;
-    }
 
     private function clearTarget()
     {
@@ -178,10 +173,10 @@ class PaymentLinkOrderComplete extends PaymentComplete
         if ($this->target instanceof PosOrder) {
             $payment_data    = [
                 'pos_order_id' => $this->target->id,
-                'amount'       => $this->payment->payable->amount,
+                'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->payment->payable->emi_month,
-                'interest'     => $this->paymentLink->getInterest(),
+                'emi_month'    => $this->transaction->getEmiMonth(),
+                'interest'     => $this->transaction->getInterest(),
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
@@ -219,7 +214,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $topic            = config('sheba.push_notification_topic_name.manager') . $partner->id;
         $channel          = config('sheba.push_notification_channel_name.manager');
         $sound            = config('sheba.push_notification_sound.manager');
-        $formatted_amount = number_format($payment_link->getAmount(), 2);
+        $formatted_amount = number_format($this->transaction->getAmount(), 2);
         $event_type       = $this->target && $this->target instanceof PosOrder && $this->target->sales_channel == SalesChannels::WEBSTORE ? 'WebstoreOrder' : class_basename($this->target);
         /** @var Payable $payable */
         $payable = Payable::find($this->payment->payable_id);
