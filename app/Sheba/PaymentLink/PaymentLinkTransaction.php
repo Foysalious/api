@@ -75,7 +75,7 @@ class PaymentLinkTransaction
 
     private function amountTransaction()
     {
-        $this->amount        = $this->payment->payable->amount;
+        $this->amount                  = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
         $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
@@ -93,20 +93,32 @@ class PaymentLinkTransaction
         return $this;
     }
 
+    private function isPaidByPartner()
+    {
+        return $this->paymentLink->getPaidBy() == $this->paidByTypes[0];
+    }
+
+    private function isPaidByCustomer()
+    {
+        return $this->paymentLink->getPaidBy() == $this->paidByTypes[0];
+    }
+
     private function feeTransaction()
     {
         if ($this->paymentLink->isEmi()) {
-            $this->fee = $this->paymentLink->isOld() || $this->paymentLink->getPaidBy() == $this->paidByTypes[0] ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge();
+            $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge();
         } else {
             $realAmount = ($this->amount - $this->tax - $this->paymentLink->getPartnerProfit());
-            $this->fee  = $this->paymentLink->isOld() || $this->paymentLink->getPaidBy() == $this->paidByTypes[0] ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round($realAmount / (100 + $this->linkCommission / 100), 2);
+            $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount / (100 + $this->linkCommission)) * 100, 2);
         }
 
         $formatted_minus_amount = number_format($this->fee, 2);
         $minus_log              = "($this->tax" . "TK + $this->linkCommission%) $formatted_minus_amount TK has been charged as link service fees against of Transc ID: {$this->rechargeTransaction->id}, and Transc amount: $this->formattedRechargeAmount";
         $this->walletTransactionHandler->setLog($minus_log)->setType(Types::debit())->setAmount($this->fee)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
     }
-    public function getFee(){
+
+    public function getFee()
+    {
         return $this->fee;
     }
 
