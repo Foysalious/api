@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
+use App\Http\Requests\Request;
 use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
 use Sheba\Dal\InfoCall\Statuses;
@@ -27,9 +28,24 @@ class InfoCallController extends Controller
         $this->infoCallStatusLogRepository = $status_repo;
     }
 
-    public function index()
+    public function index(Request $request)
     {
+//        /** @var AuthUser $auth_user */
+//        $auth_user = $request->auth_user;
+//        $resource = $auth_user->getResource();
+//        dd($resource->id);
+    }
 
+    public function serviceRequestDashboard()
+    {
+        $data = [
+            'total_rewards' => 40000,
+            'total_service_requests' => 234,
+            'total_order' => 123,
+            'completed_order' => 77,
+            'cancelled_order' => 34
+        ];
+        return ['code' => 200, 'service_request_dashboard' => $data];
     }
 
     public function store(InfoCallCreateRequest $request)

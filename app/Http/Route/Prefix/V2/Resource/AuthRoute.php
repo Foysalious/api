@@ -64,6 +64,7 @@ class AuthRoute
             $api->post('orders', 'Resource\ResourceOrderController@placeOrder');
             $api->group(['prefix' => 'info-call'], function ($api) {
                 $api->get('/', 'Resource\InfoCallController@index');
+                $api->get('/dashboard', 'Resource\InfoCallController@serviceRequestDashboard');
                 $api->post('/', 'Resource\InfoCallController@store');
                 $api->get('{id}', 'Resource\InfoCallController@show');
             });
