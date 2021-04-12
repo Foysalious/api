@@ -57,7 +57,7 @@ class RechargeComplete extends PaymentComplete
             ->where('status', 'Published')
             ->first();
 
-        if($payment_gateway){
+        if($payment_gateway && $payment_gateway->cash_in_charge > 0){
             (new WalletTransactionHandler())->setModel($user)
                 ->setAmount((double)( ($payment_gateway->cash_in_charge * $this->payment->payable->amount) / 100))
                 ->setType(Types::debit())
