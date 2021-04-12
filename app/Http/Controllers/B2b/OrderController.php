@@ -234,7 +234,7 @@ class OrderController extends Controller
                     $order = $response->orders;
                     $job = Job::find($order->jobs[0]->job_id);
                     $question = null;
-                    $answer = null;
+                    $answer = [];
                     $answer_text = null;
                     $review_question_answer = null;
                     if ($job->review && !$job->review->rates->isEmpty()) {

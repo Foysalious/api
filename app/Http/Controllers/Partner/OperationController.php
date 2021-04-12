@@ -1,24 +1,19 @@
 <?php namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
-
 use Sheba\Dal\Category\Category;
 use Sheba\Dal\CategoryPartner\CategoryPartner;
 use App\Models\CategoryRequest;
-use App\Models\HyperLocal;
 use App\Models\Partner;
 use App\Models\PartnerGeoChangeLog;
 use App\Models\PartnerResource;
 use App\Models\PartnerWorkingHour;
-
 use App\Repositories\PartnerRepository;
-
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use DB;
-use Sheba\Dal\PartnerLocation\PartnerLocation;
 use Sheba\Dal\PartnerLocation\PartnerLocationRepository;
 use Sheba\ModificationFields;
 use Sheba\Partner\PartnerStatuses;
@@ -30,120 +25,101 @@ class OperationController extends Controller
 {
     use ModificationFields;
 
+    /** @var PartnerLocationRepository */
     private $partnerLocationRepo;
     private $category_request_data;
 
-    public function __construct()
+    public function __construct(PartnerLocationRepository $location_repo)
     {
-        $this->partnerLocationRepo = new PartnerLocationRepository(new PartnerLocation());
+        $this->partnerLocationRepo = $location_repo;
     }
 
     public function index($partner, Request $request)
     {
-        try {
-            $partner = $request->partner->load(['locations' => function ($q) {
-                $q->select('id', 'name', 'partner_id');
-            }, 'categories' => function ($q) {
-                $q->select('categories.id', 'categories.name', 'partner_id');
-            }, 'basicInformations']);
-            $working_hours = $partner->workingHours()->select('id', 'partner_id', 'day', 'start_time', 'end_time')->get();
-            $final = collect($partner)->only(['id', 'name']);
-            $final->put('address', $partner->address);
-            $final->put('working_schedule', $working_hours);
-            $final->put('locations', $partner->locations->each(function ($location) {
-                removeRelationsAndFields($location);
-            }));
-            $final->put('categories', $partner->categories->each(function ($category) {
-                removeRelationsAndFields($category);
-            }));
-            return api_response($request, $final, 200, ['partner' => $final]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        $partner = $request->partner->load(['locations' => function ($q) {
+            $q->select('id', 'name', 'partner_id');
+        }, 'categories' => function ($q) {
+            $q->select('categories.id', 'categories.name', 'partner_id');
+        }, 'basicInformations']);
+        $working_hours = $partner->workingHours()->select('id', 'partner_id', 'day', 'start_time', 'end_time')->get();
+        $final = collect($partner)->only(['id', 'name']);
+        $final->put('address', $partner->address);
+        $final->put('working_schedule', $working_hours);
+        $final->put('locations', $partner->locations->each(function ($location) {
+            removeRelationsAndFields($location);
+        }));
+        $final->put('categories', $partner->categories->each(function ($category) {
+            removeRelationsAndFields($category);
+        }));
+        return api_response($request, $final, 200, ['partner' => $final]);
     }
 
     public function store($partner, Request $request)
     {
-        try {
-            $this->validate($request, ['address' => "sometimes|required|string", 'locations' => "sometimes|required", 'working_schedule' => "sometimes|required", 'is_home_delivery_available' => "sometimes|required", 'is_on_premise_available' => "sometimes|required", 'delivery_charge' => "sometimes|required",]);
-            if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
-                return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
-            }
-
-            $partner = $request->partner;
-            $this->setModifier($partner);
-
-            return $this->saveInDatabase($partner, $request) ? api_response($request, $partner, 200) : api_response($request, $partner, 500);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
+        $this->validate($request, ['address' => "sometimes|required|string", 'locations' => "sometimes|required", 'working_schedule' => "sometimes|required", 'is_home_delivery_available' => "sometimes|required", 'is_on_premise_available' => "sometimes|required", 'delivery_charge' => "sometimes|required",]);
+        if (($request->has('is_home_delivery_available') && !$request->is_home_delivery_available) && ($request->has('is_on_premise_available') && !$request->is_on_premise_available)) {
+            return api_response($request, null, 400, ['message' => "You have to select at least one delivery option"]);
         }
+
+        $partner = $request->partner;
+        $this->setModifier($partner);
+        $this->saveInDatabase($partner, $request);
+        return api_response($request, $partner, 200);
     }
 
     private function saveInDatabase($partner, Request $request)
     {
-        try {
-            DB::transaction(function () use ($request, $partner) {
-                $partner_info = [];
-                if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
-                if ($request->has('address')) $partner_info['address'] = $request->address;
-                if ($request->has('lat') && $request->has('lng')) {
-                    $old_geo_informations = $partner->geo_informations;
-                    $partner_info['geo_informations'] = json_encode([
-                        'lat' => $request->lat,
-                        'lng' => $request->lng,
-                        'radius' => $partner->geo_informations ? (json_decode($partner->geo_informations)->radius ?: 1) : 1
-                        //'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
-                    ]);
+        DB::transaction(function () use ($request, $partner) {
+            $partner_info = [];
+            if ($request->has('locations')) $partner->locations()->sync(json_decode($request->locations));
+            if ($request->has('address')) $partner_info['address'] = $request->address;
+            if ($request->has('lat') && $request->has('lng')) {
+                $old_geo_informations = $partner->geo_informations;
+                $partner_info['geo_informations'] = json_encode([
+                    'lat' => $request->lat,
+                    'lng' => $request->lng,
+                    'radius' => $partner->geo_informations ? (json_decode($partner->geo_informations)->radius ?: 1) : 1
+                    //'radius' => $request->has('radius') ? ($request->radius / 1000) : (json_decode($partner->geo_informations)->radius ?: 1)
+                ]);
 
-                    $geo_change_log_data = ['old_geo_informations' => $old_geo_informations, 'new_geo_informations' => $partner_info['geo_informations'], 'log' => 'Partner Geo Information Updated'];
+                $geo_change_log_data = ['old_geo_informations' => $old_geo_informations, 'new_geo_informations' => $partner_info['geo_informations'], 'log' => 'Partner Geo Information Updated'];
 
-                    $partner->geoChangeLogs()->save(new PartnerGeoChangeLog($this->withCreateModificationField((new RequestIdentification())->set($geo_change_log_data))));
+                $partner->geoChangeLogs()->save(new PartnerGeoChangeLog($this->withCreateModificationField((new RequestIdentification())->set($geo_change_log_data))));
 
-                    $this->partnerLocationRepo->updateByPartnerId($partner->id, ['location' => array('type' => 'Point', 'coordinates' => [(double)$request->lng, (double)$request->lat]), 'radius' => (double)$request->radius,]);
+                $this->partnerLocationRepo->updateByPartnerId($partner->id, ['location' => array('type' => 'Point', 'coordinates' => [(double)$request->lng, (double)$request->lat]), 'radius' => (double)$request->radius,]);
+            }
+
+            $partner->update($partner_info);
+
+            if ($request->has('working_schedule')) {
+                $partner->workingHours()->delete();
+                foreach (json_decode($request->working_schedule) as $working_schedule) {
+                    $partner->workingHours()->save(new PartnerWorkingHour(['day' => $working_schedule->day, 'start_time' => $working_schedule->start_time, 'end_time' => $working_schedule->end_time]));
                 }
+            }
 
-                $partner->update($partner_info);
+            $category_partner_info = [];
+            $should_update_category_partner = 0;
 
-                if ($request->has('working_schedule')) {
-                    $partner->workingHours()->delete();
-                    foreach (json_decode($request->working_schedule) as $working_schedule) {
-                        $partner->workingHours()->save(new PartnerWorkingHour(['day' => $working_schedule->day, 'start_time' => $working_schedule->start_time, 'end_time' => $working_schedule->end_time]));
-                    }
-                }
+            if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
+                $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
+                $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
+                $should_update_category_partner = 1;
+            }
+            if ($request->has('is_on_premise_available')) {
+                $category_partner_info['is_partner_premise_applied'] = $request->is_on_premise_available;
+                $should_update_category_partner = 1;
+            }
 
-                $category_partner_info = [];
-                $should_update_category_partner = 0;
+            if ($should_update_category_partner) {
+                CategoryPartner::where('partner_id', $partner->id)->update($category_partner_info);
+            }
 
-                if ($request->has('is_home_delivery_available') && $request->has('delivery_charge')) {
-                    $category_partner_info['is_home_delivery_applied'] = $request->is_home_delivery_available;
-                    $category_partner_info['delivery_charge'] = $request->is_home_delivery_available ? $request->delivery_charge : 0;
-                    $should_update_category_partner = 1;
-                }
-                if ($request->has('is_on_premise_available')) {
-                    $category_partner_info['is_partner_premise_applied'] = $request->is_on_premise_available;
-                    $should_update_category_partner = 1;
-                }
-
-                if ($should_update_category_partner) {
-                    CategoryPartner::where('partner_id', $partner->id)->update($category_partner_info);
-                }
-
-                if (isPartnerReadyToVerified($partner)) {
-                    $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
-                    $status_changer->change();
-                }
-            });
-
-            return true;
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return null;
-        }
+            if (isPartnerReadyToVerified($partner)) {
+                $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
+                $status_changer->change();
+            }
+        });
     }
 
     /**
@@ -153,55 +129,47 @@ class OperationController extends Controller
      */
     public function saveCategories($partner, Request $request)
     {
-        try {
-            $this->validate($request, ['categories' => "required|string", 'category_name' => 'string']);
-            $manager_resource = $request->manager_resource;
-            $partner = $request->partner;
-            $category_name = $request->category_name;
+        $this->validate($request, ['categories' => "required|string", 'category_name' => 'string']);
+        $manager_resource = $request->manager_resource;
+        $partner = $request->partner;
+        $category_name = $request->category_name;
 
-            $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
-            $categories = array_unique(json_decode($request->categories));
-            $categories = Category::whereIn('id', $categories)->get();
-            $categories->load('services');
-            list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
+        $by = ["created_by" => $manager_resource->id, "created_by_name" => "Resource - " . $manager_resource->profile->name];
+        $categories = array_unique(json_decode($request->categories));
+        $categories = Category::whereIn('id', $categories)->get();
+        $categories->load('services');
+        list($services, $category_partners) = $this->makeCategoryPartnerWithServices($partner, $categories, $by);
 
-            DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
-                if (!empty($category_partners)) {
-                    $partner->categories()->sync($category_partners);
-                    $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
-                    $category_ids = $partner->categories->pluck('id')->toArray();
-                    $partner_resources->each(function ($partner_resource) use ($category_ids) {
-                        $partner_resource->categories()->sync($category_ids);
-                    });
-                }
+        DB::transaction(function () use ($partner, $category_partners, $services, $category_name) {
+            if (!empty($category_partners)) {
+                $partner->categories()->sync($category_partners);
+                $partner_resources = PartnerResource::whereIn('id', $partner->handymanResources->pluck('pivot.id')->toArray())->get();
+                $category_ids = $partner->categories->pluck('id')->toArray();
+                $partner_resources->each(function ($partner_resource) use ($category_ids) {
+                    $partner_resource->categories()->sync($category_ids);
+                });
+            }
 
-                if (!empty($services)) $partner->services()->sync($services);
+            if (!empty($services)) $partner->services()->sync($services);
 
-                if (isPartnerReadyToVerified($partner)) {
-                    $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
-                    $status_changer->change();
-                }
+            if (isPartnerReadyToVerified($partner)) {
+                $status_changer = new StatusChanger($partner, ['status' => PartnerStatuses::WAITING]);
+                $status_changer->change();
+            }
 
-                if ($category_name) {
-                    $this->category_request_data[count($this->category_request_data)] = [
-                        'partner_id' => $partner->id,
-                        'category_name' => $category_name
-                    ];
-                    array_walk($this->category_request_data, function (&$item) {
-                        return $item['created_at'] = Carbon::now();
-                    });
-                    CategoryRequest::insert($this->category_request_data);
-                }
-            });
+            if ($category_name) {
+                $this->category_request_data[count($this->category_request_data)] = [
+                    'partner_id' => $partner->id,
+                    'category_name' => $category_name
+                ];
+                array_walk($this->category_request_data, function (&$item) {
+                    return $item['created_at'] = Carbon::now();
+                });
+                CategoryRequest::insert($this->category_request_data);
+            }
+        });
 
-            return api_response($request, $partner, 200);
-        } catch (ValidationException $e) {
-            $message = getValidationErrorMessage($e->validator->errors()->all());
-            return api_response($request, $message, 400, ['message' => $message]);
-        } catch (Throwable $e) {
-            app('sentry')->captureException($e);
-            return api_response($request, null, 500);
-        }
+        return api_response($request, $partner, 200);
     }
 
     /**
@@ -215,6 +183,7 @@ class OperationController extends Controller
         $services = [];
         $category_partners = [];
         $location = (new PartnerRepository($partner))->getLocations()->pluck('id');
+        $this->category_request_data = [];
         try {
             foreach ($categories as $category) {
                 if ($category->isParent()) {
@@ -244,6 +213,7 @@ class OperationController extends Controller
                 }
             }
         } catch (Throwable $exception) {
+            logError($exception);
         }
 
         return [$services, $category_partners];
@@ -251,14 +221,9 @@ class OperationController extends Controller
 
     public function isOnPremiseAvailable($partner, Request $request)
     {
-        try {
-            $partner = $request->partner;
-            $is_on_premise_applicable = $partner->categories()->where('categories.is_partner_premise_applied', 1)->count() ? 1 : 0;
-            return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
-        } catch (Throwable $exception) {
-            app('sentry')->captureException($exception);
-            return api_response($request, null, 500);
-        }
+        $partner = $request->partner;
+        $is_on_premise_applicable = $partner->categories()->where('categories.is_partner_premise_applied', 1)->count() ? 1 : 0;
+        return api_response($request, $is_on_premise_applicable, 200, ['is_on_premise_applicable' => $is_on_premise_applicable]);
     }
 
     /**

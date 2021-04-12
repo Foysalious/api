@@ -26,9 +26,9 @@ class ApiClient extends BankApiClient
             'minimum_transaction_amount' => 1000,
             'transaction_error_msg'      => 'ট্রান্সেকশন সফল হয়েছে'
         ]));
-        $transactionList=[];
+        $transactionList = [];
         foreach ([0,1,2,3,4] as $i){
-            $transactionList[]=(new BankTransaction([
+            $transactionList[] = (new BankTransaction([
                 'date'   => '2020-12-01 20:10:33',
                 'name'   => 'Ikhtiar uddin Mohammad Bakhtiar Khilji',
                 'mobile' => '01748712884',

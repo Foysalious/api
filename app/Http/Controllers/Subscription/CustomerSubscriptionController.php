@@ -521,7 +521,7 @@ class CustomerSubscriptionController extends Controller
 
         $tmp = $this->breakdown_service_with_min_max_price($arrays, $min_price, $max_price, $i + 1);
 
-        $result = array();
+        $result = [];
 
         foreach ($arrays[$i] as $array_index => $v) {
 

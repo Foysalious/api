@@ -80,10 +80,8 @@ class Excel
 
     private function getHeaders()
     {
-
         $header = ['Employee ID', 'Employee Name', 'Department'];
-        foreach ($this->leave_types as $key => $leave_types)
-        {
+        foreach ($this->leave_types as $key => $leave_types) {
             $header[] = $key;
         }
 

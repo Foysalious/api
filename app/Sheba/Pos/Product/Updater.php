@@ -90,8 +90,7 @@ class Updater
     private function updateImageGallery()
     {
         $image_gallery = [];
-        if(isset($this->data['image_gallery']))
-        {
+        if (isset($this->data['image_gallery']))  {
             foreach ($this->data['image_gallery'] as $key => $file) {
                 list($file, $filename) = $this->makeImageGallery($file, '_' . getFileName($file) . '_product_image');
                 $image_gallery[] = $this->saveFileToCDN($file, getPosServiceImageGalleryFolder(), $filename);;
