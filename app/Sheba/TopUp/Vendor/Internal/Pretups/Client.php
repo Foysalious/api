@@ -120,6 +120,11 @@ class Client
         return $input;
     }
 
+    private function getType($type)
+    {
+        return $type == 'prepaid' ? 'EXRCTRFREQ' : 'EXPPBREQ';
+    }
+
     /**
      * @param TopUpOrder $topup_order
      * @return IpnResponse
@@ -137,7 +142,7 @@ class Client
     private function makeInputStringForStatus(TopUpOrder $topup_order)
     {
         $input = '<?xml version="1.0"?><COMMAND>';
-        $input .= "<TYPE>" . $this->getType($topup_order->payee_mobile_type) . "</TYPE>";
+        $input .= "<TYPE>EXRCSTATREQ</TYPE>";
         $input .= "<DATE>" . $topup_order->created_at->toDateTimeString() . "</DATE>";
         $input .= "<EXTNWCODE>$this->EXTNWCODE</EXTNWCODE>";
         $input .= "<MSISDN>$this->mId</MSISDN>";
@@ -150,11 +155,6 @@ class Client
         $input .= "<LANGUAGE1>" . $this->language1 . "</LANGUAGE1>";
         $input .= '</COMMAND>';
         return $input;
-    }
-
-    private function getType($type)
-    {
-        return $type == 'prepaid' ? 'EXRCTRFREQ' : 'EXPPBREQ';
     }
 
     /**
