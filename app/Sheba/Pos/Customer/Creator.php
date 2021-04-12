@@ -65,7 +65,7 @@ class Creator {
         $mobile_profile = $this->profiles->checkExistingMobile($this->data['mobile']);
         if ($mobile_profile && $mobile_profile->posCustomer) {
             if (PartnerPosCustomer::where('customer_id', $mobile_profile->posCustomer->id)->where('partner_id', $this->data['partner']->id)->exists())
-                return ['mobile' => 'Mobile already exists'];
+                return ['mobile' => 'নাম্বারটি ইতোমধ্যে কন্টাক্ট লিস্টে আছে!'];
         };
         if (isset($this->data['email']) && !empty($this->data['email'])) {
             $email_profile = $this->profiles->checkExistingEmail($this->data['email']);
