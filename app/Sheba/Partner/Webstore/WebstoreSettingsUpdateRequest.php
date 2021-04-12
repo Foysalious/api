@@ -114,7 +114,7 @@ class WebstoreSettingsUpdateRequest
 
     private function removeRestrictedCharacters($sub_domain)
     {
-        return str_replace(['/', '$', '#', ' ', '?'], '', $sub_domain);
+        return str_replace(['/', '$', '#', ' ', '?', '%'], '', $sub_domain);
     }
 
     private function subDomainAlreadyExist($sub_domain)
