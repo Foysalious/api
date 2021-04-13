@@ -8,6 +8,7 @@ class AccountingRoute
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
             $api->post('/expense', 'Accounting\\ExpenseController@storeExpenseEntry');
             $api->post('/income', 'Accounting\\IncomeController@storeIncomeEntry');
+            $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
         });
     }
 }

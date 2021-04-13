@@ -2,6 +2,7 @@
 
 use App\Models\PartnerPosCustomer;
 use App\Models\PosCustomer;
+use App\Sheba\AccountingEntry\Constants\UserType;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Sheba\AccountingEntry\Exceptions\AccountingEntryServerError;
@@ -63,7 +64,7 @@ class AccountRepository extends BaseRepository
         $data     = $this->createEntryData($request, "income");
         $url = "api/entries";
         try {
-            return $this->client->setUserType("partner")->setUserId($request->partner->id)->post($url, $data);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
