@@ -118,7 +118,7 @@ class PartnerPosService extends BaseModel
 
     public function getDiscountPercentage()
     {
-        if($this->price == 0)
+        if ($this->price == 0)
             return 0;
         $discount = $this->discount();
         if ($discount->is_amount_percentage)
@@ -149,9 +149,9 @@ class PartnerPosService extends BaseModel
     public function getAlgoliaRecord()
     {
         return [
-            'id' => (int) $this->id,
-            'partner_id' => (int) $this->partner_id,
-            'category_id' => (int) $this->pos_category_id,
+            'id' => (int)$this->id,
+            'partner_id' => (int)$this->partner_id,
+            'category_id' => (int)$this->pos_category_id,
             'category_name' => $this->category->name,
             'name' => $this->name,
             'stock' => (double)$this->stock,
@@ -164,6 +164,14 @@ class PartnerPosService extends BaseModel
 
     public function scopeWebstorePublishedServiceByPartner($query, $partner_id)
     {
-        return $query->where('partner_id', $partner_id)->where('publication_status',1)->where('is_published_for_shop',1);
+        return $query->where('partner_id', $partner_id)->where('publication_status', 1)->where('is_published_for_shop', 1);
+    }
+
+    /**
+     * @return bool
+     */
+    public function isWebstorePublished(): bool
+    {
+        return $this->is_published_for_shop == 1;
     }
 }
