@@ -222,7 +222,8 @@ class DashboardController extends Controller
                 'logo'                         => $partner->logo,
                 'status'                       => $partner->getStatusToCalculateAccess(),
                 'is_nid_verified'              =>(int)$request->manager_resource->profile->nid_verified ? true : false,
-                'is_webstore_published'        =>$partner->is_webstore_published
+                'is_webstore_published'        =>$partner->is_webstore_published,
+                'new_notification_count'       => $partner->notifications()->where('is_seen', '0')->count()
             ];
             return api_response($request, $data, 200, ['data' => $data]);
         } catch (Throwable $e) {

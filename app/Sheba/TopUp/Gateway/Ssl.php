@@ -117,9 +117,4 @@ class Ssl implements Gateway
     {
         return Names::SSL;
     }
-
-    public function getName()
-    {
-        return Names::SSL;
-    }
 }

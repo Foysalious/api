@@ -18,6 +18,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
+        ini_set('memory_limit', '2048M');
         try {
             $partner = $request->partner;
             $total_items = 0.00;
@@ -175,7 +176,7 @@ class CategoryController extends Controller
             $partner_id = $request->partner->id;
             $master_categories = PosCategory::where(function ($q) use ($partner_id) {
                 $q->where('is_published_for_sheba', 1)->orWhere(function ($q) use ($partner_id) {
-                    $q->where('is_published_for_sheba', 0)->whereHas('categoryPartner', function ($q) use ($partner_id) {
+                    $q->where('is_published_for_sheba', 0)->whereHas('partnerPosCategory', function ($q) use ($partner_id) {
                         $q->where('partner_id', $partner_id);
                     });
                 });

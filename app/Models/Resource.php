@@ -19,6 +19,10 @@ class Resource extends BaseModel implements Rewardable, HasWalletTransaction
 
     protected $guarded = ['id'];
     protected $casts = ['wallet' => 'double'];
+    /**
+     * @var bool|\Carbon\Carbon|float|\Illuminate\Support\Collection|int|mixed|string|null
+     */
+    private $remember_token;
 
     public function partners()
     {

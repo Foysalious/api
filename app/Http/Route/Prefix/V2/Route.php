@@ -110,6 +110,7 @@ class Route
                 $api->post('partner-by-resource', 'Auth\PartnerRegistrationController@registerByResource');
             });
             $api->get('times', 'ScheduleTimeController@index');
+            $api->get('theme-setting', 'ThemeSettingController@index');
             $api->get('settings', 'HomePageSettingController@index');
             $api->get('settings-new', 'HomePageSettingController@indexNew');
             $api->get('campaigns', 'CampaignController@index');
@@ -154,7 +155,7 @@ class Route
                 $api->get('{location}/partners', 'PartnerController@findPartners');
                 $api->get('current', 'LocationController@getCurrent');
             });
-            $api->group(['prefix' => 'top-up', 'middleware' => ['topUp.auth']], function ($api) {
+            $api->group(['prefix' => 'top-up', 'middleware' => ['accessToken']], function ($api) {
                 $api->post('get-topup-token', 'TopUp\TopUpController@generateJwt');
                 $api->get('special-amount-data', 'TopUp\TopUpController@specialAmount');
                 $api->post('{user?}', 'TopUp\TopUpController@topUp')->where('user', "(business|partner|affiliate)");

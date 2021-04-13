@@ -7,7 +7,7 @@ use App\Models\CarRentalJobDetail;
 use Sheba\Dal\Category\Category;
 use App\Models\Customer;
 use App\Models\CustomerDeliveryAddress;
-use App\Models\InfoCall;
+use Sheba\Dal\InfoCall\InfoCall;
 use App\Models\Job;
 use Sheba\Checkout\CommissionCalculator;
 use Sheba\Dal\JobService\JobService;

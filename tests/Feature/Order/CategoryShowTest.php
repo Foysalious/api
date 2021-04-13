@@ -11,9 +11,9 @@ use Tests\Feature\FeatureTestCase;
 class CategoryShowTest extends FeatureTestCase
 {
     /** @var Location */
-    private $location;
+   // private $location;
     /** @var Category */
-    private $secondaryCategory;
+   // private $secondaryCategory;
 
     public function setUp()
     {

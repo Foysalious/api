@@ -1253,7 +1253,7 @@ COMMIT;
 DROP TABLE IF EXISTS `authorization_tokens`;
 CREATE TABLE `authorization_tokens` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
-  `token` varchar(2000) CHARACTER SET utf8 NOT NULL,
+  `token` varchar(3000) CHARACTER SET utf8 NOT NULL,
   `authorization_request_id` int(10) unsigned NOT NULL,
   `valid_till` datetime NOT NULL,
   `refresh_valid_till` datetime NOT NULL,

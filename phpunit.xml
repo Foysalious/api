@@ -23,6 +23,7 @@
     </filter>
     <php>
         <env name="DB_DATABASE" value="sheba_testing"/>
+        <env name="APP_ENV" value="testing"/>
     </php>
     <logging>
         <log type="junit" target="results/phpunit/api-test-result.xml" logIncompleteSkipped="true"/>

@@ -239,14 +239,15 @@ class ProductService
     {
         $data = [];
         if (isset($this->categoryId)) array_push($data, ['name' => 'category_id', 'contents' => $this->categoryId]);
-        if (isset($this->name)) $data['name'] = array_push($data, ['name' => 'name','contents' => $this->name]);
-        if (isset($this->description)) $data['description'] = array_push($data, ['name' => 'description','contents' => $this->description]);
-        if (isset($this->warranty)) $data['warranty'] = array_push($data, ['name' => 'warranty','contents' => $this->warranty ?: 0]);
-        if (isset($this->warrantyUnit)) $data['warranty_unit'] = array_push($data, ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day']);
-        if (isset($this->vatPercentage)) $data['vat_percentage'] = array_push($data, ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0]);
-        if (isset($this->unitId)) $data['unit_id'] = array_push($data, ['name' => 'unit_id', 'contents' => $this->unitId]);
-        if (isset($this->discountAmount)) $data['discount_amount'] = array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
-        if (isset($this->discountEndDate)) $data['discount_end_date'] = array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
+        if (isset($this->name)) array_push($data, ['name' => 'name','contents' => $this->name]);
+        if (isset($this->description)) array_push($data, ['name' => 'description','contents' => $this->description]);
+        if (isset($this->warranty)) array_push($data, ['name' => 'warranty','contents' => $this->warranty ?: 0]);
+        if (isset($this->warrantyUnit)) array_push($data, ['name' => 'warranty_unit','contents' => $this->warrantyUnit ?: 'day']);
+        if (isset($this->vatPercentage))  array_push($data, ['name' => 'vat_percentage','contents' => $this->vatPercentage ?: 0]);
+        if (isset($this->unitId))  array_push($data, ['name' => 'unit_id', 'contents' => $this->unitId]);
+        if (isset($this->discountAmount))array_push($data, ['name' => 'discount_amount', 'contents' => $this->discountAmount]);
+        if (isset($this->discountEndDate))array_push($data, ['name' => 'discount_end_date', 'contents' => $this->discountEndDate]);
+        if (isset($this->productDetails))  array_push($data, ['name' => 'product_details', 'contents' => $this->productDetails]);
         if (isset($this->images)) $data = array_merge($data, $this->makeImagesData());
         return $data;
     }

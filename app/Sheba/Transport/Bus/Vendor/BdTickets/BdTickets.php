@@ -116,11 +116,9 @@ class BdTickets extends Vendor
     public function confirmTicket($ticket_id)
     {
         $data = ['ticketId' => $ticket_id, 'accountType' => self::ACCOUNT_TYPE, 'applicationChannel' => self::APPLICATION_CHANNEL];
-        $response = $this->bdTicketClient->post('tickets/confirm', $data);
-        $bd_ticket_response = new BdTicketsResponse();
-        $bd_ticket_response->setResponse($response);
-
-        return $bd_ticket_response;
+        $response =  $this->bdTicketClient->post('tickets/confirm', $data);
+        $this->bdTicketResponse->setResponse((object)$response);
+        return $this->bdTicketResponse;
     }
 
     /**
@@ -150,11 +148,14 @@ class BdTickets extends Vendor
         return false;
     }
 
+    public function getTicketCancellableData($transportTicketOrder){
+        $transactionId = json_decode($transportTicketOrder->reservation_details)->id;
+        return $this->bdTicketClient->get('tickets/'.$transactionId.'/cancelcheck');
+    }
+
     public function cancelTicket($transport_ticket_order)
     {
         $transaction_id = json_decode($transport_ticket_order->reservation_details)->id;
-        $transport_ticket_order->status = 'cancelled';
-        $transport_ticket_order->save();
         return $this->bdTicketClient->post('tickets/cancel',["ticketId" => $transaction_id, "applicationChannel" => "REMOTE"]);
     }
 

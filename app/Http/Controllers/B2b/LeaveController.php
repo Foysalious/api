@@ -9,16 +9,17 @@ use App\Models\Profile;
 use App\Sheba\Business\BusinessBasicInformation;
 use App\Sheba\Business\Leave\ApproverWithReason;
 use App\Transformers\Business\LeaveBalanceDetailsTransformer;
+use App\Transformers\Business\LeaveBalanceRemainingTransformer;
 use App\Transformers\Business\LeaveBalanceTransformer;
 use App\Transformers\Business\LeaveListTransformer;
 use App\Transformers\Business\LeaveRequestDetailsTransformer;
 use App\Transformers\CustomSerializer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use League\Fractal\Resource\Collection;
 use Illuminate\Support\Facades\App;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Item;
+use League\Fractal\Resource\Collection;
 use Sheba\Business\ApprovalRequest\Leave\SuperAdmin\StatusUpdater as StatusUpdater;
 use Sheba\Business\ApprovalRequest\UpdaterV2;
 use Sheba\Business\ApprovalSetting\FindApprovalSettings;
@@ -92,11 +93,12 @@ class LeaveController extends Controller
         if ($request->has('department')) $leave_approval_requests = $this->filterWithDepartment($leave_approval_requests, $request);
         if ($request->has('employee')) $leave_approval_requests = $this->filterWithEmployee($leave_approval_requests, $request);
         if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->has('search')) $leave_approval_requests = $this->searchWithEmployeeName($leave_approval_requests, $request);
+        if ($request->has('period_start') && $request->has('period_end')) $leave_approval_requests = $this->filterByPeriod($leave_approval_requests, $request);
 
         $total_leave_approval_requests = $leave_approval_requests->count();
         $leave_approval_requests = $this->sortByStatus($leave_approval_requests);
         if ($request->has('limit') && !$request->has('file')) $leave_approval_requests = $leave_approval_requests->splice($offset, $limit);
-
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
         $resource = new Collection($leave_approval_requests, new LeaveApprovalRequestListTransformer($business));
@@ -128,7 +130,7 @@ class LeaveController extends Controller
      * @param LeaveStatusChangeLogRepo $leave_status_change_log_repo
      * @return JsonResponse
      */
-    public function show($business, $approval_request, Request $request)
+    public function show($business, $approval_request, Request $request, LeaveLogRepo $leave_log_repo, LeaveStatusChangeLogRepo $leave_status_change_log_repo)
     {
         /** @var Business $business */
         $business = $request->business;
@@ -138,8 +140,7 @@ class LeaveController extends Controller
         $requestable = $approval_request->requestable;
         /** @var BusinessMember $business_member */
         $business_member = $request->business_member;
-
-        if ($business_member->id != $approval_request->approver_id)
+        if (!$business_member->isSuperAdmin() && $business_member->id != $approval_request->approver_id)
             return api_response($request, null, 403, ['message' => 'You Are not authorized to show this request']);
 
         $leave_requester_business_member = $requestable->businessMember;
@@ -152,7 +153,7 @@ class LeaveController extends Controller
 
         $manager = new Manager();
         $manager->setSerializer(new CustomSerializer());
-        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $profile, $role));
+        $resource = new Item($approval_request, new LeaveRequestDetailsTransformer($business, $business_member, $profile, $role, $leave_log_repo, $leave_status_change_log_repo));
         $approval_request = $manager->createData($resource)->toArray()['data'];
 
         $approvers = $this->getApprover($requestable);
@@ -291,7 +292,7 @@ class LeaveController extends Controller
                 'phone' => $profile->mobile,
                 'profile_pic' => $profile->pro_pic,
                 'status' => ApprovalRequestPresenter::statuses()[$approval_request->status],
-                'reject_reason' => (new ApproverWithReason())->getRejectReason($this->approvalRequest, self::APPROVER, $business_member->id)
+                'reject_reason' => (new ApproverWithReason())->getRejectReason($approval_request, self::APPROVER, $business_member->id)
             ]);
         }
         $all_approvers = array_merge($approvers, $default_approvers);
@@ -414,6 +415,23 @@ class LeaveController extends Controller
         return api_response($request, null, 200, ['leave_balance_details' => $leave_balance]);
     }
 
+    public function leaveBalanceRemaining($business_id, $business_member_id, Request $request)
+    {
+        if (!is_numeric($business_member_id)) return api_response($request, null, 400);
+        /** @var BusinessMember $business_member */
+        $business_member = $this->getBusinessMemberById($business_member_id);
+        /** @var Business $business */
+        $business = $business_member->business;
+        $leave_types = $business->leaveTypes()->withTrashed()->select('id', 'title', 'total_days', 'deleted_at')->get();
+
+        $manager = new Manager();
+        $manager->setSerializer(new CustomSerializer());
+        $resource = new Item($business_member, new LeaveBalanceRemainingTransformer($leave_types));
+        $leave_balance = $manager->createData($resource)->toArray()['data'];
+
+        return api_response($request, null, 200, ['leave_balance_remaining' => $leave_balance]);
+    }
+
     /**
      * @param $leave_balances
      * @param string $sort
@@ -516,10 +534,9 @@ class LeaveController extends Controller
         $leave = $leave_repo->find($request->leave_id);
 
         $edit_values = json_decode($request->data);
-
         foreach ($edit_values as $value) {
             if ($value->type === EditType::LEAVE_TYPE) {
-                $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->updateLeaveType();
+                $updater->setLeave($leave)->setUpdateType($value->type)->setLeaveTypeId($value->leave_type_id)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveType();
             }
             if ($value->type === EditType::LEAVE_DATE) {
                 $updater->setLeave($leave)->setUpdateType($value->type)->setStartDate($value->start_date)->setEndDate($value->end_date)->updateLeaveDate();
@@ -594,6 +611,15 @@ class LeaveController extends Controller
         $sort_by = ($sort === 'asc') ? 'sortBy' : 'sortByDesc';
         return collect($leaves)->$sort_by(function ($leave, $key) {
             return strtoupper($leave['start_date']);
+        });
+    }
+
+    private function filterByPeriod($leave_approval_requests, Request $request) {
+        return $leave_approval_requests->filter(function ($approval_request) use ($request) {
+            $requestable = $approval_request->requestable;
+            $start_date = $requestable ? $requestable->start_date : null;
+            $end_date = $requestable ? $requestable->end_date : null;
+            return $start_date >= $request->period_start.' 00:00:00' && $end_date <= $request->period_end.' 23:59:59';
         });
     }
 }

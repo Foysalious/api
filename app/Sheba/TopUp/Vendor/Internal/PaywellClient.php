@@ -113,7 +113,8 @@ class PaywellClient
         if ($vendor_id == 4) return 'GP';
         if ($vendor_id == 5) return 'BL';
         if ($vendor_id == 6) return 'TT';
-        
+        if ($vendor_id == 7) return 'GP ST';
+
         throw new InvalidArgumentException('Invalid Mobile for paywell topup.');
     }
 

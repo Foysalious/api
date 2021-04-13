@@ -123,7 +123,6 @@ if (!function_exists('getCategoryGroupAppBannerFolder')) {
 if (!function_exists('getCategoryGroupThumbFolder')) {
     /**
      * Get Category Group Thumb Folder
-     *
      * @param bool $with_base_url
      * @return string
      */
@@ -139,7 +138,6 @@ if (!function_exists('getCategoryGroupThumbFolder')) {
 if (!function_exists('getCategoryGroupAppThumbFolder')) {
     /**
      * Get Category Group App Thumb Folder
-     *
      * @param bool $with_base_url
      * @return string
      */
@@ -155,7 +153,6 @@ if (!function_exists('getCategoryGroupAppThumbFolder')) {
 if (!function_exists('getCategoryGroupIconFolder')) {
     /**
      * Get Category Group App Thumb Folder
-     *
      * @param bool $with_base_url
      * @return string
      */
@@ -171,7 +168,6 @@ if (!function_exists('getCategoryGroupIconFolder')) {
 if (!function_exists('getCategoryGroupIconPngFolder')) {
     /**
      * Get Category Group App Thumb Folder
-     *
      * @param bool $with_base_url
      * @return string
      */
@@ -623,15 +619,7 @@ if (!function_exists('getTradeLicenceDocumentsFolder')) {
         return $url . 'partner/trade_license/trade_';
     }
 }
-if (!function_exists('getPartnerProofOfBusinessFolder')) {
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id=0)
-    {
-        $url = '';
-        if ($with_base_url)
-            $url = env('S3_URL');
-        return $url . "partner/$partner_id/proof-of-business";
-    }
-}
+
 if (!function_exists('getLoanDocumentFolder')) {
 
     /**
@@ -667,28 +655,9 @@ if (!function_exists('getFileTypeIcon')) {
      */
     function getFileTypeIcon($type)
     {
-        $type            = strtolower($type);
+        $type = strtolower($type);
         $file_type_icons = [
-            'xls'  => 'file-excel-o',
-            'xlsx' => 'file-excel-o',
-            'csv'  => 'file-excel-o',
-            'ppt'  => 'file-powerpoint-o',
-            'pptx' => 'file-powerpoint-o',
-            'docx' => 'file-word-o',
-            'doc'  => 'file-word-o',
-            'odt'  => 'file-word-o',
-            'rtf'  => 'file-word-o',
-            'txt'  => 'file-text-o',
-            'pdf'  => 'file-pdf-o',
-            'rar'  => 'file-archive-o',
-            'zip'  => 'file-archive-o',
-            'jpg'  => 'file-image-o',
-            'jpeg' => 'file-image-o',
-            'png'  => 'file-image-o',
-            'gif'  => 'file-image-o',
-            'mp4'  => 'file-video-o',
-            'mp3'  => 'file-audio-o',
-            'wma'  => 'file-audio-o'
+            'xls' => 'file-excel-o', 'xlsx' => 'file-excel-o', 'csv' => 'file-excel-o', 'ppt' => 'file-powerpoint-o', 'pptx' => 'file-powerpoint-o', 'docx' => 'file-word-o', 'doc' => 'file-word-o', 'odt' => 'file-word-o', 'rtf' => 'file-word-o', 'txt' => 'file-text-o', 'pdf' => 'file-pdf-o', 'rar' => 'file-archive-o', 'zip' => 'file-archive-o', 'jpg' => 'file-image-o', 'jpeg' => 'file-image-o', 'png' => 'file-image-o', 'gif' => 'file-image-o', 'mp4' => 'file-video-o', 'mp3' => 'file-audio-o', 'wma' => 'file-audio-o'
         ];
 
         if (!array_key_exists($type, $file_type_icons)) {
@@ -1184,6 +1153,7 @@ if (!function_exists('getVatRegistrationDocumentsFolder')) {
         return $url . 'partner/vat_registration/vat_';
     }
 }
+
 if (!function_exists('getDueTrackerAttachmentsFolder')) {
 
     /**
@@ -1228,13 +1198,12 @@ if (!function_exists('getCoWorkerInviteErrorFolder')) {
 }
 
 if (!function_exists('getPartnerProofOfBusinessFolder')) {
-
     /**
      * @param false $with_base_url
      * @param int $partner_id
      * @return string
      */
-    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0)
+    function getPartnerProofOfBusinessFolder($with_base_url = false, $partner_id = 0): string
     {
         $url = '';
         if ($with_base_url)

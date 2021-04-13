@@ -46,8 +46,6 @@
     "ext-mysql_xdevapi": "*",
     "ext-intl": "*",
     "algolia/algoliasearch-laravel": "^1.7",
-    "mpdf/mpdf": "^8.0",
-    "darkaonline/l5-swagger": "~3.0",
     "fideloper/proxy": "^3.3",
     "rosell-dk/webp-convert": "^2.4"
   },
@@ -70,8 +68,7 @@
     "psr-4": {
       "App\\": "app/",
       "Sheba\\": "app/Sheba",
-      "Tests\\": "tests",
-      "Factories\\": "database/Factories"
+      "Tests\\": "tests"
     }
   },
   "autoload-dev": {

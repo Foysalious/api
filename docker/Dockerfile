@@ -15,10 +15,9 @@ RUN apt-get update && apt-get install -y \
     libpng-dev \
     libxpm-dev \
     libvpx-dev \
-    libxml2-dev
-
-# Copy composer.lock and composer.json
-COPY composer.lock composer.json /var/www/
+    libxml2-dev \
+    libicu-dev \
+    git
 
 # Clear cache
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
@@ -32,22 +31,19 @@ RUN docker-php-ext-install -j$(nproc) pdo_mysql mbstring zip calendar soap gd in
 RUN pecl install mongodb-1.4.4 \
     && echo "extension=mongodb.so" > /usr/local/etc/php/conf.d/mongo.ini
 
+# Install php-ext-apfd
+RUN pecl install apfd && docker-php-ext-enable apfd
+
+# Make fpm log script executable
+COPY fpm_log_file_created.sh /etc/fpm_log_file_created.sh
+RUN chmod +x /etc/fpm_log_file_created.sh
+RUN /etc/fpm_log_file_created.sh
+
 # Install composer
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer --version=1.8.6
+RUN composer global require hirak/prestissimo
 
-RUN { \
-        echo 'opcache.memory_consumption=128'; \
-        echo 'opcache.interned_strings_buffer=8'; \
-        echo 'opcache.max_accelerated_files=4000'; \
-        echo 'opcache.revalidate_freq=2'; \
-        echo 'opcache.fast_shutdown=1'; \
-        echo 'opcache.enable_cli=1'; \
-    } > /usr/local/etc/php/conf.d/php-opocache-cfg.ini
-
-
-COPY /nginx/conf.d/nginx.conf /etc/nginx/sites-enabled/default
 COPY entrypoint.sh /etc/entrypoint.sh
-
 RUN chmod +x /etc/entrypoint.sh
 
 RUN usermod -u 1000 www-data
@@ -56,5 +52,3 @@ RUN usermod -u 1000 www-data
 WORKDIR /var/www
 
 EXPOSE 80 443
-
-ENTRYPOINT ["/etc/entrypoint.sh"]

@@ -6,6 +6,7 @@ use App\Models\Profile;
 use Carbon\Carbon;
 use Sheba\Dal\Leave\Model as Leave;
 use Sheba\Dal\Leave\Contract as LeaveRepository;
+use Sheba\Dal\Leave\Status;
 use Sheba\Dal\LeaveLog\Contract as LeaveLogRepo;
 use Sheba\Dal\LeaveType\Model as LeaveType;
 use Sheba\ModificationFields;
@@ -86,6 +87,8 @@ class Updater
     {
         $this->previousLeaveTypeId = $this->leave->leave_type_id;
         if ($this->previousLeaveTypeId === $this->leaveTypeId) return;
+        $data = $this->calculateLeaveForLeaveType();
+        if (empty($data)) return;
         $log_data = [
             'leave_id' => $this->leave->id,
             'type' => Type::LEAVE_TYPE,
@@ -94,7 +97,7 @@ class Updater
             'log' => "Super Admin edited the leave type from " . $this->getLeaveTypeName($this->previousLeaveTypeId) . ' to ' . $this->getLeaveTypeName($this->leaveTypeId),
             'is_changed_by_super' => 1,
         ];
-        $this->leaveRepository->update($this->leave, $this->withUpdateModificationField(['leave_type_id' => $this->leaveTypeId]));
+        $this->leaveRepository->update($this->leave, $this->withUpdateModificationField($data));
         $this->leaveLogRepo->create($this->withCreateModificationField($log_data));
     }
 
@@ -104,11 +107,9 @@ class Updater
         $this->previousEndDate = $this->leave->end_date->format('d/m/Y');
         $new_start_date = $this->formatDate($this->startDate);
         $new_end_date = $this->formatDate($this->endDate);
-        if($this->previousStartDate === $new_start_date) return;
-        $data = [
-            'start_date' => $this->startDate . ' ' . '00:00:00',
-            'end_date' => $this->endDate . ' ' . '23:59:59'
-        ];
+        if($this->previousStartDate === $new_start_date && $this->previousEndDate === $new_end_date) return;
+        $data = $this->calculateLeaveForLeaveDate();
+        if (empty($data)) return;
         $log_data = [
             'leave_id' => $this->leave->id,
             'type' => Type::LEAVE_DATE,
@@ -190,5 +191,60 @@ class Updater
         ];
 
         $this->pushNotificationHandler->send($notification_data, $topic, $channel, $sound);
+    }
+    private function calculateLeaveForLeaveType()
+    {
+        $leave_days_for_calculation = $this->calculateDays();
+        $data = [];
+        $used_leave = $leave_days_for_calculation['used_leave'];
+        $total_leave_type_days = $leave_days_for_calculation['leave_type_total_days'];
+        $leave_days = $leave_days_for_calculation['current_leave_days'];
+        if (($total_leave_type_days - $used_leave) >= ($leave_days + 1)) {
+            $left_days = $this->leave->status == Status::ACCEPTED ? (($total_leave_type_days - $used_leave) - ($leave_days + 1)) : ($total_leave_type_days - $used_leave);
+            $data = [
+                'leave_type_id' => $this->leaveTypeId,
+                'total_days' => $leave_days + 1,
+                'left_days' => $left_days
+            ];
+        }
+        return $data;
+    }
+
+    private function calculateLeaveForLeaveDate()
+    {
+        $leave_days_for_calculation = $this->calculateDays();
+        $data = [];
+        $used_leave = $leave_days_for_calculation['used_leave'];
+        $total_leave_type_days = $leave_days_for_calculation['leave_type_total_days'];
+        $leave_days = $leave_days_for_calculation['current_leave_days'];
+        $previous_leave_days = $leave_days_for_calculation['previous_leave_days'];
+        if (($total_leave_type_days - $used_leave) >= ($leave_days + 1)) {
+            $remaining_leave = $total_leave_type_days - $used_leave;
+            $left_days = $this->leave->status == Status::ACCEPTED ? (($remaining_leave + $previous_leave_days) - ($leave_days + 1)) : $remaining_leave;
+            $data = [
+                'total_days' => $leave_days + 1,
+                'left_days' => $left_days,
+                'start_date' => $this->startDate . ' ' . '00:00:00',
+                'end_date' => $this->endDate . ' ' . '23:59:59'
+            ];
+        }
+        return $data;
+    }
+
+
+    private function calculateDays()
+    {
+        $business_member = $this->leave->businessMember;
+        $used_leave_days = $business_member->getCountOfUsedLeaveDaysByTypeOnAFiscalYear($this->leaveTypeId);
+        $leave_type_total_days = $business_member->getTotalLeaveDaysByLeaveTypes($this->leaveTypeId);
+        $leave_days = Carbon::parse($this->endDate)->diffInDays(Carbon::parse($this->startDate));
+        $previous_leave_days = $this->leave->total_days;
+
+        return [
+            'leave_type_total_days' => $leave_type_total_days,
+            'used_leave' => $used_leave_days,
+            'current_leave_days' => $leave_days,
+            'previous_leave_days' => (float)$previous_leave_days
+        ];
     }
 }

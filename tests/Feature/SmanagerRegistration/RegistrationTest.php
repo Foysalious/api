@@ -134,6 +134,7 @@ class RegistrationTest extends FeatureTestCase
     //Test case: Post api without a mandatory payload and check response
     public function testRRegistrationPartnerwithWrongPayload()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",
@@ -144,7 +145,7 @@ class RegistrationTest extends FeatureTestCase
             'Authorization'=> "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(200,$data["code"]);
+        $this->assertEquals(403,$data["code"]);
         //$this->assertEquals(400,$data["message"]);
         //dd($data);
 
@@ -152,6 +153,7 @@ class RegistrationTest extends FeatureTestCase
 
     public function testRRegistrationPartnerwithWrongPayloadinBussines_type()
     {
+
         $response= $this->post("v2/profile/registration/partner",[
             "name"=> "ZUBAYER",
             "company_name"=> "ZUBAYER TEST",
@@ -162,7 +164,7 @@ class RegistrationTest extends FeatureTestCase
             'Authorization'=> "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
-        $this->assertEquals(200,$data["code"]);
+        $this->assertEquals(403,$data["code"]);
         $this->assertEquals("Successful",$data["message"]);
         //dd($data);
 

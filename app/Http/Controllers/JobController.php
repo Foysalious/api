@@ -429,7 +429,7 @@ class JobController extends Controller
                 $collect->put('timestamp', $log->created_at->timestamp);
                 $collect->put('type', $key);
                 $collect->put('color_code', '#02adfc');
-                $all_logs->push($collect);
+                if(substr_count($log->log, 'Commission Rate') === 0) $all_logs->push($collect);
             }
         }
     }

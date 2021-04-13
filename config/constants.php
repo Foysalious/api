@@ -1156,6 +1156,10 @@ return [
         'carton' => [
             'bn' => 'কার্টন',
             'en' => 'carton'
+        ],
+        'gauze' => [
+            'bn' => 'গজ',
+            'en' => 'gauze'
         ]
     ],
     'TICKET_LOG' => [

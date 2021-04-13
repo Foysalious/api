@@ -115,7 +115,6 @@ class Kernel extends HttpKernel
         'accessToken' => AccessTokenMiddleware::class,
         'apiRequestLog' => ApiRequestMiddleware::class,
         'shebaServer' => ShebaNetworkMiddleware::class,
-        'topUp.auth' => TopUpAuthMiddleware::class,
         'terminate' => TerminatingMiddleware::class,
 
     ];
