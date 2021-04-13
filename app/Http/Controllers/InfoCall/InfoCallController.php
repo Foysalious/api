@@ -54,7 +54,9 @@ class InfoCallController extends Controller
                 'created_by'=>0,
                 'created_by_name'=>'Guest User',
                 'updated_by'=>0,
-                'updated_by_name'=>'Guest User'
+                'updated_by_name'=>'Guest User',
+                 'follow_up_date'=> Carbon::now()->addMinutes(30),
+                    'intended_closing_date' => Carbon::now()->addMinutes(30)
             ]);
             }
             return api_response($request, 1, 200);
