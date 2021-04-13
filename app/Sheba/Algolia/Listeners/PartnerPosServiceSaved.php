@@ -13,8 +13,8 @@ class PartnerPosServiceSaved
     {
         /** @var PartnerPosService $partner_pos_service */
         $partner_pos_service = $event->model;
-        if (!$partner_pos_service->isWebstorePublished()) return;
-        $partner_pos_service->pushToIndex();
+        if ($partner_pos_service->isWebstorePublished()) $partner_pos_service->pushToIndex();
+        else $partner_pos_service->removeFromIndex();
     }
 
 }
