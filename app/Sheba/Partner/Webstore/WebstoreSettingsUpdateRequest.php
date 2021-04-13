@@ -67,7 +67,7 @@ class WebstoreSettingsUpdateRequest
      */
     public function setSubDomain($sub_domain)
     {
-        if (is_numeric($sub_domain)) throw new DoNotReportException('Number is not allowed as your sub domain', 400);
+        if (is_numeric($sub_domain)) throw new DoNotReportException('দুঃখিত, স্টোর লিংকে শুধুমাত্র নাম্বার ব্যবহার করা যাবে না !', 400);
         $sub_domain = $this->removeRestrictedCharacters(strtolower($sub_domain));
         if ($this->subDomainAlreadyExist($sub_domain)) throw new DoNotReportException('এই লিংক-টি ইতোমধ্যে ব্যবহৃত হয়েছে!', 400);
         $this->subDomain = $sub_domain;
