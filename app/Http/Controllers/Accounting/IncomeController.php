@@ -1,11 +1,8 @@
-<?php
-
-
-namespace App\Http\Controllers\Accounting;
+<?php namespace App\Http\Controllers\Accounting;
 
 
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\AccountRepository;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
@@ -13,10 +10,10 @@ class IncomeController extends Controller
 {
     use ModificationFields;
 
-    /** @var AccountRepository */
+    /** @var AccountingRepository */
     private $accountingRepo;
 
-    public function __construct(AccountRepository $accountingRepo) {
+    public function __construct(AccountingRepository $accountingRepo) {
         $this->accountingRepo = $accountingRepo;
     }
 
@@ -29,8 +26,8 @@ class IncomeController extends Controller
             'amount_cleared' => 'sometimes|required|numeric',
             'customer_id' => 'required_with:amount_cleared'
         ]);
-        $response = $this->accountingRepo->storeIncomeEntry($request);
-        return api_response($request, $response, 200);
+        $response = $this->accountingRepo->storeEntry($request, "income");
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 
 }

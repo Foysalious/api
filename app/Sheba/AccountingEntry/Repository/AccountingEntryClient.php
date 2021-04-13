@@ -50,16 +50,17 @@ class AccountingEntryClient
     public function call($method, $uri, $data = null)
     {
         try {
+            if (!$this->userType || !$this->userId) {
+                return "set userType and userId";
+            }
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
-            dd($res);
             if ($res['code'] != 200) throw new AccountingEntryServerError($res['message']);
-            unset($res['code'], $res['code']);
-            return $res;
+            unset($res['code'], $res['message']);
+            return $res['data'];
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
-            dd($res);
-            if ($res['status_code'] == 400) throw new AccountingEntryServerError($res['messages']);
-            throw new AccountingEntryServerError($e->getMessage());
+            if ($res['code'] == 400) throw new AccountingEntryServerError($res['message']);
+            logError($e);
         }
     }
 
