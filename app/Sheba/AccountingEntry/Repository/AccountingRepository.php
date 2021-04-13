@@ -11,7 +11,7 @@ use Sheba\FileManagers\FileManager;
 use Sheba\ModificationFields;
 use Sheba\RequestIdentification;
 
-class AccountRepository extends BaseRepository
+class AccountingRepository extends BaseRepository
 {
     use ModificationFields, CdnFileManager, FileManager;
 
@@ -32,36 +32,10 @@ class AccountRepository extends BaseRepository
         }
     }
 
-    public function storeExpenseEntry($data) {
-        $expense_data = [
-            "amount" => $data->has("amount_cleared") ? $data->amount_cleared : $data->amount,
-            "source_type" => "expense",
-            "debit_account_key" => $data->from_account_key,
-            "credit_account_key" => $data->to_account_key,
-            "entry_at" => $data->date,
-            "note" => $data->note,
-            "customer_id" =>$data->customer_id,
-            'attachments' => $this->uploadAttachments($data)
-            ];
-        $url = "api/entries/partner/".$data->partner->id;
-        try {
-            return $this->post($url, $expense_data);
-        } catch (AccountingEntryServerError $e) {
-            logError($e);
-        }
-    }
-
-    public function storeIncomeEntry(Request $request) {
-        $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
-        if ( $request->has('customer_id') && empty($partner_pos_customer))
-            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $request->partner->id, 'customer_id' => $request->customer_id]);
-
-        if ($partner_pos_customer) {
-            $request['customer_id'] = $partner_pos_customer->id;
-            $request['customer_name'] = $partner_pos_customer->details()["name"];
-        }
+    public function storeEntry(Request $request, $type) {
+        $this->getCustomer($request);
         $this->setModifier($request->partner);
-        $data     = $this->createEntryData($request, "income");
+        $data     = $this->createEntryData($request, $type);
         $url = "api/entries";
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
@@ -99,5 +73,19 @@ class AccountRepository extends BaseRepository
             }
         }
         return json_encode($attachments);
+    }
+
+    private function getCustomer(Request $request)
+    {
+        $partner_pos_customer = PartnerPosCustomer::byPartner($request->partner->id)->where('customer_id', $request->customer_id)->with(['customer'])->first();
+        if ( $request->has('customer_id') && empty($partner_pos_customer))
+            $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $request->partner->id, 'customer_id' => $request->customer_id]);
+
+        if ($partner_pos_customer) {
+            $request['customer_id'] = $partner_pos_customer->id;
+            $request['customer_name'] = $partner_pos_customer->details()["name"];
+        }
+
+        return $request;
     }
 }
