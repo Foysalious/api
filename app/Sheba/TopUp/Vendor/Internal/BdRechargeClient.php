@@ -77,19 +77,15 @@ class BdRechargeClient
             "Content-Type:application/json"
         ];
 
-        $this->tpRequest->setUrl($this->singleTopupUrl)
-            ->setMethod(TPRequest::METHOD_POST)
-            ->setHeaders($headers)
-            ->setInput($request_data);
-
-        try {
-            $response = $this->httpClient->call($this->tpRequest);
-        } catch (TPProxyServerTimeout $e) {
-            throw new GatewayTimeout($e->getMessage());
-        }
-        return $response;
+        return $this->sendRequestByTpClient($this->singleTopupUrl, $request_data, $headers);
     }
 
+    /**
+     * @param $topup_order_id
+     * @return mixed
+     * @throws TPProxyServerError
+     * this function is for enquire the topup status manually to bdRecharge gateway if needed
+     */
     public function enquiry($topup_order_id)
     {
         $unencrypted_data = [
@@ -106,14 +102,39 @@ class BdRechargeClient
             "Content-Type:application/json"
         ];
 
-        $this->tpRequest->setUrl($this->topupEnquiryUrl)
+        return $this->sendRequestByTpClient($this->topupEnquiryUrl, $request_data, $headers);
+    }
+
+    public function getBalance(){
+        $unencrypted_data = [
+            "srcuid" => $this->username,
+            "srcpwd" => $this->password,
+        ];
+
+        $request_data = [
+            'payload' => $this->encryptData($unencrypted_data)
+        ];
+
+        $headers = [
+            "Content-Type:application/json"
+        ];
+
+        return $this->sendRequestByTpClient($this->balanceEnquiryUrl, $request_data, $headers);
+    }
+
+    private function sendRequestByTpClient($url, $data, $headers){
+
+        $this->tpRequest->setUrl($url)
             ->setMethod(TPRequest::METHOD_POST)
             ->setHeaders($headers)
-            ->setInput($request_data);
+            ->setInput($data);
 
-        $response = $this->httpClient->call($this->tpRequest);
-
-        return $response->enquiryData;
+        try {
+            $response = $this->httpClient->call($this->tpRequest);
+        } catch (TPProxyServerTimeout $e) {
+            throw new GatewayTimeout($e->getMessage());
+        }
+        return $response;
     }
 
     /**

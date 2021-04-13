@@ -6,6 +6,7 @@ use App\Models\Partner;
 use App\Models\TopUpOrder;
 use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
+use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,8 @@ use Sheba\TopUp\Jobs\TopUpJob;
 use Sheba\TopUp\TopUpAgent;
 use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpRequest;
+use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeFailResponse;
+use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -391,5 +394,22 @@ class TopUpController extends Controller
             'status_code' => '',
         ];
         return api_response(json_encode($response), json_encode($response), 200);
+    }
+
+    public function bdrechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response, TopUp $top_up, BdRechargeClient $bdRechargeClient)
+    {
+        if($request->status == 'success'){
+            $success_response->setResponse($request->all());
+            $topup_order = $success_response->getTopUpOrder();
+            if($topup_order->status == Statuses::PENDING){
+                $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+            }
+        }
+        elseif ($request->status == 'failed'){
+            $fail_response->setResponse($request->all());
+            $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+        }
+
+        return api_response($request, 1, 200);
     }
 }
