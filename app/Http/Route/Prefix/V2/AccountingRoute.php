@@ -1,11 +1,10 @@
-<?php namespace App\Http\Route\Prefix\V2\Partner\ID\Auth;
+<?php namespace App\Http\Route\Prefix\V2;
 
-
-class Accounting
+class AccountingRoute
 {
     public function set($api)
     {
-        $api->group(['prefix' => 'accounting'], function ($api) {
+        $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
             $api->post('/expense', 'Accounting\\ExpenseController@storeExpenseEntry');
         });
