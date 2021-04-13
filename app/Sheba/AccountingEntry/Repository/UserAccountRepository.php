@@ -18,18 +18,17 @@ class UserAccountRepository extends BaseRepository
         $this->api = 'api/accounts/';
     }
 
-    public function getAccountType(array $filter = [])
+    public function getAccountType(array $request = [])
     {
         $query = '';
-        if (isset($filter['root_account'])) {
-            $query .= "?root_account=" . $filter['root_account'];
+        if (isset($request['root_account'])) {
+            $query .= "?root_account=" . $request['root_account'];
         }
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId(auth()->id())->get(
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request['partner']['id'])->get(
                 $this->api . 'account-types' . $query
             );
         } catch (AccountingEntryServerError $e) {
-            logError($e);
             return $e->getMessage();
         }
     }

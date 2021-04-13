@@ -18,6 +18,6 @@ class AccountController extends Controller
     public function getAccountTypeList(Request $request)
     {
         $response = $this->accountRepo->getAccountType($request->all());
-        return api_response($request, $response, 200);
+        return api_response($request, $response, 200, ['data' => $response]);
     }
 }
