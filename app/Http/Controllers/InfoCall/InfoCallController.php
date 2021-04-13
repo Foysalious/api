@@ -6,6 +6,7 @@ use App\Models\Profile;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -22,21 +23,39 @@ class InfoCallController extends Controller
                 'mobile' => 'required|string|mobile:bd',
                 'location_id' => 'numeric',
             ]);
-            $profile = Profile::where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
-//            dd(!$profile);
-//            $data = [
-//                'service_name' => $request->service_name,
-//                'customer_name' => $profile? $profile->name : null,
-//                'location_id' => $request->location_id,
-//                'customer_mobile' => $request->mobile,
-//                'customer_email' => $profile ? $profile->email : null,
-//                'customer_address' => $profile ? $profile->address : '',
-//                'status'=> Statuses::OPEN,
-//                'follow_up_date' => Carbon::now()->addMinutes(30),
-//                'intended_closing_date' => Carbon::now()->addMinutes(30)
-//            ];
-//            $info_call = $customer->infoCalls()->create($this->withCreateModificationField($data));
-//            $this->sendNotificationToSD($info_call);
+            $profile_exists = Profile::select('id', 'name', 'address')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
+            if ($profile_exists) {
+                $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
+                $this->setModifier($customer[0]);
+                $profile = $customer[0]->profile;
+                $data = [
+                'service_name' => $request->service_name,
+                'customer_name' => $profile->name,
+                'location_id' => $request->location_id,
+                'customer_mobile' => $request->mobile,
+                'customer_email' => !empty($profile->email) ? $profile->email : null,
+                'customer_address' => !empty($profile->address) ? $profile->address : '',
+                'status'=> Statuses::OPEN,
+                'follow_up_date' => Carbon::now()->addMinutes(30),
+                'intended_closing_date' => Carbon::now()->addMinutes(30)
+            ];
+
+                $info_call = $customer[0]->infoCalls()->create($this->withCreateModificationField($data));
+                $this->sendNotificationToSD($info_call);
+            }
+            else {
+                InfoCall::create([
+                'customer_mobile'=>$request->mobile,
+                'is_customer_vip'=>0,
+                'priority'=>'Low',
+                'flag'=>'Green',
+                'info_category'=>'not_available',
+                'created_by'=>0,
+                'created_by_name'=>'Guest User',
+                'updated_by'=>0,
+                'updated_by_name'=>'Guest User'
+            ]);
+            }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
