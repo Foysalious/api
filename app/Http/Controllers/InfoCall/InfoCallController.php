@@ -50,6 +50,7 @@ class InfoCallController extends Controller
                 'priority'=>'Low',
                 'flag'=>'Green',
                 'info_category'=>'not_available',
+                'status'=> Statuses::OPEN,
                 'created_by'=>0,
                 'created_by_name'=>'Guest User',
                 'updated_by'=>0,
