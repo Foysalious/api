@@ -81,7 +81,7 @@ class AccountingRepository extends BaseRepository
             $partner_pos_customer = PartnerPosCustomer::create(['partner_id' => $request->partner->id, 'customer_id' => $request->customer_id]);
 
         if ($partner_pos_customer) {
-            $request['customer_id'] = $partner_pos_customer->customer_id;
+            $request['customer_id'] = $partner_pos_customer->id;
             $request['customer_name'] = $partner_pos_customer->details()["name"];
         }
 
