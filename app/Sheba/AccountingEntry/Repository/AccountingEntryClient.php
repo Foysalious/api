@@ -9,6 +9,8 @@ class AccountingEntryClient
     protected $client;
     protected $baseUrl;
     protected $apiKey;
+    protected $userType;
+    protected $userId;
 
     public function __construct(Client $client)
     {
@@ -49,12 +51,14 @@ class AccountingEntryClient
     {
         try {
             $res = decodeGuzzleResponse($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data)));
+            dd($res);
             if ($res['code'] != 200) throw new AccountingEntryServerError($res['message']);
             unset($res['code'], $res['code']);
             return $res;
         } catch (GuzzleException $e) {
             $res = decodeGuzzleResponse($e->getResponse());
-            if ($res['code'] == 400) throw new AccountingEntryServerError($res['message']);
+            dd($res);
+            if ($res['status_code'] == 400) throw new AccountingEntryServerError($res['messages']);
             throw new AccountingEntryServerError($e->getMessage());
         }
     }
@@ -74,10 +78,33 @@ class AccountingEntryClient
      */
     public function getOptions($data = null)
     {
-        $options['headers'] = ['Content-Type' => 'application/json', 'x-api-key' => $this->apiKey, 'Accept' => 'application/json'];
+        $options['headers'] = ['Content-Type' => 'application/json', 'x-api-key' => $this->apiKey,
+            'Accept' => 'application/json','Ref-Id' => $this->userId, 'Ref-Type' => $this->userType];
         if ($data) {
             $options['json'] = $data;
         }
         return $options;
+    }
+
+
+    /**
+     * @param $userType
+     * @return $this
+     */
+    public function setUserType($userType)
+    {
+        $this->userType = $userType;
+        return $this;
+    }
+
+
+    /**
+     * @param $userId
+     * @return $this
+     */
+    public function setUserId($userId)
+    {
+        $this->userId = $userId;
+        return $this;
     }
 }

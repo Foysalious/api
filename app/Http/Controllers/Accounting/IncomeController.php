@@ -29,7 +29,7 @@ class IncomeController extends Controller
             'amount_cleared' => 'sometimes|required|numeric',
             'customer_id' => 'required_with:amount_cleared'
         ]);
-        $response = $this->accountingRepo->storeExpenseEntry($request);
+        $response = $this->accountingRepo->storeIncomeEntry($request);
         return api_response($request, $response, 200);
     }
 

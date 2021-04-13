@@ -7,6 +7,7 @@ class AccountingRoute
         $api->group(['prefix' => 'accounting', 'middleware' => ['accounting.auth']], function ($api) {
             $api->post('/transfer', 'Accounting\\AccountingController@storeAccountsTransfer');
             $api->post('/expense', 'Accounting\\ExpenseController@storeExpenseEntry');
+            $api->post('/income', 'Accounting\\IncomeController@storeIncomeEntry');
         });
     }
 }
