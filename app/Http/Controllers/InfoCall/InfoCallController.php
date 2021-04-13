@@ -2,9 +2,11 @@
 
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
+use App\Models\Profile;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Validation\ValidationException;
+use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\Statuses;
 use Sheba\ModificationFields;
 use Illuminate\Http\Request;
@@ -13,18 +15,20 @@ class InfoCallController extends Controller
 {
     use ModificationFields;
 
-    public function store($customer, Request $request)
+    public function store(Request $request)
     {
-        $customer = Customer::findOrFail($request->customer);
         try {
-            $this->setModifier($customer);
             $this->validate($request, [
                 'service_name' => 'required|string',
                 'mobile' => 'required|string|mobile:bd',
                 'location_id' => 'numeric',
             ]);
-            $profile = $customer->profile;
-            $data = [
+            $profile_exists = Profile::select('id', 'name', 'address')->where('mobile', 'like', '%'.$request->mobile.'%')->get()->toArray();
+            if ($profile_exists) {
+                $customer = Customer::where('profile_id', $profile_exists[0]['id'])->get();
+                $this->setModifier($customer[0]);
+                $profile = $customer[0]->profile;
+                $data = [
                 'service_name' => $request->service_name,
                 'customer_name' => $profile->name,
                 'location_id' => $request->location_id,
@@ -35,8 +39,23 @@ class InfoCallController extends Controller
                 'follow_up_date' => Carbon::now()->addMinutes(30),
                 'intended_closing_date' => Carbon::now()->addMinutes(30)
             ];
-            $info_call = $customer->infoCalls()->create($this->withCreateModificationField($data));
-            $this->sendNotificationToSD($info_call);
+
+                $info_call = $customer[0]->infoCalls()->create($this->withCreateModificationField($data));
+                $this->sendNotificationToSD($info_call);
+            }
+            else {
+                InfoCall::create([
+                'customer_mobile'=>$request->mobile,
+                'is_customer_vip'=>0,
+                'priority'=>'Low',
+                'flag'=>'Green',
+                'info_category'=>'not_available',
+                'created_by'=>0,
+                'created_by_name'=>'Guest User',
+                'updated_by'=>0,
+                'updated_by_name'=>'Guest User'
+            ]);
+            }
             return api_response($request, 1, 200);
         } catch (ValidationException $e) {
             $message = getValidationErrorMessage($e->validator->errors()->all());
@@ -52,7 +71,7 @@ class InfoCallController extends Controller
         try {
             $sd_but_not_crm = User::where('department_id', 5)->where('is_cm', 0)->pluck('id');
             notify()->users($sd_but_not_crm)->send([
-                "title" => 'New Info Call Created by Customer',
+                "title" => 'New Info Call Created by User',
                 'link' => config('sheba.admin_url') . '/info-call/' . $info_call->id,
                 "type" => notificationType('Info')
             ]);
