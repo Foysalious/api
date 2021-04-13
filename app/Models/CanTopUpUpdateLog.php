@@ -4,7 +4,7 @@
 namespace App\Models;
 
 
-class CanTopUpUpdate
+class CanTopUpUpdateLog
 {
 
 }
