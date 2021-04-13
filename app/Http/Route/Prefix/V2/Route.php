@@ -112,6 +112,7 @@ class Route
                 $api->post('partner-by-resource', 'Auth\PartnerRegistrationController@registerByResource');
             });
             $api->get('times', 'ScheduleTimeController@index');
+            $api->get('theme-setting', 'ThemeSettingController@index');
             $api->get('settings', 'HomePageSettingController@index');
             $api->get('settings-new', 'HomePageSettingController@indexNew');
             $api->get('campaigns', 'CampaignController@index');
