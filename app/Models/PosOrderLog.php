@@ -8,7 +8,7 @@ class PosOrderLog extends Model
 
     public function order()
     {
-        return $this->belongsTo(PosOrder::class);
+        return $this->belongsTo(PosOrder::class,'pos_order_id');
     }
 
     public function scopeRefundOf($query, $status)

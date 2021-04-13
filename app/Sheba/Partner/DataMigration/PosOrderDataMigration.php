@@ -3,12 +3,14 @@
 
 use App\Models\Partner;
 use App\Models\PosOrder;
+use App\Models\PosOrderLog;
 use App\Models\PosOrderPayment;
 use App\Sheba\InventoryService\InventoryServerClient;
 use App\Sheba\Partner\DataMigration\Jobs\PartnerDataMigrationToPosOrderJob;
 use App\Sheba\PosOrderService\PosOrderServerClient;
 use Sheba\Pos\Repositories\Interfaces\PosDiscountRepositoryInterface;
 use Sheba\Pos\Repositories\PosOrderItemRepository;
+use Sheba\Pos\Repositories\PosOrderLogRepository;
 use Sheba\Pos\Repositories\PosOrderRepository;
 use Sheba\Repositories\PartnerRepository;
 
@@ -31,10 +33,16 @@ class PosOrderDataMigration
     private $posOrderItemRepository;
     /** @var InventoryServerClient */
     private $inventoryServerClient;
+    /**
+     * @var PosOrderLogRepository
+     */
+    private $posOrderLogRepository;
+
 
 
     public function __construct(PartnerRepository $partnerRepository,
                                 PosOrderRepository $posOrderRepository,
+                                PosOrderLogRepository $posOrderLogRepository,
                                 PosDiscountRepositoryInterface $posOrderDiscountRepository,
                                 PosOrderServerClient $client,
                                 PosOrderItemRepository $posOrderItemRepository,
@@ -46,6 +54,7 @@ class PosOrderDataMigration
         $this->client = $client;
         $this->posOrderItemRepository = $posOrderItemRepository;
         $this->inventoryServerClient = $inventoryServerClient;
+        $this->posOrderLogRepository = $posOrderLogRepository;
     }
 
     /**
@@ -60,11 +69,13 @@ class PosOrderDataMigration
 
     public function migrate()
     {
+
         $this->migratePartner();
         $this->migrateOrders();
         $this->migrateOrderSkus();
         $this->migrateOrderPayments();
         $this->migratePosOrderDiscounts();
+        $this->migratePosOrderLogs();
     }
 
     private function migratePartner()
@@ -112,6 +123,11 @@ class PosOrderDataMigration
 
     private function migratePosOrderDiscounts()
     {
+        $pos_orders = PosOrder::where('partner_id', $this->partner->id)
+            ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', 'sales_channel', 'emi_month',
+                'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'note',
+                'voucher_id')->get()->toArray();
+        $this->partnerPosOrderIds = array_column($pos_orders, 'id');
         $chunks = array_chunk($this->generatePartnerPosOrderDiscountsMigrationData(), self::CHUNK_SIZE);
         foreach ($chunks as $chunk) {
             dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['pos_order_discounts' => $chunk]));
@@ -164,6 +180,42 @@ class PosOrderDataMigration
         $data = [];
         $data['product_ids'] = $productIds;
         return $this->inventoryServerClient->post('api/v1/get-skus-by-product-ids', $data);
+    }
+
+    private function migratePosOrderLogs()
+    {
+        $chunks = array_chunk($this->generatePosOrderLogsMigrationData(), self::CHUNK_SIZE);
+        foreach ($chunks as $chunk) {
+            dispatch(new PartnerDataMigrationToPosOrderJob($this->partner, ['pos_order_logs' => $chunk]));
+        }
+
+    }
+
+    private function generatePosOrderLogsMigrationData()
+    {
+        $pos_orders = PosOrder::where('partner_id', $this->partner->id)
+            ->select('id', 'partner_wise_order_id', 'partner_id', 'customer_id', 'sales_channel', 'emi_month',
+                'bank_transaction_charge', 'interest', 'delivery_charge', 'address AS delivery_address', 'note',
+                'voucher_id')->get()->toArray();
+        $this->partnerPosOrderIds = array_column($pos_orders, 'id');
+
+        $logs =  PosOrderLog::with(['order' => function ($pos_order) {
+            $pos_order->select('id');
+        }])->whereIn('pos_order_id', $this->partnerPosOrderIds)
+            ->select('id','type', 'pos_order_id', 'log', 'details')
+            ->get();
+
+        $data = [];
+         collect($logs)->each(function ($pos_order_logs) use(&$data) {
+            $temp['order_id'] = $pos_order_logs->pos_order_id;
+            $temp['old_value'] = json_encode([
+                "log" => $pos_order_logs->log,
+                "previous_order_id" => $pos_order_logs->order->previous_order_id ?: null
+            ],true);
+            $temp['new_value'] = json_encode($pos_order_logs->details,true);
+            array_push($data,$temp) ;
+        });
+         return $data;
     }
 
 }

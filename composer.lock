@@ -3265,12 +3265,11 @@
             "source": {
                 "type": "git",
                 "url": "https://shafiq_startern@bitbucket.org/startern/sheba_dal.git",
-                "reference": "d886dc7e4a0664dfe57549952d62d0d607c059c8"
+                "reference": "09de1d6a0c5aae6465519eb5edd17c3ea6e07b21"
             },
             "require": {
                 "php": ">=5.4"
             },
-            "default-branch": true,
             "type": "library",
             "autoload": {
                 "files": [
@@ -3293,7 +3292,7 @@
                 }
             ],
             "description": "Data access layer package for Sheba.",
-            "time": "2021-02-18T13:34:25+00:00"
+            "time": "2021-04-12T06:30:14+00:00"
         },
         {
             "name": "sheba/notification",
@@ -6291,6 +6290,5 @@
         "ext-mysql_xdevapi": "*",
         "ext-intl": "*"
     },
-    "platform-dev": [],
-    "plugin-api-version": "2.0.0"
+    "platform-dev": []
 }
