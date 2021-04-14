@@ -4,6 +4,7 @@
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
 use App\Http\Requests\Request;
+use App\Models\Order;
 use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
 use Sheba\Dal\InfoCall\Statuses;
@@ -80,9 +81,14 @@ class InfoCallController extends Controller
         $info_call_details = [
             'id' => $id,
             'status' => $info_call->status,
-            'bn_status'=> Statuses::getBanglaStatus($info_call->status),
             'created_at'=> $info_call->created_at->toDateTimeString()
         ];
+        if ($info_call->status == Statuses::CONVERTED) {
+            $order = Order::where('info_call_id', $id)->get();
+            $info_call_details['order_id'] = $order[0]->id;
+            $info_call_details['order_created_at'] = $order[0]->created_at->toDateTimeString();
+        }
+        if ($info_call->status == Statuses::REJECTED || $info_call->status == Statuses::CONVERTED) $info_call_details['bn_status'] = Statuses::getBanglaStatus($info_call->status);
         if ($info_call->status == Statuses::REJECTED && $log) $info_call_details['service_comment'] = $service_comment;
         if (!$info_call->service_id) $info_call_details['service_name'] = $info_call->service_name;
         else {
