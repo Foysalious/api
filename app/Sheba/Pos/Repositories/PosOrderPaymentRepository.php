@@ -1,6 +1,7 @@
 <?php namespace Sheba\Pos\Repositories;
 
 use App\Models\PosOrderPayment;
+use App\Sheba\PosOrderService\PosOrderServerClient;
 use Sheba\Repositories\BaseRepository;
 
 class PosOrderPaymentRepository extends BaseRepository
@@ -11,6 +12,7 @@ class PosOrderPaymentRepository extends BaseRepository
      */
     public function save(array $data)
     {
-        return PosOrderPayment::create($this->withCreateModificationField($data));
+        $client = app(PosOrderServerClient::class);
+        return $client->post('api/v1/payments', $data);
     }
 }

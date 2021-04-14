@@ -266,7 +266,7 @@ class DueTrackerRepository extends BaseRepository
         if(isset($order)) {
             $order->calculate();
             if ($order->getDue() > 0) {
-                $payment_data['pos_order_id'] = $pos_order_id;
+                $payment_data['order_id'] = $pos_order_id;
                 $payment_data['amount']       = $amount_cleared;
                 $payment_data['method']       = $payment_method;
                 $this->paymentCreator->credit($payment_data);

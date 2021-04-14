@@ -181,7 +181,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrder) {
             $payment_data    = [
-                'pos_order_id' => $this->target->id,
+                'order_id' => $this->target->id,
                 'amount'       => $this->payment->payable->amount,
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->payment->payable->emi_month,

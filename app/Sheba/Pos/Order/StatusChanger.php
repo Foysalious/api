@@ -107,7 +107,7 @@ class StatusChanger
     private function collectPayment($order)
     {
         $payment_data = [
-            'pos_order_id' => $order->id,
+            'order_id' => $order->id,
             'amount'       => $order->getDue(),
             'method'       => 'cod'
         ];
