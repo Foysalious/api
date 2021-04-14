@@ -14,6 +14,7 @@ class CategoryFactory extends Factory
         return array_merge($this->commonSeeds, [
             'name' => "Category #" . $this->faker->randomNumber(),
             'slug' => $this->faker->slug,
+            'publication_status' => 1,
             'short_description' => $this->faker->text,
             'long_description' => $this->faker->paragraph,
             'thumb' => $this->faker->imageUrl(),

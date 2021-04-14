@@ -33,6 +33,10 @@ use Factory\CategoryPartnerFactory;
 use Factory\BusinessFactory;
 use Factory\BusinessMemberFactory;
 use Factory\BusinessHolidayFactory;
+=======
+use Factory\CategoryLocationFactory;
+>>>>>>> tests/mx-orde-journey
+
 
 $factory_classes = [
     CategoryFactory::class,
@@ -63,10 +67,13 @@ $factory_classes = [
     JobServiceFactory::class,
     CategoryPartnerFactory::class,
     ResourceScheduleFactory::class,
+    TopupBlacklistNumbersFactory::class,
+    PartnerSubscriptionPackageFactory::class,
     BusinessFactory::class,
     BusinessMemberFactory::class,
     BusinessHolidayFactory::class,
-    PartnerBonus::class
+    PartnerBonus::class,
+    CategoryLocationFactory::class
 ];
 
 foreach ($factory_classes as $factory_class) {

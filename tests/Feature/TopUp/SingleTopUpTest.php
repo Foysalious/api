@@ -180,7 +180,7 @@ class SingleTopUpTest extends FeatureTestCase
         ], [
             'Authorization' => "Bearer $this->token"
         ]);
-        $this->assertEquals(1, TopUpOrder::count());
+        $this->assertEquals(1, TopUpOrder::count());;
     }
 
     public function testTopUpOrderDataMatchesTopUpRequestData()

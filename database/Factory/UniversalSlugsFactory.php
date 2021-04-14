@@ -1,20 +1,20 @@
 <?php namespace Factory;
 
 
-use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
+use Sheba\Dal\UniversalSlug\Model;
 
-class PartnerOrderRequestFactory extends Factory
+class UniversalSlugsFactory extends Factory
 {
-
     protected function getModelClass()
     {
-        return PartnerOrderRequest::class;
+        return Model::class;
     }
 
     protected function getData()
     {
         return array_merge($this->commonSeeds, [
-            'status' => 'pending'
+            'slug' => $this->faker->text
         ]);
     }
+
 }
