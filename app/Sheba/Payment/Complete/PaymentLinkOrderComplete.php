@@ -9,6 +9,7 @@ use DB;
 use GuzzleHttp\Exception\RequestException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Bus\DispatchesJobs;
+use LaravelFCM\Message\Exceptions\InvalidOptionsException;
 use Sheba\Dal\ExternalPayment\Model as ExternalPayment;
 use Sheba\Dal\POSOrder\SalesChannels;
 use Sheba\ExpenseTracker\AutomaticIncomes;
@@ -175,7 +176,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 'amount'       => $this->transaction->getEntryAmount(),
                 'method'       => $this->payment->payable->type,
                 'emi_month'    => $this->transaction->getEmiMonth(),
-                'interest'     => $this->transaction->getInterest(),
+                'interest'     => $this->transaction->getFee(),
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);
@@ -206,6 +207,7 @@ class PaymentLinkOrderComplete extends PaymentComplete
     /**
      * @param Payment                $payment
      * @param PaymentLinkTransformer $payment_link
+     * @throws InvalidOptionsException
      */
     private function notifyManager(Payment $payment, PaymentLinkTransformer $payment_link)
     {
