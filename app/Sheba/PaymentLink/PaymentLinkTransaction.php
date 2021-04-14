@@ -57,6 +57,7 @@ class PaymentLinkTransaction
         $this->payment                  = $payment;
         $this->linkCommission           = PaymentLinkStatics::get_payment_link_commission();
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
+        $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
     }
 
     /**
@@ -129,7 +130,7 @@ class PaymentLinkTransaction
 
     private function amountTransaction()
     {
-        $this->amount                  = $this->payment->payable->amount;
+        $this->amount = $this->payment->payable->amount;
         $this->formattedRechargeAmount = number_format($this->amount, 2);
         $recharge_log                  = "$this->formattedRechargeAmount TK has been collected from {$this->payment->payable->getName()}, {$this->paymentLink->getReason()}";
         $this->rechargeTransaction     = $this->walletTransactionHandler->setType(Types::credit())->setAmount($this->amount)->setSource(TransactionSources::PAYMENT_LINK)->setTransactionDetails($this->payment->getShebaTransaction()->toArray())->setLog($recharge_log)->store();
@@ -139,7 +140,7 @@ class PaymentLinkTransaction
     private function interestTransaction()
     {
         if ($this->paymentLink->isEmi()) {
-            $this->interest     = $this->paymentLink->getInterest();
+            $this->interest = $this->paymentLink->getInterest();
             $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
             $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
