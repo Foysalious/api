@@ -32,8 +32,17 @@ class Creator
     /** @var BitlyLinkShort */
     private $bitlyLink;
     private $paidBy;
+    /** @var double */
     private $transactionFeePercentage;
     private $partnerProfit;
+    /**
+     * @var int
+     */
+    private $tax;
+    /**
+     * @var double
+     */
+    private $transactionFeePercentageConfig;
 
     /**
      * @param mixed $partnerProfit
@@ -73,12 +82,14 @@ class Creator
      */
     public function __construct(PaymentLinkRepositoryInterface $payment_link_repository)
     {
-        $this->paymentLinkRepo          = $payment_link_repository;
-        $this->isDefault                = 0;
-        $this->amount                   = null;
-        $this->bitlyLink                = new BitlyLinkShort();
-        $this->partnerProfit            = 0;
-        $this->transactionFeePercentage = PaymentLinkStatics::get_payment_link_commission();
+        $this->paymentLinkRepo                = $payment_link_repository;
+        $this->isDefault                      = 0;
+        $this->amount                         = null;
+        $this->bitlyLink                      = new BitlyLinkShort();
+        $this->partnerProfit                  = 0;
+        $this->transactionFeePercentage       = PaymentLinkStatics::get_payment_link_commission();
+        $this->transactionFeePercentageConfig = PaymentLinkStatics::get_payment_link_commission();
+        $this->tax                            = PaymentLinkStatics::get_payment_link_tax();
     }
 
     public function setAmount($amount)
@@ -346,15 +357,16 @@ class Creator
         if ($this->paidBy != 'partner') {
             if ($this->emiMonth) {
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false, $this->transactionFeePercentage);
-                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + PaymentLinkStatics::get_payment_link_tax())->setAmount($data['total_amount'])->setPartnerProfit($data['partner_profit']);
+                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'] + $this->tax)->setAmount($data['total_amount'] + $this->tax)->setPartnerProfit($data['partner_profit']);
             } else {
-                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + PaymentLinkStatics::get_payment_link_tax())->setPartnerProfit($this->amount - ($amount + round($amount * PaymentLinkStatics::get_payment_link_commission() / 100, 2) + PaymentLinkStatics::get_payment_link_tax()));
+                $this->setAmount($amount + round($amount * $this->transactionFeePercentage / 100, 2) + $this->tax)->setPartnerProfit($this->amount - ($amount + round($amount * $this->transactionFeePercentageConfig / 100, 2) + $this->tax));
             }
-
         } else {
             if ($this->emiMonth) {
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false);
-                $this->setInterest($data['total_interest'])->setBankTransactionCharge($data['bank_transaction_fee'])->setAmount($amount);
+                $this->setInterest($data['total_interest'])
+                     ->setBankTransactionCharge($data['bank_transaction_fee'] )
+                     ->setAmount($amount);
             }
         }
         return $this;

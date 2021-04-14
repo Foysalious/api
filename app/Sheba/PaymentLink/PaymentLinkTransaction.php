@@ -12,44 +12,11 @@ use Sheba\Transactions\Wallet\WalletTransactionHandler;
 
 class PaymentLinkTransaction
 {
-    private $amount;
+    private $amount             = 0;
     private $paidBy;
-    private $interest;
-
-    /**
-     * @return mixed
-     */
-    public function getInterest()
-    {
-        return $this->interest;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getEmiMonth()
-    {
-        return $this->emiMonth;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getBankTransactionFee()
-    {
-        return $this->bankTransactionFee;
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getPartnerProfit()
-    {
-        return $this->partnerProfit;
-    }
-
+    private $interest           = 0;
     private $emiMonth;
-    private $bankTransactionFee;
+    private $bankTransactionFee = 0;
     private $partnerProfit;
     private $isOld;
     private $formattedRechargeAmount;
@@ -71,13 +38,16 @@ class PaymentLinkTransaction
      * @var string[]
      */
     private $paidByTypes;
-    private $fee;
+    private $fee = 0;
     /**
      * @var int
      */
     private $entryAmount = 0;
 
-    /** @var int */
+    /**
+     * @param Payment                $payment
+     * @param PaymentLinkTransformer $linkTransformer
+     */
 
     public function __construct(Payment $payment, PaymentLinkTransformer $linkTransformer)
     {
@@ -89,6 +59,41 @@ class PaymentLinkTransaction
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
     }
 
+    /**
+     * @return double
+     */
+    public function getInterest()
+    {
+        return $this->interest;
+    }
+
+    /**
+     * @return int
+     */
+    public function getEmiMonth()
+    {
+        return $this->emiMonth;
+    }
+
+    /**
+     * @return double
+     */
+    public function getBankTransactionFee()
+    {
+        return $this->bankTransactionFee;
+    }
+
+    /**
+     * @return double
+     */
+    public function getPartnerProfit()
+    {
+        return $this->partnerProfit;
+    }
+
+    /**
+     * @return double
+     */
     public function getAmount()
     {
         return $this->paymentLink->getAmount();
@@ -103,6 +108,16 @@ class PaymentLinkTransaction
     {
         $this->receiver = $receiver;
         return $this;
+    }
+
+    public function getFee()
+    {
+        return $this->fee;
+    }
+
+    public function getEntryAmount()
+    {
+        return $this->entryAmount;
     }
 
     public function create()
@@ -124,10 +139,10 @@ class PaymentLinkTransaction
     private function interestTransaction()
     {
         if ($this->paymentLink->isEmi()) {
-            $interest           = $this->paymentLink->getInterest();
-            $formatted_interest = number_format($interest, 2);
+            $this->interest     = $this->paymentLink->getInterest();
+            $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
-            $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
+            $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
         }
         return $this;
     }
@@ -157,20 +172,11 @@ class PaymentLinkTransaction
         return $this;
     }
 
-    public function getFee()
-    {
-        return $this->fee;
-    }
 
     private function setEntryAmount()
     {
-        $this->entryAmount = $this->isPaidByPartner() ? $this->getAmount() : $this->getAmount() - $this->getFee() - $this->paymentLink->getPartnerProfit() - $this->getBankTransactionFee();
+        $this->entryAmount = $this->isPaidByPartner() ? $this->getAmount() : $this->paymentLink->isEmi() ? $this->getAmount() - $this->getFee() - $this->getInterest() : $this->getAmount() - $this->getFee() - $this->partnerProfit;
         return $this;
-    }
-
-    public function getEntryAmount()
-    {
-        return $this->entryAmount;
     }
 
 }
