@@ -332,6 +332,26 @@ class EventDataConverter
                                 ],
                             ]
                         ]
+                    ],
+                'action' => [
+                    'infocall_to_order_served_and_paid' => [
+                        'name' => 'InfoCall to Order Served and Paid',
+                        'event_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Event',
+                        'rule_class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Rule',
+                        'parameters' => [
+                            'amount' => [
+                                'type' => 'number',
+                                'min' => 0,
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\Amount'
+                            ],
+                            'create_portal'=> [
+                                'type' => 'select',
+                                'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\CreatePortal'
+                            ],
+                            'serve_portal' => ''
+                        ]
                     ]
             ],
             'affiliate' =>[
@@ -468,13 +488,6 @@ class EventDataConverter
     public function getEventsFor($target_type, $event_type)
     {
         return $this->event[$target_type][$event_type];
-    }
-
-    public function setOperators(){
-        $operators = TopUpVendor::select('id', 'name')->where('is_published', 1)->get();
-        foreach ($operators as $operator){
-            $this->operator[$operator->id] = $operator->name;
-        }
     }
 }
 
