@@ -80,6 +80,7 @@ class CollectionController extends Controller
             ->setAppBanner($request->app_banner)
             ->setIsPublished($request->is_published)
             ->setCollectionId($collection_id)
+            ->setProducts($request->products)
             ->update();
         return http_response($request, null, 200, $response);
     }
