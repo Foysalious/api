@@ -38,7 +38,7 @@ class UserAccountRepository extends BaseRepository
             $query .= "root_account=" . $request['root_account'];
         }
         if (isset($request['account_type'])) {
-            $query .= "account_type=" . $request['account_type'];
+            $query .= "&account_type=" . $request['account_type'];
         }
         try {
             return $this->client->setUserType(UserType::PARTNER)->setUserId($request['partner']['id'])->get(
