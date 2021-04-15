@@ -396,18 +396,29 @@ class TopUpController extends Controller
         return api_response(json_encode($response), json_encode($response), 200);
     }
 
-    public function bdrechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response, TopUp $top_up, BdRechargeClient $bdRechargeClient)
+    /**
+     * @param Request $request
+     * @param BdRechargeSuccessResponse $success_response
+     * @param BdRechargeFailResponse $fail_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function bdrechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response, TopUp $top_up)
     {
         if($request->status == 'success'){
             $success_response->setResponse($request->all());
             $topup_order = $success_response->getTopUpOrder();
             if($topup_order->status == Statuses::PENDING){
-                $top_up->processSuccessfulTopUp($success_response->getTopUpOrder(), $success_response);
+                $top_up->processSuccessfulTopUp($topup_order, $success_response);
             }
         }
         elseif ($request->status == 'failed'){
             $fail_response->setResponse($request->all());
-            $top_up->processFailedTopUp($fail_response->getTopUpOrder(), $fail_response);
+            $topup_order = $fail_response->getTopUpOrder();
+            if($topup_order->status == Statuses::PENDING){
+                $top_up->processFailedTopUp($topup_order, $fail_response);
+            }
         }
 
         return api_response($request, 1, 200);

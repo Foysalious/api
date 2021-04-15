@@ -84,7 +84,7 @@ class BdRechargeClient
      * @param $topup_order_id
      * @return mixed
      * @throws TPProxyServerError
-     * this function is for enquire the topup status manually to bdRecharge gateway if needed
+     * this function is for enquiring the topup status manually to bdRecharge gateway if needed
      */
     public function enquiry($topup_order_id)
     {
