@@ -41,7 +41,6 @@ class CollectionController extends Controller
 
     public function store(CollectionRequest $request)
     {
-        dd($request->products);
         $partner = $request->auth_user->getPartner();
         $response = $this->collectionService
             ->setPartnerId($partner->id)
