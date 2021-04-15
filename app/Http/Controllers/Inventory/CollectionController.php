@@ -50,6 +50,7 @@ class CollectionController extends Controller
             ->setAppThumb($request->app_thumb)
             ->setAppBanner($request->app_banner)
             ->setIsPublished($request->is_published)
+            ->setProducts($request->products)
             ->store();
         return http_response($request, null, 201, $response);
     }

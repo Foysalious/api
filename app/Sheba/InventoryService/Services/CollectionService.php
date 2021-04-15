@@ -11,7 +11,7 @@ class CollectionService
     protected $name;
     protected $description;
     protected $partner_id, $is_published, $thumb, $banner, $app_thumb, $app_banner, $sharding_id;
-    protected $collection_id;
+    protected $collection_id, $products;
 
     public function __construct(InventoryServerClient $client)
     {
@@ -118,6 +118,16 @@ class CollectionService
         return $this;
     }
 
+    /**
+     * @param mixed $products
+     * @return CollectionService
+     */
+    public function setProducts($products)
+    {
+        $this->products = $products;
+        return $this;
+    }
+
     public function getAllCollection()
     {
         return $this->client->get('api/v1/partners/' . $this->partner_id . '/collection');
@@ -143,14 +153,18 @@ class CollectionService
     private function makeCreateData()
     {
         return [
-            'name' => $this->name,
-            'description' => $this->description,
-            'partner_id' => $this->partner_id,
-            'thumb' => $this->thumb,
-            'banner' => $this->banner,
-            'app_thumb' => $this->app_thumb,
-            'app_banner' => $this->app_banner,
-            'is_published' => $this->is_published
+            ['name' => 'name', 'contents' => $this->name],
+            ['name' => 'description', 'contents' => $this->description],
+            ['name' => 'partner_id', 'contents' => $this->partner_id],
+            ['name' => 'is_published', 'contents' => $this->is_published],
+            ['name' => 'thumb', 'contents' => $this->thumb ? File::get($this->thumb->getRealPath()) : null, 'filename' => $this->thumb ? $this->thumb->getClientOriginalName() : ''],
+            ['name' => 'banner', 'contents' => $this->banner ? File::get($this->banner->getRealPath()) : null, 'filename' => $this->banner ? $this->banner->getClientOriginalName() : ''],
+            ['name' => 'app_thumb', 'contents' => $this->app_thumb ? File::get($this->app_thumb->getRealPath()) : null, 'filename' => $this->app_thumb ? $this->app_thumb->getClientOriginalName() : ''],
+            ['name' => 'app_banner', 'contents' => $this->app_banner ? File::get($this->app_banner->getRealPath()) : null, 'filename' => $this->app_banner ? $this->app_banner->getClientOriginalName() : ''],
+            [
+                'name' => 'products',
+                'contents' => $this->products ? $this->products : []
+            ]
         ];
     }
 
