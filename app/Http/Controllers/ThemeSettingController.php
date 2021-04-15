@@ -10,7 +10,7 @@ class ThemeSettingController extends Controller
 {
     public function index()
     {
-                $data= ' {
+        $data= ' {
   "name": "theme-1",
   "primary_color": "#126C09",
   "secondary_color": "#126C09",
@@ -75,12 +75,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 4,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -98,12 +93,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -126,12 +116,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -149,12 +134,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -177,12 +157,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -200,12 +175,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -228,12 +198,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -251,12 +216,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -280,12 +240,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "rating": 5,
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
@@ -302,12 +257,7 @@ class ThemeSettingController extends Controller
           "discount_applicable": 0,
           "discounted_amount": 0,
           "discount_percentage": 0,
-          "image_gallery": [
-            {
-              "id": 314274,
-              "image_link": "https://s3.ap-south-1.amazonaws.com/cdn-shebadev/images/pos/services/thumbs/1608693744_jacket.jpeg"
-            }
-          ],
+          
           "name": "Coat",
           "icon": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
           "thumb": "https://s3.ap-south-1.amazonaws.com/cdn-shebaxyz/images/slides/1612888957_app_slide.jpg",
