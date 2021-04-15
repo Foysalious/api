@@ -20,4 +20,10 @@ class AccountController extends Controller
         $response = $this->accountRepo->getAccountType($request->all());
         return api_response($request, $response, 200, ['data' => $response]);
     }
+
+    public function getAccountList(Request $request)
+    {
+        $response = $this->accountRepo->getAccounts($request->all());
+        return api_response($request, $response, 200, ['data' => $response]);
+    }
 }
