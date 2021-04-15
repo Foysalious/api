@@ -104,7 +104,7 @@ class ScheduleSlot
             });
         }
         else $slots = $this->getShebaSlots();
-        
+
         $this->shebaSlots = $slots;
         if(!$this->shebaSlots->first()) return null;
         $start = $this->today->toDateString() . ' ' . $this->shebaSlots->first()->start;
@@ -132,7 +132,7 @@ class ScheduleSlot
 
     private function getLeavesBetween($start, $end)
     {
-        $leaves = $this->partner->leaves()->select('id', 'partner_id', 'start', 'end')->where(function ($q) use ($start, $end) {
+        $leaves = $this->partner->leaves()->select('id', 'artisan_id', 'start', 'end')->where(function ($q) use ($start, $end) {
             $q->where(function ($q) use ($start, $end) {
                 $q->whereBetween('start', [$start, $end]);
             })->orWhere(function ($q) use ($start, $end) {
