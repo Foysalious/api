@@ -9,12 +9,12 @@ use League\Fractal\TransformerAbstract;
 
 class PayrollSettingsTransformer extends TransformerAbstract
 {
-    private $payrollComponentData;
+    private $payrollComponentData = [];
     private $payScheduleData;
+    private $totalGrossPercentage = 0;
 
     public function __construct()
     {
-        $this->payrollComponentData = [];
         $this->payScheduleData = [];
     }
 
@@ -27,18 +27,16 @@ class PayrollSettingsTransformer extends TransformerAbstract
         return [
             'id' => $payroll_setting->id,
             'business_id' => $payroll_setting->business_id,
-            'salary_breakdown' => $this->grossSalaryBreakdown($payroll_setting),
+            'salary_breakdown' => array_values($this->grossSalaryBreakdown($payroll_setting)),
+            'gross_salary_total' => $this->totalGrossPercentage,
             'pay_components' => $this->payComponents($payroll_setting),
             'pay_schedule' => $this->paySchedule($payroll_setting),
             'payroll_setting_completion' => $this->payrollSettingCompletion(),
         ];
     }
 
-    /**
-     * @param $payroll_setting
-     * @return array
-     */
-    private function grossSalaryBreakdown($payroll_setting)
+    /*
+    private function grossSalaryBreakdown_($payroll_setting)
     {
         $payroll_percentage_breakdown = (new GrossSalaryBreakdownCalculate())->componentPercentageBreakdown($payroll_setting);
         $count = 0;
@@ -50,6 +48,26 @@ class PayrollSettingsTransformer extends TransformerAbstract
         $this->payrollComponentData[Components::MEDICAL_ALLOWANCE] = $payroll_percentage_breakdown->medicalAllowance;
         $this->payrollComponentData[Components::CONVEYANCE] = $payroll_percentage_breakdown->conveyance;
         $this->payrollComponentData['salary_breakdown_completion'] = $salary_breakdown_completion;
+        return $this->payrollComponentData;
+    }*/
+
+    private function grossSalaryBreakdown($payroll_setting)
+    {
+        $payroll_components = $payroll_setting->components()->where('type', Type::GROSS)->get();
+        foreach ($payroll_components as $payroll_component) {
+            $salary_percentage = json_decode($payroll_component->setting, 1);
+            $percentage_value = $salary_percentage['percentage'];
+            $this->totalGrossPercentage += $percentage_value;
+            array_push($this->payrollComponentData, [
+                'id' => $payroll_component->id,
+                'key' => $payroll_component->name,
+                'title' => $payroll_component->is_default ? Components::getComponents($payroll_component->name)['value'] : $payroll_component->value,
+                'value' => (int)$salary_percentage['percentage'],
+                'is_default' => $payroll_component->is_default,
+                'is_active' => $payroll_component->is_active,
+                'taxable' => $payroll_component->is_taxable,
+            ]);
+        }
         return $this->payrollComponentData;
     }
 
@@ -80,7 +98,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = $this->payrollComponentData['salary_breakdown_completion'] + $this->payScheduleData['pay_schedule_completion'];
+        $total = $this->totalGrossPercentage + $this->payScheduleData['pay_schedule_completion'];
         return round($total, 0);
     }
 
