@@ -2,6 +2,7 @@
 
 
 use App\Sheba\InventoryService\Exceptions\InventoryServiceServerError;
+use App\Sheba\PosOrderService\Exceptions\PosOrderServiceServerError;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -33,14 +34,12 @@ class PosOrderServerClient
     private function call($method, $uri, $data = null, $multipart = false)
     {
         try {
-            if($response = json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true));
-            return $response;
-            throw new PosOrderServiceServerError($e->getMessage(), $http_code);
-
+            return json_decode($this->client->request(strtoupper($method), $this->makeUrl($uri), $this->getOptions($data, $multipart))->getBody()->getContents(), true);
         } catch (GuzzleException $e) {
             $res = $e->getResponse();
             $http_code = $res->getStatusCode();
             $message = $res->getBody()->getContents();
+            dd($message);
             if ($http_code > 399 && $http_code < 500) throw new PosOrderServiceServerError($message, $http_code);
             throw new PosOrderServiceServerError($e->getMessage(), $http_code);
         }
