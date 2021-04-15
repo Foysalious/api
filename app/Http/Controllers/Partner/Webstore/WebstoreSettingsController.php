@@ -48,7 +48,7 @@ class WebstoreSettingsController extends Controller
             'sub_domain' => 'sometimes|string', 'delivery_charge' => 'sometimes|numeric|digits_between:1,5'
         ],
         [
-        'delivery_charge.digits_between' =>'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক।'
+        'delivery_charge.digits_between' =>'ডেলিভারি চার্জ ৫ সংখ্যার মধ্যে হওয়া আবশ্যক'
         ]
     );
         $is_webstore_published = 0;
