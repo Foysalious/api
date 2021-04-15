@@ -6,9 +6,8 @@ use Sheba\Business\PayrollComponent\Updater as PayrollComponentUpdater;
 use Sheba\Business\PayrollComponent\Requester as PayrollComponentRequester;
 use App\Sheba\Business\PayrollComponent\Components\Additions\Creator as AdditionCreator;
 use App\Sheba\Business\PayrollComponent\Components\Deductions\Creator as DeductionsCreator;
-use App\Sheba\Business\PayrollComponent\Components\Additions\Updater as AdditionUpdater;
-use App\Sheba\Business\PayrollComponent\Components\Deductions\Updater as DeductionsUpdater;
 use App\Transformers\Business\PayrollSettingsTransformer;
+use Sheba\Dal\PayrollComponent\PayrollComponentRepository;
 use Sheba\Dal\PayrollSetting\PayDayType;
 use Sheba\Dal\PayrollSetting\PayrollSettingRepository;
 use Sheba\Dal\PayrollSetting\PayrollSetting;
@@ -30,6 +29,10 @@ class PayrollController extends Controller
     private $payrollSettingRequester;
     private $payrollSettingUpdater;
     private $payrollComponentUpdater;
+    /*** @var PayrollComponentRequester */
+    private $payrollComponentRequester;
+    /*** @var PayrollComponentRepository */
+    private $payrollComponentRepository;
 
     /**
      * PayrollController constructor.
@@ -37,16 +40,22 @@ class PayrollController extends Controller
      * @param PayrollSettingRequester $payroll_setting_requester
      * @param PayrollSettingUpdater $payroll_setting_updater
      * @param PayrollComponentUpdater $payroll_component_updater
+     * @param PayrollComponentRequester $payroll_component_requester
+     * @param PayrollComponentRepository $payroll_component_repository
      */
     public function __construct(PayrollSettingRepository $payroll_setting_repository,
                                 PayrollSettingRequester $payroll_setting_requester,
                                 PayrollSettingUpdater $payroll_setting_updater,
-                                PayrollComponentUpdater $payroll_component_updater)
+                                PayrollComponentUpdater $payroll_component_updater,
+                                PayrollComponentRequester $payroll_component_requester,
+                                PayrollComponentRepository $payroll_component_repository)
     {
         $this->payrollSettingRepository = $payroll_setting_repository;
         $this->payrollSettingRequester = $payroll_setting_requester;
         $this->payrollSettingUpdater = $payroll_setting_updater;
         $this->payrollComponentUpdater = $payroll_component_updater;
+        $this->payrollComponentRequester = $payroll_component_requester;
+        $this->payrollComponentRepository = $payroll_component_repository;
     }
 
 
@@ -112,7 +121,7 @@ class PayrollController extends Controller
         return api_response($request, null, 200);
     }
 
-    public function addComponent($business, $payroll_setting, Request $request, PayrollComponentRequester $payroll_component_requester, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator)
+    public function addComponent($business, $payroll_setting, Request $request, AdditionCreator $addition_creator, DeductionsCreator $deduction_creator)
     {
         $this->validate($request, [
             'addition' => 'required',
@@ -127,12 +136,31 @@ class PayrollController extends Controller
         $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
         if (!$payroll_setting) return api_response($request, null, 404);
 
-        $payroll_component_requester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
-        if ($payroll_component_requester->checkError()) return api_response($request, null, 404, ['message' => 'Duplicate components found!']);
+        $this->payrollComponentRequester->setSetting($payroll_setting)->setAddition($request->addition)->setDeduction($request->deduction);
+        if ($this->payrollComponentRequester->checkError()) return api_response($request, null, 404, ['message' => 'Duplicate components found!']);
 
-        $addition_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
-        $deduction_creator->setPayrollComponentRequester($payroll_component_requester)->createOrUpdate();
+        $addition_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
+        $deduction_creator->setPayrollComponentRequester($this->payrollComponentRequester)->createOrUpdate();
 
         return api_response($request, null, 200);
     }
+
+    public function deleteComponent($business, $payroll_setting, $component, Request $request)
+    {
+        /** @var BusinessMember $business_member */
+        $business_member = $request->business_member;
+        if (!$business_member) return api_response($request, null, 401);
+
+        $this->setModifier($business_member->member);
+
+        $payroll_setting = $this->payrollSettingRepository->find((int)$payroll_setting);
+        if (!$payroll_setting) return api_response($request, null, 404);
+        $gross_component = $this->payrollComponentRepository->find((int)$component);
+        if (!$gross_component) return api_response($request, null, 404);
+        if ($gross_component->is_default) return api_response($request, null, 420);
+        $gross_component->delete();
+
+        return api_response($request, null, 200);
+    }
+
 }
