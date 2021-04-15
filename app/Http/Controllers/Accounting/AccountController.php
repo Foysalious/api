@@ -26,4 +26,10 @@ class AccountController extends Controller
         $response = $this->accountRepo->getAccounts($request->all());
         return api_response($request, $response, 200, ['data' => $response]);
     }
+
+    public function getCashAccountList(Request $request)
+    {
+        $response = $this->accountRepo->getCashAccounts($request->partner->id);
+        return api_response($request, $response, 200, ['data' => $response]);
+    }
 }

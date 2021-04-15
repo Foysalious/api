@@ -48,4 +48,15 @@ class UserAccountRepository extends BaseRepository
             return $e->getMessage();
         }
     }
+
+    public function getCashAccounts($userId, $userType = UserType::PARTNER)
+    {
+        try {
+            return $this->client->setUserType($userType)->setUserId($userId)->get(
+                $this->api .'/cash-accounts'
+            );
+        } catch (AccountingEntryServerError $e) {
+            return $e->getMessage();
+        }
+    }
 }

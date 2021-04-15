@@ -10,6 +10,7 @@ class AccountingRoute
             $api->post('/income', 'Accounting\\IncomeController@storeIncomeEntry');
             $api->get('/account-types', 'Accounting\\AccountController@getAccountTypeList');
             $api->get('/accounts', 'Accounting\\AccountController@getAccountList');
+            $api->get('/cash-accounts', 'Accounting\\AccountController@getCashAccountList');
         });
     }
 }
