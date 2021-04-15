@@ -16,14 +16,14 @@ class UserAccountRepository extends BaseRepository
         $this->api = 'api/accounts';
     }
 
-    public function getAccountType(array $request = [])
+    public function getAccountType($userId, array $request = [], $userType = UserType::PARTNER)
     {
         $query = '';
         if (isset($request['root_account'])) {
             $query .= "?root_account=" . $request['root_account'];
         }
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request['partner']['id'])->get(
+            return $this->client->setUserType($userType)->setUserId($userId)->get(
                 $this->api . '/account-types' . $query
             );
         } catch (AccountingEntryServerError $e) {
@@ -31,7 +31,7 @@ class UserAccountRepository extends BaseRepository
         }
     }
 
-    public function getAccounts(array $request = [])
+    public function getAccounts($userId, array $request = [], $userTYpe = UserType::PARTNER)
     {
         $query = '?';
         if (isset($request['root_account'])) {
@@ -41,7 +41,7 @@ class UserAccountRepository extends BaseRepository
             $query .= "&account_type=" . $request['account_type'];
         }
         try {
-            return $this->client->setUserType(UserType::PARTNER)->setUserId($request['partner']['id'])->get(
+            return $this->client->setUserType($userTYpe)->setUserId($userId)->get(
                 $this->api . $query
             );
         } catch (AccountingEntryServerError $e) {
@@ -53,7 +53,7 @@ class UserAccountRepository extends BaseRepository
     {
         try {
             return $this->client->setUserType($userType)->setUserId($userId)->get(
-                $this->api .'/cash-accounts'
+                $this->api . '/cash-accounts'
             );
         } catch (AccountingEntryServerError $e) {
             return $e->getMessage();
