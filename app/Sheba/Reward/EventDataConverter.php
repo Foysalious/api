@@ -333,10 +333,15 @@ class EventDataConverter
                             'create_portal'=> [
                                 'type' => 'select',
                                 'possible_value' => indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
-                                'is_multi_selectable' => 1,
+                                'is_multi_selectable' => 0,
                                 'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\CreatePortal'
                             ],
-                            'serve_portal' => ''
+                            'serve_portal' => [
+                                'type' => 'select',
+                                'possible_value'=> indexedArrayToAssociative(config('sheba.portals'), config('sheba.portals')),
+                                'is_multi_selectable' => 1,
+                                'class' => 'Sheba\Reward\Event\Resource\Action\InfoCallToOrderServedAndPaid\Parameter\ServePortal'
+                            ]
                         ]
                     ]
                 ]
