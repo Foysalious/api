@@ -180,6 +180,10 @@ class TopUpRequest
             $this->errorMessage = "You are not verified to do this operation.";
             return 1;
         }
+        if ($this->isCanTopUpNo()) {
+            $this->errorMessage = "টপ-আপ সফল হয়নি, sManager কতৃক আপনার টপ-আপ সার্ভিস বন্ধ করা হয়েছে। বিস্তারিত জানতে কল করুন ১৬৫১৬ নাম্বারে।";
+            return 1;
+        }
 
         if ($this->isCanTopUpNo()) {
             $this->errorMessage = "টপ-আপ সফল হয়নি, sManager কতৃক আপনার টপ-আপ সার্ভিস বন্ধ করা হয়েছে। বিস্তারিত জানতে কল করুন ১৬৫১৬ নাম্বারে।";
@@ -222,6 +226,10 @@ class TopUpRequest
     {
         return ($this->agent instanceof Partner && (!$this->agent->isNIDVerified())) ||
             ($this->agent instanceof Affiliate && $this->agent->isNotVerified());
+    }
+    private function isCanTopUpNo()
+    {
+        return ($this->agent instanceof Partner && (!$this->agent->canTopUp()));
     }
 
 
