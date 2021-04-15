@@ -2,7 +2,7 @@
 
 
 use App\Http\Controllers\Controller;
-use App\Sheba\AccountingEntry\Repository\AccountRepository;
+use App\Sheba\AccountingEntry\Repository\AccountingRepository;
 use Illuminate\Http\Request;
 use Sheba\ModificationFields;
 
@@ -10,10 +10,10 @@ class AccountingController extends Controller
 {
     use ModificationFields;
 
-    /** @var AccountRepository */
+    /** @var AccountingRepository */
     private $accountingRepo;
 
-    public function __construct(AccountRepository $accountingRepo) {
+    public function __construct(AccountingRepository $accountingRepo) {
         $this->accountingRepo = $accountingRepo;
     }
 

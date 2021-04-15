@@ -15,18 +15,13 @@ class AccountingRepository extends BaseRepository
 {
     use ModificationFields, CdnFileManager, FileManager;
 
-    public function accountTransfer($data){
-        $entry_data = [
-        "amount" => $data->amount,
-        "source_id" => rand(0000,9999).date('s').preg_replace("/^.*\./i","", microtime(true)),
-        "source_type" => "transfer",
-        "debit_account_key" => $data->from_account_key,
-        "credit_account_key" => $data->to_account_key,
-        "entry_at" => $data->date,
-        "details" => $data->note];
-        $url = "api/journals/partner/".$data->partner->id;
+    public function accountTransfer(Request $request){
+        $source_id = rand(0000,9999).date('s').preg_replace("/^.*\./i","", microtime(true));
+        $this->setModifier($request->partner);
+        $data     = $this->createJournalData($request, "transfer", $source_id);
+        $url = "api/journals";
         try {
-            return $this->client->post($url, $entry_data);
+            return $this->client->setUserType(UserType::PARTNER)->setUserId($request->partner->id)->post($url, $data);
         } catch (AccountingEntryServerError $e) {
             logError($e);
         }
@@ -44,20 +39,26 @@ class AccountingRepository extends BaseRepository
         }
     }
 
-    private function createEntryData(Request $request, $type)
+    /**
+     * @param Request $request
+     * @param $type
+     * @param null $type_id
+     * @return array
+     */
+    private function createEntryData(Request $request, $type, $type_id = null)
     {
-
-        $data['created_from']   = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
-        $data['amount']         = (double)$request->amount;
-        $data['source_type']    = $type;
-        $data['note']           = $request->note;
-        $data['amount_cleared'] = $request->amount_cleared;
-        $data['debit_account_key'] = $request->from_account_key;
+        $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+        $data['amount']             = (double)$request->amount;
+        $data['source_type']        = $type;
+        $data['source_id']          = $type_id;
+        $data['note']               = $request->note;
+        $data['amount_cleared']     = $request->amount_cleared;
+        $data['debit_account_key']  = $request->from_account_key;
         $data['credit_account_key'] = $request->to_account_key;
-        $data['customer_id']    = $request->customer_id;
-        $data['customer_name']    = $request->customer_name;
-        $data['entry_at']       = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
-        $data['attachments']    = $this->uploadAttachments($request);
+        $data['customer_id']        = $request->customer_id;
+        $data['customer_name']      = $request->customer_name;
+        $data['entry_at']           = $request->date ?: Carbon::now()->format('Y-m-d H:i:s');
+        $data['attachments']        = $this->uploadAttachments($request);
         return $data;
     }
 
@@ -87,5 +88,18 @@ class AccountingRepository extends BaseRepository
         }
 
         return $request;
+    }
+
+    private function createJournalData(Request $request, $source_type, $source_id)
+    {
+            $data['amount']             = (double)$request->amount;
+            $data['source_type']        = $source_type;
+            $data['source_id']          = $source_id;
+            $data['debit_account_key']  = $request->from_account_key;
+            $data['credit_account_key'] = $request->to_account_key;
+            $data['entry_at']           = $request->date;
+            $data['details']            = $request->note;
+            $data['created_from']       = json_encode($this->withBothModificationFields((new RequestIdentification())->get()));
+            return $data;
     }
 }
