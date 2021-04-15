@@ -10,6 +10,7 @@ use Exception;
 use Sheba\Dal\TopupOrder\Statuses;
 use Sheba\TopUp\Exception\GatewayTimeout;
 use Sheba\TopUp\Vendor\Response\BdRechargeResponse;
+use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
 use Sheba\TopUp\Vendor\Response\TopUpResponse;
 
 class BdRecharge implements Gateway
@@ -50,5 +51,10 @@ class BdRecharge implements Gateway
     public function getName()
     {
         return Names::BD_RECHARGE;
+    }
+
+    public function enquireIpnResponse(TopUpOrder $topup_order): IpnResponse
+    {
+        // TODO: Implement enquireIpnResponse() method.
     }
 }
