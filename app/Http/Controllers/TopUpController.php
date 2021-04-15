@@ -8,6 +8,7 @@ use App\Models\TopUpVendor;
 use App\Models\TopUpVendorCommission;
 use App\Repositories\NotificationRepository;
 use App\Sheba\TopUp\Vendor\Vendors;
+use App\Sheba\TopUp\Vendor\Internal\BdRechargeClient;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -25,6 +26,8 @@ use Sheba\TopUp\TopUpExcel;
 use Sheba\TopUp\TopUpLifecycleManager;
 use Sheba\TopUp\TopUpRequest;
 use Sheba\TopUp\Vendor\Response\Ipn\IpnResponse;
+use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeFailResponse;
+use Sheba\TopUp\Vendor\Response\BdRecharge\BdRechargeSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslSuccessResponse;
 use Sheba\TopUp\Vendor\Response\Ipn\Ssl\SslFailResponse;
 use Sheba\TopUp\Vendor\VendorFactory;
@@ -356,5 +359,33 @@ class TopUpController extends Controller
         }
 
         return api_response($actual_response, json_encode($actual_response), 200);
+    }
+
+    /**
+     * @param Request $request
+     * @param BdRechargeSuccessResponse $success_response
+     * @param BdRechargeFailResponse $fail_response
+     * @param TopUp $top_up
+     * @return JsonResponse
+     * @throws Exception
+     */
+    public function bdrechargeStatusUpdate(Request $request, BdRechargeSuccessResponse $success_response, BdRechargeFailResponse $fail_response, TopUp $top_up)
+    {
+        if($request->status == 'success'){
+            $success_response->setResponse($request->all());
+            $topup_order = $success_response->getTopUpOrder();
+            if($topup_order->status == Statuses::PENDING){
+                $top_up->processSuccessfulTopUp($topup_order, $success_response);
+            }
+        }
+        elseif ($request->status == 'failed'){
+            $fail_response->setResponse($request->all());
+            $topup_order = $fail_response->getTopUpOrder();
+            if($topup_order->status == Statuses::PENDING){
+                $top_up->processFailedTopUp($topup_order, $fail_response);
+            }
+        }
+
+        return api_response($request, 1, 200);
     }
 }

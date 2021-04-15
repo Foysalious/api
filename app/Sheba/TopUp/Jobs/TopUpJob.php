@@ -46,7 +46,6 @@ class TopUpJob extends Job implements ShouldQueue
     public function handle(TopUpRechargeManager $top_up, FailedJobProviderInterface $logger = null)
     {
         if ($this->attempts() > 1) return;
-
         $this->topUp = $top_up;
         $this->failedJobLogger = $logger;
 

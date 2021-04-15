@@ -15,6 +15,8 @@ use Elasticsearch\Common\Exceptions\Missing404Exception;
 use Exception;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Http\JsonResponse;
+use Jose\Factory\JWEFactory;
+use Jose\Factory\JWKFactory;
 use Sheba\Dal\AuthenticationRequest\Purpose;
 use Sheba\Dal\TopUpBulkRequest\Statuses;
 use Sheba\Dal\TopUpBulkRequest\TopUpBulkRequest;
