@@ -68,17 +68,18 @@ class PaymentLinkOrderComplete extends PaymentComplete
                 $this->completePayment();
                 $this->processTransactions($this->payment_receiver);
                 $this->clearTarget();
-                $this->createUsage($this->payment_receiver, $payable->user);
             });
         } catch (QueryException $e) {
             $this->failPayment();
             throw $e;
         }
         try {
-            $this->payment = $this->saveInvoice();
             $this->storeEntry();
+            $this->payment = $this->saveInvoice();
             $this->dispatchReward();
+            $this->createUsage($this->payment_receiver, $this->payment->payable->user);
             $this->notify();
+
         } catch (\Throwable $e) {
             logError($e);
         }
@@ -172,11 +173,12 @@ class PaymentLinkOrderComplete extends PaymentComplete
         $this->target = $this->paymentLink->getTarget();
         if ($this->target instanceof PosOrder) {
             $payment_data    = [
-                'pos_order_id' => $this->target->id,
-                'amount'       => $this->transaction->getEntryAmount(),
-                'method'       => $this->payment->payable->type,
-                'emi_month'    => $this->transaction->getEmiMonth(),
-                'interest'     => $this->transaction->getFee(),
+                'pos_order_id'            => $this->target->id,
+                'amount'                  => $this->transaction->getEntryAmount(),
+                'method'                  => $this->payment->payable->type,
+                'emi_month'               => $this->transaction->getEmiMonth(),
+                'interest'                => $this->transaction->isPaidByPartner() ? $this->transaction->getInterest() : 0,
+                'bank_transaction_charge' => $this->transaction->isPaidByPartner() ? $this->transaction->getFee() : 0,
             ];
             $payment_creator = app(PaymentCreator::class);
             $payment_creator->credit($payment_data);

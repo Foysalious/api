@@ -58,6 +58,12 @@ class PaymentLinkTransaction
         $this->linkCommission           = PaymentLinkStatics::get_payment_link_commission();
         $this->paidByTypes              = PaymentLinkStatics::paidByTypes();
         $this->partnerProfit            = $this->paymentLink->getPartnerProfit();
+        $this->interest                 = $this->paymentLink->getInterest();
+    }
+
+    public function isOld()
+    {
+        return $this->paymentLink->isOld();
     }
 
     /**
@@ -140,7 +146,6 @@ class PaymentLinkTransaction
     private function interestTransaction()
     {
         if ($this->paymentLink->isEmi()) {
-            $this->interest = $this->paymentLink->getInterest();
             $formatted_interest = number_format($this->interest, 2);
             $log                = "$formatted_interest TK has been charged as emi interest fees against of Transc ID {$this->rechargeTransaction->id}, and Transc amount $this->formattedRechargeAmount";
             $this->walletTransactionHandler->setLog($log)->setType(Types::debit())->setAmount($this->interest)->setTransactionDetails([])->setSource(TransactionSources::PAYMENT_LINK)->store();
@@ -163,7 +168,7 @@ class PaymentLinkTransaction
         if ($this->paymentLink->isEmi()) {
             $this->fee = $this->paymentLink->isOld() || $this->isPaidByPartner() ? $this->paymentLink->getBankTransactionCharge() + $this->tax : $this->paymentLink->getBankTransactionCharge();
         } else {
-            $realAmount = ($this->amount - $this->tax - $this->paymentLink->getPartnerProfit()) / (100 + $this->linkCommission) * 100;
+            $realAmount = ($this->amount - $this->tax - $this->getPartnerProfit()) / (100 + $this->linkCommission) * 100;
             $this->fee  = $this->paymentLink->isOld() || $this->isPaidByPartner() ? round(($this->amount * $this->linkCommission / 100) + $this->tax, 2) : round(($realAmount * $this->linkCommission / 100) + $this->tax, 2);
 
         }
@@ -176,7 +181,16 @@ class PaymentLinkTransaction
 
     private function setEntryAmount()
     {
-        $this->entryAmount = $this->isPaidByPartner() ? $this->getAmount() : $this->paymentLink->isEmi() ? $this->getAmount() - $this->getFee() - $this->getInterest() : $this->getAmount() - $this->getFee() - $this->partnerProfit;
+        $amount = $this->getAmount();
+        if ($this->isPaidByPartner()) {
+            $this->entryAmount = $amount;
+        } else {
+            if ($this->paymentLink->isEmi()) {
+                $this->entryAmount = $amount - $this->getFee() - $this->getInterest();
+            } else {
+                $this->entryAmount = $amount - $this->getFee() - $this->partnerProfit;
+            }
+        }
         return $this;
     }
 
