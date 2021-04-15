@@ -15,7 +15,6 @@ class PaymentLinkTransaction
     private $amount             = 0;
     private $paidBy;
     private $interest           = 0;
-    private $emiMonth;
     private $bankTransactionFee = 0;
     private $partnerProfit;
     private $isOld;
@@ -79,7 +78,7 @@ class PaymentLinkTransaction
      */
     public function getEmiMonth()
     {
-        return $this->emiMonth;
+        return $this->paymentLink->getEmiMonth();
     }
 
     /**
