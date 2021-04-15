@@ -51,6 +51,7 @@ class InfoCallController extends Controller
                 'flag'=>'Green',
                 'info_category'=>'not_available',
                 'status'=> Statuses::OPEN,
+                'service_name' => $request->service_name,
                 'created_by'=>0,
                 'created_by_name'=>'Guest User',
                 'updated_by'=>0,
