@@ -1,20 +1,24 @@
 <?php namespace Factory;
 
 
-use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
+use Sheba\Dal\CategoryLocation\CategoryLocation;
 
-class PartnerOrderRequestFactory extends Factory
+class CategoryLocationFactory extends Factory
+
 {
 
     protected function getModelClass()
     {
-        return PartnerOrderRequest::class;
+        return CategoryLocation::class;
+
     }
 
     protected function getData()
     {
         return array_merge($this->commonSeeds, [
-            'status' => 'pending'
+            'is_logistic_enabled'=>1,
+
         ]);
+
     }
 }

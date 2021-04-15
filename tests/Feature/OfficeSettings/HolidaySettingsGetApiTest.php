@@ -34,6 +34,7 @@ class HolidaySettingsGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        dd($data);
 
         $this->assertEquals(200, $data['code']);
         $this->assertEquals('Successful', $data['message']);
@@ -103,6 +104,7 @@ class HolidaySettingsGetApiTest extends FeatureTestCase
             'Authorization' => "Bearer $this->token"
         ]);
         $data = $response->decodeResponseJson();
+        //dd($data);
 
         $this->assertEquals('26/03/2021',$data['business_holidays'][0]['start_date']);
     }

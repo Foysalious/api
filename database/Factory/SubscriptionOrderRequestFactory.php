@@ -1,20 +1,19 @@
 <?php namespace Factory;
 
 
-use Sheba\Dal\PartnerOrderRequest\PartnerOrderRequest;
-
-class PartnerOrderRequestFactory extends Factory
+class SubscriptionOrderRequest extends Factory
 {
 
     protected function getModelClass()
     {
-        return PartnerOrderRequest::class;
+        return SubscriptionOrderRequest::class;
     }
 
     protected function getData()
     {
         return array_merge($this->commonSeeds, [
-            'status' => 'pending'
+            'subscription_order_id' => 1,
+            'status'=>'pending'
         ]);
     }
 }

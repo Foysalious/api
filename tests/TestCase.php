@@ -35,4 +35,11 @@ class TestCase extends Illuminate\Foundation\Testing\TestCase
 
         return $app;
     }
+
+    protected function arrayHasKeys($keys, $array)
+    {
+        foreach ($keys as $key) {
+            $this->arrayHasKey($key)->evaluate($array);
+        }
+    }
 }

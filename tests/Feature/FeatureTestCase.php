@@ -68,6 +68,14 @@ class FeatureTestCase extends TestCase
         return parent::post($uri, $data, $headers);
     }
 
+    public function postWithFiles($uri, array $data = [], array $files = [],  array $headers = [])
+    {
+        $server = $this->transformHeadersToServerVars($headers);
+        $uri = trim($this->baseUrl, '/') . '/' . trim($uri, '/');
+        $this->call("POST", $uri, $data, [], $files, $server);
+        return $this;
+    }
+
     /**
      * Define hooks to migrate the database before and after each test.
      *

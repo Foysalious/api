@@ -8,8 +8,8 @@ class MockFailResourceJobRepository extends ResourceJobRepository
     public function changeStatus($job, $request)
     {
         return json_decode(json_encode([
-            'code'=>500,
-            'msg'=>'something went wrong!'
+            'code'=>200,
+            'msg'=>'Successful'
         ]));
     }
 

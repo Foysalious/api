@@ -181,6 +181,7 @@ class ApprovalRequestController extends Controller
 
         /** @var ApprovalRequest $approval_request */
         $approval_request = $this->approvalRequestRepo->getApprovalRequestByIdAndType($type_ids, $type)->first();
+        if (!$approval_request) return api_response($request, null, 404, ['message' => 'Approval request not found.']);
 
         #if ($approval_request->approver_id != $business_member->id) return api_response($request, null, 420);
 

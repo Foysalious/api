@@ -2,6 +2,7 @@
 
 
 use Sheba\Dal\Service\Service;
+use Sheba\Services\Type as ServiceType;
 
 class ServiceFactory extends Factory
 {
@@ -28,6 +29,9 @@ class ServiceFactory extends Factory
             'app_thumb' => $this->faker->imageUrl(),
             'app_banner' => $this->faker->imageUrl(),
             'faqs' => json_encode($faqs),
+            'variable_type' => ServiceType::FIXED,
+            'variables' => '{"price":"1700","min_price":"1000","max_price":"2500","description":""}',
+            'publication_status' =>  1
         ]);
     }
 }
