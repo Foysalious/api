@@ -1093,4 +1093,9 @@ class Partner extends BaseModel implements Rewardable, TopUpAgent, HasWallet, Tr
             'in_trade_fair' => $this->tradeFair ? 1 :0,
         ];
     }
+    public function isMigrationCompleted()
+    {
+        return $this->is_migration_completed == 1;
+    }
+
 }

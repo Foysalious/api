@@ -39,6 +39,7 @@ class DataMigration
     {
         if ($this->partner->isMigrationCompleted()) throw new DataAlreadyMigratedException();
         $this->inventoryDataMigration->setPartner($this->partner)->migrate();
+
         $this->posOrderDataMigration->setPartner($this->partner)->migrate();
         dispatch(new PartnerMigrationCompleteJob($this->partner));
 

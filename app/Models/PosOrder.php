@@ -113,6 +113,11 @@ class PosOrder extends Model
         return $this->hasMany(PosOrderDiscount::class);
     }
 
+    public function log()
+    {
+        return $this->has(PosOrderDiscount::class);
+    }
+
     private function _calculatePaidAmount()
     {
         /**
