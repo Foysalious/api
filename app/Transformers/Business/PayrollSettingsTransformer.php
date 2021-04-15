@@ -29,6 +29,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
             'business_id' => $payroll_setting->business_id,
             'salary_breakdown' => array_values($this->grossSalaryBreakdown($payroll_setting)),
             'gross_salary_total' => $this->totalGrossPercentage,
+            'salary_breakdown_completion' => $this->totalGrossPercentage,
             'pay_components' => $this->payComponents($payroll_setting),
             'pay_schedule' => $this->paySchedule($payroll_setting),
             'payroll_setting_completion' => $this->payrollSettingCompletion(),
@@ -57,7 +58,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
         foreach ($payroll_components as $payroll_component) {
             $salary_percentage = json_decode($payroll_component->setting, 1);
             $percentage_value = $salary_percentage['percentage'];
-            $this->totalGrossPercentage += $percentage_value;
+            if ($payroll_component->is_active) $this->totalGrossPercentage += $percentage_value;
             array_push($this->payrollComponentData, [
                 'id' => $payroll_component->id,
                 'key' => $payroll_component->name,
@@ -98,7 +99,7 @@ class PayrollSettingsTransformer extends TransformerAbstract
      */
     private function payrollSettingCompletion()
     {
-        $total = $this->totalGrossPercentage + $this->payScheduleData['pay_schedule_completion'];
+        $total = ( $this->totalGrossPercentage / 2 ) + $this->payScheduleData['pay_schedule_completion'];
         return round($total, 0);
     }
 
