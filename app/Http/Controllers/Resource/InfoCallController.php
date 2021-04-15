@@ -3,7 +3,7 @@
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\InfoCallCreateRequest;
-use App\Http\Requests\Request;
+use Illuminate\Http\Request;
 use App\Models\Order;
 use Sheba\Dal\InfoCall\InfoCall;
 use Sheba\Dal\InfoCall\InfoCallRepository;
@@ -31,10 +31,21 @@ class InfoCallController extends Controller
 
     public function index(Request $request)
     {
-//        /** @var AuthUser $auth_user */
-//        $auth_user = $request->auth_user;
-//        $resource = $auth_user->getResource();
-//        dd($resource->id);
+        /** @var AuthUser $auth_user */
+        $auth_user = $request->auth_user;
+        $auth_user_array = $auth_user->toArray();
+        $created_by = $auth_user_array['resource']['id'];
+        $info_call_list = InfoCall::where('created_by', $created_by)->get()->sortByDesc('id')->toArray();
+        $list = [];
+        foreach ($info_call_list as $info_call) {
+            array_push($list, [
+                'created_at'=> $info_call['created_at'],
+                'service_request_id' => $info_call['id'],
+                'order_status' => 'বাতিল', //dummy
+                'reward' => 200 //dummy
+            ]);
+        }
+        return api_response($request, $list, 200, ['service_request_list' => $list]);
     }
 
     public function serviceRequestDashboard()
