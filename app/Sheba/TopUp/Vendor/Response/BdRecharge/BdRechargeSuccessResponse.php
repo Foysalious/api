@@ -23,4 +23,9 @@ class BdRechargeSuccessResponse extends SuccessResponse
             ->where('gateway', Names::BD_RECHARGE)
             ->first();
     }
+
+    protected function findTopUpOrder(): TopUpOrder
+    {
+        // TODO: Implement findTopUpOrder() method.
+    }
 }
