@@ -346,6 +346,21 @@ class Creator
         return ["message" => $message, "title" => $title];
     }
 
+    public function getInterest()
+    {
+        return $this->interest;
+    }
+
+    public function getPaidBy()
+    {
+        return $this->paidBy;
+    }
+
+    public function getBankTransactionCharge()
+    {
+        return $this->bankTransactionCharge;
+    }
+
     public function getPaymentLink()
     {
         return $this->paymentLinkCreated->link;
@@ -365,7 +380,7 @@ class Creator
             if ($this->emiMonth) {
                 $data = Calculations::getMonthData($amount, $this->emiMonth, false);
                 $this->setInterest($data['total_interest'])
-                     ->setBankTransactionCharge($data['bank_transaction_fee'] )
+                     ->setBankTransactionCharge($data['bank_transaction_fee'])
                      ->setAmount($amount);
             }
         }

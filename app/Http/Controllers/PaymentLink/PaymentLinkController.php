@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use League\Fractal\Manager;
 use League\Fractal\Resource\Collection;
-use Sheba\EMI\Calculations;
 use Sheba\ModificationFields;
 use Sheba\PaymentLink\Creator;
 use Sheba\PaymentLink\PaymentLink;
@@ -174,6 +173,12 @@ class PaymentLinkController extends Controller
                 $this->deActivatePreviousLink($pos_order);
                 $customer = PosCustomer::find($pos_order->customer_id);
                 if (!empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
+                if ($this->creator->getPaidBy() == PaymentLinkStatics::paidByTypes()[1]) {
+                    $pos_order->update(['interest' => $this->creator->getInterest(), 'bank_transaction_charge' => $this->creator->getBankTransactionCharge()]);
+                } else {
+                    $pos_order->update(['interest' => 0, 'bank_transaction_charge' => 0]);
+                }
+
             }
 
             if ($request->has('customer_id')) {
@@ -185,7 +190,7 @@ class PaymentLinkController extends Controller
             if ($payment_link_store) {
                 $payment_link = $this->creator->getPaymentLinkData();
                 if (!$request->has('emi_month')) {
-                    $this->creator->sendSMS();
+                    $this->creator->sentSms();
                 }
                 return api_response($request, $payment_link, 200, array_merge(['payment_link' => $payment_link], $this->creator->getSuccessMessage()));
             } else {
@@ -234,7 +239,7 @@ class PaymentLinkController extends Controller
                           ->setUserName($request->user->name)
                           ->setUserId($request->user->id)
                           ->setUserType($request->type)
-                          ->setEmiMonth($request->emi_month?:0)
+                          ->setEmiMonth($request->emi_month ?: 0)
                           ->setPaidBy($request->interest_paid_by ?: PaymentLinkStatics::paidByTypes()[($request->has("emi_month") ? 1 : 0)])
                           ->setTransactionFeePercentage($request->transaction_charge);
             if (isset($customer) && !empty($customer)) $this->creator->setPayerId($customer->id)->setPayerType('pos_customer');
